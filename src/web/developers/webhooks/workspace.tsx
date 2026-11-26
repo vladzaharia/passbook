@@ -1,134 +1,219 @@
-import { Copy, Plus, Send } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
+import { Send } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
+import { BENCH_WEBHOOKS_COPY } from '../../../shared/copy/developers-bench-webhooks.ts';
 import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
-import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
+import { PATHS } from '../../../shared/developers.ts';
+import { pluralize } from '../../lib/format.ts';
+import { useMediaQuery } from '../../lib/media.ts';
+import { BenchCode } from '../bench/code-block.tsx';
+import { FilterBar, FilterSelect } from '../bench/filter-select.tsx';
+import { shortId } from '../bench/id-chip.tsx';
+import { useBenchKeys } from '../bench/keys.ts';
+import { BenchList } from '../bench/list.tsx';
+import { LiveIndicator, useLiveState } from '../bench/live.tsx';
+import { BenchSlot } from '../bench/slots.tsx';
+import { BENCH_WIDE, BenchSplit } from '../bench/split.tsx';
+import { BenchState } from '../bench/state.tsx';
+import { StatusChip } from '../bench/status-chip.tsx';
+import { BenchTime } from '../bench/time.tsx';
+import { Toolbar } from '../bench/toolbar.tsx';
+import { type BenchFilters, useBenchFilters } from '../bench/use-filters.ts';
+import { useBenchSelection } from '../bench/use-selection.ts';
+import { copyWithFeedback } from '../shell/copy.ts';
 import { type Revealed, RevealSheet } from '../ui/reveal-sheet.tsx';
-import type { ApiProblem, DeliveryDto, TestAttemptDto, TesterApi } from './client.ts';
-import { Deliveries, type ListenState } from './deliveries.tsx';
-import { Detail } from './detail.tsx';
-import { AddEndpoint, Endpoints, RotateSecret } from './endpoints.tsx';
-import { VERIFY_SAMPLES } from './samples.ts';
-import { Samples } from './samples-tabs.tsx';
-import { rowsOf, UrlDetail, UrlEvents } from './url-events.tsx';
+import type { ApiProblem, TesterApi } from './client.ts';
+import { ManageSheet } from './endpoints.tsx';
+import { useFeed } from './feed.ts';
+import { curlOf } from './format.ts';
+import { WebhookInspector } from './inspector.tsx';
+import { captureRow, deliveryRow, endpointLabel, narrow, type Row, toneOfRow } from './model.ts';
 
-const CLI = 'npx @passbook/cli listen --forward-to localhost:3000/hooks';
-
-const POLL_MS = 3000;
+const C = BENCH_WEBHOOKS_COPY;
+const F = C.filters;
 const ROTATE_OVERLAP_MS = 24 * 3_600_000;
-
-export function Notice({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="card card-b stack g2" role="status">
-      <h2 className="h3">{title}</h2>
-      <div className="muted">{children}</div>
-    </div>
-  );
-}
+const FILTERS = ['type', 'status', 'request', 'pass'] as const;
+const idOf = (r: Row) => r.id;
 
 const messageOf = (e: unknown) =>
   (e as ApiProblem).status === 429
-    ? 'Too many sends. Wait a minute and try again.'
+    ? C.errors.tooMany
     : e instanceof Error
       ? e.message
-      : 'Something went wrong. Try again.';
+      : C.errors.generic;
 
-function Localhost() {
+/** A row `#id` names that this endpoint's list does not hold: found on any endpoint of the sandbox. */
+async function locate(
+  api: TesterApi,
+  endpoints: readonly WebhookEndpointDto[],
+  id: string,
+): Promise<Row | null> {
+  for (const e of endpoints) {
+    try {
+      if (e.target === 'url') return { ...deliveryRow(await api.delivery(e.id, id), e.id), id };
+      const found = (await api.captures(e.id)).find((c) => c.id === id || c.eventId === id);
+      if (found) return { ...captureRow(found), id };
+    } catch {
+      // Not on this endpoint (a 404) or unreadable: the next one may hold it.
+    }
+  }
+  return null;
+}
+
+function Toolbars({
+  endpoints,
+  endpoint,
+  types,
+  onEndpoint,
+  onManage,
+  filters,
+}: {
+  endpoints: readonly WebhookEndpointDto[];
+  endpoint: WebhookEndpointDto;
+  types: readonly string[];
+  onEndpoint: (id: string) => void;
+  onManage: () => void;
+  filters: BenchFilters<(typeof FILTERS)[number]>;
+}) {
+  const { values, set, clear, active } = filters;
+  const scoped = (key: 'request' | 'pass', label: string) =>
+    values[key] ? (
+      <FilterSelect
+        label={label}
+        value={values[key]}
+        options={[{ value: values[key], label: shortId(values[key]) }]}
+        onChange={(v) => set(key, v)}
+      />
+    ) : null;
   return (
-    <div className="card card-b stack g2">
-      <div className="xs muted">Forward to your machine</div>
-      <div className="cmd">
-        <span className="p">$</span>
-        <code>{CLI}</code>
-        <button type="button" className="iconbtn copy push" data-copy aria-label="Copy command">
-          <Copy className="lucide" aria-hidden="true" />
-        </button>
-      </div>
-    </div>
+    <Toolbar
+      label={F.toolbar}
+      note={
+        <>
+          {C.note.kept} · <a href={`${PATHS.guides}/react-to-events`}>{C.note.types}</a>
+        </>
+      }
+    >
+      <FilterSelect
+        label={F.endpoint}
+        value={endpoint.target === 'capture' ? undefined : endpoint.id}
+        any={C.capture.name}
+        options={endpoints
+          .filter((e) => e.target !== 'capture')
+          .map((e) => ({ value: e.id, label: endpointLabel(e) }))}
+        onChange={(v) => onEndpoint(v ?? '')}
+      />
+      <FilterBar active={active} onClear={clear}>
+        <FilterSelect
+          label={F.type}
+          value={values.type}
+          options={types.map((t) => ({ value: t, label: t }))}
+          onChange={(v) => set('type', v)}
+        />
+        <FilterSelect
+          label={F.status}
+          value={values.status}
+          options={[
+            { value: 'ok', label: F.ok },
+            { value: 'failed', label: F.failed },
+            { value: 'pending', label: F.pending },
+          ]}
+          onChange={(v) => set('status', v)}
+        />
+        {scoped('request', F.request)}
+        {scoped('pass', F.pass)}
+      </FilterBar>
+      <button type="button" className="btn ghost sm" onClick={onManage}>
+        {F.manage}
+      </button>
+    </Toolbar>
   );
 }
 
 export function Workspace({ api, types }: { api: TesterApi; types: readonly string[] }) {
-  const [endpoint, setEndpoint] = useState<WebhookEndpointDto | null>(null);
-  const [all, setAll] = useState<WebhookEndpointDto[]>([]);
-  const [captures, setCaptures] = useState<WebhookCaptureDto[]>([]);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
-  const [sendType, setSendType] = useState('webhook.test');
-  const [listen, setListen] = useState<ListenState>('listening');
+  const [endpoints, setEndpoints] = useState<WebhookEndpointDto[]>([]);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [sendType, setSendType] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const [failed, setFailed] = useState<string | null>(null);
-  const [urlDeliveries, setUrlDeliveries] = useState<DeliveryDto[]>([]);
-  const [urlTests, setUrlTests] = useState<TestAttemptDto[]>([]);
-  const [adding, setAdding] = useState(false);
+  const [managing, setManaging] = useState(false);
   const [revealed, setRevealed] = useState<Revealed | null>(null);
+  const wide = useMediaQuery(BENCH_WIDE);
+  const where = useBenchFilters(['endpoint'] as const);
+  const filters = useBenchFilters(FILTERS);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is Retry.
   useEffect(() => {
     let live = true;
+    setFailed(false);
     void (async () => {
       try {
         const list = await api.endpoints();
         const cap = list.find((e) => e.target === 'capture') ?? (await api.ensureCapture());
-        const found = [cap, ...list.filter((e) => e.target !== 'capture')];
-        if (!live) return;
-        setAll(found);
-        setEndpoint(cap);
+        if (live) setEndpoints([cap, ...list.filter((e) => e.target !== 'capture')]);
       } catch (e) {
-        if (live) setFailed(messageOf(e));
+        if (live) {
+          setFailed(true);
+          setMessage(messageOf(e));
+        }
       }
     })();
     return () => {
       live = false;
     };
-  }, [api]);
+  }, [api, attempt]);
 
-  const id = endpoint?.id;
-  const isUrl = endpoint?.target === 'url';
-  const load = useCallback(async () => {
-    if (!id) return;
-    try {
-      if (isUrl) {
-        const [d, t] = await Promise.all([api.deliveries(id), api.tests(id)]);
-        setUrlDeliveries(d);
-        setUrlTests(t);
-      } else setCaptures(await api.captures(id, filter || undefined));
-      setListen('listening');
-    } catch {
-      setListen('offline');
-    }
-    setNow(Date.now());
-  }, [api, id, filter, isUrl]);
-
-  useEffect(() => {
-    void load();
-    const tick = () => {
-      if (document.hidden) setListen('paused');
-      else void load();
-    };
-    const timer = setInterval(tick, POLL_MS);
-    document.addEventListener('visibilitychange', tick);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', tick);
-    };
-  }, [load]);
-
-  const loadSecret = useCallback(
-    () => (id ? api.secret(id) : Promise.reject(new Error('none'))),
-    [api, id],
+  const endpoint =
+    endpoints.find((e) => e.id === where.values.endpoint) ??
+    endpoints.find((e) => e.target === 'capture') ??
+    null;
+  const { values } = filters;
+  const feed = useFeed(api, endpoint, {
+    ...(values.type ? { type: values.type } : {}),
+    ...(values.request ? { requestId: values.request } : {}),
+    ...(values.pass ? { passId: values.pass } : {}),
+  });
+  const rows = useMemo(
+    () => narrow(feed.rows, { type: values.type, status: values.status }),
+    [feed.rows, values.type, values.status],
   );
-  const selected = captures.find((c) => c.id === picked) ?? captures[0] ?? null;
+  const fetchOne = useCallback((id: string) => locate(api, endpoints, id), [api, endpoints]);
+  const selection = useBenchSelection({ items: rows, idOf, fetchOne, ready: feed.ready });
+  const { selectedId, selected, pinned, select, step } = selection;
+  const live = useLiveState(feed.paused);
+
+  // `#<event id>` names a capture by its event; a row on another endpoint takes that endpoint.
+  useEffect(() => {
+    if (!feed.ready || !selectedId || rows.some((r) => r.id === selectedId)) return;
+    const named = rows.find((r) => r.eventId === selectedId);
+    if (named) select(named.id, { open: true });
+  }, [feed.ready, rows, selectedId, select]);
+  const elsewhere =
+    pinned && endpoint && pinned.endpointId !== endpoint.id ? pinned.endpointId : null;
+  useEffect(() => {
+    if (elsewhere) where.set('endpoint', elsewhere);
+  }, [elsewhere, where.set]);
+  // Wide, the pane is always there: it opens on the newest delivery.
+  const first = rows[0];
+  useEffect(() => {
+    if (wide && feed.ready && !selectedId && first) select(first.id, { open: false });
+  }, [wide, feed.ready, selectedId, first, select]);
+
+  const secretOf = endpoint?.id;
+  const loadSecret = useCallback(
+    () => (secretOf ? api.secret(secretOf) : Promise.reject(new Error('none'))),
+    [api, secretOf],
+  );
 
   async function act(run: () => Promise<string | null>) {
     setBusy(true);
     setMessage(null);
     try {
       const next = await run();
-      if (next) setPicked(next);
-      await load();
+      await feed.reload();
+      if (next) select(next, { open: true });
     } catch (e) {
       setMessage(messageOf(e));
     } finally {
@@ -136,136 +221,189 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
     }
   }
 
-  const rows = rowsOf(urlDeliveries, urlTests);
-  const urlRow = rows.find((r) => r.key === picked) ?? rows[0] ?? null;
-
-  function pick(next: string) {
-    setEndpoint(all.find((x) => x.id === next) ?? endpoint);
-    setPicked(null);
-    setMessage(null);
-  }
-
-  async function sendTest(): Promise<string | null> {
+  const sendTest = async (): Promise<string | null> => {
     if (!endpoint) return null;
-    const r = await api.sendTest(endpoint.id, sendType);
+    const r = await api.sendTest(endpoint.id, sendType || 'webhook.test');
     if (endpoint.target === 'url')
       setMessage(
         r.ok
           ? null
           : r.status === null
-            ? `Could not reach the endpoint (${r.errorCode ?? 'no answer'}).`
-            : `The endpoint answered ${r.status}.`,
+            ? C.errors.unreachable(r.errorCode ?? 'no answer')
+            : C.errors.answered(r.status),
       );
     return r.captureId;
-  }
+  };
+  const send = () => void act(sendTest);
+  const replay = () => {
+    if (!endpoint || !selected) return;
+    void act(async () => {
+      if (selected.kind === 'capture') return (await api.replay(endpoint.id, selected.id)).id;
+      if (selected.eventId) await api.replayDelivery(endpoint.id, selected.eventId);
+      return null;
+    });
+  };
+  useBenchKeys({
+    primary: send,
+    copyId: () => selected?.eventId && void copyWithFeedback(selected.eventId, null),
+    copyCurl: () => selected?.capture && void copyWithFeedback(curlOf(selected.capture), null),
+  });
 
-  async function create(url: string): Promise<void> {
-    const made = await api.createEndpoint(
-      url,
-      types.filter((t) => t !== 'webhook.test'),
+  /** An endpoint's id, or null for the capture endpoint (the default, so it leaves the address). */
+  const pickEndpoint = (id: string | null) => {
+    where.set('endpoint', id);
+    select(null);
+    setMessage(null);
+  };
+
+  if (failed && !endpoint)
+    return (
+      <BenchState scene="failed" onRetry={() => setAttempt((n) => n + 1)}>
+        {message ? <span className="muted">{message}</span> : null}
+      </BenchState>
     );
-    setAll((l) => [...l, made.endpoint]);
-    setEndpoint(made.endpoint);
-    setPicked(null);
-    setAdding(false);
-    setRevealed({ name: WEBHOOKS_COPY.reveal.env, secret: made.secret });
-  }
+  if (!endpoint) return null;
 
-  if (failed) return <Notice title="Could not open the tester">{failed}</Notice>;
-  if (!endpoint) return <Notice title="Opening your sandbox">One moment.</Notice>;
+  const narrowed = filters.active > 0;
+  const empty = narrowed ? (
+    <BenchState scene="no-match">
+      <button type="button" className="btn outline" onClick={filters.clear}>
+        {BENCH_COPY.state.clearFilters}
+      </button>
+    </BenchState>
+  ) : (
+    <BenchState scene="webhooks-idle">
+      <button type="button" className="btn" disabled={busy} onClick={send}>
+        <Send aria-hidden="true" />
+        {C.send.action}
+      </button>
+    </BenchState>
+  );
+  const order = [...(pinned ? [pinned] : []), ...rows];
+  const at = selected ? order.findIndex((r) => r.id === selected.id) : -1;
+
   return (
     <>
-      <div className="wh-bar">
-        <label className="wh-select wh-type">
-          <span className="sr">Event type to send</span>
-          <select value={sendType} onChange={(e) => setSendType(e.target.value)}>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+      <BenchSlot name="count">{pluralize(endpoints.length, C.count.endpoint)}</BenchSlot>
+      <BenchSlot name="action">
+        <FilterSelect
+          label={C.send.as}
+          name={C.send.name}
+          value={sendType || undefined}
+          any="webhook.test"
+          options={types.filter((t) => t !== 'webhook.test').map((t) => ({ value: t, label: t }))}
+          onChange={(v) => setSendType(v ?? '')}
+        />
         <button
           type="button"
-          className="btn outline"
+          className="btn"
           disabled={busy}
-          onClick={() => void act(() => sendTest())}
+          aria-keyshortcuts="Meta+Enter Control+Enter"
+          onClick={send}
         >
           <Send aria-hidden="true" />
-          Send test event
+          {C.send.action}
         </button>
-        <button type="button" className="btn" onClick={() => setAdding(true)}>
-          <Plus aria-hidden="true" />
-          Add endpoint
-        </button>
-      </div>
+      </BenchSlot>
+      <LiveIndicator state={live} onResume={feed.resume} />
+      <Toolbars
+        endpoints={endpoints}
+        endpoint={endpoint}
+        types={types}
+        onEndpoint={(id) => pickEndpoint(id || null)}
+        onManage={() => setManaging(true)}
+        filters={filters}
+      />
       {message ? (
         <p className="wh-msg" role="alert">
           {message}
         </p>
       ) : null}
-      <div className="wh-grid">
-        <div className="stack g4">
-          {adding ? <AddEndpoint onCreate={create} onClose={() => setAdding(false)} /> : null}
-          <Endpoints list={all} selected={endpoint.id} onSelect={pick} />
-          {isUrl ? (
-            <RotateSecret
-              key={endpoint.id}
-              rotate={async () => {
-                setMessage(null);
-                const secret = await api.rotate(endpoint.id, 24);
-                setRevealed({
-                  name: WEBHOOKS_COPY.reveal.env,
-                  secret,
-                  stopsAt: Date.now() + ROTATE_OVERLAP_MS,
-                });
-              }}
+      <BenchSplit
+        bare
+        label={C.list}
+        open={selection.open}
+        onClose={() => selection.setOpen(false)}
+        main={
+          feed.failed ? (
+            <BenchState scene="failed" onRetry={() => void feed.reload()} />
+          ) : feed.ready ? (
+            <BenchList
+              label={C.list}
+              items={rows}
+              idOf={idOf}
+              selection={selection}
+              fresh={feed.fresh}
+              empty={empty}
+              tone={toneOfRow}
+              row={(r) => ({
+                lead: <BenchTime at={r.at} />,
+                title: (
+                  <>
+                    {r.type}
+                    {r.kind === 'test' ? (
+                      <StatusChip tone="neutral">{C.inspector.test}</StatusChip>
+                    ) : null}
+                  </>
+                ),
+                meta: r.meta,
+                trail: (
+                  <StatusChip status={r.status} tone={toneOfRow(r)}>
+                    {r.status ?? r.state}
+                  </StatusChip>
+                ),
+              })}
+              footer={{ count: C.count.deliveries(rows.length) }}
             />
-          ) : null}
-          {isUrl ? (
-            <UrlEvents rows={rows} selected={urlRow?.key ?? null} onSelect={setPicked} now={now} />
-          ) : (
-            <Deliveries
-              captures={captures}
-              selected={selected?.id ?? null}
-              onSelect={setPicked}
-              filter={filter}
-              onFilter={setFilter}
-              types={types}
-              listen={listen}
-              now={now}
-            />
-          )}
-          {SDK_STATUS.cli ? <Localhost /> : null}
-        </div>
-        <div className="stack g4">
-          {isUrl ? (
-            urlRow ? (
-              <UrlDetail
-                api={api}
-                endpointId={endpoint.id}
-                row={urlRow}
-                onReplayed={() => void load()}
-              />
-            ) : (
-              <Notice title="Nothing to inspect">Send a test event to this endpoint.</Notice>
-            )
-          ) : selected ? (
-            <Detail
-              capture={selected}
+          ) : null
+        }
+        pane={
+          selected ? (
+            <WebhookInspector
+              api={api}
+              row={selected}
               busy={busy}
               loadSecret={loadSecret}
-              onReplay={() => void act(async () => (await api.replay(endpoint.id, selected.id)).id)}
+              onReplay={replay}
+              onPrev={at > 0 ? () => step(-1) : undefined}
+              onNext={at >= 0 && at < order.length - 1 ? () => step(1) : undefined}
             />
           ) : (
-            <Notice title="Nothing to inspect">
-              Send a test event, or issue a pass in your sandbox.
-            </Notice>
-          )}
-          {isUrl ? null : <Samples samples={VERIFY_SAMPLES} />}
-        </div>
-      </div>
+            <BenchCode label={C.list} body={null} empty={C.empty.pick} />
+          )
+        }
+      />
+      {managing ? (
+        <ManageSheet
+          endpoints={endpoints}
+          current={endpoint}
+          onPick={(id) => {
+            pickEndpoint(endpoints.find((e) => e.id === id)?.target === 'capture' ? null : id);
+            setManaging(false);
+          }}
+          onClose={() => setManaging(false)}
+          onCreate={async (url) => {
+            const made = await api.createEndpoint(
+              url,
+              types.filter((t) => t !== 'webhook.test'),
+            );
+            setEndpoints((l) => [...l, made.endpoint]);
+            pickEndpoint(made.endpoint.id);
+            setManaging(false);
+            setRevealed({ name: WEBHOOKS_COPY.reveal.env, secret: made.secret });
+          }}
+          onRotate={async () => {
+            setMessage(null);
+            const secret = await api.rotate(endpoint.id, 24);
+            setManaging(false);
+            setRevealed({
+              name: WEBHOOKS_COPY.reveal.env,
+              secret,
+              stopsAt: Date.now() + ROTATE_OVERLAP_MS,
+            });
+          }}
+        />
+      ) : null}
       {revealed ? (
         <RevealSheet
           revealed={revealed}

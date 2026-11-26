@@ -103,14 +103,11 @@ describe('kit lint', () => {
   // One status vocabulary on the Workbench: bench/status-chip.tsx (and bench/list.tsx's tick). A
   // tool draws no pill, no `*-code` or `*-status` class and no data-tone of its own.
   it('shows status on the Workbench tools only through the bench StatusChip', () => {
-    // Moving onto the bench in WB3 (logs), WB4 (webhooks), WB5 (keys) and WB7 (home): each removes its own.
+    // Moving onto the bench in WB3 (logs), WB4 (webhooks, done), WB5 (keys) and WB7 (home): each removes its own.
     const pending = new Set([
       'developers/keys/keys-page.tsx',
       'developers/logs/rail.ts',
       'developers/logs/row.ts',
-      'developers/webhooks/deliveries.tsx',
-      'developers/webhooks/endpoints.tsx',
-      'developers/webhooks/url-events.tsx',
       'developers/workbench/calls.tsx',
       'developers/workbench/cards.tsx',
       'developers/workbench/stats.tsx',

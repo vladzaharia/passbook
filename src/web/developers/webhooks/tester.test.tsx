@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import vectorFile from '../../../../docs/api/webhook-vectors.json';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
@@ -73,7 +73,7 @@ function api(
       },
     ],
     ensureCapture: async () => endpoint,
-    captures: async (_id, type) => captures.filter((c) => !type || c.type === type),
+    captures: async (_id, q) => captures.filter((c) => !q?.type || c.type === q.type),
     sendTest: async (_id, type) => {
       sent.push(type);
       return { ok: true, captureId: 'c1', status: 200, errorCode: null };
@@ -97,6 +97,28 @@ beforeAll(() => {
     },
   });
 });
+
+beforeEach(() => {
+  history.replaceState(null, '', '/developers/webhooks');
+  // The wide layout: the inspector beside the list; motion reduced so sheets close at once.
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: !q.includes('reduce'),
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+async function addUrl(url: string) {
+  await userEvent.click(screen.getByRole('button', { name: 'Manage' }));
+  const sheet = await screen.findByRole('dialog', { name: 'Endpoints' });
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Add endpoint' }));
+  await userEvent.type(within(sheet).getByLabelText(/^URL/), url);
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Add' }));
+}
 
 const TYPES = ['pass.issued', 'pass.updated', 'webhook.test'];
 
@@ -144,7 +166,10 @@ describe('Tester', () => {
     const fake = api([capture()]);
     render(<Tester connect={ready(fake)} types={TYPES} />);
     await screen.findByText('Signature matches');
-    await userEvent.selectOptions(screen.getByLabelText('Event type to send'), 'pass.issued');
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Event type to send' }),
+      'pass.issued',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Send test event' }));
     await waitFor(() => expect(fake.sent).toEqual(['pass.issued']));
   });
@@ -155,17 +180,18 @@ describe('Tester', () => {
     render(<Tester connect={ready(fake)} types={TYPES} />);
     await screen.findByText('Signature matches');
     await userEvent.click(screen.getByRole('tab', { name: 'Headers' }));
-    expect(screen.getByLabelText('Request headers')).toHaveTextContent('x-passbook-timestamp:');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('x-passbook-timestamp:');
     await userEvent.click(screen.getByRole('tab', { name: 'Body' }));
-    expect(screen.getByLabelText('Request body')).toHaveTextContent('"type": "pass.updated"');
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('pass.updated');
     await userEvent.click(screen.getByRole('button', { name: 'Replay' }));
     await waitFor(() => expect(replay).toHaveBeenCalledWith('ep1', 'c1'));
   });
 
   it('says what to do when nothing is captured yet', async () => {
     render(<Tester connect={ready(api([]))} types={TYPES} />);
-    expect(await screen.findByText('Nothing captured yet. Send a test event.')).toBeInTheDocument();
-    expect(within(document.body).getByText('Nothing to inspect')).toBeInTheDocument();
+    expect(await screen.findByText('Listening for events')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Send test event' })).toHaveLength(2);
+    expect(within(document.body).getByText('Select a delivery')).toBeInTheDocument();
   });
 
   it('offers a retry when the sandbox cannot be reached', async () => {
@@ -174,33 +200,54 @@ describe('Tester', () => {
       .mockRejectedValueOnce(new Error('down'))
       .mockResolvedValue({ kind: 'signed-out' });
     render(<Tester connect={connect} types={TYPES} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
 
-  it('lists URL endpoints beside the capture endpoint and shows their test sends as deliveries', async () => {
+  it('picks a URL endpoint from the toolbar and lists its test sends beside its deliveries', async () => {
     render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
     await screen.findByText('Signature matches');
-    const eps = screen
-      .getAllByRole('button', { pressed: undefined })
-      .filter((b) => b.className.includes('wh-ep'));
-    expect(eps.map((b) => b.textContent)).toEqual([
-      expect.stringContaining('Capture endpoint'),
-      expect.stringContaining('hooks.example.dev/…'),
-    ]);
-    await userEvent.click(eps[1] as HTMLElement);
-    expect(await screen.findByText('Test')).toBeInTheDocument();
-    expect(screen.getAllByText('webhook.test').length).toBeGreaterThan(0);
+    const select = screen.getByRole('combobox', { name: 'Endpoint' });
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Capture endpoint', 'hooks.example.dev/…']);
+    await userEvent.selectOptions(select, 'ep2');
+    expect(await screen.findByText('Test', { selector: '.bench-sc' })).toBeInTheDocument();
+    expect(screen.getAllByText('pass.updated').length).toBeGreaterThan(0);
     expect(screen.getAllByText('204').length).toBeGreaterThan(0);
+    expect(location.search).toBe('?endpoint=ep2');
+  });
+
+  it('takes a capture named by its event id in the address, and a request filter from a link', async () => {
+    history.replaceState(null, '', '/developers/webhooks?request=req-1#e1');
+    const fake = api([capture(), capture({ id: 'c9', eventId: 'e9' })]);
+    const seen: unknown[] = [];
+    const captures = fake.captures;
+    fake.captures = (id, q) => {
+      seen.push(q);
+      return captures(id, q);
+    };
+    render(<Tester connect={ready(fake)} types={TYPES} />);
+    await waitFor(() => expect(location.hash).toBe('#c1'));
+    expect(seen[0]).toMatchObject({ requestId: 'req-1' });
+    expect(screen.getByRole('combobox', { name: 'Request' })).toHaveValue('req-1');
+  });
+
+  it('lets the Trace carry a capture to the request that caused it', async () => {
+    const body = JSON.stringify({ ...JSON.parse(vector.body), requestId: 'req-77' });
+    render(<Tester connect={ready(api([capture({ body })]))} types={TYPES} />);
+    const trace = await screen.findByRole('navigation', { name: 'Trace' });
+    expect(within(trace).getByRole('button', { name: /request id req-77/ })).toBeInTheDocument();
+    expect(within(trace).getByRole('button', { name: /event id e1/ })).toBeInTheDocument();
   });
 
   it('adds a URL endpoint with every subscribable event and shows the secret once', async () => {
     const fake = api([capture()]);
     render(<Tester connect={ready(fake)} types={TYPES} />);
     await screen.findByText('Signature matches');
-    await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
-    await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await addUrl('https://hooks.example.dev/in');
     expect(await screen.findByText('whsec_once')).toBeInTheDocument();
     expect(screen.getByText('Shown once')).toBeInTheDocument();
     expect(fake.sent).toContain('create https://hooks.example.dev/in pass.issued,pass.updated');
@@ -216,9 +263,8 @@ describe('Tester', () => {
     });
     render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
     await screen.findByText('Signature matches');
-    await userEvent.click(
-      screen.getAllByRole('button').filter((b) => b.className.includes('wh-ep'))[1] as HTMLElement,
-    );
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Endpoint' }), 'ep2');
+    await userEvent.click(screen.getByRole('button', { name: 'Manage' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Rotate' }));
     // One confirm first; nothing is called until it.
     expect(screen.getByText(/The old one keeps signing for 24 hours/)).toBeInTheDocument();
@@ -235,9 +281,7 @@ describe('Tester', () => {
     try {
       render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
       await screen.findByText('Signature matches');
-      await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
-      await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
-      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+      await addUrl('https://hooks.example.dev/in');
       expect(await screen.findByText('whsec_once')).toBeInTheDocument();
       await vi.advanceTimersByTimeAsync(60_000);
       await waitFor(() => expect(screen.queryByText('whsec_once')).toBeNull());
@@ -259,9 +303,7 @@ describe('Tester', () => {
     };
     render(<Tester connect={ready(fake)} types={TYPES} />);
     await screen.findByText('Signature matches');
-    await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
-    await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await addUrl('https://hooks.example.dev/in');
     const link = await screen.findByRole('link', { name: 'Continue' });
     expect(link.getAttribute('href')).toContain('/auth/oidc/start');
     expect(link.getAttribute('href')).toContain('next=%2Fdevelopers%2Fwebhooks');
