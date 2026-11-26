@@ -2088,7 +2088,8 @@
       ],
       "modules": [
         "identities",
-        "orgs"
+        "orgs",
+        "passes"
       ]
     },
     {
