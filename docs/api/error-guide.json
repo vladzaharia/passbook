@@ -3875,6 +3875,12 @@
     "fix": "Do it from the console with a recent sign-in.",
     "retryable": false
   },
+  "SANDBOX_ENDPOINT_LIMIT": {
+    "title": "Sandbox endpoint limit",
+    "when": "The sandbox already holds 3 webhook endpoints, the capture endpoint included.",
+    "fix": "Delete one with DELETE /api/v1/webhook-endpoints/{id}, then retry.",
+    "retryable": false
+  },
   "SANDBOX_TEST_ONLY": {
     "title": "Sandbox is Test only",
     "when": "A request asked for Live in a developer sandbox, which never holds Live: a session or key that sent X-PassBook-Mode: live.",

@@ -5915,5 +5915,13 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "webhook sandbox delivery",
+    "class": "notable",
+    "operationId": "",
+    "op": "webhook sandbox delivery",
+    "change": "Test endpoints deliver to their URL",
+    "note": "A sandbox's URL endpoints deliver signed Test events, 60 a minute, with Live's address checks. A fourth endpoint is 409 SANDBOX_ENDPOINT_LIMIT."
   }
 ]
