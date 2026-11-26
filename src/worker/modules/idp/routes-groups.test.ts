@@ -58,7 +58,11 @@ describe('access', () => {
       403,
       'FORBIDDEN',
     );
-    expect((await h.call(BASE, { headers: (await makeApiKey(f())).headers })).status).toBe(401);
+    await expectProblem(
+      await h.call(BASE, { headers: (await makeApiKey(f())).headers }),
+      403,
+      'PERSON_REQUIRED',
+    );
     expect((await h.call(BASE, { headers: admin.headers })).status).toBe(200);
     const link = await person(['admin', 'user'], 'magic_link');
     expect((await h.call(BASE, { headers: link.headers })).status).toBe(403);
