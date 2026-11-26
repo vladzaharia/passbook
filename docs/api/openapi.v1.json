@@ -24524,6 +24524,20 @@
           "countsCapped"
         ]
       },
+      "PlatformOrgsDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
       "OrgsUpdateParams": {
         "type": "object",
         "properties": {
@@ -24558,20 +24572,6 @@
             "type": "integer"
           }
         }
-      },
-      "PlatformOrgsDeleteResponse": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          }
-        },
-        "required": [
-          "ok"
-        ]
       },
       "PlatformOrgsSetStatusParams": {
         "type": "object",
@@ -29939,6 +29939,34 @@
             ],
             "minimum": 0
           },
+          "createdBy": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "key"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name"
+            ]
+          },
           "link": {
             "type": "string"
           }
@@ -29952,7 +29980,8 @@
           "createdAt",
           "expiresAt",
           "acceptedAt",
-          "revokedAt"
+          "revokedAt",
+          "createdBy"
         ]
       },
       "PlatformInvitationsListResponse": {
@@ -30010,6 +30039,34 @@
                     "null"
                   ],
                   "minimum": 0
+                },
+                "createdBy": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "user",
+                        "key"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "name"
+                  ]
                 }
               },
               "required": [
@@ -30021,7 +30078,8 @@
                 "createdAt",
                 "expiresAt",
                 "acceptedAt",
-                "revokedAt"
+                "revokedAt",
+                "createdBy"
               ]
             }
           },
@@ -30102,6 +30160,34 @@
             ],
             "minimum": 0
           },
+          "createdBy": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "key"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name"
+            ]
+          },
           "link": {
             "type": "string"
           }
@@ -30115,7 +30201,122 @@
           "createdAt",
           "expiresAt",
           "acceptedAt",
-          "revokedAt"
+          "revokedAt",
+          "createdBy"
+        ]
+      },
+      "PlatformGroupsClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformGroupsClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
         ]
       },
       "PlatformAppleIdentitiesListResponse": {
@@ -69659,120 +69860,6 @@
           "operation"
         ]
       },
-      "PlatformGroupsClaimsRetrieveResponse": {
-        "type": "object",
-        "properties": {
-          "claims": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "number",
-                    "boolean",
-                    "json"
-                  ]
-                },
-                "value": {}
-              },
-              "required": [
-                "type"
-              ]
-            }
-          },
-          "otherKeys": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "claims",
-          "otherKeys"
-        ]
-      },
-      "PlatformGroupsClaimsUpdateParams": {
-        "type": "object",
-        "properties": {
-          "set": {
-            "type": "object",
-            "additionalProperties": {
-              "type": [
-                "object",
-                "null"
-              ],
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "number",
-                    "boolean",
-                    "json"
-                  ]
-                },
-                "value": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "array",
-                      "items": {}
-                    },
-                    {
-                      "type": "object",
-                      "additionalProperties": {}
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "set"
-        ],
-        "additionalProperties": false
-      },
-      "PlatformGroupsClaimsUpdateResponse": {
-        "type": "object",
-        "properties": {
-          "set": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "removed": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "dryRun": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "set",
-          "removed",
-          "dryRun"
-        ]
-      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -71647,6 +71734,11 @@
                 "members:read",
                 "members:write",
                 "platform:read",
+                "platform:users",
+                "platform:groups",
+                "platform:claims",
+                "platform:status",
+                "platform:audit",
                 "platform:settings",
                 "platform:wallet"
               ]
@@ -72852,7 +72944,7 @@
           "resolvedAt"
         ]
       },
-      "MetricsRetrieveOverviewResponse": {
+      "PlatformMetricsRetrieveOverviewResponse": {
         "type": "object",
         "properties": {
           "source": {
@@ -73359,7 +73451,7 @@
           "recent"
         ]
       },
-      "PlatformMetricsRetrieveOverviewResponse": {
+      "MetricsRetrieveOverviewResponse": {
         "type": "object",
         "properties": {
           "source": {
@@ -101668,6 +101760,13 @@
     },
     "/api/v1/orgs": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "List organizations (personal organizations are never listed)",
         "tags": [
           "orgs"
@@ -101765,11 +101864,6 @@
           "resource": "platform.orgs",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -101780,6 +101874,13 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "Create an organization",
         "tags": [
           "orgs"
@@ -101871,11 +101972,6 @@
           "resource": "platform.orgs",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -101891,6 +101987,13 @@
     },
     "/api/v1/orgs/{id}": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "Get an organization for platform provisioning",
         "tags": [
           "orgs"
@@ -101951,16 +102054,79 @@
           "resource": "platform.orgs",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
+        "summary": "Delete an organization",
+        "tags": [
+          "orgs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformOrgsDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "orgs.deleteOrgsById",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "delete"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_CONFLICT",
+          "ORG_HELD",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "RATE_LIMITED",
@@ -102092,9 +102258,18 @@
           "VALIDATION",
           "WORKBENCH_TEST_ONLY"
         ]
-      },
-      "delete": {
-        "summary": "Delete an organization",
+      }
+    },
+    "/api/v1/orgs/{id}/status": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
+        "summary": "Suspend or reactivate an organization",
         "tags": [
           "orgs"
         ],
@@ -102110,16 +102285,43 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformOrgsSetStatusParams"
+              },
+              "example": {
+                "status": "active"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformOrgsDeleteResponse"
+                  "$ref": "#/components/schemas/PlatformOrgsSetStatusResponse"
                 },
                 "example": {
-                  "ok": true
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "slug": "northwind-climbing",
+                  "name": "Northwind Climbing",
+                  "status": "active",
+                  "personal": false,
+                  "createdAt": 1772560800000,
+                  "counts": {
+                    "passes": 128,
+                    "templates": 2,
+                    "connections": 1,
+                    "apiKeys": 2,
+                    "members": 4
+                  },
+                  "countsCapped": false,
+                  "personalOwner": null
                 }
               }
             }
@@ -102135,26 +102337,25 @@
             }
           }
         },
-        "operationId": "orgs.deleteOrgsById",
+        "operationId": "orgs.postOrgsByIdStatus",
         "x-sdk": {
           "resource": "platform.orgs",
-          "method": "delete"
+          "method": "setStatus"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
-          "ORG_HELD",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -102269,105 +102470,6 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WORKBENCH_TEST_ONLY"
-        ]
-      }
-    },
-    "/api/v1/orgs/{id}/status": {
-      "post": {
-        "summary": "Suspend or reactivate an organization",
-        "tags": [
-          "orgs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlatformOrgsSetStatusParams"
-              },
-              "example": {
-                "status": "active"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformOrgsSetStatusResponse"
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "slug": "northwind-climbing",
-                  "name": "Northwind Climbing",
-                  "status": "active",
-                  "personal": false,
-                  "createdAt": 1772560800000,
-                  "counts": {
-                    "passes": 128,
-                    "templates": 2,
-                    "connections": 1,
-                    "apiKeys": 2,
-                    "members": 4
-                  },
-                  "countsCapped": false,
-                  "personalOwner": null
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "orgs.postOrgsByIdStatus",
-        "x-sdk": {
-          "resource": "platform.orgs",
-          "method": "setStatus"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": true
-        },
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_CONFLICT",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "RATE_LIMITED",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
         ]
       }
     },
@@ -106125,10 +106227,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Check now: compare every Polaris ID group with PassBook. `dryRun` records differences and changes nothing. Answers 202 with an operation (`idp.check` or `idp.dry_run`).",
         "operationId": "polaris-operations.postPlatformIdpReconcile",
@@ -106231,10 +106337,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -106345,6 +106454,7 @@
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_BREAKER_CLOSED",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -106749,10 +106859,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences.",
         "operationId": "polaris-platform.getPlatformIdp",
@@ -106807,6 +106926,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -106817,6 +106937,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -106826,10 +106948,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Open differences between Polaris ID and PassBook.",
         "operationId": "polaris-platform.getPlatformIdpDrift",
@@ -106876,8 +107007,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -106958,6 +107092,7 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -106969,10 +107104,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:audit"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:audit",
         "summary": "The binding's ledger of calls to Polaris ID from `since` (ms), a page at a time.",
         "operationId": "polaris-platform.getPlatformIdpCalls",
@@ -107045,6 +107189,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -107055,6 +107200,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -107065,10 +107212,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "List the Polaris ID groups PassBook manages",
         "tags": [
@@ -107133,6 +107289,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -107143,6 +107300,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -107151,10 +107310,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Create a custom Polaris ID group",
         "tags": [
@@ -107219,6 +107382,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -107236,6 +107400,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -107248,10 +107414,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Create a configured role group in Polaris ID",
         "tags": [
@@ -107307,6 +107477,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -107320,6 +107491,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -107331,10 +107504,14 @@
       "patch": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Rename a group's display name",
         "tags": [
@@ -107401,6 +107578,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -107415,6 +107593,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -107425,10 +107605,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Delete an empty custom group PassBook created",
         "tags": [
@@ -107482,6 +107666,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -107496,6 +107681,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -107508,10 +107695,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "List a group's org rules",
         "tags": [
@@ -107579,9 +107775,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -107591,10 +107790,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Add an org rule: members of the org join the group",
         "tags": [
@@ -107668,6 +107871,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -107678,6 +107882,8 @@
           "IDP_RULE_LIMIT",
           "IDP_RULE_ORG_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -107691,10 +107897,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "End an org rule",
         "tags": [
@@ -107757,11 +107967,14 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "RULE_NOT_FOUND",
@@ -107775,10 +107988,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "List a group's manual members",
         "tags": [
@@ -107845,9 +108067,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -107857,10 +108082,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Add a manual member, by user or Polaris ID subject",
         "tags": [
@@ -107930,6 +108159,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GROUP_NOT_FOUND",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -107947,7 +108177,9 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MEMBER_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -107961,10 +108193,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:groups"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:groups",
         "summary": "Remove a manual member",
         "tags": [
@@ -108027,12 +108263,15 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MEMBER_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -108045,10 +108284,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Invite a person to Polaris ID groups",
         "tags": [
@@ -108118,6 +108361,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -108132,6 +108376,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "PLATFORM_INVITE_PENDING",
           "RATE_LIMITED",
@@ -108143,10 +108389,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "List platform invitations",
         "tags": [
@@ -108210,8 +108465,11 @@
         },
         "x-sign-in": "oidc",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -108222,10 +108480,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Revoke a platform invitation",
         "tags": [
@@ -108279,6 +108541,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -108289,6 +108552,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "PLATFORM_INVITE_CONFLICT",
           "RATE_LIMITED",
@@ -108302,10 +108567,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Send a platform invitation again with a new link",
         "tags": [
@@ -108370,6 +108639,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -108384,8 +108654,214 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "PLATFORM_INVITE_CONFLICT",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/claims": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a Polaris ID group's claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -109374,6 +109850,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Start a managed Google issuer for an organization",
         "tags": [
           "wallet-platform"
@@ -109439,11 +109922,6 @@
           "resource": "platform.walletAccounts.googleManaged",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109460,6 +109938,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Finish a parked managed Google issuer with an issuer id made in the console",
         "tags": [
           "wallet-platform"
@@ -109525,11 +110010,6 @@
           "resource": "platform.walletAccounts.googleManaged",
           "method": "complete"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109547,6 +110027,13 @@
     },
     "/api/v1/platform/wallet-credentials/{id}/rotate-key": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Rotate a platform Google credential's service-account key now",
         "tags": [
           "wallet-platform"
@@ -109593,11 +110080,6 @@
           "resource": "platform.walletCredentials",
           "method": "rotateKey"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -109617,6 +110099,13 @@
     },
     "/api/v1/platform/wallet-credentials": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "List the platform wallet credentials",
         "tags": [
           "wallet-platform"
@@ -109708,11 +110197,6 @@
           "resource": "platform.walletCredentials",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109723,6 +110207,13 @@
         ]
       },
       "put": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Create or rotate a platform wallet credential",
         "tags": [
           "wallet-platform"
@@ -109799,11 +110290,6 @@
           "resource": "platform.walletCredentials",
           "method": "upsert"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -109821,6 +110307,13 @@
     },
     "/api/v1/platform/wallet-credentials/{id}/cards": {
       "put": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Name the Samsung card of one more type on a platform credential",
         "tags": [
           "wallet-platform"
@@ -109901,11 +110394,6 @@
           "resource": "platform.walletCredentials",
           "method": "setSamsungCard"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -109925,6 +110413,13 @@
     },
     "/api/v1/platform/wallet-credentials/{id}/revoke": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Revoke a platform wallet credential",
         "tags": [
           "wallet-platform"
@@ -110003,11 +110498,6 @@
           "resource": "platform.walletCredentials",
           "method": "revoke"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -110024,6 +110514,13 @@
     },
     "/api/v1/platform/wallet-credentials/{id}/check": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Check a platform wallet credential with its provider",
         "tags": [
           "wallet-platform"
@@ -110071,11 +110568,6 @@
           "resource": "platform.walletCredentials.checks",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110093,6 +110585,13 @@
     },
     "/api/v1/platform/wallet-credentials/{id}/checks/{checkId}": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Read the result of a platform wallet credential check",
         "tags": [
           "wallet-platform"
@@ -110152,11 +110651,6 @@
           "resource": "platform.walletCredentials.checks",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110173,6 +110667,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Hold a wallet provider enrollment",
         "tags": [
           "wallet-platform"
@@ -110256,11 +110757,6 @@
           "resource": "platform.orgs.walletEnrollments",
           "method": "hold"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -110277,6 +110773,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Release a held wallet provider enrollment",
         "tags": [
           "wallet-platform"
@@ -110347,11 +110850,6 @@
           "resource": "platform.orgs.walletEnrollments",
           "method": "release"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -110369,6 +110867,13 @@
     },
     "/api/v1/platform/wallet-enrolments": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "List every organization enrollment of a wallet provider",
         "tags": [
           "wallet-platform"
@@ -110449,11 +110954,6 @@
           "resource": "platform.walletEnrollments",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110466,6 +110966,13 @@
     },
     "/api/v1/platform/wallet-credentials/migrate": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Report the legacy wallet accounts waiting for a credential source",
         "tags": [
           "wallet-platform"
@@ -110543,11 +111050,6 @@
           "resource": "platform.walletCredentials",
           "method": "retrieveMigration"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110558,6 +111060,13 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Queue the migration of legacy wallet accounts onto credential sources",
         "tags": [
           "wallet-platform"
@@ -110592,11 +111101,6 @@
           "resource": "platform.walletCredentials",
           "method": "migrate"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110608,6 +111112,13 @@
     },
     "/api/v1/platform/wallet-credentials/migrate/resolve": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:wallet",
         "summary": "Resolve a refused legacy wallet account: assign the platform credential, merge or retire",
         "tags": [
           "wallet-platform"
@@ -110658,11 +111169,6 @@
           "resource": "platform.walletCredentials",
           "method": "resolveMigration"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -111107,6 +111613,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/retention/holds": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "List the legal holds of an organization",
         "tags": [
           "retention"
@@ -111176,11 +111689,6 @@
           "resource": "platform.orgs.legalHolds",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111192,6 +111700,13 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "Place a platform legal hold; only a platform administrator releases it",
         "tags": [
           "retention"
@@ -111252,11 +111767,6 @@
           "resource": "platform.orgs.legalHolds",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111272,6 +111782,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "List the retention receipts of an organization",
         "tags": [
           "retention"
@@ -111351,11 +111868,6 @@
           "resource": "platform.orgs.retentionReceipts",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111370,6 +111882,13 @@
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "Download one retention receipt of an organization",
         "tags": [
           "retention"
@@ -111442,11 +111961,6 @@
           "resource": "platform.orgs.retentionReceipts",
           "method": "download"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111461,6 +111975,13 @@
     },
     "/api/v1/platform/retention/receipts": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "List retention receipts of platform-scope deletions",
         "tags": [
           "retention"
@@ -111530,11 +112051,6 @@
           "resource": "platform.retentionReceipts",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111548,6 +112064,13 @@
     },
     "/api/v1/platform/retention/receipts/{receiptId}/download": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "Download one platform-scope retention receipt",
         "tags": [
           "retention"
@@ -111610,11 +112133,6 @@
           "resource": "platform.retentionReceipts",
           "method": "download"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111629,6 +112147,13 @@
     },
     "/api/v1/platform/closed-orgs": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:orgs",
         "summary": "List closed organizations",
         "tags": [
           "org-lifecycle"
@@ -111685,11 +112210,6 @@
           "resource": "platform.orgs",
           "method": "listClosed"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -142000,6 +142520,13 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Upload an Apple identity",
         "tags": [
           "identities"
@@ -142079,11 +142606,6 @@
           "resource": "identities",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -142107,6 +142629,13 @@
     },
     "/api/v1/identities/{id}": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Get an Apple identity",
         "tags": [
           "identities"
@@ -142182,11 +142711,6 @@
           "resource": "identities",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -142199,6 +142723,13 @@
         ]
       },
       "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Update an Apple identity",
         "tags": [
           "identities"
@@ -142289,11 +142820,6 @@
           "resource": "identities",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
@@ -142310,6 +142836,13 @@
         ]
       },
       "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Delete an Apple identity",
         "tags": [
           "identities"
@@ -142356,11 +142889,6 @@
           "resource": "identities",
           "method": "delete"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -142377,6 +142905,13 @@
     },
     "/api/v1/identities/{id}/rotate": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Replace the certificate and key of an Apple identity",
         "tags": [
           "identities"
@@ -142467,11 +143002,6 @@
           "resource": "identities",
           "method": "rotate"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -142492,6 +143022,13 @@
     },
     "/api/v1/identities/{id}/apns-check": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Probe APNs with the identity certificate using a dummy token",
         "tags": [
           "identities"
@@ -142542,11 +143079,6 @@
           "resource": "identities",
           "method": "checkApns"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -142561,6 +143093,13 @@
     },
     "/api/v1/identities/{id}/push-key": {
       "put": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Set or replace the APNs push key (.p8) of the identity team",
         "tags": [
           "identities"
@@ -142650,11 +143189,6 @@
           "resource": "identities.pushKey",
           "method": "upload"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -142672,6 +143206,13 @@
         ]
       },
       "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Remove the APNs push key of the identity team",
         "tags": [
           "identities"
@@ -142747,11 +143288,6 @@
           "resource": "identities.pushKey",
           "method": "delete"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -142767,6 +143303,13 @@
     },
     "/api/v1/identities/{id}/renew": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:identities",
         "summary": "Get a new certificate now (managed identities)",
         "tags": [
           "identities"
@@ -142825,11 +143368,6 @@
           "resource": "identities",
           "method": "renew"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -144207,10 +144745,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Read a user's Polaris ID claims (the ones PassBook manages)",
         "tags": [
@@ -144270,6 +144817,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -144278,10 +144826,13 @@
           "IDP_MULTIPLE_ACCOUNTS",
           "IDP_NOT_MANAGED",
           "IDP_NO_ACCOUNT",
+          "IDP_PLATFORM_ADMIN",
           "IDP_REFUSED",
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144293,10 +144844,14 @@
       "patch": {
         "security": [
           {
+            "apiKey": [
+              "platform:claims"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Set or remove a user's Polaris ID claims",
         "tags": [
@@ -144375,6 +144930,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -144383,10 +144939,13 @@
           "IDP_MULTIPLE_ACCOUNTS",
           "IDP_NOT_MANAGED",
           "IDP_NO_ACCOUNT",
+          "IDP_PLATFORM_ADMIN",
           "IDP_REFUSED",
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144524,6 +145083,7 @@
           "IDP_NOT_HELD",
           "IDP_NOT_WANTED",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "OPERATION_RUNNING",
           "RATE_LIMITED",
@@ -144538,10 +145098,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "A user's Polaris ID access: per role what PassBook wants and why, what Polaris ID showed, and any pause.",
         "operationId": "polaris-access.getUsersByIdAccess",
@@ -144626,6 +145195,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CLIENT",
@@ -144636,6 +145206,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -144648,10 +145220,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Grant or revoke a platform role (developer or support). The sync adds or removes the Polaris ID group within a minute.",
         "operationId": "polaris-access.postUsersByIdRoles",
@@ -144754,6 +145330,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -144768,6 +145345,8 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144901,6 +145480,7 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144914,10 +145494,15 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
+        "x-human-only": "apply",
         "x-platform-scope": "platform:users",
         "summary": "Offboard a user: end their memberships, developer sponsorships, platform grants and keys, sign them out and disable them, then take their Polaris ID roles away. `dryRun` answers 200 with the plan and changes nothing. Otherwise 202 with the plan and an operation (`idp.offboard`). 409 `IDP_PLATFORM_ADMIN` for a platform admin, `LAST_ORG_ADMIN` when an org would lose its last admin.",
         "operationId": "polaris-access.postUsersByIdOffboard",
@@ -145084,6 +145669,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_INVALID",
@@ -145098,7 +145684,9 @@
           "IDP_SCIM_FOREIGN",
           "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "LAST_ORG_ADMIN",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "OPERATION_RUNNING",
           "ORG_CONFLICT",
@@ -145113,193 +145701,15 @@
         ]
       }
     },
-    "/api/v1/platform/idp/groups/{key}/claims": {
-      "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "x-platform-scope": "platform:claims",
-        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
-        "tags": [
-          "polaris-claims"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-z0-9_]{1,64}$"
-            },
-            "required": true,
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
-                },
-                "example": {
-                  "claims": {
-                    "passbook_tier": {
-                      "type": "text",
-                      "value": "gold"
-                    }
-                  },
-                  "otherKeys": 2
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
-        "x-sdk": {
-          "resource": "platform.groups.claims",
-          "method": "retrieve"
-        },
-        "x-sign-in": "oidc",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_BUDGET",
-          "IDP_CLIENT",
-          "IDP_CONFLICT",
-          "IDP_IN_USE",
-          "IDP_NOT_MANAGED",
-          "IDP_REFUSED",
-          "IDP_SCIM_FOREIGN",
-          "IDP_SCIM_MISSING",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      },
-      "patch": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "x-platform-scope": "platform:claims",
-        "summary": "Set or remove a Polaris ID group's claims",
-        "tags": [
-          "polaris-claims"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-z0-9_]{1,64}$"
-            },
-            "required": true,
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
-              },
-              "example": {
-                "set": {
-                  "passbook_tier": {
-                    "type": "text",
-                    "value": "gold"
-                  },
-                  "passbook_old": null
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
-                },
-                "example": {
-                  "set": [
-                    "passbook_tier"
-                  ],
-                  "removed": [
-                    "passbook_old"
-                  ],
-                  "dryRun": false
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
-        "x-sdk": {
-          "resource": "platform.groups.claims",
-          "method": "update"
-        },
-        "x-sign-in": "oidc",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_BUDGET",
-          "IDP_CLIENT",
-          "IDP_CONFLICT",
-          "IDP_IN_USE",
-          "IDP_NOT_MANAGED",
-          "IDP_REFUSED",
-          "IDP_SCIM_FOREIGN",
-          "IDP_SCIM_MISSING",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "RATE_LIMITED",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
     "/api/v1/users": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "List users",
         "tags": [
           "users"
@@ -145393,11 +145803,6 @@
           "resource": "platform.users",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -145410,6 +145815,13 @@
     },
     "/api/v1/users/{id}": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Get a user",
         "tags": [
           "users"
@@ -145520,11 +145932,6 @@
           "resource": "platform.users",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -145537,6 +145944,13 @@
         ]
       },
       "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Disable or enable a user",
         "tags": [
           "users"
@@ -145604,11 +146018,6 @@
           "resource": "platform.users",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -145627,6 +146036,13 @@
     },
     "/api/v1/users/{id}/passes": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "List a user's passes in every organization",
         "tags": [
           "users"
@@ -145711,11 +146127,6 @@
           "resource": "platform.users.passes",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -145730,6 +146141,13 @@
     },
     "/api/v1/users/{id}/emails": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Send an email verification link",
         "tags": [
           "users"
@@ -145853,11 +146271,6 @@
           "resource": "platform.users.emails",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -145879,6 +146292,13 @@
     },
     "/api/v1/users/{id}/emails/{email}": {
       "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Remove an email",
         "tags": [
           "users"
@@ -145997,11 +146417,6 @@
           "resource": "platform.users.emails",
           "method": "delete"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
@@ -146019,6 +146434,13 @@
     },
     "/api/v1/users/{id}/emails/{email}/primary": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Make an email primary",
         "tags": [
           "users"
@@ -146137,11 +146559,6 @@
           "resource": "platform.users.emails",
           "method": "makePrimary"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
@@ -146158,6 +146575,13 @@
     },
     "/api/v1/users/{id}/sessions/revoke": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Revoke all sessions",
         "tags": [
           "users"
@@ -146204,11 +146628,6 @@
           "resource": "platform.users.sessions",
           "method": "revokeAll"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -146223,6 +146642,13 @@
     },
     "/api/v1/users/{id}/sessions/{sessionId}": {
       "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
         "summary": "Revoke one session",
         "tags": [
           "users"
@@ -146279,11 +146705,6 @@
           "resource": "platform.users.sessions",
           "method": "revoke"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -148636,6 +149057,13 @@
     },
     "/api/v1/status": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
         "summary": "Component health",
         "tags": [
           "status"
@@ -148771,11 +149199,6 @@
           "resource": "platform.status",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -148789,6 +149212,13 @@
     },
     "/api/v1/status/workflows": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
         "summary": "Recent workflow runs",
         "tags": [
           "status"
@@ -148846,11 +149276,6 @@
           "resource": "platform.status",
           "method": "listWorkflowRuns"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -148863,6 +149288,13 @@
     },
     "/api/v1/status/incidents": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
         "summary": "Incident notes on the public status page",
         "tags": [
           "status"
@@ -148928,11 +149360,6 @@
           "resource": "platform.status",
           "method": "listIncidents"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -148943,6 +149370,13 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
         "summary": "Open an incident note on the public status page",
         "tags": [
           "status"
@@ -148999,11 +149433,6 @@
           "resource": "platform.status",
           "method": "openIncident"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -149016,6 +149445,13 @@
     },
     "/api/v1/status/incidents/{id}/resolve": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
         "summary": "Resolve an incident note",
         "tags": [
           "status"
@@ -149068,11 +149504,6 @@
           "resource": "platform.status",
           "method": "resolveIncident"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -149082,6 +149513,669 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/metrics/platform/overview": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
+        "summary": "Platform overview metrics (filtered results are aggregate-only)",
+        "tags": [
+          "metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "templateId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "default": "7d"
+            },
+            "required": false,
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformMetricsRetrieveOverviewResponse"
+                },
+                "example": {
+                  "source": "analytics_engine",
+                  "range": "7d",
+                  "bucketMs": 86400000,
+                  "unavailable": [],
+                  "totals": {
+                    "passes": 131,
+                    "activePasses": 128,
+                    "voidedPasses": 3,
+                    "holders": 126,
+                    "devices": 214,
+                    "issued": 23,
+                    "updated": 151,
+                    "downloads": 31,
+                    "registrations": 38,
+                    "refreshes": 980,
+                    "pushes": 920,
+                    "pushFailures": 4,
+                    "emails": 23,
+                    "emailFailures": 1,
+                    "emailUnknown": 2,
+                    "syncRuns": 672,
+                    "signIns": 9,
+                    "scans": 994,
+                    "scanRefused": 27
+                  },
+                  "series": {
+                    "issued": [
+                      {
+                        "t": 1795046400000,
+                        "v": 2
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 4
+                      }
+                    ],
+                    "updated": [
+                      {
+                        "t": 1795046400000,
+                        "v": 16
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 26
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 32
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 21
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 17
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 17
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 22
+                      }
+                    ],
+                    "downloads": [
+                      {
+                        "t": 1795046400000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 5
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 6
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 5
+                      }
+                    ],
+                    "registrations": [
+                      {
+                        "t": 1795046400000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 6
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 8
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 5
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 5
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 6
+                      }
+                    ],
+                    "refreshes": [
+                      {
+                        "t": 1795046400000,
+                        "v": 105
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 175
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 210
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 140
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 105
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 105
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 140
+                      }
+                    ],
+                    "pushes": [
+                      {
+                        "t": 1795046400000,
+                        "v": 98
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 164
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 197
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 131
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 99
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 99
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 132
+                      }
+                    ],
+                    "pushFailures": [
+                      {
+                        "t": 1795046400000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 1
+                      }
+                    ],
+                    "emails": [
+                      {
+                        "t": 1795046400000,
+                        "v": 2
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 4
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 3
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 4
+                      }
+                    ],
+                    "emailFailures": [
+                      {
+                        "t": 1795046400000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 1
+                      }
+                    ],
+                    "emailUnknown": [
+                      {
+                        "t": 1795046400000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 1
+                      }
+                    ],
+                    "syncRuns": [
+                      {
+                        "t": 1795046400000,
+                        "v": 72
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 120
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 144
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 96
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 72
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 72
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 96
+                      }
+                    ],
+                    "signIns": [
+                      {
+                        "t": 1795046400000,
+                        "v": 0
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 2
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 2
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 1
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 2
+                      }
+                    ],
+                    "scans": [
+                      {
+                        "t": 1795046400000,
+                        "v": 106
+                      },
+                      {
+                        "t": 1795132800000,
+                        "v": 177
+                      },
+                      {
+                        "t": 1795219200000,
+                        "v": 213
+                      },
+                      {
+                        "t": 1795305600000,
+                        "v": 142
+                      },
+                      {
+                        "t": 1795392000000,
+                        "v": 106
+                      },
+                      {
+                        "t": 1795478400000,
+                        "v": 107
+                      },
+                      {
+                        "t": 1795564800000,
+                        "v": 143
+                      }
+                    ]
+                  },
+                  "setup": {
+                    "orgs": 1,
+                    "assignedTemplates": 3,
+                    "passes": 131,
+                    "approvedTemplates": 3,
+                    "releasedTemplates": 2,
+                    "walletPasses": 117,
+                    "passEmailsSent": 126,
+                    "latestPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "scanners": 4
+                  },
+                  "directory": {
+                    "users": 4,
+                    "walletAccounts": 1
+                  },
+                  "live": [
+                    {
+                      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                      "name": "Open climbing",
+                      "arrived": 46,
+                      "expected": 128,
+                      "ratePerMin": 1.8
+                    }
+                  ],
+                  "recent": [
+                    {
+                      "at": 1795570500000,
+                      "action": "pass.create",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "targetId": "0193a1b2-7c00-7000-8000-0000000000c1"
+                    },
+                    {
+                      "at": 1795569600000,
+                      "action": "template.release",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "targetId": "0193a1b2-7c00-7000-8000-0000000000b1"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "metrics.getMetricsPlatformOverview",
+        "x-sdk": {
+          "resource": "platform.metrics",
+          "method": "retrieveOverview"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "METRICS_NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/metrics/platform/developer": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:status",
+        "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
+        "tags": [
+          "metrics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "windowDays": {
+                      "type": "integer"
+                    },
+                    "sandboxes": {
+                      "type": "integer"
+                    },
+                    "viewed": {
+                      "type": "integer"
+                    },
+                    "called": {
+                      "type": "integer"
+                    },
+                    "passed": {
+                      "type": "integer"
+                    },
+                    "previewed": {
+                      "type": "integer"
+                    },
+                    "completion": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "ttfpP50Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpP90Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpSamples": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "windowDays",
+                    "sandboxes",
+                    "viewed",
+                    "called",
+                    "passed",
+                    "previewed",
+                    "completion",
+                    "ttfpP50Ms",
+                    "ttfpP90Ms",
+                    "ttfpSamples"
+                  ]
+                },
+                "example": {
+                  "windowDays": 36,
+                  "sandboxes": 8,
+                  "viewed": 37,
+                  "called": 8,
+                  "passed": 37,
+                  "previewed": 39,
+                  "completion": 34,
+                  "ttfpP50Ms": 1101,
+                  "ttfpP90Ms": 1541,
+                  "ttfpSamples": 28
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "metrics.getMetricsPlatformDeveloper",
+        "x-sdk": {
+          "resource": "platform.metrics",
+          "method": "retrieveDeveloper",
+          "sdk": false,
+          "reason": "Platform admin console card; needs an admin's session."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
         ]
       }
     },
@@ -149625,551 +150719,6 @@
         ]
       }
     },
-    "/api/v1/metrics/platform/overview": {
-      "get": {
-        "summary": "Platform overview metrics (filtered results are aggregate-only)",
-        "tags": [
-          "metrics"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "templateId",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "24h",
-                "7d",
-                "30d"
-              ],
-              "default": "7d"
-            },
-            "required": false,
-            "name": "range",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlatformMetricsRetrieveOverviewResponse"
-                },
-                "example": {
-                  "source": "analytics_engine",
-                  "range": "7d",
-                  "bucketMs": 86400000,
-                  "unavailable": [],
-                  "totals": {
-                    "passes": 131,
-                    "activePasses": 128,
-                    "voidedPasses": 3,
-                    "holders": 126,
-                    "devices": 214,
-                    "issued": 23,
-                    "updated": 151,
-                    "downloads": 31,
-                    "registrations": 38,
-                    "refreshes": 980,
-                    "pushes": 920,
-                    "pushFailures": 4,
-                    "emails": 23,
-                    "emailFailures": 1,
-                    "emailUnknown": 2,
-                    "syncRuns": 672,
-                    "signIns": 9,
-                    "scans": 994,
-                    "scanRefused": 27
-                  },
-                  "series": {
-                    "issued": [
-                      {
-                        "t": 1795046400000,
-                        "v": 2
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 4
-                      }
-                    ],
-                    "updated": [
-                      {
-                        "t": 1795046400000,
-                        "v": 16
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 26
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 32
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 21
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 17
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 17
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 22
-                      }
-                    ],
-                    "downloads": [
-                      {
-                        "t": 1795046400000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 5
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 6
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 5
-                      }
-                    ],
-                    "registrations": [
-                      {
-                        "t": 1795046400000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 6
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 8
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 5
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 5
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 6
-                      }
-                    ],
-                    "refreshes": [
-                      {
-                        "t": 1795046400000,
-                        "v": 105
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 175
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 210
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 140
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 105
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 105
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 140
-                      }
-                    ],
-                    "pushes": [
-                      {
-                        "t": 1795046400000,
-                        "v": 98
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 164
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 197
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 131
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 99
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 99
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 132
-                      }
-                    ],
-                    "pushFailures": [
-                      {
-                        "t": 1795046400000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 1
-                      }
-                    ],
-                    "emails": [
-                      {
-                        "t": 1795046400000,
-                        "v": 2
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 4
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 3
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 4
-                      }
-                    ],
-                    "emailFailures": [
-                      {
-                        "t": 1795046400000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 1
-                      }
-                    ],
-                    "emailUnknown": [
-                      {
-                        "t": 1795046400000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 1
-                      }
-                    ],
-                    "syncRuns": [
-                      {
-                        "t": 1795046400000,
-                        "v": 72
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 120
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 144
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 96
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 72
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 72
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 96
-                      }
-                    ],
-                    "signIns": [
-                      {
-                        "t": 1795046400000,
-                        "v": 0
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 2
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 2
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 1
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 2
-                      }
-                    ],
-                    "scans": [
-                      {
-                        "t": 1795046400000,
-                        "v": 106
-                      },
-                      {
-                        "t": 1795132800000,
-                        "v": 177
-                      },
-                      {
-                        "t": 1795219200000,
-                        "v": 213
-                      },
-                      {
-                        "t": 1795305600000,
-                        "v": 142
-                      },
-                      {
-                        "t": 1795392000000,
-                        "v": 106
-                      },
-                      {
-                        "t": 1795478400000,
-                        "v": 107
-                      },
-                      {
-                        "t": 1795564800000,
-                        "v": 143
-                      }
-                    ]
-                  },
-                  "setup": {
-                    "orgs": 1,
-                    "assignedTemplates": 3,
-                    "passes": 131,
-                    "approvedTemplates": 3,
-                    "releasedTemplates": 2,
-                    "walletPasses": 117,
-                    "passEmailsSent": 126,
-                    "latestPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                    "scanners": 4
-                  },
-                  "directory": {
-                    "users": 4,
-                    "walletAccounts": 1
-                  },
-                  "live": [
-                    {
-                      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-                      "name": "Open climbing",
-                      "arrived": 46,
-                      "expected": 128,
-                      "ratePerMin": 1.8
-                    }
-                  ],
-                  "recent": [
-                    {
-                      "at": 1795570500000,
-                      "action": "pass.create",
-                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                      "targetId": "0193a1b2-7c00-7000-8000-0000000000c1"
-                    },
-                    {
-                      "at": 1795569600000,
-                      "action": "template.release",
-                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                      "targetId": "0193a1b2-7c00-7000-8000-0000000000b1"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "metrics.getMetricsPlatformOverview",
-        "x-sdk": {
-          "resource": "platform.metrics",
-          "method": "retrieveOverview"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "METRICS_NOT_FOUND",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
     "/api/v1/metrics/activity": {
       "get": {
         "summary": "Organization activity by template",
@@ -150342,122 +150891,6 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/metrics/platform/developer": {
-      "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "x-platform-scope": "platform:status",
-        "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
-        "tags": [
-          "metrics"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "windowDays": {
-                      "type": "integer"
-                    },
-                    "sandboxes": {
-                      "type": "integer"
-                    },
-                    "viewed": {
-                      "type": "integer"
-                    },
-                    "called": {
-                      "type": "integer"
-                    },
-                    "passed": {
-                      "type": "integer"
-                    },
-                    "previewed": {
-                      "type": "integer"
-                    },
-                    "completion": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    },
-                    "ttfpP50Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpP90Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpSamples": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": [
-                    "windowDays",
-                    "sandboxes",
-                    "viewed",
-                    "called",
-                    "passed",
-                    "previewed",
-                    "completion",
-                    "ttfpP50Ms",
-                    "ttfpP90Ms",
-                    "ttfpSamples"
-                  ]
-                },
-                "example": {
-                  "windowDays": 36,
-                  "sandboxes": 8,
-                  "viewed": 37,
-                  "called": 8,
-                  "passed": 37,
-                  "previewed": 39,
-                  "completion": 34,
-                  "ttfpP50Ms": 1101,
-                  "ttfpP90Ms": 1541,
-                  "ttfpSamples": 28
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "metrics.getMetricsPlatformDeveloper",
-        "x-sdk": {
-          "resource": "platform.metrics",
-          "method": "retrieveDeveloper",
-          "sdk": false,
-          "reason": "Platform admin console card; needs an admin's session."
-        },
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED"
         ]
       }
     },
