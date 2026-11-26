@@ -1,23 +1,19 @@
 ---
 tags: runbook, wallet, rollback, production
 confirm: true
-profile: passbook-owner
-env:
-  PASSBOOK_ORIGIN: https://passbook.mobile
 ---
 # Wallet Provider Flip Rollback
 
-Owner only. Rolls a provider and mode back to `draining` and later to `dark`. Part of [[Wallet Provider Flip]].
+Owner only. Rolls a provider and mode back to `draining` and later to `dark`. Part of [[Wallet Provider Flip]]. Nothing here changes state: the draining and dark changes are PRs (one `RELEASE` cell plus one migration statement each), deployed by CI.
 
 ## 1. Read the open copies
 
-Copies already in wallets keep getting voids and removals while draining; badges and offers go away. `instances.open` must reach 0 before the dark PR merges.
+Open <https://passbook.mobile/admin/platform/wallet-accounts>, pick the Google or Samsung tab and read the Wallet copies row of the mode. Copies already in wallets keep getting voids and removals while draining; badges and offers go away. Open must reach 0 before the dark PR merges. The card shows the mode as Draining once the draining deploy has run.
 
-```sh name=read-open-copies confirm=no
-: "${PASSBOOK_SESSION_COOKIE:?profile passbook-owner must define it}" &&
-curl -fsS -K - "$PASSBOOK_ORIGIN/api/v1/platform/wallet-release" <<EOT
-header = "Cookie: $PASSBOOK_SESSION_COOKIE"
-EOT
+## 2. Wait for the deploy
+
+Finds the deploy run of the draining or dark commit. It must end successful before you read the card again.
+
+```sh name=deploy-runs confirm=no
+gh run list --workflow deploy.yml --branch main --limit 3
 ```
-
-The `draining` and `dark` changes are PRs (one `RELEASE` cell plus one migration statement each), deployed by CI. Nothing in this note changes state.
