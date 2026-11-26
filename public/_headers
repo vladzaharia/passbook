@@ -22,6 +22,11 @@
   ! Referrer-Policy
   Referrer-Policy: no-referrer
 
+# The invitation link's secret rides in the URL fragment, which no Referer carries; the page sends none either.
+/invite
+  ! Referrer-Policy
+  Referrer-Policy: no-referrer
+
 /assets/decode-worker-*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'

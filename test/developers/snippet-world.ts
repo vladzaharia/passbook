@@ -104,6 +104,8 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
   const org = await makeOrg(kit.f, options);
   // The developer invitation snippet reaches Polaris ID through the provisioner binding, which a test env lacks.
   installFakeIdp(kit.env, createFakeIdp());
+  // A role on the invitation pairs a console membership: the group Polaris ID reports must be the one sign-in reads.
+  (kit.env as { OIDC_ADMIN_GROUP?: string }).OIDC_ADMIN_GROUP = 'passbook_console';
   const owner = await kit.member(org.id, ['org_admin']);
   const id = kit.f.ids.id();
   const prefix = kit.f.ids.token(6);

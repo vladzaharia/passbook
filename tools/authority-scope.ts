@@ -142,6 +142,8 @@ const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 // the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts;
 // 32: delivery channels add channels/repo.ts, the insert-once copy evidence (design-channels.md N3).
 // 33: keys.rewrap's captured-email mechanism moves to repo-rewrap-captures.ts so repo-rewrap.ts holds the tag programming places under the size limit.
+// The invitation page moves the invitation accept from orgs/repo-members.ts into idp/invitations/repo-writes.ts (setup, claim and accept
+// share the invitation secret as their authority): one file out, one in, so the limit stays.
 export const RAW_WRITE_ALLOWLIST_LIMIT = 33;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 

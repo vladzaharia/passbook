@@ -105,6 +105,8 @@ export const ApiScopeSchema = z.enum([
   'platform:status',
   'platform:templates',
   'platform:audit',
+  /** Reads and edits custom claims on Polaris ID users and groups. */
+  'platform:claims',
   /** Reads and edits the org's brand kit: web logo, accent, mark level. */
   'brand:manage',
 ]);
