@@ -34,7 +34,7 @@ Runbook: [Local Dev Setup](runbooks/local-dev-setup.md) (`npm ci`, `dev:vars`, `
 
 Owner only; agents never deploy. Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangler.jsonc`.
 
-1. [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md)
+1. [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md) (allow the metadata URL, sign in once; [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) then sets up groups, client and SCIM)
 2. [Go-Live Apple Signing and APNs](runbooks/go-live-apple-signing.md)
 3. [Go-Live Secrets](runbooks/go-live-secrets.md) (Turnstile, KEK, signer, break-glass hash)
 4. [Go-Live Provision](runbooks/go-live-provision.md) (D1, queues, R2, the receipt lock, Analytics Engine)
@@ -101,6 +101,10 @@ On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of th
 - **Routes.** Only the routes the RPCs need (`routes.ts`): group, config, API key and OIDC client reads, the key's own user, user search, user and group-id reads, `PUT` of one user and of one user's groups, and signup tokens. Anything else, such as creating or deleting users, one-time tokens, custom claims, group, client, config or key writes, is refused in code.
 - HTTP: origin pinned to `POCKET_ID_ORIGIN`, header `X-API-KEY`, no redirects, 5 s, 256 KB; Polaris ID's text is never forwarded. The key, token values, setup links and email addresses are not logged or stored.
 
+- **Client id.** `PASSBOOK_CLIENT_ID` is PassBook's metadata URL (`https:`, path `/auth/oidc/client-metadata.json`, no query or fragment, at most 512 characters) or a plain registered id. Set up needs the metadata URL and refuses a plain id. In the admin path the URL is encoded as `~` plus base64url, and the allow-list matches that one literal; `~` is refused in every other segment.
+- **Client and SCIM writes.** Only for client `C`: `PUT` of the client (restrict, logo) and its allowed groups (union only, never removes), `POST`/`PUT`/sync of that client's SCIM service provider. Never client create or delete, secrets, any other client, SCIM delete, configuration or key writes. Budgets a minute and a day: `client_write` 3 and 9, `scim_write` 1 and 4, `scim_sync` 1 and 10, `setup_read` 6 and 200.
+- **`setupStatus`.** Reads the client, its provider and unplaced group names; reports which of up to two caller hashes equals the SHA-256 of the live SCIM token, never the token.
+
 Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
 
 Runbooks (owner): [Polaris Binding Turn On](runbooks/polaris-binding-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/polaris-binding-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/polaris-binding-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/polaris-binding-thaw.md) and [Polaris Binding Compromise](runbooks/polaris-binding-compromise.md). The SCIM receiver is set up with [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and follows in a later change.
@@ -117,7 +121,7 @@ Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (
 - A member removed from a group, or in a deleted group: queued for the drain (at most 100 a push and 300 an hour; a subject already backing off keeps its backoff). The drain reads the account and decides.
 - A platform admin removed from a group: Polaris ID is asked about each of their accounts (`lookup`); with none in the admin group their admin sessions end within the push and `admin_changed` is filed. More than five at once, a failed lookup or dry run changes nothing here; the daily reconcile decides.
 
-Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rotation is in the same note.
+Setup: Settings, Polaris ID, Set up creates the service provider and keeps the bearer token in D1 (hash and secret, never in `wrangler.jsonc`); rotate it from the same card. Right after a rotation a push with the old token is accepted for a short pending window. Fallback check: [SCIM Receiver Setup](runbooks/scim-receiver-setup.md).
 
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
