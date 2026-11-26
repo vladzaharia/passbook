@@ -33,7 +33,7 @@ Screenshots each route at 3 viewports and 2 themes into `.wrangler/visual-sweep/
 node tools/dev/visual-sweep.ts --url "$DEV_URL" --routes tools/dev/visual-routes/admin.json,tools/dev/visual-routes/portal.json,tools/dev/visual-routes/public.json,tools/dev/visual-routes/scanner.json,tools/dev/visual-routes/scanning.json
 ```
 
-Options: `--only <name>`, `--viewports desktop,tablet,mobile`, `--themes light,dark`, `--emails`.
+Options: `--only <name>`, `--viewports desktop,tablet,mobile`, `--themes light,dark`, `--emails`. A run with `scanning.json` also adds `scanner.json` (the `scan-unpaired` screens); no flag needed.
 
 ## 3. Scanner devices (optional)
 

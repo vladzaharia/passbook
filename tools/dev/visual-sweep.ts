@@ -20,6 +20,7 @@ import {
   type Role,
   type Theme,
   type ViewportName,
+  withCompanions,
 } from './lib/routes.ts';
 import { journeys } from './visual-journeys/index.ts';
 
@@ -53,7 +54,7 @@ async function orgIds(base: string, stateDir: string): Promise<Record<string, st
 
 async function main() {
   const base = assertLocal(arg('--url') ?? 'http://localhost:5173');
-  const files = (arg('--routes') ?? '').split(',').filter(Boolean);
+  const files = withCompanions((arg('--routes') ?? '').split(',').filter(Boolean));
   const journeyNames = arg('--journeys');
   if (files.length === 0 && !flag('--emails') && !journeyNames)
     throw new Error('Pass --routes <file[,file]>, --emails and/or --journeys <name[,name]|all>.');
