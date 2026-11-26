@@ -1792,6 +1792,20 @@ __all__ = [
     "TemplatesVersionsRetrieveResponseReportIssuesItem",
     "TemplatesVersionsRetrieveResponseReportIssuesItemFix",
     "TemplatesVersionsRetrieveResult",
+    "TemplatesVersionsRetrieveWalletReportsResponse",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogle",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus1",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus2",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus3",
+    "TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus4",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsung",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus1",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus2",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus3",
+    "TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus4",
+    "TemplatesVersionsRetrieveWalletReportsResult",
     "TerminalActBody",
     "TerminalActParams",
     "TerminalActParamsApproval",
@@ -13087,6 +13101,72 @@ class TemplatesVersionsRetrieveResponseReportIssuesItem(_Model):
 class TemplatesVersionsRetrieveResponseReportIssuesItemFix(_Model):
     action: _Literal["upload_logo", "upload_icon"] | str
 
+class TemplatesVersionsRetrieveWalletReportsResponse(_Model):
+    google: TemplatesVersionsRetrieveWalletReportsResponseGoogle
+    samsung: TemplatesVersionsRetrieveWalletReportsResponseSamsung
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogle(_Model):
+    schema_: _Literal[1] = _Field(alias="schema")
+    target: _Literal["google", "samsung"] | str
+    type: str
+    compilerRevision: int
+    status: TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus1 | TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus2 | TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus3 | TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus4
+    items: _List[TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem]
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem(_Model):
+    capability: _Literal["type", "field.header", "field.primary", "field.secondary", "field.auxiliary", "field.additionalInfo", "field.footer", "field.back", "field.link", "barcode.format", "barcode.format.qr", "barcode.format.pdf417", "barcode.format.aztec", "barcode.format.code128", "barcode.format.code39", "barcode.format.codabar", "barcode.format.ean13", "barcode.format.i2of5", "barcode.altText", "colors.background", "colors.foreground", "colors.label", "image.logo", "image.icon", "image.strip", "image.artwork", "image.background", "image.thumbnail", "image.personal", "relevance.dates", "relevance.locations", "relevance.beacons", "relevance.maxDistance", "validity.expiration", "void.visual", "messaging.notify", "updates.push", "upcoming.multi", "links.featured", "localization.strings", "localization.images", "sharing", "nfc", "personalization", "text.length", "role.title", "role.subtitle", "role.eventName", "role.eventStart", "role.eventEnd", "role.doorsOpen", "role.venueName", "role.venueAddress", "role.venueLocation", "role.seat", "role.row", "role.section", "role.gate", "role.ticketHolder", "role.ticketNumber", "role.confirmationCode", "role.eventId", "role.memberId", "role.memberName", "role.tier", "role.points", "role.pointsLabel", "role.balance", "role.giftCardNumber", "role.giftCardPin", "role.offerTitle", "role.offerDetails", "role.finePrint", "role.redemptionChannel", "role.validFrom", "role.validUntil", "role.appLink", "role.support"] | str
+    path: str
+    support: _Literal["native", "text", "difference", "omitted", "unsupported"] | str
+    severity: _Literal["difference", "omission", "blocked"] | str
+    group: _Literal["holder", "door", "look", "absent"] | str
+    chosen: bool
+    message: str
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus1(_Model):
+    kind: _Literal["off"] | str
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus2(_Model):
+    kind: _Literal["ready"] | str
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus3(_Model):
+    kind: _Literal["omissions"] | str
+    count: int
+
+class TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus4(_Model):
+    kind: _Literal["blocked"] | str
+    reason: str
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsung(_Model):
+    schema_: _Literal[1] = _Field(alias="schema")
+    target: _Literal["google", "samsung"] | str
+    type: str
+    compilerRevision: int
+    status: TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus1 | TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus2 | TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus3 | TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus4
+    items: _List[TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem]
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem(_Model):
+    capability: _Literal["type", "field.header", "field.primary", "field.secondary", "field.auxiliary", "field.additionalInfo", "field.footer", "field.back", "field.link", "barcode.format", "barcode.format.qr", "barcode.format.pdf417", "barcode.format.aztec", "barcode.format.code128", "barcode.format.code39", "barcode.format.codabar", "barcode.format.ean13", "barcode.format.i2of5", "barcode.altText", "colors.background", "colors.foreground", "colors.label", "image.logo", "image.icon", "image.strip", "image.artwork", "image.background", "image.thumbnail", "image.personal", "relevance.dates", "relevance.locations", "relevance.beacons", "relevance.maxDistance", "validity.expiration", "void.visual", "messaging.notify", "updates.push", "upcoming.multi", "links.featured", "localization.strings", "localization.images", "sharing", "nfc", "personalization", "text.length", "role.title", "role.subtitle", "role.eventName", "role.eventStart", "role.eventEnd", "role.doorsOpen", "role.venueName", "role.venueAddress", "role.venueLocation", "role.seat", "role.row", "role.section", "role.gate", "role.ticketHolder", "role.ticketNumber", "role.confirmationCode", "role.eventId", "role.memberId", "role.memberName", "role.tier", "role.points", "role.pointsLabel", "role.balance", "role.giftCardNumber", "role.giftCardPin", "role.offerTitle", "role.offerDetails", "role.finePrint", "role.redemptionChannel", "role.validFrom", "role.validUntil", "role.appLink", "role.support"] | str
+    path: str
+    support: _Literal["native", "text", "difference", "omitted", "unsupported"] | str
+    severity: _Literal["difference", "omission", "blocked"] | str
+    group: _Literal["holder", "door", "look", "absent"] | str
+    chosen: bool
+    message: str
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus1(_Model):
+    kind: _Literal["off"] | str
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus2(_Model):
+    kind: _Literal["ready"] | str
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus3(_Model):
+    kind: _Literal["omissions"] | str
+    count: int
+
+class TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus4(_Model):
+    kind: _Literal["blocked"] | str
+    reason: str
+
 class TerminalActParams(_Model):
     idempotencyKey: str
     input: TerminalActParamsInput1 | TerminalActParamsInput2 | TerminalActParamsInput3
@@ -14473,6 +14553,8 @@ TemplatesSetUpScanningBody = TemplatesSetUpScanningParams
 TemplatesSetUpScanningResult = TemplatesSetUpScanningResponse
 
 TemplatesVersionsRetrieveResult = TemplatesVersionsRetrieveResponse
+
+TemplatesVersionsRetrieveWalletReportsResult = TemplatesVersionsRetrieveWalletReportsResponse
 
 TerminalActBody = TerminalActParams
 

@@ -2014,6 +2014,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.versions.retrieveWalletReports", "GET", "/api/v1/templates/id1/versions/id2/wallet-reports", false,
+		"", `{"google":{"schema":1,"target":"google","type":"x","compilerRevision":0,"status":{"kind":"off"},"items":[{"capability":"type","path":"x","support":"native","severity":"difference","group":"holder","chosen":false,"message":"x"}]},"samsung":{"schema":1,"target":"google","type":"x","compilerRevision":0,"status":{"kind":"off"},"items":[{"capability":"type","path":"x","support":"native","severity":"difference","group":"holder","chosen":false,"message":"x"}]}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.Versions.RetrieveWalletReports(ctx, "id1", "id2")
+		},
+	},
+	{
 		"testEmails.list", "GET", "/api/v1/test-inbox", false,
 		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
