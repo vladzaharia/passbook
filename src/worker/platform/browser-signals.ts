@@ -1,5 +1,7 @@
 import type { Context } from 'hono';
 import { getCookie } from 'hono/cookie';
+import { matchedRoutes } from 'hono/route';
+import { MODE_HEADER } from '../../shared/contracts/common.ts';
 import { ForbiddenError } from './errors.ts';
 import { createLogger } from './log.ts';
 
@@ -32,6 +34,19 @@ export interface KeyCaller {
   sessionCookie?: string;
   /** Sets the report-only warning header on the response. */
   warn?: (text: string) => void;
+  /** The request's `X-PassBook-Mode`, trimmed and lowercased: a Workbench token refuses `live`. */
+  mode?: string;
+  /** Every method route the request matched, as `GET /api/v1/passes/:id`: the Workbench allowlist reads them. */
+  routes?: readonly string[];
+}
+
+/** The method routes a request matched (middleware registered with `use` excluded), as `METHOD /path`. */
+export function routeKeysOf(c: Context): string[] {
+  const method = c.req.method === 'HEAD' ? 'GET' : c.req.method;
+  const keys = matchedRoutes(c)
+    .filter((r) => r.method === method)
+    .map((r) => `${method} ${r.path}`);
+  return [...new Set(keys)];
 }
 
 /**
@@ -55,6 +70,8 @@ export function keyCallerOf(c: Context, sessionCookieName: string): KeyCaller {
     browser: hasBrowserSignals(c.req.raw.headers),
     sessionCookie: getCookie(c, sessionCookieName),
     warn: (text) => c.header(KEY_IN_BROWSER_WARNING_HEADER, text),
+    mode: c.req.header(MODE_HEADER)?.trim().toLowerCase(),
+    routes: routeKeysOf(c),
   };
 }
 
