@@ -5,7 +5,7 @@ import type {
   WalletCredential,
   WalletEnrolment,
 } from '@/shared/contracts/wallet-providers.ts';
-import type { WalletRelease } from '@/shared/contracts/wallet-release.ts';
+import type { WalletRelease, WalletReleaseMode } from '@/shared/contracts/wallet-release.ts';
 import { channelOf, enrolmentOf, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, type RenderAppOptions, renderApp } from '@/web/lib/test-utils.tsx';
 
@@ -90,3 +90,40 @@ export const walletRelease = (test: boolean = false, live: boolean = false): Wal
   const by = { live: live ? OPEN : DARK, test: test ? OPEN : DARK };
   return { google: by, samsung: by };
 };
+
+/** One provider in one mode, as GET /platform/wallet-release reports it. */
+export const releaseMode = (over: Partial<WalletReleaseMode> = {}): WalletReleaseMode => ({
+  provider: 'google',
+  mode: 'live',
+  state: 'dark',
+  credentials: [
+    credential({
+      scope: 'platform',
+      orgId: null,
+      mode: 'live',
+      lastCheck: { ok: true, code: null, at: Date.now() - 60_000 },
+    }),
+  ],
+  enrolments: [
+    { orgId: 'o1', orgName: 'North', status: 'issuing', blocks: [] },
+    { orgId: 'o2', orgName: 'Acme', status: 'ready', blocks: [] },
+    { orgId: 'o3', orgName: 'Birch', status: 'ready', blocks: [] },
+    { orgId: 'o4', orgName: 'Cedar', status: 'blocked', blocks: ['check', 'hold'] },
+  ],
+  templates: { ready: 4, withOmissions: 2, awaitingReview: 1, none: 3 },
+  instances: { open: 7, retired: 2 },
+  ...over,
+});
+
+/** Both modes of one provider, plus the other provider dark, so a tab must pick its own. */
+export const releaseReport = (
+  provider: 'google' | 'samsung',
+  state: WalletReleaseMode['state'],
+  over: Partial<WalletReleaseMode> = {},
+) => ({
+  releases: [
+    releaseMode({ provider, mode: 'live', state, ...over }),
+    releaseMode({ provider, mode: 'test', state, ...over }),
+    releaseMode({ provider: provider === 'google' ? 'samsung' : 'google', mode: 'live' }),
+  ],
+});

@@ -4,6 +4,7 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { replaceCallbackKeysetForTest, setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import {
   ackDirtyInstance,
   deferDirtyInstance,
@@ -34,6 +35,7 @@ async function withoutTrigger(
   db: D1Database,
   name:
     | 'wallet_provider_generation_insert_guard'
+    | 'wallet_provider_generation_operation_draining'
     | 'wallet_provider_instance_keyset_immutable'
     | 'wallet_provider_operation_keyset_immutable',
   action: () => Promise<void>,
@@ -81,6 +83,7 @@ describe('wallet provider instance repository keyset authority', () => {
   it('persists the original commitment on both initial rows without opening issuance or offer gates', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
+    await darkRows(db);
     const pass = await t.kit.pass();
     const snapshot = await readPassSnapshot(db, {
       orgId: t.operation.orgId,
@@ -107,39 +110,42 @@ describe('wallet provider instance repository keyset authority', () => {
     await expect(insertInstance(db, input)).rejects.toThrow('provider issuance is unavailable');
 
     // Isolate repository persistence without changing the real, independently closed provider gates.
-    await withoutTrigger(db, 'wallet_provider_generation_insert_guard', async () => {
-      await expect(
-        insertInstance(db, input, {
-          hash: await sha256Hex(crypto.randomUUID()),
-          expiresAt: input.now + 60_000,
-          authority: { kind: 'download', token: pass.downloadToken },
-        }),
-      ).rejects.toThrow('provider offer is unavailable');
-      expect(
-        await first(db, 'SELECT id FROM wallet_provider_instances WHERE id = ?', [
-          input.instanceId,
-        ]),
-      ).toBeNull();
-      await insertInstance(db, input);
-      expect(await getInstanceById(db, input)).toMatchObject({
-        id: input.instanceId,
-      });
-      expect(await getOperation(db, { ...input, version: 1 })).toMatchObject({
-        id: input.operationId,
-      });
-      expect(
-        await first(
-          db,
-          `SELECT i.credential_keyset_commitment AS instance_commitment,
+    // The release rule on operations (0229) is lifted too: the offer and insert guards are what this case reads.
+    await withoutTrigger(db, 'wallet_provider_generation_operation_draining', () =>
+      withoutTrigger(db, 'wallet_provider_generation_insert_guard', async () => {
+        await expect(
+          insertInstance(db, input, {
+            hash: await sha256Hex(crypto.randomUUID()),
+            expiresAt: input.now + 60_000,
+            authority: { kind: 'download', token: pass.downloadToken },
+          }),
+        ).rejects.toThrow('provider offer is unavailable');
+        expect(
+          await first(db, 'SELECT id FROM wallet_provider_instances WHERE id = ?', [
+            input.instanceId,
+          ]),
+        ).toBeNull();
+        await insertInstance(db, input);
+        expect(await getInstanceById(db, input)).toMatchObject({
+          id: input.instanceId,
+        });
+        expect(await getOperation(db, { ...input, version: 1 })).toMatchObject({
+          id: input.operationId,
+        });
+        expect(
+          await first(
+            db,
+            `SELECT i.credential_keyset_commitment AS instance_commitment,
         op.credential_keyset_commitment AS operation_commitment FROM wallet_provider_instances i
         JOIN wallet_provider_instance_operations op ON op.instance_id = i.id WHERE i.id = ?`,
-          [input.instanceId],
-        ),
-      ).toEqual({
-        instance_commitment: t.credentialKeysetCommitment,
-        operation_commitment: t.credentialKeysetCommitment,
-      });
-    });
+            [input.instanceId],
+          ),
+        ).toEqual({
+          instance_commitment: t.credentialKeysetCommitment,
+          operation_commitment: t.credentialKeysetCommitment,
+        });
+      }),
+    );
   });
 
   it('returns only rows of the pinned keyset on reads and dirty work', async () => {

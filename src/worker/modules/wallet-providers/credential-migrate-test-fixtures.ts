@@ -1,5 +1,6 @@
 // Legacy (v1 envelope) accounts for the migration tests, seeded as the old configure route wrote them.
 import { env } from 'cloudflare:workers';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
@@ -44,41 +45,44 @@ export async function seedLegacy(
     credentialAad(credentialId, orgId, `wallet-provider:${id}:${mode}:${provider}`),
   );
   const now = Date.now();
-  await batch(env.DB, [
-    stmt(
-      env.DB,
-      'INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, orgId, mode, provider, now, now],
-    ),
-    stmt(
-      env.DB,
-      `INSERT INTO wallet_provider_credentials (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, created_at)
+  // The database refuses a new legacy account (0229); this seed is the old state the migration moves off.
+  await withoutTrigger(env.DB, 'wallet_provider_accounts_no_new_legacy_update', () =>
+    batch(env.DB, [
+      stmt(
+        env.DB,
+        'INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, orgId, mode, provider, now, now],
+      ),
+      stmt(
+        env.DB,
+        `INSERT INTO wallet_provider_credentials (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        credentialId,
-        id,
-        orgId,
-        mode,
-        provider,
-        e.kekVersion,
-        e.iv,
-        e.wrappedDek,
-        e.ciphertext,
-        now,
-      ],
-    ),
-    stmt(
-      env.DB,
-      `INSERT INTO wallet_provider_account_events (id, account_id, org_id, mode, provider, revision, kind, credential_id, actor_id, created_at)
+        [
+          credentialId,
+          id,
+          orgId,
+          mode,
+          provider,
+          e.kekVersion,
+          e.iv,
+          e.wrappedDek,
+          e.ciphertext,
+          now,
+        ],
+      ),
+      stmt(
+        env.DB,
+        `INSERT INTO wallet_provider_account_events (id, account_id, org_id, mode, provider, revision, kind, credential_id, actor_id, created_at)
        VALUES (?, ?, ?, ?, ?, 1, 'configure', ?, ?, ?)`,
-      [crypto.randomUUID(), id, orgId, mode, provider, credentialId, configurer, now],
-    ),
-    stmt(
-      env.DB,
-      'UPDATE wallet_provider_accounts SET credential_id = ?, revision = 1, updated_at = ? WHERE id = ?',
-      [credentialId, now, id],
-    ),
-  ]);
+        [crypto.randomUUID(), id, orgId, mode, provider, credentialId, configurer, now],
+      ),
+      stmt(
+        env.DB,
+        'UPDATE wallet_provider_accounts SET credential_id = ?, revision = 1, updated_at = ? WHERE id = ?',
+        [credentialId, now, id],
+      ),
+    ]),
+  );
   return { id, orgId, mode, provider, hmacKey };
 }
 

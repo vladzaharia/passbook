@@ -3,6 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import { publishableSchema } from './projection-contract.ts';
 import { SYSTEM_AUTHORED_PROVIDERS } from './projection-system-authority.ts';
+import { walletProviderDisabledReason } from './provider-policy.ts';
 
 const PROVIDERS = ['google', 'samsung'] as const;
 
@@ -25,7 +26,14 @@ export async function queueSystemProjections(
     const ready: (typeof PROVIDERS)[number][] = [];
     for (const provider of open) {
       const readiness = await getWalletProviderReadiness(ctx, { orgId, mode, provider });
-      if (readiness.accountId && readiness.state !== 'revoked' && readiness.state !== 'absent')
+      // A pair that is not released, or an enrolment that cannot issue, would strand the candidate: the backfill
+      // covers it when the mode is released or the enrolment is turned On.
+      if (
+        readiness.accountId &&
+        readiness.state !== 'revoked' &&
+        readiness.state !== 'absent' &&
+        (await walletProviderDisabledReason(ctx.env.DB, provider, orgId, mode)) === null
+      )
         ready.push(provider);
     }
     if (ready.length === 0) return;

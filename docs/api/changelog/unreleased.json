@@ -1593,6 +1593,14 @@
     "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
   },
   {
+    "key": "GET /api/v1/platform/wallet-release new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.getPlatformWalletRelease",
+    "op": "GET /api/v1/platform/wallet-release",
+    "change": "new operation",
+    "note": "Platform admins read the Google and Samsung release per mode: state, credentials, enrollments by readiness, templates and provider copies."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
@@ -4255,6 +4263,14 @@
     "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
     "change": "new operation",
     "note": "Starts a service account key rotation."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
+    "op": "POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
+    "change": "new operation",
+    "note": "Lists the Off enrollments that would turn On for a provider and mode; an apply names that list and turns exactly those On once released."
   },
   {
     "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",

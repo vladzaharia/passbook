@@ -58,7 +58,7 @@ Owner only; agents never deploy. Do in order. `npm run deploy:check` lists what 
 
 - **Trigger**: the `ci` workflow finishes successfully for a push to `main`. The deploy checks out that run's `head_sha`, never a PR and never a newer unchecked commit. Runs queue (`production-deploy`, never cancelled).
 - **Order**: the tag `deployed/production` marks the last deployed commit. A run whose commit is already contained in the tag is skipped, so an older run cannot roll production back.
-- **Steps**: gen (tree must stay clean), typecheck, biome, `check:rules`, `deploy:check -- --secrets`, build (tree must stay clean), `npm run deploy -- --apply [--first]`, move the tag, smoke checks, job summary (sha, version now serving, migrations that were pending).
+- **Steps**: proof that the `ci` run for the same SHA passed the jobs `check`, `coverage-node-merge` and `coverage-worker-merge` (typecheck, biome and `check:rules` are not re-run; `ci` ran them on that commit), gen (tree must stay clean), `deploy:check -- --secrets`, build (tree must stay clean), `npm run deploy -- --apply [--first]`, move the tag, smoke checks, job summary (sha, version now serving, migrations that were pending).
 - **`--first`**: chosen by `tools/deploy-needs-first.ts`, which diffs `wrangler.jsonc` at the tagged commit against the new one and flags added workflows, queue consumers, Durable Object classes and exports, and custom domains (the things only `wrangler deploy` registers). No tag means `--first`. The step log names the reason.
 - **Smoke checks** (against `https://passbook.mobile`): `/`, `/login`, `/admin`, `/developers`, `/scan` return 200; `/api/v1/orgs` returns 401; `developers.passbook.mobile` and `wallet.plrs.im` return 308. A failure fails the job; the summary prints the previous version id.
 - **No secrets**: the run ends with a notice and succeeds, nothing is deployed, and the tag does not move. Once the secrets exist, the next green main commit deploys everything since.
@@ -418,7 +418,7 @@ Only archived templates may be listed; the wait ignores them.
 
 ### Wallet migration gate
 
-Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. Only an enrolment that is On issues (0229): a legacy account, an envelope with no source, does not, and no new one can be made (the configure route and the database refuse it). A flip still waits until none is left. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
 
 ```sql wallet-migration-gate
 SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
@@ -426,6 +426,55 @@ JOIN orgs o ON o.id = a.org_id AND o.status != 'deleted'
 WHERE a.credential_id IS NOT NULL AND a.credential_source_id IS NULL AND a.revoked_at IS NULL
 ORDER BY a.id
 ```
+
+### Wallet release
+
+Google and Samsung are released per mode in two places that must agree: `RELEASE` in
+`src/worker/modules/wallet-providers/release.ts` (the Worker) and the `wallet_provider_releases` row (the
+database's issuance guards, 0229). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
+they differ. The owner's steps (readiness read, enable-ready, flip, rollback) are the runbook [Wallet Provider Flip](runbooks/wallet-provider-flip.md).
+
+| State | New copies, offers, Samsung references | Updates, messages | Voids, removals, transfers, retirement |
+| --- | --- | --- | --- |
+| `dark` | refused | refused | not sent |
+| `released` | per org: plan, then an enrolment that is On | sent | sent |
+| `draining` | refused | refused | sent |
+
+The database enforces each column too: while not released, its guards refuse new copies, activations (an un-void
+included), offers, references and every operation but a revoke. While draining, Samsung's callbacks on cards
+already added are answered without card data, a holder's DELETED is recorded and nothing is promoted.
+
+**Flip** (one PR per provider and mode, Test before Live): change the one cell of `RELEASE` and add a migration
+with only this statement (any other way of writing the table fails check-migrations):
+
+```sql norun
+UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
+```
+
+Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
+passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
+prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
+migrates, and again before it serves for as long as any wallet is released. It refuses when it cannot read the
+pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
+is dark.
+
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list; the route is:
+`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
+On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
+org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
+On. Review the list, then send `{"apply": true, "orgIds": [...]}` with the listed orgs: exactly those turn On,
+each with its own audit row. Apply is refused (409) when the list changed and while the mode is not released. Writes go in batches of 20; after a failed batch the earlier ones stay On and the next dry run lists the rest.
+
+**Rollback** is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with
+`state = 'draining'`. Copies already in wallets keep getting voids and removals; badges and offers go away; the
+next deploy applies it. Narrower: hold one org (`POST /api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold`)
+or revoke one credential.
+
+**Back to dark** only once the readiness report shows `instances.open` at 0 for that provider and mode (copies
+that can still be in a wallet: active, revoking, revoked, or with an account and not retired). Merge the dark PR
+only then. Otherwise the deploy refuses before it migrates (`sets google test dark while N copies ...`), and every
+later deploy waits until those copies are voided or removed, since a merged migration cannot be edited; the
+migration itself also aborts as a backstop (`drain it first`).
 
 ### Entitlements gate
 
