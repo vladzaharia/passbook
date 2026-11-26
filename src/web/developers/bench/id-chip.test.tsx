@@ -18,7 +18,7 @@ describe('the id chip', () => {
     expect(shortId(REQ)).toBe('01938a1b…4a5b');
     expect(shortId('evt_1')).toBe('evt_1');
     expect(jumpTargets('request', REQ).map((t) => [t.label, t.href])).toEqual([
-      ['Logs', `/developers/logs#${REQ}`],
+      ['Logs', `/developers/logs?source=all#${REQ}`],
       ['Events it caused', `/developers/webhooks?request=${REQ}`],
     ]);
     expect(jumpTargets('key', KEY).map((t) => t.href)).toEqual([
@@ -26,7 +26,7 @@ describe('the id chip', () => {
       `/developers/logs?key=${KEY}`,
     ]);
     expect(jumpTargets('pass', 'p 1').map((t) => t.href)).toEqual([
-      '/developers/logs?path=p%201',
+      '/developers/logs?path=p%201&source=all',
       '/developers/webhooks?pass=p%201',
     ]);
     expect(jumpTargets('event', 'e1')[0]?.href).toBe('/developers/webhooks#e1');

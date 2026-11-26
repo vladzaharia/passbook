@@ -25,7 +25,8 @@ export const QS_COPY = {
       keyGone: 'Your key was shown once, when the sandbox was made. Roll it to get a new one.',
       closed: 'Your sandbox is closed. Closed for good: there is one per person.',
       check: 'The check did not pass. Try again.',
-      slow: 'Taking longer than usual. Reloading is safe: setup picks up where it stopped.',
+      showKey: 'Show key',
+      keyFailed: "Couldn't make the key. Try again.",
     },
     run: {
       title: 'First call',
@@ -48,15 +49,8 @@ export const QS_COPY = {
       locked: 'Run your first request first.',
     },
   },
-  /** Step 2: what the server made, and the key box. */
+  /** Step 2: the key box, and the repair line when setup did not finish. */
   made: {
-    org: 'Organization',
-    template: 'Ticket template',
-    templateLine: 'Released in Test',
-    capture: 'Capture endpoint',
-    captureLine: 'Signed, never sent',
-    key: 'Key',
-    keyLine: '30 days',
     once: 'Shown once',
     copyEnv: 'Copy .env',
     copied: 'Copied',

@@ -57,9 +57,9 @@ describe('response rendering', () => {
     );
     const { container } = view();
     await run();
-    await screen.findByText('<h1 onclick="x()">Bad gateway</h1>');
+    await screen.findByText('502 Bad Gateway');
+    expect(container.textContent).toContain('<h1 onclick="x()">Bad gateway</h1>');
     expect(container.querySelector('h1')).toBeNull();
-    expect(screen.getByText('502 Bad Gateway')).toBeInTheDocument();
   });
 
   it('links an error code to its entry only when the catalog has it', async () => {
@@ -68,6 +68,52 @@ describe('response rendering', () => {
     await run();
     const link = await screen.findByRole('link', { name: '"PASS_CONFLICT"' });
     expect(link).toHaveAttribute('href', '/developers/errors/PASS_CONFLICT');
+  });
+});
+
+describe('the response on the bench', () => {
+  const RID = '0190a1b2-c3d4-7e5f-8a9b-0123456789ab';
+
+  it('names the request as an id chip and opens its row in Logs', async () => {
+    fakeNetwork(() => json({ id: 'p1' }, { status: 201, headers: { 'x-request-id': RID } }));
+    view();
+    await run();
+    await screen.findByText('201 Created');
+    // The header and the Trace each hold the chip.
+    expect(screen.getAllByRole('button', { name: `Copy request id ${RID}` })).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'View in Logs' })).toHaveAttribute(
+      'href',
+      `/developers/logs?source=all#${RID}`,
+    );
+    // The Trace ends it: the request, as a chip that opens in Logs.
+    expect(screen.getByRole('navigation', { name: 'Trace' })).toHaveTextContent('POST /passes 201');
+  });
+
+  it('says where a new secret shows in full, and only then', async () => {
+    fakeNetwork(() => json({ key: { id: 'k1', secret: 'pbk_live_abc' } }, { status: 201 }));
+    view();
+    await run();
+    expect(await screen.findByText(/shows in full here/)).toBeInTheDocument();
+  });
+
+  it('has no hint on an ordinary answer', async () => {
+    fakeNetwork(() => json({ id: 'p1' }, { status: 201 }));
+    view();
+    await run();
+    await screen.findByText('201 Created');
+    expect(screen.queryByText(/shows in full here/)).toBeNull();
+  });
+});
+
+describe('the JSON editor', () => {
+  it('numbers each line on the line itself, so a wrapped line keeps one number', async () => {
+    fakeNetwork(() => json({}));
+    const { container } = view();
+    await userEvent.click(screen.getByRole('tab', { name: 'JSON' }));
+    const lines = container.querySelectorAll('.editor pre .ln');
+    const text = (screen.getByLabelText('Request body (JSON)') as HTMLTextAreaElement).value;
+    expect(lines).toHaveLength(text.split('\n').length);
+    expect(container.querySelector('.gutter')).toBeNull();
   });
 });
 

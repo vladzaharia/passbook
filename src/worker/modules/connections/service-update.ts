@@ -3,7 +3,6 @@ import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
-import { toDto } from './dto.ts';
 import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
@@ -11,6 +10,7 @@ import { validateMapping } from './mapping.ts';
 import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
 import {
   assertSecretFree,
+  needsGeneratedSecret,
   pastesSecret,
   rethrowSecretReuse,
   secretFingerprint,
@@ -37,6 +37,7 @@ import {
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
+import { dtoOf } from './webhook-arrivals.ts';
 
 /** Keys the connector fixes at creation (the webhook recipe) cannot change: bound passes hold its refs. */
 function assertFixedConfig(
@@ -215,8 +216,7 @@ export async function update(
       { path: 'webhookSecret', message: 'Not supported.' },
     ]);
   }
-  const needsSecret =
-    (mode === 'webhook' || mode === 'hybrid') && conn.webhookCredentialId === null;
+  const needsSecret = needsGeneratedSecret(def, conn, mode);
   if (input.webhookSecret !== undefined || needsSecret) {
     const secret = input.webhookSecret ?? newWebhookSecret(sctx);
     webhookCredential = secret;
@@ -231,7 +231,7 @@ export async function update(
       input.webhookSecret !== undefined && pastesSecret(def, conn.config)
         ? await secretFingerprint(sctx, input.webhookSecret)
         : null;
-    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id);
+    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id, conn);
     changed.add('webhookSecret');
   }
 
@@ -326,5 +326,5 @@ export async function update(
       });
     }
   }
-  return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };
+  return { ...(await dtoOf(sctx, fresh)), ...(generated ? { webhookSecret: generated } : {}) };
 }

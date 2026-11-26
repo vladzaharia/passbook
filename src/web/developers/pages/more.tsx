@@ -168,39 +168,15 @@ export function ProtocolsView({ site }: { site: Site }) {
   );
 }
 
+/** The webhook tool's prerendered page, in the bench frame: the signed-out state. The island replaces it. */
 export function WebhooksView({ site }: { site: Site }) {
   return (
-    <div className="wh">
-      <div
-        className="stack g4"
-        data-island="webhook-tester"
-        data-types={site.webhookEvents.map((e) => e.type).join(',')}
-      >
-        <Gate
-          title={GATE_COPY.lines.webhooks}
-          next={PATHS.webhooks}
-          docs={`${PATHS.reference}/webhook-endpoints`}
-        />
-      </div>
-      <section>
-        <h2 className="h2">Events</h2>
-        <p className="muted mt2 prose">
-          Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and
-          dedupe on x-passbook-event-id.
-        </p>
-        <div className="list card mt4">
-          {site.webhookEvents.map((e) => (
-            <div key={e.type} id={e.type} className="lrow wrap-row">
-              <code className="mono sm strong">{e.type}</code>
-              <span className="push muted sm">{e.summary}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt6 muted">
-          Endpoints are managed with the{' '}
-          <a href={`${PATHS.reference}/webhook-endpoints`}>webhook endpoints</a> API.
-        </p>
-      </section>
+    <div data-island="webhook-tester" data-types={site.webhookEvents.map((e) => e.type).join(',')}>
+      <Gate
+        title={GATE_COPY.lines.webhooks}
+        next={PATHS.webhooks}
+        docs={`${PATHS.reference}/webhook-endpoints`}
+      />
     </div>
   );
 }

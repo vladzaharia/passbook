@@ -44,7 +44,7 @@ const call = (
     appEnv,
   );
 
-const key = () => ({ 'idempotency-key': `k-${++keySeq}` });
+const key = (): Record<string, string> => ({ 'idempotency-key': `k-${++keySeq}` });
 const start = (who: SessionFixture | null, body: unknown = { slot: 'root' }, headers = key()) =>
   call(BASE, who, { method: 'POST', body, headers });
 const makeDefault = (who: SessionFixture | null, id: string, headers = key()) =>
@@ -111,11 +111,11 @@ describe('GET /platform/apple/identities', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       items: { id: string; slot: string | null; managed: string; registrationCount: number }[];
-      openRuns: Record<string, string | null>;
+      openRuns: unknown[];
     };
     const root = body.items.find((i) => i.id === 'pi4-root');
     expect(root).toMatchObject({ slot: 'root', managed: 'connector', registrationCount: 0 });
-    expect(body.openRuns).toEqual({ root: null, devtest: null });
+    expect(body.openRuns).toEqual([]);
     expect(body.items.every((i) => (i as { orgId?: unknown }).orgId === null)).toBe(true);
   });
 

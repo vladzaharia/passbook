@@ -26,7 +26,10 @@ export interface Pending {
   op: string;
   change: string;
   note: string;
-  /** A breaking change that ships to every client without a PassBook-Version: a fix that stops a request reaching more than it asked. */
+  /**
+   * A breaking change that ships to every client without a PassBook-Version: a fix that stops a request reaching more than it
+   * asked, or a status code that only a signed-in browser session ever receives (no key, so no integration, calls it).
+   */
   unversioned?: boolean;
 }
 
@@ -101,16 +104,40 @@ export const hasNewVersion = (next: Versions, base: Versions | null): boolean =>
   next.versions.some((v) => !(base?.versions ?? []).some((b) => b.date === v.date));
 
 /** The breaking changes no `unversioned` entry of unreleased.json covers, and that are not a removal at a Sunset. */
-export const versionedBreaks = (broken: string[], pending: Pending[]): string[] => {
-  // Only a request-side tightening may ship unversioned; a removed field or the like still needs a version.
+export const versionedBreaks = (
+  broken: string[],
+  pending: Pending[],
+  /** The operation ("POST /a") is reached by a browser session only: no API key or other scheme admits it. */
+  browserOnly: (op: string) => boolean = () => false,
+): string[] => {
+  // Only a request-side tightening, or a status only a browser session receives, may ship unversioned; a removed field or the like still needs a version.
   const free = new Set(
     pending
       .filter((p) => p.unversioned && p.change.endsWith(': unknown keys now refused'))
       .map((p) => p.key),
   );
+  // A route no key can call changes its status (a sandbox action now answers 202): the break is named in the notes.
+  // An operation any other scheme admits keeps its version note: an integration may call it.
+  for (const p of pending)
+    if (p.unversioned && /^response \d{3} removed$/.test(p.change) && browserOnly(p.op))
+      free.add(`${p.op}: ${p.change}`);
   // Removing an operation on or after the Sunset the base announced reaches every client whatever its version.
   return broken.filter((b) => !free.has(b) && !b.includes(`: ${SUNSET_REMOVAL} `));
 };
+
+/** True when every security requirement of the operation in `doc` is the browser `session` scheme and nothing else. */
+export function sessionOnly(doc: Doc, op: string): boolean {
+  const [method = '', path = ''] = op.split(' ');
+  const item = doc.paths?.[path]?.[method.toLowerCase()] as
+    | { security?: Record<string, unknown>[] }
+    | undefined;
+  const security = item?.security;
+  return (
+    !!security &&
+    security.length > 0 &&
+    security.every((r) => Object.keys(r).length > 0 && Object.keys(r).every((k) => k === 'session'))
+  );
+}
 
 /** The dated file a release writes. Refuses while a note is missing. */
 export function stamp(pending: Pending[], date: string, into?: DatedFile): DatedFile {

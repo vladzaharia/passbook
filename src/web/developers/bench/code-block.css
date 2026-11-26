@@ -1,0 +1,22 @@
+/* ---------- A body's block (BenchCode) ---------- */
+.bench-code .jt {
+  max-height: 28rem;
+  overflow: auto;
+}
+.bench-code-none {
+  margin: 0;
+  padding: 10px 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+
+@media (pointer: coarse) {
+  .bench-id-c,
+  .bench-id .bench-mn-t {
+    min-height: 44px;
+    margin-block: -10px;
+  }
+  .bench-mn-i {
+    min-height: 44px;
+  }
+}

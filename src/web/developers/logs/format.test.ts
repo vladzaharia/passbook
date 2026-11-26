@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { clock, count, flavour, prettyBody } from './format.ts';
-import { duration, durationShare, fullTime, notToday, pathParts } from './row-format.ts';
+import { clock, count, flavour } from './format.ts';
+import { duration, pathParts } from './row-format.ts';
 
 const text = (runs: { text: string }[]) => runs.map((r) => r.text).join('');
 
@@ -9,21 +9,12 @@ describe('log formatting', () => {
     const now = new Date(2026, 10, 20, 15, 0, 0).getTime();
     expect(clock(new Date(2026, 10, 20, 9, 5, 7).getTime(), now)).toBe('09:05:07');
     expect(clock(new Date(2026, 10, 19, 14, 2, 11).getTime(), now)).toBe('Nov 19 14:02');
-    expect(notToday(new Date(2026, 10, 19, 14, 2, 11).getTime(), now)).toBe(true);
-    expect(fullTime(new Date(2026, 10, 19, 14, 2, 11).getTime())).toBe('Nov 19, 2026, 14:02:11');
   });
 
   it('groups thousands and tones a status', () => {
     expect(count(0)).toBe('0');
     expect(count(1234567)).toBe('1,234,567');
     expect([200, 302, 404, 503].map(flavour)).toEqual(['success', 'info', 'warning', 'danger']);
-  });
-
-  it('indents JSON bodies, keeps a marker as it is, and has nothing for none', () => {
-    expect(prettyBody('{"a":1}')).toBe('{\n  "a": 1\n}');
-    expect(prettyBody('[binary body]')).toBe('[binary body]');
-    expect(prettyBody(null)).toBeNull();
-    expect(prettyBody('')).toBeNull();
   });
 
   it('reads a duration in ms, then seconds', () => {
@@ -34,16 +25,6 @@ describe('log formatting', () => {
       '2.4 s',
       '12 s',
     ]);
-  });
-
-  it('fills the duration bar on a log scale, full at 3 s', () => {
-    const shares = [0, 10, 100, 1000, 3000, 9000].map(durationShare);
-    expect(shares[0]).toBe(0);
-    expect(shares[4]).toBe(1);
-    expect(shares[5]).toBe(1);
-    expect((shares[2] ?? 0) - (shares[1] ?? 0)).toBeGreaterThan(0.2);
-    for (let i = 1; i < shares.length; i++)
-      expect(shares[i]).toBeGreaterThanOrEqual(shares[i - 1] ?? 0);
   });
 });
 
@@ -63,13 +44,11 @@ describe('a path for one line', () => {
     ]);
     expect(p.head.find((r) => r.text.includes('passes'))?.id).toBe(false);
     expect(text(p.tail)).toBe('/void');
-    // A long word is no id without a digit.
     expect(pathParts('/api/v1/webhook-endpoints', null).head.some((r) => r.id)).toBe(false);
   });
 
   it('keeps only the query in the tail when the last segment is long, and no tail when both are', () => {
     const id = '01a21159-eb6a-7557-b7b0-72729cb2ca70';
-    // A bare id is too long a tail: the path ends in `…` after the resource name.
     expect(pathParts(`/api/v1/passes/${id}`, null).tail).toEqual([]);
     expect(text(pathParts(`/api/v1/passes/${id}/void`, null).tail)).toBe('/void');
     expect(text(pathParts(`/api/v1/passes/${id}`, 'expand=holder').tail)).toBe('?expand=holder');

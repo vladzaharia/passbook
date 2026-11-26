@@ -1,28 +1,10 @@
-// What a row and its detail print beyond the clock: the full time, the duration and its bar, the path cut in the
-// middle. Apart from format.ts, which the search palette also loads.
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const two = (n: number) => String(n).padStart(2, '0');
-const sameDay = (a: number, b: number) => new Date(a).toDateString() === new Date(b).toDateString();
-
-/** True when `clock` shows a date: the time column widens for it. */
-export const notToday = (ms: number, now = Date.now()): boolean => !sameDay(ms, now);
-
-/** `Nov 19, 2026, 14:02:11`: the row's title and the detail. */
-export function fullTime(ms: number): string {
-  const d = new Date(ms);
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}, ${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`;
-}
-
+// What a row prints beyond the bench time: the duration and the path cut in the middle.
 /** `24 ms`, `2.4 s`, `12 s`. */
 export const duration = (ms: number): string =>
   ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`;
 
 /** A call this slow is marked. */
 export const SLOW_MS = 1000;
-
-/** The duration bar's fill, 0 to 1, on a log scale that is full at 3 s: 10 ms and 100 ms still read apart. */
-export const durationShare = (ms: number): number =>
-  Math.min(1, Math.log10(Math.max(0, ms) + 1) / Math.log10(3001));
 
 /** A run of the shown path; `id` runs are dimmed so the resource names lead. */
 export interface PathRun {

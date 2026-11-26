@@ -33,7 +33,7 @@ export const platformIdentityRoutes = createRouter();
 
 register(
   platformIdentityRoutes,
-  'platform identities',
+  'wallet identities',
   {
     method: 'get',
     path: '/',
@@ -46,7 +46,7 @@ register(
 
 register(
   platformIdentityRoutes,
-  'platform identities',
+  'wallet identities',
   {
     method: 'post',
     path: '/',
@@ -74,7 +74,7 @@ register(
 
 register(
   platformIdentityRoutes,
-  'platform identities',
+  'wallet identities',
   {
     method: 'post',
     path: '/{id}/default',

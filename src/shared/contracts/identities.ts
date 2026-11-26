@@ -149,8 +149,8 @@ export const PlatformIdentitySchema = IdentitySchema.extend({
 export type PlatformIdentityDto = z.infer<typeof PlatformIdentitySchema>;
 export const PlatformIdentityListSchema = z.object({
   items: z.array(PlatformIdentitySchema),
-  /** The open provision run of a slot that has no certificate yet. */
-  openRuns: z.object({ root: IdSchema.nullable(), devtest: IdSchema.nullable() }),
+  /** The open setup run of each slot that has one. */
+  openRuns: z.array(z.object({ slot: PlatformSlotSchema, runId: IdSchema })),
 });
 export const StartPlatformIdentitySchema = z.object({ slot: PlatformSlotSchema });
 export const PlatformDefaultResultSchema = z.object({

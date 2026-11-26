@@ -1171,39 +1171,41 @@ type ConnectionsCreateParamsVoidWhenItem struct {
 }
 
 type ConnectionsCreateResponse struct {
-	ID                  string                                           `json:"id"`
-	OrgID               string                                           `json:"orgId"`
-	ConnectorType       string                                           `json:"connectorType"`
-	ConnectorVersion    int64                                            `json:"connectorVersion"`
-	Name                string                                           `json:"name"`
-	Config              map[string]any                                   `json:"config"`
-	HasCredential       bool                                             `json:"hasCredential"`
-	HasWebhookSecret    bool                                             `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsCreateResponseMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                          `json:"defaultTemplateId"`
-	HolderEmailField    *string                                          `json:"holderEmailField"`
-	AutoCreate          bool                                             `json:"autoCreate"`
-	AutoEmail           bool                                             `json:"autoEmail"`
-	OnMissing           string                                           `json:"onMissing"`
-	VoidWhen            []ConnectionsCreateResponseVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                           `json:"webhookPrevUntil"`
-	Mode                string                                           `json:"mode"`
-	IntervalSeconds     *int64                                           `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                           `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                           `json:"requestsPerMinute"`
-	Enabled             bool                                             `json:"enabled"`
-	Health              string                                           `json:"health"`
-	ConsecutiveFailures int64                                            `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                           `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                           `json:"nextRunAt"`
-	LastRunAt           *int64                                           `json:"lastRunAt"`
-	LastSuccessAt       *int64                                           `json:"lastSuccessAt"`
-	LastErrorCode       *string                                          `json:"lastErrorCode"`
-	LastErrorAt         *int64                                           `json:"lastErrorAt"`
-	WebhookURL          *string                                          `json:"webhookUrl"`
-	CreatedAt           int64                                            `json:"createdAt"`
-	UpdatedAt           int64                                            `json:"updatedAt"`
-	WebhookSecret       *string                                          `json:"webhookSecret,omitempty"`
+	ID                     string                                           `json:"id"`
+	OrgID                  string                                           `json:"orgId"`
+	ConnectorType          string                                           `json:"connectorType"`
+	ConnectorVersion       int64                                            `json:"connectorVersion"`
+	Name                   string                                           `json:"name"`
+	Config                 map[string]any                                   `json:"config"`
+	HasCredential          bool                                             `json:"hasCredential"`
+	HasWebhookSecret       bool                                             `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsCreateResponseMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                          `json:"defaultTemplateId"`
+	HolderEmailField       *string                                          `json:"holderEmailField"`
+	AutoCreate             bool                                             `json:"autoCreate"`
+	AutoEmail              bool                                             `json:"autoEmail"`
+	OnMissing              string                                           `json:"onMissing"`
+	VoidWhen               []ConnectionsCreateResponseVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                           `json:"webhookPrevUntil"`
+	Mode                   string                                           `json:"mode"`
+	IntervalSeconds        *int64                                           `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                           `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                           `json:"requestsPerMinute"`
+	Enabled                bool                                             `json:"enabled"`
+	Health                 string                                           `json:"health"`
+	FirstVerifiedArrivalAt *int64                                           `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                   `json:"warning"`
+	ConsecutiveFailures    int64                                            `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                           `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                           `json:"nextRunAt"`
+	LastRunAt              *int64                                           `json:"lastRunAt"`
+	LastSuccessAt          *int64                                           `json:"lastSuccessAt"`
+	LastErrorCode          *string                                          `json:"lastErrorCode"`
+	LastErrorAt            *int64                                           `json:"lastErrorAt"`
+	WebhookURL             *string                                          `json:"webhookUrl"`
+	CreatedAt              int64                                            `json:"createdAt"`
+	UpdatedAt              int64                                            `json:"updatedAt"`
+	WebhookSecret          *string                                          `json:"webhookSecret,omitempty"`
 }
 
 type ConnectionsCreateResponseMappingValue struct {
@@ -1379,39 +1381,41 @@ type ConnectionsFilesUploadResponse2 struct {
 type ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 
 type ConnectionsListItem struct {
-	ID                  string                                     `json:"id"`
-	OrgID               string                                     `json:"orgId"`
-	ConnectorType       string                                     `json:"connectorType"`
-	ConnectorVersion    int64                                      `json:"connectorVersion"`
-	Name                string                                     `json:"name"`
-	Config              map[string]any                             `json:"config"`
-	HasCredential       bool                                       `json:"hasCredential"`
-	HasWebhookSecret    bool                                       `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsListItemMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                    `json:"defaultTemplateId"`
-	HolderEmailField    *string                                    `json:"holderEmailField"`
-	AutoCreate          bool                                       `json:"autoCreate"`
-	AutoEmail           bool                                       `json:"autoEmail"`
-	OnMissing           string                                     `json:"onMissing"`
-	VoidWhen            []ConnectionsListItemVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                     `json:"webhookPrevUntil"`
-	Mode                string                                     `json:"mode"`
-	IntervalSeconds     *int64                                     `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                     `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                     `json:"requestsPerMinute"`
-	Enabled             bool                                       `json:"enabled"`
-	Health              string                                     `json:"health"`
-	ConsecutiveFailures int64                                      `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                     `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                     `json:"nextRunAt"`
-	LastRunAt           *int64                                     `json:"lastRunAt"`
-	LastSuccessAt       *int64                                     `json:"lastSuccessAt"`
-	LastErrorCode       *string                                    `json:"lastErrorCode"`
-	LastErrorAt         *int64                                     `json:"lastErrorAt"`
-	WebhookURL          *string                                    `json:"webhookUrl"`
-	CreatedAt           int64                                      `json:"createdAt"`
-	UpdatedAt           int64                                      `json:"updatedAt"`
-	PassCount           *int64                                     `json:"passCount,omitempty"`
+	ID                     string                                     `json:"id"`
+	OrgID                  string                                     `json:"orgId"`
+	ConnectorType          string                                     `json:"connectorType"`
+	ConnectorVersion       int64                                      `json:"connectorVersion"`
+	Name                   string                                     `json:"name"`
+	Config                 map[string]any                             `json:"config"`
+	HasCredential          bool                                       `json:"hasCredential"`
+	HasWebhookSecret       bool                                       `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsListItemMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                    `json:"defaultTemplateId"`
+	HolderEmailField       *string                                    `json:"holderEmailField"`
+	AutoCreate             bool                                       `json:"autoCreate"`
+	AutoEmail              bool                                       `json:"autoEmail"`
+	OnMissing              string                                     `json:"onMissing"`
+	VoidWhen               []ConnectionsListItemVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                     `json:"webhookPrevUntil"`
+	Mode                   string                                     `json:"mode"`
+	IntervalSeconds        *int64                                     `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                     `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                     `json:"requestsPerMinute"`
+	Enabled                bool                                       `json:"enabled"`
+	Health                 string                                     `json:"health"`
+	FirstVerifiedArrivalAt *int64                                     `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                             `json:"warning"`
+	ConsecutiveFailures    int64                                      `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                     `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                     `json:"nextRunAt"`
+	LastRunAt              *int64                                     `json:"lastRunAt"`
+	LastSuccessAt          *int64                                     `json:"lastSuccessAt"`
+	LastErrorCode          *string                                    `json:"lastErrorCode"`
+	LastErrorAt            *int64                                     `json:"lastErrorAt"`
+	WebhookURL             *string                                    `json:"webhookUrl"`
+	CreatedAt              int64                                      `json:"createdAt"`
+	UpdatedAt              int64                                      `json:"updatedAt"`
+	PassCount              *int64                                     `json:"passCount,omitempty"`
 }
 
 type ConnectionsListItemMappingValue struct {
@@ -1443,39 +1447,41 @@ type ConnectionsListResponse struct {
 }
 
 type ConnectionsListResponseItemsItem struct {
-	ID                  string                                                  `json:"id"`
-	OrgID               string                                                  `json:"orgId"`
-	ConnectorType       string                                                  `json:"connectorType"`
-	ConnectorVersion    int64                                                   `json:"connectorVersion"`
-	Name                string                                                  `json:"name"`
-	Config              map[string]any                                          `json:"config"`
-	HasCredential       bool                                                    `json:"hasCredential"`
-	HasWebhookSecret    bool                                                    `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsListResponseItemsItemMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                                 `json:"defaultTemplateId"`
-	HolderEmailField    *string                                                 `json:"holderEmailField"`
-	AutoCreate          bool                                                    `json:"autoCreate"`
-	AutoEmail           bool                                                    `json:"autoEmail"`
-	OnMissing           string                                                  `json:"onMissing"`
-	VoidWhen            []ConnectionsListResponseItemsItemVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                                  `json:"webhookPrevUntil"`
-	Mode                string                                                  `json:"mode"`
-	IntervalSeconds     *int64                                                  `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                                  `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                                  `json:"requestsPerMinute"`
-	Enabled             bool                                                    `json:"enabled"`
-	Health              string                                                  `json:"health"`
-	ConsecutiveFailures int64                                                   `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                                  `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                                  `json:"nextRunAt"`
-	LastRunAt           *int64                                                  `json:"lastRunAt"`
-	LastSuccessAt       *int64                                                  `json:"lastSuccessAt"`
-	LastErrorCode       *string                                                 `json:"lastErrorCode"`
-	LastErrorAt         *int64                                                  `json:"lastErrorAt"`
-	WebhookURL          *string                                                 `json:"webhookUrl"`
-	CreatedAt           int64                                                   `json:"createdAt"`
-	UpdatedAt           int64                                                   `json:"updatedAt"`
-	PassCount           *int64                                                  `json:"passCount,omitempty"`
+	ID                     string                                                  `json:"id"`
+	OrgID                  string                                                  `json:"orgId"`
+	ConnectorType          string                                                  `json:"connectorType"`
+	ConnectorVersion       int64                                                   `json:"connectorVersion"`
+	Name                   string                                                  `json:"name"`
+	Config                 map[string]any                                          `json:"config"`
+	HasCredential          bool                                                    `json:"hasCredential"`
+	HasWebhookSecret       bool                                                    `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsListResponseItemsItemMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                                 `json:"defaultTemplateId"`
+	HolderEmailField       *string                                                 `json:"holderEmailField"`
+	AutoCreate             bool                                                    `json:"autoCreate"`
+	AutoEmail              bool                                                    `json:"autoEmail"`
+	OnMissing              string                                                  `json:"onMissing"`
+	VoidWhen               []ConnectionsListResponseItemsItemVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                                  `json:"webhookPrevUntil"`
+	Mode                   string                                                  `json:"mode"`
+	IntervalSeconds        *int64                                                  `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                                  `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                                  `json:"requestsPerMinute"`
+	Enabled                bool                                                    `json:"enabled"`
+	Health                 string                                                  `json:"health"`
+	FirstVerifiedArrivalAt *int64                                                  `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                          `json:"warning"`
+	ConsecutiveFailures    int64                                                   `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                                  `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                                  `json:"nextRunAt"`
+	LastRunAt              *int64                                                  `json:"lastRunAt"`
+	LastSuccessAt          *int64                                                  `json:"lastSuccessAt"`
+	LastErrorCode          *string                                                 `json:"lastErrorCode"`
+	LastErrorAt            *int64                                                  `json:"lastErrorAt"`
+	WebhookURL             *string                                                 `json:"webhookUrl"`
+	CreatedAt              int64                                                   `json:"createdAt"`
+	UpdatedAt              int64                                                   `json:"updatedAt"`
+	PassCount              *int64                                                  `json:"passCount,omitempty"`
 }
 
 type ConnectionsListResponseItemsItemMappingValue struct {
@@ -1492,6 +1498,12 @@ type ConnectionsListResponseItemsItemVoidWhenItem struct {
 	From   string `json:"from"`
 	Op     string `json:"op"`
 	Values []any  `json:"values,omitempty"`
+}
+
+type ConnectionsPreviewBody = ConnectionsPreviewParams
+
+type ConnectionsPreviewParams struct {
+	ArrivalID *string `json:"arrivalId,omitempty"`
 }
 
 type ConnectionsPreviewResult = ConnectionPreview
@@ -1549,40 +1561,42 @@ type ConnectionsProbeResponse struct {
 type ConnectionsProbeResult = ConnectionsProbeResponse
 
 type ConnectionsRetrieveResponse struct {
-	ID                  string                                             `json:"id"`
-	OrgID               string                                             `json:"orgId"`
-	ConnectorType       string                                             `json:"connectorType"`
-	ConnectorVersion    int64                                              `json:"connectorVersion"`
-	Name                string                                             `json:"name"`
-	Config              map[string]any                                     `json:"config"`
-	HasCredential       bool                                               `json:"hasCredential"`
-	HasWebhookSecret    bool                                               `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsRetrieveResponseMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                            `json:"defaultTemplateId"`
-	HolderEmailField    *string                                            `json:"holderEmailField"`
-	AutoCreate          bool                                               `json:"autoCreate"`
-	AutoEmail           bool                                               `json:"autoEmail"`
-	OnMissing           string                                             `json:"onMissing"`
-	VoidWhen            []ConnectionsRetrieveResponseVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                             `json:"webhookPrevUntil"`
-	Mode                string                                             `json:"mode"`
-	IntervalSeconds     *int64                                             `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                             `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                             `json:"requestsPerMinute"`
-	Enabled             bool                                               `json:"enabled"`
-	Health              string                                             `json:"health"`
-	ConsecutiveFailures int64                                              `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                             `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                             `json:"nextRunAt"`
-	LastRunAt           *int64                                             `json:"lastRunAt"`
-	LastSuccessAt       *int64                                             `json:"lastSuccessAt"`
-	LastErrorCode       *string                                            `json:"lastErrorCode"`
-	LastErrorAt         *int64                                             `json:"lastErrorAt"`
-	WebhookURL          *string                                            `json:"webhookUrl"`
-	CreatedAt           int64                                              `json:"createdAt"`
-	UpdatedAt           int64                                              `json:"updatedAt"`
-	Runs                []ConnectionsRetrieveResponseRunsItem              `json:"runs"`
-	Metrics             ConnectionsRetrieveResponseMetrics                 `json:"metrics"`
+	ID                     string                                             `json:"id"`
+	OrgID                  string                                             `json:"orgId"`
+	ConnectorType          string                                             `json:"connectorType"`
+	ConnectorVersion       int64                                              `json:"connectorVersion"`
+	Name                   string                                             `json:"name"`
+	Config                 map[string]any                                     `json:"config"`
+	HasCredential          bool                                               `json:"hasCredential"`
+	HasWebhookSecret       bool                                               `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsRetrieveResponseMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                            `json:"defaultTemplateId"`
+	HolderEmailField       *string                                            `json:"holderEmailField"`
+	AutoCreate             bool                                               `json:"autoCreate"`
+	AutoEmail              bool                                               `json:"autoEmail"`
+	OnMissing              string                                             `json:"onMissing"`
+	VoidWhen               []ConnectionsRetrieveResponseVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                             `json:"webhookPrevUntil"`
+	Mode                   string                                             `json:"mode"`
+	IntervalSeconds        *int64                                             `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                             `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                             `json:"requestsPerMinute"`
+	Enabled                bool                                               `json:"enabled"`
+	Health                 string                                             `json:"health"`
+	FirstVerifiedArrivalAt *int64                                             `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                     `json:"warning"`
+	ConsecutiveFailures    int64                                              `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                             `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                             `json:"nextRunAt"`
+	LastRunAt              *int64                                             `json:"lastRunAt"`
+	LastSuccessAt          *int64                                             `json:"lastSuccessAt"`
+	LastErrorCode          *string                                            `json:"lastErrorCode"`
+	LastErrorAt            *int64                                             `json:"lastErrorAt"`
+	WebhookURL             *string                                            `json:"webhookUrl"`
+	CreatedAt              int64                                              `json:"createdAt"`
+	UpdatedAt              int64                                              `json:"updatedAt"`
+	Runs                   []ConnectionsRetrieveResponseRunsItem              `json:"runs"`
+	Metrics                ConnectionsRetrieveResponseMetrics                 `json:"metrics"`
 }
 
 type ConnectionsRetrieveResponseMappingValue struct {
@@ -1645,38 +1659,40 @@ type ConnectionsRetrieveSummaryResponseAttentionItem struct {
 type ConnectionsRetrieveSummaryResult = ConnectionsRetrieveSummaryResponse
 
 type ConnectionsRevokePreviousWebhookSecretResponse struct {
-	ID                  string                                                                `json:"id"`
-	OrgID               string                                                                `json:"orgId"`
-	ConnectorType       string                                                                `json:"connectorType"`
-	ConnectorVersion    int64                                                                 `json:"connectorVersion"`
-	Name                string                                                                `json:"name"`
-	Config              map[string]any                                                        `json:"config"`
-	HasCredential       bool                                                                  `json:"hasCredential"`
-	HasWebhookSecret    bool                                                                  `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsRevokePreviousWebhookSecretResponseMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                                               `json:"defaultTemplateId"`
-	HolderEmailField    *string                                                               `json:"holderEmailField"`
-	AutoCreate          bool                                                                  `json:"autoCreate"`
-	AutoEmail           bool                                                                  `json:"autoEmail"`
-	OnMissing           string                                                                `json:"onMissing"`
-	VoidWhen            []ConnectionsRevokePreviousWebhookSecretResponseVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                                                `json:"webhookPrevUntil"`
-	Mode                string                                                                `json:"mode"`
-	IntervalSeconds     *int64                                                                `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                                                `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                                                `json:"requestsPerMinute"`
-	Enabled             bool                                                                  `json:"enabled"`
-	Health              string                                                                `json:"health"`
-	ConsecutiveFailures int64                                                                 `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                                                `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                                                `json:"nextRunAt"`
-	LastRunAt           *int64                                                                `json:"lastRunAt"`
-	LastSuccessAt       *int64                                                                `json:"lastSuccessAt"`
-	LastErrorCode       *string                                                               `json:"lastErrorCode"`
-	LastErrorAt         *int64                                                                `json:"lastErrorAt"`
-	WebhookURL          *string                                                               `json:"webhookUrl"`
-	CreatedAt           int64                                                                 `json:"createdAt"`
-	UpdatedAt           int64                                                                 `json:"updatedAt"`
+	ID                     string                                                                `json:"id"`
+	OrgID                  string                                                                `json:"orgId"`
+	ConnectorType          string                                                                `json:"connectorType"`
+	ConnectorVersion       int64                                                                 `json:"connectorVersion"`
+	Name                   string                                                                `json:"name"`
+	Config                 map[string]any                                                        `json:"config"`
+	HasCredential          bool                                                                  `json:"hasCredential"`
+	HasWebhookSecret       bool                                                                  `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsRevokePreviousWebhookSecretResponseMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                                               `json:"defaultTemplateId"`
+	HolderEmailField       *string                                                               `json:"holderEmailField"`
+	AutoCreate             bool                                                                  `json:"autoCreate"`
+	AutoEmail              bool                                                                  `json:"autoEmail"`
+	OnMissing              string                                                                `json:"onMissing"`
+	VoidWhen               []ConnectionsRevokePreviousWebhookSecretResponseVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                                                `json:"webhookPrevUntil"`
+	Mode                   string                                                                `json:"mode"`
+	IntervalSeconds        *int64                                                                `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                                                `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                                                `json:"requestsPerMinute"`
+	Enabled                bool                                                                  `json:"enabled"`
+	Health                 string                                                                `json:"health"`
+	FirstVerifiedArrivalAt *int64                                                                `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                                        `json:"warning"`
+	ConsecutiveFailures    int64                                                                 `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                                                `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                                                `json:"nextRunAt"`
+	LastRunAt              *int64                                                                `json:"lastRunAt"`
+	LastSuccessAt          *int64                                                                `json:"lastSuccessAt"`
+	LastErrorCode          *string                                                               `json:"lastErrorCode"`
+	LastErrorAt            *int64                                                                `json:"lastErrorAt"`
+	WebhookURL             *string                                                               `json:"webhookUrl"`
+	CreatedAt              int64                                                                 `json:"createdAt"`
+	UpdatedAt              int64                                                                 `json:"updatedAt"`
 }
 
 type ConnectionsRevokePreviousWebhookSecretResponseMappingValue struct {
@@ -1702,39 +1718,41 @@ type ConnectionsRotateWebhookSecretQuery struct {
 }
 
 type ConnectionsRotateWebhookSecretResponse struct {
-	ID                  string                                                        `json:"id"`
-	OrgID               string                                                        `json:"orgId"`
-	ConnectorType       string                                                        `json:"connectorType"`
-	ConnectorVersion    int64                                                         `json:"connectorVersion"`
-	Name                string                                                        `json:"name"`
-	Config              map[string]any                                                `json:"config"`
-	HasCredential       bool                                                          `json:"hasCredential"`
-	HasWebhookSecret    bool                                                          `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsRotateWebhookSecretResponseMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                                       `json:"defaultTemplateId"`
-	HolderEmailField    *string                                                       `json:"holderEmailField"`
-	AutoCreate          bool                                                          `json:"autoCreate"`
-	AutoEmail           bool                                                          `json:"autoEmail"`
-	OnMissing           string                                                        `json:"onMissing"`
-	VoidWhen            []ConnectionsRotateWebhookSecretResponseVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                                        `json:"webhookPrevUntil"`
-	Mode                string                                                        `json:"mode"`
-	IntervalSeconds     *int64                                                        `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                                        `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                                        `json:"requestsPerMinute"`
-	Enabled             bool                                                          `json:"enabled"`
-	Health              string                                                        `json:"health"`
-	ConsecutiveFailures int64                                                         `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                                        `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                                        `json:"nextRunAt"`
-	LastRunAt           *int64                                                        `json:"lastRunAt"`
-	LastSuccessAt       *int64                                                        `json:"lastSuccessAt"`
-	LastErrorCode       *string                                                       `json:"lastErrorCode"`
-	LastErrorAt         *int64                                                        `json:"lastErrorAt"`
-	WebhookURL          *string                                                       `json:"webhookUrl"`
-	CreatedAt           int64                                                         `json:"createdAt"`
-	UpdatedAt           int64                                                         `json:"updatedAt"`
-	WebhookSecret       *string                                                       `json:"webhookSecret,omitempty"`
+	ID                     string                                                        `json:"id"`
+	OrgID                  string                                                        `json:"orgId"`
+	ConnectorType          string                                                        `json:"connectorType"`
+	ConnectorVersion       int64                                                         `json:"connectorVersion"`
+	Name                   string                                                        `json:"name"`
+	Config                 map[string]any                                                `json:"config"`
+	HasCredential          bool                                                          `json:"hasCredential"`
+	HasWebhookSecret       bool                                                          `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsRotateWebhookSecretResponseMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                                       `json:"defaultTemplateId"`
+	HolderEmailField       *string                                                       `json:"holderEmailField"`
+	AutoCreate             bool                                                          `json:"autoCreate"`
+	AutoEmail              bool                                                          `json:"autoEmail"`
+	OnMissing              string                                                        `json:"onMissing"`
+	VoidWhen               []ConnectionsRotateWebhookSecretResponseVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                                        `json:"webhookPrevUntil"`
+	Mode                   string                                                        `json:"mode"`
+	IntervalSeconds        *int64                                                        `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                                        `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                                        `json:"requestsPerMinute"`
+	Enabled                bool                                                          `json:"enabled"`
+	Health                 string                                                        `json:"health"`
+	FirstVerifiedArrivalAt *int64                                                        `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                                `json:"warning"`
+	ConsecutiveFailures    int64                                                         `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                                        `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                                        `json:"nextRunAt"`
+	LastRunAt              *int64                                                        `json:"lastRunAt"`
+	LastSuccessAt          *int64                                                        `json:"lastSuccessAt"`
+	LastErrorCode          *string                                                       `json:"lastErrorCode"`
+	LastErrorAt            *int64                                                        `json:"lastErrorAt"`
+	WebhookURL             *string                                                       `json:"webhookUrl"`
+	CreatedAt              int64                                                         `json:"createdAt"`
+	UpdatedAt              int64                                                         `json:"updatedAt"`
+	WebhookSecret          *string                                                       `json:"webhookSecret,omitempty"`
 }
 
 type ConnectionsRotateWebhookSecretResponseMappingValue struct {
@@ -1798,6 +1816,113 @@ type ConnectionsRunsListResponseItemsItem struct {
 	HttpStatus    *int64  `json:"httpStatus"`
 	DurationMs    *int64  `json:"durationMs"`
 }
+
+type ConnectionsSetupRetrieveResponse struct {
+	Direction       string                                        `json:"direction"`
+	Recipe          string                                        `json:"recipe"`
+	Version         string                                        `json:"version"`
+	CheckedAt       string                                        `json:"checkedAt"`
+	Provider        ConnectionsSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          ConnectionsSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   ConnectionsSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []ConnectionsSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            ConnectionsSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                             `json:"troubleshooting"`
+	Values          ConnectionsSetupRetrieveResponseValues        `json:"values"`
+}
+
+type ConnectionsSetupRetrieveResponseProvider struct {
+	Name       string                                             `json:"name"`
+	ConsoleURL *string                                            `json:"consoleUrl"`
+	Docs       []ConnectionsSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type ConnectionsSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type ConnectionsSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                    `json:"perWebhook"`
+	Topics     []ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type ConnectionsSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type ConnectionsSetupRetrieveResponseValues struct {
+	EndpointURL     *string `json:"endpointUrl"`
+	SignatureHeader *string `json:"signatureHeader"`
+	TimestampHeader *string `json:"timestampHeader"`
+	HasSecret       bool    `json:"hasSecret"`
+}
+
+type ConnectionsSetupRetrieveResult = ConnectionsSetupRetrieveResponse
 
 type ConnectionsSyncResponse struct {
 	RunID              string `json:"runId"`
@@ -1950,39 +2075,41 @@ type ConnectionsUpdateParamsVoidWhenItem struct {
 }
 
 type ConnectionsUpdateResponse struct {
-	ID                  string                                           `json:"id"`
-	OrgID               string                                           `json:"orgId"`
-	ConnectorType       string                                           `json:"connectorType"`
-	ConnectorVersion    int64                                            `json:"connectorVersion"`
-	Name                string                                           `json:"name"`
-	Config              map[string]any                                   `json:"config"`
-	HasCredential       bool                                             `json:"hasCredential"`
-	HasWebhookSecret    bool                                             `json:"hasWebhookSecret"`
-	Mapping             map[string]ConnectionsUpdateResponseMappingValue `json:"mapping"`
-	DefaultTemplateID   *string                                          `json:"defaultTemplateId"`
-	HolderEmailField    *string                                          `json:"holderEmailField"`
-	AutoCreate          bool                                             `json:"autoCreate"`
-	AutoEmail           bool                                             `json:"autoEmail"`
-	OnMissing           string                                           `json:"onMissing"`
-	VoidWhen            []ConnectionsUpdateResponseVoidWhenItem          `json:"voidWhen"`
-	WebhookPrevUntil    *int64                                           `json:"webhookPrevUntil"`
-	Mode                string                                           `json:"mode"`
-	IntervalSeconds     *int64                                           `json:"intervalSeconds"`
-	MaxConcurrency      *int64                                           `json:"maxConcurrency"`
-	RequestsPerMinute   *int64                                           `json:"requestsPerMinute"`
-	Enabled             bool                                             `json:"enabled"`
-	Health              string                                           `json:"health"`
-	ConsecutiveFailures int64                                            `json:"consecutiveFailures"`
-	BreakerOpenUntil    *int64                                           `json:"breakerOpenUntil"`
-	NextRunAt           *int64                                           `json:"nextRunAt"`
-	LastRunAt           *int64                                           `json:"lastRunAt"`
-	LastSuccessAt       *int64                                           `json:"lastSuccessAt"`
-	LastErrorCode       *string                                          `json:"lastErrorCode"`
-	LastErrorAt         *int64                                           `json:"lastErrorAt"`
-	WebhookURL          *string                                          `json:"webhookUrl"`
-	CreatedAt           int64                                            `json:"createdAt"`
-	UpdatedAt           int64                                            `json:"updatedAt"`
-	WebhookSecret       *string                                          `json:"webhookSecret,omitempty"`
+	ID                     string                                           `json:"id"`
+	OrgID                  string                                           `json:"orgId"`
+	ConnectorType          string                                           `json:"connectorType"`
+	ConnectorVersion       int64                                            `json:"connectorVersion"`
+	Name                   string                                           `json:"name"`
+	Config                 map[string]any                                   `json:"config"`
+	HasCredential          bool                                             `json:"hasCredential"`
+	HasWebhookSecret       bool                                             `json:"hasWebhookSecret"`
+	Mapping                map[string]ConnectionsUpdateResponseMappingValue `json:"mapping"`
+	DefaultTemplateID      *string                                          `json:"defaultTemplateId"`
+	HolderEmailField       *string                                          `json:"holderEmailField"`
+	AutoCreate             bool                                             `json:"autoCreate"`
+	AutoEmail              bool                                             `json:"autoEmail"`
+	OnMissing              string                                           `json:"onMissing"`
+	VoidWhen               []ConnectionsUpdateResponseVoidWhenItem          `json:"voidWhen"`
+	WebhookPrevUntil       *int64                                           `json:"webhookPrevUntil"`
+	Mode                   string                                           `json:"mode"`
+	IntervalSeconds        *int64                                           `json:"intervalSeconds"`
+	MaxConcurrency         *int64                                           `json:"maxConcurrency"`
+	RequestsPerMinute      *int64                                           `json:"requestsPerMinute"`
+	Enabled                bool                                             `json:"enabled"`
+	Health                 string                                           `json:"health"`
+	FirstVerifiedArrivalAt *int64                                           `json:"firstVerifiedArrivalAt"`
+	Warning                map[string]any                                   `json:"warning"`
+	ConsecutiveFailures    int64                                            `json:"consecutiveFailures"`
+	BreakerOpenUntil       *int64                                           `json:"breakerOpenUntil"`
+	NextRunAt              *int64                                           `json:"nextRunAt"`
+	LastRunAt              *int64                                           `json:"lastRunAt"`
+	LastSuccessAt          *int64                                           `json:"lastSuccessAt"`
+	LastErrorCode          *string                                          `json:"lastErrorCode"`
+	LastErrorAt            *int64                                           `json:"lastErrorAt"`
+	WebhookURL             *string                                          `json:"webhookUrl"`
+	CreatedAt              int64                                            `json:"createdAt"`
+	UpdatedAt              int64                                            `json:"updatedAt"`
+	WebhookSecret          *string                                          `json:"webhookSecret,omitempty"`
 }
 
 type ConnectionsUpdateResponseMappingValue struct {
@@ -2128,6 +2255,43 @@ type ConnectionsUploadsUpdateResponsePreview struct {
 
 type ConnectionsUploadsUpdateResult = ConnectionsUploadsUpdateResponse
 
+type ConnectionsWebhookArrivalsListItem struct {
+	ID           string  `json:"id"`
+	ReceivedAt   int64   `json:"receivedAt"`
+	LastAt       int64   `json:"lastAt"`
+	Outcome      string  `json:"outcome"`
+	Reason       *string `json:"reason"`
+	Topic        *string `json:"topic"`
+	ContentClass string  `json:"contentClass"`
+	EventRef     *string `json:"eventRef"`
+	UsedPrevious bool    `json:"usedPrevious"`
+	Count        int64   `json:"count"`
+}
+
+type ConnectionsWebhookArrivalsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Since  *int64  `json:"since,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ConnectionsWebhookArrivalsListResponse struct {
+	Items      []ConnectionsWebhookArrivalsListResponseItemsItem `json:"items"`
+	NextCursor *string                                           `json:"nextCursor"`
+}
+
+type ConnectionsWebhookArrivalsListResponseItemsItem struct {
+	ID           string  `json:"id"`
+	ReceivedAt   int64   `json:"receivedAt"`
+	LastAt       int64   `json:"lastAt"`
+	Outcome      string  `json:"outcome"`
+	Reason       *string `json:"reason"`
+	Topic        *string `json:"topic"`
+	ContentClass string  `json:"contentClass"`
+	EventRef     *string `json:"eventRef"`
+	UsedPrevious bool    `json:"usedPrevious"`
+	Count        int64   `json:"count"`
+}
+
 type ConnectionsWebhookFailuresListItem struct {
 	ID             string  `json:"id"`
 	EventRef       string  `json:"eventRef"`
@@ -2217,6 +2381,9 @@ type ConnectorsListItemRecipesItem struct {
 	Label            string                                                    `json:"label"`
 	Category         *string                                                   `json:"category,omitempty"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
+	Line             *string                                                   `json:"line,omitempty"`
+	SecretOrigin     *string                                                   `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                   `json:"setupVersion,omitempty"`
 	Entitled         bool                                                      `json:"entitled"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
@@ -2296,6 +2463,9 @@ type ConnectorsListResponseItemsItemRecipesItem struct {
 	Label            string                                                                 `json:"label"`
 	Category         *string                                                                `json:"category,omitempty"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
+	Line             *string                                                                `json:"line,omitempty"`
+	SecretOrigin     *string                                                                `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                                `json:"setupVersion,omitempty"`
 	Entitled         bool                                                                   `json:"entitled"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
@@ -2323,6 +2493,105 @@ type ConnectorsListResponseItemsItemRecipesItemVoidWhenItem struct {
 	Op     string `json:"op"`
 	Values []any  `json:"values,omitempty"`
 }
+
+type ConnectorsRecipeSetupRetrieveResponse struct {
+	Direction       string                                             `json:"direction"`
+	Recipe          string                                             `json:"recipe"`
+	Version         string                                             `json:"version"`
+	CheckedAt       string                                             `json:"checkedAt"`
+	Provider        ConnectorsRecipeSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          ConnectorsRecipeSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   ConnectorsRecipeSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []ConnectorsRecipeSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            ConnectorsRecipeSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                                  `json:"troubleshooting"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseProvider struct {
+	Name       string                                                  `json:"name"`
+	ConsoleURL *string                                                 `json:"consoleUrl"`
+	Docs       []ConnectorsRecipeSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                         `json:"perWebhook"`
+	Topics     []ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type ConnectorsRecipeSetupRetrieveResult = ConnectorsRecipeSetupRetrieveResponse
 
 type ConnectorsRetrieveResponse struct {
 	Type         string                                                 `json:"type"`
@@ -2366,6 +2635,9 @@ type ConnectorsRetrieveResponseRecipesItem struct {
 	Label            string                                                            `json:"label"`
 	Category         *string                                                           `json:"category,omitempty"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
+	Line             *string                                                           `json:"line,omitempty"`
+	SecretOrigin     *string                                                           `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                           `json:"setupVersion,omitempty"`
 	Entitled         bool                                                              `json:"entitled"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
@@ -2446,6 +2718,7 @@ type CreatedScanningDevice struct {
 	Revoked          bool                           `json:"revoked"`
 	LastSeenAt       *int64                         `json:"lastSeenAt"`
 	UpdatedAt        int64                          `json:"updatedAt"`
+	ConfigRevision   int64                          `json:"configRevision"`
 	SignIn           string                         `json:"signIn"`
 	AdminName        *string                        `json:"adminName"`
 	Pairing          map[string]any                 `json:"pairing"`
@@ -8485,6 +8758,93 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	At         int64   `json:"at"`
 }
 
+type PlatformAppleIdentitiesCreateParams struct {
+	Slot string `json:"slot"`
+}
+
+type PlatformAppleIdentitiesCreateResponse struct {
+	ID         string  `json:"id"`
+	OrgID      *string `json:"orgId"`
+	Kind       string  `json:"kind"`
+	TargetType string  `json:"targetType"`
+	TargetID   string  `json:"targetId"`
+	State      string  `json:"state"`
+	Step       *string `json:"step"`
+	Attempt    int64   `json:"attempt"`
+	WaitingFor *string `json:"waitingFor"`
+	ErrorCode  *string `json:"errorCode"`
+	CreatedAt  int64   `json:"createdAt"`
+	UpdatedAt  int64   `json:"updatedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+}
+
+type PlatformAppleIdentitiesListResponse struct {
+	Items    []PlatformAppleIdentitiesListResponseItemsItem    `json:"items"`
+	OpenRuns []PlatformAppleIdentitiesListResponseOpenRunsItem `json:"openRuns"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItem struct {
+	ID                 string                                                    `json:"id"`
+	OrgID              *string                                                   `json:"orgId"`
+	Label              string                                                    `json:"label"`
+	PassTypeIdentifier string                                                    `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                                    `json:"teamIdentifier"`
+	Source             string                                                    `json:"source"`
+	CertSha256         *string                                                   `json:"certSha256"`
+	CertSubject        *string                                                   `json:"certSubject"`
+	CertSerial         *string                                                   `json:"certSerial"`
+	NotBefore          *int64                                                    `json:"notBefore"`
+	NotAfter           *int64                                                    `json:"notAfter"`
+	DaysRemaining      *int64                                                    `json:"daysRemaining"`
+	ApnsBinding        *string                                                   `json:"apnsBinding"`
+	ApnsAvailable      bool                                                      `json:"apnsAvailable"`
+	PushMethod         *string                                                   `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                            `json:"pushKey,omitempty"`
+	ApnsHealth         string                                                    `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                                    `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                                   `json:"apnsReason,omitempty"`
+	PassCount          *int64                                                    `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                      `json:"nfcEnabled"`
+	NFCKeys            []PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                      `json:"isDefault"`
+	CreatedAt          int64                                                     `json:"createdAt"`
+	Kind               *string                                                   `json:"kind,omitempty"`
+	Status             *string                                                   `json:"status,omitempty"`
+	Rotation           *string                                                   `json:"rotation,omitempty"`
+	Issuing            *bool                                                     `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                                    `json:"nextRotationAt,omitempty"`
+	Handle             *string                                                   `json:"handle,omitempty"`
+	Slot               *string                                                   `json:"slot"`
+	Purpose            string                                                    `json:"purpose"`
+	Managed            string                                                    `json:"managed"`
+	RegistrationCount  int64                                                     `json:"registrationCount"`
+	OpenRunID          *string                                                   `json:"openRunId"`
+	Dormant            bool                                                      `json:"dormant"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformAppleIdentitiesListResponseOpenRunsItem struct {
+	Slot  string `json:"slot"`
+	RunID string `json:"runId"`
+}
+
+type PlatformAppleIdentitiesMakeDefaultResponse struct {
+	IdentityID string `json:"identityId"`
+	Changed    bool   `json:"changed"`
+}
+
 type PlatformAuditEntriesListResponse struct {
 	Items      []PlatformAuditEntriesListResponseItemsItem `json:"items"`
 	NextCursor *string                                     `json:"nextCursor"`
@@ -12034,6 +12394,7 @@ type ScanningDevice struct {
 	Revoked          bool                    `json:"revoked"`
 	LastSeenAt       *int64                  `json:"lastSeenAt"`
 	UpdatedAt        int64                   `json:"updatedAt"`
+	ConfigRevision   int64                   `json:"configRevision"`
 	SignIn           string                  `json:"signIn"`
 	AdminName        *string                 `json:"adminName"`
 }
@@ -15153,6 +15514,105 @@ type WebhookEndpointsSendTestParams struct {
 }
 
 type WebhookEndpointsSendTestResult = WebhookTestResult
+
+type WebhookEndpointsSetupRetrieveResponse struct {
+	Direction       string                                             `json:"direction"`
+	Recipe          string                                             `json:"recipe"`
+	Version         string                                             `json:"version"`
+	CheckedAt       string                                             `json:"checkedAt"`
+	Provider        WebhookEndpointsSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          WebhookEndpointsSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   WebhookEndpointsSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []WebhookEndpointsSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            WebhookEndpointsSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                                  `json:"troubleshooting"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseProvider struct {
+	Name       string                                                  `json:"name"`
+	ConsoleURL *string                                                 `json:"consoleUrl"`
+	Docs       []WebhookEndpointsSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                         `json:"perWebhook"`
+	Topics     []WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type WebhookEndpointsSetupRetrieveResult = WebhookEndpointsSetupRetrieveResponse
 
 type WebhookEndpointsTestsListResult = WebhookTestAttemptPage
 
