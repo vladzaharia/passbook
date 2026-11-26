@@ -18,7 +18,7 @@ export { SAMSUNG_LIMITS } from './limits.ts';
 export { samsungPortalUrl } from './portal.ts';
 
 /** Joins the release candidate digest. Bump it with any change to compiled output. */
-export const SAMSUNG_COMPILER_REVISION = 2;
+export const SAMSUNG_COMPILER_REVISION = 3;
 
 type Wanted = SamsungType | 'generic' | 'giftcard';
 
