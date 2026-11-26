@@ -1,8 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { countD1 } from '../../../../test/helpers/count-d1.ts';
 import { fakeRateLimiter } from '../../../../test/helpers/fakes.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { type Api, BASE, setupApi } from './api-test-fixtures.ts';
+import { sendAllowed } from './deliver-gate.ts';
 import {
   deliveryOf,
   drain,
@@ -12,6 +14,7 @@ import {
   stubNet,
 } from './deliver-test-fixtures.ts';
 import { dispatchLane } from './dispatch.ts';
+import { getEndpoint } from './repo-endpoints.ts';
 
 let api: Api;
 let net: Net;
@@ -172,5 +175,24 @@ describe('sandbox delivery', () => {
     Object.assign(api.rig.kit.env, { RL_SANDBOX_DELIVERY: fakeRateLimiter({ limit: 0 }) });
     const d = await due('https://hooks.example.com/standard', api.rig.orgId);
     expect(await deliver(d)).toMatchObject({ state: 'delivered' });
+  });
+});
+
+describe('the send gate', () => {
+  it('reads the org kind from the due delivery: a send costs no query of its own', async () => {
+    const d = await due('https://hooks.example.com/count');
+    const endpoint = await getEndpoint(api.rig.db, { orgId, mode: 'test' }, d.ep);
+    if (!endpoint) throw new Error('setup');
+    const counted = countD1(api.rig.db);
+    const gate = (sandbox: boolean) => {
+      const env = { ...api.rig.ctx.env, DB: counted.db, ...limiters };
+      return sendAllowed({ ...api.rig.ctx, env }, endpoint, sandbox);
+    };
+    let limiters = { RL_SANDBOX_DELIVERY: fakeRateLimiter({ limit: 60 }) };
+    expect(await gate(true)).toBe(true);
+    limiters = { RL_SANDBOX_DELIVERY: fakeRateLimiter({ limit: 0 }) };
+    expect(await gate(true)).toBe(false);
+    expect(await gate(false)).toBe(true);
+    expect(counted.count()).toBe(0);
   });
 });

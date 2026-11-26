@@ -1,7 +1,6 @@
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureHourFull } from './capture.ts';
-import { isDeveloperOrg } from './repo-capture.ts';
 import type { EndpointRow } from './repo-endpoints.ts';
 import { hostOf } from './url.ts';
 
@@ -10,14 +9,18 @@ import { hostOf } from './url.ts';
  * org and lane; over the limit the delivery waits, and neither the attempt nor the endpoint is charged.
  * A sandbox URL endpoint also draws on its sandbox's own limit. A capture endpoint has no host: it waits only when its org has used the hour's captures.
  */
-export async function sendAllowed(ctx: ServiceContext, endpoint: EndpointRow): Promise<boolean> {
+export async function sendAllowed(
+  ctx: ServiceContext,
+  endpoint: EndpointRow,
+  sandbox: boolean,
+): Promise<boolean> {
   if (endpoint.target === 'capture') return !(await captureHourFull(ctx, endpoint.orgId));
   const host = hostOf(endpoint.url);
   try {
     // A sandbox's own 60 a minute comes first, so its backlog never spends the host's budget.
     if (
       endpoint.mode === 'test' &&
-      (await isDeveloperOrg(ctx.env.DB, endpoint.orgId)) &&
+      sandbox &&
       !(await checkRateLimit(ctx.env, 'RL_SANDBOX_DELIVERY', `org:${endpoint.orgId}`))
     )
       return false;

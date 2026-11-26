@@ -47,8 +47,8 @@ export async function sendTest(
   const { orgId, mode } = access.authority;
   if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `test:${orgId}:${mode}`)))
     throw new RateLimitedError();
-  // The same budgets a delivery spends.
-  if (!(await sendAllowed(ctx, endpoint))) throw new RateLimitedError();
+  // The host budgets a delivery spends; a sandbox's own limit is not spent here, the test-send limit above covers it.
+  if (!(await sendAllowed(ctx, endpoint, false))) throw new RateLimitedError();
   const secrets = await openActiveSecrets(ctx, await loadKekRing(ctx.env), endpoint);
   const startedAt = ctx.clock.now();
   const id = ctx.ids.id();
