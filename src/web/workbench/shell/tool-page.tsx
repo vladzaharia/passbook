@@ -26,7 +26,8 @@ export interface ToolPageProps {
 
 /**
  * Every tool's frame (design §5.1, D2): the glyph tile beside the h1, a mono count, Mark seen while
- * the area has attention, then the one primary. Sections rise in, 45 ms apart.
+ * the area has attention, then the one primary. Sections rise in, 45 ms apart. The title keeps the
+ * head's 40 px line, so a head that wraps its actions on a phone never moves the title.
  */
 export function ToolPage({ tool, count, primary, toolbar, children }: ToolPageProps) {
   const { context, attention, seenAt } = useWbShell();
@@ -47,7 +48,7 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
         <GlyphTile tool={tool} />
         <h1
           tabIndex={-1}
-          className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong outline-none"
+          className="grid min-h-10 content-center text-2xl font-semibold tracking-[-0.015em] text-fg-strong outline-none"
         >
           {title}
         </h1>
