@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { useWalletPreviews } from '../../channel-previews/use-wallet-previews.ts';
-import { SandboxOperations } from '../../developers/ui/sandbox-operation.tsx';
 import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../../pass-card/barcode-engine.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { copyToClipboard } from '../playground/copy.ts';
@@ -92,16 +91,14 @@ function FailCard({ fix, q }: { fix: Fix; q: Quickstart }) {
       {fix.line ? <p className="sm">{fix.line}</p> : null}
       <div className="row g2 wrap-row">
         {fix.repair && (q.session.kind === 'ready' || q.session.kind === 'none') ? (
-          <SandboxOperations csrf={q.csrf}>
-            <MakeSandbox
-              csrf={q.csrf}
-              siteKey={q.session.siteKey}
-              label={QS_COPY.fail.repair}
-              onMade={q.sandboxMade}
-              op={repairing}
-              onOp={setRepairing}
-            />
-          </SandboxOperations>
+          <MakeSandbox
+            csrf={q.csrf}
+            siteKey={q.session.siteKey}
+            label={QS_COPY.fail.repair}
+            onMade={q.sandboxMade}
+            op={repairing}
+            onOp={setRepairing}
+          />
         ) : null}
         {fix.code ? (
           <a className="btn outline" href={`${PATHS.errors}/${fix.code}`}>

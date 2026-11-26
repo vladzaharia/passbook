@@ -67,14 +67,22 @@ export class LiveClient {
   #token: { value: string; expiresAt: number } | null = null;
 
   readonly #csrf: string;
+  readonly #held: (() => Promise<string>) | undefined;
   readonly sandbox: { templateId: string | null; orgSlug: string };
 
-  constructor(csrf: string, sandbox: { templateId: string | null; orgSlug: string }) {
+  /** `held`: the Workbench token's provider. With it the client mints no Try it token of its own. */
+  constructor(
+    csrf: string,
+    sandbox: { templateId: string | null; orgSlug: string },
+    held?: () => Promise<string>,
+  ) {
     this.#csrf = csrf;
     this.sandbox = sandbox;
+    this.#held = held;
   }
 
   async #bearer(): Promise<string> {
+    if (this.#held) return this.#held();
     const now = Date.now();
     if (this.#token && this.#token.expiresAt - RENEW_BEFORE_MS > now) return this.#token.value;
     const res = await fetch(`${API}/developer/try-token`, {

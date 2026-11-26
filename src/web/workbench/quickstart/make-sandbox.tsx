@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
-import { SandboxOperation, startedOperation } from '../../developers/ui/sandbox-operation.tsx';
 import { CreateError, startSandbox } from '../console/create.ts';
 import { mintKey, sandboxOfOperation } from '../console/sandbox-actions.ts';
 import type { Sandbox } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
+import { SandboxOperation, startedOperation } from '../sandbox/operation.tsx';
 
 /**
  * The create operation, live and inline: every step with its count, Retry on the one that failed. When it ends well

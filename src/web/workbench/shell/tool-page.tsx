@@ -1,14 +1,20 @@
 import { Eye } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
 import { WB_AREA, WB_SHELL_COPY, WB_TAB_TITLE } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { useDocumentTitle } from '../../lib/route-focus.tsx';
 import { Button } from '../../ui/button.tsx';
 import { type BenchSlots, BenchSlotsContext } from '../bench/slots.tsx';
 import { SEEN_AREAS, type SeenArea } from '../host/summary.ts';
+import { useSandboxBusy } from '../sandbox/busy.ts';
 import { GlyphTile } from './area-button.tsx';
 import { markSeen } from './attention.ts';
 import { useWbShell } from './shell-context.ts';
+
+// Mid-reset (design §6): only a reset or start over under way loads this.
+const Resetting = lazy(() =>
+  import('../states/states.tsx').then((m) => ({ default: m.ResettingState })),
+);
 
 const isSeenArea = (tool: WbTool): tool is SeenArea =>
   (SEEN_AREAS as readonly string[]).includes(tool);
@@ -41,6 +47,12 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
   );
   useDocumentTitle(WB_TAB_TITLE[tool] ?? title);
   const area = isSeenArea(tool) && attention[tool] ? tool : null;
+  // The Sandbox and Quickstart pages show their own operation.
+  const resetting = useSandboxBusy(
+    context?.kind === 'sandbox' && tool !== 'sandbox' && tool !== 'quickstart'
+      ? context.orgId
+      : undefined,
+  );
   return (
     <div className="wb-rise flex min-w-0 flex-col gap-4">
       <header className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-2">
@@ -73,7 +85,15 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
         {toolbar}
       </div>
       <div className="min-w-0">
-        <BenchSlotsContext.Provider value={slots}>{children}</BenchSlotsContext.Provider>
+        <BenchSlotsContext.Provider value={slots}>
+          {resetting ? (
+            <Suspense fallback={null}>
+              <Resetting />
+            </Suspense>
+          ) : (
+            children
+          )}
+        </BenchSlotsContext.Provider>
       </div>
     </div>
   );

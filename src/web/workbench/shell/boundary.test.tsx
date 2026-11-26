@@ -6,6 +6,8 @@ import { json, renderApp } from '../../lib/test-utils.tsx';
 import { fixtureOperation, NOW, SANDBOX_CREATE } from '../../ui/operation/fixtures.test-support.ts';
 import { resetOperationCache } from '../../ui/operation/store.ts';
 import type { Operation } from '../../ui/operation/types.ts';
+import { updateSession } from '../console/session.ts';
+import { homeFresh } from '../home/home-fixtures.ts';
 import { forgetTokens } from '../host/token.ts';
 import { setSingleKeys } from './prefs.ts';
 import { CONTEXTS, handlers } from './test-fixtures.ts';
@@ -36,6 +38,8 @@ const SESSION_PATHS = new Set([
   '/api/v1/workbench/token',
   '/api/v1/orgs/memberships/me',
   '/api/v1/orgs',
+  // The person's own sandbox home: the server holds it to the session and refuses a `pbtry_` bearer there.
+  '/api/v1/developer/home',
 ]);
 /**
  * W2 moved these sandbox-only tools in with their calls still on the cookie session. The server holds a
@@ -44,7 +48,6 @@ const SESSION_PATHS = new Set([
  */
 const SESSION_CLIENT_EXEMPT: readonly { path: string; movedBy: string }[] = [
   { path: '/api/v1/developer/sandbox', movedBy: 'T1' },
-  { path: '/api/v1/developer/home', movedBy: 'T8' },
 ];
 const EXEMPT_PATHS = new Set(SESSION_CLIENT_EXEMPT.map((e) => e.path));
 const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
@@ -59,6 +62,13 @@ const apiCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
 
 const headerOf = (init: RequestInit): Record<string, string> =>
   Object.fromEntries(new Headers(init.headers).entries());
+
+const SANDBOX_SESSION = {
+  kind: 'ready',
+  csrf: 'csrf-token',
+  siteKey: 'site',
+  sandbox: { id: 's1', orgId: 'sbx', orgSlug: 'dev-4f8c673e', templateId: null },
+} as const;
 
 describe('the Workbench tray (R4 H1)', () => {
   const ops = [
@@ -115,10 +125,10 @@ describe('the Workbench tray (R4 H1)', () => {
 });
 
 describe('the session-client exemption list', () => {
-  it('only shrinks: at most two sandbox-only entries, each owned by a T package', () => {
-    expect(SESSION_CLIENT_EXEMPT.length).toBeLessThanOrEqual(2);
+  it('only shrinks: at most one sandbox-only entry, owned by a T package', () => {
+    expect(SESSION_CLIENT_EXEMPT.length).toBeLessThanOrEqual(1);
     for (const { path, movedBy } of SESSION_CLIENT_EXEMPT) {
-      expect(path).toMatch(/^\/api\/v1\/developer\/(sandbox|home)$/);
+      expect(path).toMatch(/^\/api\/v1\/developer\/sandbox$/);
       expect(movedBy).toMatch(/^T[1-8]$/);
     }
   });
@@ -163,6 +173,7 @@ describe('the runtime boundary (R4 M7, L14)', () => {
   );
 
   it('the sandbox context holds to the same rule', async () => {
+    updateSession(SANDBOX_SESSION);
     const { fetchMock } = await renderApp('/workbench/o/sbx/sandbox', {
       session: 'developer',
       handlers: handlers(),
@@ -176,12 +187,15 @@ describe('the runtime boundary (R4 M7, L14)', () => {
 
 describe('more of the boundary (R4 N3)', () => {
   it('Quickstart in the sandbox: every tenant call carries the token', async () => {
+    updateSession(SANDBOX_SESSION);
     const { fetchMock } = await renderApp('/workbench/quickstart', {
       session: 'developer',
-      handlers: handlers(),
+      handlers: { ...handlers(), '/api/v1/developer/home': () => json(homeFresh) },
     });
     await waitFor(() => expect(screen.getByRole('main')).toHaveTextContent('Quickstart'));
-    await waitFor(() => expect(apiCalls(fetchMock).length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(allCalls(fetchMock).some(({ path: p }) => p === '/api/v1/developer/home')).toBe(true),
+    );
     for (const { path: p, init } of allCalls(fetchMock)) {
       expect(
         Object.keys(headerOf(init)).filter((h) => /mode/i.test(h)),

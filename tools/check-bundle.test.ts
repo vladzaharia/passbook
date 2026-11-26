@@ -149,6 +149,16 @@ describe('check-bundle', () => {
     const tool = toolAssets(read, all, new Set(['/assets/list-C.js']), 'logs');
     expect(tool.errors).toEqual([]);
     expect(tool.files).toEqual(['/assets/logs-B.js', '/assets/logs-B.css', '/assets/rail-D.js']);
+    // A route chunk another chunk imports from is loaded through `.then(e=>e.t)`: still the same loader.
+    const thenned: Record<string, string> = {
+      ...files,
+      '/assets/main-A.js':
+        files['/assets/main-A.js']?.replace('`./logs-B.js`),', '`./logs-B.js`).then(e=>e.t),') ??
+        '',
+    };
+    expect(
+      toolAssets((u) => thenned[u] ?? '', all, new Set(['/assets/list-C.js']), 'logs').files,
+    ).toEqual(tool.files);
     expect(toolAssets(read, all, new Set(), 'console').errors[0]).toMatch(/0 chunks carry it/);
     expect(toolAssets(read, all, new Set(), 'keys').errors[0]).toMatch(/no loader lists/);
   });
@@ -165,6 +175,7 @@ describe('check-bundle', () => {
       'logs',
       'playground',
       'quickstart',
+      'sandbox',
     ]);
   });
 

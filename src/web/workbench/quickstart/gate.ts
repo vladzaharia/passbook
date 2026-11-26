@@ -1,10 +1,10 @@
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
-import { PATHS } from '../../../shared/developers.ts';
+import { wbPath } from '../../../shared/workbench.ts';
 import type { Gate } from '../console/session.ts';
 import { copyToClipboard } from '../playground/copy.ts';
 
 const G = QS_COPY.gate;
-const next = encodeURIComponent(`${PATHS.quickstart}#sandbox`);
+const next = encodeURIComponent(`${wbPath('', 'quickstart')}#sandbox`);
 
 function link(href: string, text: string, cls: string): HTMLAnchorElement {
   const a = document.createElement('a');
