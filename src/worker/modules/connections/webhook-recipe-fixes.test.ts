@@ -77,7 +77,9 @@ describe('create then paste (Stripe)', () => {
     await expect(
       receiveWebhook(kit.sctx, dto.id, await stripeReq('whsec_nothing')),
     ).rejects.toMatchObject({ status: 401 });
-    expect((await connectionArrivals(kit.sctx, dto.id, { since: 0, limit: 5 }))[0]).toMatchObject({
+    expect(
+      (await connectionArrivals(kit.sctx, kit.org.id, dto.id, { since: 0, limit: 5 }))[0],
+    ).toMatchObject({
       outcome: 'rejected',
       reason: 'no_secret',
     });
@@ -206,7 +208,7 @@ describe('preview from an arrival', () => {
         },
       }),
     );
-    return (await connectionArrivals(kit.sctx, id, { since: 0, limit: 5 }))[0];
+    return (await connectionArrivals(kit.sctx, kit.org.id, id, { since: 0, limit: 5 }))[0];
   }
 
   it('shows what the kept event would make, and writes nothing', async () => {
