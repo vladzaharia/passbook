@@ -173,9 +173,7 @@ describe('Message composer', () => {
         ),
       );
     });
-    expect(
-      await screen.findByText('Message not found', { ignore: '[role="status"]' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Message not found')).toBeInTheDocument();
     expect(screen.queryByText('Private draft')).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue('Private content')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save draft' })).not.toBeInTheDocument();
@@ -255,9 +253,7 @@ describe('Message composer', () => {
         search: { from: 'b5', orgId: ORG.id },
       });
     });
-    expect(
-      await screen.findByText('Message not found', { ignore: '[role="status"]' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Message not found')).toBeInTheDocument();
     expect(queryClient.getQueryData(['admin', 'broadcasts', 'detail', 'b5'])).toMatchObject({
       orgId: 'org2',
     });
@@ -339,9 +335,7 @@ describe('Message composer', () => {
           search: { from: 'b5', orgId: ORG.id },
         });
       });
-      expect(
-        await screen.findByText('Message not found', { ignore: '[role="status"]' }),
-      ).toBeInTheDocument();
+      expect(await screen.findByText('Message not found')).toBeInTheDocument();
     } else if (change === 'capability') {
       await act(async () => {
         queryClient.setQueryData(['org-memberships', 'me'], {
