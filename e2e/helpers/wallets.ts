@@ -54,7 +54,7 @@ export async function requireE2eRelease(admin: Api): Promise<void> {
  * passing check against the mock (which verifies it), the credential as the source, then enable. Only an
  * enrolment that is On issues (migration 0229); the legacy account route has no part in it.
  */
-async function enrolTestAccount(
+export async function enrolTestAccount(
   admin: Api,
   orgId: string,
   credential: Record<string, unknown> & { provider: Provider },
@@ -104,6 +104,23 @@ async function enrolTestAccount(
 }
 
 /**
+ * A fresh org (preset legacy) whose Test enrolments are On for each credential, and no template. The
+ * creator is its only member until a reviewer joins.
+ */
+export async function enrolledOrg(
+  admin: Api,
+  name: string,
+  credentials: (Record<string, unknown> & { provider: Provider })[],
+) {
+  const slug = uid(name).toLowerCase();
+  // See walletOrg: provider projections need the credential-ref keyset a first pass makes.
+  await createPass(admin, readSeed().org.id);
+  const org = await createOrgWithRoles(admin, { slug, name: `Wallets ${slug}` });
+  for (const credential of credentials) await enrolTestAccount(admin, org.id, credential);
+  return org;
+}
+
+/**
  * A fresh org (preset legacy: every wallet included) with the provider's Test account, then a Day pass
  * template released to Test. The release queues the platform's own Google projection, as in production.
  */
@@ -149,10 +166,16 @@ type Candidate = {
   candidateHash: string;
   projection: { approvedOmissions?: string[] };
 };
-const templatePath = (w: WalletOrg) => `/api/v1/templates/${encodeURIComponent(w.template.id)}`;
+const templatePath = (w: Pick<WalletOrg, 'template'>) =>
+  `/api/v1/templates/${encodeURIComponent(w.template.id)}`;
 
 /** A second member approves the candidate and the author publishes it: the provider's Test release. */
-async function approveAndPublish(admin: Api, w: WalletOrg, provider: Provider, c: Candidate) {
+async function approveAndPublish(
+  admin: Api,
+  w: Pick<WalletOrg, 'org' | 'template'>,
+  provider: Provider,
+  c: Candidate,
+) {
   const scope = { orgId: w.org.id, mode: 'test', provider };
   const reviewer = await templateReviewer(admin, w.org.id);
   try {
@@ -183,8 +206,16 @@ async function approveAndPublish(admin: Api, w: WalletOrg, provider: Provider, c
  * The Google candidate the platform authored after the Apple release (CW7b). Its report omits something a
  * holder sees, so it waits for one human approval instead of releasing itself.
  */
-export async function releaseSystemGoogle(admin: Api, w: WalletOrg): Promise<string[]> {
-  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider: 'google' });
+export const releaseSystemGoogle = (admin: Api, w: WalletOrg): Promise<string[]> =>
+  releaseSystem(admin, w, 'google');
+
+/** The same for either wallet: the platform's candidate for the Apple release, approved and published. */
+export async function releaseSystem(
+  admin: Api,
+  w: Pick<WalletOrg, 'org' | 'template' | 'apple'>,
+  provider: Provider,
+): Promise<string[]> {
+  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
   let candidate: Candidate | undefined;
   await expect
     .poll(
@@ -202,7 +233,7 @@ export async function releaseSystemGoogle(admin: Api, w: WalletOrg): Promise<str
     )
     .toBe(true);
   if (!candidate) throw new Error('No system Google candidate');
-  await approveAndPublish(admin, w, 'google', candidate);
+  await approveAndPublish(admin, w, provider, candidate);
   return candidate.projection.approvedOmissions ?? [];
 }
 
@@ -230,7 +261,7 @@ export async function releaseProjection(
 }
 
 /** A Test pass from the org's Day pass release, with the holder's email. */
-export async function testPass(admin: Api, w: WalletOrg) {
+export async function testPass(admin: Api, w: Pick<WalletOrg, 'org' | 'apple'>) {
   const memberId = uid('DAY').toUpperCase();
   const pass = await admin.send<{ id: string; publicUrl: string }>(
     'POST',

@@ -169,6 +169,30 @@ describe('wallet release review', () => {
     expect(within(dialog).getByText(`relevance.locations · locations`)).toBeInTheDocument();
   });
 
+  it('reads Review needed: new omission when a template change adds one to an older release', async () => {
+    // The passes move to the newest Apple release, which has no approved projection yet: offers wait.
+    const pinned = candidate({
+      id: 'candidate-g',
+      provider: 'google',
+      version: 'version-1',
+      projection: { schema: 2, provider: 'google', approvedOmissions: [STRIP] },
+    });
+    serve({
+      current: TWO,
+      active: release({
+        provider: 'google',
+        version: 'version-1',
+        candidateId: 'candidate-g',
+        approvalId: 'approval-g',
+      }),
+      candidates: [pinned],
+    });
+    mountPanel();
+    const row = await googleRow();
+    expect(row).toHaveTextContent('Review needed: new omission');
+    expect(row).toHaveTextContent('Lock screen places are not used.');
+  });
+
   it('reads Review needed: new type when the compiled type moved off the approved one', async () => {
     // Q21 pauses offers for a changed type as it does for a new omission: the row cannot read Released.
     const pinned = candidate({

@@ -20,7 +20,7 @@ import {
 import { useReleaseLists, useWalletEnrolments } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
-import { fidelityWords, walletReview } from './wallet-review.ts';
+import { fidelityWords, newestRelease, walletReview } from './wallet-review.ts';
 
 const WalletReviewDialog = lazy(() => import('./wallet-review-dialog.tsx'));
 
@@ -84,9 +84,10 @@ function nativeState(
   active: TemplateRelease | null,
   candidates: readonly TemplateCandidate[],
   versions: readonly ReleaseVersion[],
+  previous: TemplateRelease | null,
 ): RowState {
   if (!current) return releasedState(active, candidates, versions);
-  const review = walletReview(current, active, candidates);
+  const review = walletReview(current, active, candidates, previous);
   const meta = versionLabel(versions, current.version);
   if (review.kind === 'off') return { status: 'off', pill: 'neutral', label: 'Off', meta: '' };
   if (review.kind === 'blocked')
@@ -127,7 +128,13 @@ function OnRow(props: RowProps & { orgId: string }) {
   const { releases, candidates } = useReleaseLists(templateId, { orgId, mode, provider });
   const state: RowState =
     releases.data && candidates.data
-      ? nativeState(candidates.data.current, releases.data.active, candidates.data.items, versions)
+      ? nativeState(
+          candidates.data.current,
+          releases.data.active,
+          candidates.data.items,
+          versions,
+          newestRelease(releases.data.items),
+        )
       : { status: 'on', pill: 'neutral', label: 'On', meta: 'Loading release.' };
   return <WalletRow {...props} state={state} />;
 }

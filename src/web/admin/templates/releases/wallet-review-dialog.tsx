@@ -18,7 +18,7 @@ import {
 import { useReleaseLists } from './api.ts';
 import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
-import { type Omission, walletReview } from './wallet-review.ts';
+import { newestRelease, type Omission, walletReview } from './wallet-review.ts';
 import { useWalletApproval } from './wallet-review-api.ts';
 
 export interface WalletReviewDialogProps {
@@ -111,7 +111,12 @@ export default function WalletReviewDialog({
   const loading = !candidates.isError && !releases.isError && (!candidates.data || !releases.data);
   const review =
     current && releases.data && candidates.data
-      ? walletReview(current, releases.data.active, candidates.data.items)
+      ? walletReview(
+          current,
+          releases.data.active,
+          candidates.data.items,
+          newestRelease(releases.data.items),
+        )
       : null;
   const author = capabilities.includes('templates:author');
   const reviewer = capabilities.includes('templates:review');
