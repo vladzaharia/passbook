@@ -2473,6 +2473,15 @@ class TemplatesVersionsResource:
         """Template version with its validation report `GET /api/v1/templates/{id}/versions/{version}`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/versions/{_p(version)}", result=m.TemplatesVersionsRetrieveResult, **opts)
 
+    def retrieve_wallet_reports(
+        self,
+        id: str,
+        version: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesVersionsRetrieveWalletReportsResult:
+        """Per-wallet fidelity reports (Google, Samsung) for a template version `GET /api/v1/templates/{id}/versions/{version}/wallet-reports`"""
+        return self._core.request("GET", f"/api/v1/templates/{_p(id)}/versions/{_p(version)}/wallet-reports", result=m.TemplatesVersionsRetrieveWalletReportsResult, **opts)
+
 
 class TemplatesResource:
     def __init__(self, core: Core) -> None:

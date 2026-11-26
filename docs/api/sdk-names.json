@@ -2111,6 +2111,10 @@
     "resource": "templates.versions",
     "method": "retrieve"
   },
+  "templates.getTemplatesByIdVersionsByVersionWalletReports": {
+    "resource": "templates.versions",
+    "method": "retrieveWalletReports"
+  },
   "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
     "resource": "templates.versions",
     "method": "downloadAsset"

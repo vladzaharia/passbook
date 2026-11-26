@@ -11117,6 +11117,71 @@
   "cursor": null
  },
  {
+  "id": "templates.getTemplatesByIdVersionsByVersionWalletReports",
+  "call": "templates.versions.retrieve_wallet_reports",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/versions/{version}/wallet-reports",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "google": {
+    "schema": 1,
+    "target": "google",
+    "type": "x",
+    "compilerRevision": 0,
+    "status": {
+     "kind": "off"
+    },
+    "items": [
+     {
+      "capability": "type",
+      "path": "x",
+      "support": "native",
+      "severity": "difference",
+      "group": "holder",
+      "chosen": false,
+      "message": "x"
+     }
+    ]
+   },
+   "samsung": {
+    "schema": 1,
+    "target": "google",
+    "type": "x",
+    "compilerRevision": 0,
+    "status": {
+     "kind": "off"
+    },
+    "items": [
+     {
+      "capability": "type",
+      "path": "x",
+      "support": "native",
+      "severity": "difference",
+      "group": "holder",
+      "chosen": false,
+      "message": "x"
+     }
+    ]
+   }
+  }
+ },
+ {
   "id": "sandbox.getTestInbox",
   "call": "test_emails.list",
   "http": "GET",

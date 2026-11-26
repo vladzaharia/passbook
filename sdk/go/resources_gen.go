@@ -2595,6 +2595,15 @@ func (r *TemplatesVersionsResource) Retrieve(ctx context.Context, id string, ver
 	return &out, nil
 }
 
+// RetrieveWalletReports Per-wallet fidelity reports (Google, Samsung) for a template version `GET /api/v1/templates/{id}/versions/{version}/wallet-reports`
+func (r *TemplatesVersionsResource) RetrieveWalletReports(ctx context.Context, id string, version string, opts ...RequestOption) (*TemplatesVersionsRetrieveWalletReportsResult, error) {
+	var out TemplatesVersionsRetrieveWalletReportsResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/versions/" + pathEscape(version) + "/wallet-reports"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type TemplatesResource struct {
 	c          *core
 	Reviews    *TemplatesReviewsResource
