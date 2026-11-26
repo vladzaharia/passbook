@@ -4894,7 +4894,12 @@
     "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
     "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
     "LAST_ORG_ADMIN",
     "OPERATION_RUNNING",
     "ORG_CONFLICT",
@@ -4905,6 +4910,9 @@
     "USER_NOT_FOUND"
   ],
   "polaris access post /{id}/roles": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -4915,6 +4923,9 @@
     "USER_NOT_FOUND"
   ],
   "polaris access post /{id}/roles/{role}/remove-external": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -4965,6 +4976,9 @@
   ],
   "polaris groups delete /idp/groups/{key}": [
     "GROUP_NOT_FOUND",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -4973,10 +4987,16 @@
     "UNAUTHENTICATED"
   ],
   "polaris groups delete /idp/groups/{key}/members/{id}": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "MEMBER_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "polaris groups delete /idp/groups/{key}/rules/{id}": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "RULE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
@@ -4995,6 +5015,9 @@
   ],
   "polaris groups patch /idp/groups/{key}": [
     "GROUP_NOT_FOUND",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -5003,6 +5026,9 @@
     "UNAUTHENTICATED"
   ],
   "polaris groups post /idp/groups": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_GROUP_LIMIT",
@@ -5016,6 +5042,9 @@
     "UNAUTHENTICATED"
   ],
   "polaris groups post /idp/groups/ensure": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -5025,6 +5054,9 @@
   ],
   "polaris groups post /idp/groups/{key}/members": [
     "GROUP_NOT_FOUND",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
@@ -5039,6 +5071,9 @@
   ],
   "polaris groups post /idp/groups/{key}/rules": [
     "GROUP_NOT_FOUND",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_CONFLICT",
     "IDP_RULE_EXISTS",
     "IDP_RULE_LIMIT",
@@ -5084,6 +5119,9 @@
   ],
   "polaris platform get /idp/drift": [],
   "polaris platform post /idp/freeze": [
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "IDP_BUDGET",
     "IDP_CONFLICT",
     "IDP_IN_USE",
