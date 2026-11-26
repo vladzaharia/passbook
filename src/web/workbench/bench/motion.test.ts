@@ -9,10 +9,7 @@ const FILES = ['kit', 'list', 'inspector', 'state', 'toolbar'].map(
 );
 const sheets = [...FILES, 'src/web/developers/ui/sheet.css'].map((file) => ({
   file,
-  css: readFileSync(join(process.cwd(), file), 'utf8').replace(
-    /\/\*[\s\S]*?\*\//g,
-    '',
-  ),
+  css: readFileSync(join(process.cwd(), file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''),
 }));
 
 /** Every `animation` declaration with the @media blocks around it, outermost first. */
