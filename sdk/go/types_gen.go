@@ -1925,8 +1925,9 @@ type ConnectionsSetupRetrieveResponseValues struct {
 type ConnectionsSetupRetrieveResult = ConnectionsSetupRetrieveResponse
 
 type ConnectionsSyncResponse struct {
-	RunID              string `json:"runId"`
-	WorkflowInstanceID string `json:"workflowInstanceId"`
+	RunID              string  `json:"runId"`
+	WorkflowInstanceID string  `json:"workflowInstanceId"`
+	OperationID        *string `json:"operationId"`
 }
 
 type ConnectionsSyncResult = ConnectionsSyncResponse
@@ -5650,14 +5651,15 @@ type OrgExportsCreateLinkResponse struct {
 }
 
 type OrgExportsCreateResponse struct {
-	ID         string           `json:"id"`
-	State      string           `json:"state"`
-	CreatedAt  int64            `json:"createdAt"`
-	FinishedAt *int64           `json:"finishedAt"`
-	ExpiresAt  *int64           `json:"expiresAt"`
-	Bytes      *int64           `json:"bytes"`
-	Entities   map[string]int64 `json:"entities"`
-	ErrorCode  *string          `json:"errorCode"`
+	ID          string           `json:"id"`
+	State       string           `json:"state"`
+	CreatedAt   int64            `json:"createdAt"`
+	FinishedAt  *int64           `json:"finishedAt"`
+	ExpiresAt   *int64           `json:"expiresAt"`
+	Bytes       *int64           `json:"bytes"`
+	Entities    map[string]int64 `json:"entities"`
+	ErrorCode   *string          `json:"errorCode"`
+	OperationID *string          `json:"operationId"`
 }
 
 type OrgExportsListResponse struct {
@@ -7906,7 +7908,8 @@ type PassesBulkReissueParams struct {
 }
 
 type PassesBulkReissueResponse struct {
-	WorkflowInstanceID string `json:"workflowInstanceId"`
+	WorkflowInstanceID string  `json:"workflowInstanceId"`
+	OperationID        *string `json:"operationId"`
 }
 
 type PassesBulkReissueResult = PassesBulkReissueResponse
@@ -7924,9 +7927,10 @@ type PassesBulkUpdateChannelsParams struct {
 }
 
 type PassesBulkUpdateChannelsResponse struct {
-	Done    int64                                         `json:"done"`
-	Skipped []PassesBulkUpdateChannelsResponseSkippedItem `json:"skipped"`
-	Preview *PassesBulkUpdateChannelsResponsePreview      `json:"preview,omitempty"`
+	Done        int64                                         `json:"done"`
+	Skipped     []PassesBulkUpdateChannelsResponseSkippedItem `json:"skipped"`
+	Preview     *PassesBulkUpdateChannelsResponsePreview      `json:"preview,omitempty"`
+	OperationID *string                                       `json:"operationId,omitempty"`
 }
 
 type PassesBulkUpdateChannelsResponsePreview struct {
@@ -10095,9 +10099,10 @@ type PrintJobsCreateParams struct {
 }
 
 type PrintJobsCreateResponse struct {
-	JobID   string                               `json:"jobId"`
-	Count   int64                                `json:"count"`
-	Skipped []PrintJobsCreateResponseSkippedItem `json:"skipped"`
+	JobID       string                               `json:"jobId"`
+	Count       int64                                `json:"count"`
+	Skipped     []PrintJobsCreateResponseSkippedItem `json:"skipped"`
+	OperationID *string                              `json:"operationId"`
 }
 
 type PrintJobsCreateResponseSkippedItem struct {
@@ -13385,6 +13390,7 @@ type TemplatesCandidatesCreateResponse struct {
 	AccountRevision         *int64                                           `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                          `json:"providerIdentityHash,omitempty"`
 	Projection              any                                              `json:"projection,omitempty"`
+	SelfAuthored            *bool                                            `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesCreateResponseApprovalsItem `json:"approvals"`
 }
 
@@ -13424,6 +13430,7 @@ type TemplatesCandidatesListItem struct {
 	AccountRevision         *int64                                     `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                    `json:"providerIdentityHash,omitempty"`
 	Projection              any                                        `json:"projection,omitempty"`
+	SelfAuthored            *bool                                      `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListItemApprovalsItem `json:"approvals"`
 }
 
@@ -13447,6 +13454,7 @@ type TemplatesCandidatesListResponse struct {
 	Items      []TemplatesCandidatesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
 	Current    *TemplatesCandidatesListResponseCurrent    `json:"current,omitempty"`
+	Wallet     *string                                    `json:"wallet,omitempty"`
 }
 
 type TemplatesCandidatesListResponseCurrent struct {
@@ -13516,6 +13524,7 @@ type TemplatesCandidatesListResponseItemsItem struct {
 	AccountRevision         *int64                                                  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                                 `json:"providerIdentityHash,omitempty"`
 	Projection              any                                                     `json:"projection,omitempty"`
+	SelfAuthored            *bool                                                   `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListResponseItemsItemApprovalsItem `json:"approvals"`
 }
 
@@ -13560,6 +13569,7 @@ type TemplatesCandidatesPromoteResponse struct {
 	AccountRevision         *int64                                            `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                           `json:"providerIdentityHash,omitempty"`
 	Projection              any                                               `json:"projection,omitempty"`
+	SelfAuthored            *bool                                             `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesPromoteResponseApprovalsItem `json:"approvals"`
 }
 
@@ -15209,8 +15219,9 @@ type WalletProviderAccountsVerifyResponse struct {
 }
 
 type WalletReissue struct {
-	ReissueID string `json:"reissueId"`
-	Instances int64  `json:"instances"`
+	ReissueID   string  `json:"reissueId"`
+	Instances   int64   `json:"instances"`
+	OperationID *string `json:"operationId"`
 }
 
 type WebhookCapture struct {

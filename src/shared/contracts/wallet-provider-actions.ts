@@ -21,6 +21,8 @@ export const WalletReissueResponseSchema = z.object({
   reissueId: z.string(),
   /** Copies the run reaches; passes nobody has added to a wallet have none yet. */
   instances: z.number().int().nonnegative(),
+  /** The operation that shows the run; null when there was nothing to update. */
+  operationId: z.string().nullable(),
 });
 export type WalletReissueResponse = z.infer<typeof WalletReissueResponseSchema>;
 

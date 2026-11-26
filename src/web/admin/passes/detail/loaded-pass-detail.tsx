@@ -8,6 +8,7 @@ import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime, formatDay } from '../../../lib/format.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import { sessionQuery } from '../../../lib/session.ts';
+import { PassWallets } from '../../../pass-wallets/pass-wallets.tsx';
 import {
   Badge,
   Card,
@@ -220,6 +221,7 @@ export function LoadedPassDetail({
                 <PassHold passId={p.id} orgId={p.orgId} />
               </CardBody>
             </Card>
+            <PassWallets pass={p} />
             <div className="flex flex-col gap-3 empty:hidden">
               {p.reissueRequired ? (
                 <ReissueRequiredCallout pass={p} canOperate={!readOnly} />

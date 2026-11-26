@@ -22,7 +22,7 @@ import {
 } from '../../ui/index.ts';
 import { passKeys, useBulkPassAction } from './api.ts';
 import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
-import { BulkPrintAction } from './bulk-print.tsx';
+import { PrintMenuItem, useBulkPrint } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { CHANGE_COPY } from './change/copy.ts';
 import { filterRefusal, filterSelection } from './change/selection.ts';
@@ -88,6 +88,7 @@ export function SelectionBar({
   const changeable = all ? n : picked.filter((p) => p.removedAt === null).length;
   const emailable = all ? n : picked.filter((p) => p.holderEmail !== null).length;
   const operable = Boolean(canOperate && orgId && (all || picked.every((p) => p.orgId === orgId)));
+  const print = useBulkPrint({ ids, orgId, disabled: !operable || Boolean(all) });
   const canChannel = !all && operable && changeable > 0 && n <= CHANNELS_LIMIT;
   const canShare = !all && n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
   const canChange =
@@ -269,13 +270,14 @@ export function SelectionBar({
             <ACTION_ICON.removeFromWallet aria-hidden />
             Remove from Wallet
           </DropdownMenuItem>
-          <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable || Boolean(all)} as="menu" />
+          <PrintMenuItem print={print} />
           <DropdownMenuItem disabled={Boolean(all)} onSelect={onExport}>
             <ACTION_ICON.download aria-hidden />
             Export CSV
           </DropdownMenuItem>
         </MoreMenu>
       </div>
+      {print.panel}
       {bundleOrgId ? (
         <BundleDialog
           open={operable && sharing}

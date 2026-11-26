@@ -1,4 +1,5 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
+import { progressOf } from '../modules/operations/progress.ts';
 import {
   type ReissuePageResult,
   type ReissueParams,
@@ -8,6 +9,7 @@ import { failBulkRun } from '../modules/passes/bulk-run.ts';
 import { runBulkChunk } from '../modules/passes/bulk-run-chunk.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { AppError } from '../platform/errors.ts';
 import { createJobContext } from '../platform/service-context.ts';
 
 export type BulkReissueParams = ReissueParams;
@@ -34,7 +36,11 @@ export async function runBulkReissue(
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'bulk-reissue', instanceId },
   });
+  const progress = progressOf(ctx, params.operationId, params.operationAttempt ?? 1);
+  const starting = progress.step('start');
   await step.do('start', () => setWorkflowStatus(env.DB, instanceId, 'running', ctx.clock.now()));
+  await starting.done();
+  const counted = progress.step('passes');
   const totals: { changed: number; unchanged: number; failed: number; aboveMax?: number } = {
     changed: 0,
     unchanged: 0,
@@ -50,6 +56,7 @@ export async function runBulkReissue(
       totals.changed += result.changed;
       totals.unchanged += result.unchanged;
       totals.failed += result.failed;
+      await counted.count(totals.changed + totals.unchanged + totals.failed);
       if (result.revoked) {
         await step.do('revoked', () =>
           setWorkflowStatus(
@@ -59,6 +66,9 @@ export async function runBulkReissue(
             ctx.clock.now(),
             'REISSUE_PRINCIPAL_REVOKED',
           ),
+        );
+        await progress.fail(
+          new AppError('REISSUE_PRINCIPAL_REVOKED', 403, 'Your access to this run ended.'),
         );
         return totals;
       }
@@ -70,8 +80,11 @@ export async function runBulkReissue(
     await step.do('fail', () =>
       setWorkflowStatus(env.DB, instanceId, 'errored', ctx.clock.now(), 'BULK_REISSUE_FAILED'),
     );
+    await progress.fail(new AppError('BULK_REISSUE_FAILED', 500, 'The rebuild stopped.'));
     throw error;
   }
+  await counted.done();
+  const finishing = progress.step('finish');
   await step.do('finish', async () => {
     await setWorkflowStatus(
       env.DB,
@@ -81,6 +94,15 @@ export async function runBulkReissue(
       totals.failed > 0 ? 'PARTIAL_FAILURE' : null,
     );
     ctx.log.info('bulk_reissue.done', { ...totals, templateId: params.templateId });
+  });
+  await finishing.done();
+  await progress.succeed({
+    href: null,
+    ids: {
+      changed: String(totals.changed),
+      unchanged: String(totals.unchanged),
+      failed: String(totals.failed),
+    },
   });
   return totals;
 }

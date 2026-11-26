@@ -205,7 +205,7 @@ describe('channel routes', () => {
       channels: ['apple', 'mobile'],
       ids,
     });
-    expect(await off.json()).toEqual({ done: 2, skipped: [] });
+    expect(await off.json()).toEqual({ done: 2, skipped: [], operationId: null });
     const one = (await (await call('GET', `/passes/${other.id}/channels`)).json()) as {
       effective: Record<string, { on: boolean }>;
     };

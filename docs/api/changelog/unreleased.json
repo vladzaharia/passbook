@@ -129,6 +129,22 @@
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
   },
   {
+    "key": "DELETE /api/v1/me/passes/{id} 200.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "200.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "DELETE /api/v1/me/passes/{id} 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "202.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. It waits until the wallets let go. Only the holder's own session reads it."
+  },
+  {
     "key": "DELETE /api/v1/nfc/bindings/{bindingId} callable by nfc:write key",
     "class": "additive",
     "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
@@ -2073,6 +2089,22 @@
     "note": "Google and Samsung candidate lists carry current: the Apple release's version and id, and the wallet's report compiled now."
   },
   {
+    "key": "GET /api/v1/templates/{id}/candidates 200.items[].selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.items[].selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/candidates 200.wallet: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.wallet: field added",
+    "note": "Google and Samsung candidate lists carry wallet (on, off or not_released) for a caller who can review the template."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -3590,6 +3622,14 @@
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
   },
   {
+    "key": "POST /api/v1/connections/{id}/sync 202.operationId: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdSync",
+    "op": "POST /api/v1/connections/{id}/sync",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the sync; null when the sync joined a run that was already open. Read it with GET /api/v1/operations/{id}."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdWebhookSecret",
@@ -3977,6 +4017,38 @@
     "note": "Create a Polaris ID from an invitation: a one-hour signup link that already carries the invitation's groups."
   },
   {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhone",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone",
+    "change": "202.operationId: field added",
+    "note": "Lost phone is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone/confirmation new operation",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone/confirmation",
+    "change": "new operation",
+    "note": "Emails a sign-in link back to the pass. Lost phone then needs an email-link session under 10 minutes old (409 EMAIL_CONFIRMATION_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/refresh 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdRefresh",
+    "op": "POST /api/v1/me/passes/{id}/refresh",
+    "change": "202.operationId: field added",
+    "note": "The refresh is an operation: follow it at GET /operations/{id}. Absent when an earlier refresh covers the click. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/resend 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdResend",
+    "op": "POST /api/v1/me/passes/{id}/resend",
+    "change": "202.operationId: field added",
+    "note": "The email is an operation: follow it at GET /operations/{id}. A second request while one runs answers 409 OPERATION_RUNNING with its id."
+  },
+  {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
     "class": "additive",
     "operationId": "message-rules.postMessageRulesByIdTest",
@@ -4233,6 +4305,14 @@
     "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/exports 202.operationId: field added",
+    "class": "additive",
+    "operationId": "org-lifecycle.postOrgsByOrgIdExports",
+    "op": "POST /api/v1/orgs/{orgId}/exports",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the export. The download stays a separate call: POST /api/v1/orgs/{orgId}/exports/{exportId}/link."
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
     "class": "additive",
     "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
@@ -4449,6 +4529,22 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/bulk-print 202.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkPrint",
+    "op": "POST /api/v1/passes/bulk-print",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the print job; null when nothing was printed. The PDF stays at GET /api/v1/passes/bulk-print/{jobId}/pdf."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-reissue 202.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkReissue",
+    "op": "POST /api/v1/passes/bulk-reissue",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the rebuild; null for a platform-wide run or a branding run."
+  },
+  {
     "key": "POST /api/v1/passes/bulk-runs new operation",
     "class": "additive",
     "operationId": "passes.postPassesBulkRuns",
@@ -4463,6 +4559,14 @@
     "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
     "change": "new operation",
     "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk/channels 200.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkChannels",
+    "op": "POST /api/v1/passes/bulk/channels",
+    "change": "200.operationId: field added",
+    "note": "operationId names the operation that shows the code replacements; null when none is to be replaced."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -5233,6 +5337,22 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "POST /api/v1/templates/{id}/candidates 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidates",
+    "op": "POST /api/v1/templates/{id}/candidates",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/candidates/promote 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidatesPromote",
+    "op": "POST /api/v1/templates/{id}/candidates/promote",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdChannelsResetPasses",
@@ -5575,6 +5695,14 @@
     "op": "POST /api/v1/visitors/{id}/host-email",
     "change": "operation removed",
     "note": "Removed; host arrival emails are no longer sent. Action: email the host from your system on pass.scanned."
+  },
+  {
+    "key": "POST /api/v1/wallet-providers/reissue 202.operationId: field added",
+    "class": "additive",
+    "operationId": "wallet-providers.postWalletProvidersReissue",
+    "op": "POST /api/v1/wallet-providers/reissue",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the update; null when there is nothing to update."
   },
   {
     "key": "POST /api/v1/wallet-providers/reissue new operation",

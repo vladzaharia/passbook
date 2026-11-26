@@ -47,19 +47,6 @@ const READY = report({ kind: 'ready' });
 const TWO = report({ kind: 'omissions', count: 2 }, ITEMS);
 const ONE_OLD = report({ kind: 'omissions', count: 1 }, ITEMS.slice(0, 1));
 
-const enrolment = {
-  mode: 'live',
-  provider: 'google',
-  accountId: null,
-  source: null,
-  platformAvailable: true,
-  state: 'on',
-  enrolmentRevision: 0,
-  prerequisites: { check: false, roundTrip: null },
-  hold: null,
-  issuance: { state: 'enabled' },
-};
-
 /** The release server, with Google's candidate list carrying the report the server compiled. */
 function serve(options: {
   current: FidelityReportDto | null;
@@ -73,8 +60,6 @@ function serve(options: {
   const inner = globalThis.fetch;
   vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'http://localhost');
-    if (url.pathname === '/api/v1/orgs/org-1/wallet-enrolments')
-      return Promise.resolve(json({ items: [enrolment], nextCursor: null }));
     if (
       url.pathname === `/api/v1/templates/${TEMPLATE}/candidates` &&
       url.searchParams.get('provider') === 'google' &&
@@ -84,6 +69,7 @@ function serve(options: {
         json({
           items: server.candidates,
           nextCursor: null,
+          wallet: 'on',
           ...(options.current
             ? {
                 current: {
@@ -169,6 +155,55 @@ describe('wallet release review', () => {
     expect(within(dialog).getByText(`relevance.locations · locations`)).toBeInTheDocument();
   });
 
+  it('reads Review needed: new omission when a template change adds one to an older release', async () => {
+    // The passes move to the newest Apple release, which has no approved projection yet: offers wait.
+    const pinned = candidate({
+      id: 'candidate-g',
+      provider: 'google',
+      version: 'version-1',
+      projection: { schema: 2, provider: 'google', approvedOmissions: [STRIP] },
+    });
+    serve({
+      current: TWO,
+      active: release({
+        provider: 'google',
+        version: 'version-1',
+        candidateId: 'candidate-g',
+        approvalId: 'approval-g',
+      }),
+      candidates: [pinned],
+    });
+    mountPanel();
+    const row = await googleRow();
+    expect(row).toHaveTextContent('Review needed: new omission');
+    expect(row).toHaveTextContent('Lock screen places are not used.');
+  });
+
+  it('reads Review needed: new type when the compiled type moved off the approved one', async () => {
+    // Q21 pauses offers for a changed type as it does for a new omission: the row cannot read Released.
+    const pinned = candidate({
+      id: 'candidate-g',
+      provider: 'google',
+      version: 'version-2',
+      projection: { schema: 2, provider: 'google', type: 'loyalty', approvedOmissions: [] },
+    });
+    serve({
+      current: READY,
+      active: release({
+        provider: 'google',
+        version: 'version-2',
+        candidateId: 'candidate-g',
+        approvalId: 'approval-g',
+      }),
+      candidates: [pinned],
+    });
+    mountPanel();
+    const row = await googleRow();
+    expect(row).toHaveTextContent('Review needed: new type');
+    expect(row).toHaveTextContent('Now generic, approved as loyalty.');
+    expect(row).not.toHaveTextContent('Released');
+  });
+
   it('reads Released when the approval covers every omission', async () => {
     serve({
       current: ONE_OLD,
@@ -187,9 +222,17 @@ describe('wallet release review', () => {
     expect(row).toHaveTextContent('Ready with omissions (1)');
   });
 
-  it('approves item by item, then requests, approves and releases', async () => {
+  it('approves the platform candidate item by item and releases it', async () => {
+    // The platform's own candidate is no one's own work: the version author approves it as a peer.
     const user = userEvent.setup();
-    const server = serve({ current: TWO });
+    const platform = candidate({
+      id: 'candidate-1',
+      provider: 'google',
+      authorId: 'system:wallet-projection',
+      selfAuthored: false,
+      projection: { schema: 2, provider: 'google', approvedOmissions: [PLACES, STRIP].sort() },
+    });
+    const server = serve({ current: TWO, candidates: [platform] });
     mountPanel();
     const row = await googleRow();
     await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
@@ -206,20 +249,48 @@ describe('wallet release review', () => {
     await waitFor(() =>
       expect(server.requests.filter((r) => r.method === 'POST').map((r) => r.url.pathname)).toEqual(
         [
-          `/api/v1/templates/${TEMPLATE}/candidates`,
           `/api/v1/templates/${TEMPLATE}/candidates/candidate-1/approve`,
           `/api/v1/templates/${TEMPLATE}/releases`,
         ],
       ),
     );
     const posts = server.requests.filter((r) => r.method === 'POST');
-    expect(posts[0]?.body).toMatchObject({
+    expect(posts[0]?.body).not.toHaveProperty('alone');
+  });
+
+  it('offers Request review, not Approve, for your own work when you are not alone', async () => {
+    const user = userEvent.setup();
+    const own = candidate({
+      id: 'candidate-own',
       provider: 'google',
-      version: 'version-2',
-      sourceReleaseId: 'release-apple',
+      selfAuthored: true,
       projection: { schema: 2, provider: 'google', approvedOmissions: [PLACES, STRIP].sort() },
     });
-    expect(posts[1]?.body).not.toHaveProperty('alone');
+    const server = serve({ current: TWO, candidates: [own] });
+    mountPanel();
+    const row = await googleRow();
+    await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });
+    expect(within(dialog).queryByRole('button', { name: /^Approve/ })).toBeNull();
+    expect(within(dialog).getByText(/Another reviewer must approve this/)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Review requested' })).toBeDisabled();
+    expect(server.requests.filter((r) => r.method === 'POST')).toEqual([]);
+  });
+
+  it('requests a review for a new candidate when you are not alone', async () => {
+    const user = userEvent.setup();
+    const server = serve({ current: TWO });
+    mountPanel();
+    const row = await googleRow();
+    await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });
+    expect(within(dialog).queryByRole('button', { name: /^Approve/ })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Request review' }));
+    await waitFor(() =>
+      expect(server.requests.filter((r) => r.method === 'POST').map((r) => r.url.pathname)).toEqual(
+        [`/api/v1/templates/${TEMPLATE}/candidates`],
+      ),
+    );
   });
 
   it('sends alone only when the release state says the caller is alone', async () => {
@@ -251,7 +322,16 @@ describe('wallet release review', () => {
   it('shows the buddy and nothing to approve when nothing is left out', async () => {
     const user = userEvent.setup();
     serve({ current: READY });
-    mountPanel();
+    mountPanel({
+      release: {
+        live: null,
+        test: null,
+        draft: null,
+        review: { state: 'none' },
+        alone: true,
+        next: null,
+      },
+    });
     const row = await googleRow();
     await user.click(within(row).getByRole('button', { name: 'Review Google Wallet' }));
     const dialog = await screen.findByRole('dialog', { name: 'Review Google Wallet' });

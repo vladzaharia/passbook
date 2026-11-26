@@ -16,6 +16,9 @@ export interface OperationFilter {
   active?: boolean;
   mine?: boolean;
   target?: { type: string; id: string };
+  /** One kind (`org.export`), and the org whose operations to read: an org's rows are not the person's own. */
+  kind?: string;
+  orgId?: string;
 }
 
 /** What the kit needs from the server; the app, the portal and the developer site each supply one. */
@@ -82,6 +85,8 @@ export function createFetchClient({
       if (filter.active) q.set('active', 'true');
       if (filter.mine) q.set('mine', 'true');
       if (filter.target) q.set('target', `${filter.target.type}:${filter.target.id}`);
+      if (filter.kind) q.set('kind', filter.kind);
+      if (filter.orgId) q.set('orgId', filter.orgId);
       const qs = q.toString();
       const { body } = await send('GET', qs ? `?${qs}` : '', { signal });
       return ((body as { items?: Operation[] } | null)?.items ?? []) as Operation[];

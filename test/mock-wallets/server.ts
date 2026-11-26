@@ -1,6 +1,6 @@
 // Standalone fake Google Wallet + Samsung Wallet for dev and Playwright: node test/mock-wallets/server.ts [port]
 // Control: GET /__mock/state, GET /__mock/requests, POST /__mock/reset, POST /__mock/inject {status, match?, times?},
-// POST /__mock/samsung-template {cardId, template?}.
+// POST /__mock/samsung-template {cardId, template?}, POST /__mock/google-keys {keys} (the callback root keys served at /gp/m/issuer/keys).
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createMockWallets } from './index.ts';
 

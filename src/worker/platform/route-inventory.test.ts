@@ -265,6 +265,7 @@ const HOLDER_ROUTES = [
   'POST /api/v1/me/emails',
   'POST /api/v1/me/emails/:email/primary',
   'POST /api/v1/me/passes/:id/lost-phone',
+  'POST /api/v1/me/passes/:id/lost-phone/confirmation',
   'POST /api/v1/me/passes/:id/refresh',
   'POST /api/v1/me/passes/:id/resend',
   'POST /api/v1/me/sessions/revoke-all',

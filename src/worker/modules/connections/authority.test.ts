@@ -1160,6 +1160,9 @@ describe('manual workflow enqueue authority', () => {
             credentialKeysetCommitment,
             trigger: 'admin',
             runId: response.json.runId,
+            // The operation that shows the run: ids only, no principal enters the Workflow.
+            operationId: response.json.operationId,
+            operationAttempt: 1,
           },
         },
       ]);

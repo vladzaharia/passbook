@@ -74,7 +74,8 @@ export function installV2Env(): void {
   });
 }
 
-export async function member(orgId: string): Promise<SessionAuth> {
+export async function member(orgId: string, roles: string[] = ['org_admin']): Promise<SessionAuth> {
+  const roleJson = JSON.stringify(roles);
   const { env, f, clock } = S;
   const user = await makeUser(f);
   const now = clock.now();
@@ -83,22 +84,13 @@ export async function member(orgId: string): Promise<SessionAuth> {
     env.DB,
     `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      invitation,
-      orgId,
-      user.primaryEmail,
-      '["org_admin"]',
-      f.ids.token(),
-      now,
-      now + 3600_000,
-      now,
-    ],
+    [invitation, orgId, user.primaryEmail, roleJson, f.ids.token(), now, now + 3600_000, now],
   );
   await run(
     env.DB,
     `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
     VALUES (?, ?, ?, ?, ?, ?)`,
-    [f.ids.id(), orgId, user.id, invitation, '["org_admin"]', now],
+    [f.ids.id(), orgId, user.id, invitation, roleJson, now],
   );
   const session = await makeSession(f, { userId: user.id });
   const auth = await createSessionStore(env, clock).resolve(session.cookieValue);
