@@ -11,6 +11,7 @@ import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
 import {
   type AuditRow,
   auditStmt,
+  hiddenOrgLabels,
   labelKey,
   listAuditRows,
   loadLabels,
@@ -184,10 +185,12 @@ async function listAudit(
     refs,
     scope.kind === 'tenant' ? scope.orgId : undefined,
   );
+  const orgIds = [...new Set(page.flatMap((r) => (r.org_id ? [r.org_id] : [])))];
   const orgLabels =
     scope.kind === 'platform'
-      ? await personalOrgLabels(ctx.env.DB, [
-          ...new Set(page.flatMap((r) => (r.org_id ? [r.org_id] : []))),
+      ? new Map([
+          ...(await hiddenOrgLabels(ctx.env.DB, orgIds)),
+          ...(await personalOrgLabels(ctx.env.DB, orgIds)),
         ])
       : new Map<string, string>();
   return {
