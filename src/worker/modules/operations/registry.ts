@@ -54,4 +54,4 @@ export function registerOperationKind(def: OperationKindDef, runner: OperationRu
   };
 }
 
-export { kindOf, orgKinds } from './kinds.ts';
+export { kindOf } from './kinds.ts';
