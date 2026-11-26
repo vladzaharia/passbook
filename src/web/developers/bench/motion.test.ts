@@ -47,8 +47,16 @@ describe('bench motion', () => {
 
   it('under reduced motion it only fades: no transform in a reduce block', () => {
     for (const { file, css } of sheets) {
-      const reduce = css.split(/@media\s*\(prefers-reduced-motion:\s*reduce\)/).slice(1);
-      for (const block of reduce) expect(block.split('@media')[0], file).not.toMatch(/transform/);
+      const at = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{/g;
+      for (let m = at.exec(css); m; m = at.exec(css)) {
+        let depth = 1;
+        let i = m.index + m[0].length;
+        for (; depth > 0 && i < css.length; i++) {
+          if (css[i] === '{') depth++;
+          else if (css[i] === '}') depth--;
+        }
+        expect(css.slice(m.index, i), file).not.toMatch(/transform/);
+      }
     }
   });
 });
