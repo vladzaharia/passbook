@@ -82,14 +82,9 @@ export function ScanOutline({
         System: verdicts, authorization, the identity line and actions cannot be changed here.
       </p>
       {screen === 'refused' && !invalid ? (
-        <>
-          <p className="text-sm text-fg-muted">
-            Refused screens show only the system result and an optional refused note.
-          </p>
-          <div data-target="scan-display:notes" tabIndex={-1}>
-            <Notes editor={editor} refusedOnly />
-          </div>
-        </>
+        <div data-target="scan-display:notes" tabIndex={-1}>
+          <Notes editor={editor} refusedOnly />
+        </div>
       ) : invalid ? (
         <div className="rounded-lg border border-danger p-3">
           <p className="text-sm font-medium text-fg-strong">The saved scan screen is invalid</p>

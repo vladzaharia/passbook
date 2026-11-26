@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_SCAN_ACTION } from '@/shared/scan-defaults.ts';
 import '../../../../lib/test-utils.tsx';
 import { TooltipProvider } from '../../../../ui/index.ts';
@@ -12,7 +12,10 @@ import { sampleDoc } from '../fixtures.ts';
 import type { Selection } from '../model.ts';
 import { designerReducer, initialState, isDirty } from '../reducer.ts';
 import { ScanMode } from './scan-mode.tsx';
+import { forgetStageMemory } from './scan-stage-memory.ts';
 import { frame, frameReady } from './scan-stage-test-fixtures.ts';
+
+beforeEach(forgetStageMemory);
 
 function Harness() {
   const [state, dispatch] = useReducer(designerReducer, undefined, () => {

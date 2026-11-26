@@ -18,7 +18,7 @@ export const TEMPLATE_BRAND_COPY = {
     title: 'Brand',
     logo: 'Logo',
     icon: 'Icon',
-    colors: 'Colours',
+    colors: 'Colors',
     support: 'Support',
     override: 'Override',
     useOrg: 'Use organization',
