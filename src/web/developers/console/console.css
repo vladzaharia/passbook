@@ -1,14 +1,10 @@
 /* The Try it console: tabs, header chips, form, editor and the Run bar. Loads with the island. */
-@import "./inspector.css";
+@import "./response.css";
 @import "./page.css";
 @import "./runbar.css";
 
 .run-root {
   min-width: 0;
-}
-.stub > .code-h {
-  border-radius: var(--pk-radius-lg) var(--pk-radius-lg) 0 0;
-  flex: none;
 }
 /* ---------- Header chips ---------- */
 .hchips {
@@ -178,47 +174,48 @@ textarea.ctl {
   }
 }
 
+/* The text and its coloured copy share one cell, wrap at the same width and carry the same padding, so they
+   scroll and size together. The numbers are the copy's own (a counter on each line): a wrapped line keeps one. */
 .editor {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100%;
   font: 400 12.5px / 1.7 var(--pk-font-mono);
+  counter-reset: ln;
 }
-.gutter {
-  flex: none;
-  width: 44px;
-  padding: 14px 8px 14px 0;
+.editor > * {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 14px 16px 14px 52px;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  tab-size: 2;
+}
+.editor pre.src {
+  overflow: visible;
+  pointer-events: none;
+}
+.editor pre.src .ln {
+  position: relative;
+  display: block;
+  min-height: 1.7em;
+  padding-inline: 0;
+  margin-inline: 0;
+  white-space: inherit;
+  counter-increment: ln;
+}
+.editor pre.src .ln::before {
+  content: counter(ln);
+  position: absolute;
+  inset-inline-start: -52px;
+  width: 36px;
   text-align: right;
   color: var(--pk-text-subtle);
   user-select: none;
 }
-.gutter span {
-  display: block;
-}
-/* The text and its coloured copy share one cell, so they scroll and size together. */
-.ed-stack {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(100%, max-content);
-  min-width: 0;
-}
-.ed-stack > * {
-  grid-area: 1 / 1;
-  margin: 0;
-  padding: 14px 16px 14px 0;
-  font: inherit;
-  white-space: pre;
-  tab-size: 2;
-}
-.ed-stack pre.src {
-  pointer-events: none;
-}
-.ed-stack pre.src .ln {
-  display: inline;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-}
-.ed-stack textarea {
+.editor textarea {
   min-width: 0;
   border: 0;
   background: transparent;
@@ -227,10 +224,10 @@ textarea.ctl {
   resize: none;
   overflow: hidden;
 }
-.ed-stack textarea::selection {
+.editor textarea::selection {
   background: color-mix(in oklab, var(--pk-accent) 30%, transparent);
 }
-.ed-stack textarea:focus-visible {
+.editor textarea:focus-visible {
   outline: 2px solid var(--pk-focus);
   outline-offset: -2px;
 }

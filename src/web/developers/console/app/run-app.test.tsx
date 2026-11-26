@@ -17,7 +17,7 @@ describe('RunApp without a ready sandbox', () => {
     vi.stubGlobal('location', { ...location, reload });
     const { container } = render(<RunApp session={{ kind: 'failed', csrf: 'c' }} mode="console" />);
     await screen.findByRole('button', { name: 'Retry' });
-    expect(container.querySelector('.pstate')?.getAttribute('data-kind')).toBe('error');
+    expect(container.querySelector('.pstate')?.getAttribute('data-scene')).toBe('failed');
     expect(screen.queryByText('No sandbox yet')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(reload).toHaveBeenCalledOnce();
@@ -28,7 +28,7 @@ describe('RunApp without a ready sandbox', () => {
       <RunApp session={{ kind: 'none', csrf: 'c', siteKey: 's' }} mode="console" />,
     );
     await screen.findByText('No sandbox yet');
-    expect(container.querySelector('.pstate')?.getAttribute('data-kind')).toBe('empty');
+    expect(container.querySelector('.pstate')?.getAttribute('data-scene')).toBe('no-sandbox');
     expect(screen.getByRole('button', { name: 'Create sandbox' })).toBeTruthy();
     expect(container.querySelector('.ticket')).toBeNull();
   });

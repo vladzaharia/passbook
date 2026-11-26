@@ -1,15 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Inspector } from '../../ui/inspector.tsx';
+import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
+import { useMediaQuery } from '../../../lib/media.ts';
+import { useBenchKeys } from '../../bench/keys.ts';
+import { BenchSkeleton } from '../../bench/skeleton.tsx';
+import { BENCH_TABLET } from '../../bench/split.tsx';
+import { BenchState } from '../../bench/state.tsx';
+import { copyWithFeedback } from '../../shell/copy.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
+import { copyAs } from '../copy-as.ts';
 import { applyPrefill, type Prefill } from '../prefill.ts';
-import { buildSent, type Draft, type InputCheck, initialDraft, takesTemplate } from '../request.ts';
+import {
+  buildSent,
+  type Draft,
+  type InputCheck,
+  initialDraft,
+  problems,
+  takesTemplate,
+} from '../request.ts';
 import { type Outcome, RunError, send } from '../send.ts';
 import { loadTemplateInput } from '../template-sample.ts';
 import { tokenHeld } from '../token.ts';
 import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
-import { ResponseEmpty } from './response-empty.tsx';
+import { ResponseView } from './response.tsx';
+import { RunBar } from './run-bar.tsx';
 
 export interface ConsoleProps {
   op: RunOp;
@@ -27,7 +42,7 @@ const firstTab = (op: RunOp): Tab =>
   op.params.some((p) => p.where !== 'header') || !op.body ? 'form' : 'json';
 
 /** One operation: the request as the ticket stub, the response as its body. Remounted per operation. */
-export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: ConsoleProps) {
+export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }: ConsoleProps) {
   const [draft, setDraft] = useState<Draft>(() => {
     const start = initialDraft(op, templateId);
     return prefill ? applyPrefill(start, op, prefill, templateId) : start;
@@ -39,7 +54,10 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
   const [asked, setAsked] = useState(tokenHeld);
   const [tab, setTab] = useState<Tab>(() => firstTab(op));
   const [pending, setPending] = useState(false);
-  const [outcome, setOutcome] = useState<{ result: Outcome; draft: Draft } | null>(null);
+  const [outcome, setOutcome] = useState<{ result: Outcome; draft: Draft; at: number } | null>(
+    null,
+  );
+  const count = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [spent, setSpent] = useState(() => remaining() === 0);
   const live = useRef(true);
@@ -80,13 +98,13 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
       try {
         const result = await send(op, d, csrf);
         if (!live.current) return;
-        setOutcome({ result, draft: d });
+        count.current += 1;
+        setOutcome({ result, draft: d, at: count.current });
         // A call that went through spends its key: the next Run is a new call. "Same key" keeps it.
         if (!again && d.idemOn && result.status < 500)
           setDraft((cur) => ({ ...cur, idemKey: crypto.randomUUID() }));
       } catch (e) {
-        if (live.current)
-          setError(e instanceof RunError ? e.message : 'Something went wrong. Run again.');
+        if (live.current) setError(e instanceof RunError ? e.message : CONSOLE_COPY.runFailed);
       } finally {
         if (live.current) setPending(false);
       }
@@ -103,6 +121,35 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
     void execute(draft, false);
   };
   const replay = outcome ? () => void execute(outcome.draft, true) : undefined;
+  const issues = problems(op, draft, check);
+
+  // On the Workbench the Run bar docks to the bottom of a phone; elsewhere it ends the request.
+  const tablet = useMediaQuery(BENCH_TABLET);
+  const docked = mode === 'console' && !tablet;
+  const bar = (
+    <RunBar
+      op={op}
+      draft={draft}
+      check={check}
+      issues={issues}
+      pending={pending}
+      spent={spent}
+      run={run}
+      pressRef={pressRef}
+    />
+  );
+  // The bench's keys reach the console from the list too (a focused field has its own Cmd+Enter below).
+  useBenchKeys(
+    mode === 'console'
+      ? {
+          primary: () => pressRef.current?.(),
+          copyCurl: () => void copyWithFeedback(copyAs('curl', buildSent(op, draft, origin)), null),
+          ...(outcome?.result.requestId
+            ? { copyId: () => void copyWithFeedback(outcome.result.requestId ?? '', null) }
+            : {}),
+        }
+      : {},
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Cmd/Ctrl+Enter runs from anywhere in the console
@@ -118,19 +165,18 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
     >
       <Ticket
         stub={
-          <Builder
-            op={op}
-            origin={origin}
-            draft={draft}
-            check={check}
-            tab={tab}
-            pending={pending}
-            spent={spent}
-            set={edit}
-            setTab={setTab}
-            run={run}
-            pressRef={pressRef}
-          />
+          <>
+            <Builder
+              op={op}
+              origin={origin}
+              draft={draft}
+              check={check}
+              tab={tab}
+              set={edit}
+              setTab={setTab}
+            />
+            {docked ? null : bar}
+          </>
         }
         body={
           <div aria-busy={pending} className="resp-pane">
@@ -139,20 +185,23 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
                 {error}
               </p>
             ) : null}
-            {pending && !outcome ? <ResponseEmpty pending /> : null}
+            {pending && !outcome ? <BenchSkeleton rows={3} /> : null}
             {outcome ? (
-              <Inspector
+              <ResponseView
                 outcome={outcome.result}
+                at={outcome.at}
                 sent={buildSent(op, outcome.draft, origin)}
                 codes={codes}
+                csrf={csrf}
                 onReplay={replay}
               />
             ) : pending || error ? null : (
-              <ResponseEmpty />
+              <BenchState scene="console-idle" heading="p" />
             )}
           </div>
         }
       />
+      {docked ? <div className="runbar-dock">{bar}</div> : null}
     </div>
   );
 }

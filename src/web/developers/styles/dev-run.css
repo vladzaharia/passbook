@@ -23,18 +23,10 @@
     min-block-size: 0;
     overflow: auto;
   }
-  .console-slot .stub {
-    block-size: 24.5rem;
-  }
 }
-/* The console page: the ticket plus the operation's heading row. */
-.console-slot {
-  /* 45rem, less on a short window: the footer stays on the first screen of a signed-out console. */
-  min-block-size: clamp(24rem, calc(100dvh - 27rem), 45rem);
-}
-/* A state card (no sandbox, failed) is not a ticket: no blank min-height under it. */
-.console-slot:has(.pstate) {
-  min-block-size: 0;
+/* The Console tool while its session is read: the held slot keeps room, so the page below does not jump. */
+.bench-run[data-hydrating] {
+  min-block-size: clamp(20rem, calc(100dvh - 24rem), 40rem);
 }
 .ticket > .body {
   position: relative;
@@ -45,10 +37,6 @@
   align-items: flex-start;
   gap: 12px;
   padding: 24px 20px;
-}
-.resp-hint {
-  padding: 18px 20px;
-  margin: 0;
 }
 
 /* Skeleton: the slot keeps its boxes (visibility, not display) and shows bars where content goes. */

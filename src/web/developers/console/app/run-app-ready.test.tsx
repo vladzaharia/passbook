@@ -16,29 +16,22 @@ vi.mock('./console.tsx', () => ({
     </p>
   ),
 }));
-vi.mock('./picker.tsx', () => ({
-  Picker: ({
-    index,
-    current,
-    onPick,
+vi.mock('./index-pane.tsx', () => ({
+  idOfOp: (o: { id: string }) => o.id,
+  OpIndex: ({
+    items,
+    selection,
   }: {
-    index: { groups: { items: { id: string; title: string }[] }[] };
-    current: string | null;
-    onPick: (i: { id: string; title: string; slug: string; anchor: string }) => void;
+    items: { id: string }[];
+    selection: { selectedId: string | null; select: (id: string, o: { open: boolean }) => void };
   }) => (
     <div>
-      <span>current {current}</span>
-      {index.groups.flatMap((g) =>
-        g.items.map((i) => (
-          <button
-            key={i.id}
-            type="button"
-            onClick={() => onPick(i as { id: string; title: string; slug: string; anchor: string })}
-          >
-            pick {i.id}
-          </button>
-        )),
-      )}
+      <span>current {selection.selectedId}</span>
+      {items.map((i) => (
+        <button key={i.id} type="button" onClick={() => selection.select(i.id, { open: true })}>
+          pick {i.id}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -51,9 +44,10 @@ const index = {
   codes: ['X'],
   groups: [
     {
+      label: 'Passes',
       items: [
-        { id: 'a', title: 'First', slug: 'passes', anchor: 'a' },
-        { id: 'b', title: 'Second', slug: 'passes', anchor: 'b' },
+        { id: 'a', title: 'First', slug: 'passes', anchor: 'a', method: 'get', path: '/a' },
+        { id: 'b', title: 'Second', slug: 'passes', anchor: 'b', method: 'post', path: '/b' },
       ],
     },
   ],
@@ -74,7 +68,7 @@ describe('RunApp with a sandbox', () => {
 
   it('loads the operation of an operation page, and keeps the token', async () => {
     render(<RunApp session={ready} mode="op" slug="passes" opId="a" />);
-    expect(screen.getByText('Loading')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
     expect(await screen.findByText('console a op plain')).toBeInTheDocument();
     expect(m.retain).toHaveBeenCalledWith('c');
   });
@@ -94,9 +88,25 @@ describe('RunApp with a sandbox', () => {
     render(<RunApp session={ready} mode="console" />);
     expect(await screen.findByText('current b')).toBeInTheDocument();
     expect(await screen.findByText(/console b console/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Read the reference' })).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole('button', { name: 'pick a' }));
+    expect(screen.getByRole('link', { name: 'Reference' })).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByText('pick a'));
     await waitFor(() => expect(screen.getByText('current a')).toBeInTheDocument());
     expect(location.hash).toBe('#a');
+  });
+
+  it('the console page opens on the first read, and says so in the address, when none is linked', async () => {
+    m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
+    render(<RunApp session={ready} mode="console" />);
+    expect(await screen.findByText('current a')).toBeInTheDocument();
+    expect(location.hash).toBe('#a');
+  });
+
+  it('keeps a guide link\u2019s prefill for its operation and drops it for another', async () => {
+    location.hash = '#b?body=%7B%7D';
+    m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
+    render(<RunApp session={ready} mode="console" />);
+    expect(await screen.findByText(/console b console prefilled/)).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByText('pick a'));
+    expect(await screen.findByText(/console a console plain/)).toBeInTheDocument();
   });
 });
