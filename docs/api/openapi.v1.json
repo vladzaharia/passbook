@@ -10401,11 +10401,18 @@
           "instances": {
             "type": "integer",
             "minimum": 0
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "reissueId",
-          "instances"
+          "instances",
+          "operationId"
         ]
       },
       "ApiKeyCurrent": {
@@ -26864,6 +26871,14 @@
               "string",
               "null"
             ]
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
@@ -26874,7 +26889,8 @@
           "expiresAt",
           "bytes",
           "entities",
-          "errorCode"
+          "errorCode",
+          "operationId"
         ]
       },
       "OrgExportsCreateLinkResponse": {
@@ -37254,10 +37270,17 @@
         "properties": {
           "workflowInstanceId": {
             "type": "string"
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
-          "workflowInstanceId"
+          "workflowInstanceId",
+          "operationId"
         ]
       },
       "PassesBulkUpdateChannelsParams": {
@@ -37471,6 +37494,12 @@
               "allOff",
               "blocked",
               "windows"
+            ]
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -39174,12 +39203,19 @@
                 "code"
               ]
             }
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "jobId",
           "count",
-          "skipped"
+          "skipped",
+          "operationId"
         ]
       },
       "PrintJobsRetrieveResponse": {
@@ -54551,11 +54587,20 @@
           },
           "workflowInstanceId": {
             "type": "string"
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
           "runId",
-          "workflowInstanceId"
+          "workflowInstanceId",
+          "operationId"
         ]
       },
       "ConnectionsRunsListResponse": {
@@ -105137,55 +105182,53 @@
                   "$ref": "#/components/schemas/OperationsCancelResponse"
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-5fb420e31bab",
-                    "kind": "bulk.run",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-33cc03362941"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
-                    "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/admin/passes",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                  "id": "0193a1b2-7c00-7000-8000-cb8398d01ce2",
+                  "kind": "bulk.run",
+                  "status": "succeeded",
+                  "title": "Delete sandbox",
+                  "text": "Removing Test passes · 4 of 12",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-696c742e8471"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "Remove Test passes",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "Waiting for Apple",
+                      "until": 1795572600000,
+                      "waitingReason": "due",
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "/admin/passes",
+                    "ids": {
+                      "tier": "northwind"
+                    }
+                  },
+                  "revision": 3,
+                  "pollAfterMs": 1471
                 }
               }
             }
@@ -105354,55 +105397,53 @@
                   "$ref": "#/components/schemas/OperationsRetryResponse"
                 },
                 "example": {
-                  "operation": {
-                    "id": "0193a1b2-7c00-7000-8000-f650d22e8d9d",
-                    "kind": "bulk.run",
-                    "status": "succeeded",
-                    "title": "Delete sandbox",
-                    "text": "Removing Test passes · 4 of 12",
-                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                    "mode": "live",
-                    "target": {
-                      "type": "generic",
-                      "id": "0193a1b2-7c00-7000-8000-c89e76b47558"
-                    },
-                    "step": "mapping",
-                    "steps": [
-                      {
-                        "key": "tier",
-                        "label": "Remove Test passes",
-                        "state": "done",
-                        "done": 39,
-                        "total": 128,
-                        "detail": "Waiting for Apple",
-                        "until": 1795572600000,
-                        "waitingReason": "due",
-                        "group": "Access",
-                        "startedAt": 1794362400000,
-                        "finishedAt": 1795570500000
-                      }
-                    ],
-                    "attempt": 1,
-                    "cancelable": true,
-                    "cancelRequested": true,
-                    "startedBy": {
-                      "type": "user",
-                      "id": "0193a1b2-7c00-7000-8000-000000000011"
-                    },
-                    "createdAt": 1794362400000,
-                    "startedAt": 1794362400000,
-                    "updatedAt": 1795399200000,
-                    "finishedAt": 1795570500000,
-                    "error": null,
-                    "result": {
-                      "href": "/admin/passes",
-                      "ids": {
-                        "tier": "northwind"
-                      }
-                    },
-                    "revision": 3,
-                    "pollAfterMs": 1471
-                  }
+                  "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
+                  "kind": "bulk.run",
+                  "status": "succeeded",
+                  "title": "Delete sandbox",
+                  "text": "Removing Test passes · 4 of 12",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-4ec68f100a84"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "Remove Test passes",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "Waiting for Apple",
+                      "until": 1795572600000,
+                      "waitingReason": "due",
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "/admin/passes",
+                    "ids": {
+                      "tier": "northwind"
+                    }
+                  },
+                  "revision": 3,
+                  "pollAfterMs": 1471
                 }
               }
             }

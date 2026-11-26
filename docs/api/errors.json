@@ -733,6 +733,15 @@
       ]
     },
     {
+      "code": "BULK_REISSUE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "workflows"
+      ]
+    },
+    {
       "code": "BULK_RUN_ACTIVE",
       "statuses": [
         409
@@ -993,6 +1002,33 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "CONNECTION_SYNC_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_SYNC_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_SYNC_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
       ]
     },
     {
@@ -3231,7 +3267,10 @@
         404
       ],
       "modules": [
-        "operations"
+        "connections",
+        "operations",
+        "passes",
+        "wallet-providers"
       ]
     },
     {
@@ -3310,9 +3349,27 @@
       ]
     },
     {
+      "code": "ORG_EXPORT_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "workflows"
+      ]
+    },
+    {
       "code": "ORG_EXPORT_RUNNING",
       "statuses": [
         409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_EXPORT_START",
+      "statuses": [
+        500
       ],
       "modules": [
         "org-lifecycle"
@@ -3834,6 +3891,24 @@
       ]
     },
     {
+      "code": "PRINT_BULK_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_BULK_VOIDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
       "code": "PRINT_CODE_UNAVAILABLE",
       "statuses": [
         409
@@ -3968,6 +4043,15 @@
       ],
       "modules": [
         "apple"
+      ]
+    },
+    {
+      "code": "REISSUE_PRINCIPAL_REVOKED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "workflows"
       ]
     },
     {
@@ -6791,6 +6875,15 @@
       "code": "WALLET_PROJECTION_UNSUPPORTED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_REISSUE_KEYSET",
+      "statuses": [
+        503
       ],
       "modules": [
         "wallet-providers"

@@ -3418,6 +3418,7 @@ class ConnectionsRunsListResponseItemsItem(_Model):
 class ConnectionsSyncResponse(_Model):
     runId: str
     workflowInstanceId: str
+    operationId: str | None
 
 class ConnectionsTestConfigParams(_Model):
     orgId: str
@@ -6410,6 +6411,7 @@ class OrgExportsCreateResponse(_Model):
     bytes: int | None
     entities: _Dict[str, int] | None
     errorCode: str | None
+    operationId: str | None
 
 class OrgExportsListResponse(_Model):
     items: _List[OrgExportsListResponseItemsItem]
@@ -8299,6 +8301,7 @@ class PassesBulkReissueParams(_Model):
 
 class PassesBulkReissueResponse(_Model):
     workflowInstanceId: str
+    operationId: str | None
 
 class PassesBulkUpdateChannelsParams(_Model):
     action: _Literal["on", "off", "reset"] | str
@@ -8313,6 +8316,7 @@ class PassesBulkUpdateChannelsResponse(_Model):
     done: int
     skipped: _List[PassesBulkUpdateChannelsResponseSkippedItem]
     preview: PassesBulkUpdateChannelsResponsePreview | None = None
+    operationId: str | None = None
 
 class PassesBulkUpdateChannelsResponsePreview(_Model):
     impact: _List[PassesBulkUpdateChannelsResponsePreviewImpactItem]
@@ -9983,6 +9987,7 @@ class PrintJobsCreateResponse(_Model):
     jobId: str
     count: int
     skipped: _List[PrintJobsCreateResponseSkippedItem]
+    operationId: str | None
 
 class PrintJobsCreateResponseSkippedItem(_Model):
     id: str
@@ -14066,6 +14071,7 @@ class WalletProviderAccountsVerifyResponse(_Model):
 class WalletReissue(_Model):
     reissueId: str
     instances: int
+    operationId: str | None
 
 class WebhookCapture(_Model):
     id: str

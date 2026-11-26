@@ -447,7 +447,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.sync", "POST", "/api/v1/connections/id1/sync", false,
-		"", `{"runId":"x","workflowInstanceId":"x"}`,
+		"", `{"runId":"x","workflowInstanceId":"x","operationId":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Sync(ctx, "id1")
 		},
@@ -1123,7 +1123,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"printJobs.create", "POST", "/api/v1/passes/bulk-print", false,
-		`{"ids":["x"],"orgId":"x"}`, `{"jobId":"x","count":0,"skipped":[{"id":"x","code":"x"}]}`,
+		`{"ids":["x"],"orgId":"x"}`, `{"jobId":"x","count":0,"skipped":[{"id":"x","code":"x"}],"operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PrintJobsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1148,7 +1148,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.bulkReissue", "POST", "/api/v1/passes/bulk-reissue", false,
-		`{}`, `{"workflowInstanceId":"x"}`,
+		`{}`, `{"workflowInstanceId":"x","operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesBulkReissueBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -2157,7 +2157,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.resendProviderCopies", "POST", "/api/v1/wallet-providers/reissue", false,
-		`{"provider":"google"}`, `{"reissueId":"x","instances":0}`,
+		`{"provider":"google"}`, `{"reissueId":"x","instances":0,"operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesResendProviderCopiesBody
 			if err := json.Unmarshal(body, &b); err != nil {
