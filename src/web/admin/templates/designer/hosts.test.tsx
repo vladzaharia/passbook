@@ -5,6 +5,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../../../lib/api.ts';
 import { AppProviders } from '../../../lib/providers.tsx';
@@ -94,6 +95,11 @@ describe('the designer in each host', () => {
     );
     expect(token.calls).toContainEqual(expect.stringMatching(/^GET .*\/channels\?orgId=org-wb$/));
     expect(await screen.findByRole('button', { name: 'Save version' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Scan screen' }));
+    expect(await screen.findByRole('button', { name: 'Start blank' })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(token.calls).toContainEqual(expect.stringMatching(/^GET \/api\/v1\/orgs\/org-wb\//)),
+    );
     expect(tenantCalls(session)).toEqual([]);
   });
 
