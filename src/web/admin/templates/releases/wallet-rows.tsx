@@ -96,8 +96,11 @@ function nativeState(
     return {
       status: 'blocked',
       pill: 'warning',
-      label: 'Review needed: new omission',
-      meta: review.pending.map((item) => item.message).join(' · '),
+      label: review.pending.length > 0 ? 'Review needed: new omission' : 'Review needed: new type',
+      meta:
+        review.pending.length > 0
+          ? review.pending.map((item) => item.message).join(' · ')
+          : `Now ${review.typeChanged?.to ?? ''}, approved as ${review.typeChanged?.from ?? ''}.`,
     };
   if (review.kind === 'released' && active?.googleReview === 'waiting')
     return releasedState(active, candidates, versions);

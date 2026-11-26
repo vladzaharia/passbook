@@ -26,7 +26,17 @@ export type WalletReview =
       approved: ReadonlySet<string>;
       /** Omissions with no approval yet: all of them before a release, the new ones after it. */
       pending: readonly Omission[];
+      /** The compiled type moved off the approved one: a Q21 pause the omissions do not show. */
+      typeChanged?: { from: string; to: string };
     };
+
+/** The compiled type a schema 2 candidate pinned. */
+function pinnedType(candidate: TemplateCandidate | undefined): string | undefined {
+  const projection = candidate?.projection as { schema?: unknown; type?: unknown } | undefined;
+  return projection?.schema === 2 && typeof projection.type === 'string'
+    ? projection.type
+    : undefined;
+}
 
 /** The omissions a schema 2 candidate pinned; none for schema 1 or no candidate. */
 function pinnedKeys(candidate: TemplateCandidate | undefined): Set<string> {
@@ -63,18 +73,26 @@ export function walletReview(
     .filter((item, at, all) => all.findIndex((other) => other.key === item.key) === at)
     .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   const serving = active?.version === current.version ? active : null;
-  const approved = serving
-    ? pinnedKeys(candidates.find((c) => c.id === serving.candidateId))
-    : new Set<string>();
+  const source = serving ? candidates.find((c) => c.id === serving.candidateId) : undefined;
+  const approved = serving ? pinnedKeys(source) : new Set<string>();
   const pending = items.filter((item) => !approved.has(item.key));
+  // The offer paths pause on a changed type too (Q21), so the row must not read Released.
+  const from = pinnedType(source);
+  const typeChanged = serving && from !== undefined && from !== report.type;
   const kind = serving
-    ? pending.length > 0
+    ? pending.length > 0 || typeChanged
       ? 'review'
       : 'released'
     : items.length > 0
       ? 'omissions'
       : 'ready';
-  return { kind, items, approved, pending };
+  return {
+    kind,
+    items,
+    approved,
+    pending,
+    ...(typeChanged && from !== undefined ? { typeChanged: { from, to: report.type } } : {}),
+  };
 }
 
 /** The fidelity words of the report: "Ready" or "Ready with omissions (n)". */

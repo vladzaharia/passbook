@@ -169,6 +169,31 @@ describe('wallet release review', () => {
     expect(within(dialog).getByText(`relevance.locations · locations`)).toBeInTheDocument();
   });
 
+  it('reads Review needed: new type when the compiled type moved off the approved one', async () => {
+    // Q21 pauses offers for a changed type as it does for a new omission: the row cannot read Released.
+    const pinned = candidate({
+      id: 'candidate-g',
+      provider: 'google',
+      version: 'version-2',
+      projection: { schema: 2, provider: 'google', type: 'loyalty', approvedOmissions: [] },
+    });
+    serve({
+      current: READY,
+      active: release({
+        provider: 'google',
+        version: 'version-2',
+        candidateId: 'candidate-g',
+        approvalId: 'approval-g',
+      }),
+      candidates: [pinned],
+    });
+    mountPanel();
+    const row = await googleRow();
+    expect(row).toHaveTextContent('Review needed: new type');
+    expect(row).toHaveTextContent('Now generic, approved as loyalty.');
+    expect(row).not.toHaveTextContent('Released');
+  });
+
   it('reads Released when the approval covers every omission', async () => {
     serve({
       current: ONE_OLD,

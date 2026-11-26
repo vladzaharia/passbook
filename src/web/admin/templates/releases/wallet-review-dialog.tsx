@@ -227,7 +227,16 @@ export default function WalletReviewDialog({
           ) : (
             <>
               {review.kind === 'review' ? (
-                <Callout tone="warning" title="Review needed: new omission" />
+                <Callout
+                  tone="warning"
+                  title={
+                    pending.length > 0 ? 'Review needed: new omission' : 'Review needed: new type'
+                  }
+                >
+                  {review.typeChanged
+                    ? `Now ${review.typeChanged.to}, approved as ${review.typeChanged.from}.`
+                    : null}
+                </Callout>
               ) : null}
               {items.length === 0 ? (
                 <EmptyState art="wallet" title="Nothing is left out" />
