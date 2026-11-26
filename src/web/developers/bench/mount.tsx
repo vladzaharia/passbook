@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { useActiveOperation } from '../../ui/operation/use-operation.ts';
+import { useActiveOperation } from '../../ui/operation/index.ts';
 import { loadSession, onSession, type Session } from '../console/session.ts';
 import type { Island } from '../shell/islands.ts';
 import { type ChipState, SandboxChip } from './sandbox-chip.tsx';

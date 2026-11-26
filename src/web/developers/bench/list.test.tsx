@@ -119,7 +119,7 @@ describe('the bench list', () => {
     await waitFor(() => expect(screen.getByText('Not in this view')).toBeTruthy());
     expect(fetchOne).toHaveBeenCalledTimes(1);
     const pinned = option('/old');
-    expect(pinned.dataset.pinned).toBe('');
+    expect(pinned.hasAttribute('data-pinned')).toBe(true);
     expect(pinned.getAttribute('aria-selected')).toBe('true');
     fireEvent.keyDown(box(), { key: 'ArrowDown' });
     expect(location.hash).toBe('#r1');
@@ -134,7 +134,15 @@ describe('the bench list', () => {
         items={[] as Call[]}
         idOf={idOf}
         row={(c) => ({ title: c.path })}
-        selection={{ selectedId: null, selected: null, pinned: null, open: false, select: vi.fn(), step: vi.fn(), setOpen: vi.fn() }}
+        selection={{
+          selectedId: null,
+          selected: null,
+          pinned: null,
+          open: false,
+          select: vi.fn(),
+          step: vi.fn(),
+          setOpen: vi.fn(),
+        }}
         empty={<p>No requests yet.</p>}
       />,
     );
