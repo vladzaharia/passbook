@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  DeveloperInvitationSchema,
+  DeveloperListSchema,
+} from '@/shared/contracts/developer-invitations.ts';
+import {
   OrgInvitationListSchema,
   OrgInvitationSchema,
   OrgMemberListSchema,
@@ -10,12 +14,12 @@ import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { api } from '@/web/lib/api.ts';
 import { membershipsQuery, sessionQuery, useSession } from '@/web/lib/session.ts';
 
-export type InviteBody = { email: string; roles: OrgRole[] };
+export type InviteBody = { email: string; roles: OrgRole[]; developer?: boolean };
 /** Sends one invitation; true when it went. A thrown error is the server's refusal. */
 export type SendInvite = (body: InviteBody) => Promise<boolean>;
 
 /** Members and invitations of one org, and the writes the Members page makes. */
-export function useOrgAccess(orgId: string) {
+export function useOrgAccess(orgId: string, personal = false) {
   const path = `/api/v1/orgs/${encodeURIComponent(orgId)}`;
   const key = ['org-access', orgId];
   const client = useQueryClient();
@@ -28,6 +32,13 @@ export function useOrgAccess(orgId: string) {
     queryKey: [...key, 'invitations'],
     queryFn: ({ signal }) => api.get(`${path}/invitations`, OrgInvitationListSchema, { signal }),
   });
+  // Developer access is offered when the plan has seats and Polaris ID can enrol (the API says so).
+  const developers = useQuery({
+    queryKey: [...key, 'developers'],
+    queryFn: ({ signal }) => api.get(`${path}/developers`, DeveloperListSchema, { signal }),
+    enabled: !personal,
+    retry: false,
+  });
   const refresh = () => client.invalidateQueries({ queryKey: key });
   const isCurrentPrincipal = (principalId: string) => {
     const session = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
@@ -38,7 +49,12 @@ export function useOrgAccess(orgId: string) {
     mutationFn: async ({ body, principalId }: { body: InviteBody; principalId: string }) => {
       if (!isCurrentPrincipal(principalId)) return undefined;
       try {
-        await api.post(`${path}/invitations`, OrgInvitationSchema, body);
+        if (body.developer)
+          await api.post(`${path}/developer-invitations`, DeveloperInvitationSchema, {
+            email: body.email,
+            ...(body.roles.length ? { roles: body.roles } : {}),
+          });
+        else await api.post(`${path}/invitations`, OrgInvitationSchema, body);
         if (isCurrentPrincipal(principalId)) return true;
       } catch (error) {
         if (isCurrentPrincipal(principalId)) throw error;
@@ -90,5 +106,6 @@ export function useOrgAccess(orgId: string) {
     revoke,
     changeRoles,
     inviting: invite.isPending,
+    developersAvailable: developers.data?.available === true,
   };
 }

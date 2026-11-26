@@ -54,10 +54,22 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason: 'a user edits their own primary email under their own session',
     writes: ['users:5cbb5673e06f'],
   },
-  'src/worker/modules/orgs/repo-members.ts': {
+  'src/worker/modules/idp/invitations/repo-writes.ts': {
     reason:
-      'invitation accept (the token, with a strong session, is the authority); manager writes are org.member.* grants',
-    writes: ['org_invitations:4b6bc4ab06f4', 'org_memberships:70b55e5c0f81'],
+      'invitation setup, claim and accept: the invitation secret (with a strong session, to accept) is the authority and the person holds no membership, so no grant principal exists; every statement is fenced in SQL by the invitation being open and, to accept, by one gate update that the rest key on in a batch that rolls back whole',
+    writes: [
+      'developer_invitations:c329d239065d',
+      'developer_invitations:ef7a966cd756',
+      'developer_invitations:ef7a966cd756@use',
+      'developer_invitations:ef7a966cd756@use',
+      'developer_invite_setups:d21574026cdd',
+      'developer_invite_setups:d21574026cdd@use',
+      'developer_sponsors:153ba85a1e40',
+      'org_invitations:c03bce0e29e0',
+      'org_invitations:ed7bccf1b0a5',
+      'org_memberships:35bad208c71d',
+      'org_memberships:433f77c699a7',
+    ],
   },
   'src/worker/modules/settings/repo.ts': {
     reason: 'system-scope job values (cron runs, identity checks); the settings routes use grants',

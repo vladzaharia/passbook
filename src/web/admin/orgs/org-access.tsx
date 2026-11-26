@@ -25,7 +25,7 @@ export interface MembersPanelProps {
 /** The member table, pending invitations, and the dialogs that change them. */
 export function MembersPanel({ org, inviteOpen, onInviteOpenChange }: MembersPanelProps) {
   const { authed } = useSession();
-  const access = useOrgAccess(org.id);
+  const access = useOrgAccess(org.id, org.personal === true);
   const { members, invitations } = access;
   const [removing, setRemoving] = useState<Pending | null>(null);
   const [editing, setEditing] = useState<OrgMember | null>(null);
@@ -95,6 +95,7 @@ export function MembersPanel({ org, inviteOpen, onInviteOpenChange }: MembersPan
           onOpenChange={onInviteOpenChange}
           pending={access.inviting}
           onInvite={access.sendInvite}
+          developers={access.developersAvailable}
         />
       )}
       <ChangeRolesDialog

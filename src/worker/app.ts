@@ -21,6 +21,7 @@ import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
@@ -174,6 +175,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
+  app.route('/api/v1/invitations', invitationRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
   app.route('/api/v1/orgs', passSetupWriteRoutes);
   app.route('/api/v1/orgs', orgsRoutes);

@@ -58,8 +58,9 @@ export function claimsOfInvitation(db: D1Database, parent: ClaimParent) {
 }
 
 /**
- * Claims the sweep must settle: not swept yet, the window ended (or the org invitation expired) or the
- * invitation was revoked, and the invitation was never accepted. Oldest first.
+ * Claims the sweep must settle: not swept yet, and the window ended, the invitation expired or was revoked, or it
+ * was accepted (the acceptor's reason moves to the membership or sponsorship, and any other subject's claim is no
+ * longer a reason: marking each dirty lets the drain keep the one and take back the other). Oldest first.
  */
 export const unsettledClaims = (db: D1Database, now: number, limit: number) =>
   all<ClaimRow>(
@@ -69,9 +70,10 @@ export const unsettledClaims = (db: D1Database, now: number, limit: number) =>
      LEFT JOIN org_invitations oi ON oi.id = c.org_invitation_id
      LEFT JOIN developer_invitations di ON di.id = c.developer_invitation_id
      LEFT JOIN platform_invitations pi ON pi.id = c.platform_invitation_id
-     WHERE COALESCE(oi.accepted_at, di.accepted_at, pi.accepted_at) IS NULL
-       AND c.swept_at IS NULL
-       AND (c.claim_until <= ? OR oi.expires_at <= ? OR COALESCE(oi.revoked_at, di.revoked_at, pi.revoked_at) IS NOT NULL)
+     WHERE c.swept_at IS NULL
+       AND (c.claim_until <= ? OR oi.expires_at <= ?
+         OR COALESCE(oi.revoked_at, di.revoked_at, pi.revoked_at) IS NOT NULL
+         OR COALESCE(oi.accepted_at, di.accepted_at, pi.accepted_at) IS NOT NULL)
      ORDER BY c.claim_until, c.id LIMIT ?`,
     [now, now, limit],
   );

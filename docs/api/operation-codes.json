@@ -1279,6 +1279,11 @@
   "developer invitations delete /{id}/developer-invitations/{invitationId}": [
     "DEVELOPER_INVITE_CONFLICT",
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
@@ -2044,6 +2049,53 @@
     "STALE",
     "TEMPLATE_RELEASE_CHANGED",
     "UNAUTHENTICATED"
+  ],
+  "invitations post /accept": [
+    "DEVELOPER_LIMIT_REACHED",
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "IDP_SIGN_IN_REQUIRED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_CONFLICT",
+    "INVITATION_EMAIL_MISMATCH",
+    "INVITATION_INVALID",
+    "UNAUTHENTICATED"
+  ],
+  "invitations post /claim-existing": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_INVALID",
+    "INVITATION_NO_ACCOUNT",
+    "TURNSTILE_FAILED"
+  ],
+  "invitations post /preview": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_INVALID"
+  ],
+  "invitations post /setup": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_INVALID",
+    "INVITATION_SETUP_CAPPED",
+    "TURNSTILE_FAILED"
   ],
   "join get /{token}": [
     "IDENTITY_EXPIRED",
@@ -2988,6 +3040,11 @@
   ],
   "organization memberships delete /{id}/invitations/{invitationId}": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "MEMBERSHIP_CONFLICT",
     "UNAUTHENTICATED"
   ],
@@ -3020,12 +3077,21 @@
     "UNAUTHENTICATED"
   ],
   "organization memberships post /invitations/accept": [
+    "DEVELOPER_LIMIT_REACHED",
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "INVITATION_CLAIM_CAPPED",
+    "INVITATION_CONFLICT",
+    "INVITATION_EMAIL_MISMATCH",
     "INVITATION_INVALID",
-    "MEMBERSHIP_CONFLICT",
     "UNAUTHENTICATED"
   ],
   "organization memberships post /invitations/preview": [
+    "FORBIDDEN",
     "INVITATION_INVALID"
   ],
   "organization memberships post /{id}/invitations": [

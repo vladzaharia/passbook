@@ -35,8 +35,8 @@ function surfaceFor(c: Context<AppBindings>): string {
   const path = c.req.path;
   return path.startsWith('/api/v1/developer')
     ? '/developers'
-    : path.startsWith('/api/v1/orgs/invitations')
-      ? '/api/v1/orgs/invitations/accept'
+    : path.startsWith('/api/v1/orgs/invitations') || path.startsWith('/api/v1/invitations')
+      ? '/invite'
       : path.startsWith('/api/v1/scan')
         ? '/scan'
         : '/admin';

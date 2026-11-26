@@ -16,6 +16,7 @@ export * from './events.ts';
 export * from './holders.ts';
 export * from './identities.ts';
 export * from './idp-access.ts';
+export * from './invitations.ts';
 export * from './me.ts';
 export * from './message-rules.ts';
 export * from './metrics.ts';

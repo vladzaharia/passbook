@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { InviteOrgMemberSchema, type OrgRole } from '@/shared/contracts/org-membership.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
-import { Button, Dialog, DialogContent, Form, toast, useFormErrors } from '@/web/ui/index.ts';
+import {
+  Button,
+  CheckboxField,
+  Dialog,
+  DialogContent,
+  Form,
+  toast,
+  useFormErrors,
+} from '@/web/ui/index.ts';
 import { EmailChips } from './email-chips.tsx';
 import { addEmails, type EmailChip } from './invite-emails.ts';
 import { RolePicker } from './role-picker.tsx';
@@ -13,15 +21,19 @@ export function InviteDialog({
   onOpenChange,
   pending,
   onInvite,
+  developers = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pending: boolean;
   onInvite: SendInvite;
+  /** Polaris ID can enrol developers and the plan has seats: offer developer access. */
+  developers?: boolean;
 }) {
   const [chips, setChips] = useState<EmailChip[]>([]);
   const [draft, setDraft] = useState('');
   const [roles, setRoles] = useState<OrgRole[]>([]);
+  const [developer, setDeveloper] = useState(false);
   const [refused, setRefused] = useState<Record<string, string>>({});
   const all = addEmails(chips, draft);
   const emailError =
@@ -32,7 +44,12 @@ export function InviteDialog({
         : undefined;
   const check = useFormErrors({
     emails: emailError,
-    roles: InviteOrgMemberSchema.shape.roles.safeParse(roles).success
+    // Developer access alone is an invitation: roles are only needed to join the org as well.
+    roles: (
+      roles.length > 0
+        ? InviteOrgMemberSchema.shape.roles.safeParse(roles).success
+        : developer
+    )
       ? undefined
       : 'Choose at least one role.',
   });
@@ -42,6 +59,7 @@ export function InviteDialog({
     setChips([]);
     setDraft('');
     setRoles([]);
+    setDeveloper(false);
     setRefused({});
     check.reset();
   }
@@ -53,7 +71,8 @@ export function InviteDialog({
     let dropped = false;
     for (const chip of all) {
       try {
-        if (await onInvite({ email: chip.email, roles })) sent += 1;
+        if (await onInvite({ email: chip.email, roles, ...(developer ? { developer } : {}) }))
+          sent += 1;
         else dropped = true;
       } catch (error) {
         failed[chip.email] = errorMessage(error);
@@ -75,7 +94,7 @@ export function InviteDialog({
   return (
     <Dialog
       open={open}
-      dirty={chips.length > 0 || draft.trim() !== '' || roles.length > 0}
+      dirty={chips.length > 0 || draft.trim() !== '' || roles.length > 0 || developer}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
@@ -109,6 +128,13 @@ export function InviteDialog({
             error={check.errors.roles}
             idPrefix="invite-role"
           />
+          {developers ? (
+            <CheckboxField
+              label="Developer access"
+              checked={developer}
+              onCheckedChange={(checked) => setDeveloper(checked === true)}
+            />
+          ) : null}
         </Form>
       </DialogContent>
     </Dialog>

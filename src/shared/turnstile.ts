@@ -4,3 +4,5 @@ export const TURNSTILE_ACTION = 'magic_request';
 export const TURNSTILE_JOIN_ACTION = 'join';
 /** The action the developer sandbox widget sets. */
 export const TURNSTILE_SANDBOX_ACTION = 'developer_sandbox';
+/** The action the invitation page's widget sets. */
+export const TURNSTILE_INVITE_ACTION = 'invite';

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { editSessionAuthority, makeApiKey } from '../../../../test/helpers/index.ts';
+import { editSessionAuthority, expectSet, makeApiKey } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createApiKeyStore } from './service.ts';
@@ -111,19 +111,22 @@ describe('API key commit authority', () => {
       const response = await beforeKeyBatch(
         action,
         async (db) => {
-          const result =
-            invalidated === 'session'
-              ? await run(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
-                  h.clock.now(),
-                  sessionId,
-                ])
-              : await run(db, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-                  h.clock.now(),
-                  membershipId,
-                ]);
-          // D1 counts the rows a trigger writes: revoking a membership also marks the user's Polaris ID subject.
-          if (invalidated === 'session') expect(result).toEqual({ changes: 1 });
-          else expect(result.changes).toBeGreaterThanOrEqual(1);
+          if (invalidated === 'session')
+            await run(db, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+              h.clock.now(),
+              sessionId,
+            ]);
+          else
+            await run(db, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+              h.clock.now(),
+              membershipId,
+            ]);
+          await expectSet(
+            db,
+            invalidated === 'session' ? 'sessions' : 'org_memberships',
+            invalidated === 'session' ? 'id_hash' : 'id',
+            invalidated === 'session' ? sessionId : membershipId,
+          );
         },
         () =>
           action === 'create'
