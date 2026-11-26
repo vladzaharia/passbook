@@ -137,6 +137,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The copy that failed the last run and how many times it has: a copy is retried, then skipped, never lost. */
     failedId: z.string().max(64).optional(),
     failures: z.number().int().nonnegative().optional(),
+    /** The operation that shows this run, its attempt, the copies it reaches, and how many are behind it. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
+    total: z.number().int().nonnegative().optional(),
+    done: z.number().int().nonnegative().optional(),
+    skipped: z.number().int().nonnegative().optional(),
   }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),

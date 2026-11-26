@@ -5,6 +5,7 @@ import * as k0 from '../shared/operations/kinds/connection-sync.ts';
 import * as k1 from '../shared/operations/kinds/org-export.ts';
 import * as k2 from '../shared/operations/kinds/passes-reissue.ts';
 import * as k3 from '../shared/operations/kinds/sandbox.ts';
+import * as k4 from '../shared/operations/kinds/wallet-reissue.ts';
 
 /** Every declared operation kind. */
-export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[]), ...(Object.values(k2) as OperationKindDef[]), ...(Object.values(k3) as OperationKindDef[])];
+export const OPERATION_KINDS: readonly OperationKindDef[] = [...(Object.values(k0) as OperationKindDef[]), ...(Object.values(k1) as OperationKindDef[]), ...(Object.values(k2) as OperationKindDef[]), ...(Object.values(k3) as OperationKindDef[]), ...(Object.values(k4) as OperationKindDef[])];
