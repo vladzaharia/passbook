@@ -1,9 +1,9 @@
 import { env } from 'cloudflare:workers';
-import { run } from '../../platform/db.ts';
 import { envString } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
 import { mockProvidersUrl } from './mock-endpoint.ts';
 import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
+import { setReleaseRows } from './repo-e2e-release.ts';
 
 /**
  * vite.config.ts defines it (tools/lib/e2e-release.ts) only for a tools/e2e-server.ts build started with
@@ -75,11 +75,7 @@ export async function controlE2eRelease(request: Request, source: object): Promi
   if (state !== 'draining' && state !== 'released')
     return json(400, { error: 'state is draining or released' });
   setWalletReleaseForTest(state);
-  await run(
-    (source as { DB: D1Database }).DB,
-    'UPDATE wallet_provider_releases SET state = ?, changed_at = ?',
-    [state, Date.now()],
-  );
+  await setReleaseRows((source as { DB: D1Database }).DB, state, Date.now());
   return json(200, { state });
 }
 
