@@ -7681,6 +7681,57 @@ export type PlatformIdpScimBreakerClearResponse = {
   };
 };
 
+export type PlatformInvitationsCreateParams = {
+  email: string;
+  groups?: Array<string>;
+  developer?: boolean;
+};
+
+export type PlatformInvitationsCreateResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link: string;
+};
+
+export type PlatformInvitationsListResponse = {
+  items: Array<{
+    id: string;
+    email: string;
+    groups: Array<string>;
+    developer: boolean;
+    state: "pending" | "accepted" | "expired" | "revoked";
+    createdAt: number;
+    expiresAt: number;
+    acceptedAt: number | null;
+    revokedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformInvitationsResendResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link: string;
+};
+
+export type PlatformInvitationsRevokeResponse = {
+  ok: true;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";

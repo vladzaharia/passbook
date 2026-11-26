@@ -176,6 +176,14 @@
     "note": "End an org rule on a Polaris ID group; its members leave the group."
   },
   {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Revoke a platform invitation: its unused signup links are withdrawn."
+  },
+  {
     "key": "DELETE /api/v1/scan/draft new operation",
     "class": "additive",
     "operationId": "scan.deleteScanDraft",
@@ -1638,6 +1646,14 @@
     "op": "GET /api/v1/platform/idp/groups/{key}/rules",
     "change": "new operation",
     "note": "List a group's org rules."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "List platform invitations with their state."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -3813,6 +3829,14 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Accepting a platform invitation with developer access answers kind platform, orgName null."
+  },
+  {
     "key": "POST /api/v1/invitations/accept new operation",
     "class": "additive",
     "operationId": "invitations.postInvitationsAccept",
@@ -3827,6 +3851,30 @@
     "op": "POST /api/v1/invitations/claim-existing",
     "change": "new operation",
     "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Finish a platform invitation after creating a Polaris ID; accepted when the account's verified address is the invited one."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations list the groups they give, by display name; empty for other kinds."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Invitations come in a third kind, platform, with orgName null."
   },
   {
     "key": "POST /api/v1/invitations/preview new operation",
@@ -4387,6 +4435,22 @@
     "op": "POST /api/v1/platform/idp/scim-breaker/clear",
     "change": "new operation",
     "note": "Clear the latched SCIM breaker. Answers 202 with an operation (idp.breaker_clear). Platform admin session only."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Invite a person to Polaris ID groups, with developer access if chosen. The invitation link is returned once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Send a platform invitation again on a new row with a new link; the old one is revoked."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",

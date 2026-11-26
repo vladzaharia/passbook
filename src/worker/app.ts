@@ -21,6 +21,7 @@ import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
@@ -228,6 +229,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', idpOperationRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

@@ -54,12 +54,18 @@ export interface SetupRow {
 }
 
 /** Signup tokens minted for the invitation, oldest first. Ids only: the tokens are never stored. */
-export const setupsOf = (db: D1Database, kind: InviteRow['kind'], invitationId: string) =>
+export const setupsOf = (
+  db: D1Database,
+  kind: InviteRow['kind'] | 'platform',
+  invitationId: string,
+) =>
   all<SetupRow>(
     db,
     kind === 'member'
       ? 'SELECT idp_token_id, created_at, expires_at FROM org_invitation_setups WHERE invitation_id = ? ORDER BY created_at, idp_token_id'
-      : 'SELECT idp_token_id, created_at, expires_at FROM developer_invite_setups WHERE invitation_id = ? ORDER BY created_at, idp_token_id',
+      : kind === 'developer'
+        ? 'SELECT idp_token_id, created_at, expires_at FROM developer_invite_setups WHERE invitation_id = ? ORDER BY created_at, idp_token_id'
+        : 'SELECT idp_token_id, created_at, expires_at FROM platform_invitation_setups WHERE invitation_id = ? ORDER BY created_at, idp_token_id',
     [invitationId],
   );
 
