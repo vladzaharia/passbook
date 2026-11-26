@@ -1,12 +1,14 @@
 import type { Context } from 'hono';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
 import { capabilityState } from './auth-capability.ts';
-import type { AuthContext, SessionAuth, WorkbenchPin } from './auth-types.ts';
+import type { ApiKeyAuth, AuthContext, SessionAuth, WorkbenchPin } from './auth-types.ts';
+import { type KeyCaller, TRY_TOKEN_PREFIX } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { NotFoundError } from './errors.ts';
 import { workbenchTestOnly } from './errors-denial.ts';
-import { type FeatureRule, trackFeatures } from './feature-guard.ts';
-import type { StepUp } from './route-auth-spec.ts';
+import { enforceFeatures, type FeatureRule, trackFeatures } from './feature-guard.ts';
+import { isRead, type StepUp } from './route-auth-spec.ts';
+import { serviceContext } from './service-context.ts';
 import { assertConsoleGroup, assertStepUp, hasConsoleAccess } from './sign-in-guard.ts';
 
 /** The org a Workbench token pins this principal to, or undefined for every other credential. */
@@ -46,6 +48,8 @@ export async function admitTokenSession(
   decl: Decl,
 ): Promise<void> {
   if (decl.sessionKind === 'admin') throw workbenchTestOnly();
+  // As `sessionOrThrow` does: a step-up's `when` may read the principal.
+  c.set('auth', session);
   const consoleAccess = !decl.ownOnlyAdmitted || hasConsoleAccess(c, session);
   if (decl.sessionKind === 'tenant' && consoleAccess) assertConsoleGroup(c, session);
   if (decl.stepUp && (!decl.stepUp.when || (await decl.stepUp.when(c))))
@@ -53,6 +57,22 @@ export async function admitTokenSession(
   const principal: SessionAuth = { ...session, mode: 'test', consoleAccess };
   if (decl.capability)
     capabilityState.set(principal, { capability: decl.capability, proven: false });
-  trackFeatures(principal, decl.feature, undefined);
+  // The org's `api` plan level applies to a member token as to a key: it is a bearer, used from code.
+  trackFeatures(principal, decl.feature, { key: 'api', atLeast: isRead(c) ? 'read' : 'full' });
   c.set('auth', principal);
+  if (session.workbench)
+    await enforceFeatures(serviceContext(c), principal, session.workbench.orgId);
+}
+
+/** A bearer on an `auth` route: a `pbtry_` token through the Workbench store when wired, any other key through `apiKeys`. */
+export function resolveBearer(
+  c: Context<AppBindings>,
+  token: string,
+  caller: KeyCaller,
+  limited: { limited: 'ok' } | undefined,
+): Promise<ApiKeyAuth | SessionAuth | null> {
+  const workbench = c.var.stores.workbench;
+  return workbench && token.startsWith(TRY_TOKEN_PREFIX)
+    ? workbench.resolve(token, caller, limited)
+    : c.var.stores.apiKeys.resolve(token, caller, limited);
 }

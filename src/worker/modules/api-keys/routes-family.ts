@@ -20,6 +20,7 @@ import { getKey } from './repo.ts';
 import { isOwnPersonalKey } from './service.ts';
 import { getApiKey, getApiKeyActivity } from './service-detail.ts';
 import { rotateApiKey } from './service-rotate.ts';
+import { rotatableUnderToken } from './workbench-cap.ts';
 
 /** A rotation as stored for a replay: the new key without its secret. */
 const withoutSecret = ({
@@ -55,6 +56,21 @@ export async function authorizeKey(
   return authorizeApiKeys(ctx, auth, orgId, capability);
 }
 
+/**
+ * A token rotates only a key it could have made (`workbench-cap.ts`): a fresh secret for a wider or longer-lived
+ * key would outlive the token. Any other key is not found, like a Live one.
+ */
+async function assertRotatable(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+  id: string,
+  orgId: string | null,
+): Promise<void> {
+  if (!viaToken(auth)) return;
+  if (!rotatableUnderToken(await getKey(ctx.env.DB, id, orgId), ctx.clock.now()))
+    throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+}
+
 /** Rotation, detail and activity, on the router that guards sessions and `api-keys:write` keys. */
 export function registerKeyFamilyRoutes(router: Router): void {
   // Registered ahead of `/{id}/rotate`: `me` is not an id.
@@ -75,6 +91,7 @@ export function registerKeyFamilyRoutes(router: Router): void {
       if (auth?.kind !== 'api_key')
         throw new UnauthenticatedError('Call this with an API key.', 'API_KEY_REQUIRED');
       const ctx = serviceContext(c);
+      await assertRotatable(ctx, auth, auth.keyId, auth.orgId);
       const authority = await authorizeApiKeys(ctx, auth, auth.orgId, 'integrations:manage');
       const { overlapHours } = c.req.valid('json');
       c.header('cache-control', 'no-store');
@@ -105,6 +122,7 @@ export function registerKeyFamilyRoutes(router: Router): void {
       const ctx = serviceContext(c);
       const { id } = c.req.valid('param');
       const { orgId, overlapHours } = c.req.valid('json');
+      await assertRotatable(ctx, c.var.auth, id, orgId);
       const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:manage');
       c.header('cache-control', 'no-store');
       return idempotentSecret(

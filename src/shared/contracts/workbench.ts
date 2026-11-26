@@ -24,6 +24,21 @@ export const WorkbenchTokenSchema = z.object({
 export type WorkbenchToken = z.infer<typeof WorkbenchTokenSchema>;
 
 /**
+ * The scopes a key made or rotated under a Workbench token may hold: Test data only. Brand, org, wallet,
+ * member, key, audit, connection and NFC scopes reach state Live shares, so a token never mints them.
+ */
+export const WORKBENCH_KEY_SCOPES: readonly string[] = [
+  'passes:read',
+  'passes:write',
+  'holders:write',
+  'templates:read',
+  'webhooks:manage',
+  'scans:read',
+];
+/** A key made under a token must expire, at most this long after it is made (30 days). */
+export const WORKBENCH_KEY_MAX_MS = 30 * 86_400_000;
+
+/**
  * The operations a member token may call (`x-workbench: test` in the OpenAPI document): each one's effect
  * stays inside the org's Test mode. Deny by default: every other route answers 403 `WORKBENCH_TEST_ONLY`.
  * A sandbox token is its sandbox's key and needs no list, since a sandbox holds Test only.
@@ -72,6 +87,11 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'POST /api/v1/api-keys/:id/rotate',
   'POST /api/v1/api-keys/:id/retire',
   'GET /api/v1/api-keys/:id/activity',
+  // Activity and the tray: the org's Test operations the person may read, and stopping or retrying them.
+  'GET /api/v1/operations',
+  'GET /api/v1/operations/:id',
+  'POST /api/v1/operations/:id/cancel',
+  'POST /api/v1/operations/:id/retry',
   // Release a template version to Test only (`modes: ['test']`).
   'POST /api/v1/templates/:id/release',
 ];

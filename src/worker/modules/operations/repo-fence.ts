@@ -47,16 +47,20 @@ export function starterFence(
   now: number,
   /** Stopping or retrying: only the session that started it, not the person's other sessions. */
   writer = false,
+  /** A Workbench token: only the person's rows in its org's Test mode. */
+  pinnedOrg?: string,
 ): Fence {
   return {
     ctes: '',
     ctesParams: [],
     where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${writer ? ' AND o.actor_session = ?' : ''}
+      ${pinnedOrg === undefined ? '' : "AND o.org_id = ? AND o.mode = 'test'"}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
         AND s.expires_at > ? AND s.idle_expires_at > ?)`,
     whereParams: [
       session.userId,
       ...(writer ? [session.sessionId] : []),
+      ...(pinnedOrg === undefined ? [] : [pinnedOrg]),
       session.sessionId,
       session.userId,
       now,

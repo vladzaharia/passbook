@@ -12,8 +12,8 @@ import {
   verifiedScopeOf,
   verifiedScopes,
 } from './auth-capability.ts';
-import type { ApiKeyAuth, AuthContext, SessionAuth } from './auth-types.ts';
-import { admitTokenSession, assertWorkbenchOrg } from './auth-workbench.ts';
+import type { AuthContext, SessionAuth } from './auth-types.ts';
+import { admitTokenSession, assertWorkbenchOrg, resolveBearer } from './auth-workbench.ts';
 import { type KeyCaller, keyCallerOf, TRY_TOKEN_PREFIX } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
@@ -52,6 +52,9 @@ export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
 export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
+/** `requireCaller` guards that take a bearer (a `scope` route): the Workbench route tests read them. */
+const bearerGuards = new WeakSet<object>();
+export const takesBearer = (handler: object): boolean => bearerGuards.has(handler);
 
 export const API_SCOPES = ApiScopeSchema.options;
 
@@ -84,6 +87,10 @@ export const apiKeyMissing = (): UnauthenticatedError =>
   );
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
+  // A Workbench call never falls back to the cookie: with a `pbtry_` bearer, the token alone decides.
+  const sent = bearerOf(c);
+  if (sent !== null && sent !== 'empty' && sent.token.startsWith(TRY_TOKEN_PREFIX))
+    throw new UnauthenticatedError();
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
   // A person's browser calls have a budget too; API keys are metered by tier.
@@ -207,7 +214,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token ?? null;
     if (rule && token) {
-      const key = await resolveBearer(c, token, limited);
+      const key = await resolveBearer(c, token, keyCaller(c), limited);
       if (!key) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
@@ -275,22 +282,11 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
+  if (rule) bearerGuards.add(guard);
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
   return declareSignIn(guard, level);
-}
-
-/** A bearer on an `auth` route: a Workbench token through its store when wired, any other key through `apiKeys`. */
-function resolveBearer(
-  c: Context<AppBindings>,
-  token: string,
-  limited: { limited: 'ok' } | undefined,
-): Promise<ApiKeyAuth | SessionAuth | null> {
-  const workbench = c.var.stores.workbench;
-  return workbench && token.startsWith(TRY_TOKEN_PREFIX)
-    ? workbench.resolve(token, keyCaller(c), limited)
-    : c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
 }
 
 /** Machine API: a bearer API key with the scope, or an admin cookie session. */

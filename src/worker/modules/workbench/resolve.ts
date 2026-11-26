@@ -17,15 +17,19 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { keyAuthOf } from '../api-keys/service.ts';
 import { tryTokenKeyRow } from '../developer/repo-try.ts';
 import { resolveTryToken } from '../developer/try-token.ts';
+import { SHARED_WRITES } from './inventory.ts';
 import { memberTokenRow } from './repo.ts';
 import { tokenBucket, verifyWorkbenchToken, type WorkbenchClaims } from './token.ts';
 
 const ALLOWED: ReadonlySet<string> = new Set(WORKBENCH_ROUTES);
 
-/** A token used beside a session cookie must be that session's: one browser never carries another's token. */
+/**
+ * Bound to the browser, as the v1 try token is: the request carries the session cookie the token was made
+ * for. A token copied off the page (a pasted curl, a HAR file) is no use without that cookie.
+ */
 async function cookieOk(caller: KeyCaller, sessionIdHash: string): Promise<boolean> {
   const cookie = caller.sessionCookie;
-  return !cookie || safeEqual(await sha256Hex(cookie), sessionIdHash);
+  return !!cookie && safeEqual(await sha256Hex(cookie), sessionIdHash);
 }
 
 /** The sandbox key a `sandbox_key` token stands for, while the session, sandbox generation and key hold. */
@@ -80,7 +84,7 @@ async function memberPrincipal(
     userId: row.user_id,
     sessionId: claims.sessionIdHash,
     roles,
-    // A bearer is not ambient: no cookie, so no CSRF secret to check.
+    // The bearer is the credential: it is not ambient, so no CSRF secret applies.
     csrfSecret: '',
     amr: row.amr,
     authTime: row.auth_time,
@@ -127,6 +131,9 @@ export async function resolveWorkbenchToken(
   if (!auth) return null;
   if (caller?.mode === 'live') throw workbenchTestOnly();
   if (auth.kind === 'session' && !routeAllowed(caller))
+    throw workbenchTestOnly(WORKBENCH_ROUTE_COPY);
+  // Every token, the sandbox's too: no write to state the org's Live shares (brand, org, members, settings).
+  if (caller?.routes?.some((route) => SHARED_WRITES.test(route)))
     throw workbenchTestOnly(WORKBENCH_ROUTE_COPY);
   return auth;
 }

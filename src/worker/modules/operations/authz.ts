@@ -1,6 +1,7 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { scopeExercises } from '../../platform/api-scopes.ts';
 import { type AuthContext, assertOrgAccess, isOwnOnly } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -25,6 +26,10 @@ export async function orgFenceFor(
   orgId: string,
   capability: OrgCapability,
 ): Promise<Fence | null> {
+  // A Workbench token reads its own org's Test rows only; any other org is no org.
+  const pin = workbenchPinOf(auth);
+  if (pin && (pin.orgId !== orgId || (auth.kind !== 'scanner' && auth.mode !== 'test')))
+    return null;
   const now = ctx.clock.now();
   const revision = await tenantOrgAccessRevision(ctx.env.DB, orgId);
   if (revision === null) return null;
@@ -72,14 +77,17 @@ export async function orgFenceFor(
 
 /** Platform rows: a live admin session. Keys never read them in v1. */
 export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence | null {
-  if (auth.kind !== 'session' || !auth.roles.includes('admin')) return null;
+  if (auth.kind !== 'session' || !auth.roles.includes('admin') || auth.workbench) return null;
   return platformFence(
     { kind: 'platform', userId: auth.userId, sessionIdHash: auth.sessionId },
     ctx.clock.now(),
   );
 }
 
-/** Starter rows: the person who started them; an own-only session only what its own session started. Never a key. */
+/**
+ * Starter rows: the person who started them; an own-only session only what its own session started. Never a
+ * key. A member token: only those in its org's Test mode.
+ */
 export function starterFenceFor(
   ctx: ServiceContext,
   auth: AuthContext,
@@ -90,6 +98,7 @@ export function starterFenceFor(
         { userId: auth.userId, sessionId: auth.sessionId },
         ctx.clock.now(),
         writer || isOwnOnly(auth),
+        auth.workbench?.orgId,
       )
     : null;
 }

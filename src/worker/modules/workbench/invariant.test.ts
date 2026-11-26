@@ -2,7 +2,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass, makeTemplate } from '../../../../test/helpers/index.ts';
 import { WORKBENCH_ROUTES } from '../../../shared/contracts/workbench.ts';
-import { bearer, workbenchKit } from './workbench-test-fixtures.ts';
+import { takesBearer } from '../../platform/auth.ts';
+import { enforcesKeyAccess } from '../../platform/openapi-security.ts';
+import { BROWSER, bearer, ORIGIN, workbenchKit } from './workbench-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof workbenchKit>>;
 beforeAll(async () => {
@@ -113,6 +115,61 @@ describe('L3: deny by default', () => {
     expect((await t.call('GET', '/webhook-endpoints', t.asClient(token))).status).toBe(200);
     expect((await t.call('GET', '/test-inbox', t.asClient(token))).status).toBe(200);
   });
+});
+
+describe('L5: every route kind', () => {
+  it('no ALL endpoint under /api/v1, and no bearer guard outside it', () => {
+    // An ALL route is middleware (`use`) when it is a wildcard or shares its path with a method route.
+    const methodPaths = new Set(t.app.routes.filter((r) => r.method !== 'ALL').map((r) => r.path));
+    for (const r of t.app.routes) {
+      if (r.method === 'ALL' && r.path.startsWith('/api/v1/'))
+        expect(
+          r.path.endsWith('*') || methodPaths.has(r.path),
+          `ALL ${r.path} is an endpoint, not middleware`,
+        ).toBe(true);
+      if (takesBearer(r.handler) || enforcesKeyAccess(r.handler))
+        expect(r.path.startsWith('/api/v1/'), `${r.method} ${r.path} takes a bearer`).toBe(true);
+    }
+  });
+
+  it('on every route a member token adds nothing to its cookie: no success the cookie alone lacks', async () => {
+    const allowed = new Set(WORKBENCH_ROUTES);
+    const keys = [
+      ...new Set(
+        t.app.routes
+          .filter((r) => !(r.method === 'ALL' && r.path.endsWith('*')))
+          .map((r) => `${r.method === 'ALL' ? 'GET' : r.method} ${r.path}`),
+      ),
+    ]
+      .filter((key) => !allowed.has(key))
+      .sort();
+    expect(keys.length).toBeGreaterThan(400);
+    const gained: string[] = [];
+    for (let i = 0; i < keys.length; i += 40) {
+      const m = await t.member();
+      const { token } = await t.wbMint(m.browser, m.orgId);
+      for (const key of keys.slice(i, i + 40)) {
+        const [method = 'GET', path = ''] = key.split(' ');
+        const url = `${ORIGIN}${path.replace(/:[A-Za-z0-9_]+/g, DUMMY).replace(/\*/g, 'x')}`;
+        const send = (headers: Record<string, string>) =>
+          t.app.request(
+            url,
+            {
+              method,
+              headers: { ...headers, 'content-type': 'application/json' },
+              ...(method === 'GET' || method === 'HEAD' ? {} : { body: '{}' }),
+            },
+            t.kit.env,
+          );
+        const cookieOnly = (await send({ ...BROWSER, cookie: m.session.headers.cookie ?? '' }))
+          .status;
+        const withToken = (await send(t.asClient(token))).status;
+        if (withToken < 400 && cookieOnly >= 400)
+          gained.push(`${key} ${withToken} (cookie ${cookieOnly})`);
+      }
+    }
+    expect(gained, gained.join('\n')).toEqual([]);
+  }, 300_000);
 });
 
 describe('L6: a sandbox refuses Live for every credential', () => {

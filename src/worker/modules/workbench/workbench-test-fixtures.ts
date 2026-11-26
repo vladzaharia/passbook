@@ -74,21 +74,29 @@ export async function workbenchKit() {
     };
   }
 
+  /** The session cookie each minted token was made beside. */
+  const cookieOf = new Map<string, string>();
+
   /** `POST /workbench/token` from the signed-in browser. */
   async function wbMint(browser: Record<string, string>, orgId: string) {
     const res = await call('POST', '/workbench/token', browser, { orgId });
     expect(res.status, await res.clone().text()).toBe(201);
     expect(res.headers.get('cache-control')).toBe('no-store');
-    return WorkbenchTokenSchema.parse(await res.json());
+    const minted = WorkbenchTokenSchema.parse(await res.json());
+    if (browser.cookie) cookieOf.set(minted.token, browser.cookie);
+    return minted;
   }
 
-  /** How the Workbench client calls: the bearer, browser signals, no cookie and no mode header. */
-  const asClient = (token: string) => ({
+  /** The token copied off the page: the bearer alone, no cookie. */
+  const bare = (token: string) => ({
     'sec-fetch-site': 'same-origin',
     'sec-fetch-mode': 'cors',
     origin: ORIGIN,
     ...bearer(token),
   });
 
-  return { ...t, call, join, member, wbMint, asClient };
+  /** How the Workbench client calls: the bearer beside its session cookie (same-origin), no mode header. */
+  const asClient = (token: string) => ({ ...bare(token), cookie: cookieOf.get(token) ?? '' });
+
+  return { ...t, call, join, member, wbMint, asClient, bare };
 }

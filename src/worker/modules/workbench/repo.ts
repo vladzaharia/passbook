@@ -65,3 +65,13 @@ export const bumpMemberEpoch = (db: D1Database, sessionIdHash: string, now: numb
      ON CONFLICT (session_id_hash) DO UPDATE SET generation = generation + 1, changed_at = excluded.changed_at`,
     [sessionIdHash, now],
   );
+
+/** Daily retention: the epochs of sessions that are gone (the auth purge deleted them). Rows removed. */
+export async function purgeOrphanEpochs(db: D1Database): Promise<number> {
+  const { changes } = await run(
+    db,
+    `DELETE FROM workbench_token_epochs WHERE NOT EXISTS
+       (SELECT 1 FROM sessions s WHERE s.id_hash = workbench_token_epochs.session_id_hash)`,
+  );
+  return changes;
+}
