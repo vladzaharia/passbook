@@ -192,6 +192,9 @@ export const JobSchema = z.discriminatedUnion('kind', [
     orgId: z.string().min(1),
     jobId: z.string().min(1),
     passIds: z.array(z.string().min(1)).min(1).max(50),
+    /** The operation that shows this job, and its attempt. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
   }),
   z.object({
     kind: z.literal('template.fork_update'),

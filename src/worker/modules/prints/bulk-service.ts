@@ -4,6 +4,8 @@ import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { progressOf } from '../operations/progress.ts';
+import { failStarted, startOrgOperation } from '../operations/start-org.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
@@ -60,7 +62,7 @@ export async function startBulkPrint(
       skipped.push({ id: pass.id, code: error.code, reason });
     }
   }
-  if (printed.length === 0) return { jobId: '', count: 0, skipped };
+  if (printed.length === 0) return { jobId: '', count: 0, skipped, operationId: null };
   const orgId = authority.orgId;
   const jobId = ctx.ids.token(16);
   await Promise.all(printed.map((id) => ctx.env.BUCKET.put(bulkMarkerKey(orgId, id, jobId), '')));
@@ -74,7 +76,33 @@ export async function startBulkPrint(
     mode: caller.mode,
     passIds: printed,
   });
-  await ctx.env.JOBS.send({ kind: 'prints.bulk', orgId, jobId, passIds: printed });
+  const op = await startOrgOperation(
+    ctx,
+    {
+      type:
+        caller.actor.type === 'user' || caller.actor.type === 'api_key'
+          ? caller.actor.type
+          : 'system',
+      id: caller.actor.id,
+    },
+    { kind: 'prints.bulk', orgId, mode: caller.mode, target: { type: 'print-job', id: jobId } },
+  );
+  const pages = progressOf(ctx, op.id, op.attempt).step('pages');
+  pages.total(printed.length);
+  await pages.count(0);
+  try {
+    await ctx.env.JOBS.send({
+      kind: 'prints.bulk',
+      orgId,
+      jobId,
+      passIds: printed,
+      operationId: op.id,
+      attempt: op.attempt,
+    });
+  } catch (error) {
+    await failStarted(ctx, op, error);
+    throw error;
+  }
   await recordAudit(ctx, {
     orgId,
     actorType: caller.actor.type,
@@ -84,7 +112,7 @@ export async function startBulkPrint(
     targetId: orgId,
     detail: { count: printed.length, skipped: skipped.length },
   });
-  return { jobId, count: printed.length, skipped };
+  return { jobId, count: printed.length, skipped, operationId: op.id };
 }
 
 type Who = { orgId: string; userId: string; mode: Mode };

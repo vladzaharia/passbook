@@ -1,6 +1,7 @@
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { progressOf } from '../operations/progress.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
@@ -19,6 +20,9 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   const bucket = ctx.env.BUCKET;
   const stored = await readStoredBulk(bucket, job.orgId, job.jobId);
   if (stored?.state !== 'pending') return;
+  const progress = progressOf(ctx, job.operationId, job.attempt ?? 1);
+  const pages = progress.step('pages');
+  pages.total(job.passIds.length);
   const sheets: PrintSheet[] = [];
   const printIds: string[] = [];
   const imageCache: ImageCache = new Map();
@@ -33,7 +37,8 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   };
   // One brand read for the whole job: every pass is this org's.
   const brand = await orgBrandOf(ctx, job.orgId);
-  for (const passId of job.passIds) {
+  for (const [n, passId] of job.passIds.entries()) {
+    await pages.count(n);
     const pass = await getPass(ctx.env.DB, passId, job.orgId);
     if (!pass) {
       skip(passId, 'PASS_NOT_FOUND');
@@ -53,6 +58,8 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       skip(passId, error.code);
     }
   }
+  await pages.count(job.passIds.length);
+  await pages.done();
   const done = { ...stored, skipped };
   if (sheets.length === 0) {
     await writeBulkStatus(bucket, job.orgId, job.jobId, {
@@ -61,8 +68,10 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       count: 0,
       at: ctx.clock.now(),
     });
+    await progress.fail(new AppError('PRINT_BULK_EMPTY', 422, 'No ticket could be printed.'));
     return;
   }
+  const render = progress.step('render');
   let lossy = false;
   const bytes = await renderPdf(sheets, {
     assets: ctx.env.ASSETS,
@@ -72,6 +81,8 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     },
     onImageError: logImageProblem(ctx),
   });
+  await render.done();
+  const save = progress.step('save');
   const key = bulkKey(job.orgId, job.jobId, 'pdf');
   await putPdf(bucket, key, bytes);
   // A print voided while this rendered must not leave its code in a PDF the drop hooks never saw.
@@ -85,6 +96,7 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       count: 0,
       at: ctx.clock.now(),
     });
+    await progress.fail(new AppError('PRINT_BULK_VOIDED', 409, 'A ticket was voided.'));
     return;
   }
   await writeBulkStatus(bucket, job.orgId, job.jobId, {
@@ -94,6 +106,11 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     engine: 'pdf-lib',
     lossy,
     at: ctx.clock.now(),
+  });
+  await save.done();
+  await progress.succeed({
+    href: null,
+    ids: { jobId: job.jobId, count: String(sheets.length), skipped: String(skipped) },
   });
   ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, skipped });
 }

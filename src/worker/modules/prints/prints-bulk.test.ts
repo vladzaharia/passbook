@@ -3,8 +3,11 @@ import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { toDto } from '../operations/dto.ts';
+import { rowById } from '../operations/repo.ts';
 import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
+import { operationRunners } from './operations.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
 import { readPdf } from './pdf-read.ts';
 import { bulkKey } from './pdf-store.ts';
@@ -14,6 +17,7 @@ type Started = {
   jobId: string;
   count: number;
   skipped: { id: string; code: string; reason?: string }[];
+  operationId: string | null;
 };
 
 async function setup() {
@@ -261,5 +265,47 @@ describe('bulk job race', () => {
       await api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`)
     ).json();
     expect(status).toMatchObject({ state: 'failed', count: 0 });
+  });
+});
+
+describe('bulk print as an operation', () => {
+  it('counts the tickets, then ends Done with the job named, and no download in it', async () => {
+    const { kit, printPass, start, jobs } = await setup();
+    const a = await printPass();
+    const b = await printPass('b@example.com');
+    const started = (await (await start([a.id, b.id])).json()) as Started;
+    expect(started.operationId).not.toBeNull();
+    const read = async () => toDto((await rowById(kit.env.DB, started.operationId ?? '')) as never);
+    expect(await read()).toMatchObject({
+      kind: 'prints.bulk',
+      status: 'running',
+      target: { type: 'print-job', id: started.jobId },
+    });
+    expect((await read()).steps[0]).toMatchObject({ done: 0, total: 2 });
+    const [job] = jobs();
+    expect(job).toMatchObject({ operationId: started.operationId, attempt: 1 });
+    await handlePrintsBulk(job as never, jobCtxOf(kit));
+    const done = await read();
+    expect(done).toMatchObject({ status: 'succeeded', text: 'Tickets ready' });
+    expect(done.steps.map((s) => s.state)).toEqual(['done', 'done', 'done']);
+    expect(done.result).toEqual({
+      href: null,
+      ids: { jobId: started.jobId, count: '2', skipped: '0' },
+    });
+  });
+
+  it('a job that finds every pass gone fails with a sentence, and a retry sends it again', async () => {
+    const { kit, printPass, start, jobs } = await setup();
+    const a = await printPass();
+    const started = (await (await start([a.id])).json()) as Started;
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, a.id, null);
+    const [job] = jobs();
+    await handlePrintsBulk(job as never, jobCtxOf(kit));
+    const op = toDto((await rowById(kit.env.DB, started.operationId ?? '')) as never);
+    expect(op).toMatchObject({ status: 'failed', error: { retryable: true } });
+    const before = jobs().length;
+    await operationRunners['prints.bulk']?.run?.(jobCtxOf(kit), { ...op, attempt: 2 }, 'lease');
+    expect(jobs()).toHaveLength(before + 1);
+    expect(jobs().at(-1)).toMatchObject({ operationId: started.operationId, attempt: 2 });
   });
 });
