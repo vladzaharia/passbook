@@ -2226,6 +2226,15 @@
       ]
     },
     {
+      "code": "IDP_NOT_EXTERNAL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_HELD",
       "statuses": [
         404,
@@ -2259,6 +2268,24 @@
     },
     {
       "code": "IDP_NO_ACCOUNT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_OFFBOARD_INCOMPLETE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_PLATFORM_ADMIN",
       "statuses": [
         409
       ],
@@ -2874,6 +2901,7 @@
       ],
       "modules": [
         "dev-access",
+        "idp",
         "orgs"
       ]
     },

@@ -1146,11 +1146,19 @@ __all__ = [
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
+    "PlatformIdpCallsResponse",
+    "PlatformIdpCallsResponseItemsItem",
     "PlatformIdpCheckParams",
     "PlatformIdpCheckResponse",
     "PlatformIdpCheckResponseOperation",
     "PlatformIdpCheckResponseOperationStartedBy",
     "PlatformIdpCheckResponseOperationStepsItem",
+    "PlatformIdpDriftResponse",
+    "PlatformIdpDriftResponseItemsItem",
+    "PlatformIdpFreezeParams",
+    "PlatformIdpFreezeResponse",
+    "PlatformIdpRetrieveResponse",
+    "PlatformIdpRetrieveResponseBudgetValue",
     "PlatformIdpScimBreakerClearResponse",
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
@@ -1226,6 +1234,11 @@ __all__ = [
     "PlatformStatusRetrieveResponseComponentsItem",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
+    "PlatformUsersAccessRetrieveResponse",
+    "PlatformUsersAccessRetrieveResponseAccount",
+    "PlatformUsersAccessRetrieveResponseRolesItem",
+    "PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem",
+    "PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem",
     "PlatformUsersClaimsRetrieveResponse",
     "PlatformUsersClaimsRetrieveResponseClaimsValue",
     "PlatformUsersClaimsUpdateParams",
@@ -1255,6 +1268,13 @@ __all__ = [
     "PlatformUsersHoldsDeleteResponseOperationStepsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersOffboardParams",
+    "PlatformUsersOffboardResponse",
+    "PlatformUsersOffboardResponsePlan",
+    "PlatformUsersOffboardResponsePlanBlockersItem",
+    "PlatformUsersOffboardResponsePlanKeptItem",
+    "PlatformUsersOffboardResponsePlanMembershipsItem",
+    "PlatformUsersOffboardResponsePlanSponsorshipsItem",
     "PlatformUsersPassesListResponse",
     "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
@@ -1263,6 +1283,17 @@ __all__ = [
     "PlatformUsersRetrieveResponsePassesItem",
     "PlatformUsersRetrieveResponseRecentAuditItem",
     "PlatformUsersRetrieveResponseSessionsItem",
+    "PlatformUsersRolesRemoveExternalResponse",
+    "PlatformUsersRolesRemoveExternalResponseAccount",
+    "PlatformUsersRolesRemoveExternalResponseRolesItem",
+    "PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem",
+    "PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem",
+    "PlatformUsersRolesSetParams",
+    "PlatformUsersRolesSetResponse",
+    "PlatformUsersRolesSetResponseAccount",
+    "PlatformUsersRolesSetResponseRolesItem",
+    "PlatformUsersRolesSetResponseRolesItemMembershipsItem",
+    "PlatformUsersRolesSetResponseRolesItemSponsorshipsItem",
     "PlatformUsersSessionsRevokeAllResponse",
     "PlatformUsersSessionsRevokeResponse",
     "PlatformUsersUpdateParams",
@@ -9042,6 +9073,20 @@ class PlatformGroupsClaimsUpdateResponse(_Model):
     removed: _List[str]
     dryRun: bool
 
+class PlatformIdpCallsResponse(_Model):
+    items: _List[PlatformIdpCallsResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformIdpCallsResponseItemsItem(_Model):
+    id: int
+    phase: str
+    method: str
+    target: str | None
+    actor: str | None
+    reason: str | None
+    status: str | None
+    at: int
+
 class PlatformIdpCheckParams(_Model):
     dryRun: bool | None = None
 
@@ -9088,6 +9133,38 @@ class PlatformIdpCheckResponseOperationStepsItem(_Model):
     group: str | None
     startedAt: int | None
     finishedAt: int | None
+
+class PlatformIdpDriftResponse(_Model):
+    items: _List[PlatformIdpDriftResponseItemsItem]
+    nextCursor: None
+
+class PlatformIdpDriftResponseItemsItem(_Model):
+    id: str
+    userId: str | None
+    target: str
+    kind: str
+    foundAt: int
+
+class PlatformIdpFreezeParams(_Model):
+    reason: str
+
+class PlatformIdpFreezeResponse(_Model):
+    result: _Literal["frozen", "already"] | str
+
+class PlatformIdpRetrieveResponse(_Model):
+    connected: bool
+    mode: _Literal["dry_run", "live", None] | str
+    frozen: bool | None
+    keyExpiresAt: int | None
+    problems: _List[str]
+    budget: _Dict[str, PlatformIdpRetrieveResponseBudgetValue]
+    lastScimAt: int | None
+    drift: _Dict[str, int]
+    breakerOpen: bool
+
+class PlatformIdpRetrieveResponseBudgetValue(_Model):
+    day: float
+    limit: float
 
 class PlatformIdpScimBreakerClearResponse(_Model):
     operation: PlatformIdpScimBreakerClearResponseOperation
@@ -9597,6 +9674,38 @@ class PlatformTemplatesAssignParams(_Model):
 class PlatformTemplatesShareParams(_Model):
     shared: bool
 
+class PlatformUsersAccessRetrieveResponse(_Model):
+    userId: str
+    connected: bool
+    platformAdmin: bool
+    disabled: bool
+    linked: bool
+    account: PlatformUsersAccessRetrieveResponseAccount
+    roles: _List[PlatformUsersAccessRetrieveResponseRolesItem]
+
+class PlatformUsersAccessRetrieveResponseAccount(_Model):
+    class_: _Literal["created", "linked", "external", None] | str = _Field(alias="class")
+    disabledInIdp: bool | None
+
+class PlatformUsersAccessRetrieveResponseRolesItem(_Model):
+    role: _Literal["console", "developer", "support"] | str
+    wanted: bool
+    present: bool | None
+    presence: _Literal["none", "passbook", "external"] | str
+    held: bool
+    memberships: _List[PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem]
+    sponsorships: _List[PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem]
+    grantedAt: int | None
+    error: str | None
+
+class PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem(_Model):
+    orgId: str
+    name: str
+
+class PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem(_Model):
+    orgId: str
+    name: str
+
 class PlatformUsersClaimsRetrieveResponse(_Model):
     claims: _Dict[str, PlatformUsersClaimsRetrieveResponseClaimsValue]
     otherKeys: int
@@ -9840,6 +9949,45 @@ class PlatformUsersListResponseItemsItem(_Model):
     passCount: int | None = None
     signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
 
+class PlatformUsersOffboardParams(_Model):
+    dryRun: bool | None = None
+
+class PlatformUsersOffboardResponse(_Model):
+    plan: PlatformUsersOffboardResponsePlan
+    operation: _Dict[str, _Any] | None
+
+class PlatformUsersOffboardResponsePlan(_Model):
+    userId: str
+    memberships: _List[PlatformUsersOffboardResponsePlanMembershipsItem]
+    kept: _List[PlatformUsersOffboardResponsePlanKeptItem]
+    sponsorships: _List[PlatformUsersOffboardResponsePlanSponsorshipsItem]
+    grants: _List[_Literal["developer", "support"] | str]
+    personalKeys: int
+    platformKeys: _List[str]
+    sessions: int
+    sandboxOrgId: str | None
+    removes: _List[_Literal["console", "developer", "support"] | str]
+    external: _List[_Literal["console", "developer", "support"] | str]
+    blockers: _List[PlatformUsersOffboardResponsePlanBlockersItem]
+
+class PlatformUsersOffboardResponsePlanBlockersItem(_Model):
+    orgId: str
+    name: str
+    code: _Literal["LAST_ORG_ADMIN"] | str
+
+class PlatformUsersOffboardResponsePlanKeptItem(_Model):
+    orgId: str
+    name: str
+
+class PlatformUsersOffboardResponsePlanMembershipsItem(_Model):
+    orgId: str
+    name: str
+    membershipId: str
+
+class PlatformUsersOffboardResponsePlanSponsorshipsItem(_Model):
+    orgId: str
+    name: str
+
 class PlatformUsersPassesListResponse(_Model):
     items: _List[PlatformUsersPassesListResponseItemsItem]
     nextCursor: str | None
@@ -9911,6 +10059,74 @@ class PlatformUsersRetrieveResponseSessionsItem(_Model):
     userAgent: str | None
     current: bool
     method: str
+
+class PlatformUsersRolesRemoveExternalResponse(_Model):
+    userId: str
+    connected: bool
+    platformAdmin: bool
+    disabled: bool
+    linked: bool
+    account: PlatformUsersRolesRemoveExternalResponseAccount
+    roles: _List[PlatformUsersRolesRemoveExternalResponseRolesItem]
+
+class PlatformUsersRolesRemoveExternalResponseAccount(_Model):
+    class_: _Literal["created", "linked", "external", None] | str = _Field(alias="class")
+    disabledInIdp: bool | None
+
+class PlatformUsersRolesRemoveExternalResponseRolesItem(_Model):
+    role: _Literal["console", "developer", "support"] | str
+    wanted: bool
+    present: bool | None
+    presence: _Literal["none", "passbook", "external"] | str
+    held: bool
+    memberships: _List[PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem]
+    sponsorships: _List[PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem]
+    grantedAt: int | None
+    error: str | None
+
+class PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem(_Model):
+    orgId: str
+    name: str
+
+class PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem(_Model):
+    orgId: str
+    name: str
+
+class PlatformUsersRolesSetParams(_Model):
+    role: _Literal["developer", "support"] | str
+    grant: bool
+
+class PlatformUsersRolesSetResponse(_Model):
+    userId: str
+    connected: bool
+    platformAdmin: bool
+    disabled: bool
+    linked: bool
+    account: PlatformUsersRolesSetResponseAccount
+    roles: _List[PlatformUsersRolesSetResponseRolesItem]
+
+class PlatformUsersRolesSetResponseAccount(_Model):
+    class_: _Literal["created", "linked", "external", None] | str = _Field(alias="class")
+    disabledInIdp: bool | None
+
+class PlatformUsersRolesSetResponseRolesItem(_Model):
+    role: _Literal["console", "developer", "support"] | str
+    wanted: bool
+    present: bool | None
+    presence: _Literal["none", "passbook", "external"] | str
+    held: bool
+    memberships: _List[PlatformUsersRolesSetResponseRolesItemMembershipsItem]
+    sponsorships: _List[PlatformUsersRolesSetResponseRolesItemSponsorshipsItem]
+    grantedAt: int | None
+    error: str | None
+
+class PlatformUsersRolesSetResponseRolesItemMembershipsItem(_Model):
+    orgId: str
+    name: str
+
+class PlatformUsersRolesSetResponseRolesItemSponsorshipsItem(_Model):
+    orgId: str
+    name: str
 
 class PlatformUsersSessionsRevokeAllResponse(_Model):
     ok: _Literal[True]

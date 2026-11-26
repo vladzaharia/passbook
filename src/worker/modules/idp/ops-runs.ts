@@ -37,7 +37,7 @@ function holdOf(op: OperationDto): { userId: string; role: WritableRole } {
 }
 
 /** The admin who started it is still a platform admin: a run has no session, so it asks the user row. */
-async function adminStill(ctx: ServiceContext, op: OperationDto): Promise<void> {
+export async function adminStill(ctx: ServiceContext, op: OperationDto): Promise<void> {
   const user = op.startedBy.id ? await getUser(ctx.env.DB, op.startedBy.id) : null;
   let roles: unknown = [];
   try {
@@ -50,7 +50,7 @@ async function adminStill(ctx: ServiceContext, op: OperationDto): Promise<void> 
 }
 
 /** A run that holds a lease checks it still does before a domain write: a twin that took it over wins. */
-async function held(ctx: ServiceContext, op: OperationDto, lease: string): Promise<void> {
+export async function held(ctx: ServiceContext, op: OperationDto, lease: string): Promise<void> {
   const owner = (await rowById(ctx.env.DB, op.id))?.lease_owner;
   if (owner && owner !== lease)
     throw new AppError('OPERATION_LEASE_LOST', 409, 'Another runner took this over.');
@@ -60,7 +60,7 @@ async function held(ctx: ServiceContext, op: OperationDto, lease: string): Promi
  * Takes the lease the drain and the reconcile share. When another run holds it, the step waits and a delayed
  * `operation.run` looks again; after ten minutes it fails. No sleeping in the job.
  */
-async function takeSync(
+export async function takeSync(
   ctx: ServiceContext,
   op: OperationDto,
   progress: Progress,
@@ -85,7 +85,8 @@ async function takeSync(
   return null;
 }
 
-const notReady = () => new AppError('IDP_NOT_READY', 503, 'Polaris ID is paused or not reachable.');
+export const notReady = () =>
+  new AppError('IDP_NOT_READY', 503, 'Polaris ID is paused or not reachable.');
 
 /** Check now and the dry run: one reconcile under the sync lease. `forceDry` records differences and changes nothing. */
 export async function checkRun(

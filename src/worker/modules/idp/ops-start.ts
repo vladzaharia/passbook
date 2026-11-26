@@ -19,7 +19,7 @@ import { BREAKER_KEY, BREAKER_LATCH_MS } from './scim-effects.ts';
 import type { WritableRole } from './types.ts';
 
 type Spec = {
-  kind: 'idp.check' | 'idp.dry_run' | 'idp.restore' | 'idp.breaker_clear';
+  kind: 'idp.check' | 'idp.dry_run' | 'idp.restore' | 'idp.breaker_clear' | 'idp.offboard';
   target?: { type: string; id: string };
   subject?: Record<string, string>;
   idempotencyKey: string | undefined;
@@ -31,7 +31,7 @@ type Spec = {
  * Starts a Polaris ID operation, queued; `operation.run` does the work. A repeat with the same key answers the
  * first operation; a second start while one is active answers 409 naming it. Platform admins only (the route).
  */
-async function startIdpOp(
+export async function startIdpOp(
   ctx: ServiceContext,
   auth: SessionAuth,
   spec: Spec,
@@ -61,10 +61,10 @@ async function startIdpOp(
   return operation;
 }
 
-const limited = (ctx: ServiceContext, auth: SessionAuth) =>
+export const limited = (ctx: ServiceContext, auth: SessionAuth) =>
   enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${auth.userId}`);
 
-function needBinding(ctx: ServiceContext): void {
+export function needBinding(ctx: ServiceContext): void {
   if (!idpConfigured(ctx.env))
     throw new UnavailableError(IDP_UNAVAILABLE_MESSAGE, 'IDP_UNAVAILABLE');
 }

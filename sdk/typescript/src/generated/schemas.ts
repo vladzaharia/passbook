@@ -7415,6 +7415,20 @@ export type PlatformGroupsClaimsUpdateResponse = {
   dryRun: boolean;
 };
 
+export type PlatformIdpCallsResponse = {
+  items: Array<{
+    id: number;
+    phase: string;
+    method: string;
+    target: string | null;
+    actor: string | null;
+    reason: string | null;
+    status: string | null;
+    at: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PlatformIdpCheckParams = {
   dryRun?: boolean;
 };
@@ -7470,6 +7484,40 @@ export type PlatformIdpCheckResponse = {
     revision: number;
     pollAfterMs: number;
   };
+};
+
+export type PlatformIdpDriftResponse = {
+  items: Array<{
+    id: string;
+    userId: string | null;
+    target: string;
+    kind: string;
+    foundAt: number;
+  }>;
+  nextCursor: null;
+};
+
+export type PlatformIdpFreezeParams = {
+  reason: string;
+};
+
+export type PlatformIdpFreezeResponse = {
+  result: "frozen" | "already";
+};
+
+export type PlatformIdpRetrieveResponse = {
+  connected: boolean;
+  mode: "dry_run" | "live" | null;
+  frozen: boolean | null;
+  keyExpiresAt: number | null;
+  problems: Array<string>;
+  budget: Record<string, {
+    day: number;
+    limit: number;
+  }>;
+  lastScimAt: number | null;
+  drift: Record<string, number>;
+  breakerOpen: boolean;
 };
 
 export type PlatformIdpScimBreakerClearResponse = {
@@ -8000,6 +8048,35 @@ export type PlatformTemplatesShareParams = {
   shared: boolean;
 };
 
+export type PlatformUsersAccessRetrieveResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    sponsorships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
+};
+
 export type PlatformUsersClaimsRetrieveResponse = {
   claims: Record<string, {
     type: "text" | "number" | "boolean" | "json";
@@ -8246,6 +8323,91 @@ export type PlatformUsersListResponse = {
   nextCursor: string | null;
 };
 
+export type PlatformUsersOffboardParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformUsersOffboardResponse = {
+  plan: {
+    userId: string;
+    memberships: Array<{
+      orgId: string;
+      name: string;
+      membershipId: string;
+    }>;
+    kept: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    sponsorships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    grants: Array<"developer" | "support">;
+    personalKeys: number;
+    platformKeys: Array<string>;
+    sessions: number;
+    sandboxOrgId: string | null;
+    removes: Array<"console" | "developer" | "support">;
+    external: Array<"console" | "developer" | "support">;
+    blockers: Array<{
+      orgId: string;
+      name: string;
+      code: "LAST_ORG_ADMIN";
+    }>;
+  };
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  } | null;
+};
+
 export type PlatformUsersPassesListResponse = {
   items: Array<{
     id: string;
@@ -8311,6 +8473,69 @@ export type PlatformUsersRetrieveResponse = {
     action: string;
     actorType: string;
     actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesRemoveExternalResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    sponsorships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesSetParams = {
+  role: "developer" | "support";
+  grant: boolean;
+};
+
+export type PlatformUsersRolesSetResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    sponsorships: Array<{
+      orgId: string;
+      name: string;
+    }>;
+    grantedAt: number | null;
+    error: string | null;
   }>;
 };
 

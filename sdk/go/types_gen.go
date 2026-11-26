@@ -8561,6 +8561,22 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	DryRun  bool     `json:"dryRun"`
 }
 
+type PlatformIdpCallsResponse struct {
+	Items      []PlatformIdpCallsResponseItemsItem `json:"items"`
+	NextCursor *string                             `json:"nextCursor"`
+}
+
+type PlatformIdpCallsResponseItemsItem struct {
+	ID     int64   `json:"id"`
+	Phase  string  `json:"phase"`
+	Method string  `json:"method"`
+	Target *string `json:"target"`
+	Actor  *string `json:"actor"`
+	Reason *string `json:"reason"`
+	Status *string `json:"status"`
+	At     int64   `json:"at"`
+}
+
 type PlatformIdpCheckParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
 }
@@ -8611,6 +8627,44 @@ type PlatformIdpCheckResponseOperationStepsItem struct {
 	Group         *string `json:"group"`
 	StartedAt     *int64  `json:"startedAt"`
 	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpDriftResponse struct {
+	Items      []PlatformIdpDriftResponseItemsItem `json:"items"`
+	NextCursor any                                 `json:"nextCursor"`
+}
+
+type PlatformIdpDriftResponseItemsItem struct {
+	ID      string  `json:"id"`
+	UserID  *string `json:"userId"`
+	Target  string  `json:"target"`
+	Kind    string  `json:"kind"`
+	FoundAt int64   `json:"foundAt"`
+}
+
+type PlatformIdpFreezeParams struct {
+	Reason string `json:"reason"`
+}
+
+type PlatformIdpFreezeResponse struct {
+	Result string `json:"result"`
+}
+
+type PlatformIdpRetrieveResponse struct {
+	Connected    bool                                              `json:"connected"`
+	Mode         *string                                           `json:"mode"`
+	Frozen       *bool                                             `json:"frozen"`
+	KeyExpiresAt *int64                                            `json:"keyExpiresAt"`
+	Problems     []string                                          `json:"problems"`
+	Budget       map[string]PlatformIdpRetrieveResponseBudgetValue `json:"budget"`
+	LastScimAt   *int64                                            `json:"lastScimAt"`
+	Drift        map[string]int64                                  `json:"drift"`
+	BreakerOpen  bool                                              `json:"breakerOpen"`
+}
+
+type PlatformIdpRetrieveResponseBudgetValue struct {
+	Day   float64 `json:"day"`
+	Limit float64 `json:"limit"`
 }
 
 type PlatformIdpScimBreakerClearResponse struct {
@@ -9196,6 +9250,43 @@ type PlatformTemplatesShareParams struct {
 	Shared bool `json:"shared"`
 }
 
+type PlatformUsersAccessRetrieveResponse struct {
+	UserID        string                                         `json:"userId"`
+	Connected     bool                                           `json:"connected"`
+	PlatformAdmin bool                                           `json:"platformAdmin"`
+	Disabled      bool                                           `json:"disabled"`
+	Linked        bool                                           `json:"linked"`
+	Account       PlatformUsersAccessRetrieveResponseAccount     `json:"account"`
+	Roles         []PlatformUsersAccessRetrieveResponseRolesItem `json:"roles"`
+}
+
+type PlatformUsersAccessRetrieveResponseAccount struct {
+	Class         *string `json:"class"`
+	DisabledInIdp *bool   `json:"disabledInIdp"`
+}
+
+type PlatformUsersAccessRetrieveResponseRolesItem struct {
+	Role         string                                                         `json:"role"`
+	Wanted       bool                                                           `json:"wanted"`
+	Present      *bool                                                          `json:"present"`
+	Presence     string                                                         `json:"presence"`
+	Held         bool                                                           `json:"held"`
+	Memberships  []PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem  `json:"memberships"`
+	Sponsorships []PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem `json:"sponsorships"`
+	GrantedAt    *int64                                                         `json:"grantedAt"`
+	Error        *string                                                        `json:"error"`
+}
+
+type PlatformUsersAccessRetrieveResponseRolesItemMembershipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
+type PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
 type PlatformUsersClaimsRetrieveResponse struct {
 	Claims    map[string]PlatformUsersClaimsRetrieveResponseClaimsValue `json:"claims"`
 	OtherKeys int64                                                     `json:"otherKeys"`
@@ -9468,6 +9559,52 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
+type PlatformUsersOffboardParams struct {
+	DryRun *bool `json:"dryRun,omitempty"`
+}
+
+type PlatformUsersOffboardResponse struct {
+	Plan      PlatformUsersOffboardResponsePlan `json:"plan"`
+	Operation map[string]any                    `json:"operation"`
+}
+
+type PlatformUsersOffboardResponsePlan struct {
+	UserID       string                                              `json:"userId"`
+	Memberships  []PlatformUsersOffboardResponsePlanMembershipsItem  `json:"memberships"`
+	Kept         []PlatformUsersOffboardResponsePlanKeptItem         `json:"kept"`
+	Sponsorships []PlatformUsersOffboardResponsePlanSponsorshipsItem `json:"sponsorships"`
+	Grants       []string                                            `json:"grants"`
+	PersonalKeys int64                                               `json:"personalKeys"`
+	PlatformKeys []string                                            `json:"platformKeys"`
+	Sessions     int64                                               `json:"sessions"`
+	SandboxOrgID *string                                             `json:"sandboxOrgId"`
+	Removes      []string                                            `json:"removes"`
+	External     []string                                            `json:"external"`
+	Blockers     []PlatformUsersOffboardResponsePlanBlockersItem     `json:"blockers"`
+}
+
+type PlatformUsersOffboardResponsePlanBlockersItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+	Code  string `json:"code"`
+}
+
+type PlatformUsersOffboardResponsePlanKeptItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
+type PlatformUsersOffboardResponsePlanMembershipsItem struct {
+	OrgID        string `json:"orgId"`
+	Name         string `json:"name"`
+	MembershipID string `json:"membershipId"`
+}
+
+type PlatformUsersOffboardResponsePlanSponsorshipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
 type PlatformUsersPassesListResponse struct {
 	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
@@ -9546,6 +9683,85 @@ type PlatformUsersRetrieveResponseSessionsItem struct {
 	UserAgent  *string  `json:"userAgent"`
 	Current    bool     `json:"current"`
 	Method     string   `json:"method"`
+}
+
+type PlatformUsersRolesRemoveExternalResponse struct {
+	UserID        string                                              `json:"userId"`
+	Connected     bool                                                `json:"connected"`
+	PlatformAdmin bool                                                `json:"platformAdmin"`
+	Disabled      bool                                                `json:"disabled"`
+	Linked        bool                                                `json:"linked"`
+	Account       PlatformUsersRolesRemoveExternalResponseAccount     `json:"account"`
+	Roles         []PlatformUsersRolesRemoveExternalResponseRolesItem `json:"roles"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseAccount struct {
+	Class         *string `json:"class"`
+	DisabledInIdp *bool   `json:"disabledInIdp"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseRolesItem struct {
+	Role         string                                                              `json:"role"`
+	Wanted       bool                                                                `json:"wanted"`
+	Present      *bool                                                               `json:"present"`
+	Presence     string                                                              `json:"presence"`
+	Held         bool                                                                `json:"held"`
+	Memberships  []PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem  `json:"memberships"`
+	Sponsorships []PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem `json:"sponsorships"`
+	GrantedAt    *int64                                                              `json:"grantedAt"`
+	Error        *string                                                             `json:"error"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
+type PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
+type PlatformUsersRolesSetParams struct {
+	Role  string `json:"role"`
+	Grant bool   `json:"grant"`
+}
+
+type PlatformUsersRolesSetResponse struct {
+	UserID        string                                   `json:"userId"`
+	Connected     bool                                     `json:"connected"`
+	PlatformAdmin bool                                     `json:"platformAdmin"`
+	Disabled      bool                                     `json:"disabled"`
+	Linked        bool                                     `json:"linked"`
+	Account       PlatformUsersRolesSetResponseAccount     `json:"account"`
+	Roles         []PlatformUsersRolesSetResponseRolesItem `json:"roles"`
+}
+
+type PlatformUsersRolesSetResponseAccount struct {
+	Class         *string `json:"class"`
+	DisabledInIdp *bool   `json:"disabledInIdp"`
+}
+
+type PlatformUsersRolesSetResponseRolesItem struct {
+	Role         string                                                   `json:"role"`
+	Wanted       bool                                                     `json:"wanted"`
+	Present      *bool                                                    `json:"present"`
+	Presence     string                                                   `json:"presence"`
+	Held         bool                                                     `json:"held"`
+	Memberships  []PlatformUsersRolesSetResponseRolesItemMembershipsItem  `json:"memberships"`
+	Sponsorships []PlatformUsersRolesSetResponseRolesItemSponsorshipsItem `json:"sponsorships"`
+	GrantedAt    *int64                                                   `json:"grantedAt"`
+	Error        *string                                                  `json:"error"`
+}
+
+type PlatformUsersRolesSetResponseRolesItemMembershipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
+}
+
+type PlatformUsersRolesSetResponseRolesItemSponsorshipsItem struct {
+	OrgID string `json:"orgId"`
+	Name  string `json:"name"`
 }
 
 type PlatformUsersSessionsRevokeAllResponse struct {

@@ -4800,6 +4800,50 @@
     "VERSION_CONFLICT",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
+  "polaris access get /{id}/access": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris access post /{id}/offboard": [
+    "API_KEY_NOT_FOUND",
+    "FORBIDDEN",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_PLATFORM_ADMIN",
+    "LAST_ORG_ADMIN",
+    "OPERATION_RUNNING",
+    "ORG_CONFLICT",
+    "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
+    "SELF_DISABLE",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris access post /{id}/roles": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris access post /{id}/roles/{role}/remove-external": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_EXTERNAL",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
   "polaris claims get /idp/groups/{key}/claims": [
     "IDP_BUDGET",
     "IDP_CONFLICT",
@@ -4857,6 +4901,29 @@
     "IDEMPOTENCY_KEY_REUSED",
     "IDP_BREAKER_CLOSED",
     "OPERATION_RUNNING",
+    "UNAUTHENTICATED"
+  ],
+  "polaris platform get /idp": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED"
+  ],
+  "polaris platform get /idp/calls": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED"
+  ],
+  "polaris platform get /idp/drift": [],
+  "polaris platform post /idp/freeze": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
     "UNAUTHENTICATED"
   ],
   "public get /wallet/samsung/{offer}": [

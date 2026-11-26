@@ -62047,6 +62047,1002 @@
           "operation"
         ]
       },
+      "PlatformUsersAccessRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "platformAdmin": {
+            "type": "boolean"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "linked": {
+            "type": "boolean"
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "created",
+                  "linked",
+                  "external",
+                  null
+                ]
+              },
+              "disabledInIdp": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "class",
+              "disabledInIdp"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "developer",
+                    "support"
+                  ]
+                },
+                "wanted": {
+                  "type": "boolean"
+                },
+                "present": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "presence": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "passbook",
+                    "external"
+                  ]
+                },
+                "held": {
+                  "type": "boolean"
+                },
+                "memberships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "sponsorships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "grantedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "role",
+                "wanted",
+                "present",
+                "presence",
+                "held",
+                "memberships",
+                "sponsorships",
+                "grantedAt",
+                "error"
+              ]
+            }
+          }
+        },
+        "required": [
+          "userId",
+          "connected",
+          "platformAdmin",
+          "disabled",
+          "linked",
+          "account",
+          "roles"
+        ]
+      },
+      "PlatformUsersRolesSetParams": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "developer",
+              "support"
+            ]
+          },
+          "grant": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "role",
+          "grant"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformUsersRolesSetResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "platformAdmin": {
+            "type": "boolean"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "linked": {
+            "type": "boolean"
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "created",
+                  "linked",
+                  "external",
+                  null
+                ]
+              },
+              "disabledInIdp": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "class",
+              "disabledInIdp"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "developer",
+                    "support"
+                  ]
+                },
+                "wanted": {
+                  "type": "boolean"
+                },
+                "present": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "presence": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "passbook",
+                    "external"
+                  ]
+                },
+                "held": {
+                  "type": "boolean"
+                },
+                "memberships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "sponsorships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "grantedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "role",
+                "wanted",
+                "present",
+                "presence",
+                "held",
+                "memberships",
+                "sponsorships",
+                "grantedAt",
+                "error"
+              ]
+            }
+          }
+        },
+        "required": [
+          "userId",
+          "connected",
+          "platformAdmin",
+          "disabled",
+          "linked",
+          "account",
+          "roles"
+        ]
+      },
+      "PlatformUsersRolesRemoveExternalResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "platformAdmin": {
+            "type": "boolean"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "linked": {
+            "type": "boolean"
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "created",
+                  "linked",
+                  "external",
+                  null
+                ]
+              },
+              "disabledInIdp": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "class",
+              "disabledInIdp"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "developer",
+                    "support"
+                  ]
+                },
+                "wanted": {
+                  "type": "boolean"
+                },
+                "present": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "presence": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "passbook",
+                    "external"
+                  ]
+                },
+                "held": {
+                  "type": "boolean"
+                },
+                "memberships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "sponsorships": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "name"
+                    ]
+                  }
+                },
+                "grantedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "role",
+                "wanted",
+                "present",
+                "presence",
+                "held",
+                "memberships",
+                "sponsorships",
+                "grantedAt",
+                "error"
+              ]
+            }
+          }
+        },
+        "required": [
+          "userId",
+          "connected",
+          "platformAdmin",
+          "disabled",
+          "linked",
+          "account",
+          "roles"
+        ]
+      },
+      "PlatformUsersOffboardParams": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlatformUsersOffboardResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "memberships": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "membershipId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "orgId",
+                    "name",
+                    "membershipId"
+                  ]
+                }
+              },
+              "kept": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "orgId",
+                    "name"
+                  ]
+                }
+              },
+              "sponsorships": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "orgId",
+                    "name"
+                  ]
+                }
+              },
+              "grants": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "developer",
+                    "support"
+                  ]
+                }
+              },
+              "personalKeys": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "platformKeys": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              },
+              "sessions": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sandboxOrgId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "removes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "developer",
+                    "support"
+                  ]
+                }
+              },
+              "external": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "developer",
+                    "support"
+                  ]
+                }
+              },
+              "blockers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "LAST_ORG_ADMIN"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "orgId",
+                    "name",
+                    "code"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "userId",
+              "memberships",
+              "kept",
+              "sponsorships",
+              "grants",
+              "personalKeys",
+              "platformKeys",
+              "sessions",
+              "sandboxOrgId",
+              "removes",
+              "external",
+              "blockers"
+            ]
+          },
+          "operation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "waiting",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "orgId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "live",
+                  "test",
+                  null
+                ]
+              },
+              "target": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "waiting",
+                        "done",
+                        "failed",
+                        "skipped"
+                      ]
+                    },
+                    "done": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "until": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "waitingReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "blocked",
+                        "due",
+                        null
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "state",
+                    "done",
+                    "total",
+                    "detail",
+                    "until",
+                    "waitingReason",
+                    "group",
+                    "startedAt",
+                    "finishedAt"
+                  ]
+                }
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "cancelable": {
+                "type": "boolean"
+              },
+              "cancelRequested": {
+                "type": "boolean"
+              },
+              "startedBy": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "api_key",
+                      "system"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finishedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "step": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "step",
+                  "retryable"
+                ]
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "ids": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^[A-Za-z0-9_.:-]+$"
+                    }
+                  }
+                },
+                "required": [
+                  "href",
+                  "ids"
+                ]
+              },
+              "revision": {
+                "type": "integer"
+              },
+              "pollAfterMs": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "status",
+              "title",
+              "text",
+              "orgId",
+              "mode",
+              "target",
+              "step",
+              "steps",
+              "attempt",
+              "cancelable",
+              "cancelRequested",
+              "startedBy",
+              "createdAt",
+              "startedAt",
+              "updatedAt",
+              "finishedAt",
+              "error",
+              "result",
+              "revision",
+              "pollAfterMs"
+            ]
+          }
+        },
+        "required": [
+          "plan",
+          "operation"
+        ]
+      },
       "PlatformGroupsClaimsRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -62799,6 +63795,238 @@
         },
         "required": [
           "operation"
+        ]
+      },
+      "PlatformIdpRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "dry_run",
+              "live",
+              null
+            ]
+          },
+          "frozen": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "keyExpiresAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "number"
+                },
+                "limit": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "day",
+                "limit"
+              ]
+            }
+          },
+          "lastScimAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "drift": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "breakerOpen": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "connected",
+          "mode",
+          "frozen",
+          "keyExpiresAt",
+          "problems",
+          "budget",
+          "lastScimAt",
+          "drift",
+          "breakerOpen"
+        ]
+      },
+      "PlatformIdpDriftResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "userId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "target": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "foundAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "userId",
+                "target",
+                "kind",
+                "foundAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformIdpFreezeParams": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformIdpFreezeResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "enum": [
+              "frozen",
+              "already"
+            ]
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "PlatformIdpCallsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "phase": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "actor": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "at": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "phase",
+                "method",
+                "target",
+                "actor",
+                "reason",
+                "status",
+                "at"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "PlatformUsersListResponse": {
@@ -130949,6 +132177,334 @@
         ]
       }
     },
+    "/api/v1/users/{id}/access": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "A user's Polaris ID access: per role what PassBook wants and why, what Polaris ID showed, and any pause.",
+        "operationId": "polaris-access.getUsersByIdAccess",
+        "tags": [
+          "polaris-access"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersAccessRetrieveResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.users.access",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/roles": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Grant or revoke a platform role (developer or support). The sync adds or removes the Polaris ID group within a minute.",
+        "operationId": "polaris-access.postUsersByIdRoles",
+        "tags": [
+          "polaris-access"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformUsersRolesSetParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersRolesSetResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.users.roles",
+          "method": "set"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/roles/{role}/remove-external": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Remove a role that was added in Polaris ID, not by PassBook. 409 `IDP_NOT_EXTERNAL` when PassBook did not find it there.",
+        "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
+        "tags": [
+          "polaris-access"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console",
+                "developer",
+                "support"
+              ]
+            },
+            "required": true,
+            "name": "role",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersRolesRemoveExternalResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.users.roles",
+          "method": "removeExternal"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_EXTERNAL",
+          "IDP_NOT_MANAGED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/offboard": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Offboard a user: end their memberships, developer sponsorships, platform grants and keys, sign them out and disable them, then take their Polaris ID roles away. `dryRun` answers 200 with the plan and changes nothing. Otherwise 202 with the plan and an operation (`idp.offboard`). 409 `IDP_PLATFORM_ADMIN` for a platform admin, `LAST_ORG_ADMIN` when an org would lose its last admin.",
+        "operationId": "polaris-access.postUsersByIdOffboard",
+        "tags": [
+          "polaris-access"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformUsersOffboardParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersOffboardResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.users",
+          "method": "offboard"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_SIGN_IN_REQUIRED",
+          "LAST_ORG_ADMIN",
+          "NOT_FOUND",
+          "OPERATION_RUNNING",
+          "ORG_CONFLICT",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "RATE_LIMITED",
+          "SELF_DISABLE",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/platform/idp/groups/{key}/claims": {
       "get": {
         "security": [
@@ -131352,6 +132908,253 @@
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/platform/idp": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:status",
+        "summary": "Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences.",
+        "operationId": "polaris-platform.getPlatformIdp",
+        "tags": [
+          "polaris-platform"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpRetrieveResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/drift": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Open differences between Polaris ID and PassBook.",
+        "operationId": "polaris-platform.getPlatformIdpDrift",
+        "tags": [
+          "polaris-platform"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpDriftResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp",
+          "method": "drift"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/freeze": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:users",
+        "summary": "Pause every Polaris ID change. A person signed in with Polaris ID only: an emergency control, never a key. It is lifted in Polaris ID.",
+        "operationId": "polaris-platform.postPlatformIdpFreeze",
+        "tags": [
+          "polaris-platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformIdpFreezeParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpFreezeResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp",
+          "method": "freeze"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/calls": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:audit",
+        "summary": "The binding's ledger of calls to Polaris ID from `since` (ms), a page at a time.",
+        "operationId": "polaris-platform.getPlatformIdpCalls",
+        "tags": [
+          "polaris-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,12}$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpCallsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp",
+          "method": "calls"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       }
     },
