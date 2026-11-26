@@ -1,6 +1,6 @@
 import type { Actor } from '../../platform/actor.ts';
-import { first } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
+import { activeCreatorOfKey } from './repo-key-creator.ts';
 import type { Actor as BindingActor } from './types.ts';
 
 /** Who the binding's ledger names: the person, or the key. */
@@ -15,12 +15,8 @@ export const bindingActorOf = (actor: Actor): BindingActor => ({
  */
 export async function byUserOf(db: D1Database, actor: Actor): Promise<string> {
   if (actor.userId) return actor.userId;
-  const row = await first<{ created_by: string }>(
-    db,
-    `SELECT k.created_by FROM api_keys k JOIN users u ON u.id = k.created_by AND u.status = 'active'
-     WHERE k.id = ?`,
-    [actor.keyId],
-  );
+  if (!actor.keyId) throw new ForbiddenError();
+  const row = await activeCreatorOfKey(db, actor.keyId);
   if (!row) throw new ForbiddenError('The key has no active creator.', 'FORBIDDEN');
   return row.created_by;
 }
