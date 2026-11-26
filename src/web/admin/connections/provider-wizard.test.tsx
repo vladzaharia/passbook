@@ -290,7 +290,8 @@ describe('setup page: the pieces', () => {
     // Over the guide and the panel, as well as the rail.
     expect(screen.getAllByText('In Shopify', { selector: 'p' }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('In PassBook', { selector: 'p' }).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeInTheDocument();
+    // The bar's own Copy URL (phones) beside the panel's row.
+    expect(screen.getAllByRole('button', { name: 'Copy URL' }).length).toBeGreaterThanOrEqual(2);
   });
 
   it('the Test step leads with the live check, led by the provider', async () => {
