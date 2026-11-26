@@ -132883,14 +132883,18 @@
                       "held": false,
                       "memberships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "Sam Rivera"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Sam Rivera"
+                          }
                         }
                       ],
                       "sponsorships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "MISSING"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Northwind Climbing"
+                          }
                         }
                       ],
                       "grantedAt": 1795570500000,
@@ -132999,14 +133003,18 @@
                       "held": false,
                       "memberships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "Sam Rivera"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Sam Rivera"
+                          }
                         }
                       ],
                       "sponsorships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "MISSING"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Northwind Climbing"
+                          }
                         }
                       ],
                       "grantedAt": 1795570500000,
@@ -133120,14 +133128,18 @@
                       "held": false,
                       "memberships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "Sam Rivera"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Sam Rivera"
+                          }
                         }
                       ],
                       "sponsorships": [
                         {
-                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                          "name": "MISSING"
+                          "org": {
+                            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                            "name": "Northwind Climbing"
+                          }
                         }
                       ],
                       "grantedAt": 1795570500000,
@@ -133228,21 +133240,27 @@
                     "userId": "0193a1b2-7c00-7000-8000-000000000011",
                     "memberships": [
                       {
-                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                        "name": "Sam Rivera",
+                        "org": {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Sam Rivera"
+                        },
                         "membershipId": "0193a1b2-7c00-7000-8000-1b5822e0a640"
                       }
                     ],
                     "kept": [
                       {
-                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                        "name": "Always open"
+                        "org": {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Northwind Climbing"
+                        }
                       }
                     ],
                     "sponsorships": [
                       {
-                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                        "name": "Always open"
+                        "org": {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Northwind Climbing"
+                        }
                       }
                     ],
                     "grants": [
@@ -133262,15 +133280,17 @@
                     ],
                     "blockers": [
                       {
-                        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                        "name": "Always open",
+                        "org": {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "name": "Northwind Climbing"
+                        },
                         "code": "LAST_ORG_ADMIN"
                       }
                     ]
                   },
                   "operation": {
                     "id": "0193a1b2-7c00-7000-8000-76ce790ad83b",
-                    "kind": "kind",
+                    "kind": "idp.offboard",
                     "status": "succeeded",
                     "title": "Delete sandbox",
                     "text": "Removing Test passes · 4 of 12",
@@ -133869,7 +133889,7 @@
                       "id": "0193a1b2-7c00-7000-8000-8de0614067e2",
                       "userId": "0193a1b2-7c00-7000-8000-000000000011",
                       "target": "tier",
-                      "kind": "kind",
+                      "kind": "unknown_member",
                       "foundAt": 1795570500000
                     }
                   ],
@@ -134028,7 +134048,7 @@
                       "phase": "active",
                       "method": "GET",
                       "target": "tier",
-                      "actor": "actor",
+                      "actor": "idp_sync",
                       "reason": null,
                       "status": "ok",
                       "at": 1795570500000
