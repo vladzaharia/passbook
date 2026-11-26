@@ -63262,6 +63262,518 @@
           "changed"
         ]
       },
+      "PlatformAppleIdentityMovesPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "toIdentityId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "passes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "registered": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "holders": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kept": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "toIdentityId",
+          "passes",
+          "registered",
+          "holders",
+          "kept"
+        ]
+      },
+      "PlatformAppleIdentityMovesListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "operationId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "fromIdentityId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "toIdentityId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "oldPassId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "newPassId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "planned",
+                    "issued",
+                    "notified",
+                    "registered",
+                    "voided",
+                    "kept",
+                    "kept_both",
+                    "failed"
+                  ]
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "conflictCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "registeredAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "voidAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "voidedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "operationId",
+                "orgId",
+                "fromIdentityId",
+                "toIdentityId",
+                "oldPassId",
+                "newPassId",
+                "state",
+                "reason",
+                "conflictCount",
+                "registeredAt",
+                "voidAt",
+                "voidedAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformAppleIdentityMovesStartParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "fromIdentityId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "toIdentityId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "orgId",
+          "fromIdentityId"
+        ]
+      },
+      "PlatformAppleIdentityMovesStartResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "live",
+              "test",
+              null
+            ]
+          },
+          "target": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "waiting",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ]
+                },
+                "done": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "total": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "until": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "waitingReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "blocked",
+                    "due",
+                    null
+                  ]
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "finishedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "done",
+                "total",
+                "detail",
+                "until",
+                "waitingReason",
+                "group",
+                "startedAt",
+                "finishedAt"
+              ]
+            }
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "cancelable": {
+            "type": "boolean"
+          },
+          "cancelRequested": {
+            "type": "boolean"
+          },
+          "startedBy": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "api_key",
+                  "system"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "step",
+              "retryable"
+            ]
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "ids": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_.:-]+$"
+                }
+              }
+            },
+            "required": [
+              "href",
+              "ids"
+            ]
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "pollAfterMs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "title",
+          "text",
+          "orgId",
+          "mode",
+          "target",
+          "step",
+          "steps",
+          "attempt",
+          "cancelable",
+          "cancelRequested",
+          "startedBy",
+          "createdAt",
+          "startedAt",
+          "updatedAt",
+          "finishedAt",
+          "error",
+          "result",
+          "revision",
+          "pollAfterMs"
+        ]
+      },
+      "PlatformAppleIdentityMovesStartTimerResponse": {
+        "type": "object",
+        "properties": {
+          "moveId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "armed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "moveId",
+          "armed"
+        ]
+      },
       "PlatformAppleCallsListResponse": {
         "type": "object",
         "properties": {
@@ -133086,40 +133598,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "toIdentityId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "passes": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "registered": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "holders": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "kept": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "integer",
-                        "minimum": 0
-                      }
-                    }
-                  },
-                  "required": [
-                    "toIdentityId",
-                    "passes",
-                    "registered",
-                    "holders",
-                    "kept"
-                  ]
+                  "$ref": "#/components/schemas/PlatformAppleIdentityMovesPreviewResponse"
+                },
+                "example": {
+                  "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+                  "passes": 37,
+                  "registered": 15,
+                  "holders": 3,
+                  "kept": {
+                    "tier": 8
+                  }
                 }
               }
             }
@@ -133136,6 +133624,10 @@
           }
         },
         "operationId": "wallet-identities.getPlatformAppleIdentityMovesPreview",
+        "x-sdk": {
+          "resource": "platform.appleIdentityMoves",
+          "method": "preview"
+        },
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -133241,126 +133733,28 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "operationId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "orgId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "fromIdentityId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "toIdentityId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "oldPassId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "newPassId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "planned",
-                              "issued",
-                              "notified",
-                              "registered",
-                              "voided",
-                              "kept",
-                              "kept_both",
-                              "failed"
-                            ]
-                          },
-                          "reason": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "conflictCount": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "registeredAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "voidAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "voidedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "updatedAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "operationId",
-                          "orgId",
-                          "fromIdentityId",
-                          "toIdentityId",
-                          "oldPassId",
-                          "newPassId",
-                          "state",
-                          "reason",
-                          "conflictCount",
-                          "registeredAt",
-                          "voidAt",
-                          "voidedAt",
-                          "updatedAt"
-                        ]
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                  "$ref": "#/components/schemas/PlatformAppleIdentityMovesListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-fcaca9137406",
+                      "operationId": "0193a1b2-7c00-7000-8000-8d47a660d49a",
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "fromIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "oldPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "newPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "state": "planned",
+                      "reason": "A connection owns this pass.",
+                      "conflictCount": 25,
+                      "registeredAt": 1795570500000,
+                      "voidAt": 1795570500000,
+                      "voidedAt": null,
+                      "updatedAt": 1795399200000
                     }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
+                  ],
+                  "nextCursor": "c1.4812"
                 }
               }
             }
@@ -133377,6 +133771,10 @@
           }
         },
         "operationId": "wallet-identities.getPlatformAppleIdentityMoves",
+        "x-sdk": {
+          "resource": "platform.appleIdentityMoves",
+          "method": "list"
+        },
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -133406,31 +133804,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "orgId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  },
-                  "fromIdentityId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  },
-                  "toIdentityId": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "minLength": 1,
-                    "maxLength": 64
-                  }
-                },
-                "required": [
-                  "orgId",
-                  "fromIdentityId"
-                ]
+                "$ref": "#/components/schemas/PlatformAppleIdentityMovesStartParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "fromIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+                "toIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1"
               }
             }
           }
@@ -133441,311 +133820,56 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "kind": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "queued",
-                        "running",
-                        "waiting",
-                        "succeeded",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "text": {
-                      "type": "string"
-                    },
-                    "orgId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "enum": [
-                        "live",
-                        "test",
-                        null
-                      ]
-                    },
-                    "target": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "type": {
-                          "type": "string"
-                        },
-                        "id": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "id"
-                      ]
-                    },
-                    "step": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "steps": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "pending",
-                              "running",
-                              "waiting",
-                              "done",
-                              "failed",
-                              "skipped"
-                            ]
-                          },
-                          "done": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ]
-                          },
-                          "total": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ]
-                          },
-                          "detail": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "until": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "waitingReason": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "enum": [
-                              "blocked",
-                              "due",
-                              null
-                            ]
-                          },
-                          "group": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "startedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "finishedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "label",
-                          "state",
-                          "done",
-                          "total",
-                          "detail",
-                          "until",
-                          "waitingReason",
-                          "group",
-                          "startedAt",
-                          "finishedAt"
-                        ]
-                      }
-                    },
-                    "attempt": {
-                      "type": "integer"
-                    },
-                    "cancelable": {
-                      "type": "boolean"
-                    },
-                    "cancelRequested": {
-                      "type": "boolean"
-                    },
-                    "startedBy": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "user",
-                            "api_key",
-                            "system"
-                          ]
-                        },
-                        "id": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "id"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "error": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "step": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "retryable": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message",
-                        "step",
-                        "retryable"
-                      ]
-                    },
-                    "result": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "href": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "maxLength": 300
-                        },
-                        "ids": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string",
-                            "maxLength": 80,
-                            "pattern": "^[A-Za-z0-9_.:-]+$"
-                          }
-                        }
-                      },
-                      "required": [
-                        "href",
-                        "ids"
-                      ]
-                    },
-                    "revision": {
-                      "type": "integer"
-                    },
-                    "pollAfterMs": {
-                      "type": "integer"
+                  "$ref": "#/components/schemas/PlatformAppleIdentityMovesStartResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-67a34975ea5c",
+                  "kind": "identity.move",
+                  "status": "succeeded",
+                  "title": "Delete sandbox",
+                  "text": "Issuing replacements · 40 of 120",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "live",
+                  "target": {
+                    "type": "generic",
+                    "id": "0193a1b2-7c00-7000-8000-e4650b9b5420"
+                  },
+                  "step": "mapping",
+                  "steps": [
+                    {
+                      "key": "tier",
+                      "label": "Remove Test passes",
+                      "state": "done",
+                      "done": 39,
+                      "total": 128,
+                      "detail": "Waiting for the connector",
+                      "until": 1795572600000,
+                      "waitingReason": "due",
+                      "group": "Access",
+                      "startedAt": 1794362400000,
+                      "finishedAt": 1795570500000
+                    }
+                  ],
+                  "attempt": 1,
+                  "cancelable": true,
+                  "cancelRequested": true,
+                  "startedBy": {
+                    "type": "user",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
+                  },
+                  "createdAt": 1794362400000,
+                  "startedAt": 1794362400000,
+                  "updatedAt": 1795399200000,
+                  "finishedAt": 1795570500000,
+                  "error": null,
+                  "result": {
+                    "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                    "ids": {
+                      "tier": "northwind"
                     }
                   },
-                  "required": [
-                    "id",
-                    "kind",
-                    "status",
-                    "title",
-                    "text",
-                    "orgId",
-                    "mode",
-                    "target",
-                    "step",
-                    "steps",
-                    "attempt",
-                    "cancelable",
-                    "cancelRequested",
-                    "startedBy",
-                    "createdAt",
-                    "startedAt",
-                    "updatedAt",
-                    "finishedAt",
-                    "error",
-                    "result",
-                    "revision",
-                    "pollAfterMs"
-                  ]
+                  "revision": 3,
+                  "pollAfterMs": 1471
                 }
               }
             }
@@ -133762,6 +133886,10 @@
           }
         },
         "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+        "x-sdk": {
+          "resource": "platform.appleIdentityMoves",
+          "method": "start"
+        },
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -133820,24 +133948,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "moveId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "armed": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "moveId",
-                    "armed"
-                  ]
+                  "$ref": "#/components/schemas/PlatformAppleIdentityMovesStartTimerResponse"
+                },
+                "example": {
+                  "moveId": "0193a1b2-7c00-7000-8000-36ed6f6441cf",
+                  "armed": true
                 }
               }
             }
@@ -133854,6 +133969,10 @@
           }
         },
         "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
+        "x-sdk": {
+          "resource": "platform.appleIdentityMoves",
+          "method": "startTimer"
+        },
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,

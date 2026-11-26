@@ -5,7 +5,10 @@ import {
   type Fixtures,
   fixtures,
   makeEnv,
+  makeOrg,
+  makePass,
   makeSession,
+  makeTemplate,
   makeUser,
   type SessionFixture,
 } from '../../../../test/helpers/index.ts';
@@ -228,7 +231,14 @@ describe('POST /platform/apple/identities/{id}/default', () => {
 
   it('flips the default once a device registered a pass, and replays', async () => {
     await slotRow('pi4-root', 'pass.mobile.passbook', 'passes');
-    const pass = await (await setupKit()).pass();
+    const personal = await makeOrg(fx, { personalUserId: (await makeUser(fx)).id });
+    const pass = await makePass(fx, { orgId: personal.id, template: makeTemplate().resolved });
+    await run(
+      env.DB,
+      `INSERT INTO audit_log (org_id, actor_type, action, target_type, target_id, at)
+       VALUES (NULL, 'system', 'identity.apns_probe', 'identity', 'pi4-root', ?)`,
+      [fx.clock.now()],
+    );
     await run(
       env.DB,
       'INSERT INTO devices (device_id, identity_id, push_token, updated_at) VALUES (?, ?, ?, ?)',
