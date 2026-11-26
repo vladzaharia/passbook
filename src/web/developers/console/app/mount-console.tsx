@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import type { Session } from '../session.ts';
 import { ConsoleApp } from './console-app.tsx';
 import '../console.css';
+import '../page.css';
 
 /** Marks the slot ready once React has drawn into it. */
 function Ready({ el, children }: { el: HTMLElement; children: ReactNode }) {

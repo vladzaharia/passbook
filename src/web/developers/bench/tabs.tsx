@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useRef } from 'react';
-import './inspector.css';
+import './tabs.css';
 
 export interface BenchTab {
   id: string;

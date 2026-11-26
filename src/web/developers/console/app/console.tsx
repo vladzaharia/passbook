@@ -3,7 +3,6 @@ import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.t
 import { useMediaQuery } from '../../../lib/media.ts';
 import { useBenchKeys } from '../../bench/keys.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
-import { BENCH_TABLET } from '../../bench/split.tsx';
 import { copyWithFeedback } from '../../shell/copy.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
@@ -24,6 +23,9 @@ import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
 import { LazyState } from './lazy-state.tsx';
 import { RunBar } from './run-bar.tsx';
+
+/** Below the bench's 720 px the Run bar docks to the screen's bottom edge. */
+const DOCK = '(max-width: 719.98px)';
 
 // The response (its code block, id chips and Trace) is read when there is one to draw, and warmed once the console is idle.
 const loadResponse = () => import('./response.tsx');
@@ -135,8 +137,8 @@ export function OpConsole({ op, origin, csrf, templateId, codes, mode, prefill }
   const issues = problems(op, draft, check);
 
   // On the Workbench the Run bar docks to the bottom of a phone; elsewhere it ends the request.
-  const tablet = useMediaQuery(BENCH_TABLET);
-  const docked = mode === 'console' && !tablet;
+  const phone = useMediaQuery(DOCK);
+  const docked = mode === 'console' && phone;
   const bar = (
     <RunBar
       op={op}
