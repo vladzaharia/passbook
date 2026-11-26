@@ -100,7 +100,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await shots(page, '07-captures', true);
 
   // 6. Done.
-  await page.getByRole('button', { name: 'Finish' }).click();
+  await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: /First pass in \d+:\d\d/ }),
   ).toBeVisible();
@@ -163,7 +163,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   });
   expect(closed).toBe(200);
   await page.goto('/developers');
-  await expect(page.getByTestId('wb-closed')).toContainText('Reopen within');
+  await expect(page.getByTestId('wb-closed')).toContainText('Reopen in 30 days');
   await shots(page, '13-closed');
   await page.getByRole('button', { name: 'Reopen' }).click();
   await expect(page.getByText('Reopened. Your key was replaced.')).toBeVisible();

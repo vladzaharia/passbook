@@ -1,4 +1,4 @@
-/* The bench's small pieces: StatusChip, IdChip, BenchMenu, BenchTime, the Trace and a body's block.
+/* The bench's small pieces: StatusChip, IdChip, BenchMenu, BenchTime, the Trace (a body's block has its own sheet).
    Tokens only; motion is transform and opacity, and none of it runs under reduced motion. */
 
 /* ---------- StatusChip: one vocabulary, mono 12, 22 px ---------- */
@@ -217,28 +217,5 @@
   from {
     opacity: 0;
     transform: translateX(-6px);
-  }
-}
-
-/* ---------- A body's block (BenchCode) ---------- */
-.bench-code .jt {
-  max-height: 28rem;
-  overflow: auto;
-}
-.bench-code-none {
-  margin: 0;
-  padding: 10px 0;
-  color: var(--pk-text-muted);
-  font-size: 13px;
-}
-
-@media (pointer: coarse) {
-  .bench-id-c,
-  .bench-id .bench-mn-t {
-    min-height: 44px;
-    margin-block: -10px;
-  }
-  .bench-mn-i {
-    min-height: 44px;
   }
 }

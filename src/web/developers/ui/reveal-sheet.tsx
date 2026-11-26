@@ -1,6 +1,8 @@
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { clock, maskSecret } from '../keys/model.ts';
+import { benchTimeText } from '../bench/time.tsx';
+import { benchZone } from '../bench/zone.ts';
+import { maskSecret } from '../keys/model.ts';
 import { copyToClipboard } from '../playground/copy.ts';
 import { Sheet } from './sheet.tsx';
 
@@ -148,7 +150,11 @@ export function RevealSheet({
         </div>
       ) : null}
       {stops === undefined ? null : (
-        <p className="sm muted">{stops <= now() ? c.stoppedNow : c.stops(clock(stops))}</p>
+        <p className="sm muted">
+          {stops <= now()
+            ? c.stoppedNow
+            : c.stops(benchTimeText(stops, benchZone(), 'auto', now()))}
+        </p>
       )}
     </Sheet>
   );

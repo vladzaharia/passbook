@@ -86708,6 +86708,2201 @@
         ]
       }
     },
+    "/api/v1/developer/sandbox": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Make your developer sandbox: a test organization whose passes are previews. Answers 202 with an operation (`sandbox.create`); the key is minted once afterwards with `POST /developer/sandbox/key`.",
+        "operationId": "developer.postSandbox",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "viewedAt": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "turnstileToken"
+                ]
+              },
+              "example": {
+                "turnstileToken": "0.demo-turnstile-response-northwind",
+                "viewedAt": 1795570500000
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "live",
+                            "test",
+                            null
+                          ]
+                        },
+                        "target": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "running",
+                                  "waiting",
+                                  "done",
+                                  "failed",
+                                  "skipped"
+                                ]
+                              },
+                              "done": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "total": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "detail": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "until": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "waitingReason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "blocked",
+                                  "due",
+                                  null
+                                ]
+                              },
+                              "group": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "finishedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "state",
+                              "done",
+                              "total",
+                              "detail",
+                              "until",
+                              "waitingReason",
+                              "group",
+                              "startedAt",
+                              "finishedAt"
+                            ]
+                          }
+                        },
+                        "attempt": {
+                          "type": "integer"
+                        },
+                        "cancelable": {
+                          "type": "boolean"
+                        },
+                        "cancelRequested": {
+                          "type": "boolean"
+                        },
+                        "startedBy": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "user",
+                                "api_key",
+                                "system"
+                              ]
+                            },
+                            "id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "startedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "error": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "step": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "retryable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "step",
+                            "retryable"
+                          ]
+                        },
+                        "result": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "href": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 300
+                            },
+                            "ids": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string",
+                                "maxLength": 80,
+                                "pattern": "^[A-Za-z0-9_.:-]+$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "href",
+                            "ids"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "pollAfterMs": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "status",
+                        "title",
+                        "text",
+                        "orgId",
+                        "mode",
+                        "target",
+                        "step",
+                        "steps",
+                        "attempt",
+                        "cancelable",
+                        "cancelRequested",
+                        "startedBy",
+                        "createdAt",
+                        "startedAt",
+                        "updatedAt",
+                        "finishedAt",
+                        "error",
+                        "result",
+                        "revision",
+                        "pollAfterMs"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operation"
+                  ]
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-2b09c2384426",
+                    "kind": "sandbox.delete",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-7713593a699e"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/developers/quickstart",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "create",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "AUTHORITY_DENIED",
+          "CAPTURE_DEVELOPER_ONLY",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_LEASE_LOST",
+          "OPERATION_RUNNING",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_QUERY",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CHANGED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_SELF_APPROVAL",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WALLET_ART_MISMATCH",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day. Answers 202 with an operation (`sandbox.delete`).",
+        "operationId": "developer.deleteSandbox",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "live",
+                            "test",
+                            null
+                          ]
+                        },
+                        "target": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "running",
+                                  "waiting",
+                                  "done",
+                                  "failed",
+                                  "skipped"
+                                ]
+                              },
+                              "done": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "total": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "detail": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "until": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "waitingReason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "blocked",
+                                  "due",
+                                  null
+                                ]
+                              },
+                              "group": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "finishedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "state",
+                              "done",
+                              "total",
+                              "detail",
+                              "until",
+                              "waitingReason",
+                              "group",
+                              "startedAt",
+                              "finishedAt"
+                            ]
+                          }
+                        },
+                        "attempt": {
+                          "type": "integer"
+                        },
+                        "cancelable": {
+                          "type": "boolean"
+                        },
+                        "cancelRequested": {
+                          "type": "boolean"
+                        },
+                        "startedBy": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "user",
+                                "api_key",
+                                "system"
+                              ]
+                            },
+                            "id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "startedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "error": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "step": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "retryable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "step",
+                            "retryable"
+                          ]
+                        },
+                        "result": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "href": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 300
+                            },
+                            "ids": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string",
+                                "maxLength": 80,
+                                "pattern": "^[A-Za-z0-9_.:-]+$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "href",
+                            "ids"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "pollAfterMs": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "status",
+                        "title",
+                        "text",
+                        "orgId",
+                        "mode",
+                        "target",
+                        "step",
+                        "steps",
+                        "attempt",
+                        "cancelable",
+                        "cancelRequested",
+                        "startedBy",
+                        "createdAt",
+                        "startedAt",
+                        "updatedAt",
+                        "finishedAt",
+                        "error",
+                        "result",
+                        "revision",
+                        "pollAfterMs"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operation"
+                  ]
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-6a8053955efd",
+                    "kind": "sandbox.delete",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-eacf4232eb2b"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/developers/quickstart",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "close",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration. The name predates the delete; the route now deletes."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
+          "RATE_LIMITED",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_RESET_LIMIT",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED"
+        ]
+      },
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Your developer sandbox, or null, and the site key for the check that makes one",
+        "operationId": "developer.getSandbox",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sandbox": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgSlug": {
+                          "type": "string"
+                        },
+                        "templateId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "previewOnly": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "closedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "orgId",
+                        "orgSlug",
+                        "templateId",
+                        "previewOnly",
+                        "createdAt",
+                        "closedAt",
+                        "timeZone"
+                      ]
+                    },
+                    "turnstileSiteKey": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sandbox",
+                    "turnstileSiteKey"
+                  ]
+                },
+                "example": {
+                  "sandbox": {
+                    "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+                    "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+                    "orgSlug": "northwind-sandbox",
+                    "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+                    "previewOnly": true,
+                    "createdAt": 1794362400000,
+                    "closedAt": null,
+                    "timeZone": "America/Los_Angeles"
+                  },
+                  "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/developer/sandbox/key": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Mint your sandbox key, once. A second call answers 409 `SANDBOX_KEY_SHOWN` while the key is live: roll it instead.",
+        "operationId": "developer.postSandboxKey",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "secret": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "test"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "secret",
+                        "mode",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ]
+                },
+                "example": {
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
+                    "name": "Server integration",
+                    "secret": "whsec_demo_northwind_f6888a",
+                    "mode": "test",
+                    "expiresAt": 1798790399999
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "reveal",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_CHILD_CANNOT_MINT",
+          "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_PARENT_RETIRING",
+          "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCAN_ORG_REQUIRED",
+          "API_KEY_SCOPE_EXCEEDS_CREATOR",
+          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+          "API_KEY_TERMINALS_REQUIRED",
+          "API_KEY_TERMINALS_UNUSED",
+          "EXPIRY_PAST",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "SANDBOX_CLOSED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_KEY_SHOWN",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/developer/sandbox/recreate": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Start over from nothing: delete your sandbox and make a new one. Counts as a delete. Answers 202 with an operation (`sandbox.recreate`); the key is minted once afterwards.",
+        "operationId": "developer.postSandboxRecreate",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "viewedAt": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "turnstileToken"
+                ]
+              },
+              "example": {
+                "turnstileToken": "0.demo-turnstile-response-northwind",
+                "viewedAt": 1795570500000
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "live",
+                            "test",
+                            null
+                          ]
+                        },
+                        "target": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "running",
+                                  "waiting",
+                                  "done",
+                                  "failed",
+                                  "skipped"
+                                ]
+                              },
+                              "done": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "total": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "detail": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "until": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "waitingReason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "blocked",
+                                  "due",
+                                  null
+                                ]
+                              },
+                              "group": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "finishedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "state",
+                              "done",
+                              "total",
+                              "detail",
+                              "until",
+                              "waitingReason",
+                              "group",
+                              "startedAt",
+                              "finishedAt"
+                            ]
+                          }
+                        },
+                        "attempt": {
+                          "type": "integer"
+                        },
+                        "cancelable": {
+                          "type": "boolean"
+                        },
+                        "cancelRequested": {
+                          "type": "boolean"
+                        },
+                        "startedBy": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "user",
+                                "api_key",
+                                "system"
+                              ]
+                            },
+                            "id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "startedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "error": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "step": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "retryable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "step",
+                            "retryable"
+                          ]
+                        },
+                        "result": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "href": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 300
+                            },
+                            "ids": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string",
+                                "maxLength": 80,
+                                "pattern": "^[A-Za-z0-9_.:-]+$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "href",
+                            "ids"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "pollAfterMs": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "status",
+                        "title",
+                        "text",
+                        "orgId",
+                        "mode",
+                        "target",
+                        "step",
+                        "steps",
+                        "attempt",
+                        "cancelable",
+                        "cancelRequested",
+                        "startedBy",
+                        "createdAt",
+                        "startedAt",
+                        "updatedAt",
+                        "finishedAt",
+                        "error",
+                        "result",
+                        "revision",
+                        "pollAfterMs"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operation"
+                  ]
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-e5d024f6c11c",
+                    "kind": "sandbox.delete",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-4cf677d96a71"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/developers/quickstart",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "replace",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "AUTHORITY_DENIED",
+          "CAPTURE_DEVELOPER_ONLY",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_LEASE_LOST",
+          "OPERATION_RUNNING",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_RESET_LIMIT",
+          "SANDBOX_TEST_ONLY",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_QUERY",
+          "STEP_UP_REQUIRED",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CHANGED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_SELF_APPROVAL",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WALLET_ART_MISMATCH",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/developer/sandbox/reset": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and revoke the key. Answers 202 with an operation (`sandbox.reset`); the key is minted once afterwards.",
+        "operationId": "developer.postSandboxReset",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "turnstileToken"
+                ]
+              },
+              "example": {
+                "turnstileToken": "0.demo-turnstile-response-northwind"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "live",
+                            "test",
+                            null
+                          ]
+                        },
+                        "target": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "running",
+                                  "waiting",
+                                  "done",
+                                  "failed",
+                                  "skipped"
+                                ]
+                              },
+                              "done": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "total": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "detail": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "until": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "waitingReason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "blocked",
+                                  "due",
+                                  null
+                                ]
+                              },
+                              "group": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "startedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "finishedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "state",
+                              "done",
+                              "total",
+                              "detail",
+                              "until",
+                              "waitingReason",
+                              "group",
+                              "startedAt",
+                              "finishedAt"
+                            ]
+                          }
+                        },
+                        "attempt": {
+                          "type": "integer"
+                        },
+                        "cancelable": {
+                          "type": "boolean"
+                        },
+                        "cancelRequested": {
+                          "type": "boolean"
+                        },
+                        "startedBy": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "user",
+                                "api_key",
+                                "system"
+                              ]
+                            },
+                            "id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "startedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "finishedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "error": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "step": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "retryable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "step",
+                            "retryable"
+                          ]
+                        },
+                        "result": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "href": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 300
+                            },
+                            "ids": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string",
+                                "maxLength": 80,
+                                "pattern": "^[A-Za-z0-9_.:-]+$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "href",
+                            "ids"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "pollAfterMs": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "status",
+                        "title",
+                        "text",
+                        "orgId",
+                        "mode",
+                        "target",
+                        "step",
+                        "steps",
+                        "attempt",
+                        "cancelable",
+                        "cancelRequested",
+                        "startedBy",
+                        "createdAt",
+                        "startedAt",
+                        "updatedAt",
+                        "finishedAt",
+                        "error",
+                        "result",
+                        "revision",
+                        "pollAfterMs"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operation"
+                  ]
+                },
+                "example": {
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-4574298dee81",
+                    "kind": "sandbox.delete",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-189853ce8561"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "/developers/quickstart",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "reset",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "OPERATION_LEASE_LOST",
+          "OPERATION_RUNNING",
+          "ORG_FORBIDDEN",
+          "ORG_HELD",
+          "ORG_NOT_FOUND",
+          "ORG_PERSONAL",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "SANDBOX_CLOSED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_RESET_LIMIT",
+          "SANDBOX_TEST_ONLY",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_QUERY",
+          "STEP_UP_REQUIRED",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_SELF_APPROVAL",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WALLET_ART_MISMATCH",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
     "/api/v1/developer/access": {
       "get": {
         "security": [
@@ -87714,538 +89909,6 @@
         ]
       }
     },
-    "/api/v1/developer/sandbox": {
-      "post": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "summary": "Make your developer sandbox: a test organization whose passes are previews",
-        "operationId": "developer.postSandbox",
-        "tags": [
-          "developer"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "turnstileToken": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 4096
-                  },
-                  "viewedAt": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "required": [
-                  "turnstileToken"
-                ]
-              },
-              "example": {
-                "turnstileToken": "0.demo-turnstile-response-northwind",
-                "viewedAt": 1795570500000
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgSlug": {
-                      "type": "string"
-                    },
-                    "templateId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "previewOnly": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "closedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "timeZone": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "secret": {
-                          "type": "string"
-                        },
-                        "mode": {
-                          "type": "string",
-                          "enum": [
-                            "test"
-                          ]
-                        },
-                        "expiresAt": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "secret",
-                        "mode",
-                        "expiresAt"
-                      ]
-                    },
-                    "previousKey": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "name": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "orgSlug",
-                    "templateId",
-                    "previewOnly",
-                    "createdAt",
-                    "closedAt",
-                    "timeZone",
-                    "key",
-                    "previousKey"
-                  ]
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                  "orgSlug": "northwind-sandbox",
-                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": null,
-                  "timeZone": "America/Los_Angeles",
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
-                    "name": "Sandbox key",
-                    "secret": "pb_test_s4Ndb0xK_northwind-demo-key-do-not-use-4949b36517b4",
-                    "mode": "test",
-                    "expiresAt": 1796954400000
-                  },
-                  "previousKey": null
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-sdk": {
-          "resource": "developer.sandbox",
-          "method": "create",
-          "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
-        },
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
-          "ASSETS_INVALID",
-          "ASSET_NOT_FOUND",
-          "AUTHORITY_DENIED",
-          "CAPTURE_DEVELOPER_ONLY",
-          "EXPIRY_PAST",
-          "FEATURE_LIMIT_REACHED",
-          "FEATURE_NOT_INCLUDED",
-          "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "KEY_CREATOR_GONE",
-          "KEY_CREATOR_NOT_MEMBER",
-          "KEY_TEST_ONLY",
-          "LINEAGE_CHANGED",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "ORG_ACCESS_CHANGED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "ORG_REQUIRED",
-          "RATE_LIMITED",
-          "RETENTION_CHANGED",
-          "SANDBOX_EXISTS",
-          "SANDBOX_NOT_FOUND",
-          "SANDBOX_TEST_ONLY",
-          "SCANNER_REPAIR",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_STAFF_CHANGED",
-          "STALE",
-          "STAMPS_ABOVE_MAX",
-          "STAMPS_QUERY",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_ASSET_CONFLICT",
-          "TEMPLATE_BAKED",
-          "TEMPLATE_BLUEPRINT_INACTIVE",
-          "TEMPLATE_CANDIDATE_NOT_FOUND",
-          "TEMPLATE_CONTENT_CHANGED",
-          "TEMPLATE_EXISTS",
-          "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_NOT_BLUEPRINT",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_ORG_REQUIRED",
-          "TEMPLATE_PROVIDER_UNSUPPORTED",
-          "TEMPLATE_RELEASE_CHANGED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TEMPLATE_SELF_APPROVAL",
-          "TEMPLATE_SLUG_CONFLICT",
-          "TEMPLATE_VERSION_CONFLICT",
-          "TEMPLATE_VERSION_CONTENT_CONFLICT",
-          "TEMPLATE_VERSION_NOT_FOUND",
-          "TURNSTILE_FAILED",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "VERSION_INVALID",
-          "WALLET_ART_MISMATCH",
-          "WALLET_PROJECTION_BLOCKED",
-          "WALLET_PROJECTION_CONFLICT",
-          "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_PROJECTION_SCHEMA",
-          "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED",
-          "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND",
-          "WORKBENCH_TEST_ONLY"
-        ]
-      },
-      "get": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "summary": "Your developer sandbox, or null, and the site key for the check that makes one",
-        "operationId": "developer.getSandbox",
-        "tags": [
-          "developer"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "sandbox": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "orgId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "orgSlug": {
-                          "type": "string"
-                        },
-                        "templateId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "previewOnly": {
-                          "type": "boolean",
-                          "enum": [
-                            true
-                          ]
-                        },
-                        "createdAt": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "closedAt": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        },
-                        "timeZone": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "orgId",
-                        "orgSlug",
-                        "templateId",
-                        "previewOnly",
-                        "createdAt",
-                        "closedAt",
-                        "timeZone"
-                      ]
-                    },
-                    "turnstileSiteKey": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "sandbox",
-                    "turnstileSiteKey"
-                  ]
-                },
-                "example": {
-                  "sandbox": {
-                    "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                    "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                    "orgSlug": "northwind-sandbox",
-                    "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                    "previewOnly": true,
-                    "createdAt": 1794362400000,
-                    "closedAt": null,
-                    "timeZone": "America/Los_Angeles"
-                  },
-                  "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-sdk": {
-          "resource": "developer.sandbox",
-          "method": "retrieve",
-          "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
-        },
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "RATE_LIMITED",
-          "UNAUTHENTICATED"
-        ]
-      },
-      "delete": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "summary": "Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day.",
-        "operationId": "developer.deleteSandbox",
-        "tags": [
-          "developer"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgSlug": {
-                      "type": "string"
-                    },
-                    "templateId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "previewOnly": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "closedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "timeZone": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "orgSlug",
-                    "templateId",
-                    "previewOnly",
-                    "createdAt",
-                    "closedAt",
-                    "timeZone"
-                  ]
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                  "orgSlug": "northwind-sandbox",
-                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": 1795572000000,
-                  "timeZone": "America/Los_Angeles"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-sdk": {
-          "resource": "developer.sandbox",
-          "method": "close",
-          "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration. The name predates the delete; the route now deletes."
-        },
-        "x-sign-in": "idp",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "RATE_LIMITED",
-          "SANDBOX_NOT_FOUND",
-          "SANDBOX_RESET_LIMIT",
-          "STEP_UP_REQUIRED",
-          "UNAUTHENTICATED"
-        ]
-      }
-    },
     "/api/v1/developer/sandbox/close": {
       "post": {
         "security": [
@@ -88358,610 +90021,6 @@
           "SANDBOX_CONFLICT",
           "SANDBOX_NOT_FOUND",
           "UNAUTHENTICATED"
-        ]
-      }
-    },
-    "/api/v1/developer/sandbox/recreate": {
-      "post": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "summary": "Start over from nothing: delete your sandbox and make a new one, with a new key shown once. Counts as a delete.",
-        "operationId": "developer.postSandboxRecreate",
-        "tags": [
-          "developer"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "turnstileToken": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 4096
-                  },
-                  "viewedAt": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "required": [
-                  "turnstileToken"
-                ]
-              },
-              "example": {
-                "turnstileToken": "0.demo-turnstile-response-northwind",
-                "viewedAt": 1795570500000
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgSlug": {
-                      "type": "string"
-                    },
-                    "templateId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "previewOnly": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "closedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "timeZone": {
-                      "type": "string"
-                    },
-                    "key": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "secret": {
-                          "type": "string"
-                        },
-                        "mode": {
-                          "type": "string",
-                          "enum": [
-                            "test"
-                          ]
-                        },
-                        "expiresAt": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "secret",
-                        "mode",
-                        "expiresAt"
-                      ]
-                    },
-                    "previousKey": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "name": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "orgSlug",
-                    "templateId",
-                    "previewOnly",
-                    "createdAt",
-                    "closedAt",
-                    "timeZone",
-                    "key",
-                    "previousKey"
-                  ]
-                },
-                "example": {
-                  "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
-                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "orgSlug": "northwind-climbing",
-                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": null,
-                  "timeZone": "America/Los_Angeles",
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-000000000021",
-                    "name": "Server integration",
-                    "secret": "whsec_demo_northwind_53ec29",
-                    "mode": "test",
-                    "expiresAt": 1798790399999
-                  },
-                  "previousKey": null
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-sdk": {
-          "resource": "developer.sandbox",
-          "method": "replace",
-          "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
-        },
-        "x-sign-in": "idp",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
-          "ASSETS_INVALID",
-          "ASSET_NOT_FOUND",
-          "AUTHORITY_DENIED",
-          "CAPTURE_DEVELOPER_ONLY",
-          "EXPIRY_PAST",
-          "FEATURE_LIMIT_REACHED",
-          "FEATURE_NOT_INCLUDED",
-          "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "KEY_CREATOR_GONE",
-          "KEY_CREATOR_NOT_MEMBER",
-          "KEY_TEST_ONLY",
-          "LINEAGE_CHANGED",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "ORG_ACCESS_CHANGED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "ORG_REQUIRED",
-          "RATE_LIMITED",
-          "RETENTION_CHANGED",
-          "SANDBOX_EXISTS",
-          "SANDBOX_NOT_FOUND",
-          "SANDBOX_RESET_LIMIT",
-          "SANDBOX_TEST_ONLY",
-          "SCANNER_REPAIR",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_STAFF_CHANGED",
-          "STALE",
-          "STAMPS_ABOVE_MAX",
-          "STAMPS_QUERY",
-          "STEP_UP_REQUIRED",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_ASSET_CONFLICT",
-          "TEMPLATE_BAKED",
-          "TEMPLATE_BLUEPRINT_INACTIVE",
-          "TEMPLATE_CANDIDATE_NOT_FOUND",
-          "TEMPLATE_CONTENT_CHANGED",
-          "TEMPLATE_EXISTS",
-          "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_NOT_BLUEPRINT",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_ORG_REQUIRED",
-          "TEMPLATE_PROVIDER_UNSUPPORTED",
-          "TEMPLATE_RELEASE_CHANGED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TEMPLATE_SELF_APPROVAL",
-          "TEMPLATE_SLUG_CONFLICT",
-          "TEMPLATE_VERSION_CONFLICT",
-          "TEMPLATE_VERSION_CONTENT_CONFLICT",
-          "TEMPLATE_VERSION_NOT_FOUND",
-          "TURNSTILE_FAILED",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "VERSION_INVALID",
-          "WALLET_ART_MISMATCH",
-          "WALLET_PROJECTION_BLOCKED",
-          "WALLET_PROJECTION_CONFLICT",
-          "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_PROJECTION_SCHEMA",
-          "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED",
-          "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND",
-          "WORKBENCH_TEST_ONLY"
-        ]
-      }
-    },
-    "/api/v1/developer/sandbox/reset": {
-      "post": {
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-human-only": true,
-        "summary": "Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key",
-        "operationId": "developer.postSandboxReset",
-        "tags": [
-          "developer"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "turnstileToken": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 4096
-                  }
-                },
-                "required": [
-                  "turnstileToken"
-                ]
-              },
-              "example": {
-                "turnstileToken": "0.demo-turnstile-response-northwind"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "sandbox": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "orgId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "orgSlug": {
-                          "type": "string"
-                        },
-                        "templateId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "previewOnly": {
-                          "type": "boolean",
-                          "enum": [
-                            true
-                          ]
-                        },
-                        "createdAt": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "closedAt": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        },
-                        "timeZone": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "orgId",
-                        "orgSlug",
-                        "templateId",
-                        "previewOnly",
-                        "createdAt",
-                        "closedAt",
-                        "timeZone"
-                      ]
-                    },
-                    "key": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "secret": {
-                          "type": "string"
-                        },
-                        "mode": {
-                          "type": "string",
-                          "enum": [
-                            "test"
-                          ]
-                        },
-                        "expiresAt": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "secret",
-                        "mode",
-                        "expiresAt"
-                      ]
-                    },
-                    "deleted": {
-                      "type": "object",
-                      "properties": {
-                        "passes": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "captures": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "calls": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "other": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "Bundles, captured emails, imports, broadcasts, rules and idempotency records."
-                        }
-                      },
-                      "required": [
-                        "passes",
-                        "captures",
-                        "calls",
-                        "other"
-                      ]
-                    },
-                    "kept": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "more": {
-                      "type": "boolean"
-                    },
-                    "resetsLeft": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 3
-                    }
-                  },
-                  "required": [
-                    "sandbox",
-                    "key",
-                    "deleted",
-                    "kept",
-                    "more",
-                    "resetsLeft"
-                  ]
-                },
-                "example": {
-                  "sandbox": {
-                    "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                    "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                    "orgSlug": "northwind-sandbox",
-                    "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                    "previewOnly": true,
-                    "createdAt": 1794362400000,
-                    "closedAt": null,
-                    "timeZone": "America/Los_Angeles"
-                  },
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
-                    "name": "Sandbox key",
-                    "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
-                    "mode": "test",
-                    "expiresAt": 1796954400000
-                  },
-                  "deleted": {
-                    "passes": 9,
-                    "captures": 6,
-                    "calls": 38,
-                    "other": 2
-                  },
-                  "kept": 0,
-                  "more": false,
-                  "resetsLeft": 2
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-sdk": {
-          "resource": "developer.sandbox",
-          "method": "reset",
-          "sdk": false,
-          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
-        },
-        "x-sign-in": "idp",
-        "x-step-up": {
-          "maxAgeSec": 600,
-          "conditional": false
-        },
-        "x-codes": [
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
-          "ASSETS_INVALID",
-          "ASSET_NOT_FOUND",
-          "EXPIRY_PAST",
-          "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
-          "IDP_SIGN_IN_REQUIRED",
-          "KEY_CREATOR_GONE",
-          "KEY_CREATOR_NOT_MEMBER",
-          "KEY_TEST_ONLY",
-          "MISSING_SCOPE",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_HELD",
-          "ORG_NOT_FOUND",
-          "ORG_PERSONAL",
-          "ORG_REQUIRED",
-          "RATE_LIMITED",
-          "SANDBOX_CLOSED",
-          "SANDBOX_CONFLICT",
-          "SANDBOX_NOT_FOUND",
-          "SANDBOX_RESET_LIMIT",
-          "SANDBOX_TEST_ONLY",
-          "STAMPS_ABOVE_MAX",
-          "STAMPS_QUERY",
-          "STEP_UP_REQUIRED",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_ASSET_CONFLICT",
-          "TEMPLATE_BAKED",
-          "TEMPLATE_BLUEPRINT_INACTIVE",
-          "TEMPLATE_CANDIDATE_NOT_FOUND",
-          "TEMPLATE_CONTENT_CHANGED",
-          "TEMPLATE_EXISTS",
-          "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_NOT_BLUEPRINT",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_ORG_REQUIRED",
-          "TEMPLATE_PROVIDER_UNSUPPORTED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TEMPLATE_SELF_APPROVAL",
-          "TEMPLATE_SLUG_CONFLICT",
-          "TEMPLATE_VERSION_CONFLICT",
-          "TEMPLATE_VERSION_CONTENT_CONFLICT",
-          "TEMPLATE_VERSION_NOT_FOUND",
-          "TURNSTILE_FAILED",
-          "UNAUTHENTICATED",
-          "VALIDATION",
-          "VERSION_INVALID",
-          "WALLET_ART_MISMATCH",
-          "WALLET_PROJECTION_BLOCKED",
-          "WALLET_PROJECTION_CONFLICT",
-          "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_PROJECTION_SCHEMA",
-          "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED",
-          "WORKBENCH_TEST_ONLY"
         ]
       }
     },

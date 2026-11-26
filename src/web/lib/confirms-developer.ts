@@ -27,7 +27,7 @@ export const deleteSandboxConfirm: ConfirmCopy = {
   typed: false,
 };
 
-/** What the page says while a delete or start over runs: one call, so no steps are claimed. */
+/** What the page says while the call is out, until the server names the operation: its live steps then take the note's place. */
 export const sandboxWorking = {
   delete: { title: 'Deleting your sandbox', detail: 'Passes, keys, webhooks and logs are going.' },
   'start-over': { title: 'Making a new sandbox', detail: 'The old one is deleted first.' },
