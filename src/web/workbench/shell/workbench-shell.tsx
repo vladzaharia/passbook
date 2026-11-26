@@ -206,7 +206,13 @@ function Shell({
           <BookOpen aria-hidden className="size-4" />
           {WB_SHELL_COPY.docs}
         </a>
-        {host ? <ActivityTray client={host.operations} include={inContext} /> : null}
+        {host ? (
+          <ActivityTray
+            client={host.operations}
+            include={inContext}
+            allHref={wbPath(host.context.orgId, 'activity')}
+          />
+        ) : null}
       </>
     ),
     tone,
