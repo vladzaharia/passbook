@@ -138,6 +138,8 @@ function ScopedPanel({
         versions={versions}
         selected={provider}
         onSelect={setProvider}
+        capabilities={capabilities}
+        alone={release?.alone === true}
         apple={{
           active: (mode === 'live' ? live : testLists.releases.data).active ?? null,
           candidates: candidates.data.items,
