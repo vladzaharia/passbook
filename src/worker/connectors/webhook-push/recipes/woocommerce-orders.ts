@@ -70,7 +70,8 @@ export const woocommerceOrders: Recipe = {
     { from: '/refunded', op: 'in', values: [true] },
   ],
   adapt({ body, topic, config }) {
-    // A new webhook pings with a form body, and order.deleted or restored are not handled.
+    // A new webhook pings with a form body (not JSON), and order.deleted or restored are not handled.
+    if (body === undefined) return ignored('ping');
     if (topic !== null && !TOPICS.includes(topic)) return ignored('unknown_type');
     const o = obj(body);
     const id = typeof o?.id === 'number' && Number.isSafeInteger(o.id) ? String(o.id) : null;
