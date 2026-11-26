@@ -30,7 +30,11 @@ import {
 } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
-import { createSamsungRuntimeOffer, WalletRuntimeError } from './runtime.ts';
+import {
+  createSamsungRuntimeOffer,
+  WalletRuntimeError,
+  type WalletRuntimeScope,
+} from './runtime.ts';
 
 export interface WalletOffer {
   provider: 'google' | 'samsung';
@@ -93,6 +97,15 @@ export async function issueWalletOffer(
   token: string,
   provider: NativeProvider,
 ): Promise<string> {
+  return (await issueWalletOfferScoped(ctx, token, provider)).location;
+}
+
+/** The offer and the account scope it was issued under, so a bundle can combine several of them. */
+export async function issueWalletOfferScoped(
+  ctx: ServiceContext,
+  token: string,
+  provider: NativeProvider,
+): Promise<{ location: string; scope: WalletRuntimeScope }> {
   if (provider !== 'google' && provider !== 'samsung') throw notFound();
   assertWalletProviderEnabled(provider);
   ctx = captureOfferContext(ctx);
@@ -192,7 +205,7 @@ export async function issueWalletOffer(
       throw notFound();
     delivered = true;
     await recordCopy(ctx, pass, provider);
-    return location;
+    return { location, scope: eligible.runtimeScope };
   } catch (error) {
     if (fenceLost || (error instanceof WalletRuntimeError && error.code === 'account_unavailable'))
       throw notFound();

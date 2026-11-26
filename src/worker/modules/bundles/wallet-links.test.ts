@@ -6,6 +6,7 @@ import type { jobCtxOf as JobCtxOf } from '../delivery/delivery-test-fixtures.ts
 import type { createPassRow as CreatePassRow } from '../passes/create.ts';
 import type { Kit, setupKit as SetupKit } from '../passes/pass-test-fixtures.ts';
 import type {
+  issueWalletOfferScoped as IssueScoped,
   issueWalletOffer as IssueWalletOffer,
   listWalletOffers as ListWalletOffers,
 } from '../wallet-providers/offers.ts';
@@ -16,6 +17,13 @@ vi.mock('../wallet-providers/offers.ts', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   listWalletOffers: vi.fn(),
   issueWalletOffer: vi.fn(),
+  issueWalletOfferScoped: vi.fn(),
+}));
+vi.mock('../wallet-providers/runtime-google-bundle.ts', () => ({
+  combineGoogleRuntimeOffers: vi.fn(async () => ({
+    url: 'https://pay.google.test/gp/v/save/all',
+    expiresAt: 1,
+  })),
 }));
 
 const ORIGIN = 'https://wallet.test';
@@ -27,6 +35,7 @@ let jobCtxOf: typeof JobCtxOf;
 let createPassRow: typeof CreatePassRow;
 let seedBundlePrincipal: typeof SeedBundlePrincipal;
 let list: ReturnType<typeof vi.mocked<typeof ListWalletOffers>>;
+let scoped: ReturnType<typeof vi.mocked<typeof IssueScoped>>;
 let issue: ReturnType<typeof vi.mocked<typeof IssueWalletOffer>>;
 let NotFoundError: typeof NotFound;
 let restore: () => void;
@@ -44,6 +53,7 @@ beforeAll(async () => {
   const offers = await import('../wallet-providers/offers.ts');
   list = vi.mocked(offers.listWalletOffers);
   issue = vi.mocked(offers.issueWalletOffer);
+  scoped = vi.mocked(offers.issueWalletOfferScoped);
   const policy = await import('../wallet-providers/provider-policy.ts');
   restore = policy.setWalletProvidersEnabledForTest(true);
   kit = await setupKit();
@@ -57,6 +67,7 @@ beforeEach(() => {
   list.mockResolvedValue([]);
   issue.mockReset();
   issue.mockResolvedValue(SAVE);
+  scoped.mockReset();
 });
 
 async function bundleOfTwo() {
@@ -143,5 +154,32 @@ describe('bundle save links for native wallets', () => {
     const stranger = await kit.pass();
     expect((await get(`/b/${token}/${stranger.id}/wallet/google`)).status).toBe(404);
     expect((await get(`/b/${token}/${passes[0]?.id}/wallet/apple`)).status).toBe(422);
+  });
+
+  it('gives two Google-offered passes one save link, and none for fewer', async () => {
+    const { passes, token } = await bundleOfTwo();
+    list.mockImplementation(async (_ctx, passId) => [
+      { provider: 'google', href: `/p/${passId}/wallet/google`, installation: 'unknown' },
+    ]);
+    const scope = { accountId: 'a', accountRevision: 1 } as never;
+    scoped.mockImplementation(async () => ({ location: SAVE, scope }));
+    const html = await (await get(`/b/${token}`)).text();
+    expect(html).toContain(`href="/b/${token}/wallet/google?part=0"`);
+    expect(html).not.toContain('part=1');
+    const res = await app.request(
+      `${ORIGIN}/b/${token}/wallet/google`,
+      { redirect: 'manual' },
+      kit.env,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('https://pay.google.test/gp/v/save/all');
+    expect(scoped).toHaveBeenCalledTimes(passes.length);
+    // One offered member: no combined link is offered on the page.
+    list.mockImplementation(async (_ctx, passId) =>
+      passId === passes[0]?.id
+        ? [{ provider: 'google', href: `/p/${passId}/wallet/google`, installation: 'unknown' }]
+        : [],
+    );
+    expect(await (await get(`/b/${token}`)).text()).not.toContain('/wallet/google?part');
   });
 });
