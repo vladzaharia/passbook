@@ -1,6 +1,7 @@
 // Guarded production deploy. Dry run unless --apply.
 //   node tools/deploy.ts --check   check wrangler.jsonc only; add --secrets to also check required secret names
-//   npm run deploy:check -- <flags>  same; --require-wallet-migrated also queries the remote D1 (also checked before serving)
+//   npm run deploy:check -- <flags>  same; --require-wallet-migrated also queries the remote D1 (also checked before
+//                                    migrating and serving; on by itself when a pending migration releases a wallet)
 //   npm run deploy                   print the plan
 //   npm run deploy -- --apply        run every check, upload a Worker version, bookmark D1, migrate,
 //                                    promote the version
@@ -49,6 +50,7 @@ import { entitlementsRefusal, orgsWithoutEntitlements } from './lib/entitlements
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
 import { unmigratedWalletAccounts, walletMigrationRefusal } from './lib/wallet-migrate-gate.ts';
+import { pendingReleaseFlip } from './lib/wallet-release-sql.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const args = (() => {
@@ -170,16 +172,17 @@ if (buildRefusal) {
   process.exit(1);
 }
 checkSecrets();
+const pending = pendingMigrations(wrangler('d1', 'migrations', 'list', database, '--remote'));
 if (stage !== 'migrate') {
-  const refusal = pendingRefusal(
-    stage,
-    pendingMigrations(wrangler('d1', 'migrations', 'list', database, '--remote')),
-  );
+  const refusal = pendingRefusal(stage, pending);
   if (refusal) {
     console.error(refusal);
     process.exit(1);
   }
 }
+// A pending wallet flip is printed, and needs every wallet account on a source before it migrates.
+if (pendingReleaseFlip(root, pending, console.log)) args.add('--require-wallet-migrated');
+requireWalletMigrated();
 
 mkdirSync(resolve(root, '.wrangler'), { recursive: true });
 const promote = (versionId: string | null) =>

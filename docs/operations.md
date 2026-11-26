@@ -592,7 +592,7 @@ Only archived templates may be listed; the wait ignores them.
 
 ### Wallet migration gate
 
-Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. A deploy whose pending migrations release a wallet (a flip, below) turns the flag on by itself and also checks before migrating. Since 0226 a legacy account never issues; the gate keeps the flip honest. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
 
 ```sql wallet-migration-gate
 SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
@@ -600,6 +600,42 @@ JOIN orgs o ON o.id = a.org_id AND o.status != 'deleted'
 WHERE a.credential_id IS NOT NULL AND a.credential_source_id IS NULL AND a.revoked_at IS NULL
 ORDER BY a.id
 ```
+
+### Wallet release
+
+Google and Samsung are released per mode in two places that must agree: `RELEASE` in
+`src/worker/modules/wallet-providers/release.ts` (the Worker) and the `wallet_provider_releases` row (the
+database's issuance guards, 0226). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
+they differ.
+
+| State | New copies, offers, Samsung references | Updates, messages | Voids, removals, transfers, retirement |
+| --- | --- | --- | --- |
+| `dark` | refused | refused | not sent |
+| `released` | per org: plan, then an enrolment that is On | sent | sent |
+| `draining` | refused | refused | sent |
+
+**Flip** (one PR per provider and mode, Test before Live): change the one cell of `RELEASE` and add a migration
+with only this statement (any other way of writing the table fails check-migrations):
+
+```sql
+UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
+```
+
+Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
+passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
+prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
+migrates. It migrates before it serves, and both sides must say `released`, so every step in between is dark.
+
+**After the flip**, turn on the orgs that set up before it:
+`POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that would turn
+On (plan, source, fresh check, Live round trip, no hold, channel not blocked). Send `{"apply": true}` to turn
+exactly those On, each with its own audit row. Apply is refused while the mode is not released.
+
+**Rollback** is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with
+`state = 'draining'`. Copies already in wallets keep getting voids and removals; badges and offers go away; the
+next deploy applies it. Narrower: hold one org (`POST /api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold`)
+or revoke one credential. Go back to `dark` only once the readiness report shows `instances.open` at 0 for that
+provider and mode; until then the migration aborts (`drain it first`).
 
 ### Entitlements gate
 
