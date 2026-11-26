@@ -165,7 +165,7 @@ export async function activateCertificate(db: D1Database, a: Activation): Promis
   return results[1]?.meta.changes === 1;
 }
 
-/** Pending to failed; the unused key is deleted. */
+/** Pending to failed; the unused key is deleted, unless a half-built identity row still holds it. */
 export async function failPendingCertificate(
   db: D1Database,
   certId: string,
@@ -174,7 +174,8 @@ export async function failPendingCertificate(
   await batch(db, [
     stmt(
       db,
-      `DELETE FROM credentials WHERE id = (SELECT credential_id FROM identity_certificates WHERE id = ? AND state = 'pending')`,
+      `DELETE FROM credentials WHERE id = (SELECT credential_id FROM identity_certificates WHERE id = ? AND state = 'pending')
+         AND id NOT IN (SELECT credential_id FROM signing_identities WHERE credential_id IS NOT NULL)`,
       [certId],
     ),
     stmt(

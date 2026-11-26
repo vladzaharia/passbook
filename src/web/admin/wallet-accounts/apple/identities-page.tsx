@@ -22,6 +22,7 @@ import { ATTENTION_COPY, expiryPhrase, identityAttention } from './attention.ts'
 import { IdentityStatusPill, KIND_LABEL, renewalText, STATUS_OPTIONS } from './identity-status.tsx';
 import { useWalletIdentityPages } from './managed-queries.ts';
 import { NewManagedIdentityDialog } from './new-managed-dialog.tsx';
+import { PlatformSection } from './platform-section.tsx';
 import { UploadIdentityDialog } from './upload-dialog.tsx';
 
 type Row = z.infer<typeof WalletIdentitySchema>;
@@ -123,6 +124,7 @@ export function IdentitiesPanel() {
   );
   return (
     <>
+      <PlatformSection />
       {attention ? (
         <Callout
           className="mb-6"

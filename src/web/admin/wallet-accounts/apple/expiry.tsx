@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { IdentitySchema } from '@/shared/contracts/identities.ts';
+import { formatDayIn } from '@/shared/format-date.ts';
 import { StatusPill } from '@/web/ui/index.ts';
 import { daysUntil, formatDay } from '../../../lib/format.ts';
 
@@ -21,9 +22,12 @@ export function remainingDays(
 export function ExpiryPill({
   identity,
   now,
+  zone,
 }: {
   identity: Pick<Identity, 'notAfter' | 'daysRemaining'>;
   now: number;
+  /** Shows the date on this zone's calendar (platform views: America/Los_Angeles). */
+  zone?: string;
 }) {
   const days = remainingDays(identity, now);
   if (days === null) return <span className="text-fg-muted">Unknown</span>;
@@ -45,7 +49,9 @@ export function ExpiryPill({
     <span className="flex flex-col items-start gap-0.5">
       <StatusPill status={status}>{label}</StatusPill>
       {identity.notAfter ? (
-        <span className="text-xs text-fg-muted">{formatDay(identity.notAfter)}</span>
+        <span className="text-xs text-fg-muted">
+          {zone ? formatDayIn(identity.notAfter, zone) : formatDay(identity.notAfter)}
+        </span>
       ) : null}
     </span>
   );

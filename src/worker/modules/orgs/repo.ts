@@ -72,7 +72,7 @@ export function listOrgRows(
   );
 }
 
-/** Identity an org may default to: global (no org) or its own. */
+/** Identity an org may default to: global (no org) or its own, and meant for passes (never the device-test one). */
 export async function identityUsableBy(
   db: D1Database,
   identityId: string,
@@ -80,7 +80,7 @@ export async function identityUsableBy(
 ): Promise<boolean> {
   const row = await first<{ org_id: string | null }>(
     db,
-    'SELECT org_id FROM signing_identities WHERE id = ?',
+    "SELECT org_id FROM signing_identities WHERE id = ? AND purpose = 'passes'",
     [identityId],
   );
   return row !== null && (row.org_id === null || row.org_id === orgId);

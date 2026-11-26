@@ -135,6 +135,8 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
       return pick(d, { printId: 'string', generation: 'number', voided: 'number' });
     case 'pass.print_voided':
       return pick(d, { printId: 'string', cause: 'string' });
+    case 'pass.replaced':
+      return pick(d, { replacedBy: 'string' });
     case 'push.failed':
       return pick(d, { ...VERSION, status: 'number', reason: 'string', code: 'string' });
     case 'email.failed':

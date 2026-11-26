@@ -93,6 +93,10 @@ export async function reserve(
   throw new AscError('ASC_BUDGET', `Call budget reached for ${method}.`);
 }
 
+/** A later page of one lookup is a call of its own: it takes budget from the caller's bucket, one unit per read. */
+export const reservePage = (db: D1Database, method: string, target: string, at: number) =>
+  reserve(db, crypto.randomUUID(), method, target, null, at);
+
 export async function finish(
   db: D1Database,
   callId: string,

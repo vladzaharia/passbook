@@ -91,7 +91,7 @@ export async function printPageModel(
           mark: brand.mark,
           code: await printCodeOf(ctx.env, {
             id: print.id,
-            passId: pass.id,
+            passId: await repo.codePassIdOf(ctx.env.DB, print.id, pass.id),
             orgId: pass.orgId,
             mode: pass.mode,
           }),

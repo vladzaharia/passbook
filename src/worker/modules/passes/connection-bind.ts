@@ -9,6 +9,7 @@ import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { detailOf } from './detail.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
+import { assertNotReplaced } from './pass-replaced.ts';
 import { requestRefresh } from './pass-service-refresh.ts';
 import { type FieldSources, setBinding } from './repo.ts';
 import { connectionForPass, connectionInOrg, findByConnectionRef } from './repo-read-connection.ts';
@@ -31,6 +32,7 @@ export async function bindPassConnection(
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
   const { connectionId, externalRef } = body;
+  if (connectionId !== null) await assertNotReplaced(db, pass.id);
   if (pass.removedAt !== null)
     throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   if (pass.mode === 'test' && pass.connectionId !== null)

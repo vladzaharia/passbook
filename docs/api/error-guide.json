@@ -829,7 +829,7 @@
   },
   "IDEMPOTENCY_KEY_REQUIRED": {
     "title": "Idempotency-Key required",
-    "when": "A release without dryRun came without an Idempotency-Key header.",
+    "when": "A release without dryRun, or a platform identity write, came without an Idempotency-Key header.",
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
     "retryable": false
   },
@@ -931,8 +931,8 @@
   },
   "IDENTITY_NOT_READY": {
     "title": "Identity not ready",
-    "when": "The identity has no certificate yet.",
-    "fix": "Wait for provisioning to finish, then send the request again.",
+    "when": "The identity has no certificate yet, or as a platform default it is not issuing, has no healthy push or has no device that registered one of its passes.",
+    "fix": "Wait for provisioning to finish, or run the push check and the device test, then send the request again.",
     "retryable": true
   },
   "IDENTITY_NOT_ROTATABLE": {
@@ -1677,6 +1677,12 @@
     "title": "Pass removed",
     "when": "The pass was removed from the holder's wallet.",
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
+    "retryable": false
+  },
+  "PASS_REPLACED": {
+    "title": "Pass was replaced",
+    "when": "The pass was replaced by a pass on another Apple identity, and this call would write to the old one, for example a connection bind or sync.",
+    "fix": "Use the replacement pass id from the message, then send the request again. API writes by the old id to a replaced pass are forwarded; connector syncs are refused.",
     "retryable": false
   },
   "PASS_SETUP_CHANGED": {

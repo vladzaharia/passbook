@@ -14,6 +14,7 @@ import {
 } from './google-rest.ts';
 import {
   clearGoogleClassMemo,
+  googleObjectHasUsers,
   patchGoogleObjectBody,
   revokeGoogleObject,
   upsertGoogleClass,
@@ -440,5 +441,54 @@ describe('revoke: PUT inactive, then GET to confirm', () => {
       'absent',
     );
     expect(mock.requests.filter((r) => r.method === 'PUT')).toEqual([]);
+  });
+});
+
+describe('googleObjectHasUsers', () => {
+  async function issued(type: GoogleType) {
+    const ctx = await rest();
+    const { classBody, objectBody } = BODIES[type];
+    const objectScope = { ...scope, type };
+    await upsertGoogleClass(
+      ctx,
+      type,
+      { tenantId: 'tenant', releaseId: 'release' },
+      classBody as never,
+    );
+    await upsertGoogleObject(ctx, type, objectScope, objectBody as never);
+    const { objectId } = await googleObjectIds(ISSUER, secret, objectScope);
+    return { ctx, objectScope, objectId, resource: GOOGLE_RESOURCES[type].object };
+  }
+
+  it.each([
+    [true, true],
+    [false, false],
+  ])(
+    "reads Google's hasUsers=%s as %s, and sends nothing but a GET",
+    async (hasUsers, expected) => {
+      const { ctx, objectScope, objectId, resource } = await issued('loyalty');
+      Object.assign(mock.google[resource].get(objectId) ?? {}, { hasUsers });
+      const mark = mock.requests.length;
+      expect(await googleObjectHasUsers(ctx, 'loyalty', objectScope)).toBe(expected);
+      expect(mock.requests.slice(mark).map((r) => r.method)).toEqual(['GET']);
+    },
+  );
+
+  it('reads an object with no hasUsers field as having none', async () => {
+    const { ctx, objectScope } = await issued('event');
+    expect(await googleObjectHasUsers(ctx, 'event', objectScope)).toBe(false);
+  });
+
+  it('treats an object Google does not have as having no users', async () => {
+    const ctx = await rest();
+    expect(await googleObjectHasUsers(ctx, 'event', { ...scope, type: 'event' })).toBe(false);
+  });
+
+  it('lets any other failure through: the caller then holds the copy', async () => {
+    const { ctx, objectScope } = await issued('loyalty');
+    const failing = (async () => new Response('no', { status: 500 })) as typeof fetch;
+    await expect(
+      googleObjectHasUsers({ ...ctx, fetcher: failing }, 'loyalty', objectScope),
+    ).rejects.toBeDefined();
   });
 });
