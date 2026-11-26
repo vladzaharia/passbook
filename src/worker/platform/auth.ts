@@ -87,9 +87,8 @@ export const apiKeyMissing = (): UnauthenticatedError =>
   );
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
-  // A Workbench call never falls back to the cookie: with a `pbtry_` bearer, the token alone decides.
-  const sent = bearerOf(c);
-  if (sent !== null && sent !== 'empty' && sent.token.startsWith(TRY_TOKEN_PREFIX))
+  // A Workbench call never falls back to the cookie: a `pbtry_` anywhere in Authorization, parsed or not, refuses it.
+  if (c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX))
     throw new UnauthenticatedError();
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;

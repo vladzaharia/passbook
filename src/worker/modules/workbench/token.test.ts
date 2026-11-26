@@ -239,6 +239,24 @@ describe('M1: a v2 token is bound to its browser session', () => {
     expect((await t.call('GET', '/developer/access', m.browser)).status).toBe(200);
   });
 
+  it('a pbtry_ token that does not parse never falls back to the cookie', async () => {
+    const m = await t.member();
+    const { token } = await t.wbMint(m.browser, m.orgId);
+    const headers = [
+      'Bearer pbtry_broken',
+      `Bearer ${token} x`,
+      `bearer ${token.slice(0, -1)}`,
+      `Bearer ${token} Bearer ${token}`,
+      token,
+    ];
+    for (const authorization of headers) {
+      for (const path of ['/passes', '/developer/access']) {
+        const res = await t.call('GET', path, { ...m.browser, authorization });
+        expect(res.status, `${path} ${authorization.slice(0, 20)}`).toBe(401);
+      }
+    }
+  });
+
   it('the request log keeps no Authorization: a logged token call holds no part of the token', async () => {
     const d = await t.developer();
     const { token } = await t.wbMint(d.browser, d.made.orgId);
