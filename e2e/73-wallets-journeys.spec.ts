@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import {
+  callbackKeyset,
+  makeCallbackSigningKeys,
+  signedGoogleEvent,
+} from '../src/worker/modules/wallet-providers/google-callback-test-kit.ts';
 import { type Api, apiAs, BASE } from './helpers/api.ts';
 import { runMinuteCron } from './helpers/cron.ts';
 import {
@@ -218,6 +223,65 @@ test('journey 7: Google sends the save link, scoped to the Test issuer, and the 
   expect(statuses.find((p) => p.provider === 'google')?.reported).toBeUndefined();
 });
 
+test('journey 8: a signed Google save callback marks the pass Saved once, and a callback signed for another issuer changes nothing', async () => {
+  // Google's root keys are the mock's to serve: the test holds their private halves.
+  const keys = await makeCallbackSigningKeys();
+  await fetch(`${MOCK}/__mock/google-keys`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(await callbackKeyset(keys.root, Date.now() + 86_400_000)),
+  });
+  const state = (await mockState()).google as unknown as Record<
+    string,
+    Record<string, Record<string, unknown>>
+  >;
+  const object = Object.values(state.genericObject ?? {}).find((o) =>
+    String(o.id).startsWith(`${google.issuerId}.`),
+  );
+  const klass = state.genericClass?.[String(object?.classId)];
+  const url = new URL(String((klass?.callbackOptions as { url?: string } | undefined)?.url));
+  const sign = (issuer: string, event: Record<string, unknown>) =>
+    signedGoogleEvent(keys, issuer, event, { keyExpiration: Date.now() + 86_400_000 });
+  const post = async (body: string) =>
+    (
+      await fetch(`${BASE}${url.pathname}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      })
+    ).status;
+  const event = (nonce: string) => ({
+    classId: object?.classId,
+    objectId: object?.id,
+    eventType: 'save',
+    nonce,
+    expTimeMillis: String(Date.now() + 3_600_000),
+  });
+  const reported = async () =>
+    (await status(pass.id)).find((p) => p.provider === 'google')?.reported;
+  expect(await reported()).toBeUndefined();
+
+  const delivery = await sign(google.issuerId, event('first'));
+  expect(await post(delivery)).toBe(204);
+  const saved = await reported();
+  expect(saved).toMatchObject({ event: 'saved' });
+  // Google redelivers the same message on a timeout: the same answer, no second change.
+  expect(await post(delivery)).toBe(204);
+  expect(await reported()).toEqual(saved);
+
+  // A callback signed for another issuer (north's, say) is refused and moves nothing.
+  const other = `3388${String(Date.now()).slice(-9)}9999`;
+  const foreign = {
+    classId: `${other}.c_${'A'.repeat(43)}`,
+    objectId: `${other}.o_${'B'.repeat(43)}`,
+    eventType: 'save',
+    nonce: 'foreign',
+    expTimeMillis: String(Date.now() + 3_600_000),
+  };
+  expect(await post(await sign(other, foreign))).toBeGreaterThanOrEqual(400);
+  expect(await reported()).toEqual(saved);
+});
+
 test('journey 7: the Samsung add reaches Samsung and the pass is active there', async () => {
   ref = await samsung.add(pass.path);
   expect(await lifecycleOf('samsung')).toBe('active');
@@ -401,6 +465,78 @@ test('journey 15: the pass page has no axe violations and its badges are 48 px t
   } finally {
     await context.close();
   }
+});
+
+// Bundles (architecture 6.1): Google gets one save link with every eligible object, Samsung a link per member.
+async function bundleOf(count: number) {
+  const members = await Promise.all(Array.from({ length: count }, () => testPass(admin, harbor)));
+  const bundle = await admin.send<{ url: string }>(
+    'POST',
+    '/api/v1/bundles',
+    {
+      orgId: harbor.org.id,
+      passIds: members.map((m) => m.id),
+      name: `Bundle ${members[0]?.id.slice(-6)}`,
+    },
+    TEST,
+  );
+  return { members, path: new URL(bundle.url, BASE).pathname };
+}
+/** The Google objects a save link carries, from its JWT's payload (the mock records the same ones). */
+const savedObjects = (location: string) => {
+  const payload = JSON.parse(
+    atob(
+      (location.split('/').pop() ?? '').split('.')[1]?.replaceAll('-', '+').replaceAll('_', '/') ??
+        '',
+    ),
+  );
+  return (payload.payload.genericObjects as { id: string }[]).map((o) => o.id);
+};
+const saveLink = async (path: string) => {
+  const res = await fetch(`${BASE}${path}/wallet/google?part=0`, { redirect: 'manual' });
+  return { status: res.status, location: res.headers.get('location') ?? '' };
+};
+
+test('a bundle gives one Google save link with every member, and Samsung a link per member', async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const { members, path } = await bundleOf(3);
+  const link = await saveLink(path);
+  expect(link.status).toBe(302);
+  expect(link.location).toMatch(/^https:\/\/pay\.google\.com\/gp\/v\/save\//);
+  const ids = savedObjects(link.location);
+  expect(ids).toHaveLength(3);
+  expect(ids.every((id) => id.startsWith(`${google.issuerId}.`))).toBe(true);
+  // Google's page takes the one link and saves all three.
+  const saved = await fetch(`${MOCK}${new URL(link.location).pathname}`);
+  expect(await saved.text()).toContain('Saved to Google Wallet (mock).');
+  expect((await mockState()).google.saves.at(-1)?.objectIds.sort()).toEqual([...ids].sort());
+
+  const context = await holderContext(browser, 'galaxy');
+  try {
+    const page = await context.newPage();
+    // Each member has its own page with its own Samsung link: the bundle page opens on the first.
+    for (const member of members) {
+      await page.goto(`${path}/${member.id}`);
+      await expect(page.locator(`a[href="${path}/${member.id}/wallet/samsung"]`)).toHaveCount(1);
+    }
+  } finally {
+    await context.close();
+  }
+});
+
+test('a member Google refuses is left out of the bundle link, and the others are still saved', async () => {
+  test.setTimeout(120_000);
+  const { path } = await bundleOf(3);
+  await fetch(`${MOCK}/__mock/inject`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ status: 400, match: 'POST /walletobjects/v1/genericObject', times: 1 }),
+  });
+  const link = await saveLink(path);
+  expect(link.status).toBe(302);
+  expect(savedObjects(link.location)).toHaveLength(2);
 });
 
 // DoD 11: the rollback. Voids and removals still reach the wallets; nothing new issues, updates or messages.
