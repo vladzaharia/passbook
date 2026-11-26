@@ -1,0 +1,152 @@
+/* The bench pane below 1180 px (bench/split.tsx): a drawer from its edge from 720 px, a bottom sheet below. */
+dialog.bench-sheet {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  padding: 0;
+  width: min(32rem, 88vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-inline-start: 1px solid var(--pk-border-strong);
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-default);
+  overflow: hidden;
+}
+dialog.bench-sheet[data-edge="start"] {
+  inset: 0 auto 0 0;
+  border-inline-start: 0;
+  border-inline-end: 1px solid var(--pk-border-strong);
+}
+dialog.bench-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.bench-sheet::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+html:has(dialog.bench-sheet[open]) {
+  overflow: hidden;
+}
+.bench-sheet-h {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 8px 0;
+}
+.bench-grab {
+  display: none;
+}
+.bench-sheet-b {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 719.98px) {
+  dialog.bench-sheet,
+  dialog.bench-sheet[data-edge="start"] {
+    inset: auto 0 0;
+    width: 100%;
+    height: 92dvh;
+    border: 0;
+    border-top: 1px solid var(--pk-border-strong);
+    border-radius: 16px 16px 0 0;
+  }
+  .bench-sheet-h {
+    position: relative;
+    min-height: 44px;
+  }
+  .bench-grab {
+    display: block;
+    position: absolute;
+    inset-inline: 0;
+    top: 8px;
+    width: 36px;
+    height: 4px;
+    margin-inline: auto;
+    border-radius: 2px;
+    background: var(--pk-border-strong);
+  }
+  .bench-sheet-b {
+    padding-inline: 16px;
+  }
+}
+
+/* In: 32 px along x, or up from the bottom, on the card's beat. Out: 160 ms. Reduced: a fade in, out at once. */
+@media (prefers-reduced-motion: no-preference) {
+  dialog.bench-sheet[open] {
+    animation: bench-in-end var(--wl-dur-card, 320ms) var(--wl-ease-out, ease-out);
+  }
+  dialog.bench-sheet[data-edge="start"][open] {
+    animation-name: bench-in-start;
+  }
+  dialog.bench-sheet[open]::backdrop {
+    animation: bench-fade var(--wl-dur-card, 320ms) var(--wl-ease-out, ease-out);
+  }
+  dialog.bench-sheet[data-closing] {
+    animation: bench-out-end 160ms var(--wl-ease-in, ease-in) forwards;
+  }
+  dialog.bench-sheet[data-edge="start"][data-closing] {
+    animation-name: bench-out-start;
+  }
+  dialog.bench-sheet[data-closing]::backdrop {
+    animation: bench-fade 160ms var(--wl-ease-in, ease-in) reverse forwards;
+  }
+  @media (max-width: 719.98px) {
+    dialog.bench-sheet[open],
+    dialog.bench-sheet[data-edge="start"][open] {
+      animation-name: bench-in-up;
+    }
+    dialog.bench-sheet[data-closing],
+    dialog.bench-sheet[data-edge="start"][data-closing] {
+      animation-name: bench-out-down;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.bench-sheet[open] {
+    animation: bench-fade 120ms linear;
+  }
+}
+@keyframes bench-in-end {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes bench-in-start {
+  from {
+    transform: translateX(-32px);
+    opacity: 0;
+  }
+}
+@keyframes bench-out-end {
+  to {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes bench-out-start {
+  to {
+    transform: translateX(-32px);
+    opacity: 0;
+  }
+}
+@keyframes bench-in-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes bench-out-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes bench-fade {
+  from {
+    opacity: 0;
+  }
+}

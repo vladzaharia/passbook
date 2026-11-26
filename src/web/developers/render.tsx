@@ -5,10 +5,12 @@
  */
 import type { ReactElement } from 'react';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
-import { KEYS_COPY } from '../../shared/copy/developers-keys.ts';
-import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
+import { BENCH_COPY } from '../../shared/copy/developers-bench.ts';
+import { STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
+import { type BenchTool, toolLabel } from './bench/switcher.tsx';
+import { BENCH_VT_FILE, BENCH_VT_HEAD, benchVtScript } from './bench/transition.ts';
 import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
 import type { GuideInputs } from './guide/load.ts';
 import { guideMarkdown } from './guide/markdown.ts';
@@ -53,6 +55,7 @@ import { NotFoundView } from './pages/not-found.tsx';
 import { OperationView } from './pages/operation.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
+import { TOOL_PATH } from './pages/toc.tsx';
 import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartView } from './quickstart/page.tsx';
@@ -203,17 +206,6 @@ export function renderSite(
       <ErrorEntryView entry={e} />,
       { crumbs: crumbs.errors(e.code), md: errorMarkdown(e) },
     );
-  // Wide, no docs grid: the tester needs two columns.
-  add({
-    url: PATHS.webhooks,
-    title: `Webhooks · ${base}`,
-    description: 'Capture signed webhooks in your sandbox, verify them and replay them.',
-    twin: webhooksMarkdown(site),
-    body: fr.shell(PATHS.webhooks, 'workbench', <WebhooksView site={site} />, {
-      bare: true,
-      tools: true,
-    }),
-  });
   page(
     PATHS.changelog,
     'Changelog',
@@ -234,11 +226,21 @@ export function renderSite(
     twin: appTwins.playground(),
     body: fr.provide(PATHS.playground, <PlaygroundPage site={site} previews={previews} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'workbench', <ConsoleView />, {
-    app: true,
-    tools: true,
-    md: appTwins.console(),
-  });
+  // The Workbench: one frame, the same boxes on all four tools (bench/frame.tsx).
+  const bench = (tool: BenchTool, child: ReactElement, md: string) =>
+    add({
+      url: TOOL_PATH[tool],
+      title: `${toolLabel(tool)} · ${base}`,
+      description: BENCH_COPY.about[tool],
+      head: BENCH_VT_HEAD,
+      twin: md,
+      body: fr.bench(TOOL_PATH[tool], tool, child),
+    });
+  bench('console', <ConsoleView />, appTwins.console());
+  bench('webhooks', <WebhooksView site={site} />, webhooksMarkdown(site));
+  bench('logs', <LogsView />, appTwins.logs());
+  bench('keys', <KeysView />, appTwins.keys());
+  out.push({ file: BENCH_VT_FILE, body: benchVtScript() });
   // What the Run island reads: per page the operations it can run, and one index for the console.
   for (const p of site.pages)
     out.push({
@@ -251,19 +253,6 @@ export function renderSite(
       ),
     });
   out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
-  // The keys island is wide and has no docs grid.
-  add({
-    url: PATHS.keys,
-    title: `${KEYS_COPY.title} · ${base}`,
-    description: 'Make, roll and revoke the keys of your sandbox.',
-    twin: appTwins.keys(),
-    body: fr.shell(PATHS.keys, 'workbench', <KeysView />, { bare: true, tools: true }),
-  });
-  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'workbench', <LogsView />, {
-    app: true,
-    tools: true,
-    md: appTwins.logs(),
-  });
   page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />, {
     md: appTwins.status(),
   });

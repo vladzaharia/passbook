@@ -24,11 +24,11 @@
 }
 .picker {
   position: sticky;
-  top: 80px;
+  top: calc(var(--wb-sticky) + 8px);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: calc(100dvh - 112px);
+  max-height: calc(100dvh - var(--wb-sticky) - 16px);
 }
 .picker-list {
   overflow: auto;

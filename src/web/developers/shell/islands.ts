@@ -23,10 +23,8 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
     const { mountAccount } = await import('./account.ts');
     return { mount: async (el) => void (await mountAccount(el)) };
   },
-  'org-chip': async () => {
-    const { mountOrgChip } = await import('../console/org-chip.ts');
-    return { mount: mountOrgChip };
-  },
+  'org-chip': async () => (await import('../bench/mount.tsx')).barChipIsland,
+  'bench-strip': async () => (await import('../bench/mount.tsx')).stripIsland,
   logs: async () => (await import('../logs/entry.ts')).logsIsland,
   'api-rail': async () => (await import('../logs/entry.ts')).railIsland,
 };

@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY, DEV_GUIDES } from '../../shared/copy/developers.ts';
 import { PATHS } from '../../shared/developers.ts';
+import { BenchFrame } from './bench/frame.tsx';
+import type { BenchTool } from './bench/switcher.tsx';
 import { groupByStep } from './guide/group.ts';
 import type { Guide } from './guide/model.ts';
 import { shortDate } from './model/dates.ts';
@@ -13,16 +15,15 @@ import { Frame, type FrameData, type NavGuide } from './pages/nav-tree.tsx';
 import type { Crumb, PagerLinks, TocItem } from './pages/toc.tsx';
 
 export interface FrameOpts {
-  /** A tool with its own full-width column (console, logs). */
+  /** A page with its own full-width column. */
   app?: boolean;
-  /** Home and the tools that lay themselves out. */
+  /** Home: no docs grid. */
   bare?: boolean;
   resource?: ResourcePage;
   crumbs?: readonly Crumb[];
   pager?: PagerLinks;
   /** The sections "On this page" lists; each id is on the page (see `toc` below). */
   toc?: readonly TocItem[];
-  tools?: boolean;
 }
 
 const home: Crumb = { label: DEV_COPY.brand, href: PATHS.home };
@@ -84,7 +85,6 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
     crumbs: o.crumbs,
     pager: o.pager,
     toc: o.toc,
-    tools: o.tools,
   });
   const html = (node: ReactElement) => renderToStaticMarkup(node);
   return {
@@ -100,6 +100,15 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
         </Frame.Provider>,
       );
     },
+    /** A Workbench tool: the bar, the bench frame around the tool, the footer. */
+    bench: (path: string, tool: BenchTool, child: ReactElement) =>
+      html(
+        <Frame.Provider value={data(path, {})}>
+          <Shell site={site} active="workbench" bench>
+            <BenchFrame tool={tool}>{child}</BenchFrame>
+          </Shell>
+        </Frame.Provider>,
+      ),
   };
 }
 
