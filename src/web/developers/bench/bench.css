@@ -253,7 +253,10 @@ body:has(.bench) > .foot {
     grid-area: strip;
     justify-content: flex-start;
     padding-inline: var(--bench-pad);
-    overflow: hidden;
+  }
+  /* The key gives way first; the strip never clips (its menu hangs below it). */
+  .bench-status {
+    flex: none;
   }
   .bench-strip:has(.bench-ctx > *) {
     padding-block: 2px 8px;
