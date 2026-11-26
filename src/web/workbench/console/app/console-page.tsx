@@ -1,6 +1,6 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { ChevronDown } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { opUrl } from '../../../../shared/developers.ts';
 import { MethodPill } from '../../../developers/ui/method-pill.tsx';
@@ -97,6 +97,36 @@ export function ConsolePage() {
     const start = safeStart(index);
     if (start) select(start.id, { open: false });
   }, [index, current, select, launch.from]);
+
+  // Beside the stage the index opens on the operation the link named, centred in its own pane. The list's
+  // own scroll-into-view also moves the page; the page goes back to where it was.
+  const pageTop = useRef(typeof window === 'undefined' ? 0 : window.scrollY);
+  const centered = useRef(false);
+  const inUse = current?.id;
+  useEffect(() => {
+    // Below 1180 px the index is a sheet, drawn only when opened: nothing to centre.
+    if (!wide || !inUse || centered.current) return;
+    let frame = 0;
+    let tries = 0;
+    const settle = () => {
+      const row = document.querySelector('.console-idx [aria-selected="true"]');
+      const pane = row?.closest('.bench-pane');
+      // The list draws a frame after the stage: look again a few times before giving up.
+      if (!(row && pane) && tries++ < 10) {
+        frame = requestAnimationFrame(settle);
+        return;
+      }
+      centered.current = true;
+      window.scrollTo({ top: pageTop.current });
+      if (row && pane)
+        pane.scrollTop +=
+          row.getBoundingClientRect().top -
+          pane.getBoundingClientRect().top -
+          (pane.clientHeight - row.clientHeight) / 2;
+    };
+    frame = requestAnimationFrame(settle);
+    return () => cancelAnimationFrame(frame);
+  }, [inUse, wide]);
 
   // The sheet opens on the operation in use, not at the top of 269.
   useEffect(() => {

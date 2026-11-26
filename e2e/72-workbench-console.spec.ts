@@ -1,12 +1,39 @@
+import { mkdirSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
 import { sandboxOrgId } from './helpers/sandbox.ts';
-import { shots as allShots } from './helpers/shots.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
-/** SHOT_ONLY=a,b takes only those states (a re-shoot after a fix). */
+/** SHOT_ONLY=a,b takes only those states (a re-shoot after a fix). SHOTS_DIR names the folder; unset, a no-op. */
 const only = process.env.SHOT_ONLY?.split(',');
-const shots = (page: Page, name: string, view = false) =>
-  !only || only.includes(name) ? allShots(page, name, view) : Promise.resolve();
+const DIR = process.env.SHOTS_DIR;
+const VIEWS = [
+  [1440, 900],
+  [834, 1112],
+  [390, 844],
+] as const;
+/** Every width and theme of a state: the window at 1440 and 834 (the index and the stage scroll apart), the whole page at 390. */
+async function shots(page: Page, name: string, show?: string) {
+  if (!DIR || (only && !only.includes(name))) return;
+  mkdirSync(DIR, { recursive: true });
+  const before = page.viewportSize();
+  for (const [width, height] of VIEWS) {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.evaluate(
+        () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+      );
+      // The window shows the part the state is about: the response sits below the form.
+      if (show) await page.locator(show).first().scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `${DIR}/${name}-${width}-${scheme}.png`,
+        fullPage: width === 390,
+      });
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  if (before) await page.setViewportSize(before);
+}
 
 /** The Console on the Workbench token. Needs the prerendered portal: `WALLET_E2E_PREVIEW=1`. */
 async function signIn(page: Page) {
@@ -22,15 +49,29 @@ async function signIn(page: Page) {
       headers: { ...response.headers(), location: location.toString() },
     });
   });
-  await page.goto('/developers/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.goto('/workbench/quickstart');
+  await page.getByRole('link', { name: 'Sign in with Polaris ID' }).first().click();
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
+  await page
+    .getByRole('heading', { name: /sandbox/i })
+    .first()
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
-    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
+    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/, {
+      timeout: 90_000,
+    });
   }
+  await expect.poll(() => sandboxOrgId(page).catch(() => ''), { timeout: 60_000 }).not.toBe('');
+  // A sandbox made by an earlier run of this server may have no key yet: the Workbench token needs one.
+  await page.evaluate(async () => {
+    const me = (await (await fetch('/api/v1/session')).json()) as { csrfToken: string };
+    await fetch('/api/v1/developer/sandbox/key', {
+      method: 'POST',
+      headers: { accept: 'application/json', 'x-csrf-token': me.csrfToken },
+    });
+  });
 }
 
 interface IndexItem {
@@ -72,7 +113,7 @@ test('the Console: never runs on arrival, runs on Cmd+Enter with the token, and 
   const org = await open(page, `?op=${encodeURIComponent(list.id)}`);
   const index = page.getByRole('listbox', { name: 'Operations' });
   await expect(index).toBeVisible();
-  await expect(page.locator('[data-bench-count]')).toContainText(/\d+ operations/);
+  await expect(page.getByText(/^\d+ operations$/)).toBeVisible();
   await expect(index.getByRole('option', { selected: true })).toContainText('GET');
   await page.waitForLoadState('networkidle');
   expect(calls).toEqual([]);
@@ -83,7 +124,7 @@ test('the Console: never runs on arrival, runs on Cmd+Enter with the token, and 
   await expect(page).toHaveURL(/console\?op=/);
 
   await open(page, `?op=${encodeURIComponent(list.id)}`);
-  await index.focus();
+  await expect(page.getByRole('button', { name: /^Run/ })).toBeEnabled();
   const sent = page.waitForRequest((r) => new URL(r.url()).pathname === '/api/v1/passes');
   await page.keyboard.press('Control+Enter');
   const request = await sent;
@@ -92,7 +133,7 @@ test('the Console: never runs on arrival, runs on Cmd+Enter with the token, and 
   await expect(page.locator('.stamp')).toContainText(/^2\d\d/);
   const rid = await page.locator('.cr-h .bench-id-c').getAttribute('title');
   expect(rid).toBeTruthy();
-  await shots(page, 'console-response', true);
+  await shots(page, 'console-response', '.cr-h');
   await page.getByRole('link', { name: 'View in Logs' }).click();
   await page.waitForURL(new RegExp(`/workbench/o/${org}/logs`));
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(rid);
@@ -159,7 +200,7 @@ test('the Console: a failed call is a sorry with the first issue; an org Test lo
   await expect(page.locator('.stamp')).toContainText(/^4\d\d/);
   await expect(page.locator('.cr-cheer .wl-buddy[data-scene="sorry"]')).toBeVisible();
   await page.waitForTimeout(600);
-  await shots(page, 'console-sorry');
+  await shots(page, 'console-sorry', '.cr-h');
 
   // The sandbox as an org's Test: only the allowlisted operations run on a member token.
   const org = await sandboxOrgId(page);

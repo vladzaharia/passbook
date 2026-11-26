@@ -215,6 +215,16 @@ describe('OperationTray', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(window.location.search).toBe('');
     });
+
+    it('leaves an `op` that is not an operation id alone: the Console names API operations with it', async () => {
+      window.history.replaceState(null, '', '/workbench/o/org/console?op=passes.getPasses');
+      const get = vi.fn();
+      mount(client({ get }));
+      await settle();
+      expect(get).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(window.location.search).toBe('?op=passes.getPasses');
+    });
   });
 
   describe('a finished row with a page', () => {

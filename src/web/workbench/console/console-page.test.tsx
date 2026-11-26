@@ -126,6 +126,33 @@ describe('the Console on the Workbench token', () => {
     expect(Object.keys(headers(call?.init ?? {})).some((h) => /mode/i.test(h))).toBe(false);
   });
 
+  it('reads no sandbox from the session: every tenant call carries the token', async () => {
+    const { handlers } = setup();
+    const { fetchMock } = await renderApp('/workbench/o/nw/console?op=passes.list', {
+      session: 'developer',
+      handlers,
+    });
+    await screen.findByRole('button', { name: 'Run' });
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    await screen.findAllByText('200 OK');
+    const account = new Set([
+      '/api/v1/session',
+      '/api/v1/workbench/contexts',
+      '/api/v1/workbench/token',
+      '/api/v1/orgs/memberships/me',
+      '/api/v1/orgs',
+    ]);
+    const calls = fetchMock.mock.calls
+      .map(([url, init]) => ({
+        path: new URL(String(url), 'http://localhost').pathname,
+        init: (init ?? {}) as RequestInit,
+      }))
+      .filter(({ path }) => path.startsWith('/api/') && !account.has(path));
+    expect(calls.map((c) => c.path)).not.toContain('/api/v1/developer/sandbox');
+    for (const { path, init } of calls)
+      expect(headers(init).authorization, path).toMatch(/^Bearer pbtry_nw$/);
+  });
+
   it('disables an operation a member token cannot call, with the reason, and still copies it', async () => {
     const { handlers } = setup();
     await renderApp('/workbench/o/nw/console?op=connections.list', {
