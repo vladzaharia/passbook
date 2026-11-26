@@ -3161,9 +3161,27 @@
       ]
     },
     {
+      "code": "OPERATION_OUTCOME_UNKNOWN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
       "code": "OPERATION_RUNNING",
       "statuses": [
         409
+      ],
+      "modules": [
+        "operations"
+      ]
+    },
+    {
+      "code": "OPERATION_SESSION_REQUIRED",
+      "statuses": [
+        500
       ],
       "modules": [
         "operations"
