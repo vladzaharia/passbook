@@ -66,14 +66,20 @@ export async function upsertGoogleClass(
   type: GoogleType,
   scope: GoogleClassScope,
   projection: GoogleGenericProjection,
-): Promise<{ result: 'created' | 'unchanged' | 'drift'; classId: DerivedGoogleId }> {
+): Promise<{
+  result: 'created' | 'unchanged' | 'drift';
+  classId: DerivedGoogleId;
+  /** False when this isolate's memo answered: Google was not asked. */
+  contacted: boolean;
+}> {
   const body = copyGoogleProjection(projection);
   const resource = GOOGLE_RESOURCES[type].class;
   const id = await googleClassId(ctx.account.issuerId, ctx.objectIdHmacKey, { ...scope, type });
   const memo = `${resource}/${id}`;
   const digest = await sha256Hex(canonicalJson(body));
   const known = classDigests.get(memo);
-  if (known !== undefined) return { result: known === digest ? 'unchanged' : 'drift', classId: id };
+  if (known !== undefined)
+    return { result: known === digest ? 'unchanged' : 'drift', classId: id, contacted: false };
   const remember = () => {
     if (classDigests.size >= MAX_KNOWN_CLASSES) {
       const oldest = classDigests.keys().next().value;
@@ -84,7 +90,7 @@ export async function upsertGoogleClass(
   try {
     await request(ctx, resource, 'POST', undefined, { ...body, id });
     remember();
-    return { result: 'created', classId: id };
+    return { result: 'created', classId: id, contacted: true };
   } catch (error) {
     if (!(error instanceof GoogleWalletError) || error.code !== 'conflict') throw error;
   }
@@ -93,7 +99,7 @@ export async function upsertGoogleClass(
   // What this isolate remembers is what Google holds, so a later body is compared with that.
   if (same) remember();
   else classDigests.set(memo, await sha256Hex(canonicalJson(content(held))));
-  return { result: same ? 'unchanged' : 'drift', classId: id };
+  return { result: same ? 'unchanged' : 'drift', classId: id, contacted: true };
 }
 
 /** A newer release's class body: PATCHed once; Google reviews it again (Q16, accepted). */

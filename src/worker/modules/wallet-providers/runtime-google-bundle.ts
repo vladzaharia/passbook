@@ -1,16 +1,21 @@
+import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
-import { combineGoogleSaveOffers, type GoogleSaveOffer } from './google-offer.ts';
-import type { WalletRuntimeScope } from './runtime-core.ts';
-import { copyRuntimeScope, runtimeExecution, runtimeGoogleAccount } from './runtime-core.ts';
+import { combineGoogleSaveRefs, type GoogleSaveOffer } from './google-offer.ts';
+import {
+  copyRuntimeScope,
+  runtimeExecution,
+  runtimeGoogleAccount,
+  type WalletRuntimeScope,
+} from './runtime-core.ts';
 
-/** Signs one save link over the objects of links this scope just issued; see `combineGoogleSaveOffers`. */
+/** Signs one save link over objects this scope just issued; see `combineGoogleSaveRefs`. */
 export async function combineGoogleRuntimeOffers(
   ctx: ServiceContext,
   inputScope: WalletRuntimeScope,
-  urls: readonly string[],
+  offers: readonly Pick<GoogleSaveOffer, 'objectId' | 'type' | 'expiresAt'>[],
   assertCurrent?: () => Promise<void>,
-): Promise<GoogleSaveOffer> {
+): Promise<string> {
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(inputScope);
   const purpose = { kind: 'issuance' } as const;
@@ -18,6 +23,9 @@ export async function combineGoogleRuntimeOffers(
   const call = runtimeExecution(ctx, scope, 'google', assertCurrent, undefined, purpose);
   return call.finish(async () => {
     if (assertCurrent) await assertCurrent();
-    return combineGoogleSaveOffers(account, urls, Math.floor(ctx.clock.now() / 1000));
+    return combineGoogleSaveRefs(account, offers, {
+      origins: [new URL(baseUrl(ctx.env)).origin],
+      issuedAt: Math.floor(ctx.clock.now() / 1000),
+    });
   });
 }

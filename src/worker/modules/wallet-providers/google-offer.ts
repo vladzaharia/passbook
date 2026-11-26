@@ -2,7 +2,7 @@ import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import type { GoogleValidatedAccount } from './google-credentials.ts';
 import { googleIssuedAt, signGoogleJwt } from './google-crypto.ts';
 import { GoogleWalletError } from './google-errors.ts';
-import { type GoogleObjectScope, googleObjectIds } from './google-ids.ts';
+import { type DerivedGoogleId, type GoogleObjectScope, googleObjectIds } from './google-ids.ts';
 import { GOOGLE_RESOURCES } from './google-rest.ts';
 
 export interface GoogleSaveOfferOptions {
@@ -16,6 +16,9 @@ export interface GoogleSaveOfferOptions {
 export interface GoogleSaveOffer {
   url: string;
   expiresAt: number;
+  /** The one object the link references, so a bundle can sign several into one link. */
+  objectId: DerivedGoogleId;
+  type: GoogleType;
 }
 
 function googleOrigins(origins: readonly string[]): string[] {
@@ -58,9 +61,8 @@ export async function createGoogleSaveOffer(
   const origins = googleOrigins(options.origins);
   const { objectId } = await googleObjectIds(account.issuerId, idSecret, scope);
   // The payload key is the object collection's name, pluralised (genericObjects, loyaltyObjects, ...).
-  const payload = {
-    [`${GOOGLE_RESOURCES[options.type ?? 'generic'].object}s`]: [{ id: objectId }],
-  };
+  const type = options.type ?? 'generic';
+  const payload = { [`${GOOGLE_RESOURCES[type].object}s`]: [{ id: objectId }] };
   // Google does not document exp enforcement; callers must expire their own offer endpoint.
   const expiresAt = issuedAt + lifetime;
   const jwt = await signGoogleJwt(account, {
@@ -72,66 +74,43 @@ export async function createGoogleSaveOffer(
     origins,
     payload,
   });
-  return { url: `https://pay.google.com/gp/v/save/${jwt}`, expiresAt };
+  return { url: `https://pay.google.com/gp/v/save/${jwt}`, expiresAt, objectId, type };
 }
 
 /** Google refuses a save link longer than this many characters. */
 export const GOOGLE_SAVE_LINK_MAX = 1800;
 const SAVE_PREFIX = 'https://pay.google.com/gp/v/save/';
 
-function savePayload(url: string): {
-  exp: number;
-  origins: string[];
-  payload: Record<string, unknown[]>;
-} {
-  try {
-    const part = url.slice(SAVE_PREFIX.length).split('.')[1] ?? '';
-    const bytes = Uint8Array.from(atob(part.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-      c.charCodeAt(0),
-    );
-    const claims = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>;
-    const { exp, origins, payload } = claims;
-    if (!url.startsWith(SAVE_PREFIX) || typeof exp !== 'number' || !Array.isArray(origins))
-      throw new Error();
-    if (typeof payload !== 'object' || payload === null) throw new Error();
-    return { exp, origins: origins as string[], payload: payload as Record<string, unknown[]> };
-  } catch {
-    throw new GoogleWalletError('invalid_input', 'offer');
-  }
-}
-
 /**
- * One save link that carries every object of the single-object links this server just signed (one tap adds
- * them all). It expires with the earliest of them and is refused past Google's length limit; the caller
- * splits a bundle into several links before that.
+ * One save link carrying several objects this server just issued links for. It is built from the object ids
+ * issuance returned, never from a URL: only a known object type becomes a payload key, and every id must
+ * belong to this issuer. It expires with the earliest member. Past Google's length limit it throws, and the
+ * caller sends fewer objects.
  */
-export async function combineGoogleSaveOffers(
+export async function combineGoogleSaveRefs(
   account: GoogleValidatedAccount,
-  urls: readonly string[],
-  issuedAt: number,
-): Promise<GoogleSaveOffer> {
-  const parts = urls.map(savePayload);
-  const first = parts[0];
-  if (!first) throw new GoogleWalletError('invalid_input', 'offer');
-  const origins = [...first.origins].sort().join();
-  const payload: Record<string, unknown[]> = {};
-  for (const part of parts) {
-    if ([...part.origins].sort().join() !== origins)
+  refs: readonly { objectId: string; type: GoogleType; expiresAt: number }[],
+  options: { origins: readonly string[]; issuedAt: number },
+): Promise<GoogleSaveOffer['url']> {
+  if (refs.length === 0) throw new GoogleWalletError('invalid_input', 'offer');
+  const payload: Record<string, { id: string }[]> = {};
+  for (const ref of refs) {
+    const resource = GOOGLE_RESOURCES[ref.type]?.object;
+    if (!resource || !ref.objectId.startsWith(`${account.issuerId}.`))
       throw new GoogleWalletError('invalid_input', 'offer');
-    for (const [key, objects] of Object.entries(part.payload))
-      payload[key] = [...(payload[key] ?? []), ...(Array.isArray(objects) ? objects : [])];
+    const key = `${resource}s`;
+    payload[key] = [...(payload[key] ?? []), { id: ref.objectId }];
   }
-  const expiresAt = Math.min(...parts.map((part) => part.exp));
   const jwt = await signGoogleJwt(account, {
     iss: account.serviceAccountEmail,
     aud: 'google',
     typ: 'savetowallet',
-    iat: googleIssuedAt(issuedAt),
-    exp: expiresAt,
-    origins: first.origins,
+    iat: googleIssuedAt(options.issuedAt),
+    exp: Math.min(...refs.map((ref) => ref.expiresAt)),
+    origins: googleOrigins(options.origins),
     payload,
   });
   const url = `${SAVE_PREFIX}${jwt}`;
   if (url.length > GOOGLE_SAVE_LINK_MAX) throw new GoogleWalletError('invalid_input', 'offer');
-  return { url, expiresAt };
+  return url;
 }
