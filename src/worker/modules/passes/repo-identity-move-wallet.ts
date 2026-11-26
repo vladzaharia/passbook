@@ -120,3 +120,16 @@ export function walletOverrides(db: D1Database, passId: string): Promise<Channel
     [passId],
   );
 }
+
+/** The identity the old pass is on has stopped issuing: nothing is left to wait for. */
+export async function identityRetired(
+  db: D1Database,
+  row: Pick<MoveRow, 'from_identity_id'>,
+): Promise<boolean> {
+  const hit = await first<{ issuing: number }>(
+    db,
+    'SELECT issuing FROM signing_identities WHERE id = ?',
+    [row.from_identity_id],
+  );
+  return hit?.issuing === 0;
+}

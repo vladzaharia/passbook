@@ -44,7 +44,7 @@ const WALLET_NAMES: Record<string, string> = { google: 'Google Wallet', samsung:
 
 /**
  * The 30-day reminder of a row that waits on a wallet copy: the existing reminder mail, naming the wallets
- * whose new pass is not saved. It goes once. `retry` when it could not be sent: the row tries again tomorrow.
+ * whose new pass is not saved. It goes once; the row keeps waiting, so a save after it still counts. `retry` when it could not be sent: the row tries again tomorrow.
  */
 export async function remindWalletCopy(
   ctx: ServiceContext,

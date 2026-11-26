@@ -111,6 +111,15 @@ beforeEach(() => {
   google.answer = false;
   google.asked = 0;
 });
+/** The old identity stops issuing while `fn` runs: the one thing that ends a wait on a wallet copy. */
+async function whileRetired<T>(fn: () => Promise<T>): Promise<T> {
+  await run(db(), "UPDATE signing_identities SET issuing = 0 WHERE id = 'platform'");
+  try {
+    return await fn();
+  } finally {
+    await run(db(), "UPDATE signing_identities SET issuing = 1 WHERE id = 'platform'");
+  }
+}
 const stateOf = async (oldId: string) => {
   const row = await moveOf(kit, oldId);
   return [row.state, row.reason];
@@ -170,7 +179,7 @@ describe('a copy a device holds is never voided', () => {
     [['samsung'], 'wallet_copy:samsung'],
     [['google', 'samsung'], 'wallet_copy:google+samsung'],
   ] as [Provider[], string][])(
-    'waits, with its reason, when %j was saved mid-move and the replacement has none; ends kept_both at the reminder deadline',
+    'waits, with its reason, when %j was saved mid-move and the replacement has none; the reminder at the deadline does not end it, the old identity retiring does',
     async (providers, reason) => {
       const { old, next, copies } = await moved(providers);
       expect(await stateOf(old.id)).toEqual(['notified', null]);
@@ -186,20 +195,26 @@ describe('a copy a device holds is never voided', () => {
       kit.clock.advance(5 * DAY);
       await sweep();
       expect(await stateOf(old.id)).toEqual(['registered', reason]);
-      // At the deadline (30 days after the replacement was issued) it stays as it is, both passes live.
+      // At the deadline (30 days after the replacement was issued) the holder is reminded; the row keeps waiting.
       kit.clock.advance(30 * DAY);
       await sweep();
+      expect(await stateOf(old.id)).toEqual(['registered', reason]);
+      expect((await passOf(kit, old.id)).status).toBe('active');
+      expect((await passOf(kit, next.id)).status).toBe('active');
+      // Only the old identity retiring ends it, both passes live.
+      await whileRetired(async () => {
+        kit.clock.advance(DAY);
+        await sweep();
+      });
       expect(await stateOf(old.id)).toEqual(['kept_both', reason]);
       expect((await passOf(kit, old.id)).status).toBe('active');
       expect((await passOf(kit, next.id)).status).toBe('active');
       for (const id of copies.values()) expect(await dirtyOf(id)).toBe(before.get(id));
-      // Nothing later voids either pass, nor sends a reminder.
-      const sent = kit.mailer.sent.length;
+      // Nothing later voids either pass.
       kit.clock.advance(40 * DAY);
       await sweep();
       expect((await passOf(kit, old.id)).status).toBe('active');
       expect((await passOf(kit, next.id)).status).toBe('active');
-      expect(kit.mailer.sent.length).toBe(sent);
     },
   );
 
@@ -334,15 +349,19 @@ describe('a holder with no Apple registration is armed by wallet saves', () => {
     expect(await stateOf(b.old.id)).toEqual(['voided', null]);
   });
 
-  it('revives a reminded row when the holder saves the replacement later', async () => {
+  it('revives a reminded row when the holder saves the replacement on day 40, and the old pass goes 24 hours later', async () => {
     const { old, next } = await moved(['google'], false);
     await save(old, 'google');
     kit.clock.advance(31 * DAY);
     await sweep();
     expect(await stateOf(old.id)).toEqual(['kept', 'reminded']);
+    kit.clock.advance(9 * DAY);
     await save(next, 'google');
     await sweep();
     expect(await stateOf(old.id)).toEqual(['registered', null]);
+    kit.clock.advance(DAY + HOUR);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['voided', null]);
   });
 });
 
@@ -382,7 +401,7 @@ describe('W2: a device that holds the old pass without the replacement keeps it'
 });
 
 describe('W1: a lost save callback is not proof the copy is unsaved', () => {
-  it('Google says the object has users: the old pass waits as wallet_copy:google, and ends kept_both at the deadline', async () => {
+  it('Google says the object has users: the old pass waits as wallet_copy:google, past the deadline, until the old identity retires', async () => {
     google.answer = true;
     const { old, next, copies } = await moved(['google']);
     const before = await dirtyOf(copies.get('google') ?? '');
@@ -398,6 +417,11 @@ describe('W1: a lost save callback is not proof the copy is unsaved', () => {
     expect(google.asked).toBe(2);
     kit.clock.advance(40 * DAY);
     await sweep();
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:google']);
+    await whileRetired(async () => {
+      kit.clock.advance(DAY);
+      await sweep();
+    });
     expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:google']);
     expect((await passOf(kit, old.id)).status).toBe('active');
     expect(await dirtyOf(copies.get('google') ?? '')).toBe(before);
@@ -431,7 +455,7 @@ describe('W1: a lost save callback is not proof the copy is unsaved', () => {
     expect(await stateOf(old.id)).toEqual(['voided', null]);
   });
 
-  it('Samsung with no events is held until the replacement is saved, or the 30-day deadline', async () => {
+  it('Samsung with no events is held until the replacement is saved, however long that takes', async () => {
     const { old, next, copies } = await moved(['samsung']);
     const before = await dirtyOf(copies.get('samsung') ?? '');
     await completeMove(next);
@@ -439,7 +463,7 @@ describe('W1: a lost save callback is not proof the copy is unsaved', () => {
     expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
     kit.clock.advance(40 * DAY);
     await sweep();
-    expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:samsung']);
+    expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
     expect((await passOf(kit, old.id)).status).toBe('active');
     expect(await dirtyOf(copies.get('samsung') ?? '')).toBe(before);
   });
@@ -472,7 +496,7 @@ describe('the 30-day reminder of a move waiting on a wallet copy', () => {
     [['samsung'], 'Samsung Wallet'],
     [['google', 'samsung'], 'Google Wallet and Samsung Wallet'],
   ] as [Provider[], string][])(
-    'names the wallet of %j and goes once, then the row ends kept_both',
+    'names the wallet of %j, goes once, and a save on day 40 still voids the old pass',
     async (providers, names) => {
       const { old, next } = await moved(providers);
       for (const p of providers) await save(old, p);
@@ -484,12 +508,39 @@ describe('the 30-day reminder of a move waiting on a wallet copy', () => {
       expect(mails).toHaveLength(1);
       expect(mails[0]?.text).toContain(`Save it in ${names}`);
       expect(mails[0]?.text).toContain('/p/');
-      expect((await moveOf(kit, old.id)).state).toBe('kept_both');
-      kit.clock.advance(40 * DAY);
+      // The row keeps waiting; the reminder is not the end.
+      expect((await moveOf(kit, old.id)).state).toBe('registered');
+      expect((await moveOf(kit, old.id)).reminded_at).not.toBeNull();
+      kit.clock.advance(5 * DAY);
       await sweep();
+      expect(sentTo(next.holderEmail)).toHaveLength(1);
+      expect((await passOf(kit, old.id)).status).toBe('active');
+      // Day 40: the holder saves the new copy; the 24 hours run from that save.
+      for (const p of providers) await save(next, p);
+      await sweep();
+      expect((await passOf(kit, old.id)).status).toBe('active');
+      kit.clock.advance(DAY + HOUR);
+      await sweep();
+      expect(await stateOf(old.id)).toEqual(['voided', null]);
+      expect((await passOf(kit, next.id)).status).toBe('active');
       expect(sentTo(next.holderEmail)).toHaveLength(1);
     },
   );
+
+  it('ends kept_both only when the old identity retires while the row waits', async () => {
+    const { old, next } = await moved(['samsung']);
+    await completeMove(next);
+    kit.clock.advance(35 * DAY);
+    await sweep();
+    expect((await moveOf(kit, old.id)).state).toBe('registered');
+    await whileRetired(async () => {
+      kit.clock.advance(DAY);
+      await sweep();
+    });
+    expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:samsung']);
+    expect((await passOf(kit, old.id)).status).toBe('active');
+    expect(sentTo(next.holderEmail)).toHaveLength(1);
+  });
 
   it('is not sent when the holder saved the new copy in time', async () => {
     const { old, next } = await moved(['google']);
@@ -514,7 +565,7 @@ describe('the 30-day reminder of a move waiting on a wallet copy', () => {
     await sweep();
     send.mockRestore();
     expect(sentTo(next.holderEmail)).toHaveLength(1);
-    expect((await moveOf(kit, old.id)).state).toBe('kept_both');
+    expect((await moveOf(kit, old.id)).state).toBe('registered');
   });
 });
 
@@ -524,8 +575,10 @@ describe('revocation with copies', () => {
     const newCopy = await seedCopy(next, 'google');
     await save(old, 'samsung');
     await completeMove(next);
-    kit.clock.advance(40 * DAY);
-    await sweep();
+    await whileRetired(async () => {
+      kit.clock.advance(DAY);
+      await sweep();
+    });
     expect(await stateOf(old.id)).toEqual(['kept_both', 'wallet_copy:samsung']);
     const before = await dirtyOf(newCopy);
     await voidPass(ctx(), { type: 'user', id: 'admin-1' }, old.id, org.id);

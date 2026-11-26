@@ -41,7 +41,7 @@ import {
   voidedByMove,
   voidRef,
 } from './repo-identity-move-timers.ts';
-import { heldReason } from './repo-identity-move-wallet.ts';
+import { heldReason, identityRetired } from './repo-identity-move-wallet.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';
@@ -217,15 +217,18 @@ export async function voidDue(
       return 'kept';
     }
     // A device holds a wallet copy of the old pass that the replacement lacks: the row waits, with its reason, for
-    // the holder to save the new one. At the reminder's deadline it stays as it is, both passes live.
+    // the holder to save the new one, which clears the hold and starts the 24 hours. At the reminder's deadline
+    // the holder is asked once to save it, and the row keeps waiting: a save after the reminder still counts.
+    // Only the old identity retiring ends the wait (`kept_both`); otherwise a revoked old pass, a gone
+    // replacement or an inactive org bound it, as for any other row.
     const held = await heldReason(db, row, asked === 'empty' ? ['google'] : []);
     if (held !== null) {
-      if (fresh.remind_at !== null && now >= fresh.remind_at) {
-        // The reminder asks the holder to save the new copy; a mail that fails is tried again tomorrow.
-        if ((await remindWalletCopy(ctx, fresh, held)) === 'retry') {
-          await setWaitReason(db, row.id, held, now, now + DAY_MS);
-          return 'waiting';
-        }
+      const remind = fresh.remind_at !== null && now >= fresh.remind_at;
+      if (remind && (await remindWalletCopy(ctx, fresh, held)) === 'retry') {
+        await setWaitReason(db, row.id, held, now, now + DAY_MS);
+        return 'waiting';
+      }
+      if (await identityRetired(db, row)) {
         await setState(db, row.id, ['registered'], { state: 'kept_both', reason: held }, now);
         ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: held });
         return 'kept';
