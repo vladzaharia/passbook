@@ -29,7 +29,12 @@ export class ActionError extends Error {
 export function sandboxOfOperation(op: Operation): Sandbox | null {
   const ids = op.result?.ids;
   if (!ids?.sandboxId || !ids.orgSlug) return null;
-  return { id: ids.sandboxId, orgSlug: ids.orgSlug, templateId: ids.templateId ?? null };
+  return {
+    id: ids.sandboxId,
+    orgId: ids.orgId ?? '',
+    orgSlug: ids.orgSlug,
+    templateId: ids.templateId ?? null,
+  };
 }
 
 async function post(
