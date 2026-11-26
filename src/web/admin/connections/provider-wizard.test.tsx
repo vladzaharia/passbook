@@ -7,14 +7,7 @@ import { inboundTrouble } from '../../ui/webhook-setup/index.ts';
 import { setViewport } from '../../ui/webhook-setup/test-support.test-support.tsx';
 import type { Arrival } from '../../ui/webhook-setup/types.ts';
 import { ORG } from '../passes/test-fixtures.ts';
-import {
-  GUIDES,
-  ledgerRow,
-  RECIPE_IDS,
-  setupHandlers,
-  setupOf,
-  URL_C9,
-} from './setup-fixtures.test-support.ts';
+import { GUIDES, ledgerRow, RECIPE_IDS, setupHandlers, setupOf, URL_C9 } from './setup-fixtures.ts';
 import { holdSecret } from './setup-handoff.ts';
 
 const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });

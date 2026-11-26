@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { CONNECTOR, connection, connectionDetail, ORG } from '../passes/test-fixtures.ts';
-import { GUIDES, setupOf } from './setup-fixtures.test-support.ts';
+import { GUIDES, setupOf } from './setup-fixtures.ts';
 
 const STRIPE = {
   id: 'stripe-subscriptions',

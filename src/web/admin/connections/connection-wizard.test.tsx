@@ -16,7 +16,7 @@ import {
   templateDetail,
   templateSummary,
 } from '../passes/test-fixtures.ts';
-import { GUIDES, setupOf } from './setup-fixtures.test-support.ts';
+import { GUIDES, setupOf } from './setup-fixtures.ts';
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
