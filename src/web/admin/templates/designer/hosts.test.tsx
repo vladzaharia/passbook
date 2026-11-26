@@ -17,8 +17,10 @@ import { sampleDoc } from './fixtures.ts';
 import { adminHref, type DesignerHost, DesignerHostProvider, useDesignerHost } from './host.tsx';
 import {
   anonymousDesignerHost,
+  type BundledFiles,
   issueTestPass,
   releaseInTest,
+  useAnonymousDesignerHost,
   type WorkbenchClient,
   workbenchDesignerHost,
 } from './hosts.tsx';
@@ -102,6 +104,20 @@ describe('the anonymous host', () => {
     );
     expect(host.Link).toBeNull();
     expect(host.allows).toEqual({ edit: false, save: false, publishLive: false });
+  });
+});
+
+describe('host identity', () => {
+  it('keeps one anonymous host per bundle across renders', () => {
+    const files: BundledFiles = {};
+    const { result, rerender } = renderHook(({ f }) => useAnonymousDesignerHost(f), {
+      initialProps: { f: files },
+    });
+    const first = result.current;
+    rerender({ f: files });
+    expect(result.current).toBe(first);
+    rerender({ f: {} });
+    expect(result.current).not.toBe(first);
   });
 });
 
