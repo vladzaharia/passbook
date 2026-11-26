@@ -29,8 +29,8 @@ import { type Kit, setupKit, withKitDatabase } from '../passes/pass-test-fixture
 import { getPass } from '../passes/repo-read-pass.ts';
 import { codeOf, key, setupScanKit } from '../scan/test-kit.ts';
 import { getVersion } from '../templates/repo.ts';
-import { configureWalletProviderAccount } from '../wallet-providers/account-service.ts';
 import { retireWalletInstance } from '../wallet-providers/instance.ts';
+import { configureOn } from '../wallet-providers/legacy-on-test-fixtures.ts';
 import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtures.ts';
 import { computeProjectionPins } from '../wallet-providers/projection-pins.ts';
 import {
@@ -137,7 +137,7 @@ async function samsungProjection(kit: Kit, row: PassRow) {
       );
       if (!account) {
         const identity = await createFixtureIdentity(undefined, { now: new Date(kit.clock.now()) });
-        const configured = await configureWalletProviderAccount(kit.ctx, auth, {
+        const configured = await configureOn(kit.ctx, auth, {
           ...scope,
           expectedRevision: 0,
           credentials: {
@@ -372,7 +372,7 @@ async function samsungFixture() {
   const auth = { ...resolved, mode: 'test' as const };
   const identity = await createFixtureIdentity(undefined, { now: new Date(kit.clock.now()) });
   const scope = { orgId: kit.org.id, mode: 'test' as const, provider: 'samsung' as const };
-  await configureWalletProviderAccount(kit.ctx, auth, {
+  await configureOn(kit.ctx, auth, {
     ...scope,
     expectedRevision: 0,
     credentials: {
