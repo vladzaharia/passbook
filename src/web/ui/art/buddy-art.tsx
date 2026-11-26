@@ -25,8 +25,6 @@ export type BuddyScene =
   | 'listen'
   | 'catch'
   | 'explain'
-  | 'listen-live'
-  | 'catch-live'
   | 'beat';
 
 export interface BuddyProps {

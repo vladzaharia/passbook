@@ -52,8 +52,6 @@ import './scenes/busy.css';
 import './scenes/listen.css';
 import './scenes/catch.css';
 import './scenes/explain.css';
-import './scenes/listen-live.css';
-import './scenes/catch-live.css';
 import './scenes/face.css';
 
 /** Every entity art by name; loaded beside the app (index.ts), not in its first chunk. */
