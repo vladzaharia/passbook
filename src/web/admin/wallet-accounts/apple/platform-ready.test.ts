@@ -1,52 +1,58 @@
 import { describe, expect, it } from 'vitest';
 import type { PlatformIdentity } from './platform-queries.ts';
-import { canMakeDefault, PROBE_FRESH_MS, readiness } from './platform-ready.ts';
+import { canMakeDefault, readiness } from './platform-ready.ts';
 
-const NOW = 1_800_000_000_000;
-const row = (over: Partial<PlatformIdentity> = {}): PlatformIdentity =>
+const row = (over: Record<string, unknown> = {}, ready: Record<string, unknown> = {}) =>
   ({
-    id: 'p1',
-    slot: 'root',
-    purpose: 'passes',
-    issuing: true,
-    certSha256: 'ab',
-    notAfter: NOW + 90 * 86_400_000,
-    apnsHealth: 'healthy',
-    apnsCheckedAt: NOW - 1000,
-    registrationCount: 2,
     isDefault: false,
     status: 'active',
+    readiness: {
+      eligible: true,
+      certificate: true,
+      issuing: true,
+      pushHealthy: true,
+      pushProbeAt: 1,
+      pushProbeFresh: true,
+      deviceTest: true,
+      ready: true,
+      ...ready,
+    },
     ...over,
   }) as PlatformIdentity;
 
 const open = (r: PlatformIdentity) =>
-  readiness(r, NOW)
+  readiness(r)
     .filter((c) => !c.ok)
     .map((c) => c.id);
 
-describe('platform readiness', () => {
-  it('is ready with issuing, certificate, healthy fresh push and a device', () => {
+describe('platform readiness checklist', () => {
+  it('lists the server facts and names what is open', () => {
+    expect(readiness(row()).map((c) => c.id)).toEqual([
+      'issuing',
+      'certificate',
+      'push',
+      'probe',
+      'device',
+    ]);
     expect(open(row())).toEqual([]);
+    expect(open(row({}, { pushProbeFresh: false, deviceTest: false }))).toEqual([
+      'probe',
+      'device',
+    ]);
   });
 
-  it('names what is open', () => {
-    expect(open(row({ issuing: false }))).toEqual(['issuing']);
-    expect(open(row({ apnsHealth: 'failing' }))).toEqual(['push']);
-    expect(open(row({ apnsCheckedAt: NOW - PROBE_FRESH_MS - 1 }))).toEqual(['probe']);
-    expect(open(row({ apnsCheckedAt: null }))).toEqual(['probe']);
-    expect(open(row({ registrationCount: 0 }))).toEqual(['device']);
-    expect(open(row({ notAfter: NOW - 1 }))).toEqual(['certificate']);
+  it('leaves out a check the row is not held to', () => {
+    const legacy = row(
+      {},
+      { issuing: null, pushHealthy: null, pushProbeFresh: null, deviceTest: null },
+    );
+    expect(readiness(legacy).map((c) => c.id)).toEqual(['certificate']);
   });
 
-  it('asks the legacy identity for its certificate only', () => {
-    expect(open(row({ slot: null, apnsHealth: 'unknown', registrationCount: 0 }))).toEqual([]);
-    expect(open(row({ slot: null, certSha256: null }))).toEqual(['certificate']);
-  });
-
-  it('offers Make default only for a passes identity that is not the default', () => {
+  it('offers Make default only to an eligible row that is not the default', () => {
     expect(canMakeDefault(row())).toBe(true);
     expect(canMakeDefault(row({ isDefault: true }))).toBe(false);
-    expect(canMakeDefault(row({ purpose: 'device_test' }))).toBe(false);
+    expect(canMakeDefault(row({}, { eligible: false }))).toBe(false);
     expect(canMakeDefault(row({ status: 'retired' }))).toBe(false);
   });
 });

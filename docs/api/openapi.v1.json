@@ -63068,6 +63068,61 @@
                 },
                 "dormant": {
                   "type": "boolean"
+                },
+                "readiness": {
+                  "type": "object",
+                  "properties": {
+                    "eligible": {
+                      "type": "boolean"
+                    },
+                    "certificate": {
+                      "type": "boolean"
+                    },
+                    "issuing": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "pushHealthy": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "pushProbeAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "pushProbeFresh": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "deviceTest": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "ready": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "eligible",
+                    "certificate",
+                    "issuing",
+                    "pushHealthy",
+                    "pushProbeAt",
+                    "pushProbeFresh",
+                    "deviceTest",
+                    "ready"
+                  ]
                 }
               },
               "required": [
@@ -63094,7 +63149,8 @@
                 "managed",
                 "registrationCount",
                 "openRunId",
-                "dormant"
+                "dormant",
+                "readiness"
               ]
             }
           },
@@ -133142,6 +133198,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
@@ -133365,6 +133422,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
@@ -133778,6 +133836,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",

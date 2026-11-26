@@ -1181,6 +1181,7 @@ __all__ = [
     "PlatformAppleIdentitiesListResponse",
     "PlatformAppleIdentitiesListResponseItemsItem",
     "PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem",
+    "PlatformAppleIdentitiesListResponseItemsItemReadiness",
     "PlatformAppleIdentitiesListResponseOpenRunsItem",
     "PlatformAppleIdentitiesMakeDefaultResponse",
     "PlatformAppleIdentityMovesListResponse",
@@ -9351,6 +9352,7 @@ class PlatformAppleIdentitiesListResponseItemsItem(_Model):
     registrationCount: int
     openRunId: str | None
     dormant: bool
+    readiness: PlatformAppleIdentitiesListResponseItemsItemReadiness
 
 class PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem(_Model):
     id: str
@@ -9363,6 +9365,16 @@ class PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem(_Model):
     retiredAt: int | None
     passCount: int
     passesLeft: int | None
+
+class PlatformAppleIdentitiesListResponseItemsItemReadiness(_Model):
+    eligible: bool
+    certificate: bool
+    issuing: bool | None
+    pushHealthy: bool | None
+    pushProbeAt: int | None
+    pushProbeFresh: bool | None
+    deviceTest: bool | None
+    ready: bool
 
 class PlatformAppleIdentitiesListResponseOpenRunsItem(_Model):
     slot: _Literal["root", "devtest"] | str

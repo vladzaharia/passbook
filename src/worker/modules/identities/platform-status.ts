@@ -2,6 +2,7 @@ import type { PlatformIdentityDto } from '../../../shared/contracts/identities.t
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDtos } from './dto.ts';
 import { PLATFORM_IDENTITY_ID } from './env-identity.ts';
+import { platformReadiness } from './platform-readiness.ts';
 import { PLATFORM_SLOTS, type PlatformSlot, platformTarget } from './provision-platform.ts';
 import { type IdentityRow, listIdentityRows } from './repo.ts';
 import { platformRegistrationCounts } from './repo-platform-list.ts';
@@ -22,19 +23,22 @@ export async function listPlatformIdentities(ctx: ServiceContext) {
     const open = await findOpenRun(ctx.env.DB, 'identity', platformTarget(slot), 'provision');
     if (open) openRuns.push({ slot, runId: open.id });
   }
-  const items: PlatformIdentityDto[] = dtos.map((dto, i) => {
-    const row = rows[i] as IdentityRow;
-    const slot = slotOf(row);
-    const legacy = row.id === PLATFORM_IDENTITY_ID;
-    return {
-      ...dto,
-      slot,
-      purpose: row.purpose,
-      managed: row.source === 'env' ? 'deployment' : 'connector',
-      registrationCount: registrations.get(row.id) ?? 0,
-      openRunId: openRuns.find((o) => o.slot === slot)?.runId ?? null,
-      dormant: legacy && !dto.isDefault && dto.passCount === 0,
-    };
-  });
+  const items: PlatformIdentityDto[] = await Promise.all(
+    dtos.map(async (dto, i) => {
+      const row = rows[i] as IdentityRow;
+      const slot = slotOf(row);
+      const legacy = row.id === PLATFORM_IDENTITY_ID;
+      return {
+        ...dto,
+        slot,
+        purpose: row.purpose,
+        managed: row.source === 'env' ? 'deployment' : 'connector',
+        registrationCount: registrations.get(row.id) ?? 0,
+        openRunId: openRuns.find((o) => o.slot === slot)?.runId ?? null,
+        dormant: legacy && !dto.isDefault && dto.passCount === 0,
+        readiness: await platformReadiness(ctx, row),
+      };
+    }),
+  );
   return { items, openRuns };
 }

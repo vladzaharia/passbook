@@ -12,30 +12,26 @@ import { useCheckApns } from './queries.ts';
  */
 export function MakeDefaultDialog({
   row,
-  now,
   onOpenChange,
 }: {
   row: PlatformIdentity | null;
-  now: number;
   onOpenChange: (open: boolean) => void;
 }) {
   if (!row) return null;
-  return <Body row={row} now={now} onOpenChange={onOpenChange} />;
+  return <Body row={row} onOpenChange={onOpenChange} />;
 }
 
 function Body({
   row,
-  now,
   onOpenChange,
 }: {
   row: PlatformIdentity;
-  now: number;
   onOpenChange: (open: boolean) => void;
 }) {
   const make = useMakeDefault(row.id);
   const probe = useCheckApns(row.id);
-  const checks = readiness(row, now);
-  const ready = checks.every((c) => c.ok);
+  const checks = readiness(row);
+  const ready = row.readiness.ready;
   const copy = makeDefaultConfirm(platformName(row));
   const pushOpen = checks.some((c) => (c.id === 'push' || c.id === 'probe') && !c.ok);
   return (

@@ -65,11 +65,7 @@ export function PlatformSection() {
       </div>
       {movedOrg ? <PlatformMoves orgId={movedOrg} /> : null}
       <PlatformSetupWizard open={setup} onOpenChange={setSetup} slots={free} />
-      <MakeDefaultDialog
-        row={defaulting}
-        now={now}
-        onOpenChange={(o) => !o && setDefaulting(null)}
-      />
+      <MakeDefaultDialog row={defaulting} onOpenChange={(o) => !o && setDefaulting(null)} />
       <MovePassesDialog
         from={moving}
         identities={items}

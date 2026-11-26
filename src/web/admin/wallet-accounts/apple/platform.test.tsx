@@ -42,6 +42,16 @@ const row = (over: Record<string, unknown> = {}) => ({
   registrationCount: 3,
   openRunId: null,
   dormant: false,
+  readiness: {
+    eligible: true,
+    certificate: true,
+    issuing: true,
+    pushHealthy: true,
+    pushProbeAt: Date.now() - 1000,
+    pushProbeFresh: true,
+    deviceTest: true,
+    ready: true,
+  },
   ...over,
 });
 const legacy = row({
@@ -52,6 +62,16 @@ const legacy = row({
   isDefault: false,
   passCount: 40,
   registrationCount: 12,
+  readiness: {
+    eligible: true,
+    certificate: true,
+    issuing: null,
+    pushHealthy: null,
+    pushProbeAt: null,
+    pushProbeFresh: null,
+    deviceTest: null,
+    ready: true,
+  },
   nextRotationAt: null,
 });
 const page = (items: unknown[]) => () => json({ items, nextCursor: null });
@@ -148,7 +168,24 @@ describe('platform identities', () => {
       handlers: {
         ...base,
         '/api/v1/platform/apple/identities': () =>
-          json({ items: [legacy, row({ registrationCount: 0 })], openRuns: [] }),
+          json({
+            items: [
+              legacy,
+              row({
+                readiness: {
+                  eligible: true,
+                  certificate: true,
+                  issuing: true,
+                  pushHealthy: true,
+                  pushProbeAt: null,
+                  pushProbeFresh: false,
+                  deviceTest: false,
+                  ready: false,
+                },
+              }),
+            ],
+            openRuns: [],
+          }),
       },
     });
     const ui = userEvent.setup();
