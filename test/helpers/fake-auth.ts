@@ -65,7 +65,11 @@ export interface FakeAuth {
     orgId?: string | null;
     scopes?: ApiScope[];
     mode?: Mode;
+    /** Default: `platform` without an org, else `service`. A forged row may pair `platform` with an org. */
+    keyKind?: NonNullable<ApiKeyAuth['keyKind']>;
   }): Record<string, string>;
+  /** Headers for a Platform key (kind `platform`, no org) holding platform scopes. */
+  platformKey(options?: { scopes?: ApiScope[] }): Record<string, string>;
 }
 
 interface FakeSession {
@@ -168,7 +172,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
   let n = 0;
   let binding: { db: D1Database; clock: Clock } | undefined;
   let keyBinding: { db: D1Database; clock: Clock; store: Promise<ApiKeyStore> } | undefined;
-  return {
+  const fake: FakeAuth = {
     denied,
     bindSessions(db, clock) {
       binding = { db, clock };
@@ -318,17 +322,29 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
       orgId = null,
       scopes = ['passes:read', 'passes:write', 'holders:write', 'templates:read'] as ApiScope[],
       mode = 'live' as Mode,
+      keyKind = orgId === null ? 'platform' : 'service',
     } = {}) {
       n++;
       const prefix = toBase64Url(randomBytes(6));
       const raw = `wlt_${prefix}_${toBase64Url(randomBytes(32))}`;
       keys.set(raw, {
         // Existing in-memory fixtures use sequential IDs; D1 keys need independent unique IDs.
-        auth: { kind: 'api_key', keyId: `key-${n}`, orgId, scopes, mode },
+        auth: {
+          kind: 'api_key',
+          keyId: `key-${n}`,
+          orgId,
+          scopes,
+          mode,
+          keyKind,
+        },
         prefix,
         seeded: new WeakMap(),
       });
       return { authorization: `Bearer ${raw}` };
     },
+    platformKey({ scopes = ['platform:read'] as ApiScope[] } = {}) {
+      return fake.apiKey({ orgId: null, scopes });
+    },
   };
+  return fake;
 }

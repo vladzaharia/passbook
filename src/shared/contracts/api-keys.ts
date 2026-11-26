@@ -11,6 +11,24 @@ import { OrgRoleSchema } from './org-membership.ts';
 import { PassStyleSchema } from './templates.ts';
 
 /**
+ * The scopes of a Platform key, the only flavour that reaches `platform` routes. A key holds these alone (no org
+ * scope, `API_KEY_PLATFORM_SCOPES_ALONE`), and only a `platform` kind key holds them (`API_KEY_PLATFORM_SCOPE_KIND`).
+ */
+export const PLATFORM_KEY_SCOPES = [
+  'platform:read',
+  'platform:orgs',
+  'platform:users',
+  'platform:groups',
+  'platform:claims',
+  'platform:identities',
+  'platform:wallet',
+  'platform:settings',
+  'platform:status',
+  'platform:templates',
+  'platform:audit',
+] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
+
+/**
  * The scopes a key may be minted with: those some route accepts today. A scope joins this list in
  * the change that makes a route accept it, so no key holds authority nobody reviewed.
  */
@@ -42,6 +60,7 @@ export const MINTABLE_SCOPES = [
   'audit:read',
   'members:read',
   'members:write',
+  ...PLATFORM_KEY_SCOPES,
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 /** Scopes that mint or reset device credentials, or invite people into developer access: named in `scopes` only, never through a role or a parent key, live and one org. */
 export const CREDENTIAL_SCOPES = [

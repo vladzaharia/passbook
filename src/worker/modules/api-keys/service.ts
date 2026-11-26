@@ -249,6 +249,7 @@ export async function keyAuthOf(
     kind: 'api_key',
     keyId: row.id,
     orgId: row.org_id,
+    keyKind: row.kind,
     scopes: memberRoles
       ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
       : held,

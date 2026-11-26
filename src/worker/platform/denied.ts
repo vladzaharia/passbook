@@ -6,7 +6,14 @@ import { ipPrefix } from './ip.ts';
 import { serviceContext } from './service-context.ts';
 
 export interface DeniedEvent {
-  code: 'FORBIDDEN' | 'CSRF_ORIGIN' | 'CSRF_TOKEN' | 'MISSING_SCOPE' | 'IDP_SIGN_IN_REQUIRED';
+  code:
+    | 'FORBIDDEN'
+    | 'CSRF_ORIGIN'
+    | 'CSRF_TOKEN'
+    | 'MISSING_SCOPE'
+    | 'IDP_SIGN_IN_REQUIRED'
+    | 'PLATFORM_KEY_REQUIRED'
+    | 'PERSON_REQUIRED';
   actorType: 'user' | 'api_key' | 'scanner';
   actorId: string;
   ipPrefix: string | null;
@@ -51,7 +58,11 @@ export function noteKeyRefused(
   c: Context<AppBindings>,
   refusal:
     | { code: 'INVALID_API_KEY'; token: string }
-    | { code: 'MISSING_SCOPE'; keyId: string; scope: string | null },
+    | {
+        code: 'MISSING_SCOPE' | 'PLATFORM_KEY_REQUIRED' | 'PERSON_REQUIRED';
+        keyId: string;
+        scope: string | null;
+      },
 ): void {
   c.set(
     'refusal',

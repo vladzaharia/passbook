@@ -2,14 +2,20 @@ import type { Context } from 'hono';
 import type { z } from 'zod';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
-import type { PlatformScope } from './api-scopes.ts';
+import type { PlatformScope, TenantScope } from './api-scopes.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
 
 type ApiScope = z.infer<typeof ApiScopeSchema>;
 
-/** Scopes that let a key in: one, any of several, or one for reads (GET, HEAD) and one for the rest. */
-export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write: ApiScope };
+/**
+ * Scopes that let a key in: one, any of several, or one for reads (GET, HEAD) and one for the rest. Never a platform
+ * scope: a Platform key cannot meet a tenant rule, and the type proves no `scope` route lists one.
+ */
+export type ScopeRule =
+  | TenantScope
+  | readonly TenantScope[]
+  | { read: TenantScope; write: TenantScope };
 
 /**
  * Who may call a route. Declared once per route (`RouteSpec.auth`); `requireCaller` enforces it and
@@ -75,13 +81,21 @@ export type RouteAuth =
       developer?: true;
     }
   /**
-   * A platform admin session. Keys never pass until a platform key kind exists. `signIn: 'oidc'` admits only a
-   * Polaris ID session: break-glass and email links get 403 IDP_SIGN_IN_REQUIRED, and a step-up is a Polaris ID re-auth.
+   * A platform admin session. `key` opts a Platform key in (one holding the scope, or `platform:read` for GET and
+   * HEAD); omitted, the route is person-only (403 PERSON_REQUIRED). `key: { unless }` refuses the requests it accepts,
+   * which need a person (offboard without `dryRun`). Keys are never asked for a step-up: the mint was it.
+   * `signIn: 'oidc'` admits only a Polaris ID session: break-glass and email links get 403 IDP_SIGN_IN_REQUIRED, and
+   * a step-up is a Polaris ID re-auth.
    */
-  | { platform: PlatformScope; stepUp?: StepUp; signIn?: 'oidc' };
+  | {
+      platform: PlatformScope;
+      key?: true | { unless: (c: Context<AppBindings>) => boolean | Promise<boolean> };
+      stepUp?: StepUp;
+      signIn?: 'oidc';
+    };
 
 /** Reads (GET, HEAD) need `read`, everything else `write`. */
-export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {
+export function methodScope(scopes: { read: TenantScope; write: TenantScope }): ScopeRule {
   return scopes;
 }
 
@@ -92,10 +106,10 @@ export function neededScope(
   rule: ScopeRule,
   c: Context,
   held: readonly ApiScope[],
-): ApiScope | null {
+): TenantScope | null {
   if (typeof rule === 'string') return rule;
   if (Array.isArray(rule)) return rule.find((candidate) => held.includes(candidate)) ?? null;
-  const split = rule as { read: ApiScope; write: ApiScope };
+  const split = rule as { read: TenantScope; write: TenantScope };
   return isRead(c) ? split.read : split.write;
 }
 

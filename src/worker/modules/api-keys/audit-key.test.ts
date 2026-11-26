@@ -74,8 +74,9 @@ describe('audit log for a key', () => {
     const platform = await makeApiKey(f(), { orgId: null, scopes: ['audit:read'] });
     expect((await read(as(platform), org.id)).status).not.toBe(200);
     const key = await auditKey();
-    expect((await h.call('/api/v1/audit/platform', { headers: as(key) })).status).toBe(401);
-    expect((await h.call('/api/v1/audit/platform/export', { headers: as(key) })).status).toBe(401);
+    // An org key is no Platform key: the platform log refuses it by name, whatever scopes it holds.
+    for (const path of ['/api/v1/audit/platform', '/api/v1/audit/platform/export'])
+      await expectProblem(await h.call(path, { headers: as(key) }), 403, 'PLATFORM_KEY_REQUIRED');
   });
 
   it('stops for a personal key whose member lost the role or the membership', async () => {

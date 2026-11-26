@@ -8,7 +8,7 @@ import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
 import { declareKeyAccess, enforcesKeyAccess } from './openapi-security.ts';
-import { signInLevelOf } from './sign-in-guard.ts';
+import { platformKeyOf, signInLevelOf } from './sign-in-guard.ts';
 
 // Every route needs a decision: a guard the inventory recognises (requireCaller from `auth`,
 // requireSession, requireAdmin, or a guard declaring key access), `public: true`, or a line below.
@@ -334,4 +334,52 @@ it('lets an email-link session reach only the holder routes, and deny every othe
     'POST /api/v1/orgs/:orgId/close',
   ])
     expect(levels[route], route).toBe('strict');
+});
+
+/** How each route a `platform` declaration covers treats a key (`key`, `key.unless` or none). */
+function platformKeyRoutes(): Record<'key' | 'conditional' | 'person', string[]> {
+  const found: Record<'key' | 'conditional' | 'person', string[]> = {
+    key: [],
+    conditional: [],
+    person: [],
+  };
+  for (const { key, covering } of coverage()) {
+    const modes = covering.map((g) => platformKeyOf(g.handler)).filter((m) => m !== undefined);
+    const mode = modes.at(-1);
+    if (mode) found[mode].push(key);
+  }
+  for (const list of Object.values(found)) list.sort();
+  return found;
+}
+
+/**
+ * Every `platform` route has a written decision about keys: here it takes a Platform key, takes one unless the
+ * request needs a person (`key: { unless }`), or is person-only (403 PERSON_REQUIRED). The lists are exact, so a new
+ * `platform` route fails until it is put on one. Router-level `requireAdmin` routes are not `platform` declarations
+ * yet; converting one means adding `auth: { platform, key? }` and listing it here.
+ */
+const PLATFORM_KEY_ROUTES: string[] = [];
+const PLATFORM_KEY_CONDITIONAL: string[] = [];
+/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
+const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  'GET /api/v1/audit/platform',
+  'GET /api/v1/audit/platform/export',
+  'GET /api/v1/metrics/platform/developer',
+  'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/entitlement-presets',
+  'GET /api/v1/platform/idp/groups/:key/claims',
+  'GET /api/v1/platform/orgs/:id/entitlements',
+  'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/users/:id/claims',
+  'PATCH /api/v1/platform/idp/groups/:key/claims',
+  'PATCH /api/v1/users/:id/claims',
+  'PUT /api/v1/platform/entitlement-presets',
+  'PUT /api/v1/platform/orgs/:id/entitlements',
+];
+
+it('pins which platform routes take a key and which are person-only', () => {
+  const found = platformKeyRoutes();
+  expect(found.key).toEqual(PLATFORM_KEY_ROUTES);
+  expect(found.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
+  expect(found.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
 });

@@ -9,15 +9,22 @@ import {
   isMarkedOwnOnly,
   isOwnOnly,
   proveCapability,
+  tagPlatformScope,
   verifiedScopeOf,
   verifiedScopes,
 } from './auth-capability.ts';
-import type { AuthContext, SessionAuth } from './auth-types.ts';
+import type { ApiKeyAuth, AuthContext, SessionAuth } from './auth-types.ts';
 import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
-import { ForbiddenError, IdpSignInRequiredError, UnauthenticatedError } from './errors.ts';
+import {
+  ForbiddenError,
+  IdpSignInRequiredError,
+  PersonRequiredError,
+  PlatformKeyRequiredError,
+  UnauthenticatedError,
+} from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
@@ -34,6 +41,7 @@ import {
   assertSignIn,
   assertStepUp,
   declareOidcOnly,
+  declarePlatformKey,
   declareSignIn,
   declareStepUp,
   hasConsoleAccess,
@@ -127,6 +135,63 @@ export const requireConsoleSession: MiddlewareHandler<AppBindings> = declareSign
 );
 knownGuards.add(requireConsoleSession);
 
+/** A Platform key: kind `platform` and no org. Both, so a bad row fails either way. */
+const isPlatformKey = (key: ApiKeyAuth): boolean =>
+  key.keyKind === 'platform' && key.orgId === null;
+
+/** A key that holds a platform scope may reach `platform` routes only: never a tenant route, whatever else it holds. */
+const holdsPlatformScope = (key: ApiKeyAuth): boolean =>
+  key.scopes.some((scope) => scope.startsWith('platform:'));
+
+type PlatformDecl = Extract<RouteAuth, { platform: unknown }>;
+
+/**
+ * A Bearer key on a `platform` route. In order: it resolves (401); it is a Platform key (403
+ * PLATFORM_KEY_REQUIRED); the route opted keys in (403 PERSON_REQUIRED); it holds the route's scope, or
+ * `platform:read` for a read (403 MISSING_SCOPE); `key.unless` does not refuse the request (403 PERSON_REQUIRED).
+ * Each refusal after the first is audited as the key. No cookie is consulted and no step-up asked: the mint was it.
+ */
+async function platformKeyGate(
+  c: Context<AppBindings>,
+  decl: PlatformDecl,
+  token: string,
+): Promise<ApiKeyAuth> {
+  const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
+  if (!key) {
+    noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
+    throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  }
+  const refuse = (
+    code: 'PLATFORM_KEY_REQUIRED' | 'PERSON_REQUIRED' | 'MISSING_SCOPE',
+    scope: string | null,
+  ) => {
+    reportDenied(c, code, key);
+    noteKeyRefused(c, { code, keyId: key.keyId, scope });
+  };
+  if (!isPlatformKey(key)) {
+    refuse('PLATFORM_KEY_REQUIRED', null);
+    throw new PlatformKeyRequiredError();
+  }
+  if (!decl.key) {
+    refuse('PERSON_REQUIRED', decl.platform);
+    throw new PersonRequiredError();
+  }
+  const needed =
+    isRead(c) && key.scopes.includes('platform:read') ? 'platform:read' : decl.platform;
+  if (!key.scopes.includes(needed)) {
+    refuse('MISSING_SCOPE', needed);
+    throw new ForbiddenError(`The API key lacks the ${needed} scope.`, 'MISSING_SCOPE');
+  }
+  if (decl.key !== true && (await decl.key.unless(c))) {
+    refuse('PERSON_REQUIRED', decl.platform);
+    throw new PersonRequiredError();
+  }
+  const scoped = { ...key };
+  tagPlatformScope(scoped, needed);
+  c.set('auth', scoped);
+  return scoped;
+}
+
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c, 'idp');
@@ -175,7 +240,8 @@ export { authorityUnproven, isMarkedOwnOnly, isOwnOnly, proveCapability, verifie
  * 2. Otherwise a cookie session (401 without one) that passes CSRF. `scope` routes take any tenant
  *    session, or an admin one with `session: 'admin'`; `human` routes take any session; `platform`
  *    routes take an admin session. Admin and tenant sessions adopt the request mode.
- * 3. `human` and `platform` routes ignore a Bearer header: a key is never a person.
+ * 3. `human` routes ignore a Bearer header: a key is never a person. A `platform` route with a Bearer header takes a
+ *    Platform key alone (`platformKeyGate`): a person-only route refuses it, an org key never reaches one.
  */
 export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const rule = 'scope' in auth ? auth.scope : null;
@@ -184,6 +250,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const developer = 'human' in auth && auth.developer === true;
+  const platformDecl = 'platform' in auth ? auth : null;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
   const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
@@ -195,9 +262,14 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   )
     throw new Error("signIn: 'any' cannot combine with capability, session, stepUp or tillKey");
   const guard = createMiddleware<AppBindings>(async (c, next) => {
-    const sent = rule ? bearerOf(c) : null;
+    const sent = rule || platformDecl ? bearerOf(c) : null;
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token ?? null;
+    // A Bearer header decides alone: a bad key with a good cookie is 401, never a fallback to the cookie.
+    if (platformDecl && token) {
+      await platformKeyGate(c, platformDecl, token);
+      return next();
+    }
     if (rule && token) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
       if (!key) {
@@ -205,7 +277,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       }
       const needed = neededScope(rule, c, key.scopes);
-      if (!needed || !key.scopes.includes(needed)) {
+      // Platform scopes never open a tenant route, even on a row that also holds a tenant scope.
+      if (!needed || !key.scopes.includes(needed) || holdsPlatformScope(key)) {
         reportDenied(c, 'MISSING_SCOPE', key);
         noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: needed ?? null });
         throw new ForbiddenError(
@@ -257,6 +330,11 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
+  if (platformDecl)
+    declarePlatformKey(
+      guard,
+      !platformDecl.key ? 'person' : platformDecl.key === true ? 'key' : 'conditional',
+    );
   return declareSignIn(guard, level);
 }
 

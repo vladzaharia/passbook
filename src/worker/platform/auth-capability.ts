@@ -13,6 +13,18 @@ export function verifiedScopeOf(auth: object): ApiScope | undefined {
   return verifiedScopes.get(auth);
 }
 
+// Only the `platform` branch of requireCaller tags this, and never into `verifiedScopes`: a platform scope can then
+// never be read as tenant authority (`tenantAuthorityOf`).
+const verifiedPlatformScopes = new WeakMap<object, ApiScope>();
+export const tagPlatformScope = (auth: object, scope: ApiScope): void => {
+  verifiedPlatformScopes.set(auth, scope);
+};
+
+/** The platform scope `requireCaller` checked on this Platform key principal; undefined for anything else. */
+export function verifiedPlatformScopeOf(auth: object): ApiScope | undefined {
+  return verifiedPlatformScopes.get(auth);
+}
+
 // A declared `capability` is a promise the handler proves with tenantAuthorityOf. The state hangs
 // on the principal object requireCaller puts in the context, which is fresh for every request.
 export const capabilityState = new WeakMap<

@@ -149,6 +149,20 @@ export class IdpSignInRequiredError extends ForbiddenError {
   }
 }
 
+/** 403 `PLATFORM_KEY_REQUIRED`: a platform route met a key that is not a Platform key (an org key, or a bad row). */
+export class PlatformKeyRequiredError extends ForbiddenError {
+  constructor() {
+    super('This needs a platform key.', 'PLATFORM_KEY_REQUIRED');
+  }
+}
+
+/** 403 `PERSON_REQUIRED`: a platform route, or a request of one, that a key never makes. */
+export class PersonRequiredError extends ForbiddenError {
+  constructor() {
+    super('This needs a person signed in with Polaris ID.', 'PERSON_REQUIRED');
+  }
+}
+
 /** 403 `STEP_UP_REQUIRED`: the session's sign-in is too old for this action; `signInUrl` asks Polaris ID again. */
 export class StepUpRequiredError extends ForbiddenError {
   constructor(signInUrl: string) {
