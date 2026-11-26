@@ -164,8 +164,11 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await shots(page, 'admin-webhook-deliveries');
 
   // D10: the playground offers the sandbox instead of asking to sign in.
+  // Signed in, Design is the Playground's successor (design §1.9): the sandbox's own Design, not a sign-in ask.
+  // DC3 restores the editor hand-off assertions on the anonymous page.
   await page.goto('/workbench/design');
-  await expect(page.getByText(/Previews show each blueprint/)).toBeVisible();
+  await page.waitForURL((u) => /^\/workbench\/o\/[^/]+\/design$/.test(u.pathname));
+  await expect(page.getByRole('heading', { level: 1, name: 'Design' })).toBeVisible();
   await expect(page.getByText('Sign in to edit them live')).toHaveCount(0);
   await shot(page, 'playground-signed-in');
 

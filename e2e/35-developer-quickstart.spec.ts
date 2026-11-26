@@ -87,10 +87,9 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   });
   expect(bad.status()).toBe(422);
   await expect(page.getByText('422 INVALID')).toBeVisible();
-  // The request log keeps no input keys (R3), so the page names the problem and its code, not the field.
-  const problem = page.getByRole('alert').filter({ hasText: 'The pass input is invalid.' });
-  await expect(problem).toBeVisible();
-  await expect(problem.getByRole('link', { name: 'PASS_INPUT_INVALID' })).toBeVisible();
+  // The log blanks the request's input (R3) but keeps the problem's own issue list: the page names the field.
+  await expect(page.getByRole('alert').filter({ hasText: 'ticketId is required.' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: '"ticketId": "QS-1042"' })).toBeVisible();
 
   const made = await api.post('/api/v1/passes', {
     headers: { ...auth, 'idempotency-key': 'e2e-good' },
