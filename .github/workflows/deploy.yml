@@ -26,6 +26,7 @@ jobs:
     environment: production
     permissions:
       contents: write # moves the deployed/production tag
+      actions: read # reads the ci run's jobs
     steps:
       - name: Check Cloudflare secrets
         id: secrets
@@ -71,7 +72,24 @@ jobs:
         if: steps.order.outputs.run == 'true'
         run: npm ci
 
-      # Same gates as the manual recipe; each leaves the tree clean or fails.
+      # typecheck, biome and check:rules are not repeated here (3.5 min of a 5 min deploy): the ci run that triggered
+      # this deploy ran them on exactly this commit. Prove that from its jobs, then re-run only the cheap gen drift check.
+      - name: ci passed for this commit
+        id: proof
+        if: steps.order.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")
+          [ "$(jq -r .head_sha <<<"$run")" = "$SHA" ] || { echo "::error::ci run $RUN_ID is not for $SHA"; exit 1; }
+          [ "$(jq -r .conclusion <<<"$run")" = success ] || { echo "::error::ci run $RUN_ID did not succeed"; exit 1; }
+          jobs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs?per_page=100" --jq '.jobs[] | [.name, .conclusion] | @tsv')
+          printf '%s\n' "$jobs"
+          for j in check coverage-node-merge coverage-worker-merge; do
+            printf '%s\n' "$jobs" | grep -qx "$j"$'\tsuccess' || { echo "::error::ci job $j did not succeed for $SHA"; exit 1; }
+          done
+
       - name: Gates
         if: steps.order.outputs.run == 'true'
         # Diff against the commit being deployed, not origin/main: main may have moved on since ci passed.
@@ -81,9 +99,6 @@ jobs:
         run: |
           npm run gen
           test -z "$(git status --porcelain)" || { echo "::error::gen changed files"; git status --porcelain; exit 1; }
-          npm run typecheck
-          npx biome ci --error-on-warnings .
-          npm run check:rules
 
       - name: Check wrangler.jsonc and remote secrets
         if: steps.order.outputs.run == 'true'
