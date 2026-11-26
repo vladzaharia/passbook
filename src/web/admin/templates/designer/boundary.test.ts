@@ -13,6 +13,7 @@ const ADMIN_ONLY = [
   'lib/scope.ts',
   'lib/mode.ts',
   'lib/session.ts',
+  'lib/search.ts',
 ];
 
 function sources(dir: string): string[] {
@@ -50,6 +51,21 @@ describe('designer core boundary', () => {
         .map((t) => `${relative(ROOT, file)} -> ${t}`),
     );
     expect(leaks).toEqual([]);
+  });
+
+  it("takes only keys from admin's template queries, never their session hooks", () => {
+    const hooks = core.flatMap((file) =>
+      [
+        ...readFileSync(file, 'utf8').matchAll(
+          /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*'([^']+)'/g,
+        ),
+      ]
+        .filter((m) => target(file, m[2] ?? '') === 'admin/templates/api.ts')
+        .flatMap((m) => (m[1] ?? '').split(',').map((name) => name.trim()))
+        .filter((name) => name && name !== 'templateKeys')
+        .map((name) => `${relative(ROOT, file)} -> ${name}`),
+    );
+    expect(hooks).toEqual([]);
   });
 
   it('never imports the admin host', () => {

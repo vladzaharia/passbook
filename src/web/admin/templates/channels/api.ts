@@ -8,7 +8,7 @@ import {
   TemplateChannelsResponseSchema,
 } from '@/shared/contracts/channels.ts';
 import { api } from '../../../lib/api.ts';
-import { useToolApi, useToolMode } from '../../../lib/tool-api.tsx';
+import { useToolApi, useToolKey, useToolMode } from '../../../lib/tool-api.tsx';
 
 type Body = z.input<typeof PutTemplateChannelsSchema>;
 
@@ -23,9 +23,10 @@ const path = (templateId: string) => `/api/v1/templates/${encodeURIComponent(tem
 export function useTemplateChannels(templateId: string, orgId: string, enabled = true) {
   const client = useToolApi();
   const mode = useToolMode();
+  const toolKey = useToolKey();
   return useQuery({
     enabled,
-    queryKey: keys.one(templateId, orgId, mode),
+    queryKey: [...keys.one(templateId, orgId, mode), ...toolKey],
     queryFn: ({ signal }) =>
       client.get(path(templateId), TemplateChannelsResponseSchema, { query: { orgId }, signal }),
   });
@@ -48,11 +49,13 @@ const ACTIVE = new Set(['pending', 'running']);
 
 /** The latest runs that applied saved changes; polls while one is pending or running. */
 export function useChannelRuns(templateId: string, orgId: string) {
+  const client = useToolApi();
   const mode = useToolMode();
+  const toolKey = useToolKey();
   return useQuery({
-    queryKey: ['admin', 'templates', 'channels', 'runs', templateId, orgId, mode] as const,
+    queryKey: ['admin', 'templates', 'channels', 'runs', templateId, orgId, mode, ...toolKey],
     queryFn: ({ signal }) =>
-      api.get(`${path(templateId)}/runs`, ChannelApplyRunsResponseSchema, {
+      client.get(`${path(templateId)}/runs`, ChannelApplyRunsResponseSchema, {
         query: { orgId },
         signal,
       }),

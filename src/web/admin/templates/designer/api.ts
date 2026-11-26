@@ -10,7 +10,7 @@ import {
 import { StampsImpactSchema } from '@/shared/contracts/stamps.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
 import { templateKeys } from '../api.ts';
-import { useDesignerHost } from './host.tsx';
+import { useDesignerHost, useHostKey } from './host.tsx';
 import { assetsPayload } from './images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from './model.ts';
 import { signature } from './reducer.ts';
@@ -36,8 +36,9 @@ const body = (doc: DesignDoc, extra: VersionOptions, previewCount?: number) => (
 /** The version the designer starts from: both documents and the file list. */
 export function useBaseVersion(templateId: string, version: string | null) {
   const { orgId, api } = useDesignerHost();
+  const hostKey = useHostKey();
   return useQuery({
-    queryKey: [...templateKeys.detail(templateId, orgId), 'design', version],
+    queryKey: [...templateKeys.detail(templateId, orgId), 'design', version, ...hostKey],
     queryFn: ({ signal }) =>
       api.get(`/api/v1/templates/${templateId}/versions/${version}`, TemplateVersionDetailSchema, {
         query: { orgId },
@@ -61,10 +62,20 @@ export function useDesignCheck(
   asNew?: { orgId: string; name: string },
 ) {
   const { orgId, api } = useDesignerHost();
+  const hostKey = useHostKey();
   const settled = useDebounced(doc, 450);
   const sig = useMemo(() => `${signature(settled)}|${previewCount ?? ''}`, [settled, previewCount]);
   const query = useQuery({
-    queryKey: ['admin', 'templates', 'design-check', templateId, orgId, asNew ?? null, sig],
+    queryKey: [
+      'admin',
+      'templates',
+      'design-check',
+      templateId,
+      orgId,
+      asNew ?? null,
+      sig,
+      ...hostKey,
+    ],
     queryFn: ({ signal }) =>
       asNew
         ? api.post(
@@ -94,8 +105,9 @@ export function useDesignCheck(
 /** What a goal change does to the template's live cards. */
 export function useStampsImpact(templateId: string, goal: number, enabled: boolean) {
   const { orgId, api } = useDesignerHost();
+  const hostKey = useHostKey();
   return useQuery({
-    queryKey: ['admin', 'templates', 'stamps-impact', templateId, orgId, goal],
+    queryKey: ['admin', 'templates', 'stamps-impact', templateId, orgId, goal, ...hostKey],
     queryFn: ({ signal }) =>
       api.get(`/api/v1/templates/${templateId}/stamps-impact`, StampsImpactSchema, {
         query: { goal, orgId },

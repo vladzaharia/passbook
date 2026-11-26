@@ -2,30 +2,39 @@ import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { AccessGrant, AccessPlan, ValidationIssue } from '@/passkit/types.ts';
 import { ZoneKeySchema } from '@/shared/contracts/scan-access.ts';
+import { type ToolScope, useToolScope } from '../../../../lib/tool-api.tsx';
 import { Button, Combobox, IconButton, Input, SwitchRow, WeekGrid } from '../../../../ui/index.ts';
-import { useZones } from '../../../scanning/zones-query.ts';
+import { usePinnedZones, useZones } from '../../../scanning/zones-query.ts';
 import { useDesigner } from '../context.tsx';
-import { useDesignerHost } from '../host.tsx';
+import { PlaceLink } from '../host.tsx';
 import { dayErrors } from './issues.ts';
 
 const ALL = '*';
 const isAll = (g: AccessGrant) => g.zone === ALL;
 const keyOf = (g: AccessGrant): string | null => (typeof g.zone === 'string' ? g.zone : null);
 
+type Props = { plan: AccessPlan; issues: readonly ValidationIssue[] };
+type Zones = ReturnType<typeof useZones>;
+
+function AdminZoneGrants(props: Props) {
+  return <ZoneGrantsView {...props} zones={useZones()} />;
+}
+
+function PinnedZoneGrants({ scope, ...props }: Props & { scope: ToolScope }) {
+  return <ZoneGrantsView {...props} zones={usePinnedZones(scope)} />;
+}
+
 /**
  * Who a plan lets in where: every zone, or the zones picked, each optionally with hours of its
- * own inside the plan's.
+ * own inside the plan's. Zones come from the host's pinned org and client, else admin's URL scope.
  */
-export function ZoneGrants({
-  plan,
-  issues,
-}: {
-  plan: AccessPlan;
-  issues: readonly ValidationIssue[];
-}) {
+export function ZoneGrants(props: Props) {
+  const scope = useToolScope();
+  return scope ? <PinnedZoneGrants {...props} scope={scope} /> : <AdminZoneGrants {...props} />;
+}
+
+function ZoneGrantsView({ plan, issues, zones }: Props & { zones: Zones }) {
   const { edit } = useDesigner();
-  const { Link } = useDesignerHost();
-  const zones = useZones();
   const [typed, setTyped] = useState('');
   const list = zones.data?.items ?? [];
   const known = new Set(list.map((z) => z.key));
@@ -85,9 +94,9 @@ export function ZoneGrants({
                   {key && zones.isSuccess && !known.has(key) ? (
                     <p className="text-xs text-warning">
                       {key} isn&apos;t a zone yet.{' '}
-                      <Link place={{ to: 'zones' }} className="underline">
+                      <PlaceLink place={{ to: 'zones' }} className="underline">
                         Create zone
-                      </Link>
+                      </PlaceLink>
                     </p>
                   ) : null}
                   <SwitchRow

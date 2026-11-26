@@ -1,13 +1,14 @@
 import { Minus, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useToolApi } from '../../../lib/tool-api.tsx';
 import { Badge, Button, Callout, IconButton, SwitchRow, toast } from '../../../ui/index.ts';
 import { ImageSlotRow } from '../../passes/detail/image-slot-row.tsx';
 import '../../passes/passes.css';
 import { MAX_ASSET_BYTES, TOO_BIG } from '../../passes/png.ts';
+import { useLoadedUrl } from './assets.ts';
 import { fetchBlueprintArt } from './blueprint-art.ts';
 import { useDesigner } from './context.tsx';
 import { PickEdit } from './controls.tsx';
+import { useDesignerHost } from './host.tsx';
 import { previewAssetMap } from './images.ts';
 import { placeStampArt } from './stamp-art.ts';
 import { StampGrid } from './stamp-grid.tsx';
@@ -28,7 +29,9 @@ function ArtDrop({ slot }: { slot: (typeof ART_SLOTS)[number] }) {
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
   const current = doc.assets.find((a) => a.name === slot.file);
-  const url = current ? previewAssetMap([current], assetBase)[current.name] : undefined;
+  const url = useLoadedUrl(
+    current ? previewAssetMap([current], assetBase)[current.name] : undefined,
+  );
   const ground =
     typeof doc.passJson.backgroundColor === 'string' ? doc.passJson.backgroundColor : undefined;
   async function take(file: File) {
@@ -104,14 +107,14 @@ function GoalStepper({ goal }: { goal: number }) {
 
 export function StampsSection() {
   const { doc, edit, stamps, readOnly, orgId } = useDesigner();
-  const api = useToolApi();
+  const host = useDesignerHost();
   const view = readStamps(doc);
   const [busy, setBusy] = useState(false);
 
   async function loadArt(add: boolean) {
     setBusy(true);
     try {
-      const art = await fetchBlueprintArt(api, orgId);
+      const art = await fetchBlueprintArt(host, orgId);
       if (add) edit({ op: 'stamps-add', art });
       else
         for (const { slot } of ART_SLOTS)

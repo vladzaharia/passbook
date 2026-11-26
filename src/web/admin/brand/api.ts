@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/wallet-providers.ts';
 import { api } from '@/web/lib/api.ts';
 import { isApiError } from '@/web/lib/errors.ts';
-import { useToolApi, useToolMode } from '@/web/lib/tool-api.tsx';
+import { useToolApi, useToolKey, useToolMode } from '@/web/lib/tool-api.tsx';
 import { orgKeys } from '../orgs/queries.ts';
 
 const base = (orgId: string) => `/api/v1/orgs/${encodeURIComponent(orgId)}`;
@@ -41,9 +41,10 @@ export const stageBrandAsset = (orgId: string, body: z.input<typeof StageBrandAs
 export function usePassSetup(orgId: string, enabled = true) {
   const client = useToolApi();
   const mode = useToolMode();
+  const toolKey = useToolKey();
   return useQuery({
     enabled,
-    queryKey: passSetupKey(orgId, mode),
+    queryKey: [...passSetupKey(orgId, mode), ...toolKey],
     queryFn: ({ signal }) =>
       client.get(`${base(orgId)}/pass-setup`, PassSetupSchema, signal ? { signal } : {}),
   });
@@ -84,9 +85,10 @@ export function useWebLogoUrl(orgId: string, enabled: boolean) {
 /** The mark holders see for the org (its choice, fitted to its plan); full until it loads. */
 export function useBrandMark(orgId: string | undefined) {
   const client = useToolApi();
+  const toolKey = useToolKey();
   return (
     useQuery({
-      queryKey: ['admin', 'brand', orgId],
+      queryKey: ['admin', 'brand', orgId, ...toolKey],
       queryFn: ({ signal }) =>
         client.get('/api/v1/brand', BrandKitSchema, { query: { orgId }, signal }),
       enabled: Boolean(orgId),

@@ -156,7 +156,7 @@ export function WalletsMode({
           </div>
         </div>
       </div>
-      {phone ? (
+      {phone && Link ? (
         <Button asChild variant="outline" className="justify-self-center">
           <Link place={{ to: 'template', templateId }}>Back to template</Link>
         </Button>

@@ -5,7 +5,7 @@ import type { ScanDisplayScope } from '@/passkit/template/scan-display/text.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
 import { ScanDisplayPreviewSchema } from '@/shared/contracts/scan-display-preview.ts';
-import { useToolApi } from '@/web/lib/tool-api.tsx';
+import { useToolApi, useToolScope } from '@/web/lib/tool-api.tsx';
 import type { DesignDoc } from '../model.ts';
 import { previewManifest, previewSecrets, safePreviewText } from './scan-preview-policy.ts';
 
@@ -20,6 +20,8 @@ export function useRealPreview(
   request: number,
 ) {
   const api = useToolApi();
+  // A pinned client is already in its mode and sends no mode header of its own.
+  const pinned = useToolScope() !== null;
   const key = JSON.stringify([orgId, templateId, mode, role, passId, request]);
   const [result, setResult] = useState<RealScope | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -37,7 +39,7 @@ export function useRealPreview(
     void api
       .get('/api/v1/scan-display/preview', ScanDisplayPreviewSchema, {
         query: { orgId, mode, templateId, passId, role },
-        headers: { [MODE_HEADER]: mode },
+        ...(pinned ? {} : { headers: { [MODE_HEADER]: mode } }),
         signal: controller.signal,
       })
       .then(({ scope }) => {
@@ -54,7 +56,7 @@ export function useRealPreview(
         }
       });
     return () => controller.abort();
-  }, [api, orgId, templateId, mode, role, passId, key]);
+  }, [api, pinned, orgId, templateId, mode, role, passId, key]);
   // The key check is synchronous: a render for another role/pass/org/mode can never paint an old response.
   return {
     scope: result?.key === key && passId && orgId ? result.scope : null,

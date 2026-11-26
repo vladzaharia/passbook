@@ -31,7 +31,7 @@ describe('tool scope', () => {
   it('pins a host client, mode and org whatever the switch says', () => {
     setMode('live');
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <ToolScopeProvider api={token} mode="test" orgId="org-wb">
+      <ToolScopeProvider api={token} client="workbench:org-wb" mode="test" orgId="org-wb">
         {children}
       </ToolScopeProvider>
     );

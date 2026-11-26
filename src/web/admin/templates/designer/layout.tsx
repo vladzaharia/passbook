@@ -31,9 +31,11 @@ export function DesignerLayout({
         <Callout tone="info" title={previewOnPhone ? 'Preview only' : 'Use a larger screen'}>
           The designer needs a tablet or desktop screen.
         </Callout>
-        <Button asChild variant="outline" className="justify-self-center">
-          <Link place={{ to: 'template', templateId }}>Back to template</Link>
-        </Button>
+        {Link ? (
+          <Button asChild variant="outline" className="justify-self-center">
+            <Link place={{ to: 'template', templateId }}>Back to template</Link>
+          </Button>
+        ) : null}
         {previewOnPhone ? preview : null}
       </div>
     );

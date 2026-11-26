@@ -12,6 +12,8 @@ export type ToolApi = Pick<
 /** What a host pins for the tools under it. */
 export interface ToolScope {
   api: ToolApi;
+  /** Which client answers, such as `workbench:<orgId>`: cached answers never cross clients. */
+  client: string;
   /** The mode every call is in (keys and mode-scoped reads follow it). */
   mode: Mode;
   /** The organization the host acts in. */
@@ -25,12 +27,13 @@ const ToolScopeContext = createContext<ToolScope | null>(null);
  * provider, tools use the session client, the admin mode switch and the URL's organization.
  */
 export function ToolScopeProvider({
-  api: client,
+  api: tool,
+  client,
   mode,
   orgId,
   children,
 }: ToolScope & { children: ReactNode }) {
-  const value = useMemo(() => ({ api: client, mode, orgId }), [client, mode, orgId]);
+  const value = useMemo(() => ({ api: tool, client, mode, orgId }), [tool, client, mode, orgId]);
   return <ToolScopeContext.Provider value={value}>{children}</ToolScopeContext.Provider>;
 }
 
@@ -47,4 +50,15 @@ export function useToolMode(): Mode {
   const pinned = useContext(ToolScopeContext)?.mode;
   const switched = useMode();
   return pinned ?? switched;
+}
+
+const ADMIN_KEY: readonly string[] = [];
+
+/**
+ * Appended to every tool query key: the pinned client and mode. Admin's keys stay as they are
+ * (its pages write them exactly); a pinned host's keys are longer, so the two never share an entry.
+ */
+export function useToolKey(): readonly string[] {
+  const pinned = useContext(ToolScopeContext);
+  return useMemo(() => (pinned ? [pinned.client, pinned.mode] : ADMIN_KEY), [pinned]);
 }
