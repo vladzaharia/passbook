@@ -150,7 +150,11 @@ export async function setupRun(
     // Reached only after a sync was seen: the copy may simply not have arrived yet.
     const copying = key === 'scim_mirror' && !item.reason?.startsWith('after:');
     if (item.status === 'blocked' && !copying) throw blockError(item);
-    if (item.reason?.startsWith('after:')) {
+    // The token is minted for the connection: a connection that is blocked gets none.
+    const behind =
+      item.reason?.startsWith('after:') ||
+      (key === 'scim_token' && itemOf(view, 'scim_provider').status === 'blocked');
+    if (behind) {
       ids[key] = 'after';
       await step.skip();
       continue;
@@ -166,6 +170,8 @@ export async function setupRun(
     if (!copying && !waited) {
       try {
         await act(key);
+        // The push may land after this run resumes: the request is what changed, so it is what is recorded.
+        if (key === 'scim_sync') await audit(key, 'requested');
       } catch (error) {
         // The logo is a nicety: its failure does not stop the items after it.
         if (key !== 'client_logo' || !(error instanceof AppError)) throw error;
@@ -182,7 +188,7 @@ export async function setupRun(
       await pause(ctx, op, progress, lease, key, key === 'scim_sync' ? pushMissing : mirrorEmpty);
       return;
     }
-    if (key !== 'scim_mirror') await audit(key, 'changed');
+    if (key !== 'scim_mirror' && key !== 'scim_sync') await audit(key, 'changed');
     ids[key] = 'changed';
     await step.done();
   }

@@ -63,7 +63,8 @@ register(
     const operation = await startSetup(
       serviceContext(c),
       auth,
-      c.req.valid('json'),
+      // An empty body skips validation: parse again so the default stays a dry run.
+      StartSetupSchema.parse(c.req.valid('json') ?? {}),
       idempotencyKeyHeader(c.req.header('idempotency-key')),
     );
     c.header('location', `/api/v1/operations/${operation.id}`);
@@ -92,7 +93,7 @@ register(
     const operation = await startRotate(
       serviceContext(c),
       auth,
-      c.req.valid('json').dryRun,
+      RotateScimSchema.parse(c.req.valid('json') ?? {}).dryRun,
       idempotencyKeyHeader(c.req.header('idempotency-key')),
     );
     c.header('location', `/api/v1/operations/${operation.id}`);

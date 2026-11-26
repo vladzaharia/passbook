@@ -17,7 +17,12 @@ const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ct
     );
   if (op.error?.code === 'IDP_NOT_WANTED')
     throw new AppError('IDP_NOT_WANTED', 409, 'Nothing wants this role now.');
-  if (caller.kind !== 'session' || !caller.roles.includes('admin') || caller.amr !== 'oidc')
+  if (
+    caller.kind !== 'session' ||
+    caller.workbench ||
+    !caller.roles.includes('admin') ||
+    caller.amr !== 'oidc'
+  )
     throw new ForbiddenError(
       'Sign in with Polaris ID as a platform admin.',
       'IDP_SIGN_IN_REQUIRED',

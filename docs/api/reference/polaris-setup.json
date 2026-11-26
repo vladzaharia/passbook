@@ -1,0 +1,138 @@
+{
+  "polaris-setup.getPlatformIdpSetup": {
+    "response": {
+      "mode": "live",
+      "items": [
+        {
+          "key": "binding",
+          "status": "done",
+          "reason": "Unexpected role changes in Polaris ID.",
+          "owner": false,
+          "counts": {
+            "healthy": 30
+          },
+          "rows": [
+            {
+              "key": "tier",
+              "state": "placed"
+            }
+          ],
+          "note": "Pilot pricing through March."
+        }
+      ]
+    }
+  },
+  "polaris-setup.postPlatformIdpSetup": {
+    "request": {
+      "dryRun": false,
+      "items": ["groups"]
+    },
+    "response": {
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-2825c52dc1d1",
+        "kind": "kind",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-445121678a69"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        "createdAt": 1794362400000,
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
+    }
+  },
+  "polaris-setup.postPlatformIdpScimTokenRotate": {
+    "request": {
+      "dryRun": false
+    },
+    "response": {
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-f267abbe9cd2",
+        "kind": "kind",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-48e80ba335ae"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        "createdAt": 1794362400000,
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
+    }
+  }
+}
