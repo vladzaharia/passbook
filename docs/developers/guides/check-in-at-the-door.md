@@ -57,6 +57,10 @@ See the [terminal reference](/developers/reference/terminal).
 | [422 VALIDATION](/developers/errors/VALIDATION) | `idempotencyKey` is not a UUID v7. | Set the version digit to 7. |
 | [404 SCAN_NOT_FOUND](/developers/errors/SCAN_NOT_FOUND) | The scan is not an admit of this key. | Undo the `scanId` of the admit. |
 
+## Sign out
+
+`POST /scan/sign-out` with a pass id marks the person out of every tracked place and collects a lent tag (`tag`: `returned`, or `not_returned` to report it lost). Send `read` instead of `passId` to tap the lent tag. The same `idempotencyKey` repeats the first answer. A terminal that is in no scanning session, or whose session has no zones, marks nobody out: the answer counts those places in `stillInside`.
+
 ## Result
 
 The admit answered `ok`, and the second scan answered `already_done`. After the undo the pass admits again.

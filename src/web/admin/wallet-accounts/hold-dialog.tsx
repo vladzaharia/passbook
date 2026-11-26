@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PlatformWalletEnrolment } from '@/shared/contracts/wallet-providers.ts';
+import { holdConfirm } from '@/web/lib/confirms-wallet.ts';
 import { Button, Dialog, DialogContent, FormField, Textarea, toast } from '@/web/ui/index.ts';
 import { PROVIDER_NAME, safeError } from './copy.ts';
 import { useWalletActions } from './queries.ts';
@@ -45,18 +46,21 @@ export function HoldDialog({
       setBusy(false);
     }
   }
+  const copy = holdConfirm(
+    enrolment ? `${enrolment.orgName} · ${PROVIDER_NAME[enrolment.provider]}` : '',
+  );
   return (
     <Dialog open={enrolment !== undefined} onOpenChange={(o) => !o && !busy && close()}>
       <DialogContent
-        title={`Hold ${enrolment ? `${enrolment.orgName} · ${PROVIDER_NAME[enrolment.provider]}` : ''}?`}
-        description="Turns it Off. The organization cannot turn it on until you release it."
+        title={copy.title}
+        description={copy.description}
         footer={
           <>
             <Button variant="outline" disabled={busy} onClick={close}>
               Cancel
             </Button>
-            <Button type="submit" form={FORM_ID} loading={busy}>
-              Hold
+            <Button type="submit" form={FORM_ID} variant="danger" loading={busy}>
+              {copy.confirmLabel}
             </Button>
           </>
         }

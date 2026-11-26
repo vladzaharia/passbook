@@ -23,6 +23,8 @@ export interface SelectProps {
   id?: string;
   name?: string;
   disabled?: boolean;
+  /** A list of ten or so options: opens to 24rem before it scrolls, never past the window. */
+  tall?: boolean;
   className?: string;
   'aria-label'?: string;
   'aria-describedby'?: string;
@@ -41,6 +43,7 @@ export function Select({
   id,
   name,
   disabled,
+  tall,
   ...rest
 }: SelectProps) {
   // An accessible name must contain the visible value (WCAG 2.5.3 label in name).
@@ -83,7 +86,12 @@ export function Select({
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="wl-pop origin-(--radix-select-content-transform-origin) z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] min-w-(--radix-select-trigger-width) overflow-auto overscroll-contain rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2"
+          className={cn(
+            'wl-pop origin-(--radix-select-content-transform-origin) z-50 min-w-(--radix-select-trigger-width) overflow-auto overscroll-contain rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
+            tall
+              ? 'max-h-[min(24rem,var(--radix-select-content-available-height))]'
+              : 'max-h-[min(18rem,var(--radix-select-content-available-height))]',
+          )}
         >
           <SelectPrimitive.Viewport>
             {options.map((o) => (

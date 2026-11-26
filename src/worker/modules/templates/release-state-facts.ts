@@ -26,7 +26,7 @@ import {
   listCandidates,
   type ReleaseRow,
 } from './repo-releases.ts';
-import { countEligibleReviewers, lastReviewerRemoval } from './repo-sole-reviewer.ts';
+import { countEligibleReviewers } from './repo-sole-reviewer.ts';
 import { isPlatformAdmin } from './service-access.ts';
 
 /** The member acting for `capability` here, or null when the caller lacks it. */
@@ -94,7 +94,7 @@ export async function loadReleaseFacts(
 ): Promise<ReleaseFacts> {
   const db = ctx.env.DB;
   const head = (mode: Mode) => getActiveRelease(db, { templateId, orgId, mode, provider: 'apple' });
-  const [author, review, publish, live, test, reviews, count, lastRemovedAt] = await Promise.all([
+  const [author, review, publish, live, test, reviews, count] = await Promise.all([
     actorFor(ctx, auth, orgId, 'templates:author'),
     actorFor(ctx, auth, orgId, 'templates:review'),
     actorFor(ctx, auth, orgId, 'templates:publish'),
@@ -102,7 +102,6 @@ export async function loadReleaseFacts(
     head('test'),
     liveReviews(ctx, templateId, orgId),
     countEligibleReviewers(db, orgId),
-    lastReviewerRemoval(db, orgId),
   ]);
   const userId = author ?? review ?? publish ?? (auth?.kind === 'session' ? auth.userId : null);
   const names = await userNames(
@@ -115,7 +114,6 @@ export async function loadReleaseFacts(
   const headFact = (row: ReleaseRow | null): ReleaseHeadFact | null =>
     row && { version: row.version, at: row.createdAt, byName: name(row.createdBy) };
   return {
-    now: ctx.clock.now(),
     versions: versions.map((v) => ({
       version: v.version,
       at: v.createdAt,
@@ -133,7 +131,6 @@ export async function loadReleaseFacts(
     reviewers: {
       count,
       includesCaller: userId !== null && (await isActiveReviewer(db, orgId, userId)),
-      lastRemovedAt,
     },
   };
 }

@@ -11,6 +11,7 @@ import {
   listPlatformAudit,
   listTenantAudit,
   recordAudit,
+  tenantAuditReader,
 } from './service.ts';
 
 export const auditRoutes = createRouter();
@@ -85,8 +86,9 @@ register(
     const query = c.req.valid('query');
     const byKey = auth.kind === 'api_key';
     if (byKey) assertKeyWindow(ctx, { ...query, limit: 1, cursor: undefined }, false);
+    const reader = await tenantAuditReader(ctx, auth, query);
     const out = await auditCsv(
-      (cursor, limit) => listTenantAudit(ctx, auth, { ...query, cursor, limit }),
+      (cursor, limit) => listTenantAudit(ctx, auth, { ...query, cursor, limit }, reader),
       () =>
         enforceExportLimit(
           ctx,

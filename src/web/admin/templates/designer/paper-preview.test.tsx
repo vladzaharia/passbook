@@ -72,7 +72,7 @@ describe('designer Paper tab', () => {
     expect(container.textContent).not.toContain('SECRET-SCAN-CODE');
 
     await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
-    await user.click(await screen.findByRole('option', { name: 'Card, landscape' }));
+    await user.click(await screen.findByRole('option', { name: /^Card, landscape/ }));
     await waitFor(() => expect(container.querySelector('.pp-cr80')).not.toBeNull());
   });
 
@@ -136,10 +136,10 @@ describe('designer Paper tab', () => {
     expect(screen.queryByRole('radio', { name: 'Code 128' })).toBeNull();
     expect(screen.getByText('Code 128 does not fit this size.')).toBeInTheDocument();
     await user.click(await screen.findByRole('combobox', { name: /Holder sheet/ }));
-    await user.click(await screen.findByRole('option', { name: 'A4' }));
+    await user.click(await screen.findByRole('option', { name: /^A4/ }));
     expect(onPaper).toHaveBeenLastCalledWith({ sheet: 'a4' });
     await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
-    await user.click(await screen.findByRole('option', { name: 'Boarding pass' }));
+    await user.click(await screen.findByRole('option', { name: /^Boarding pass/ }));
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'atb' });
   });
 
@@ -208,7 +208,7 @@ describe('designer Paper tab', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Holders can print' }));
     expect(onPaper).toHaveBeenLastCalledWith({ holder: false, effectiveKind: 'admission' });
     await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
-    await user.click(await screen.findByRole('option', { name: 'Letter' }));
+    await user.click(await screen.findByRole('option', { name: /^Letter/ }));
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
     await user.click(screen.getByRole('radio', { name: 'Mono' }));
     expect(onPaper).toHaveBeenLastCalledWith({ ink: 'mono' });

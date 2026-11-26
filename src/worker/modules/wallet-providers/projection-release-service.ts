@@ -49,8 +49,9 @@ export async function publish(
   if (
     approval.candidateId !== candidate.id ||
     approval.candidateHash !== candidate.candidateHash ||
-    approval.reviewerId === candidate.authorId ||
-    (approval.reviewerId === candidate.versionAuthorId && !isSystemAuthored(candidate))
+    (approval.kind !== 'sole' &&
+      (approval.reviewerId === candidate.authorId ||
+        (approval.reviewerId === candidate.versionAuthorId && !isSystemAuthored(candidate))))
   )
     throw changed();
   const db = ctx.env.DB;

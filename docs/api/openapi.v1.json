@@ -6974,6 +6974,9 @@
           "release": {
             "type": "boolean"
           },
+          "alone": {
+            "type": "boolean"
+          },
           "note": {
             "type": "string",
             "minLength": 1,
@@ -60101,6 +60104,8 @@
                 "scan-setup:read",
                 "scanning:admin",
                 "nfc:keys",
+                "nfc:read",
+                "nfc:write",
                 "api-keys:write",
                 "audit:read",
                 "members:read",
@@ -62473,6 +62478,126 @@
           "templates"
         ]
       },
+      "TerminalSignOutEverywhereParams": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "The pass to sign out. Send this or `read`, not both."
+          },
+          "read": {
+            "type": "object",
+            "properties": {
+              "uid": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$"
+              },
+              "uidRandom": {
+                "type": "boolean"
+              },
+              "tech": {
+                "type": "string",
+                "enum": [
+                  "a",
+                  "b",
+                  "isodep",
+                  "unknown"
+                ]
+              },
+              "ndef": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "U",
+                      "T"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "webnfc"
+                ]
+              }
+            },
+            "required": [
+              "tech",
+              "source"
+            ],
+            "additionalProperties": false,
+            "description": "The lent tag, tapped instead of naming the pass. Its binding names the pass; a tag that is not lent is 409 TAG_NOT_LENT."
+          },
+          "tag": {
+            "type": "string",
+            "enum": [
+              "returned",
+              "not_returned",
+              "none"
+            ],
+            "description": "What happened to the pass's lent tag. Default `none` with `passId` (the tag stays lent), `returned` with `read`."
+          }
+        },
+        "required": [
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      },
+      "TerminalSignOutEverywhereResponse": {
+        "type": "object",
+        "properties": {
+          "passId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "stayMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "stillInside": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Places the person is still inside that this device could not mark out."
+          },
+          "tag": {
+            "type": "string",
+            "enum": [
+              "returned",
+              "not_returned",
+              "none"
+            ],
+            "description": "What happened to the lent tag; `none` when the pass had none to collect."
+          }
+        },
+        "required": [
+          "passId",
+          "stayMs",
+          "stillInside",
+          "tag"
+        ]
+      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -62883,6 +63008,9 @@
               "pin": {
                 "type": "string",
                 "pattern": "^\\d{6}$"
+              },
+              "alone": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -89268,7 +89396,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -89412,7 +89539,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -89556,7 +89682,6 @@
           "SAMSUNG_UNAUTHENTICATED",
           "SAMSUNG_UNAVAILABLE",
           "TEMPLATE_MODE_MISMATCH",
-          "TEMPLATE_SELF_APPROVAL",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -132941,6 +133066,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -133064,7 +133190,7 @@
     },
     "/api/v1/scan/sign-out": {
       "post": {
-        "summary": "Sign someone out: out of every place they are in",
+        "summary": "Sign someone out: out of every place, and collect a lent tag",
         "tags": [
           "scan"
         ],
@@ -133073,32 +133199,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "idempotencyKey": {
-                    "type": "string",
-                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
-                  },
-                  "passId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  },
-                  "tag": {
-                    "type": "string",
-                    "enum": [
-                      "returned",
-                      "not_returned",
-                      "none"
-                    ],
-                    "default": "none"
-                  }
-                },
-                "required": [
-                  "idempotencyKey",
-                  "passId"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/TerminalSignOutEverywhereParams"
               },
               "example": {
                 "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
@@ -133114,38 +133215,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "passId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "stayMs": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "tag": {
-                      "type": "string",
-                      "enum": [
-                        "returned",
-                        "not_returned",
-                        "none"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "passId",
-                    "stayMs",
-                    "tag"
-                  ]
+                  "$ref": "#/components/schemas/TerminalSignOutEverywhereResponse"
                 },
                 "example": {
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "stayMs": 1290,
+                  "stillInside": 0,
                   "tag": "returned"
                 }
               }
@@ -133165,18 +133240,28 @@
         "operationId": "scan.postScanSignOut",
         "x-sdk": {
           "resource": "terminal",
-          "method": "signOutEverywhere",
-          "sdk": false,
-          "reason": "Scanner device protocol; needs a paired scanner session."
+          "method": "signOutEverywhere"
         },
         "security": [
           {
-            "scanner": []
+            "apiKey": [
+              "scans:write"
+            ]
+          },
+          {
+            "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
+          "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_INSIDE",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -133188,6 +133273,13 @@
           "SCAN_PASS_CHANGED",
           "SCAN_STAFF_CHANGED",
           "SCAN_TOO_MANY_OVERRIDES",
+          "TAG_CHECK_FAILED",
+          "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
+          "TAG_SUN_RATE_LIMITED",
+          "TAG_TYPE_NOT_FOUND",
+          "TAG_UID_RANDOM",
+          "TAG_UNREADABLE",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -135762,6 +135854,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -138100,6 +138193,7 @@
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
+          "PIN_ALONE_NOT_SELF",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
@@ -146707,6 +146801,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -146823,6 +146918,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -146959,6 +147055,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -147075,6 +147172,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -148568,6 +148666,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -148684,6 +148783,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -148820,6 +148920,7 @@
           "PASS_NOT_FOUND",
           "PHOTO_PASS_INACTIVE",
           "PHOTO_ROLE",
+          "PIN_ALONE_NOT_SELF",
           "PIN_GENERATION_FAILED",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
@@ -148936,6 +149037,7 @@
           "TAG_HOLDER_CHANGED",
           "TAG_LIMIT",
           "TAG_NOT_FOUND",
+          "TAG_NOT_LENT",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_NOT_ACCEPTED",
           "TAG_POOL_UNSUPPORTED",
@@ -151016,6 +151118,16 @@
     },
     "/api/v1/nfc/passes/{passId}/tags": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Tags that open a pass",
         "tags": [
           "nfc-tags"
@@ -151110,15 +151222,13 @@
           "resource": "nfc.tags",
           "method": "listForPass"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -151129,6 +151239,12 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "x-feature": {
           "key": "nfc",
           "atLeast": "basic"
@@ -151227,11 +151343,6 @@
           "resource": "nfc.tags",
           "method": "rebind"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -151267,6 +151378,16 @@
     },
     "/api/v1/nfc/bindings/{bindingId}": {
       "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Remove a tag from its pass or person",
         "tags": [
           "nfc-tags"
@@ -151347,21 +151468,20 @@
           "resource": "nfc.bindings",
           "method": "delete"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TAG_KEY_LIMITED",
           "TAG_NOT_FOUND",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -151369,6 +151489,12 @@
         ]
       },
       "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "x-feature": {
           "key": "nfc",
           "atLeast": "basic"
@@ -151467,11 +151593,6 @@
           "resource": "nfc.bindings",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -151506,6 +151627,16 @@
     },
     "/api/v1/nfc/tags": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List tags",
         "tags": [
           "nfc-tags"
@@ -151517,7 +151648,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -151657,19 +151788,20 @@
           "resource": "nfc.tags",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "ORG_TEST_ONLY",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "TAG_KEY_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -151677,6 +151809,16 @@
     },
     "/api/v1/nfc/tags/{id}": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Get a tag",
         "tags": [
           "nfc-tags"
@@ -151757,15 +151899,13 @@
           "resource": "nfc.tags",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -151776,6 +151916,12 @@
         ]
       },
       "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Rename a tag",
         "tags": [
           "nfc-tags"
@@ -151870,11 +152016,6 @@
           "resource": "nfc.tags",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -151895,6 +152036,12 @@
     },
     "/api/v1/nfc/tags/{id}/retire": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Retire a tag",
         "tags": [
           "nfc-tags"
@@ -151975,11 +152122,6 @@
           "resource": "nfc.tags",
           "method": "retire"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -151990,22 +152132,8 @@
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
-          "TAGS_OFF",
-          "TAG_ASSURANCE_LOW",
-          "TAG_HOLDER_CHANGED",
-          "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
-          "TAG_PASS_EXPIRED",
-          "TAG_TYPED_OFF",
-          "TAG_TYPE_ARCHIVED",
-          "TAG_TYPE_CHOOSE",
-          "TAG_TYPE_LIMIT",
-          "TAG_TYPE_MISMATCH",
           "TAG_TYPE_NOT_FOUND",
-          "TAG_TYPE_SCOPE",
-          "TAG_TYPE_SET",
-          "TAG_TYPE_SYSTEM",
-          "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -152013,6 +152141,16 @@
     },
     "/api/v1/nfc/tags/{id}/restore": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Restore a retired or lost tag",
         "tags": [
           "nfc-tags"
@@ -152093,16 +152231,14 @@
           "resource": "nfc.tags",
           "method": "restore"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -152131,6 +152267,16 @@
     },
     "/api/v1/nfc/tags/{id}/lost": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Report a tag lost",
         "tags": [
           "nfc-tags"
@@ -152211,16 +152357,14 @@
           "resource": "nfc.tags",
           "method": "reportLost"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -152249,6 +152393,12 @@
     },
     "/api/v1/nfc/scanners": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Scanners that can take a tag request",
         "tags": [
           "nfc-tags"
@@ -152317,11 +152467,6 @@
           "resource": "nfc.enrollments",
           "method": "listScanners"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -152337,6 +152482,12 @@
     },
     "/api/v1/nfc/passes/{passId}/enrollments": {
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "x-feature": {
           "key": "nfc",
           "atLeast": "basic"
@@ -152429,11 +152580,6 @@
           "resource": "nfc.enrollments",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -152461,6 +152607,12 @@
     },
     "/api/v1/nfc/passes/{passId}/enrollments/{id}": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "A tag request",
         "tags": [
           "nfc-tags"
@@ -152545,11 +152697,6 @@
           "resource": "nfc.enrollments",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
@@ -152565,6 +152712,12 @@
         ]
       },
       "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Cancel a tag request",
         "tags": [
           "nfc-tags"
@@ -152649,11 +152802,6 @@
           "resource": "nfc.enrollments",
           "method": "cancel"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -152673,6 +152821,16 @@
     },
     "/api/v1/nfc/passes/{passId}/tags/assign": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "x-feature": {
           "key": "nfc",
           "atLeast": "basic"
@@ -152773,16 +152931,14 @@
           "resource": "nfc.tags",
           "method": "assign"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -152793,6 +152949,7 @@
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
           "TAG_ID_INVALID",
+          "TAG_KEY_LIMITED",
           "TAG_NOT_FOUND",
           "TAG_NO_ACCOUNT",
           "TAG_PASS_EXPIRED",
@@ -152813,6 +152970,16 @@
     },
     "/api/v1/nfc/tags/{id}/history": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Every binding a tag has had",
         "tags": [
           "nfc-tags"
@@ -152894,15 +153061,13 @@
           "resource": "nfc.tags",
           "method": "listHistory"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -152915,6 +153080,12 @@
     },
     "/api/v1/nfc/users/{userId}/tags": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Tags that open a user's passes",
         "tags": [
           "nfc-tags"
@@ -153022,11 +153193,6 @@
           "resource": "nfc.tags",
           "method": "listForUser"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",

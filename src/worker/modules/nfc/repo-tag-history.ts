@@ -25,7 +25,8 @@ interface Raw {
 const SELECT = `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, b.source, b.bound_at, b.ended_at, b.end_cause,
     p.display_title AS pass_title, hu.name AS holder_name,
     CASE b.bound_by_type
-      WHEN 'user' THEN (SELECT u.name FROM users u WHERE u.id = b.bound_by)
+      WHEN 'user' THEN COALESCE((SELECT u.name FROM users u WHERE u.id = b.bound_by),
+        (SELECT k.name FROM api_keys k WHERE b.bound_by LIKE 'k:%' AND k.id = substr(b.bound_by, 3) AND k.org_id = t.org_id))
       WHEN 'staff' THEN (SELECT s.name FROM scan_staff s WHERE s.id = b.bound_by AND s.org_id = t.org_id)
       ELSE (SELECT s.name FROM scanners s WHERE s.id = b.bound_by AND s.org_id = t.org_id) END AS bound_by_name,
     (SELECT s.name FROM scanners s WHERE s.id = b.scanner_id AND s.org_id = t.org_id) AS scanner_name,

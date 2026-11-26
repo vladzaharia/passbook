@@ -1,10 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth, makeUser } from '../../../../test/helpers/index.ts';
+import { AuditQuerySchema } from '../../../shared/contracts/audit.ts';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import type { AuthContext } from '../../platform/auth.ts';
+import { first, run } from '../../platform/db.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { auditCsv } from './export.ts';
-import { recordAudit } from './service.ts';
+import { listTenantAudit, recordAudit, tenantAuditReader } from './service.ts';
 
 const fake = fakeAuth();
 let rk: RetentionKit;
@@ -65,6 +68,7 @@ async function setup(rows: number) {
     orgId: admin.orgId,
     otherId: other.orgId,
     admin: fake.user(admin.userId),
+    adminUserId: admin.userId,
     author: await member(admin.orgId, 'template_author'),
     outsider: fake.user(other.userId),
     root: fake.session({ userId: root.userId, roles: ['admin', 'user'] }),
@@ -87,6 +91,37 @@ describe('audit export', () => {
     expect(text).not.toContain('holder@example.test');
     expect(text).not.toContain('other.org');
   }, 60_000);
+
+  it('fails a later page when authority is lost mid-export, instead of ending the file short', async () => {
+    const p = await setup(3);
+    expect((await get(`/api/v1/audit?orgId=${p.orgId}`, p.admin)).status).toBe(200);
+    const row = await first<{ id_hash: string }>(
+      rk.kit.env.DB,
+      'SELECT id_hash FROM sessions WHERE user_id = ?',
+      [p.adminUserId],
+    );
+    const auth: AuthContext = {
+      kind: 'session',
+      userId: p.adminUserId,
+      sessionId: row?.id_hash ?? '',
+      roles: ['user'],
+      csrfSecret: 'x',
+      amr: 'oidc',
+      consoleUntil: null,
+      authTime: null,
+      mode: 'live',
+    };
+    const query = AuditQuerySchema.parse({ orgId: p.orgId });
+    const { ctx } = rk.kit;
+    const reader = await tenantAuditReader(ctx, auth, query);
+    const next = { ...query, cursor: '1' };
+    expect((await listTenantAudit(ctx, auth, next, reader)).items).toEqual([]);
+    await run(rk.kit.env.DB, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
+      rk.kit.clock.now(),
+      auth.sessionId,
+    ]);
+    await expect(listTenantAudit(ctx, auth, next, reader)).rejects.toBeInstanceOf(ForbiddenError);
+  });
 
   it('applies the list filters', async () => {
     const p = await setup(3);

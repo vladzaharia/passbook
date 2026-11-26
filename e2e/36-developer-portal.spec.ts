@@ -15,7 +15,7 @@ test.describe('portal routes', () => {
     const res = await page.goto('/developers/nope');
     expect(res?.status()).toBe(404);
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
-    await expect(page.locator('main').getByRole('link', { name: 'API reference' })).toBeVisible();
+    await expect(page.locator('main').getByRole('link', { name: 'Developers home' })).toBeVisible();
   });
 
   test('a file that does not exist keeps problem+json', async ({ request }) => {

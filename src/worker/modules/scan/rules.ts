@@ -55,6 +55,7 @@ export type PolicyRequest =
   | { kind: 'capacity_override' }
   | { kind: 'access_override' }
   | { kind: 'mark_out' }
+  | { kind: 'sign_out' }
   | { kind: 'undo'; scan: UndoTarget; now: number; undoWindowMinutes: number }
   | { kind: 'bundle' }
   | { kind: 'card' }
@@ -151,6 +152,9 @@ export function scanPolicy(
       return managerOnly();
     case 'mark_out':
       return !actor.terminal && ROLE_RANK[actor.role] >= ROLE_RANK.desk ? ALLOW : FORBIDDEN;
+    // A Desk terminal (a till key) may sign a person out; marking out alone stays with people.
+    case 'sign_out':
+      return ROLE_RANK[actor.role] >= ROLE_RANK.desk ? ALLOW : FORBIDDEN;
     case 'undo': {
       const { scan, now } = request;
       const own =

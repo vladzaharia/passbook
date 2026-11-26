@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { batch, stmt } from '../../platform/db.ts';
+import { approvalStandsSql } from './projection-system-authority.ts';
 import { samsungOperationKeysetSql } from './repo-callbacks.ts';
 
 export interface SamsungRetirementScope {
@@ -36,8 +37,7 @@ const retirementJoins = `FROM wallet_provider_instances i
   JOIN template_approvals approval ON approval.id = original.approval_id
     AND approval.candidate_id = candidate.id AND approval.candidate_hash = candidate.candidate_hash
     AND approval.credential_keyset_commitment = i.credential_keyset_commitment
-    AND approval.reviewer_id != candidate.author_id
-    AND (candidate.version_author_id IS NULL OR approval.reviewer_id != candidate.version_author_id)`;
+    AND ${approvalStandsSql('approval', 'candidate')}`;
 // Materialize the current authority and the historical proof separately. Joining all
 // of their predicates to an INSERT makes D1 exceed its expression-depth limit.
 const retirementCtes = `WITH retirement_base AS MATERIALIZED (
@@ -88,9 +88,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
         AND historical_candidate.credential_keyset_commitment = base.credential_keyset_commitment
         AND historical_approval.candidate_hash = historical_candidate.candidate_hash
         AND historical_approval.credential_keyset_commitment = base.credential_keyset_commitment
-        AND historical_approval.reviewer_id != historical_candidate.author_id
-        AND (historical_candidate.version_author_id IS NULL
-          OR historical_approval.reviewer_id != historical_candidate.version_author_id)
+        AND ${approvalStandsSql('historical_approval', 'historical_candidate')}
         AND EXISTS (SELECT 1 FROM wallet_provider_account_events historical_config
           JOIN wallet_provider_credentials historical_credential
             ON historical_credential.id = historical_config.credential_id
@@ -187,9 +185,7 @@ export async function putSamsungTombstone(
           AND historical_approval.candidate_id = historical_candidate.id
           AND historical_approval.candidate_hash = historical_candidate.candidate_hash
           AND historical_approval.credential_keyset_commitment = retirement.credential_keyset_commitment
-          AND historical_approval.reviewer_id != historical_candidate.author_id
-          AND (historical_candidate.version_author_id IS NULL
-            OR historical_approval.reviewer_id != historical_candidate.version_author_id)
+          AND ${approvalStandsSql('historical_approval', 'historical_candidate')}
         JOIN wallet_provider_account_events historical_config ON historical_config.account_id = retirement.account_id
           AND historical_config.org_id = retirement.org_id AND historical_config.mode = retirement.mode
           AND historical_config.provider = 'samsung' AND historical_config.kind = 'configure'

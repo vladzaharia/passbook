@@ -2,7 +2,7 @@ import type { TagScanner } from '../../../shared/contracts/nfc-tag-enrollments.t
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanHub } from '../scan/live.ts';
 import { enrollScanners, type ScannerFacts } from './repo-enrollments.ts';
-import type { TagAuthority } from './repo-tags-write.ts';
+import type { SessionTagAuthority } from './repo-tags-write.ts';
 
 function unavailable(f: ScannerFacts, online: boolean): TagScanner['unavailable'] {
   if (!online) return 'offline';
@@ -15,7 +15,7 @@ function unavailable(f: ScannerFacts, online: boolean): TagScanner['unavailable'
 
 async function connectedIds(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
   ids: string[],
 ): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
@@ -25,7 +25,7 @@ async function connectedIds(
 /** Scan-role devices of the org and mode, with what an admin needs to pick one. */
 export async function listEnrollScanners(
   ctx: ServiceContext,
-  a: TagAuthority,
+  a: SessionTagAuthority,
 ): Promise<TagScanner[]> {
   const now = ctx.clock.now();
   const facts = await enrollScanners(ctx.env.DB, a.orgId, a.mode, a.userId, now);

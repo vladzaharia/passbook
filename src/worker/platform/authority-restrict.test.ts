@@ -6,7 +6,13 @@ import { passRow } from './authority-checks.ts';
 import { jsonSet } from './authority-expr.ts';
 import { db, refusal } from './authority-ext-fixtures.ts';
 import { authorityPredicate, tenantFilter } from './authority-read.ts';
-import { columnOf, hasTemplateRef, partsOf, TEMPLATE_REFS } from './authority-restrict.ts';
+import {
+  CARRIED_BY_EDGE,
+  columnOf,
+  hasTemplateRef,
+  partsOf,
+  TEMPLATE_REFS,
+} from './authority-restrict.ts';
 import { visible, world } from './authority-restrict-fixtures.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import { all, first, run } from './db.ts';
@@ -457,13 +463,116 @@ describe('reads', () => {
   });
 });
 
+describe('tag bindings, carried by the pass they open', () => {
+  let n = 0;
+  async function seed(w: Awaited<ReturnType<typeof world>>) {
+    const tagId = `tg-${w.org.id}-${++n}`;
+    await run(
+      db,
+      `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, status, created_at)
+       VALUES (?, ?, 'live', ?, 'uid', '0000', 'active', 1)`,
+      [tagId, w.org.id, (++n).toString(16).padStart(64, '0')],
+    );
+    return tagId;
+  }
+  const bindingsOf = (tagId: string) =>
+    all<{ pass_id: string }>(db, 'SELECT pass_id FROM tag_bindings WHERE tag_id = ?', [tagId]);
+  async function bind(
+    w: Awaited<ReturnType<typeof world>>,
+    keyId: string,
+    tagId: string,
+    passId: string,
+  ) {
+    const g = grant(w.x.route, {
+      purpose: 'org_mode.nfc.tag.bind',
+      principal: w.principal(keyId),
+    });
+    g.insertJoined('tag_bindings', {
+      parents: { tag_id: tagId, pass_id: passId },
+      columns: [
+        'id',
+        'scope',
+        'user_id',
+        'source',
+        'bound_at',
+        'bound_by_type',
+        'bound_by',
+        'holder_generation',
+        'holder_owner',
+      ],
+      values: [`b-${tagId}-${passId}`, 'pass', null, 'admin', 1, 'user', `k:${keyId}`, 0, null],
+      returning: ['id'],
+    });
+    return refusal(g.commit());
+  }
+  async function unbind(
+    w: Awaited<ReturnType<typeof world>>,
+    keyId: string,
+    tagId: string,
+    via: 'pass_id' | 'tag_id',
+  ) {
+    const g = grant(w.x.route, {
+      purpose: 'org_mode.nfc.tag.unbind',
+      principal: w.principal(keyId),
+    });
+    g.joined('tag_bindings', {
+      via,
+      where: { tag_id: tagId, ended_at: null },
+      set: { ended_at: 2, ended_by_type: 'user', ended_by: 'k', end_cause: 'admin' },
+    });
+    return refusal(g.commit());
+  }
+
+  it('a limited key binds and unbinds a tag on a pass of its template and on no other', async () => {
+    const w = await world('tb-pass');
+    const key = await w.key({ templateIds: [w.a.id] });
+    const mine = await seed(w);
+    const theirs = await seed(w);
+    expect(await bind(w, key, mine, w.a.pass)).toBeNull();
+    expect(await bindingsOf(mine)).toHaveLength(1);
+    // The pass of another template: the statement matches no parent, so nothing is written.
+    expect(await bind(w, key, theirs, w.b.pass)).toBeNull();
+    expect(await bindingsOf(theirs)).toEqual([]);
+    expect(await unbind(w, key, mine, 'pass_id')).toBeNull();
+    expect(
+      await first(db, 'SELECT ended_at AS v FROM tag_bindings WHERE tag_id = ?', [mine]),
+    ).toEqual({ v: 2 });
+  });
+
+  it('cannot end a binding on a pass of another template, nor reach a binding by its tag', async () => {
+    const w = await world('tb-other');
+    const free = await w.key({});
+    const key = await w.key({ templateIds: [w.a.id] });
+    const theirs = await seed(w);
+    expect(await bind(w, free, theirs, w.b.pass)).toBeNull();
+    expect(await unbind(w, key, theirs, 'pass_id')).toBeNull();
+    expect(
+      await first(db, 'SELECT ended_at AS v FROM tag_bindings WHERE tag_id = ?', [theirs]),
+    ).toEqual({ v: null });
+    // A tag has no template: ending by the tag edge is refused to a limited key.
+    expect((await unbind(w, key, theirs, 'tag_id'))?.code).toBe('ACTOR_CHANGED');
+    expect(await unbind(w, free, theirs, 'tag_id')).toBeNull();
+  });
+
+  it('refuses a limited key every write to the tag row itself', async () => {
+    const w = await world('tb-tag');
+    const key = await w.key({ templateIds: [w.a.id] });
+    const tagId = await seed(w);
+    const g = grant(w.x.route, { purpose: 'org_mode.nfc.tag.lost', principal: w.principal(key) });
+    g.update('nfc_tags', { set: { lost_at: 5 }, where: { id: tagId } });
+    expect((await refusal(g.commit()))?.code).toBe('ACTOR_CHANGED');
+    expect(await first(db, 'SELECT lost_at AS v FROM nfc_tags WHERE id = ?', [tagId])).toEqual({
+      v: null,
+    });
+  });
+});
+
 describe('the corpus: every table with a template column is covered', () => {
   /** Guarded tables that carry a template or pass column and that a limited key is refused, with the reason. */
   const REFUSED: Record<string, string> = {
     connections: 'default_template_id configures a sync; a connection is not a template resource',
     bundles: 'a bundle holds passes of several templates',
     bundle_passes: 'reached through a bundle, which has no template',
-    tag_bindings: 'reached through an NFC tag, which has no template',
     nfc_tag_type_templates: 'reached through a tag type, which spans templates',
     scan_event_templates: 'reached through an event, which spans templates',
     scanner_templates: 'reached through a scanner, which spans templates',
@@ -494,7 +603,12 @@ describe('the corpus: every table with a template column is covered', () => {
       const columns = await columnsOf(table);
       const names = columns.some((c) => /^(template_id|template_ids|pass_id|endpoint_id)$/.test(c));
       const edgeParent = (GUARDED_TABLES[table]?.edges ?? []).some((e) => hasTemplateRef(e.parent));
-      if ((names || edgeParent) && !hasTemplateRef(table) && !(table in REFUSED))
+      if (
+        (names || edgeParent) &&
+        !hasTemplateRef(table) &&
+        !(table in REFUSED) &&
+        !(table in CARRIED_BY_EDGE)
+      )
         unexplained.push(table);
     }
     expect(unexplained).toEqual([]);

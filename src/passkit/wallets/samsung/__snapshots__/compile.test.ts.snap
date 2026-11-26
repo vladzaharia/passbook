@@ -227,7 +227,7 @@ Departs: 6/1/30, 8:00 AM
 Boards: 7:15 AM
 Terms: Be at the gate 30 minutes before departure.",
       "providerName": "PassBook",
-      "startDate": "1906550100000",
+      "startDate": "1906556400000",
       "title": "SFO",
     },
     "language": "en",
@@ -281,7 +281,7 @@ Where: Soho
 Name: Ana Rivera
 Terms: Please arrive on time. Show the code at the desk.",
       "providerName": "PassBook",
-      "startDate": "1921757400000",
+      "startDate": "1921761000000",
       "title": "2030-11-24T09:30:00-05:00",
     },
     "language": "en",
@@ -623,7 +623,7 @@ Wi-Fi: Luma Guest
 Wi-Fi password: lamplight
 Terms: This pass does not open your room. Show it at breakfast, the spa and the desk.",
       "providerName": "PassBook",
-      "startDate": "1921230000000",
+      "startDate": "1921273200000",
       "title": "Ana Rivera",
     },
     "language": "en",
@@ -1164,7 +1164,7 @@ Entrance: B
 Terms: Arrive within your slot. Show the code at the entrance.",
       "providerName": "PassBook",
       "reservationNumber": "SNAPSHOT-SCAN-CODE",
-      "startDate": "1921514400000",
+      "startDate": "1921518000000",
       "title": "Ocean Light",
     },
     "language": "en",
@@ -1214,7 +1214,7 @@ Party: Admits 3
 Vehicle: AB12 CDE
 Terms: Be at the quay by the board-by time. Show the code to board.",
       "providerName": "PassBook",
-      "startDate": "1921488900000",
+      "startDate": "1921493700000",
       "title": "Newport",
     },
     "language": "en",

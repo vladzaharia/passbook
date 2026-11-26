@@ -117,6 +117,12 @@ const ROWS: Row[] = [
         input('generic', { dates: DATES }),
         '2030-01-01T10:00:00Z',
       ],
+      [
+        'the template start input before the relevance date',
+        'style',
+        input('generic', { dates: DATES, declared: { start: '2030-01-01T10:30:00Z' } }),
+        '2030-01-01T10:30:00Z',
+      ],
     ],
     misses: [
       ['no dates', bare],
@@ -133,6 +139,12 @@ const ROWS: Row[] = [
         '2030-02-02T23:00:00Z',
       ],
       ['relevantDates[0] end', 'style', input('generic', { dates: DATES }), '2030-01-01T12:00:00Z'],
+      [
+        'the template end input before the relevance date',
+        'style',
+        input('generic', { dates: DATES, declared: { end: '2030-01-01T12:30:00Z' } }),
+        '2030-01-01T12:30:00Z',
+      ],
     ],
     misses: [['a start only', input('generic', { dates: [{ start: '2030-01-01T10:00:00Z' }] })]],
   },

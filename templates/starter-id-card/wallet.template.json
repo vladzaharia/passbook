@@ -291,6 +291,7 @@
     "size": "cr80",
     "barcode": "qr",
     "kind": "membership",
+    "holder": false,
     "ink": "mono"
   }
 }

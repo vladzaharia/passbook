@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
+import { PATHS } from '../../../shared/developers.ts';
+import { Gate } from '../ui/gate.tsx';
 import type { TesterAuth } from './client.ts';
 import { Notice, Workspace } from './workspace.tsx';
-
-const SIGN_IN = '/login?next=%2Fdevelopers%2Fwebhooks';
 
 export function Tester({
   connect,
@@ -36,11 +37,11 @@ export function Tester({
     );
   if (auth.kind === 'signed-out')
     return (
-      <Notice title="Sign in to capture webhooks">
-        <a className="btn" href={SIGN_IN}>
-          Sign in
-        </a>
-      </Notice>
+      <Gate
+        title={GATE_COPY.lines.webhooks}
+        next={PATHS.webhooks}
+        docs={`${PATHS.reference}/webhook-endpoints`}
+      />
     );
   if (auth.kind === 'no-sandbox')
     return (

@@ -1,0 +1,198 @@
+/* A code block's frame and header: tabs, file name, SDK badge, Wrap, Copy and its check. Prerendered pages and islands share it. */
+
+.code {
+  position: relative;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+}
+/* The header: tabs (they scroll, nothing else does, so the Copy as menu is never clipped), then the tools. */
+.code-h {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  min-height: 40px;
+  padding: 0 6px 0 8px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  border-radius: calc(var(--pk-radius-lg) - 1px) calc(var(--pk-radius-lg) - 1px) 0 0;
+  background: var(--dp-glass);
+}
+.code-h:not(:has(.menu)) {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+/* A narrow block wraps the tools onto a second row instead of squeezing the tabs. */
+.code-h .tabs {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.code-tools {
+  margin-left: auto;
+  min-height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.code-label {
+  font: 600 12px var(--pk-font-mono);
+  letter-spacing: 0.04em;
+  color: var(--pk-text-muted);
+}
+.code-h .copy {
+  margin-left: auto;
+  flex: none;
+}
+.code-tools .copy {
+  margin-left: 0;
+}
+.code > .region,
+.code > .panel,
+.code > [role="tabpanel"] {
+  border-radius: 0 0 calc(var(--pk-radius-lg) - 1px) calc(var(--pk-radius-lg) - 1px);
+  overflow: hidden;
+}
+.tab-wrap {
+  display: contents;
+}
+.tab {
+  flex: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pk-text-muted);
+  position: relative;
+  cursor: pointer;
+}
+.tab:hover {
+  color: var(--pk-text-strong);
+}
+.tab[aria-current],
+.tab[aria-selected="true"],
+.tab-radio:checked + .tab {
+  color: var(--pk-text-strong);
+}
+.tab[aria-current]::after,
+.tab[aria-selected="true"]::after,
+.tab-radio:checked + .tab::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--pk-accent);
+}
+.tab-radio:focus-visible + .tab,
+.tab:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+/* A touch screen gets 44 px tabs, so the header grows to hold them. */
+@media (pointer: coarse) {
+  .code-h .tabs,
+  .code-tools {
+    min-height: 48px;
+  }
+  .tab {
+    height: 44px;
+  }
+  .tab[aria-current]::after,
+  .tab[aria-selected="true"]::after,
+  .tab-radio:checked + .tab::after {
+    bottom: 0;
+  }
+}
+.code-h .file {
+  font: 400 12px var(--pk-font-mono);
+  color: var(--pk-text-muted);
+  white-space: nowrap;
+}
+.code-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* A language's file name and badge show with its tab (prerendered blocks: no script). */
+.samples .only {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.samples:has([data-lang="curl"]:checked) [data-only="curl"],
+.samples:has([data-lang="ts"]:checked) [data-only="ts"],
+.samples:has([data-lang="cli"]:checked) [data-only="cli"],
+.samples:has([data-lang="py"]:checked) [data-only="py"],
+.samples:has([data-lang="go"]:checked) [data-only="go"] {
+  display: inline-flex;
+}
+.sdk-badge {
+  padding: 1px 8px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--pk-text-muted);
+  cursor: help;
+}
+/* Wrap: phones only. */
+.wrapbtn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--pk-radius-md);
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--pk-text-muted);
+  cursor: pointer;
+}
+.wrapbtn[aria-pressed="true"] {
+  color: var(--pk-text-strong);
+  background: var(--pk-state-hover-tint);
+}
+@media (max-width: 720px) {
+  .wrapbtn {
+    display: inline-flex;
+  }
+  .code-h .file {
+    display: none;
+  }
+}
+/* Wrap: the whole line, with a hanging indent, instead of cut at the edge. */
+.code[data-wrap] pre.src .ln {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-inline-start: 32px;
+  text-indent: -16px;
+}
+/* Copy shows a check for 1.5 s after it ran, and the live region says so. */
+.copy .ic-done {
+  display: none;
+}
+.copy[data-state="copied"] .ic-copy {
+  display: none;
+}
+.copy[data-state="copied"] .ic-done {
+  display: block;
+}

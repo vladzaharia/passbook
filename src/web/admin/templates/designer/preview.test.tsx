@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { DesignerPreview } from './preview.tsx';
 
 vi.mock('../../../pass-card/index.tsx', () => ({
-  PassCardStage: ({ view }: { view: { fields: string[] } }) => (
-    <div>
+  PassCardStage: ({ view, target }: { view: { fields: string[] }; target?: string }) => (
+    <div data-target={target}>
       {view.fields.map((k) => (
         <span key={k} data-fk={k} />
       ))}
@@ -31,5 +31,15 @@ describe('part drop', () => {
     expect(animate).not.toHaveBeenCalled();
     rerender(<DesignerPreview {...props} passJson={pass('a', 'b')} />);
     expect(animate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('face', () => {
+  const props = { assets: [], assetBase: '', checking: false, passJson: pass('a') };
+  it('draws iOS 27 unless the pass has two layouts and the toggle picked another', () => {
+    const { container, rerender } = render(<DesignerPreview {...props} />);
+    expect(container.querySelector('[data-target]')?.getAttribute('data-target')).toBe('ios27');
+    rerender(<DesignerPreview {...props} target="legacy" />);
+    expect(container.querySelector('[data-target]')?.getAttribute('data-target')).toBe('legacy');
   });
 });

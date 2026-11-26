@@ -3,6 +3,7 @@ import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
+import type { PassTarget } from '@/shared/pass-view/index.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useSettings } from '../../settings/queries.ts';
@@ -27,12 +28,14 @@ export function DesignerStage({
   templateId,
   orgId,
   onPaper,
+  target,
   ...card
 }: {
   manifest: Record<string, unknown>;
   templateId?: string | undefined;
   orgId?: string | undefined;
   onPaper?: ((patch: PaperPatch) => void) | undefined;
+  target?: PassTarget | undefined;
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
   assetBase: string;
@@ -60,7 +63,7 @@ export function DesignerStage({
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
-  // has no tab.
+  // has no tab. The paper pane says so itself.
   const effective = useMemo(() => {
     const all = channels.data?.effective;
     if (!all) return undefined;
@@ -73,7 +76,7 @@ export function DesignerStage({
     if (!all) return undefined;
     return Object.fromEntries(
       (Object.keys(all) as (keyof typeof all)[])
-        .filter((c) => c !== 'nfc' && !all[c].on && all[c].source === 'template')
+        .filter((c) => c !== 'nfc' && c !== 'paper' && !all[c].on && all[c].source === 'template')
         .map((c) => [
           c,
           scanLine(TEMPLATE_BRAND_COPY.designer.channelOff, { channel: CHANNEL_LABEL[c] }),
@@ -101,7 +104,13 @@ export function DesignerStage({
       source={source}
       channels={effective}
       notes={notes}
-      apple={<DesignerPreview {...card} assetOverrides={assetOverrides} />}
+      apple={
+        <DesignerPreview
+          {...card}
+          assetOverrides={assetOverrides}
+          {...(target ? { target } : {})}
+        />
+      }
       paper={
         <PaperPreview
           passJson={passJson}

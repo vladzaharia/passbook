@@ -317,5 +317,12 @@
         "refused": "Ask the issuer."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "cr80",
+    "barcode": "qr",
+    "kind": "credential",
+    "holder": false
   }
 }

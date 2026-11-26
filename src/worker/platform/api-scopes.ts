@@ -82,6 +82,9 @@ const presetScope = (scope: TenantScope) =>
   !NOT_TENANT_AUTHORITY.includes(scope) &&
   // Reading the org's audit log is named on a key, never carried by a role.
   scope !== 'audit:read' &&
+  // Tags open doors: named on a key, never carried by a role.
+  scope !== 'nfc:read' &&
+  scope !== 'nfc:write' &&
   !(CREDENTIAL_SCOPES as readonly string[]).includes(scope) &&
   (MINTABLE_SCOPES as readonly string[]).includes(scope);
 
