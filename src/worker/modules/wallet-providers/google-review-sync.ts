@@ -44,8 +44,10 @@ export async function syncGoogleClassReviews(ctx: ServiceContext): Promise<void>
       releaseId,
       type: (due.classType as GoogleType | null) ?? 'generic',
       ...(due.classKey ? { classKey: due.classKey } : {}),
+      expectedClassIdHash: due.classIdHash,
     });
-    if (outcome === 'failed')
+    // Anything but a read (or one another caller just made) backs the row off: it must not stay first.
+    if (outcome !== 'read' && outcome !== 'claimed_elsewhere')
       await recordGoogleClassReviewFailure(ctx.env.DB, due.classIdHash, now);
   }
 }

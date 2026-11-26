@@ -122,4 +122,47 @@ describe('the review sync tick', () => {
     await tick(f);
     expect(mock.requests.length).toBe(sent);
   });
+
+  it('backs off a row whose class does not derive to its id, and reads the rows behind it', async () => {
+    const { f, cls } = await pending();
+    const real = await first<{ hash: string; releaseId: string }>(
+      f.kit.env.DB,
+      'SELECT class_id_hash AS hash, release_id AS releaseId FROM wallet_google_classes',
+    );
+    // A row selected first (oldest check) whose binding points at an id the derivation never gives.
+    const fake = 'b'.repeat(64);
+    const second = await f.kit.pass({});
+    const [offer] = await listWalletOffers(f.kit.ctx, second.id);
+    await issueWalletOffer(f.kit.ctx, offer?.href.split('/')[2] ?? '', 'google');
+    await run(
+      f.kit.env.DB,
+      `INSERT INTO wallet_google_classes (class_id_hash, release_id, release_generation, written_at, review_checked_at)
+      VALUES (?, ?, 0, 0, 1)`,
+      [fake, real?.releaseId ?? ''],
+    );
+    await run(
+      f.kit.env.DB,
+      'UPDATE wallet_google_callback_bindings SET class_id_hash = ? WHERE instance_id = (SELECT id FROM wallet_provider_instances WHERE pass_id = ?)',
+      [fake, second.id],
+    );
+    cls.reviewStatus = 'APPROVED';
+    f.kit.clock.advance(61_000);
+    await tick(f);
+    const bad = await first<{ failures: number; checkedAt: number }>(
+      f.kit.env.DB,
+      'SELECT review_failures AS failures, review_checked_at AS checkedAt FROM wallet_google_classes WHERE class_id_hash = ?',
+      [fake],
+    );
+    expect(bad?.failures).toBe(1);
+    expect(bad?.checkedAt).toBe(f.kit.clock.now());
+    // The real class behind it was read in the same tick, and the bad row is no longer first.
+    const ok = await first<{ status: string }>(
+      f.kit.env.DB,
+      'SELECT review_status AS status FROM wallet_google_classes WHERE class_id_hash = ?',
+      [real?.hash ?? ''],
+    );
+    expect(ok?.status).toBe('APPROVED');
+    const due = await listDueGoogleClassReviews(f.kit.env.DB, f.kit.clock.now(), 25);
+    expect(due.map((d) => d.classIdHash)).not.toContain(fake);
+  });
 });

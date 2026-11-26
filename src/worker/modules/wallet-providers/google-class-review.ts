@@ -19,6 +19,9 @@ export function parseReview(value: unknown): GoogleClassReview | null {
   return key === 'DRAFT' || key === 'APPROVED' || key === 'REJECTED' ? key : null;
 }
 
+/** `claimed_elsewhere`: another caller read it this window; `mismatch` and `missing` read nothing. */
+export type ReviewOutcome = 'read' | 'claimed_elsewhere' | 'mismatch' | 'missing' | 'failed';
+
 /**
  * Reads Google's review of a class and stores it. Best effort and off the write path (the caller runs it
  * under `waitUntil`): a failed read is logged with a code and leaves the status unknown, and the next
@@ -28,9 +31,15 @@ export function parseReview(value: unknown): GoogleClassReview | null {
 export async function refreshGoogleClassReview(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
-  input: { releaseId: string; type: GoogleType; classKey?: string | undefined },
-): Promise<'read' | 'skipped' | 'failed'> {
-  let outcome: 'read' | 'skipped' = 'skipped';
+  input: {
+    releaseId: string;
+    type: GoogleType;
+    classKey?: string | undefined;
+    /** The class the caller selected: a derivation that names another class is refused, never read. */
+    expectedClassIdHash?: string;
+  },
+): Promise<ReviewOutcome> {
+  let outcome: ReviewOutcome = 'claimed_elsewhere';
   try {
     await withGoogleRest(
       ctx,
@@ -52,8 +61,19 @@ export async function refreshGoogleClassReview(
         );
         const classIdHash = await sha256Hex(classId);
         const now = ctx.clock.now();
+        if (input.expectedClassIdHash !== undefined && input.expectedClassIdHash !== classIdHash) {
+          ctx.log.warn('wallet.google_class_review_mismatch', {
+            code: 'WALLET_GOOGLE_CLASS_REVIEW_MISMATCH',
+          });
+          outcome = 'mismatch';
+          return;
+        }
         const state = await getGoogleClassState(ctx.env.DB, classIdHash);
-        if (!state || !(await claimGoogleClassReview(ctx.env.DB, classIdHash, now))) return;
+        if (!state) {
+          outcome = 'missing';
+          return;
+        }
+        if (!(await claimGoogleClassReview(ctx.env.DB, classIdHash, now))) return;
         const read = await verifyIdentity(rest, GOOGLE_RESOURCES[input.type].class, classId);
         outcome = 'read';
         await setGoogleClassReview(
