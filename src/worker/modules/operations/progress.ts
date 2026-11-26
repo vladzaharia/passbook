@@ -6,8 +6,8 @@ import {
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseSteps } from './dto.ts';
+import { kindOf } from './kinds.ts';
 import { NOOP, OperationCancelled, type Progress, type StepHandle } from './progress-types.ts';
-import { kindOf } from './registry.ts';
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,

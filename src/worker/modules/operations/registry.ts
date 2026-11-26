@@ -1,9 +1,9 @@
-import { OPERATION_KINDS } from '../../../generated/operation-kinds.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import type { OperationKindDef } from '../../../shared/operations/define.ts';
 import { OPERATION_RUNNERS } from '../../generated/operation-runners.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { kinds } from './kinds.ts';
 
 /** The Workflow a runner started, for the stall sweep to ask about. */
 export interface WorkflowHandle {
@@ -40,10 +40,8 @@ export interface OperationRunner {
 
 export type OperationRunners = Record<string, OperationRunner>;
 
-const kinds = new Map<string, OperationKindDef>(OPERATION_KINDS.map((k) => [k.kind, k]));
 const runners = new Map<string, OperationRunner>(Object.entries(OPERATION_RUNNERS));
 
-export const kindOf = (kind: string): OperationKindDef | undefined => kinds.get(kind);
 export const runnerOf = (kind: string): OperationRunner | undefined => runners.get(kind);
 
 /** For tests: declare a kind and its hooks. Returns what undoes it. */
@@ -56,6 +54,4 @@ export function registerOperationKind(def: OperationKindDef, runner: OperationRu
   };
 }
 
-/** The org kinds' distinct read capabilities, for a list that reads across kinds. */
-export const orgKinds = (): OperationKindDef[] =>
-  [...kinds.values()].filter((k) => k.audience === 'org' && k.read !== null);
+export { kindOf } from './kinds.ts';
