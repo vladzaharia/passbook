@@ -4,7 +4,6 @@ import { copyWithFeedback } from '../../../developers/shell/copy.ts';
 import { Ticket } from '../../../developers/ui/ticket.tsx';
 import { consoleRunConfirm } from '../../../lib/confirms-console.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
-import { ConfirmDialog } from '../../../ui/alert-dialog.tsx';
 import { useBenchKeys } from '../../bench/keys.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
 import { remaining, subscribe } from '../budget.ts';
@@ -32,6 +31,10 @@ import { RunBar } from './run-bar.tsx';
 const DOCK = '(max-width: 719.98px)';
 
 // The response (its code block, id chips and Trace) is read when there is one to draw, and warmed once the console is idle.
+// The dialog (and the Radix it brings) loads when a destructive call is first asked about.
+const ConfirmDialog = lazy(() =>
+  import('../../../ui/alert-dialog.tsx').then((m) => ({ default: m.ConfirmDialog })),
+);
 const Cheer = lazy(() => import('./cheer.tsx').then((m) => ({ default: m.Cheer })));
 const loadResponse = () => import('./response.tsx');
 const ResponseView = lazy(() => loadResponse().then((m) => ({ default: m.ResponseView })));
@@ -254,14 +257,16 @@ export function OpConsole({
         }
       />
       {docked ? <div className="runbar-dock">{bar}</div> : null}
-      {mode === 'console' ? (
-        <ConfirmDialog
-          open={confirming}
-          onOpenChange={setConfirming}
-          destructive
-          {...consoleRunConfirm(op.method.toUpperCase(), target(op, draft))}
-          onConfirm={run}
-        />
+      {mode === 'console' && confirming ? (
+        <Suspense fallback={null}>
+          <ConfirmDialog
+            open
+            onOpenChange={setConfirming}
+            destructive
+            {...consoleRunConfirm(op.method.toUpperCase(), target(op, draft))}
+            onConfirm={run}
+          />
+        </Suspense>
       ) : null}
     </div>
   );
