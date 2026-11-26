@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
-import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
+import type { ConnectorInfoSchema, RecipeInfo } from '@/shared/contracts/connections.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
 import {
   Button,
@@ -20,8 +20,11 @@ import {
   KeyValue,
 } from '../../ui/index.ts';
 import type { SourceField } from '../mapping/mapping.ts';
+import { datasetOfSample } from './demo/datasets.ts';
+import { RecordCard } from './demo/record-card.tsx';
 import { MODE_LABEL } from './labels.ts';
 import { type Lifecycle, scheduled } from './lifecycle-fields.tsx';
+import { recipeLine } from './recipe-copy.ts';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
 
@@ -44,6 +47,7 @@ export function ReviewStep({
   templateName,
   mappings,
   defaultMinutes,
+  upload,
   onEdit,
 }: {
   orgName: string;
@@ -53,6 +57,8 @@ export function ReviewStep({
   templateName: string | undefined;
   mappings: number;
   defaultMinutes: number | undefined;
+  /** A file upload syncs when a file is applied. */
+  upload?: boolean;
   onEdit: (step: number) => void;
 }) {
   const Icon = connectorIcon(connector?.type ?? '');
@@ -114,7 +120,7 @@ export function ReviewStep({
         <CardBody>
           <KeyValue
             items={[
-              { label: 'Mode', value: MODE_LABEL[life.mode] },
+              { label: 'Mode', value: upload ? 'On apply' : MODE_LABEL[life.mode] },
               ...(scheduled(life.mode)
                 ? [
                     {
@@ -147,10 +153,13 @@ export function ReviewStep({
  */
 export function WizardAside({
   connector,
+  sender,
   sample,
   step,
 }: {
   connector: Connector | undefined;
+  /** The sender fixed by a tile; it names the aside in place of the webhook connector. */
+  sender?: RecipeInfo | undefined;
   sample: readonly SourceField[];
   /** The wizard's step: the empty sample hint belongs to Configuration and Mapping only. */
   step: number;
@@ -167,14 +176,25 @@ export function WizardAside({
             <Icon className="size-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-fg-strong">{connector.displayName}</p>
-            {connector.description ? (
-              <p className="mt-0.5 text-xs text-fg-muted">{connector.description}</p>
+            <p className="text-sm font-medium text-fg-strong">
+              {sender?.label ?? connector.displayName}
+            </p>
+            {sender || connector.description ? (
+              <p className="mt-0.5 text-xs text-fg-muted">
+                {sender ? recipeLine(sender.id) : connector.description}
+              </p>
             ) : null}
           </div>
         </div>
       ) : null}
-      {sample.length ? (
+      {connector?.type === 'demo' &&
+      sample.some((f) => f.preview !== undefined) &&
+      datasetOfSample(sample) ? (
+        <RecordCard
+          dataset={datasetOfSample(sample) as NonNullable<ReturnType<typeof datasetOfSample>>}
+          sample={sample.map((f) => ({ pointer: f.pointer, preview: f.preview ?? '' }))}
+        />
+      ) : sample.length ? (
         <div className="flex min-w-0 flex-col gap-3 border-t border-border pt-5">
           <p className="text-xs font-medium text-fg-muted">Sample record</p>
           <KeyValue
@@ -187,11 +207,13 @@ export function WizardAside({
           <p className="text-xs text-fg-muted">
             {!connector
               ? 'Pick a connector'
-              : step === 1
-                ? 'Test shows a sample record here.'
-                : step === 2
-                  ? 'Test to load a sample.'
-                  : null}
+              : connector.capabilities.upload
+                ? 'The first row shows here.'
+                : step === 1
+                  ? 'Test shows a sample record here.'
+                  : step === 2
+                    ? 'Test to load a sample.'
+                    : null}
           </p>
         </div>
       )}

@@ -52,17 +52,19 @@ export interface DialogContentProps
   footer?: ReactNode;
   /** Visually hide the title; it stays the accessible name. */
   hideTitle?: boolean;
-  /** sm 384 confirms, md 512 forms (default), lg 768 uploads and editors, xl 896 steps with a side rail (full screen on phones). */
+  /** sm 384 confirms, md 512 forms (default), lg 768 uploads and editors, xl 896 steps with a side rail (full screen on phones; from 640 up it hangs from 8vh, so a taller step grows downward). */
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Destructive confirms have no X. */
   closeButton?: boolean;
+  /** Seated on the panel's top edge, outside the scrolling body (a Buddy). */
+  crest?: ReactNode;
 }
 
 const SIZES = {
   sm: 'sm:max-w-sm',
   md: 'sm:max-w-lg',
   lg: 'sm:max-w-3xl',
-  xl: 'sm:max-w-4xl max-sm:top-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:rounded-none max-sm:pt-[env(safe-area-inset-top)]',
+  xl: 'sm:max-w-4xl sm:top-[8vh] sm:max-h-[calc(92dvh-1rem)] sm:translate-y-0 max-sm:top-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:rounded-none max-sm:pt-[env(safe-area-inset-top)]',
 } as const;
 
 export function DialogContent({
@@ -72,6 +74,7 @@ export function DialogContent({
   hideTitle,
   size = 'md',
   closeButton = true,
+  crest,
   className,
   children,
   onOpenAutoFocus,
@@ -95,6 +98,7 @@ export function DialogContent({
         className={cn(DIALOG_PANEL, SIZES[size], 'outline-none', className)}
         {...props}
       >
+        {crest}
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="min-w-0">
             <DialogPrimitive.Title className={cn(OVERLAY_TITLE, hideTitle && 'sr-only')}>

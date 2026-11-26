@@ -1,6 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { isApiError } from '../../lib/errors.ts';
 import { type NewPassPayload, useCreatePass } from './new-pass-create.ts';
 import { EMPTY_SAMPLE } from './new-pass-draft.ts';
 import type {
@@ -134,12 +133,5 @@ export function useNewPassCreation({
       });
   }, [created, principalId, sessionReady, grantsReady, canReadCreatedPass, navigate]);
 
-  const fieldErrors = useMemo(() => {
-    if (!isApiError(create.error)) return undefined;
-    const out: Record<string, string> = {};
-    for (const [path, msg] of Object.entries(create.error.fields))
-      out[path.startsWith('input.') ? path.slice(6) : path] = msg;
-    return out;
-  }, [create.error]);
-  return { payload, create, fieldErrors, onCancel: () => void navigate({ to: '/admin/passes' }) };
+  return { payload, create, onCancel: () => void navigate({ to: '/admin/passes' }) };
 }

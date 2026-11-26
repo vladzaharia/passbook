@@ -96,9 +96,12 @@ describe('device creation from Devices', () => {
       handlers: handlers(),
     });
     const dialog = await screen.findByRole('dialog', { name: 'New session' });
-    expect(within(dialog).getByRole('tab', { name: 'Passes' })).toBeInTheDocument();
-    expect(within(dialog).getByRole('tab', { name: 'Admission' })).toBeInTheDocument();
-    expect(within(dialog).getByRole('tab', { name: 'Device defaults' })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('heading', { name: 'Name it and pick passes' }),
+    ).toBeInTheDocument();
+    const steps = within(dialog).getByRole('navigation', { name: 'Steps' });
+    for (const title of ['Passes', 'Admission', 'Device defaults'])
+      expect(within(steps).getByText(title)).toBeInTheDocument();
     await waitFor(() => expect(router.state.location.search).not.toHaveProperty('new'));
   });
 });

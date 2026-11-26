@@ -9,6 +9,7 @@ import {
   DraftingCompass,
   FileBadge,
   FileSpreadsheet,
+  FileUp,
   History,
   IdCard,
   Image,
@@ -90,6 +91,7 @@ export const CONNECTOR_ICON: Record<string, LucideIcon> = {
   'http-json': Braces,
   'webhook-push': Webhook,
   'csv-url': FileSpreadsheet,
+  'file-upload': FileUp,
 };
 export const connectorIcon = (id: string): LucideIcon => CONNECTOR_ICON[id] ?? Cable;
 

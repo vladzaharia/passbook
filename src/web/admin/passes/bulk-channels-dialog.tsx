@@ -1,32 +1,26 @@
 import { useState } from 'react';
-import { isDigital } from '@/shared/channels.ts';
 import { CHANNELS, type Channel } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { bulkChannelsOffConfirm } from '../../lib/confirms.ts';
-import {
-  Button,
-  CheckboxField,
-  ConfirmDialog,
-  Dialog,
-  DialogContent,
-  SegmentedControl,
-  toast,
-} from '../../ui/index.ts';
+import { toast, useWizard, WizardDialog, WizardReview } from '../../ui/index.ts';
 import { BulkPreview } from './bulk-channels-preview.tsx';
+import {
+  ACTION_WORD,
+  BULK_FIELD_STEP,
+  BULK_HINTS,
+  BULK_STEPS,
+  type BulkAction,
+  canReplaceCodes,
+  StepChannels,
+  StepHolders,
+} from './bulk-channels-steps.tsx';
 import { useBulkChannelsPreview, useBulkPassChannels } from './channels-api.ts';
-
-type Action = 'on' | 'off' | 'reset';
-const ACTIONS = [
-  { value: 'on', label: 'On' },
-  { value: 'off', label: 'Off' },
-  { value: 'reset', label: CHANNEL_COPY.useTemplate },
-] as const;
 
 const plural = (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`;
 
 /**
- * Channels for the selected passes: On, Off or Use template for the ticked channels. Off never
- * replaces codes; holders are emailed only when asked.
+ * Channels for the selected passes: On, Off or Use template for the ticked channels, then a
+ * review. Off never replaces codes; holders are emailed only when asked.
  */
 export function BulkChannelsDialog({
   open,
@@ -42,138 +36,132 @@ export function BulkChannelsDialog({
   onDone: () => void;
 }) {
   const bulk = useBulkPassChannels();
-  const [action, setAction] = useState<Action>('off');
+  const [action, setAction] = useState<BulkAction>('off');
   const [picked, setPicked] = useState<Channel[]>([]);
   const [notify, setNotify] = useState(false);
   const [replace, setReplace] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
-  const close = () => {
-    onOpenChange(false);
-    setAction('off');
-    setPicked([]);
-    setNotify(false);
-    setReplace(false);
-  };
-  /** New codes only follow turning a digital channel off. */
-  const canReplace = action === 'off' && picked.some(isDigital);
+  const canReplace = canReplaceCodes(action, picked);
+  const replacing = canReplace && replace;
+  const off = action === 'off';
   const preview = useBulkChannelsPreview(
     {
       action,
       channels: picked,
       ids,
       notify: false,
-      ...(canReplace && replace ? { replaceCodes: true } : {}),
+      ...(replacing ? { replaceCodes: true } : {}),
       orgId,
     },
-    open && action === 'off' && picked.length > 0,
+    open && off && picked.length > 0,
   );
-  const offConfirm = {
-    ...bulkChannelsOffConfirm(
-      picked.map((c) => CHANNEL_LABEL[c]),
-      ids.length,
-    ),
-    // "Copies keep working" is wrong once new codes are issued.
-    ...(canReplace && replace ? { description: undefined } : {}),
-  };
-  async function apply() {
-    try {
+
+  const w = useWizard({
+    open,
+    steps: BULK_STEPS.map((s) => ({
+      ...s,
+      ...(s.id === 'holders' ? { skip: !off } : {}),
+      summary:
+        s.id === 'channels' && picked.length
+          ? `${ACTION_WORD[action]}: ${picked.map((c) => CHANNEL_LABEL[c]).join(', ')}`
+          : s.id === 'holders'
+            ? notify
+              ? 'Emailed'
+              : 'Not emailed'
+            : undefined,
+    })),
+    errors: { channels: picked.length ? undefined : { channels: 'Pick a channel.' } },
+    hints: BULK_HINTS,
+    fieldStep: BULK_FIELD_STEP,
+    onFinish: async () => {
       const result = await bulk.mutateAsync({
         action,
         channels: picked,
         ids,
-        notify: action === 'off' && notify,
-        ...(canReplace && replace ? { replaceCodes: true } : {}),
+        notify: off && notify,
+        ...(replacing ? { replaceCodes: true } : {}),
         orgId,
       });
       const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
       toast.success(
-        `${plural(result.done)} updated${skipped}${canReplace && replace ? `. ${CHANNEL_COPY.bulkReplaced}` : ''}`,
+        `${plural(result.done)} updated${skipped}${replacing ? `. ${CHANNEL_COPY.bulkReplaced}` : ''}`,
       );
-      close();
+      onOpenChange(false);
       onDone();
-    } catch (error) {
-      toast.error(error, 'Could not change channels.');
-    }
-  }
+    },
+  });
+
   const toggle = (c: Channel, on: boolean) =>
     setPicked((p) =>
       on ? CHANNELS.filter((x) => x === c || p.includes(x)) : p.filter((x) => x !== c),
     );
+  const labels = picked.map((c) => CHANNEL_LABEL[c]);
+  const ask = bulkChannelsOffConfirm(labels, ids.length);
 
   return (
-    <Dialog
+    <WizardDialog
       open={open}
+      onOpenChange={onOpenChange}
+      title={CHANNEL_COPY.bulkTitle}
+      wizard={w}
       dirty={picked.length > 0}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      finishLabel={off ? ask.confirmLabel : action === 'on' ? 'Turn on' : CHANNEL_COPY.useTemplate}
+      {...(off ? { finishTone: 'danger' as const } : {})}
+      busy={bulk.isPending}
+      onClose={() => {
+        setAction('off');
+        setPicked([]);
+        setNotify(false);
+        setReplace(false);
+      }}
     >
-      <DialogContent
-        size="md"
-        title={CHANNEL_COPY.bulkTitle}
-        description={plural(ids.length)}
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button
-              disabled={picked.length === 0}
-              loading={bulk.isPending}
-              onClick={() => (action === 'off' ? setConfirming(true) : void apply())}
-            >
-              Apply
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <SegmentedControl
-            label="Change"
-            options={ACTIONS}
-            value={action}
-            onValueChange={setAction}
-          />
-          <fieldset className="flex flex-col gap-1">
-            <legend className="mb-1 text-sm font-medium text-fg-strong">Channels</legend>
-            {CHANNELS.map((c) => (
-              <CheckboxField
-                key={c}
-                label={CHANNEL_LABEL[c]}
-                checked={picked.includes(c)}
-                onCheckedChange={(v) => toggle(c, v === true)}
-              />
-            ))}
-          </fieldset>
-          {action === 'off' ? (
-            <CheckboxField
-              label={CHANNEL_COPY.bulkNotify}
-              checked={notify}
-              onCheckedChange={(v) => setNotify(v === true)}
-            />
-          ) : null}
-          {action === 'off' && picked.length > 0 && preview.data?.preview ? (
-            <BulkPreview preview={preview.data.preview} replace={canReplace && replace} />
-          ) : null}
-          {canReplace ? (
-            <div className="flex flex-col gap-1">
-              <CheckboxField
-                label={CHANNEL_COPY.replaceBox}
-                checked={replace}
-                onCheckedChange={(v) => setReplace(v === true)}
-              />
-              {replace ? (
-                <p className="text-xs text-fg-muted">{CHANNEL_COPY.bulkReplaced}</p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </DialogContent>
-      <ConfirmDialog
-        open={confirming}
-        onOpenChange={setConfirming}
-        {...offConfirm}
-        onConfirm={apply}
-      />
-    </Dialog>
+      {w.id === 'channels' ? (
+        <StepChannels
+          action={action}
+          onAction={setAction}
+          picked={picked}
+          onToggle={(c, on) => {
+            toggle(c, on);
+            w.clearServer('channels');
+          }}
+          replace={replace}
+          onReplace={setReplace}
+          error={w.errors.channels}
+        />
+      ) : null}
+      {w.id === 'holders' ? <StepHolders notify={notify} onNotify={setNotify} /> : null}
+      {w.id === 'review' ? (
+        <WizardReview
+          onEdit={w.go}
+          sections={[
+            {
+              id: 'channels',
+              title: 'Channels',
+              items: [
+                { label: 'Passes', value: plural(ids.length) },
+                { label: 'Change', value: ACTION_WORD[action] },
+                { label: 'Channels', value: labels.join(', ') },
+                ...(canReplace ? [{ label: 'New codes', value: replace ? 'Yes' : 'No' }] : []),
+              ],
+            },
+            ...(off
+              ? [
+                  {
+                    id: 'holders' as const,
+                    title: 'Holders',
+                    items: [{ label: 'Email holders', value: notify ? 'Yes' : 'No' }],
+                  },
+                ]
+              : []),
+          ]}
+          preview={
+            off && preview.data?.preview ? (
+              <BulkPreview preview={preview.data.preview} replace={replacing} />
+            ) : null
+          }
+          {...(off && !replacing ? { note: ask.description } : {})}
+        />
+      ) : null}
+    </WizardDialog>
   );
 }

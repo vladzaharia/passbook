@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { Tag } from '@/shared/contracts/nfc-tags.ts';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
 import { Badge, FormField, Input } from '@/web/ui/index.ts';
-import { DoneTile, EnrollArt } from './enroll-art.tsx';
+import { EnrollArt } from './enroll-art.tsx';
 import { TagCode } from './tag-code.tsx';
 import { tagName, worksWithLabel } from './words.ts';
 
@@ -23,7 +23,7 @@ export function KindPill({ assurance }: { assurance: Tag['assurance'] }) {
   );
 }
 
-/** Tag assigned: the card with its kind and what it works with, and an optional name. */
+/** The result body, under the title Tag assigned: the card with its kind and what it works with, and an optional name. */
 export function ResultFace({
   tag,
   hint,
@@ -42,10 +42,6 @@ export function ResultFace({
     <div className="wl-enroll-face flex flex-col gap-4">
       <EnrollArt stage="done" />
       <div className="flex flex-col items-center gap-2 text-center">
-        <DoneTile />
-        <p role="status" className="text-base font-medium text-fg-strong">
-          {TAG_COPY.dialog.done}
-        </p>
         <p className="flex flex-wrap items-center justify-center gap-2 text-sm text-fg">
           <span>{tag ? tagName(tag) : 'Tag'}</span>
           <TagCode hint={hint} className="text-fg-muted" />

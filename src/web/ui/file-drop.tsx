@@ -17,6 +17,8 @@ export interface FileDropProps {
   art?: ArtName;
   /** A form error about the file: the input is aria-invalid, so a blocked submit focuses it. */
   invalid?: boolean;
+  /** The dialog opens with the file input focused (`data-autofocus`). */
+  autoFocus?: boolean;
   className?: string;
 }
 
@@ -45,6 +47,7 @@ export function FileDrop({
   disabled,
   art,
   invalid,
+  autoFocus,
   className,
 }: FileDropProps) {
   const id = useId();
@@ -106,6 +109,7 @@ export function FileDrop({
           multiple={multiple}
           disabled={disabled}
           aria-invalid={invalid || undefined}
+          data-autofocus={autoFocus || undefined}
           onChange={(e) => {
             take(e.target.files);
             e.target.value = '';

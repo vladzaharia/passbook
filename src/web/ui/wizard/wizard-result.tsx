@@ -1,4 +1,5 @@
 import { type ReactNode, useRef } from 'react';
+import { Buddy } from '../art/buddy.tsx';
 import { Button } from '../button.tsx';
 import { DialogContent } from '../dialog.tsx';
 
@@ -30,7 +31,7 @@ export function WizardResultTitle({ title, icon }: Pick<ResultSpec, 'title' | 'i
 
 /**
  * The dialog panel both shells show in place of their form once a result arrives: md, the
- * result's own title with focus on it, no X, and Esc and outside clicks ignored. Render it inside
+ * result's own title with focus on it, a happy buddy seated on its top edge, no X, and Esc and outside clicks ignored. Render it inside
  * a `Dialog` whose onOpenChange does nothing.
  */
 export function ResultDialogContent({
@@ -45,6 +46,7 @@ export function ResultDialogContent({
     <DialogContent
       size="md"
       closeButton={false}
+      crest={<Buddy size="sm" mood="happy" at="end" />}
       onCloseAutoFocus={onCloseAutoFocus}
       onOpenAutoFocus={(e) => {
         e.preventDefault();

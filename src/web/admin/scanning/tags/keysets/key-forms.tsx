@@ -1,218 +1,36 @@
-import { KeyRound, ShieldCheck, Upload } from 'lucide-react';
-import { type ReactNode, useId, useState } from 'react';
+import { KeyRound } from 'lucide-react';
+import { useState } from 'react';
 import type { z } from 'zod';
-import { RotateTagKeysetSchema } from '@/shared/contracts/nfc-tag-keysets.ts';
 import { CreateTagKeysetSchema } from '@/shared/contracts/nfc-tags.ts';
 import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
 import {
-  Button,
-  Callout,
-  CheckboxField,
-  Dialog,
-  DialogContent,
-  Form,
   FormField,
   Input,
-  OptionTile,
   SecretReveal,
   toast,
-  useFormErrors,
+  useWizard,
+  WizardDialog,
+  WizardReview,
 } from '@/web/ui/index.ts';
-import type { Keyset, MadeKeyset } from './api.ts';
+import type { MadeKeyset } from './api.ts';
+import { KeyInputs, ModeTiles, useKeyDraft } from './key-fields.tsx';
 import { SdmProfile } from './sdm-profile.tsx';
 
-type Mode = 'generate' | 'enter' | 'own';
-const C = KEYSET_COPY.mode;
-const MODES = [
-  { value: 'generate', label: C.generate, description: C.generateHelp, icon: ShieldCheck },
-  { value: 'enter', label: C.enter, description: C.enterHelp, icon: KeyRound },
-  { value: 'own', label: C.own, description: C.ownHelp, icon: Upload },
-] as const;
-
-const keyInput = { autoComplete: 'off', autoCapitalize: 'off', spellCheck: false } as const;
-
-/** Create or rotate: keys generated and shown once, entered, or (imported tags) the meta key only. */
-function KeysDialog({
-  title,
-  confirm,
-  modes,
-  nameField,
-  build,
-  send,
-  onClose,
-}: {
-  title: string;
-  confirm: string;
-  modes: readonly Mode[];
-  nameField: boolean;
-  build: (v: {
-    name: string;
-    mode: Mode;
-    meta: string;
-    file: string;
-    diversify: boolean;
-  }) => unknown;
-  send: (body: never) => Promise<MadeKeyset>;
-  onClose: () => void;
-}) {
-  const formId = useId();
-  const group = useId();
-  const [name, setName] = useState('');
-  const [mode, setMode] = useState<Mode>(modes[0] ?? 'generate');
-  const [meta, setMeta] = useState('');
-  const [file, setFile] = useState('');
-  const [diversify, setDiversify] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [made, setMade] = useState<MadeKeyset>();
-  const body = build({ name: name.trim(), mode, meta: meta.trim(), file: file.trim(), diversify });
-  const ok = nameField
-    ? CreateTagKeysetSchema.safeParse(body).success
-    : RotateTagKeysetSchema.safeParse(body).success;
-  const check = useFormErrors({
-    name: nameField && !name.trim() ? 'Enter a name.' : undefined,
-    keys: mode === 'generate' || ok ? undefined : 'A key is 32 hex digits.',
-  });
-
-  async function save() {
-    setBusy(true);
-    setError('');
-    try {
-      const result = await send(body as never);
-      if (result.keys) setMade(result);
-      else {
-        toast.success(KEYSET_COPY.entered);
-        onClose();
-      }
-    } catch (cause) {
-      setError(errorMessage(cause));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && !busy && !made && onClose()}>
-      <DialogContent
-        title={made ? `Keys of ${made.name}` : title}
-        description={made ? undefined : KEYSET_COPY.help}
-        closeButton={!busy && !made}
-        footer={
-          made ? null : (
-            <>
-              <Button variant="outline" disabled={busy} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" form={formId} loading={busy}>
-                {confirm}
-              </Button>
-            </>
-          )
-        }
-      >
-        {made?.keys ? (
-          <SecretReveal
-            savedLabel="I saved the keys"
-            onDone={onClose}
-            fields={[
-              { label: 'Meta key', value: made.keys.metaKey },
-              { label: 'File key', value: made.keys.fileKey, sheen: false },
-            ]}
-          >
-            <SdmProfile keyset={made} />
-          </SecretReveal>
-        ) : (
-          <Form {...check.form} id={formId} className="grid gap-4" onValid={() => void save()}>
-            {error ? <Callout tone="danger">{error}</Callout> : null}
-            {nameField ? (
-              <FormField label="Name" required error={check.errors.name}>
-                {(props) => (
-                  <Input
-                    {...props}
-                    value={name}
-                    maxLength={40}
-                    placeholder="Staff badges"
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                )}
-              </FormField>
-            ) : null}
-            {modes.length > 1 ? (
-              <fieldset className="grid gap-2" disabled={busy}>
-                <legend className="mb-2 text-sm font-medium text-fg-strong">Keys</legend>
-                {MODES.filter((m) => modes.includes(m.value)).map((m) => (
-                  <OptionTile
-                    key={m.value}
-                    name={group}
-                    value={m.value}
-                    label={m.label}
-                    description={m.description}
-                    icon={m.icon}
-                    checked={mode === m.value}
-                    onSelect={() => setMode(m.value)}
-                  />
-                ))}
-              </fieldset>
-            ) : null}
-            {mode !== 'generate' ? (
-              <>
-                <FormField
-                  label="Meta key"
-                  required
-                  help="32 hex digits."
-                  error={check.errors.keys}
-                >
-                  {(props) => (
-                    <Input
-                      {...props}
-                      {...keyInput}
-                      className="font-mono"
-                      value={meta}
-                      maxLength={32}
-                      onChange={(e) => setMeta(e.target.value)}
-                    />
-                  )}
-                </FormField>
-                {mode === 'enter' ? (
-                  <>
-                    <FormField
-                      label="File key"
-                      required
-                      help="32 hex digits."
-                      error={check.errors.keys}
-                    >
-                      {(props) => (
-                        <Input
-                          {...props}
-                          {...keyInput}
-                          className="font-mono"
-                          value={file}
-                          maxLength={32}
-                          onChange={(e) => setFile(e.target.value)}
-                        />
-                      )}
-                    </FormField>
-                    {nameField ? (
-                      <CheckboxField
-                        label="Derive a key per tag from this file key"
-                        checked={diversify}
-                        onCheckedChange={(v) => setDiversify(v === true)}
-                      />
-                    ) : null}
-                  </>
-                ) : null}
-              </>
-            ) : null}
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 type Body = z.infer<typeof CreateTagKeysetSchema>;
+const C = KEYSET_COPY.mode;
+const MODE_LABEL = { generate: C.generate, enter: C.enter, own: C.own } as const;
+const MODES = ['generate', 'enter', 'own'] as const;
+const HINTS = { keyset: 'Name the keyset.', keys: 'Fix the keys.' };
+const FIELD_STEP = {
+  name: 'keyset',
+  generate: 'keyset',
+  metaKey: 'keys',
+  fileKey: 'keys',
+  diversify: 'keys',
+  perTag: 'keys',
+} as const;
 
+/** A keyset in three steps: its name and how its keys come, the keys (not for Generate), Review. */
 export function NewKeysetDialog({
   create,
   onClose,
@@ -220,49 +38,129 @@ export function NewKeysetDialog({
   create: (body: Body) => Promise<MadeKeyset>;
   onClose: () => void;
 }) {
-  return (
-    <KeysDialog
-      title={KEYSET_COPY.add}
-      confirm="Create"
-      modes={['generate', 'enter', 'own']}
-      nameField
-      build={({ name, mode, meta, file, diversify }) =>
-        mode === 'generate'
-          ? { name, generate: true, diversify: true }
-          : mode === 'own'
-            ? { name, perTag: true, metaKey: meta }
-            : { name, diversify, metaKey: meta, fileKey: file }
-      }
-      send={create as never}
-      onClose={onClose}
-    />
-  );
-}
+  const draft = useKeyDraft('generate');
+  const [name, setName] = useState('');
+  const [made, setMade] = useState<MadeKeyset>();
+  const { meta, file } = draft.trimmed;
+  const body: Body =
+    draft.mode === 'generate'
+      ? { name: name.trim(), generate: true, diversify: true }
+      : draft.mode === 'own'
+        ? { name: name.trim(), perTag: true, metaKey: meta }
+        : { name: name.trim(), diversify: draft.diversify, metaKey: meta, fileKey: file };
+  const keysOk = draft.mode === 'generate' || CreateTagKeysetSchema.safeParse(body).success;
+  const generate = draft.mode === 'generate';
 
-export function RotateDialog({
-  keyset,
-  rotate,
-  onClose,
-}: {
-  keyset: Keyset;
-  rotate: (id: string, body: z.infer<typeof RotateTagKeysetSchema>) => Promise<MadeKeyset>;
-  onClose: () => void;
-}): ReactNode {
-  return (
-    <KeysDialog
-      title={`Rotate keys of ${keyset.name}`}
-      confirm="Rotate keys"
-      modes={keyset.perTag ? ['own'] : ['generate', 'enter']}
-      nameField={false}
-      build={({ mode, meta, file }) =>
-        mode === 'generate'
-          ? { generate: true }
-          : mode === 'own'
-            ? { metaKey: meta }
-            : { metaKey: meta, fileKey: file }
+  const w = useWizard({
+    open: true,
+    steps: [
+      {
+        id: 'keyset',
+        title: 'Keyset',
+        heading: 'Name the keyset',
+        summary: name.trim() || undefined,
+      },
+      { id: 'keys', title: 'Keys', heading: 'Enter the keys', skip: generate },
+      { id: 'review', title: 'Review', heading: 'Check and create' },
+    ],
+    errors: {
+      keyset: name.trim() ? undefined : { name: 'Enter a name.' },
+      keys: keysOk ? undefined : { keys: 'A key is 32 hex digits.' },
+    },
+    hints: HINTS,
+    fieldStep: FIELD_STEP,
+    onFinish: async () => {
+      const result = await create(body);
+      if (result.keys) setMade(result);
+      else {
+        toast.success(KEYSET_COPY.entered);
+        onClose();
       }
-      send={((body: never) => rotate(keyset.id, body)) as never}
-      onClose={onClose}
-    />
+    },
+  });
+
+  return (
+    <WizardDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={KEYSET_COPY.add}
+      wizard={w}
+      dirty={name !== '' || draft.dirty}
+      finishLabel="Create keyset"
+      result={
+        made?.keys
+          ? {
+              title: `Keys of ${made.name}`,
+              icon: <KeyRound aria-hidden />,
+              body: (
+                <SecretReveal
+                  savedLabel="I saved the keys"
+                  onDone={onClose}
+                  fields={[
+                    { label: 'Meta key', value: made.keys.metaKey },
+                    { label: 'File key', value: made.keys.fileKey, sheen: false },
+                  ]}
+                >
+                  <SdmProfile keyset={made} />
+                </SecretReveal>
+              ),
+            }
+          : undefined
+      }
+    >
+      {w.id === 'keyset' ? (
+        <>
+          <FormField label="Name" required error={w.errors.name}>
+            {(props) => (
+              <Input
+                {...props}
+                data-autofocus
+                value={name}
+                maxLength={40}
+                placeholder="Staff badges"
+                onChange={(e) => setName(e.target.value)}
+              />
+            )}
+          </FormField>
+          <ModeTiles modes={MODES} draft={draft} />
+        </>
+      ) : null}
+      {w.id === 'keys' ? (
+        <KeyInputs draft={draft} error={w.errors.keys} diversifyChoice autoFocus />
+      ) : null}
+      {w.id === 'review' ? (
+        <WizardReview
+          onEdit={w.go}
+          {...(generate ? { note: 'The keys are shown once, after you create it.' } : {})}
+          sections={[
+            {
+              id: 'keyset',
+              title: 'Keyset',
+              items: [
+                { label: 'Name', value: name.trim() },
+                { label: 'Keys', value: MODE_LABEL[draft.mode] },
+              ],
+            },
+            ...(generate
+              ? []
+              : [
+                  {
+                    id: 'keys' as const,
+                    title: 'Keys',
+                    items: [
+                      { label: 'Meta key', value: 'Entered' },
+                      ...(draft.mode === 'enter'
+                        ? [
+                            { label: 'File key', value: 'Entered' },
+                            { label: 'Key per tag', value: draft.diversify ? 'Yes' : 'No' },
+                          ]
+                        : []),
+                    ],
+                  },
+                ]),
+          ]}
+        />
+      ) : null}
+    </WizardDialog>
   );
 }

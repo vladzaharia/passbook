@@ -6,15 +6,19 @@ export function CertificateFields({
   draft,
   errors,
   patch,
+  autoFocus,
 }: {
   draft: UploadDraft;
   errors: Record<string, string>;
   patch: (p: Partial<UploadDraft>) => void;
+  /** The format choice takes focus when the dialog opens. */
+  autoFocus?: boolean;
 }) {
   return (
     <>
       <RadioGroup
         legend="Format"
+        autoFocus={autoFocus}
         orientation="horizontal"
         value={draft.mode}
         onValueChange={(v) => patch({ mode: v as UploadMode })}

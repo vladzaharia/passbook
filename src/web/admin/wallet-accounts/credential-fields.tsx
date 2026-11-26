@@ -1,165 +1,50 @@
-import { type FormEvent, useState } from 'react';
+import { type RefObject, useRef, useState } from 'react';
 import {
-  SAMSUNG_CARD_TYPES,
   type SaveWalletCredential,
   SaveWalletCredentialSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
-import { FormField, Input, Textarea } from '@/web/ui/index.ts';
+import { FieldGroup, FormField, Input, Textarea } from '@/web/ui/index.ts';
+import {
+  CARD_TYPES,
+  type FieldName,
+  GOOGLE_SCOPE,
+  googleFields,
+  samsungFields,
+  validPem,
+} from './credential-field-defs.ts';
 
-const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
+type Errors = Partial<Record<FieldName, string>>;
 
-/** The card types a Samsung projection supports: a card row for each beside the default card. */
-const CARD_TYPES = SAMSUNG_CARD_TYPES;
-const CARD_ID = /^[A-Za-z0-9_-]{1,32}$/;
-
-type FieldName =
-  | `cardIds.${(typeof CARD_TYPES)[number]}`
-  | 'issuerId'
-  | 'serviceAccountEmail'
-  | 'privateKeyPem'
-  | 'partnerId'
-  | 'certificateId'
-  | 'cardId'
-  | 'partnerPrivateKeyPem'
-  | 'partnerCertificatePem'
-  | 'samsungCertificatePem';
-
-type Field = {
-  name: FieldName;
-  optional?: boolean;
-  label: string;
-  help?: string;
-  pem?: 'PRIVATE KEY' | 'CERTIFICATE';
-  validate?: (value: string) => boolean;
-  invalid: string;
-};
-
-const googleFields: Field[] = [
-  {
-    name: 'issuerId',
-    label: 'Issuer ID',
-    help: 'The numeric Google Wallet issuer ID.',
-    validate: (value) => /^[0-9]{1,32}$/.test(value) && /[1-9]/.test(value),
-    invalid: 'Enter a nonzero numeric issuer ID, up to 32 digits.',
-  },
-  {
-    name: 'serviceAccountEmail',
-    label: 'Service account email',
-    help: 'The service account must be authorized on this issuer in Google Wallet.',
-    validate: (value) =>
-      /^[a-zA-Z0-9][a-zA-Z0-9._+-]{0,63}@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.gserviceaccount\.com$/.test(
-        value,
-      ),
-    invalid: 'Enter a valid Google service account email.',
-  },
-  {
-    name: 'privateKeyPem',
-    label: 'Service account private key (PKCS#8 PEM)',
-    pem: 'PRIVATE KEY',
-    invalid: 'Enter a PKCS#8 PRIVATE KEY PEM.',
-  },
-];
-
-const samsungFields: Field[] = [
-  {
-    name: 'partnerId',
-    label: 'Partner ID',
-    validate: (value) => /^[A-Za-z0-9_-]{1,32}$/.test(value),
-    invalid: 'Enter 1–32 letters, numbers, underscores or hyphens.',
-  },
-  {
-    name: 'certificateId',
-    label: 'Certificate ID',
-    validate: (value) => /^[A-Za-z0-9]{4}$/.test(value),
-    invalid: 'Enter the four-character certificate ID.',
-  },
-  {
-    name: 'cardId',
-    label: 'Default card ID',
-    help: 'Used by every type without its own card.',
-    validate: (value) => CARD_ID.test(value),
-    invalid: 'Enter 1–32 letters, numbers, underscores or hyphens.',
-  },
-  ...CARD_TYPES.map(
-    (type): Field => ({
-      name: `cardIds.${type}`,
-      label: `Card for ${type} (optional)`,
-      optional: true,
-      validate: (value) => CARD_ID.test(value),
-      invalid: 'Enter 1–32 letters, numbers, underscores or hyphens.',
-    }),
-  ),
-  {
-    name: 'partnerPrivateKeyPem',
-    label: 'Partner private key (PKCS#8 PEM)',
-    pem: 'PRIVATE KEY',
-    invalid: 'Enter a PKCS#8 PRIVATE KEY PEM.',
-  },
-  {
-    name: 'partnerCertificatePem',
-    label: 'Partner certificate (PEM)',
-    pem: 'CERTIFICATE',
-    invalid: 'Enter the partner CERTIFICATE PEM.',
-  },
-  {
-    name: 'samsungCertificatePem',
-    label: 'Samsung certificate (PEM)',
-    help: 'Use the genuine Samsung certificate obtained during partner onboarding.',
-    pem: 'CERTIFICATE',
-    invalid: 'Enter the Samsung CERTIFICATE PEM.',
-  },
-];
-
-function validPem(value: string, label: 'PRIVATE KEY' | 'CERTIFICATE'): boolean {
-  return (
-    value.length <= 32768 &&
-    new RegExp(`^-----BEGIN ${label}-----\\s+[A-Za-z0-9+/=\\s]+\\s+-----END ${label}-----$`).test(
-      value,
-    )
-  );
-}
-
-export const CREDENTIAL_FORM_ID = 'wallet-credentials';
-
-/** The form is deliberately uncontrolled: credential values never enter React or query state. */
-export function WalletCredentialFields({
-  provider,
-  revision,
-  rotating,
-  busy,
-  onSave,
-}: {
-  provider: WalletProvider;
-  revision: number;
-  rotating: boolean;
-  busy: boolean;
-  onSave: (request: SaveWalletCredential) => Promise<void>;
-}) {
+/**
+ * Reads the credential form straight from the DOM: the values are deliberately uncontrolled, so
+ * they never enter React or query state. `read` returns the request, or undefined after showing
+ * the field errors.
+ */
+export function useCredentialForm(provider: WalletProvider, revision: number) {
   const fields = provider === 'google' ? googleFields : samsungFields;
-  const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
-  const [formError, setFormError] = useState('');
+  const root = useRef<HTMLDivElement>(null);
+  const [errors, setErrors] = useState<Errors>({});
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy) return;
-    const form = event.currentTarget;
+  function read(): SaveWalletCredential | undefined {
+    const form = root.current?.closest('form');
+    if (!form) return undefined;
     const data = new FormData(form);
     const values = Object.fromEntries(
       fields.map((field) => [field.name, String(data.get(field.name) ?? '').trim()]),
     );
-    const nextErrors: Partial<Record<FieldName, string>> = {};
+    const next: Errors = {};
     for (const field of fields) {
       const value = values[field.name] ?? '';
       if (!value) {
-        if (!field.optional) nextErrors[field.name] = 'Required.';
+        if (!field.optional) next[field.name] = 'Required.';
       } else if (
         field.pem
           ? !validPem(value, field.pem)
           : value.length > (field.name === 'serviceAccountEmail' ? 254 : 255) ||
             (field.validate && !field.validate(value))
       ) {
-        nextErrors[field.name] = field.invalid;
+        next[field.name] = field.invalid;
       }
     }
     const cardIds = Object.fromEntries(
@@ -190,12 +75,13 @@ export function WalletCredentialFields({
       expectedRevision: revision,
       credentials,
     });
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length || !request.success) {
-      setFormError('Check the highlighted fields.');
-      return;
+    setErrors(next);
+    if (Object.keys(next).length || !request.success) {
+      requestAnimationFrame(() =>
+        root.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+      );
+      return undefined;
     }
-    setFormError('');
     // Identifiers and certificates stay for a retry; private keys never outlive the submit.
     for (const field of fields) {
       if (field.pem === 'PRIVATE KEY') {
@@ -203,58 +89,68 @@ export function WalletCredentialFields({
         if (input instanceof HTMLTextAreaElement) input.value = '';
       }
     }
-    void onSave(request.data);
+    return request.data;
   }
 
+  return { root, errors, read, reset: () => setErrors({}) };
+}
+
+/** The fields, grouped. They render inside the dialog's form; `form.read` collects them. */
+export function WalletCredentialFields({
+  provider,
+  form,
+}: {
+  provider: WalletProvider;
+  form: { root: RefObject<HTMLDivElement | null>; errors: Errors };
+}) {
+  const fields = provider === 'google' ? googleFields : samsungFields;
+  const groups = [...new Set(fields.map((f) => f.group))];
   return (
-    <form
-      id={CREDENTIAL_FORM_ID}
-      className="flex flex-col gap-4 overflow-y-auto"
-      onSubmit={submit}
-      noValidate
-      autoComplete="off"
-    >
-      <p className="text-sm text-fg-muted">
-        {rotating
-          ? 'Required fields are marked. The issuer, or partner and cards, stay the same: enter every card again.'
-          : 'Required fields are marked. Saved credentials cannot be read back.'}
-      </p>
-      {fields.map((field) => (
-        <FormField
-          key={field.name}
-          label={field.label}
-          help={field.help}
-          error={errors[field.name]}
-          required={!field.optional}
+    <div ref={form.root} className="flex flex-col">
+      {groups.map((group, i) => (
+        <FieldGroup
+          key={group}
+          title={group}
+          className={i === 0 ? '[&>h3]:mt-0 [&>h3]:border-t-0 [&>h3]:pt-0' : undefined}
         >
-          {(props) =>
-            field.pem ? (
-              <Textarea
-                {...props}
-                name={field.name}
-                rows={4}
-                autoComplete="off"
-                spellCheck={false}
-                disabled={busy}
-                className={field.pem === 'PRIVATE KEY' ? '[-webkit-text-security:disc]' : undefined}
-              />
-            ) : (
-              <Input
-                {...props}
-                name={field.name}
-                autoComplete="off"
-                spellCheck={false}
-                disabled={busy}
-              />
-            )
-          }
-        </FormField>
+          <div className="flex flex-col gap-4">
+            {fields
+              .filter((f) => f.group === group)
+              .map((field, n) => (
+                <FormField
+                  key={field.name}
+                  label={field.label}
+                  help={field.help}
+                  error={form.errors[field.name]}
+                  required={!field.optional}
+                >
+                  {(props) =>
+                    field.pem ? (
+                      <Textarea
+                        {...props}
+                        name={field.name}
+                        rows={4}
+                        autoComplete="off"
+                        spellCheck={false}
+                        className={
+                          field.pem === 'PRIVATE KEY' ? '[-webkit-text-security:disc]' : undefined
+                        }
+                      />
+                    ) : (
+                      <Input
+                        {...props}
+                        {...(i === 0 && n === 0 ? { 'data-autofocus': true } : {})}
+                        name={field.name}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                    )
+                  }
+                </FormField>
+              ))}
+          </div>
+        </FieldGroup>
       ))}
-      {formError ? (
-        <p role="alert" className="text-sm text-danger">
-          {formError}
-        </p>
-      ) : null}
-    </form>
+    </div>
   );
 }

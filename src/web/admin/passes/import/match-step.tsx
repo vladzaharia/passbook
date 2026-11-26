@@ -4,10 +4,11 @@ import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
 import { useSession } from '../../../lib/session.ts';
-import { Callout, Card, CardHeader, ErrorState, Skeleton, Wizard } from '../../../ui/index.ts';
+import { Callout, Card, ErrorState, Skeleton } from '../../../ui/index.ts';
 import { useTemplate } from '../../templates/api.ts';
 import { useCheckImport } from './api.ts';
 import { useSavedMappings, useSaveMapping } from './api-run.ts';
+import { ImportWizard, summaryOf } from './import-wizard.tsx';
 import { MatchSettings, type MatchSettingsValue, RowCard } from './match-aside.tsx';
 import {
   type MatchRow,
@@ -19,7 +20,7 @@ import {
 } from './match-model.ts';
 import { MatchRows } from './match-rows.tsx';
 import { MatchSummary, SavedPicker, UnusedColumns, valuesLeft } from './match-summary.tsx';
-import { IMPORT_STEPS, STEP } from './steps.ts';
+import { STEP } from './steps.ts';
 
 function MatchForm({
   imp,
@@ -105,9 +106,9 @@ function MatchForm({
   );
 
   return (
-    <Wizard
-      steps={IMPORT_STEPS}
+    <ImportWizard
       current={STEP.match}
+      summary={summaryOf(imp)}
       onStep={onStep}
       onCancel={() => onStep(STEP.source)}
       onBack={() => onStep(STEP.source)}
@@ -119,10 +120,11 @@ function MatchForm({
       aside={aside}
     >
       <Card>
-        <CardHeader
-          title={C.match.title}
-          actions={<SavedPicker saved={saved.data?.saved ?? []} onPick={pick} />}
-        />
+        {(saved.data?.saved.length ?? 0) > 0 ? (
+          <div className="flex min-h-12 items-center justify-end border-b border-border px-4">
+            <SavedPicker saved={saved.data?.saved ?? []} onPick={pick} />
+          </div>
+        ) : null}
         {imp.errorCode && !check.isError ? (
           <Callout tone="warning" className="m-4">
             {errorText(imp.errorCode)}
@@ -153,7 +155,7 @@ function MatchForm({
       )}
       {left > 0 ? <p className="text-xs text-fg-muted">{C.match.valuesLeft(left)}</p> : null}
       {check.isError ? <Callout tone="danger">{errorMessage(check.error)}</Callout> : null}
-    </Wizard>
+    </ImportWizard>
   );
 }
 

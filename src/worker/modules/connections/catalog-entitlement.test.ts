@@ -109,7 +109,12 @@ describe('connector plans', () => {
   it('shows a trial org no REST API and refuses to create one', async () => {
     await onPreset('trial');
     const items = await types();
-    expect(items.map((c) => c.type).sort()).toEqual(['csv-url', 'demo', 'webhook-push']);
+    expect(items.map((c) => c.type).sort()).toEqual([
+      'csv-url',
+      'demo',
+      'file-upload',
+      'webhook-push',
+    ]);
     expect(items.find((c) => c.type === 'webhook-push')?.recipes.length).toBeGreaterThan(1);
     const before = await credentials();
     const refused = await refusedBy(await createRest());
@@ -280,6 +285,7 @@ describe('connector plans', () => {
     expect(all.items.map((c) => c.type).sort()).toEqual([
       'csv-url',
       'demo',
+      'file-upload',
       'http-json',
       'webhook-push',
     ]);
@@ -293,6 +299,11 @@ describe('connector plans', () => {
     const res = await app.request('/api/v1/connectors', { headers: key.headers }, kit.env);
     expect(res.status).toBe(200);
     const { items } = (await res.json()) as { items: { type: string }[] };
-    expect(items.map((c) => c.type).sort()).toEqual(['csv-url', 'demo', 'webhook-push']);
+    expect(items.map((c) => c.type).sort()).toEqual([
+      'csv-url',
+      'demo',
+      'file-upload',
+      'webhook-push',
+    ]);
   });
 });

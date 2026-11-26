@@ -30,6 +30,8 @@ export interface ModeCapabilities {
   poll: boolean;
   webhook: boolean;
   snapshot: boolean;
+  /** Records come from uploaded files: there is no schedule to choose. */
+  upload?: boolean;
 }
 
 const MODE: Record<Lifecycle['mode'], { icon: LucideIcon }> = {
@@ -122,24 +124,28 @@ export function LifecycleFields({
     );
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <fieldset className="min-w-0">
-        <legend className="mb-2 text-sm font-medium text-fg">Mode</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {modeOptions(capabilities, value.mode).map((m) => (
-            <OptionTile
-              key={m}
-              name="connection-mode"
-              value={m}
-              label={MODE_LABEL[m]}
-              className="items-center"
-              icon={MODE[m].icon}
-              checked={value.mode === m}
-              disabled={disabled}
-              onSelect={(v) => set('mode', v as Lifecycle['mode'])}
-            />
-          ))}
-        </div>
-      </fieldset>
+      {capabilities?.upload ? (
+        <p className="text-sm text-fg-muted">Syncs when you apply a file.</p>
+      ) : (
+        <fieldset className="min-w-0">
+          <legend className="mb-2 text-sm font-medium text-fg">Mode</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {modeOptions(capabilities, value.mode).map((m) => (
+              <OptionTile
+                key={m}
+                name="connection-mode"
+                value={m}
+                label={MODE_LABEL[m]}
+                className="items-center"
+                icon={MODE[m].icon}
+                checked={value.mode === m}
+                disabled={disabled}
+                onSelect={(v) => set('mode', v as Lifecycle['mode'])}
+              />
+            ))}
+          </div>
+        </fieldset>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <DependentSettings open={scheduled(value.mode)}>
           <FormField
