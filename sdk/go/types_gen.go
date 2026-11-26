@@ -8561,6 +8561,126 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	DryRun  bool     `json:"dryRun"`
 }
 
+type PlatformGroupsCreateParams struct {
+	Key          string                                `json:"key"`
+	FriendlyName string                                `json:"friendlyName"`
+	Rules        []PlatformGroupsCreateParamsRulesItem `json:"rules,omitempty"`
+}
+
+type PlatformGroupsCreateParamsRulesItem struct {
+	OrgID    string   `json:"orgId"`
+	OrgRoles []string `json:"orgRoles,omitempty"`
+}
+
+type PlatformGroupsCreateResponse struct {
+	Key    string `json:"key"`
+	DryRun bool   `json:"dryRun"`
+}
+
+type PlatformGroupsDeleteResponse struct {
+	Key    string `json:"key"`
+	DryRun bool   `json:"dryRun"`
+}
+
+type PlatformGroupsEnsureParams struct {
+	Role string `json:"role"`
+}
+
+type PlatformGroupsEnsureResponse struct {
+	Key    string `json:"key"`
+	DryRun bool   `json:"dryRun"`
+}
+
+type PlatformGroupsListResponse struct {
+	Items      []PlatformGroupsListResponseItemsItem `json:"items"`
+	NextCursor *string                               `json:"nextCursor"`
+}
+
+type PlatformGroupsListResponseItemsItem struct {
+	Key          string   `json:"key"`
+	Kind         string   `json:"kind"`
+	Name         string   `json:"name"`
+	FriendlyName *string  `json:"friendlyName"`
+	Members      *int64   `json:"members"`
+	Claims       []string `json:"claims"`
+	OtherClients *int64   `json:"otherClients"`
+	Flags        []string `json:"flags"`
+	Rules        int64    `json:"rules"`
+	Manual       int64    `json:"manual"`
+}
+
+type PlatformGroupsMembersCreateParams = any
+
+type PlatformGroupsMembersCreateParams1 struct {
+	UserID string `json:"userId"`
+}
+
+type PlatformGroupsMembersCreateParams2 struct {
+	Subject string `json:"subject"`
+}
+
+type PlatformGroupsMembersCreateResponse struct {
+	ID        string  `json:"id"`
+	Subject   string  `json:"subject"`
+	UserID    *string `json:"userId"`
+	Source    string  `json:"source"`
+	CreatedAt int64   `json:"createdAt"`
+}
+
+type PlatformGroupsMembersDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type PlatformGroupsMembersListResponse struct {
+	Items      []PlatformGroupsMembersListResponseItemsItem `json:"items"`
+	NextCursor *string                                      `json:"nextCursor"`
+}
+
+type PlatformGroupsMembersListResponseItemsItem struct {
+	ID        string  `json:"id"`
+	Subject   string  `json:"subject"`
+	UserID    *string `json:"userId"`
+	Source    string  `json:"source"`
+	CreatedAt int64   `json:"createdAt"`
+}
+
+type PlatformGroupsRulesCreateParams struct {
+	OrgID    string   `json:"orgId"`
+	OrgRoles []string `json:"orgRoles,omitempty"`
+}
+
+type PlatformGroupsRulesCreateResponse struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	OrgRoles  []string `json:"orgRoles"`
+	CreatedAt int64    `json:"createdAt"`
+}
+
+type PlatformGroupsRulesDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type PlatformGroupsRulesListResponse struct {
+	Items      []PlatformGroupsRulesListResponseItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformGroupsRulesListResponseItemsItem struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	OrgRoles  []string `json:"orgRoles"`
+	CreatedAt int64    `json:"createdAt"`
+}
+
+type PlatformGroupsUpdateParams struct {
+	FriendlyName string `json:"friendlyName"`
+}
+
+type PlatformGroupsUpdateResponse struct {
+	Key    string `json:"key"`
+	DryRun bool   `json:"dryRun"`
+}
+
 type PlatformIdpCallsListResponse struct {
 	Items      []PlatformIdpCallsListResponseItemsItem `json:"items"`
 	NextCursor *string                                 `json:"nextCursor"`

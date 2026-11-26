@@ -26,6 +26,7 @@ import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
 import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
 import { userAccessRoutes } from './modules/idp/routes-users.ts';
+import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
@@ -226,6 +227,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', groupClaimsRoutes);
   app.route('/api/v1/platform', idpOperationRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
+  app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
