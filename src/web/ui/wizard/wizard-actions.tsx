@@ -1,5 +1,12 @@
-import { type ReactNode, useId } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import { useId } from 'react';
 import { Button } from '../button.tsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../dropdown-menu.tsx';
 import type { WizardModel } from './wizard-types.ts';
 
 /**
@@ -8,6 +15,14 @@ import type { WizardModel } from './wizard-types.ts';
  * has no X). Next is never hard-disabled for an incomplete step: it carries `aria-disabled` and its
  * hint, and a press shows the errors. `busy` is the only hard-disabled state.
  */
+/** An action of the page beside Back and Next: inline on a wide screen, in the bar's menu on a phone. */
+export interface WizardBarAction {
+  label: string;
+  onSelect: () => void;
+  /** Only in the phone menu (a wide screen has the value in view). */
+  phoneOnly?: boolean;
+}
+
 export function WizardButtons({
   first,
   label,
@@ -17,7 +32,7 @@ export function WizardButtons({
   working,
   formId,
   keepCancel,
-  extra,
+  menu,
   onCancel,
   onBack,
   onNext,
@@ -32,8 +47,8 @@ export function WizardButtons({
   /** The primary submits this form. */
   formId?: string | undefined;
   keepCancel?: boolean;
-  /** Beside the primary (a page's own action): full width above it on a phone. */
-  extra?: ReactNode;
+  /** The page's own actions. On a phone they and Cancel sit in one menu, so the bar is one row. */
+  menu?: readonly WizardBarAction[] | undefined;
   onCancel: () => void;
   onBack?: (() => void) | undefined;
   /** Without formId. */
@@ -48,7 +63,11 @@ export function WizardButtons({
       <Button
         variant="ghost"
         disabled={working}
-        className={keepCancel ? 'mr-auto max-sm:order-2 max-sm:w-full' : 'max-sm:hidden sm:mr-auto'}
+        className={
+          keepCancel && !menu?.length
+            ? 'mr-auto max-sm:order-2 max-sm:w-full'
+            : 'max-sm:hidden sm:mr-auto'
+        }
         onClick={onCancel}
       >
         Cancel
@@ -58,8 +77,34 @@ export function WizardButtons({
           {why}
         </span>
       ) : null}
-      {extra}
+      {menu
+        ?.filter((a) => !a.phoneOnly)
+        .map((a) => (
+          <Button key={a.label} variant="ghost" className="max-sm:hidden" onClick={a.onSelect}>
+            {a.label}
+          </Button>
+        ))}
       <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
+        {menu?.length ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                aria-label="More actions"
+                className="sm:hidden max-sm:flex-none!"
+                iconStart={<MoreHorizontal aria-hidden />}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top">
+              {menu.map((a) => (
+                <DropdownMenuItem key={a.label} onSelect={a.onSelect}>
+                  {a.label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem onSelect={onCancel}>Cancel</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
         {first ? null : (
           <Button variant="outline" disabled={working} onClick={onBack}>
             Back

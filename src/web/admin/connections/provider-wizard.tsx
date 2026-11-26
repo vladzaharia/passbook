@@ -3,8 +3,9 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSetup } from '@/shared/contracts/connection-setup.ts';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
+import { copyText } from '../../lib/clipboard.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { Button, CodeBlock, ConfirmDialog, toast, Wizard } from '../../ui/index.ts';
+import { CodeBlock, ConfirmDialog, toast, Wizard } from '../../ui/index.ts';
 import {
   SetupSources,
   SetupSteps,
@@ -16,7 +17,7 @@ import { useTemplate } from '../templates/api.ts';
 import { useConnectionActions } from './api.ts';
 import { providerGroup, providerOrder, railSteps } from './create-wizard-steps.ts';
 import { exampleBody } from './payload-example.ts';
-import { CopyUrlButton, ProviderLive, ProviderPanel, ProviderStrip } from './provider-panel.tsx';
+import { ProviderLive, ProviderPanel, ProviderStrip } from './provider-panel.tsx';
 import { signingSecretError } from './recipe-copy.ts';
 import { SecretStep } from './secret-step.tsx';
 import { SendSnippets } from './send-snippets.tsx';
@@ -241,14 +242,12 @@ export function ProviderWizard({
       : id === 'secret' && origin === 'provider' && (!hasSecret || replacing)
         ? 'Save secret'
         : 'Next';
-  const barExtra =
-    id === 'connect' ? (
-      <CopyUrlButton url={url} />
-    ) : id === 'test' ? (
-      <Button variant="ghost" className="max-sm:w-full" onClick={open}>
-        Skip for now
-      </Button>
-    ) : undefined;
+  const barMenu =
+    id === 'connect'
+      ? [{ label: 'Copy URL', phoneOnly: true, onSelect: () => void copyText(url, 'URL') }]
+      : id === 'test' && !verified
+        ? [{ label: 'Skip for now', onSelect: open }]
+        : undefined;
   return (
     <>
       <Wizard
@@ -262,7 +261,7 @@ export function ProviderWizard({
         nextLabel={label}
         nextDisabled={(holding && !saved) || (id === 'test' && !verified)}
         nextHint={holding ? 'Copy the secret.' : 'Waiting for a delivery.'}
-        barExtra={barExtra}
+        barMenu={barMenu}
         busy={actions.update.isPending}
       >
         <TwoSided

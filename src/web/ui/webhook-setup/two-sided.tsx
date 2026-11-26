@@ -4,7 +4,9 @@ import { cn } from '../../lib/cn.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 
 const WIDE = '(min-width: 1024px)';
-const STICKY = 'sticky top-[calc(4.5rem+env(safe-area-inset-top))]';
+// Under the top bar with room to spare (the two-pane pages use the same 5rem), and no taller than what is left.
+const STICKY =
+  'sticky top-[calc(5rem+env(safe-area-inset-top))] max-h-[calc(100dvh-6rem-env(safe-area-inset-top))] overflow-y-auto';
 
 export interface TwoSidedProps {
   /** The provider's side: the guide's steps. Prose stays under 40rem inside it. */
@@ -67,7 +69,8 @@ export function TwoSided({
   if (phone)
     return (
       <div className={cn('flex min-w-0 flex-col gap-6', className)}>
-        <Side label={guideLabel}>{guide}</Side>
+        {/* The rail's own line over the step says whose side this is: not said twice. */}
+        <div className="min-w-0">{guide}</div>
         <aside aria-label={panelLabel} className="min-w-0">
           <Surface>{panel}</Surface>
         </aside>

@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { useChangeCount } from '../lib/change-count.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { useBlockedSubmit } from './form.tsx';
-import { WizardButtons } from './wizard/wizard-actions.tsx';
+import { type WizardBarAction, WizardButtons } from './wizard/wizard-actions.tsx';
 import { WizardStep } from './wizard/wizard-step.tsx';
 import { WizardStepper } from './wizard/wizard-stepper.tsx';
 import type { WizardRail, WizardStepDef, WizardStepState } from './wizard/wizard-types.ts';
@@ -54,8 +54,8 @@ export interface WizardProps {
   nextDisabled?: boolean;
   /** Why Next is off, in a few words; shown beside it while it is disabled. */
   nextHint?: string;
-  /** An action of the page beside Back and Next (Skip for now, Copy URL on a phone). */
-  barExtra?: ReactNode;
+  /** The page's own actions beside Back and Next (Skip for now, Copy URL on a phone); on a phone they and Cancel share a menu. */
+  barMenu?: readonly WizardBarAction[] | undefined;
   busy?: boolean;
   children: ReactNode;
 }
@@ -74,7 +74,7 @@ export function WizardBar({
   nextTone,
   nextDisabled,
   nextHint,
-  barExtra,
+  barMenu,
   busy,
 }: Pick<
   WizardProps,
@@ -86,7 +86,7 @@ export function WizardBar({
   | 'nextTone'
   | 'nextDisabled'
   | 'nextHint'
-  | 'barExtra'
+  | 'barMenu'
   | 'busy'
 > & { onBlocked?: () => void }) {
   // The bar's height as a variable, so the page keeps its last line clear of it (a phone's bar is three rows).
@@ -115,7 +115,7 @@ export function WizardBar({
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 max-sm:flex-wrap sm:[--wl-gutter:1.5rem]">
         <WizardButtons
           keepCancel
-          extra={barExtra}
+          menu={barMenu}
           first={!onBack}
           label={nextLabel}
           tone={nextTone}

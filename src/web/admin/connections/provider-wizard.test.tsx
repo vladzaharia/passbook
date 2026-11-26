@@ -290,14 +290,21 @@ describe('setup page: the pieces', () => {
     // Over the guide and the panel, as well as the rail.
     expect(screen.getAllByText('In Shopify', { selector: 'p' }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('In PassBook', { selector: 'p' }).length).toBeGreaterThanOrEqual(2);
-    // The bar's own Copy URL (phones) beside the panel's row.
-    expect(screen.getAllByRole('button', { name: 'Copy URL' }).length).toBeGreaterThanOrEqual(2);
+    // The panel's row; the phone's own Copy URL sits in the bar's menu.
+    expect(screen.getAllByRole('button', { name: 'Copy URL' }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument();
   });
 
   it('the Test step leads with the live check, led by the provider', async () => {
     await open('shopify-orders');
     expect(await screen.findByText(/In Shopify: row menu/)).toBeVisible();
     expect(screen.getByRole('button', { name: 'Skip for now' })).toBeVisible();
+  });
+
+  it('Skip for now goes once a signed delivery is caught', async () => {
+    await open('shopify-orders', { rows: [ledgerRow({ topic: 'orders/create' })] });
+    await screen.findByRole('heading', { name: 'Signed delivery seen', level: 4 });
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).toBeNull();
   });
 
   it('an accepted delivery whose work failed reads Accepted, not issued, with Open failures', async () => {

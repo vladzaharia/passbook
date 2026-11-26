@@ -1,8 +1,7 @@
 import type { z } from 'zod';
 import type { ConnectionSetup } from '@/shared/contracts/connection-setup.ts';
 import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
-import { copyText } from '../../lib/clipboard.ts';
-import { Button, CopyButton } from '../../ui/index.ts';
+import { CopyButton } from '../../ui/index.ts';
 import {
   type ArrivalLoader,
   CopyRow,
@@ -122,18 +121,5 @@ export function ProviderStrip({
             : 'Listening'}
       </span>
     </span>
-  );
-}
-
-/** On a phone the URL is the most used value: one thumb from the bar. */
-export function CopyUrlButton({ url }: { url: string }) {
-  return (
-    <Button
-      variant="outline"
-      className="w-full sm:hidden"
-      onClick={() => void copyText(url, 'URL')}
-    >
-      Copy URL
-    </Button>
   );
 }

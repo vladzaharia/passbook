@@ -35,6 +35,27 @@ async function check(page: Page, name: string) {
   await page.setViewportSize({ width: 1440, height: 900 });
 }
 
+/** What the person sees, not the whole page: the bar's height and the sticky panel only show in the viewport. */
+async function viewportShots(
+  page: Page,
+  name: string,
+  size: readonly [number, number],
+  scroll = 0,
+) {
+  const dir = process.env.D12_SHOTS ?? process.env.SHOTS_DIR;
+  if (!dir) return;
+  await page.setViewportSize({ width: size[0], height: size[1] });
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.evaluate((y) => window.scrollTo(0, y), scroll);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${dir}/${name}-${size[0]}x${size[1]}-vp-${scheme}.png` });
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+}
+
 const next = (page: Page) => page.getByRole('button', { name: 'Next', exact: true }).click();
 
 /** The wizard from Setup to Create, with a name. */
@@ -80,6 +101,8 @@ test('Shopify: create, paste the secret, a signed delivery is caught, finish', a
   const url = `${BASE}/hooks/connections/${id}`;
   await expect(page.getByRole('button', { name: 'Copy endpoint URL' }).first()).toBeVisible();
   await check(page, 'webhook-connect');
+  await viewportShots(page, 'webhook-connect', [390, 844]);
+  await viewportShots(page, 'webhook-connect', [1440, 768], 500);
 
   await next(page);
   await expect(page.getByRole('heading', { name: 'Paste the secret', level: 2 })).toBeVisible();
@@ -93,6 +116,7 @@ test('Shopify: create, paste the secret, a signed delivery is caught, finish', a
     page.getByRole('heading', { name: 'Listening · nothing yet', level: 4 }),
   ).toBeVisible();
   await check(page, 'webhook-listening');
+  await viewportShots(page, 'webhook-listening', [390, 844]);
 
   // What Shopify sends: the raw body, its base64 HMAC and the topic.
   const body = ORDER(new Date().toISOString());
@@ -110,6 +134,7 @@ test('Shopify: create, paste the secret, a signed delivery is caught, finish', a
     timeout: 20_000,
   });
   await check(page, 'webhook-caught');
+  await viewportShots(page, 'webhook-caught', [390, 844]);
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Shopify is connected' })).toBeVisible();
   await check(page, 'webhook-finish');
