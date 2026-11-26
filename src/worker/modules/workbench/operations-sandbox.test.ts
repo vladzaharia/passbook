@@ -165,4 +165,32 @@ describe('operations under a sandbox token: its owner’s sandbox rows', () => {
       expect(((await res.json()) as { code: string }).code, verb).toBe('WORKBENCH_TEST_ONLY');
     }
   });
+
+  it('retries a step-up sandbox kind only while its session would pass the step-up', async () => {
+    const d = await t.developer();
+    const sandbox = d.made.orgId;
+    const me = { actorId: d.user.id, actorSession: await sha256Hex(d.session.cookieValue) };
+    const id = await starter(`sb-stale-${sandbox}`, {
+      kind: 'sandbox.reset',
+      target: sandbox,
+      ...me,
+    });
+    const { token } = await t.wbMint(d.browser, sandbox);
+    const client = t.asClient(token);
+    const fresh = await t.call('POST', `/operations/${id}/retry`, client, {});
+    expect(fresh.status, await fresh.clone().text()).not.toBe(403);
+    // Eleven minutes after sign-in the session is asked to sign in again, and so is its token.
+    await run(
+      t.kit.env.DB,
+      "UPDATE operations SET status = 'failed', error_retryable = 1 WHERE id = ?",
+      [id],
+    );
+    t.kit.clock.set(t.kit.clock.now() + 11 * 60_000);
+    const stale = await t.call('POST', `/operations/${id}/retry`, client, {});
+    expect(stale.status).toBe(403);
+    expect(((await stale.json()) as { code: string }).code).toBe('STEP_UP_REQUIRED');
+    const cancel = await t.call('POST', `/operations/${id}/cancel`, client, {});
+    expect(cancel.status).toBe(403);
+    expect(((await cancel.json()) as { code: string }).code).toBe('STEP_UP_REQUIRED');
+  });
 });

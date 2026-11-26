@@ -47,8 +47,8 @@ export async function authorizeKey(
   id: string,
   capability: 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
-  // A sandbox token never reaches the key it stands for.
-  if (workbenchPinOf(auth)?.keyId === id)
+  // A sandbox token reads the key it stands for (the Logs key chip opens it) but never changes it.
+  if (capability === 'integrations:manage' && workbenchPinOf(auth)?.keyId === id)
     throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
   // Under a Workbench token a Live key, or one of another org, is not found.
   if (viaToken(auth) && (await getKey(ctx.env.DB, id, orgId))?.mode !== 'test')

@@ -6,8 +6,8 @@ import { useSession } from '../../lib/session.ts';
 import { StandaloneError } from '../../ui/layout/lazy-error-pages.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { useWorkbenchContexts } from '../../workbench/host/contexts.ts';
+import { useFreshSpace } from '../../workbench/host/fresh-space.ts';
 import { markSessionGone, resetSessionGone } from '../../workbench/host/session-gone.ts';
-import { forgetTokens } from '../../workbench/host/token.ts';
 import { ToolHostProvider } from '../../workbench/host/tool-host.tsx';
 import { PUBLIC_AREAS } from '../../workbench/shell/nav-model.ts';
 import { setPerson } from '../../workbench/shell/person.ts';
@@ -35,10 +35,7 @@ function WorkbenchLayout() {
   const contexts = useWorkbenchContexts();
   setPerson(authed?.user.id);
   // PrincipalBoundary remounts the space for each person: no token or banner carries over.
-  useEffect(() => {
-    forgetTokens();
-    resetSessionGone();
-  }, []);
+  useFreshSpace();
 
   // The session ended behind a refetch: the "Sign in again" banner, never Retry.
   const ended = contexts.error instanceof ApiError && contexts.error.isUnauthorized;

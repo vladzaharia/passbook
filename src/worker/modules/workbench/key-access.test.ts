@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { WORKBENCH_KEY_MAX_MS } from '../../../shared/contracts/workbench.ts';
+import { resolveWorkbenchToken } from './resolve.ts';
 import { workbenchKit } from './workbench-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof workbenchKit>>;
@@ -70,6 +71,11 @@ describe('Keys access by Workbench token', () => {
     // Revoke a capped key; the token's own key is not found for revoke and rotate.
     expect((await t.call('DELETE', `/api-keys/${id}?orgId=${orgId}`, client)).status).toBe(200);
     const ownId = d.key.id;
+    // It reads its own key and that key's activity (the Logs key chip opens it) but never changes it.
+    expect((await t.call('GET', `/api-keys/${ownId}?orgId=${orgId}`, client)).status).toBe(200);
+    expect((await t.call('GET', `/api-keys/${ownId}/activity?orgId=${orgId}`, client)).status).toBe(
+      200,
+    );
     expect((await t.call('DELETE', `/api-keys/${ownId}?orgId=${orgId}`, client)).status).toBe(404);
     expect(
       (await t.call('POST', `/api-keys/${ownId}/rotate`, client, { orgId, overlapHours: 1 }))
@@ -134,5 +140,24 @@ describe('Keys access by Workbench token', () => {
     const { id } = (await first.json()) as { id: string };
     expect((await t.call('DELETE', `/api-keys/${id}?orgId=${orgId}`, client)).status).toBe(200);
     expect((await make()).status).toBe(201);
+  });
+
+  it('gives a sandbox token the key-management scope on the key routes only', async () => {
+    const d = await t.developer();
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    const scopesOn = async (route: string) => {
+      const auth = await resolveWorkbenchToken(
+        t.kit.env,
+        t.kit.clock,
+        token,
+        { ip: undefined, sessionCookie: d.session.cookieValue, routes: [route] },
+        undefined,
+      );
+      return auth?.kind === 'api_key' ? auth.scopes : null;
+    };
+    expect(await scopesOn('GET /api/v1/api-keys')).toContain('api-keys:write');
+    expect(await scopesOn('POST /api/v1/api-keys/:id/rotate')).toContain('api-keys:write');
+    for (const route of ['GET /api/v1/passes', 'POST /api/v1/passes', 'GET /api/v1/api-keys-x'])
+      expect(await scopesOn(route), route).not.toContain('api-keys:write');
   });
 });

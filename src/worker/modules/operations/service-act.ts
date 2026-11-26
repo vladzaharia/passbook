@@ -1,5 +1,5 @@
 import type { OperationDto, OperationStep } from '../../../shared/contracts/operations.ts';
-import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
+import { type Amr, type AuthContext, isOwnOnly } from '../../platform/auth.ts';
 import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError } from '../../platform/errors.ts';
@@ -34,10 +34,23 @@ const notCancelable = () =>
   new AppError('OPERATION_NOT_CANCELABLE', 409, 'This cannot be stopped. Wait for it to finish.');
 const notRetryable = () => new AppError('OPERATION_NOT_RETRYABLE', 409, 'This cannot be retried.');
 
-/** A Workbench token acts only on a kind that declares `tokenActs`: its retry never writes state Live uses. */
-function assertTokenMayAct(auth: AuthContext, kind: string): void {
-  if (workbenchPinOf(auth) && !kindOf(kind)?.tokenActs)
+/** The route's step-up bound to its request: throws `STEP_UP_REQUIRED` when the sign-in is stale. */
+export type TokenStepUp = (session: { authTime: number | null; amr: Amr }) => void;
+
+/**
+ * A Workbench token acts only on a kind that declares `tokenActs`: its retry never writes state Live uses.
+ * A sandbox token passes a step-up kind's step-up exactly when its session would: the route's own
+ * step-up never sees a key, so it is asked here, fail-closed when the route gave no way to ask.
+ */
+function assertTokenMayAct(auth: AuthContext, kind: string, stepUp?: TokenStepUp): void {
+  if (!workbenchPinOf(auth)) return;
+  const def = kindOf(kind);
+  if (!def?.tokenActs)
     throw workbenchTestOnly('A Workbench token cannot stop or retry this. Use the admin console.');
+  if (def.stepUp && auth.kind === 'api_key') {
+    if (!stepUp) throw new ForbiddenError();
+    stepUp({ authTime: auth.sessionAuthTime ?? null, amr: auth.sessionAmr ?? 'oidc' });
+  }
 }
 
 /**
@@ -49,10 +62,11 @@ export async function cancelOperation(
   ctx: ServiceContext,
   auth: AuthContext,
   id: string,
+  stepUp?: TokenStepUp,
 ): Promise<OperationDto> {
   if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
-  assertTokenMayAct(auth, row.kind);
+  assertTokenMayAct(auth, row.kind, stepUp);
   const dto = toDto(row);
   const policy = kindOf(row.kind)?.cancel ?? 'never';
   if (policy === 'never') throw notCancelable();
@@ -123,10 +137,11 @@ export async function retryOperation(
   auth: AuthContext,
   id: string,
   idempotencyKey?: string,
+  stepUp?: TokenStepUp,
 ): Promise<OperationDto> {
   if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
-  assertTokenMayAct(auth, row.kind);
+  assertTokenMayAct(auth, row.kind, stepUp);
   // The key is kept as a hash on the row, per principal.
   const retryKey =
     idempotencyKey === undefined ? null : await sha256Hex(`${principalOf(auth)}:${idempotencyKey}`);

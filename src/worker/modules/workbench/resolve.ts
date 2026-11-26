@@ -40,6 +40,11 @@ async function cookieOk(caller: KeyCaller, sessionIdHash: string): Promise<boole
   return !!cookie && safeEqual(await sha256Hex(cookie), sessionIdHash);
 }
 
+/** Every route the request matched is a key route (`/api/v1/api-keys…`). */
+const onKeyRoutes = (caller: KeyCaller | undefined): boolean =>
+  !!caller?.routes?.length &&
+  caller.routes.every((route) => /^\S+ \/api\/v1\/api-keys(\/|$)/.test(route));
+
 /** The sandbox key a `sandbox_key` token stands for, while the session, sandbox generation and key hold. */
 async function sandboxPrincipal(
   env: AppEnv,
@@ -66,10 +71,12 @@ async function sandboxPrincipal(
   return {
     ...auth,
     // The one scope a sandbox's person holds beyond its key: managing the keys under it. The key routes
-    // reach children only, cap them (`api-keys/workbench-cap.ts`) and never the token's own key (404).
-    scopes: auth.scopes.includes('api-keys:write')
-      ? auth.scopes
-      : [...auth.scopes, 'api-keys:write'],
+    // reach children only, cap them (`api-keys/workbench-cap.ts`) and never change the token's own key (404);
+    // every other route sees the key's own scopes.
+    scopes:
+      onKeyRoutes(caller) && !auth.scopes.includes('api-keys:write')
+        ? [...auth.scopes, 'api-keys:write']
+        : auth.scopes,
     via: 'try',
     sessionAuthTime: row.session_auth_time,
     sessionAmr: row.session_amr,
