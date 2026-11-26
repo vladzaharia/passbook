@@ -69,10 +69,11 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
   // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
   // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
+  // 0229 (Samsung system release): the exemption's `provider IN (...)` is one group deeper: revoke depth 27 -> 28.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
-    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 27, 58],
+    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 28, 58],
     ['release binding', bindingSql, 49, 162],
     ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 25, 32],
     ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 27, 50],
@@ -122,7 +123,8 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       template_provider_releases_insert: [51, 106],
       // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
       wallet_samsung_tombstones_approved_insert: [37, 33],
-      wallet_samsung_tombstone_keyset_insert: [39, 37],
+      // 0229: one more OR/AND pair for the system exemption: terms 37 -> 39.
+      wallet_samsung_tombstone_keyset_insert: [39, 39],
     };
     for (const t of triggers) {
       const [depth, n] = ceiling[t.name] ?? [0, 0];
@@ -139,8 +141,9 @@ describe('expression depth of the largest wallet-provider predicates', () => {
     );
     expect(views).toHaveLength(2);
     const ceiling: Record<string, [number, number]> = {
-      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77).
-      wallet_provider_retirement_complete_base: [33, 77],
+      // 0199 made the evidence optional (33/75); 0222 added the sole approval clause (33/77); 0229 the system
+      // exemption (33/79).
+      wallet_provider_retirement_complete_base: [33, 79],
       template_provider_apple_sources: [37, 41],
     };
     for (const v of views) {
