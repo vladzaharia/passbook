@@ -91541,9 +91541,9 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
-          "ORG_NOT_FOUND",
           "RATE_LIMITED",
-          "SANDBOX_KEY_MISSING",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WORKBENCH_CONTEXT_NOT_FOUND"
@@ -92246,13 +92246,10 @@
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "RATE_LIMITED",
-          "RESOLVE_NOT_FOUND",
-          "SANDBOX_NOT_FOUND",
           "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WORKBENCH_CONTEXT_NOT_FOUND",
           "WORKBENCH_TEST_ONLY"
         ]
       }
