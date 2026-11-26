@@ -23,7 +23,7 @@ export const SAMSUNG_COMPILER_REVISION = 2;
 type Wanted = SamsungType | 'generic' | 'giftcard';
 
 /** The style's type (architecture 3.1), or the author's. */
-function wantedType(view: WalletPassView, configured: Wanted | 'off' | undefined): Wanted {
+export function wantedType(view: WalletPassView, configured: Wanted | 'off' | undefined): Wanted {
   if (configured && configured !== 'off') return configured;
   if (view.style === 'eventTicket') return 'ticket';
   if (view.style === 'coupon') return 'coupon';

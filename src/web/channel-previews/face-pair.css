@@ -81,6 +81,10 @@
     opacity: 0;
     pointer-events: none;
   }
+  .fp[data-fit][data-face="front"] .fp-face[data-side="back"],
+  .fp[data-fit][data-face="back"] .fp-face[data-side="front"] {
+    display: none;
+  }
   .fp-seg {
     display: inline-flex;
   }

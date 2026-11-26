@@ -20,6 +20,7 @@ import {
 } from '../../../ui/index.ts';
 import { useTemplate, useTemplatePreview } from '../api.ts';
 import { useBaseVersion } from './api.ts';
+import type { DesignSearch } from './design-search.ts';
 import { Designer, type ReadOnlyDesign } from './designer.tsx';
 import { DesignerSkeleton } from './designer-skeleton.tsx';
 import { clearDraft, draftKey, loadDraft } from './drafts.ts';
@@ -46,17 +47,32 @@ export function docOf(v: Version): DesignDoc {
   };
 }
 
-export function TemplateDesignerPage({ templateId }: { templateId: string }) {
+export interface DesignerView {
+  view?: DesignSearch | undefined;
+  onView?: ((next: DesignSearch) => void) | undefined;
+}
+
+export function TemplateDesignerPage({
+  templateId,
+  view,
+  onView,
+}: { templateId: string } & DesignerView) {
   const { hasExplicitOrg } = useOrgScope();
   return (
     <TemplateDesignerResource
       key={JSON.stringify([templateId, hasExplicitOrg])}
       templateId={templateId}
+      view={view}
+      onView={onView}
     />
   );
 }
 
-function TemplateDesignerResource({ templateId }: { templateId: string }) {
+function TemplateDesignerResource({
+  templateId,
+  view,
+  onView,
+}: { templateId: string } & DesignerView) {
   const scope = useOrgScope();
   const canFetch =
     !scope.isLoading &&
@@ -146,6 +162,8 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
     <Loaded
       key={`${scope.orgId}:${template.data.id}`}
       template={template.data}
+      view={view}
+      onView={onView}
       crumbs={[
         { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
         {
@@ -158,7 +176,12 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
   );
 }
 
-function Loaded({ template: t, crumbs }: { template: Template; crumbs: Crumbs }) {
+function Loaded({
+  template: t,
+  crumbs,
+  view,
+  onView,
+}: { template: Template; crumbs: Crumbs } & DesignerView) {
   // Keep the version opened here stable while another administrator changes the active one.
   // A newly imported inactive template starts from its newest candidate.
   const [opened] = useState(() => {
@@ -206,7 +229,16 @@ function Loaded({ template: t, crumbs }: { template: Template; crumbs: Crumbs })
         issues: version.data.report.issues,
       }
     : undefined;
-  return <Ready template={t} version={version.data} base={base} readOnly={readOnly} />;
+  return (
+    <Ready
+      template={t}
+      version={version.data}
+      base={base}
+      readOnly={readOnly}
+      view={view}
+      onView={onView}
+    />
+  );
 }
 
 function Ready({
@@ -214,12 +246,14 @@ function Ready({
   version,
   base,
   readOnly,
+  view,
+  onView,
 }: {
   template: Template;
   version: Version;
   base: DesignDoc;
   readOnly: ReadOnlyDesign | undefined;
-}) {
+} & DesignerView) {
   const { authed } = useSession();
   const scope = useOrgScope();
   const key = draftKey(authed?.user.id ?? 'anonymous', t.orgId, t.id);
@@ -269,6 +303,10 @@ function Ready({
       }
       prompt={prompt}
       {...(readOnly ? { readOnly } : {})}
+      {...(view ? { view } : {})}
+      {...(onView
+        ? { onView: (mode, wallet) => onView(mode === 'wallets' ? { mode, wallet } : {}) }
+        : {})}
     />
   );
 }

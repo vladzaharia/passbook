@@ -3,20 +3,19 @@ import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
+import { WALLETS_COPY } from '@/shared/copy/wallets.ts';
 import type { PassTarget } from '@/shared/pass-view/index.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
-import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
-import { useSettings } from '../../settings/queries.ts';
+import type { PreviewChannel } from '../../../channel-previews/types.ts';
+import { Button } from '../../../ui/button.tsx';
 import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import { useTemplateChannels } from '../channels/api.ts';
+import { useDesigner } from './context.tsx';
 import type { DraftAsset } from './model.ts';
-import { ownParts } from './ops-brand.ts';
 import type { PaperPatch } from './ops-paper.ts';
-import { useOrgBrand } from './org-brand.ts';
 import { PaperPreview } from './paper-preview.tsx';
 import { DesignerPreview } from './preview.tsx';
-
-const NO_INPUT = {};
+import { useStageSource } from './stage-source.ts';
 
 /**
  * The designer's preview stage: every channel from the draft, the card from the dry run and the
@@ -43,23 +42,27 @@ export function DesignerStage({
   stripUrl?: string | null;
 }) {
   const { passJson, assets, assetBase } = card;
-  const org = useOrgBrand(orgId);
-  // Where the manifest follows the organization, its logo and icon draw as a build would use them.
-  const assetOverrides = useMemo(() => {
-    const own = ownParts({ manifest } as never);
-    const out: Record<string, string> = {};
-    for (const slot of ['logo', 'icon'] as const) {
-      const image = org[slot];
-      if (!image || own.includes(slot)) continue;
-      for (const suffix of ['', '@2x', '@3x']) out[`${slot}${suffix}.png`] = image.url;
-    }
-    return out;
-  }, [org, manifest]);
-  // The Samsung app link is the organization's website when it has one: the preview shows what a pass gets.
-  const website = useSettings(`org:${orgId}`, Boolean(orgId)).data?.items.find(
-    (i) => i.key === 'org.website',
-  )?.value;
+  const { source, assetOverrides } = useStageSource({
+    manifest,
+    passJson,
+    assets,
+    assetBase,
+    orgId,
+  });
   const timeZone = useOrgTimeZone(orgId);
+  const { openWallets } = useDesigner();
+  const walletAction = openWallets
+    ? (target: 'google' | 'samsung') => (
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-start"
+          onClick={() => openWallets(target)}
+        >
+          {WALLETS_COPY.report.editInWallets}
+        </Button>
+      )
+    : undefined;
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
@@ -83,27 +86,12 @@ export function DesignerStage({
         ]),
     ) as Partial<Record<PreviewChannel, string>>;
   }, [channels.data]);
-  const source = useMemo<PreviewSource | null>(
-    () =>
-      passJson
-        ? {
-            passJson,
-            assetBaseUrl: assetBase,
-            assetNames: assets.map((a) => a.name),
-            manifest,
-            assets,
-            input: (manifest.sample as PreviewSource['input'] | undefined) ?? NO_INPUT,
-            ...(typeof website === 'string' && website ? { website } : {}),
-            timeZone,
-          }
-        : null,
-    [passJson, assets, assetBase, manifest, website, timeZone],
-  );
   return (
     <ChannelPreviews
       source={source}
       channels={effective}
       notes={notes}
+      walletAction={walletAction}
       apple={
         <DesignerPreview
           {...card}

@@ -14,10 +14,10 @@ import {
   Celebrate,
   Skeleton,
 } from '../../ui/index.ts';
+import { ImportWallets } from '../../wallet-report/import-wallets.tsx';
 import { useVersionWalletReports } from './api.ts';
 import { TemplateStill } from './gallery.tsx';
 import { PackageChecklist, ValidationReport } from './validation-report.tsx';
-import { WalletReports } from './wallet-report.tsx';
 
 type ImportStatus = z.infer<typeof ImportStatusSchema>;
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -68,7 +68,11 @@ export function UploadReport({
       ) : null}
       {wallets ? (
         <section aria-label="Wallet reports">
-          <WalletReports reports={wallets} />
+          <ImportWallets
+            reports={wallets}
+            templateId={s?.templateId ?? ''}
+            orgId={template?.orgId ?? undefined}
+          />
         </section>
       ) : null}
       {report ? (

@@ -11,6 +11,8 @@ export interface DesignerApi {
   select: (select: Selection) => void;
   /** Opens a section and moves focus to the control the target names. */
   focusTarget: (select: Selection) => void;
+  /** Opens the Wallets tab on one wallet. */
+  openWallets?: (wallet: 'google' | 'samsung') => void;
   dispatch: (action: Action) => void;
   /** Mutable assets of the saved version: where to read files that have a hash. */
   assetBase: string;

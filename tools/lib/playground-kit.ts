@@ -11,7 +11,12 @@ import { sourceHash } from './ssr-kit.ts';
 export const PLAYGROUND_KIT_SOURCES = [
   'src/web/channel-previews/channel-previews.tsx',
   'src/web/channel-previews/wallet-channel.tsx',
-  'src/web/channel-previews/fidelity-notes.tsx',
+  'src/web/wallet-report/wallet-report.tsx',
+  'src/web/wallet-report/report-row.tsx',
+  'src/web/wallet-report/wallet-status.tsx',
+  'src/web/ui/card-base.tsx',
+  'src/web/ui/button-variants.ts',
+  'src/web/ui/status-pill-base.tsx',
   'src/web/ui/badge.tsx',
   'src/web/ui/callout.tsx',
   'src/web/ui/empty-state.tsx',
