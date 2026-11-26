@@ -172,6 +172,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     log,
     writes: 0,
     frozen: false,
+    freezeReason: null,
     mode: options.mode ?? 'live',
     holdLease: (key) => void leases.add(key),
     releaseLease: (key) => void leases.delete(key),
@@ -284,8 +285,11 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
               : ('mismatch' as const);
       return { ...first, matches, ...(emailMatch ? { emailMatch } : {}) };
     },
-    async freeze() {
+    async freeze(reason) {
       enter('freeze');
+      // The binding's policy (assertReason): a code, so free text is refused.
+      if (!/^[a-z][a-z0-9_]{0,39}$/.test(reason)) refuse('IDP_REFUSED');
+      idp.freezeReason = reason;
       if (idp.frozen) return 'already';
       idp.frozen = true;
       return 'frozen';

@@ -80,6 +80,12 @@ describe('platform routes', () => {
     );
     expect(first.result).toBe('frozen');
     expect(rig.idp.frozen).toBe(true);
+    // The binding takes a code; what the admin typed stays in PassBook's audit log.
+    expect(rig.idp.freezeReason).toBe('admin_pause');
+    const audit = await rig.h.env.DB.prepare(
+      "SELECT detail FROM audit_log WHERE action = 'idp.freeze'",
+    ).first<{ detail: string }>();
+    expect(JSON.parse(audit?.detail ?? '{}')).toEqual({ reason: 'owner asked' });
     const again = FrozenSchema.parse(
       await (await start(`${P}/freeze`, 'POST', a.headers, body)).json(),
     );

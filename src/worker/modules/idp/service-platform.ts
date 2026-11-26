@@ -87,7 +87,8 @@ export async function freezeIdp(
   reason: string,
 ): Promise<'frozen' | 'already'> {
   needBinding(ctx);
-  const result = await idpClient(ctx.env, ctx.log).freeze(reason, {
+  // The binding takes a code (its ledger holds no free text); the words the admin typed stay in PassBook's audit log.
+  const result = await idpClient(ctx.env, ctx.log).freeze('admin_pause', {
     ref: `freeze-${ctx.requestId ?? ctx.ids.id()}`,
     reason: 'freeze',
     actor: { kind: 'user', id: actor.id },
@@ -99,6 +100,7 @@ export async function freezeIdp(
       action: 'idp.freeze',
       targetType: 'idp',
       targetId: 'binding',
+      detail: { reason },
     });
   return result;
 }

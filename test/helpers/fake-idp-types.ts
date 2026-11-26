@@ -23,6 +23,8 @@ export interface FakeIdp extends IdpRpc {
   /** Writes the binding would have sent to Polaris ID. Dry runs and refusals add none. */
   writes: number;
   frozen: boolean;
+  /** The reason the last freeze call carried (the binding takes a code, never free text). */
+  freezeReason: string | null;
   mode: 'dry_run' | 'live';
   /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
   failNext(code: string, method?: string): void;
