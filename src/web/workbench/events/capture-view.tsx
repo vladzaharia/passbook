@@ -40,7 +40,7 @@ export function CaptureView({
   return (
     <section
       aria-label="Captured request"
-      className="mt-2 flex flex-col gap-3 border-t border-border pt-4"
+      className="mt-2 flex min-w-0 max-w-full flex-col gap-3 overflow-x-auto border-t border-border pt-4"
     >
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-sm font-semibold text-fg-strong">Captured request</h3>

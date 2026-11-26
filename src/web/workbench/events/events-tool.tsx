@@ -103,7 +103,7 @@ export function EventsTool() {
       tool="events"
       action={
         <div className="flex flex-wrap justify-center gap-2">
-          <Button onClick={openAdd} iconStart={<Plus aria-hidden />}>
+          <Button variant="outline" onClick={openAdd} iconStart={<Plus aria-hidden />}>
             Add endpoint
           </Button>
           <Button

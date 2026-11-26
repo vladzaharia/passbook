@@ -2,6 +2,9 @@ import { useLocation, useRouter } from '@tanstack/react-router';
 import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { bindBenchRouter } from '../bench/url.ts';
 
+/** Where a step-up sign-in returns to: this view. */
+export const useHere = (): string => useLocation({ select: (l) => l.href });
+
 /** The Events address (`shared/workbench.ts`, `WbEventsLink`): the query the tool reads. */
 export interface EventsParams {
   tab: 'events' | 'endpoints';
@@ -45,7 +48,7 @@ export function useAddress() {
 
   const write = useCallback(
     (next: Record<string, string | null>, mode: 'push' | 'replace') => {
-      const url = new URL(location.href);
+      const url = new URL(router.history.location.href, 'http://wb.invalid');
       for (const [k, v] of Object.entries(next)) {
         if (v === null || v === '') url.searchParams.delete(k);
         else url.searchParams.set(k, v);

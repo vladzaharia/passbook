@@ -1,7 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Pause, Play, RotateCw, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import type { WebhookCaptureDto } from '@/shared/contracts/webhook-captures.ts';
+import { useEffect, useState } from 'react';
 import { WEBHOOK_EVENT_TYPES, type WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { WEBHOOKS_COPY } from '@/shared/copy/developers-webhooks.ts';
 import { Deliveries } from '../../admin/connections/webhooks/deliveries.tsx';
@@ -9,16 +8,16 @@ import { type Revealed, RevealSheet } from '../../developers/ui/reveal-sheet.tsx
 import { StepUp } from '../../developers/ui/step-up.tsx';
 import { errorMessage } from '../../lib/errors.ts';
 import { toast } from '../../ui/toaster.tsx';
-import { DeliveryList } from '../../ui/webhooks/delivery-list.tsx';
 import { IdChip } from '../bench/id-chip.tsx';
 import { Inspector } from '../bench/inspector.tsx';
 import { StatusChip } from '../bench/status-chip.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { stepUpOf } from './api.ts';
-import { CaptureView } from './capture-view.tsx';
-import { captureRow, endpointLabel } from './model.ts';
+import { endpointLabel } from './model.ts';
 import { SendButton } from './send.tsx';
-import { useCaptures, useDeliveryHost, useEventsApi } from './use-events.ts';
+import { StoredRequests } from './stored-requests.tsx';
+import { useHere } from './use-address.ts';
+import { useDeliveryHost, useEventsApi } from './use-events.ts';
 
 const TYPES = ['webhook.test', ...WEBHOOK_EVENT_TYPES.filter((t) => t !== 'webhook.test')];
 const OLD_SECRET_MS = 24 * 3_600_000;
@@ -72,6 +71,7 @@ export function EndpointInspector({
   const qc = useQueryClient();
   const host = useDeliveryHost();
   const guard = useGuarded();
+  const here = useHere();
   const [busy, setBusy] = useState(false);
   const [asking, setAsking] = useState<'rotate' | 'delete' | null>(null);
   const [revealed, setRevealed] = useState<Revealed | null>(null);
@@ -168,13 +168,8 @@ export function EndpointInspector({
       onPrev={onPrev}
       onNext={onNext}
     >
-      <div className="flex flex-col gap-5">
-        {guard.stepUp !== null ? (
-          <StepUp
-            signInUrl={guard.stepUp}
-            next={`${location.pathname}${location.search}${location.hash}`}
-          />
-        ) : null}
+      <div className="flex min-w-0 flex-col gap-5">
+        {guard.stepUp !== null ? <StepUp signInUrl={guard.stepUp} next={here} /> : null}
         {guard.error ? (
           <p className="wh-msg" role="alert">
             {guard.error}
@@ -238,7 +233,7 @@ export function EndpointInspector({
               inline
             />
           ) : (
-            <Stored endpoint={endpoint} open={openCapture} onOpen={onCapture} />
+            <StoredRequests endpoint={endpoint} open={openCapture} onOpen={onCapture} />
           )}
         </section>
       </div>
@@ -252,74 +247,5 @@ export function EndpointInspector({
         />
       ) : null}
     </Inspector>
-  );
-}
-
-/** What a capture endpoint stored, in the shared list; one opens in place. */
-function Stored({
-  endpoint,
-  open,
-  onOpen,
-}: {
-  endpoint: WebhookEndpointDto;
-  open: string | undefined;
-  onOpen: (id: string | undefined) => void;
-}) {
-  const api = useEventsApi();
-  const qc = useQueryClient();
-  const host = useDeliveryHost();
-  const list = useCaptures(endpoint.id);
-  const [replaying, setReplaying] = useState(false);
-  const rows = useMemo(
-    () => (list.data ?? []).map((c) => captureRow(c, endpoint)),
-    [list.data, endpoint],
-  );
-  const found = useQuery({
-    queryKey: ['workbench', 'events', 'stored', endpoint.id, open],
-    queryFn: () => api.capture(endpoint.id, open as string),
-    enabled: Boolean(open) && !(list.data ?? []).some((c) => c.id === open),
-    retry: false,
-  });
-  const shown: WebhookCaptureDto | undefined =
-    (list.data ?? []).find((c) => c.id === open) ?? found.data;
-  return (
-    <>
-      <DeliveryList
-        host={{ ...host, canManage: false }}
-        rows={rows}
-        endpointStatus={endpoint.status}
-        loading={list.isPending}
-        fetching={list.isFetching}
-        error={list.isError ? list.error : undefined}
-        onRetry={() => void list.refetch()}
-        onOpen={(row) => 'rowId' in row && onOpen(row.rowId)}
-        selected={open}
-        onReplay={() => undefined}
-        emptyTitle="Nothing stored yet"
-        caption="Stored requests"
-      />
-      {shown ? (
-        <CaptureView
-          key={shown.id}
-          capture={shown}
-          loadSecret={() => api.captureSecret(endpoint.id)}
-          next={`${location.pathname}${location.search}${location.hash}`}
-          replaying={replaying}
-          onReplay={() => {
-            setReplaying(true);
-            api
-              .replayCapture(endpoint.id, shown.id)
-              .then(async ({ capture }) => {
-                await qc.invalidateQueries({ queryKey: ['workbench', 'events'] });
-                toast.success('Replayed. A new request is stored.');
-                onOpen(capture.id);
-              })
-              .catch((error: unknown) => toast.error(errorMessage(error), 'Could not replay'))
-              .finally(() => setReplaying(false));
-          }}
-          onClose={() => onOpen(undefined)}
-        />
-      ) : null}
-    </>
   );
 }

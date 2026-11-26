@@ -20,6 +20,7 @@ import { Trace } from '../bench/trace.tsx';
 import { CaptureView } from './capture-view.tsx';
 import { eventDeliveryRow } from './model.ts';
 import { eventInConsole } from './open-in-console.ts';
+import { useHere } from './use-address.ts';
 import type { FeedEvent } from './use-event-feed.ts';
 import { useCaptures, useDeliveryHost, useEventDeliveries, useEventsApi } from './use-events.ts';
 
@@ -82,11 +83,7 @@ export function EventInspector({
       itemKey={event.id}
       id={<IdChip id={event.id} kind="event" />}
       actions={
-        <Link
-          className="btn ghost sm"
-          to={eventInConsole(orgId, event.id)}
-          aria-label="Open this event in Console"
-        >
+        <Link className="btn ghost sm" to={eventInConsole(orgId, event.id)}>
           <Terminal aria-hidden="true" />
           Open in Console
         </Link>
@@ -120,24 +117,26 @@ export function EventInspector({
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-5">
-        <section aria-label="Deliveries" className="flex flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-5">
+        <section aria-label="Deliveries" className="flex min-w-0 flex-col gap-3">
           <h3 className="text-sm font-semibold text-fg-strong">Sent to</h3>
-          <DeliveryList
-            host={listHost}
-            rows={rows}
-            endpointStatus="active"
-            showEndpoint
-            loading={deliveries.isPending}
-            fetching={deliveries.isFetching}
-            error={deliveries.isError ? deliveries.error : undefined}
-            onRetry={() => void deliveries.refetch()}
-            onOpen={pick}
-            selected={selected}
-            onReplay={() => undefined}
-            emptyTitle="Not sent to any endpoint"
-            caption="Deliveries of this event"
-          />
+          <div className="min-w-0 overflow-x-auto">
+            <DeliveryList
+              host={listHost}
+              rows={rows}
+              endpointStatus="active"
+              showEndpoint
+              loading={deliveries.isPending}
+              fetching={deliveries.isFetching}
+              error={deliveries.isError ? deliveries.error : undefined}
+              onRetry={() => void deliveries.refetch()}
+              onOpen={pick}
+              selected={selected}
+              onReplay={() => undefined}
+              emptyTitle="Not sent to any endpoint"
+              caption="Deliveries of this event"
+            />
+          </div>
           {open.endpoint ? (
             <DeliveryInline
               endpointId={open.endpoint}
@@ -152,9 +151,11 @@ export function EventInspector({
             <CaptureOpen captureId={open.capture} endpoints={endpoints} onOpen={onOpen} />
           ) : null}
         </section>
-        <section aria-label="Payload" className="flex flex-col gap-3">
+        <section aria-label="Payload" className="flex min-w-0 flex-col gap-3">
           <h3 className="text-sm font-semibold text-fg-strong">Payload</h3>
-          <JsonViewer value={event} label="Event JSON" maxHeight="max-h-96" />
+          <div className="min-w-0 overflow-x-auto">
+            <JsonViewer value={event} label="Event JSON" maxHeight="max-h-96" />
+          </div>
         </section>
       </div>
     </Inspector>
@@ -172,6 +173,7 @@ function CaptureOpen({
   onOpen: (next: OpenDelivery) => void;
 }) {
   const api = useEventsApi();
+  const here = useHere();
   const key = useToolKey();
   const qc = useQueryClient();
   const [replaying, setReplaying] = useState(false);
@@ -220,7 +222,7 @@ function CaptureOpen({
       key={capture.id}
       capture={capture}
       loadSecret={() => api.captureSecret(capture.endpointId)}
-      next={`${location.pathname}${location.search}${location.hash}`}
+      next={here}
       onReplay={() => void replay()}
       replaying={replaying}
       onClose={() => onOpen({})}
