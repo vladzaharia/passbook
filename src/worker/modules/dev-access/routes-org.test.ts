@@ -25,6 +25,7 @@ beforeEach(async () => {
   h = kit.h;
   // The harness env carries no IDP binding; the provisioner is a fake behind it.
   installFakeIdp(h.env, idp);
+  h.env.OIDC_ADMIN_GROUP = 'passbook_console';
   const send = h.env.EMAIL.send.bind(h.env.EMAIL);
   (h.env as unknown as { EMAIL: unknown }).EMAIL = {
     send: async (m: Parameters<typeof send>[0]) => {

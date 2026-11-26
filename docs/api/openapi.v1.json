@@ -10418,6 +10418,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -10565,6 +10566,7 @@
                         "platform:status",
                         "platform:templates",
                         "platform:audit",
+                        "platform:claims",
                         "brand:manage"
                       ]
                     }
@@ -10797,6 +10799,7 @@
                         "platform:status",
                         "platform:templates",
                         "platform:audit",
+                        "platform:claims",
                         "brand:manage"
                       ]
                     }
@@ -11027,6 +11030,7 @@
                     "platform:status",
                     "platform:templates",
                     "platform:audit",
+                    "platform:claims",
                     "brand:manage"
                   ]
                 }
@@ -11261,6 +11265,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -11672,6 +11677,7 @@
                 "platform:status",
                 "platform:templates",
                 "platform:audit",
+                "platform:claims",
                 "brand:manage"
               ]
             }
@@ -59685,6 +59691,234 @@
         ],
         "additionalProperties": false
       },
+      "PlatformUsersClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformUsersClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformUsersClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
+        ]
+      },
+      "PlatformGroupsClaimsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {}
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "otherKeys": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claims",
+          "otherKeys"
+        ]
+      },
+      "PlatformGroupsClaimsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "number",
+                    "boolean",
+                    "json"
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformGroupsClaimsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "set",
+          "removed",
+          "dryRun"
+        ]
+      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -61318,6 +61552,7 @@
                       "platform:status",
                       "platform:templates",
                       "platform:audit",
+                      "platform:claims",
                       "brand:manage"
                     ]
                   }
@@ -82319,6 +82554,7 @@
                           "platform:status",
                           "platform:templates",
                           "platform:audit",
+                          "platform:claims",
                           "brand:manage"
                         ]
                       }
@@ -82997,6 +83233,7 @@
                                 "platform:status",
                                 "platform:templates",
                                 "platform:audit",
+                                "platform:claims",
                                 "brand:manage"
                               ]
                             }
@@ -85585,6 +85822,11 @@
           "API_KEY_MISSING",
           "DEVELOPER_INVITE_CONFLICT",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
@@ -85786,6 +86028,566 @@
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/invitations/preview": {
+      "post": {
+        "summary": "Name what an invitation link joins",
+        "tags": [
+          "invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "token": "demo-token-northwind-a0d51d4db3425b4c189b56"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "member",
+                        "developer"
+                      ]
+                    },
+                    "orgName": {
+                      "type": "string"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org_admin",
+                          "integration_admin",
+                          "template_author",
+                          "template_reviewer",
+                          "template_publisher",
+                          "pass_operator",
+                          "read_only"
+                        ]
+                      }
+                    },
+                    "developer": {
+                      "type": "boolean"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "polaris": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "orgName",
+                    "roles",
+                    "developer",
+                    "email",
+                    "expiresAt",
+                    "polaris"
+                  ]
+                },
+                "example": {
+                  "kind": "member",
+                  "orgName": "Northwind Climbing",
+                  "roles": [
+                    "org_admin"
+                  ],
+                  "developer": false,
+                  "email": "ada@example.com",
+                  "expiresAt": 1798790399999,
+                  "polaris": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "invitations.postInvitationsPreview",
+        "x-sdk": {
+          "resource": "invitationPage",
+          "method": "preview",
+          "sdk": false,
+          "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "INVITATION_INVALID",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/invitations/setup": {
+      "post": {
+        "summary": "Make a one-hour link to create a Polaris ID with the invitation’s groups",
+        "tags": [
+          "invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
+                  },
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "token",
+                  "turnstileToken"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "token": "demo-token-northwind-ee84636ec59f7eff40bbc6",
+                "turnstileToken": "0.demo-turnstile-response-northwind"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "setupUrl": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "setupUrl",
+                    "expiresAt"
+                  ]
+                },
+                "example": {
+                  "setupUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                  "expiresAt": 1798790399999
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "invitations.postInvitationsSetup",
+        "x-sdk": {
+          "resource": "invitationPage",
+          "method": "setup",
+          "sdk": false,
+          "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "INVITATION_INVALID",
+          "INVITATION_SETUP_CAPPED",
+          "RATE_LIMITED",
+          "TURNSTILE_FAILED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/invitations/claim-existing": {
+      "post": {
+        "summary": "Give the Polaris ID account that has the invited address the invitation’s groups",
+        "tags": [
+          "invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
+                  },
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "token",
+                  "turnstileToken"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "token": "demo-token-northwind-585db9e4e87568b6f20320",
+                "turnstileToken": "0.demo-turnstile-response-northwind"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "invitations.postInvitationsClaimExisting",
+        "x-sdk": {
+          "resource": "invitationPage",
+          "method": "attachExisting",
+          "sdk": false,
+          "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "INVITATION_CLAIM_CAPPED",
+          "INVITATION_INVALID",
+          "INVITATION_NO_ACCOUNT",
+          "RATE_LIMITED",
+          "TURNSTILE_FAILED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/invitations/accept": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Accept an invitation with a verified account email",
+        "tags": [
+          "invitations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "token": "demo-token-northwind-1b36e8b0ca7bd2cd79a809"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "joined",
+                        "refresh"
+                      ]
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "member",
+                        "developer"
+                      ]
+                    },
+                    "orgName": {
+                      "type": "string"
+                    },
+                    "membership": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgName": {
+                          "type": "string"
+                        },
+                        "orgSlug": {
+                          "type": "string"
+                        },
+                        "personal": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "testOnly": {
+                          "type": "boolean"
+                        },
+                        "userId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "roles": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "org_admin",
+                              "integration_admin",
+                              "template_author",
+                              "template_reviewer",
+                              "template_publisher",
+                              "pass_operator",
+                              "read_only"
+                            ]
+                          },
+                          "minItems": 1,
+                          "maxItems": 7
+                        },
+                        "capabilities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "org:read",
+                              "org:manage",
+                              "members:read",
+                              "members:manage",
+                              "integrations:read",
+                              "integrations:manage",
+                              "templates:read",
+                              "templates:author",
+                              "templates:review",
+                              "templates:publish",
+                              "passes:read",
+                              "passes:operate",
+                              "messages:read",
+                              "messages:manage",
+                              "scanning:read",
+                              "scanning:manage",
+                              "audit:read"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "revokedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "orgId",
+                        "orgName",
+                        "orgSlug",
+                        "userId",
+                        "roles",
+                        "capabilities",
+                        "createdAt",
+                        "revokedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "kind",
+                    "orgName",
+                    "membership"
+                  ]
+                },
+                "example": {
+                  "outcome": "joined",
+                  "kind": "member",
+                  "orgName": "Northwind Climbing",
+                  "membership": {
+                    "id": "0193a1b2-7c00-7000-8000-910a5c50413c",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "orgName": "Sam Rivera",
+                    "orgSlug": "northwind-climbing",
+                    "personal": false,
+                    "testOnly": false,
+                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "roles": [
+                      "org_admin"
+                    ],
+                    "capabilities": [
+                      "org:read"
+                    ],
+                    "createdAt": 1794362400000,
+                    "revokedAt": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "invitations.postInvitationsAccept",
+        "x-sdk": {
+          "resource": "invitationPage",
+          "method": "accept",
+          "sdk": false,
+          "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVELOPER_LIMIT_REACHED",
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVITATION_CLAIM_CAPPED",
+          "INVITATION_CONFLICT",
+          "INVITATION_EMAIL_MISMATCH",
+          "INVITATION_INVALID",
+          "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -86961,7 +87763,7 @@
                 "properties": {
                   "token": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
                   }
                 },
                 "required": [
@@ -87122,10 +87924,18 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "DEVELOPER_LIMIT_REACHED",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVITATION_CLAIM_CAPPED",
+          "INVITATION_CONFLICT",
+          "INVITATION_EMAIL_MISMATCH",
           "INVITATION_INVALID",
-          "MEMBERSHIP_CONFLICT",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -87147,7 +87957,7 @@
                 "properties": {
                   "token": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                    "pattern": "^(?:[mdp]_)?[A-Za-z0-9_-]{43}$"
                   }
                 },
                 "required": [
@@ -87204,6 +88014,7 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "FORBIDDEN",
           "INVITATION_INVALID",
           "RATE_LIMITED",
           "VALIDATION"
@@ -87764,6 +88575,11 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "MEMBERSHIP_CONFLICT",
           "NOT_FOUND",
@@ -124976,6 +125792,368 @@
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/claims": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a user's Polaris ID claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getUsersByIdClaims",
+        "x-sdk": {
+          "resource": "platform.users.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_MULTIPLE_ACCOUNTS",
+          "IDP_NOT_MANAGED",
+          "IDP_NO_ACCOUNT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a user's Polaris ID claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformUsersClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUsersClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchUsersByIdClaims",
+        "x-sdk": {
+          "resource": "platform.users.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_MULTIPLE_ACCOUNTS",
+          "IDP_NOT_MANAGED",
+          "IDP_NO_ACCOUNT",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/groups/{key}/claims": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsRetrieveResponse"
+                },
+                "example": {
+                  "claims": {
+                    "passbook_tier": {
+                      "type": "text",
+                      "value": "gold"
+                    }
+                  },
+                  "otherKeys": 2
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "retrieve"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:claims",
+        "summary": "Set or remove a Polaris ID group's claims",
+        "tags": [
+          "polaris-claims"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateParams"
+              },
+              "example": {
+                "set": {
+                  "passbook_tier": {
+                    "type": "text",
+                    "value": "gold"
+                  },
+                  "passbook_old": null
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformGroupsClaimsUpdateResponse"
+                },
+                "example": {
+                  "set": [
+                    "passbook_tier"
+                  ],
+                  "removed": [
+                    "passbook_old"
+                  ],
+                  "dryRun": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+        "x-sdk": {
+          "resource": "platform.groups.claims",
+          "method": "update"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

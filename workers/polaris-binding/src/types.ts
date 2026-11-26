@@ -166,8 +166,10 @@ export interface Lookup {
   disabled: boolean;
   isAdmin: boolean;
   class: AccountClass;
-  /** Targets with a live grant. */
+  /** Targets with a live grant, pending ones included. */
   grants: Target[];
+  /** The subset of `grants` whose write was read back, with the time it was (R1e). A pending grant is never in it. */
+  confirmedGrants: { target: Target; confirmedAt: number }[];
 }
 export interface SnapshotMember {
   subject: string;

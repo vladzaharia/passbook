@@ -15,7 +15,7 @@ import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
-import { ForbiddenError, UnauthenticatedError } from './errors.ts';
+import { ForbiddenError, IdpSignInRequiredError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
@@ -31,8 +31,10 @@ import {
   assertDeveloper,
   assertSignIn,
   assertStepUp,
+  declareOidcOnly,
   declareSignIn,
   declareStepUp,
+  signInUrlFor,
 } from './sign-in-guard.ts';
 
 export * from './auth-types.ts';
@@ -181,6 +183,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const developer = 'human' in auth && auth.developer === true;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
+  const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const sent = rule ? bearerOf(c) : null;
@@ -221,6 +224,10 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
+    if (oidcOnly && session.amr !== 'oidc') {
+      reportDenied(c, 'IDP_SIGN_IN_REQUIRED', session);
+      throw new IdpSignInRequiredError(signInUrlFor(c));
+    }
     if (developer) assertDeveloper(c, session);
     if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
@@ -239,6 +246,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   knownGuards.add(guard);
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
+  if (oidcOnly) declareOidcOnly(guard);
   return declareSignIn(guard, level);
 }
 

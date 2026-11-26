@@ -90,6 +90,8 @@ export interface IdpLookup {
   isAdmin: boolean;
   class: AccountClass;
   grants: Target[];
+  /** The subset of `grants` the binding read back (R1e). */
+  confirmedGrants: { target: Target; confirmedAt: number }[];
 }
 export interface SnapshotMember {
   subject: string;

@@ -1122,6 +1122,10 @@ __all__ = [
     "PlatformEntitlementPresetsUpdateParams",
     "PlatformEntitlementPresetsUpdateResponse",
     "PlatformEntitlementPresetsUpdateResponsePreset",
+    "PlatformGroupsClaimsRetrieveResponse",
+    "PlatformGroupsClaimsRetrieveResponseClaimsValue",
+    "PlatformGroupsClaimsUpdateParams",
+    "PlatformGroupsClaimsUpdateResponse",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -1193,6 +1197,10 @@ __all__ = [
     "PlatformStatusRetrieveResponseComponentsItem",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
+    "PlatformUsersClaimsRetrieveResponse",
+    "PlatformUsersClaimsRetrieveResponseClaimsValue",
+    "PlatformUsersClaimsUpdateParams",
+    "PlatformUsersClaimsUpdateResponse",
     "PlatformUsersEmailsCreateParams",
     "PlatformUsersEmailsCreateResponse",
     "PlatformUsersEmailsCreateResponseEmailsItem",
@@ -2014,7 +2022,7 @@ class ApiKeyCurrent(_Model):
     orgId: str | None
     name: str
     prefix: str
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdAt: int
     lastUsedAt: int | None
@@ -2029,7 +2037,7 @@ class ApiKeyDetail(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2057,7 +2065,7 @@ class ApiKeyMinted(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2089,7 +2097,7 @@ class ApiKeyRotationKey1(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2114,7 +2122,7 @@ class ApiKeyRotationKey2(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2138,7 +2146,7 @@ class ApiKeyRotationPrevious(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2175,7 +2183,7 @@ class ApiKeysListItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -2204,7 +2212,7 @@ class ApiKeysListResponseItemsItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "platform:claims", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -8738,6 +8746,22 @@ class PlatformEntitlementPresetsUpdateResponsePreset(_Model):
     pendingOrgs: int
     values: _Dict[str, float | str | _List[str] | None]
 
+class PlatformGroupsClaimsRetrieveResponse(_Model):
+    claims: _Dict[str, PlatformGroupsClaimsRetrieveResponseClaimsValue]
+    otherKeys: int
+
+class PlatformGroupsClaimsRetrieveResponseClaimsValue(_Model):
+    type: _Literal["text", "number", "boolean", "json"] | str
+    value: _Any | None = None
+
+class PlatformGroupsClaimsUpdateParams(_Model):
+    set: _Dict[str, _Dict[str, _Any] | None]
+
+class PlatformGroupsClaimsUpdateResponse(_Model):
+    set: _List[str]
+    removed: _List[str]
+    dryRun: bool
+
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str
     range: _Literal["24h", "7d", "30d"] | str
@@ -9201,6 +9225,22 @@ class PlatformTemplatesAssignParams(_Model):
 
 class PlatformTemplatesShareParams(_Model):
     shared: bool
+
+class PlatformUsersClaimsRetrieveResponse(_Model):
+    claims: _Dict[str, PlatformUsersClaimsRetrieveResponseClaimsValue]
+    otherKeys: int
+
+class PlatformUsersClaimsRetrieveResponseClaimsValue(_Model):
+    type: _Literal["text", "number", "boolean", "json"] | str
+    value: _Any | None = None
+
+class PlatformUsersClaimsUpdateParams(_Model):
+    set: _Dict[str, _Dict[str, _Any] | None]
+
+class PlatformUsersClaimsUpdateResponse(_Model):
+    set: _List[str]
+    removed: _List[str]
+    dryRun: bool
 
 class PlatformUsersEmailsCreateParams(_Model):
     email: str

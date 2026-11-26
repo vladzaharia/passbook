@@ -26,14 +26,15 @@ import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
+import { acceptInvitation } from '../idp/invitations/accept.ts';
 import { listMyOrgMemberships, parseRoles } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import {
-  acceptOrgInvitation,
   inviteOrgMember,
   isOrgManager,
   listOrgInvitations,
@@ -52,7 +53,8 @@ const session = (c: Context<AppBindings>): SessionAuth => {
 
 export const membershipRoutes = createRouter({ bodyLimit: false });
 
-// The landing document is public; the accepting POST is always strong-session (no email-link grace) and CSRF protected.
+// The old landing address, still in mailed links: it opens the invitation page, carrying the fragment on.
+// The accepting POST is always strong-session (no email-link grace) and CSRF protected.
 membershipRoutes.use('/invitations/accept', (c, next) =>
   c.req.method === 'GET' ? next() : requireStrictSession(c, next),
 );
@@ -124,8 +126,16 @@ register(
     body: AcceptOrgInvitationSchema,
     response: OrgMembershipSchema,
   },
-  async (c) =>
-    c.json(await acceptOrgInvitation(serviceContext(c), session(c), c.req.valid('json').token)),
+  async (c) => {
+    await enforceRateLimit(c.env, 'RL_LOGIN', `invitation-accept:${session(c).userId}`);
+    const accepted = await acceptInvitation(
+      serviceContext(c),
+      session(c),
+      c.req.valid('json').token,
+      'member',
+    );
+    return c.json(accepted.membership as NonNullable<typeof accepted.membership>);
+  },
 );
 register(
   membershipRoutes,

@@ -20,6 +20,8 @@ export interface AppEnv
   OIDC_CLIENT_SECRET?: string;
   /** SHA-256 of the break-glass token. Unset turns the route off. */
   BREAKGLASS_TOKEN_SHA256?: string;
+  /** Bearer token Polaris ID presents to the SCIM receiver (`/scim/v2`). Unset turns the receiver off. */
+  SCIM_BEARER_TOKEN?: string;
   /** Rate tier for API keys with none stored: standard, high or bulk. Unset or unknown means standard. */
   API_RATE_TIER_DEFAULT?: string;
   /** Optional ceiling on the daily magic-link volume. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { expectSet, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { action } from './console-privacy-actions-test-fixtures.ts';
 import {
@@ -133,10 +133,13 @@ describe('console undo tenant authority', () => {
                 ? 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?'
                 : 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?';
               const id = sessionRevoked ? adminSessionId : adminMembershipId;
-              // A membership revoke also marks the user's Polaris ID subject, and D1 counts trigger writes.
-              const { changes } = await run(db, sql, [kit.clock.now(), id]);
-              if (sessionRevoked) expect(changes).toBe(1);
-              else expect(changes).toBeGreaterThanOrEqual(1);
+              await run(db, sql, [kit.clock.now(), id]);
+              await expectSet(
+                db,
+                sessionRevoked ? 'sessions' : 'org_memberships',
+                sessionRevoked ? 'id_hash' : 'id',
+                id,
+              );
               if (change === 'membership replaced' || change === 'role downgraded') {
                 await grantScanMembership(
                   kit.fx,
