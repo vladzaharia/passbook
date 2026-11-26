@@ -100,7 +100,7 @@ describe('setup page: every reason shows its fix', () => {
     const row = asRow(reason);
     await open(recipe, { rows: [row] });
     const trouble = inboundTrouble(row as unknown as Arrival, {
-      provider: guide.provider.name,
+      provider: recipe === 'custom' ? 'your system' : guide.provider.name,
       origin: guide.secret.origin,
       recipeFix: guide.troubleshooting,
     });
@@ -244,5 +244,35 @@ describe('setup page: leaving', () => {
     );
     await waitFor(() => expect(router.state.location.pathname).toMatch(/\/connections\/c9$/));
     expect(calls).not.toContain('DELETE');
+  });
+});
+
+describe('connection page: waiting for the first event', () => {
+  it('leads with the live check and a way back into setup, and hears a delivery', async () => {
+    const rows = [ledgerRow({ topic: 'orders/create' })];
+    await renderApp('/admin/connections/c9', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: setupHandlers('shopify-orders', { rows }),
+    });
+    expect(
+      await screen.findByRole('heading', { name: 'Signed delivery seen', level: 4 }),
+    ).toBeVisible();
+    const link = screen.getByRole('link', { name: 'Finish setup' });
+    expect(link).toHaveAttribute('href', expect.stringMatching(/\/connections\/c9\/setup/));
+  });
+
+  it('has no card once a signed delivery has been seen', async () => {
+    await renderApp('/admin/connections/c9', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: setupHandlers('shopify-orders', {
+        detail: { health: 'healthy', firstVerifiedArrivalAt: 5 },
+      }),
+    });
+    expect(await screen.findByRole('heading', { name: 'Orders in' })).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Finish setup' })).toBeNull();
   });
 });

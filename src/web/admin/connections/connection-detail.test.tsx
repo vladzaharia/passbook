@@ -375,6 +375,7 @@ describe('connection detail', () => {
     });
     expect(await screen.findByText('Waiting for first event')).toBeVisible();
     const setup = await screen.findByRole('link', { name: 'Setup' });
+    expect(setup).toBeVisible();
     expect(setup).toHaveAttribute('href', expect.stringMatching(/\/connections\/c1\/setup/));
   });
 

@@ -21,8 +21,11 @@ export interface InboundContext {
 
 export const NOTHING = 'none';
 
+/** A name that opens a line is capitalised there only: "your system sent no signature" reads "Your system…". */
+const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /** What the ledger saw, in words, with the fix: recipe-specific from the guide, else the generic line. */
-export function inboundTrouble(
+function rawInboundTrouble(
   arrival: Pick<Arrival, 'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious'> | null,
   ctx: InboundContext,
 ): Trouble {
@@ -230,4 +233,12 @@ export function outboundTrouble(result: SendResult): Trouble {
       ? (NETWORK[key] as string)
       : 'PassBook could not reach your server. Check the URL and that it is public.',
   };
+}
+
+export function inboundTrouble(
+  arrival: Parameters<typeof rawInboundTrouble>[0],
+  ctx: InboundContext,
+): Trouble {
+  const t = rawInboundTrouble(arrival, ctx);
+  return { ...t, fix: atLineStart(t.fix) };
 }

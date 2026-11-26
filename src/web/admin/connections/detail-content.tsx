@@ -30,6 +30,7 @@ import {
 import { confirmWord } from '../../ui/typed-confirm-dialog.tsx';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { useConnectionActions, useConnector, useConnectorNames } from './api.ts';
+import { AwaitingCard } from './awaiting-card.tsx';
 import { ConfigTab } from './config-tab.tsx';
 import { SettingsTab } from './detail-tabs.tsx';
 import { FileTab } from './files/file-tab.tsx';
@@ -253,6 +254,7 @@ export function ConnectionDetail({
             </TabsContent>
           ) : null}
           <TabsContent value="health">
+            {showWebhook && live && c.health === 'awaiting' ? <AwaitingCard c={c} /> : null}
             <HealthPanel
               connection={c}
               canSync={canManage && canSync && c.enabled}

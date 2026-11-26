@@ -47,7 +47,7 @@ export function ProviderPanel({
       {topics.length > 0 ? <TopicChecklist topics={topics} seen={seen} /> : null}
       <LiveCheck
         mode="listen"
-        provider={setup.provider.name}
+        provider={setup.recipe === 'custom' ? 'your system' : setup.provider.name}
         load={load}
         since={connection.createdAt}
         topics={topics}

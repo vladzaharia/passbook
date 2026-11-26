@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { Pause } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
@@ -119,15 +118,6 @@ export function HealthPanel({
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <p className={cn('text-sm', failing ? 'text-fg-strong' : 'text-fg')}>
               {waiting ? 'Waiting for the first webhook. ' : healthSentence(c, now, since)}{' '}
-              {awaiting ? (
-                <Link
-                  to="/admin/connections/$connectionId/setup"
-                  params={{ connectionId: c.id }}
-                  className="font-medium text-fg-strong underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-focus"
-                >
-                  Finish setup
-                </Link>
-              ) : null}
               {waiting && onWebhookTab ? (
                 <Button variant="link" onClick={onWebhookTab}>
                   Open webhook setup
