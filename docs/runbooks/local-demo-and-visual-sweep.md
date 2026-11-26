@@ -58,6 +58,8 @@ Lists skipped shots and notes, such as a click that found nothing:
 python3 -c "import json,sys; d=json.load(open(sys.argv[1]+'/index.json')); n=[s for s in d if s.get('note') or not s['file']]; print(len(d),'shots,',len(n),'with notes'); [print(s['name'],s['viewport'],s['theme'],s.get('note')) for s in n]" "$OUT"
 ```
 
+A run with `scanning.json` also adds `scanner.json` (the `scan-unpaired` screens); no flag needed.
+
 ## 3. Scanner devices (optional)
 
 Adds the paired device views (door, operator, desk, customer, staff sign-in, offline), the monitor and the customer display. Run it into the same folder as the sweep after the seed.

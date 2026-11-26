@@ -56,4 +56,33 @@ describe('the queue in This shift', () => {
     );
     expect(screen.queryByTestId('offline-rows')).toBeNull();
   });
+  it('shows the list as a row: waiting for a first download, then current', () => {
+    const { rerender } = render(
+      <OfflineStatus
+        offline={{ mode: 'list', listAt: null, syncing: false }}
+        queue={{ pending: 0, oldestAt: null, conflicts: 1 }}
+        onSync={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('No list yet. Stay online until it loads.')).toBeVisible();
+    rerender(
+      <OfflineStatus
+        offline={{ mode: 'list', listAt: Date.parse('2026-11-20T19:38:00'), syncing: false }}
+        queue={{ pending: 0, oldestAt: null, conflicts: 1 }}
+        onSync={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/^From /)).toBeVisible();
+  });
+  it('shows a sync row while the queue goes up', () => {
+    render(
+      <OfflineStatus
+        offline={{ mode: 'decide', listAt: null, syncing: true }}
+        queue={{ pending: 2, oldestAt: 1, conflicts: 0 }}
+        onSync={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Sending saved entries')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Syncing' })).toBeDisabled();
+  });
 });

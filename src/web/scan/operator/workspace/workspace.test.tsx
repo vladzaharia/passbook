@@ -176,6 +176,11 @@ describe('the workspace', () => {
     await waitFor(() => expect(screen.getAllByTestId('op-result')).toHaveLength(2), {
       timeout: 2000,
     });
+    // An effect highlights the first hit after the rows render, and overwrites an earlier move.
+    await waitFor(
+      () => expect(screen.getByText('Maya Okafor', { selector: 'h2' })).toBeInTheDocument(),
+      { timeout: 45_000 },
+    );
     key(field(), { key: 'ArrowDown', code: 'ArrowDown' });
     // Opening the record preview renders the whole workspace; under v8 coverage that passed the
     // global 10 s window. A passing test never waits this long.

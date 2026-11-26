@@ -3,8 +3,11 @@ import { useEffect, useState } from 'react';
 import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { formatCount, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
+import { OperationRow } from '../../ui/operation/index.ts';
+import { useNow } from '../../ui/rel-time.tsx';
 import type { ScanState } from '../machine/types.ts';
 import type { QueueView } from '../offline/queue-view.ts';
+import { useOfflineOperations } from './offline-operations.ts';
 
 const Q = SCAN_HANDHELD_COPY.queue;
 
@@ -60,6 +63,8 @@ export function OfflineStatus({
 }) {
   const [saved, setSaved] = useState<QueueView[]>([]);
   const waiting = queue.pending;
+  const ops = useOfflineOperations(offline, timeZone);
+  const now = useNow(1000, offline.syncing);
   useEffect(() => {
     let live = true;
     if (rows && waiting >= 0)
@@ -76,11 +81,7 @@ export function OfflineStatus({
     <section className="flex flex-col gap-2" aria-label="Offline" data-testid="offline-status">
       <h3 className="text-sm font-semibold text-fg-muted">Offline</h3>
       {offline.mode === 'list' ? (
-        <p>
-          {offline.listAt === null
-            ? 'No offline list yet. Stay online until it loads.'
-            : `Offline list from ${formatTime(offline.listAt, timeZone)}`}
-        </p>
+        <OperationRow operation={ops.list} now={now} elapsed={false} />
       ) : null}
       {offline.mode === 'decide' ? <p>Offline: staff decide each entry.</p> : null}
       {queue.pending > 0 ? (
@@ -97,6 +98,7 @@ export function OfflineStatus({
           </Button>
         </div>
       ) : null}
+      {offline.syncing ? <OperationRow operation={ops.sync} now={now} /> : null}
       {saved.length > 0 ? <QueueRows rows={saved} timeZone={timeZone} /> : null}
       {queue.conflicts > 0 ? (
         <p role="status" data-testid="offline-conflicts">

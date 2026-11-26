@@ -3,14 +3,7 @@ import { useEffect, useState } from 'react';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { getBarcodeEngine, loadBarcodeEngine } from '../../../pass-card/barcode-engine.ts';
 import { qrDataUri } from '../../../portal/holder-qr.tsx';
-import {
-  AppleWalletBadge,
-  Button,
-  Callout,
-  Celebrate,
-  CopyButton,
-  Skeleton,
-} from '../../../ui/index.ts';
+import { AppleWalletBadge, Button, Celebrate, CopyButton, Skeleton } from '../../../ui/index.ts';
 import type { TryPhase, useOnPhone } from './try-flow.ts';
 
 /** The iPhone branch: a touch screen of phone width, not just a narrow window. */
@@ -71,47 +64,16 @@ function Waiting({
       )}
       {watch.gaveUp ? (
         <div className="flex flex-col items-center gap-2">
-          <p className="text-sm text-fg-muted">Not on your phone yet.</p>
           <Button size="sm" variant="outline" onClick={watch.again}>
             Check again
           </Button>
         </div>
-      ) : (
-        <p className="flex items-center gap-2 text-sm text-fg-muted">
-          <span
-            aria-hidden
-            className="wl-essential size-2 rounded-full bg-warning"
-            style={{ animation: 'wl-pulse 1.2s ease-in-out infinite alternate' }}
-          />
-          Waiting for your phone
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }
 
-export function Stage({
-  phase,
-  watch,
-  onRetry,
-}: {
-  phase: TryPhase;
-  watch: Watch;
-  onRetry: () => void;
-}) {
-  if (phase.step === 'failed')
-    return (
-      <Callout
-        tone="danger"
-        actions={
-          <Button size="sm" variant="outline" onClick={onRetry}>
-            Try again
-          </Button>
-        }
-      >
-        {phase.message}
-      </Callout>
-    );
+export function Stage({ phase, watch }: { phase: TryPhase; watch: Watch }) {
   if (phase.step !== 'waiting')
     return (
       <div aria-busy className="py-6">
@@ -125,7 +87,6 @@ export function Stage({
           <Check aria-hidden className="size-7" />
           <Celebrate when radius={30} delay={150} size="lg" />
         </span>
-        <p className="text-sm font-semibold text-fg-strong">On your phone</p>
       </div>
     );
   return (

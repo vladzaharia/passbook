@@ -1,4 +1,5 @@
 // Runs a journey: each step once (side effects), then a screenshot per viewport and theme.
+
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { type Browser, type BrowserContext, chromium, devices, type Page } from '@playwright/test';
@@ -15,6 +16,7 @@ import {
 } from './journey.ts';
 import type { JourneyEnv } from './journey-env.ts';
 import { type Theme, VIEWPORTS, type ViewportName } from './routes.ts';
+import { settle as settleAnimations } from './settle.ts';
 
 type Options = {
   base: string;
@@ -57,6 +59,8 @@ async function settle(page: Page, note: string[]) {
     .catch(() => {
       note.push('skeleton still showing');
     });
+  // A sheet or dialog that just opened is still sliding or fading in: shoot it at rest.
+  await settleAnimations(page);
 }
 
 export async function runJourney(
