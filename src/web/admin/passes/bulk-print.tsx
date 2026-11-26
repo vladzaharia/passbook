@@ -10,8 +10,6 @@ import { AdminOperations } from '../operations/admin-operation.tsx';
 import { printNote } from '../operations/notes.ts';
 import { useOrgTimeZone } from '../settings/use-org-time-zone.ts';
 
-const plural = (n: number) => `${n} ${n === 1 ? 'ticket' : 'tickets'}`;
-
 /** The PDF goes through fetch so Test mode's header travels with it; a plain link would not carry it. */
 async function savePdf(orgId: string, jobId: string): Promise<void> {
   const res = await fetch(

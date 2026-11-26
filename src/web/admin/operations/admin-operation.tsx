@@ -94,7 +94,7 @@ export function useOrgOperation(kind: string, orgId: string | undefined) {
     if (id) return;
     const active = resumed.operations[0];
     if (active) setId(active.id);
-  }, [id, orgId, resumed.operations]);
+  }, [id, resumed.operations]);
   const show = useCallback((next: string | null | undefined) => {
     if (next) setId(next);
   }, []);
