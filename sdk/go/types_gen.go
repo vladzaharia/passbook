@@ -10102,6 +10102,116 @@ type ReleaseTemplateExpected struct {
 	Test *int64 `json:"test,omitempty"`
 }
 
+type RequestLogsListItem struct {
+	ID         string                   `json:"id"`
+	RequestID  string                   `json:"requestId"`
+	At         int64                    `json:"at"`
+	Method     string                   `json:"method"`
+	Route      *string                  `json:"route"`
+	Path       string                   `json:"path"`
+	Query      *string                  `json:"query"`
+	Status     int64                    `json:"status"`
+	Code       *string                  `json:"code"`
+	DurationMs int64                    `json:"durationMs"`
+	KeyID      *string                  `json:"keyId"`
+	Mode       string                   `json:"mode"`
+	Via        string                   `json:"via"`
+	Client     *string                  `json:"client"`
+	HasBodies  bool                     `json:"hasBodies"`
+	ResourceID *string                  `json:"resourceId"`
+	APIVersion *string                  `json:"apiVersion"`
+	Flags      RequestLogsListItemFlags `json:"flags"`
+}
+
+type RequestLogsListItemFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsListQuery struct {
+	KeyID   *string `json:"keyId,omitempty"`
+	Status  *string `json:"status,omitempty"`
+	Code    *string `json:"code,omitempty"`
+	PassID  *string `json:"passId,omitempty"`
+	Version *string `json:"version,omitempty"`
+	Path    *string `json:"path,omitempty"`
+	Method  *string `json:"method,omitempty"`
+	Source  *string `json:"source,omitempty"`
+	Portal  *string `json:"portal,omitempty"`
+	After   *string `json:"after,omitempty"`
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
+	Key     *string `json:"key,omitempty"`
+}
+
+type RequestLogsListResponse struct {
+	Items          []RequestLogsListResponseItemsItem `json:"items"`
+	NextCursor     *string                            `json:"nextCursor"`
+	Capped         *string                            `json:"capped"`
+	BodiesRecorded bool                               `json:"bodiesRecorded"`
+}
+
+type RequestLogsListResponseItemsItem struct {
+	ID         string                                `json:"id"`
+	RequestID  string                                `json:"requestId"`
+	At         int64                                 `json:"at"`
+	Method     string                                `json:"method"`
+	Route      *string                               `json:"route"`
+	Path       string                                `json:"path"`
+	Query      *string                               `json:"query"`
+	Status     int64                                 `json:"status"`
+	Code       *string                               `json:"code"`
+	DurationMs int64                                 `json:"durationMs"`
+	KeyID      *string                               `json:"keyId"`
+	Mode       string                                `json:"mode"`
+	Via        string                                `json:"via"`
+	Client     *string                               `json:"client"`
+	HasBodies  bool                                  `json:"hasBodies"`
+	ResourceID *string                               `json:"resourceId"`
+	APIVersion *string                               `json:"apiVersion"`
+	Flags      RequestLogsListResponseItemsItemFlags `json:"flags"`
+}
+
+type RequestLogsListResponseItemsItemFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsRetrieveResponse struct {
+	ID             string                           `json:"id"`
+	RequestID      string                           `json:"requestId"`
+	At             int64                            `json:"at"`
+	Method         string                           `json:"method"`
+	Route          *string                          `json:"route"`
+	Path           string                           `json:"path"`
+	Query          *string                          `json:"query"`
+	Status         int64                            `json:"status"`
+	Code           *string                          `json:"code"`
+	DurationMs     int64                            `json:"durationMs"`
+	KeyID          *string                          `json:"keyId"`
+	Mode           string                           `json:"mode"`
+	Via            string                           `json:"via"`
+	Client         *string                          `json:"client"`
+	HasBodies      bool                             `json:"hasBodies"`
+	ResourceID     *string                          `json:"resourceId"`
+	APIVersion     *string                          `json:"apiVersion"`
+	Flags          RequestLogsRetrieveResponseFlags `json:"flags"`
+	RequestBody    *string                          `json:"requestBody"`
+	ResponseBody   *string                          `json:"responseBody"`
+	BodiesExpireAt *int64                           `json:"bodiesExpireAt"`
+	BodiesRecorded bool                             `json:"bodiesRecorded"`
+}
+
+type RequestLogsRetrieveResponseFlags struct {
+	IdempotencyKey bool `json:"idempotencyKey"`
+	IfMatch        bool `json:"ifMatch"`
+	Version        bool `json:"version"`
+}
+
+type RequestLogsRetrieveResult = RequestLogsRetrieveResponse
+
 type RetentionReceiptsDownloadResponse struct {
 	Receipt RetentionReceiptsDownloadResponseReceipt `json:"receipt"`
 }

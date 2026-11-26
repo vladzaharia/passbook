@@ -2584,5 +2584,13 @@
   "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
     "resource": "platform.walletRelease",
     "method": "enableReady"
+  },
+  "workbench.getRequestLog": {
+    "resource": "requestLogs",
+    "method": "retrieve"
+  },
+  "workbench.listRequestLogs": {
+    "resource": "requestLogs",
+    "method": "list"
   }
 }

@@ -1,3 +1,5 @@
+import type { LogsApi } from './logs.ts';
+
 /** The slice of `PassBook` (@passbook/sdk) the CLI calls. A `PassBook` satisfies it; tests pass a fake. */
 export interface Capture {
   id: string;
@@ -14,7 +16,7 @@ export interface CapturePage {
   nextCursor: string | null;
 }
 
-export interface Api {
+export interface Api extends LogsApi {
   webhookEndpoints: {
     ensureCapture(body: object): Promise<{ endpoint: { id: string }; secret: string | null }>;
     captures: {

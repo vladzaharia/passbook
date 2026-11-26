@@ -14,6 +14,9 @@ import { parseScopes } from '../api-keys/service-dto.ts';
 import { sandboxOfUser } from './repo.ts';
 import {
   callBuckets,
+  FLAG_IDEMPOTENCY_KEY,
+  FLAG_IF_MATCH,
+  FLAG_VERSION,
   getLog,
   LOG_BODY_MS,
   type LogRow,
@@ -21,6 +24,7 @@ import {
   logCap,
 } from './repo-request-log.ts';
 import { tryKeyOf } from './repo-try.ts';
+import { bodiesRecorded } from './request-log-bodies.ts';
 
 type Entry = z.infer<typeof RequestLogEntrySchema>;
 type Detail = z.infer<typeof RequestLogDetailSchema>;
@@ -58,21 +62,45 @@ export const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entr
   via: r.via,
   client: r.client,
   hasBodies: r.has_bodies === 1,
+  resourceId: r.resource_id,
+  apiVersion: r.api_version,
+  flags: {
+    idempotencyKey: (r.flags & FLAG_IDEMPOTENCY_KEY) !== 0,
+    ifMatch: (r.flags & FLAG_IF_MATCH) !== 0,
+    version: (r.flags & FLAG_VERSION) !== 0,
+  },
 });
+
+type Page = {
+  items: Entry[];
+  nextCursor: string | null;
+  capped: 'hour' | 'total' | null;
+  bodiesRecorded: boolean;
+};
 
 export async function listRequestLog(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   query: Query,
-): Promise<{ items: Entry[]; nextCursor: string | null; capped: 'hour' | 'total' | null }> {
-  const orgId = await orgOfCaller(ctx, auth);
-  const { cursor, limit, ...filter } = query;
+): Promise<Page> {
+  return listOrgRequestLog(ctx, await orgOfCaller(ctx, auth), query);
+}
+
+/** An org's Test calls, newest first. The caller has already shown authority over `orgId`. */
+export async function listOrgRequestLog(
+  ctx: ServiceContext,
+  orgId: string,
+  query: Query & { key?: string },
+): Promise<Page> {
+  const { cursor, limit, key, ...rest } = query;
+  const filter = { ...rest, ...(key && !rest.keyId ? { keyId: key } : {}) };
   const rows = await listLogs(ctx.env.DB, orgId, filter, limit + 1, ctx.clock.now(), cursor);
   const page = rows.slice(0, limit);
   return {
     items: page.map(entryOf),
     nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
     capped: await logCap(ctx.env.DB, orgId, ctx.clock.now()),
+    bodiesRecorded: await bodiesRecorded(ctx, orgId),
   };
 }
 
@@ -81,7 +109,14 @@ export async function getRequestLog(
   auth: AuthContext | undefined,
   id: string,
 ): Promise<Detail> {
-  const orgId = await orgOfCaller(ctx, auth);
+  return getOrgRequestLog(ctx, await orgOfCaller(ctx, auth), id);
+}
+
+export async function getOrgRequestLog(
+  ctx: ServiceContext,
+  orgId: string,
+  id: string,
+): Promise<Detail> {
   const row = await getLog(ctx.env.DB, orgId, id, ctx.clock.now());
   if (!row) throw new NotFoundError('Request not found.', 'REQUEST_LOG_NOT_FOUND');
   return {
@@ -89,6 +124,7 @@ export async function getRequestLog(
     requestBody: row.request_body,
     responseBody: row.response_body,
     bodiesExpireAt: row.has_bodies === 1 ? row.at + LOG_BODY_MS : null,
+    bodiesRecorded: await bodiesRecorded(ctx, orgId),
   };
 }
 

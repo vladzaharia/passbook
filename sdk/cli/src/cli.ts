@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import type { Api } from './api.ts';
 import { receiverUrl } from './forward.ts';
 import { listen } from './listen.ts';
+import { followLogs } from './logs.ts';
 import { passesCommand } from './passes.ts';
 import { inputTypeFile, typeName } from './types-gen.ts';
 
@@ -12,6 +13,8 @@ export const HELP = `passbook <command>
 
   listen --forward-to <url>   Forward webhook captures to a local server, with their original signatures.
       [--endpoint <id>] [--interval <ms>] [--from-start] [--once]
+  logs --follow               Print your Test calls as they arrive, oldest first.
+      [--status 4xx] [--code <CODE>] [--interval <ms>] [--once]
   types <templateId>          Print the TypeScript type of a template's pass input.
       [--name <TypeName>] [--out <file>]
   passes create               Issue a pass. Body from --file <json|-> (- is stdin) and flags.
@@ -20,7 +23,7 @@ export const HELP = `passbook <command>
   passes update <passId>      Change a pass's input. Same body sources.
       [--external-id <id>] [--template-version <v>] [--notify] [--set key=value]... [--idempotency-key <k>]
 
-PASSBOOK_KEY holds a pbp_test_ key. PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
+PASSBOOK_KEY holds a pbp_test_ key (logs needs the logs:read scope). PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
 
 export interface Io {
   env: Record<string, string | undefined>;
@@ -75,6 +78,34 @@ export async function run(argv: string[], io: Io): Promise<number> {
         fromStart: values['from-start'] === true,
         once: values.once === true,
         ...(io.fetch ? { fetch: io.fetch } : {}),
+        ...(io.signal ? { signal: io.signal } : {}),
+        log: io.out,
+      });
+      return 0;
+    }
+    if (command === 'logs') {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          follow: { type: 'boolean' },
+          status: { type: 'string' },
+          code: { type: 'string' },
+          interval: { type: 'string' },
+          once: { type: 'boolean' },
+        },
+      });
+      if (!values.follow) throw new Error('logs needs --follow.');
+      if (values.status && !/^(?:[1-5]xx|[1-5]\d\d)$/.test(values.status))
+        throw new Error('--status is a class such as 4xx, or one status such as 404.');
+      const interval = Number(values.interval ?? 2000);
+      if (!Number.isFinite(interval) || interval < 200)
+        throw new Error('--interval is milliseconds, at least 200.');
+      await followLogs({
+        api,
+        ...(values.status ? { status: values.status } : {}),
+        ...(values.code ? { code: values.code } : {}),
+        intervalMs: interval,
+        once: values.once === true,
         ...(io.signal ? { signal: io.signal } : {}),
         log: io.out,
       });

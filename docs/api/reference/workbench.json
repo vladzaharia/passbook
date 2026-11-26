@@ -1,0 +1,65 @@
+{
+  "workbench.listRequestLogs": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+          "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+          "at": 1795570500000,
+          "method": "GET",
+          "route": "/api/v1/passes",
+          "path": "/api/v1/passes",
+          "query": "limit=25",
+          "status": 200,
+          "code": null,
+          "durationMs": 84,
+          "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+          "mode": "test",
+          "via": "try",
+          "client": "@passbook/sdk 1.4.2",
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
+        }
+      ],
+      "nextCursor": null,
+      "capped": null,
+      "bodiesRecorded": true
+    }
+  },
+  "workbench.getRequestLog": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+      "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+      "at": 1795570500000,
+      "method": "GET",
+      "route": "/api/v1/passes",
+      "path": "/api/v1/passes",
+      "query": "limit=25",
+      "status": 200,
+      "code": null,
+      "durationMs": 84,
+      "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+      "mode": "test",
+      "via": "try",
+      "client": "@passbook/sdk 1.4.2",
+      "hasBodies": true,
+      "resourceId": null,
+      "apiVersion": "2026-11-01",
+      "flags": {
+        "idempotencyKey": false,
+        "ifMatch": false,
+        "version": true
+      },
+      "requestBody": null,
+      "responseBody": "{\"items\":[],\"nextCursor\":null}",
+      "bodiesExpireAt": 1796175300000,
+      "bodiesRecorded": true
+    }
+  }
+}

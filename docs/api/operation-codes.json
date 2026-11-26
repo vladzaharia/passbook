@@ -8834,5 +8834,20 @@
     "UNSAFE_URL",
     "WEBHOOK_ENDPOINT_LIMIT",
     "WEBHOOK_ENDPOINT_NOT_FOUND"
+  ],
+  "workbench get /": [
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "workbench get /{id}": [
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_REQUIRED",
+    "ORG_TEST_ONLY",
+    "REQUEST_LOG_NOT_FOUND",
+    "UNAUTHENTICATED"
   ]
 }

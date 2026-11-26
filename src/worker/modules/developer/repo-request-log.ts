@@ -3,7 +3,7 @@ import { all, first, run, type SqlValue } from '../../platform/db.ts';
 const DAY = 86_400_000;
 /** Metadata (method, route, status, code, time) is kept this long. */
 export const LOG_META_MS = 7 * DAY;
-/** Bodies are kept this long, in developer Test traffic only. */
+/** Bodies are kept this long, in Test traffic of orgs that record them. */
 export const LOG_BODY_MS = DAY;
 
 export interface LogRow {
@@ -22,6 +22,9 @@ export interface LogRow {
   code: string | null;
   duration_ms: number;
   at: number;
+  resource_id: string | null;
+  api_version: string | null;
+  flags: number;
   has_bodies: number;
   request_body: string | null;
   response_body: string | null;
@@ -45,30 +48,40 @@ export interface NewLog {
   code: string | null;
   durationMs: number;
   at: number;
+  /** The pass, template or key the route touched. */
+  resourceId?: string | null;
+  /** The `PassBook-Version` date the call pinned. */
+  apiVersion?: string | null;
+  /** `FLAG_*` bits: which of the three headers the call carried. */
+  flags?: number;
   requestBody: string | null;
   responseBody: string | null;
 }
+
+export const FLAG_IDEMPOTENCY_KEY = 1;
+export const FLAG_IF_MATCH = 2;
+export const FLAG_VERSION = 4;
 
 export const HOUR_ROWS_CAP = 2000;
 export const TOTAL_ROWS_CAP = 20_000;
 
 /**
- * The one write of a request, for a developer org's Test call only: the SELECT reads the org row (`kind =
- * 'developer'`) and the sandbox's row budget, so a Live call, a real org's call, or a sandbox over its hourly or
- * total cap writes nothing, and a body is bound only when the call was Test. The table's triggers refuse a body
- * or a query value anywhere else. Returns whether a row was written.
+ * The one write of a request, for a Test call: the SELECT reads the org's row budget, so an org over its hourly or
+ * total cap writes nothing, and a body is bound only when the call was Test (the caller binds none when the org
+ * does not record bodies). The table's triggers refuse a Live row, a body and a query value outside Test.
+ * Returns whether a row was written.
  */
 export const insertLog = async (db: D1Database, l: NewLog) =>
   (
     await run(
       db,
       `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
-         duration_ms, at, has_bodies, request_body, response_body, client)
+         duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
          CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
          CASE WHEN ?5 = 'test' THEN ?15 END,
-         CASE WHEN ?5 = 'test' THEN ?16 END, ?17
-       FROM orgs o WHERE o.id = ?2 AND o.kind = 'developer'
+         CASE WHEN ?5 = 'test' THEN ?16 END, ?17, ?18, ?19, ?20
+       FROM orgs o WHERE o.id = ?2 AND ?5 = 'test'
          AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
                        FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
          AND COALESCE((SELECT b.total_rows FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${TOTAL_ROWS_CAP}`,
@@ -90,11 +103,14 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
         l.requestBody,
         l.responseBody,
         l.client ?? null,
+        l.resourceId ?? null,
+        l.apiVersion ?? null,
+        l.flags ?? 0,
       ],
     )
   ).changes > 0;
 
-/** `hour`: this hour's cap is spent; `total`: the sandbox holds its most rows. Null: room left. */
+/** `hour`: this hour's cap is spent; `total`: the org holds its most rows. Null: room left. */
 export async function logCap(
   db: D1Database,
   orgId: string,
@@ -120,18 +136,24 @@ export interface LogFilter {
   source?: 'key' | 'try' | 'all';
   /** `hide`: leave out the portal's own background reads. */
   portal?: 'show' | 'hide';
+  /** The pass, template or key a call touched. */
+  passId?: string;
+  /** The `PassBook-Version` date a call pinned. */
+  version?: string;
   /** Rows newer than this id (UUIDv7, so newer sorts higher). */
   after?: string;
 }
 
 function where(orgId: string, f: LogFilter, now: number, cursor?: string) {
-  const sql = ['org_id = ?', 'at >= ?'];
+  const sql = ['org_id = ?', 'at >= ?', "mode = 'test'"];
   const params: SqlValue[] = [orgId, now - LOG_META_MS];
   const add = (clause: string, ...values: SqlValue[]) => {
     sql.push(clause);
     params.push(...values);
   };
   if (f.keyId) add('key_id = ?', f.keyId);
+  if (f.passId) add('resource_id = ?', f.passId);
+  if (f.version) add('api_version = ?', f.version);
   if (f.code) add('code = ?', f.code);
   if (f.method) add('method = ?', f.method);
   if (f.path) add('instr(path, ?) > 0', f.path);
@@ -152,6 +174,7 @@ const readable = (now: number) => `(has_bodies = 1 AND at >= ${now - LOG_BODY_MS
 
 const LIST_COLUMNS = (now: number) =>
   `id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
+   resource_id, api_version, flags,
    CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies`;
 
 export const listLogs = (
@@ -174,6 +197,7 @@ export const getLog = (db: D1Database, orgId: string, id: string, now: number) =
   first<LogRow>(
     db,
     `SELECT id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
+       resource_id, api_version, flags,
        CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies,
        CASE WHEN ${readable(now)} THEN request_body END AS request_body,
        CASE WHEN ${readable(now)} THEN response_body END AS response_body

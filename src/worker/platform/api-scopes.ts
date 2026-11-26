@@ -55,6 +55,7 @@ export const scopeCapability: Record<TenantScope, OrgCapability> = {
   'members:read': 'members:read',
   'members:write': 'members:manage',
   'audit:read': 'audit:read',
+  'logs:read': 'logs:read',
   'brand:manage': 'org:manage',
 };
 

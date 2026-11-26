@@ -17,11 +17,19 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "nextCursor": null,
-      "capped": null
+      "capped": null,
+      "bodiesRecorded": true
     }
   },
   "developer.getLog": {
@@ -41,9 +49,17 @@
       "via": "try",
       "client": "@passbook/sdk 1.4.2",
       "hasBodies": true,
+      "resourceId": null,
+      "apiVersion": "2026-11-01",
+      "flags": {
+        "idempotencyKey": false,
+        "ifMatch": false,
+        "version": true
+      },
       "requestBody": null,
       "responseBody": "{\"items\":[],\"nextCursor\":null}",
-      "bodiesExpireAt": 1796175300000
+      "bodiesExpireAt": 1796175300000,
+      "bodiesRecorded": true
     }
   },
   "developer.getRail": {
@@ -149,7 +165,14 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "endpoints": [

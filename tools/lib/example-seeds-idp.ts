@@ -366,8 +366,20 @@ export const IDP_SEEDS: Record<string, unknown> = {
   'metrics.getMetricsPlatformOverview response': METRICS,
   'metrics.getMetricsActivity response': ACTIVITY,
   'developer.getHome response': DEVELOPER_HOME,
-  'developer.getLogs response': { items: [CALL], nextCursor: null, capped: null },
+  'developer.getLogs response': {
+    items: [CALL],
+    nextCursor: null,
+    capped: null,
+    bodiesRecorded: true,
+  },
   'developer.getLog response': CALL,
+  'workbench.listRequestLogs response': {
+    items: [CALL],
+    nextCursor: null,
+    capped: null,
+    bodiesRecorded: true,
+  },
+  'workbench.getRequestLog response': CALL,
   'developer.getRail response': {
     mode: 'test',
     scopes: DEVELOPER_HOME.keys[0]?.scopes,

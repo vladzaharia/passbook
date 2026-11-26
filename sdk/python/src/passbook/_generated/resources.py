@@ -1909,6 +1909,40 @@ class PassViewsResource:
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
 
 
+class RequestLogsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        key_id: str | None = None,
+        status: str | None = None,
+        code: str | None = None,
+        pass_id: str | None = None,
+        version: str | None = None,
+        path: str | None = None,
+        method: _Literal["GET", "POST", "PUT", "PATCH", "DELETE"] | None = None,
+        source: _Literal["key", "try", "all"] | None = None,
+        portal: _Literal["show", "hide"] | None = None,
+        after: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        key: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.RequestLogsListItem]:
+        """List an organization's Test calls, newest first `GET /api/v1/request-logs`"""
+        return self._core.paginate("GET", "/api/v1/request-logs", query={"keyId": key_id, "status": status, "code": code, "passId": pass_id, "version": version, "path": path, "method": method, "source": source, "portal": portal, "after": after, "cursor": cursor, "limit": limit, "key": key}, result=m.RequestLogsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.RequestLogsRetrieveResult:
+        """One Test call, with its redacted bodies for 24 hours where the organization records them `GET /api/v1/request-logs/{id}`"""
+        return self._core.request("GET", f"/api/v1/request-logs/{_p(id)}", result=m.RequestLogsRetrieveResult, **opts)
+
+
 class RollCallsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2930,6 +2964,7 @@ class Resources:
         self.print_jobs = PrintJobsResource(core)
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
+        self.request_logs = RequestLogsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)

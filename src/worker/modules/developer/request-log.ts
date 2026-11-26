@@ -2,14 +2,25 @@ import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from '../../platform/context.ts';
 import { redactString } from '../../platform/log.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
-import { insertLog, type NewLog } from './repo-request-log.ts';
+import {
+  FLAG_IDEMPOTENCY_KEY,
+  FLAG_IF_MATCH,
+  FLAG_VERSION,
+  insertLog,
+  type NewLog,
+} from './repo-request-log.ts';
+import { bodiesRecorded } from './request-log-bodies.ts';
 import { clientOf } from './request-log-client.ts';
 import { BODY_READ_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
 /** Only a Test secret or a try token can be a sandbox's, so only they are ever copied: a Live call is never read. */
 const TEST_BEARER = /^Bearer\s+(?:pbp?_test_|pbtry_)/i;
 /** Reading the log is not logged. */
-const NOT_LOGGED = /^\/api\/v1\/developer\/(?:logs|rail)(?:\/|$)/;
+const NOT_LOGGED = /^\/api\/v1\/(?:developer\/(?:logs|rail)|request-logs)(?:\/|$)/;
+/** The pass, template or key a path names. */
+const RESOURCE =
+  /\/(?:passes|templates|api-keys)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
+const VERSION = /^\d{4}-\d{2}-\d{2}$/;
 const CODE = /^[A-Z0-9_]{2,64}$/;
 
 /** What the portal's own background reads call themselves, so the workbench can leave them out of its Calls. */
@@ -86,11 +97,19 @@ function sentOf(c: { req: { raw: Request; header(name: string): string | undefin
   return copy ? { copy } : null;
 }
 
+/** Which of the three headers a call carried: presence only, never a value. */
+const flagsOf = (header: (name: string) => string | undefined) =>
+  (header('idempotency-key') !== undefined ? FLAG_IDEMPOTENCY_KEY : 0) |
+  (header('if-match') !== undefined ? FLAG_IF_MATCH : 0) |
+  (header('passbook-version') !== undefined ? FLAG_VERSION : 0);
+
 /**
- * Logs a developer org's Test calls to `request_log` after the response is made: one background write
- * (`waitUntil`), so the request pays for nothing but copying a small JSON stream. Nothing else is logged: not a
- * Live call, not a real org's call (`auth.orgKind`), and the insert backs that up. The request is copied only
- * when its bearer looks like a Test secret or try token and its body is JSON of at most 16 KB.
+ * Logs an org's Test calls to `request_log` after the response is made: one background write (`waitUntil`), so
+ * the request pays for nothing but copying a small JSON stream. Nothing else is logged: not a Live call, and the
+ * insert and the table's triggers back that up. No header is stored, so no secret can be: only the pinned
+ * version date and the presence of Idempotency-Key, If-Match and PassBook-Version. Bodies are kept only where the
+ * org records them (`bodiesRecorded`). The request is copied only when its bearer looks like a Test secret or
+ * try token and its body is JSON of at most 16 KB.
  */
 export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
   const sent = TEST_BEARER.test(c.req.header('authorization') ?? '') ? sentOf(c) : null;
@@ -100,7 +119,6 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
   if (
     auth?.kind !== 'api_key' ||
     auth.orgId === null ||
-    auth.orgKind !== 'developer' ||
     auth.mode !== 'test' ||
     NOT_LOGGED.test(c.req.path)
   ) {
@@ -126,9 +144,19 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     status: res.status,
     durationMs: c.var.clock.now() - started,
     at: started,
+    resourceId: RESOURCE.exec(c.req.path)?.[1] ?? null,
+    apiVersion: VERSION.test(c.req.header('passbook-version') ?? '')
+      ? (c.req.header('passbook-version') ?? null)
+      : null,
+    flags: flagsOf((name) => c.req.header(name)),
   };
   const type = res.headers.get('content-type');
-  ctx.waitUntil(writeLog(ctx, row, { sent, received: res.clone().body, type }));
+  const copies = { sent, received: res.clone().body, type };
+  ctx.waitUntil(
+    bodiesRecorded(ctx, auth.orgId, auth.orgKind).then((record) =>
+      writeLog(ctx, row, copies, record),
+    ),
+  );
 });
 
 interface Copies {
@@ -142,22 +170,26 @@ export async function writeLog(
   ctx: ServiceContext,
   row: Omit<NewLog, 'requestBody' | 'responseBody' | 'code'>,
   { sent, received, type }: Copies,
+  /** False: the org keeps no bodies; they are read for the code and the resource, then dropped. */
+  record = true,
 ): Promise<void> {
   const receivedJson = isJson(type);
   const [sentRead, receivedRead] = await Promise.all([
-    sent && 'copy' in sent ? readCapped(sent.copy, BODY_READ_MAX_BYTES) : null,
+    sent && 'copy' in sent && record ? readCapped(sent.copy, BODY_READ_MAX_BYTES) : null,
     receivedJson ? readCapped(received, BODY_READ_MAX_BYTES) : null,
   ]);
   // Not JSON: nothing of it is read, only its type is noted.
   if (received && !receivedJson) await received.cancel();
+  if (sent && 'copy' in sent && !record) await sent.copy.cancel();
   await insertLog(ctx.env.DB, {
     ...row,
-    requestBody: !sent
-      ? null
-      : 'marker' in sent
-        ? sent.marker
-        : stored(sentRead, 'application/json'),
-    responseBody: received ? stored(receivedRead, type) : null,
+    requestBody:
+      !record || !sent
+        ? null
+        : 'marker' in sent
+          ? sent.marker
+          : stored(sentRead, 'application/json'),
+    responseBody: record && received ? stored(receivedRead, type) : null,
     code: receivedJson && row.status >= 400 ? codeOf(receivedRead) : null,
   });
 }

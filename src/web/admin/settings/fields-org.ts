@@ -68,6 +68,13 @@ export const ORG_FIELDS: readonly SettingField[] = [
     schema: O['email.orgCapPerDay'],
   },
   {
+    key: 'requestLog.bodies',
+    group: 'Developers',
+    label: 'Record request bodies in Test',
+    kind: 'boolean',
+    schema: O['requestLog.bodies'],
+  },
+  {
     key: 'support.email',
     group: 'Support',
     label: 'Support email',

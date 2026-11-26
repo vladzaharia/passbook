@@ -34,6 +34,7 @@ export const OrgCapabilitySchema = z.enum([
   'scanning:read',
   'scanning:manage',
   'audit:read',
+  'logs:read',
 ]);
 export type OrgCapability = z.infer<typeof OrgCapabilitySchema>;
 

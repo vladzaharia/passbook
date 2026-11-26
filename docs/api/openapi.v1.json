@@ -10464,6 +10464,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "logs:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -10612,6 +10613,7 @@
                         "members:read",
                         "members:write",
                         "audit:read",
+                        "logs:read",
                         "platform:orgs",
                         "platform:users",
                         "platform:identities",
@@ -10845,6 +10847,7 @@
                         "members:read",
                         "members:write",
                         "audit:read",
+                        "logs:read",
                         "platform:orgs",
                         "platform:users",
                         "platform:identities",
@@ -11076,6 +11079,7 @@
                     "members:read",
                     "members:write",
                     "audit:read",
+                    "logs:read",
                     "platform:orgs",
                     "platform:users",
                     "platform:identities",
@@ -11311,6 +11315,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "logs:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -11723,6 +11728,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "logs:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -22450,6 +22456,336 @@
           "undoneAt"
         ]
       },
+      "RequestLogsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "requestId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "method": {
+                  "type": "string"
+                },
+                "route": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "path": {
+                  "type": "string"
+                },
+                "query": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": "integer"
+                },
+                "code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "durationMs": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "keyId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "live",
+                    "test"
+                  ]
+                },
+                "via": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "try"
+                  ]
+                },
+                "client": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 32
+                },
+                "hasBodies": {
+                  "type": "boolean"
+                },
+                "resourceId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "apiVersion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "flags": {
+                  "type": "object",
+                  "properties": {
+                    "idempotencyKey": {
+                      "type": "boolean"
+                    },
+                    "ifMatch": {
+                      "type": "boolean"
+                    },
+                    "version": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "idempotencyKey",
+                    "ifMatch",
+                    "version"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "requestId",
+                "at",
+                "method",
+                "route",
+                "path",
+                "query",
+                "status",
+                "code",
+                "durationMs",
+                "keyId",
+                "mode",
+                "via",
+                "client",
+                "hasBodies",
+                "resourceId",
+                "apiVersion",
+                "flags"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capped": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "hour",
+              "total",
+              null
+            ]
+          },
+          "bodiesRecorded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "capped",
+          "bodiesRecorded"
+        ]
+      },
+      "RequestLogsRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "method": {
+            "type": "string"
+          },
+          "route": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "keyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "via": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "try"
+            ]
+          },
+          "client": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 32
+          },
+          "hasBodies": {
+            "type": "boolean"
+          },
+          "resourceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "flags": {
+            "type": "object",
+            "properties": {
+              "idempotencyKey": {
+                "type": "boolean"
+              },
+              "ifMatch": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "idempotencyKey",
+              "ifMatch",
+              "version"
+            ]
+          },
+          "requestBody": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseBody": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bodiesExpireAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "bodiesRecorded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "requestId",
+          "at",
+          "method",
+          "route",
+          "path",
+          "query",
+          "status",
+          "code",
+          "durationMs",
+          "keyId",
+          "mode",
+          "via",
+          "client",
+          "hasBodies",
+          "resourceId",
+          "apiVersion",
+          "flags",
+          "requestBody",
+          "responseBody",
+          "bodiesExpireAt",
+          "bodiesRecorded"
+        ]
+      },
       "OrgsEntitlementsRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -23300,7 +23636,8 @@
                       "messages:manage",
                       "scanning:read",
                       "scanning:manage",
-                      "audit:read"
+                      "audit:read",
+                      "logs:read"
                     ]
                   }
                 },
@@ -23660,7 +23997,8 @@
                 "messages:manage",
                 "scanning:read",
                 "scanning:manage",
-                "audit:read"
+                "audit:read",
+                "logs:read"
               ]
             }
           },
@@ -63828,6 +64166,7 @@
                       "members:read",
                       "members:write",
                       "audit:read",
+                      "logs:read",
                       "platform:orgs",
                       "platform:users",
                       "platform:identities",
@@ -64070,6 +64409,7 @@
                 "nfc:write",
                 "api-keys:write",
                 "audit:read",
+                "logs:read",
                 "members:read",
                 "members:write"
               ]
@@ -84292,6 +84632,29 @@
             "schema": {
               "type": "string",
               "minLength": 1,
+              "maxLength": 64,
+              "description": "Calls that touched this pass, template or key."
+            },
+            "required": false,
+            "description": "Calls that touched this pass, template or key.",
+            "name": "passId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Calls that pinned this PassBook-Version date."
+            },
+            "required": false,
+            "description": "Calls that pinned this PassBook-Version date.",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
               "maxLength": 200
             },
             "required": false,
@@ -84467,6 +84830,39 @@
                           },
                           "hasBodies": {
                             "type": "boolean"
+                          },
+                          "resourceId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "apiVersion": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "flags": {
+                            "type": "object",
+                            "properties": {
+                              "idempotencyKey": {
+                                "type": "boolean"
+                              },
+                              "ifMatch": {
+                                "type": "boolean"
+                              },
+                              "version": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "idempotencyKey",
+                              "ifMatch",
+                              "version"
+                            ]
                           }
                         },
                         "required": [
@@ -84484,7 +84880,10 @@
                           "mode",
                           "via",
                           "client",
-                          "hasBodies"
+                          "hasBodies",
+                          "resourceId",
+                          "apiVersion",
+                          "flags"
                         ]
                       }
                     },
@@ -84504,12 +84903,16 @@
                         "total",
                         null
                       ]
+                    },
+                    "bodiesRecorded": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "items",
                     "nextCursor",
-                    "capped"
+                    "capped",
+                    "bodiesRecorded"
                   ]
                 },
                 "example": {
@@ -84529,11 +84932,19 @@
                       "mode": "test",
                       "via": "try",
                       "client": "@passbook/sdk 1.4.2",
-                      "hasBodies": true
+                      "hasBodies": true,
+                      "resourceId": null,
+                      "apiVersion": "2026-11-01",
+                      "flags": {
+                        "idempotencyKey": false,
+                        "ifMatch": false,
+                        "version": true
+                      }
                     }
                   ],
                   "nextCursor": null,
-                  "capped": null
+                  "capped": null,
+                  "bodiesRecorded": true
                 }
               }
             }
@@ -84675,6 +85086,39 @@
                     "hasBodies": {
                       "type": "boolean"
                     },
+                    "resourceId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "apiVersion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "flags": {
+                      "type": "object",
+                      "properties": {
+                        "idempotencyKey": {
+                          "type": "boolean"
+                        },
+                        "ifMatch": {
+                          "type": "boolean"
+                        },
+                        "version": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "idempotencyKey",
+                        "ifMatch",
+                        "version"
+                      ]
+                    },
                     "requestBody": {
                       "type": [
                         "string",
@@ -84693,6 +85137,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "bodiesRecorded": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -84711,9 +85158,13 @@
                     "via",
                     "client",
                     "hasBodies",
+                    "resourceId",
+                    "apiVersion",
+                    "flags",
                     "requestBody",
                     "responseBody",
-                    "bodiesExpireAt"
+                    "bodiesExpireAt",
+                    "bodiesRecorded"
                   ]
                 },
                 "example": {
@@ -84732,9 +85183,17 @@
                   "via": "try",
                   "client": "@passbook/sdk 1.4.2",
                   "hasBodies": true,
+                  "resourceId": null,
+                  "apiVersion": "2026-11-01",
+                  "flags": {
+                    "idempotencyKey": false,
+                    "ifMatch": false,
+                    "version": true
+                  },
                   "requestBody": null,
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
-                  "bodiesExpireAt": 1796175300000
+                  "bodiesExpireAt": 1796175300000,
+                  "bodiesRecorded": true
                 }
               }
             }
@@ -84830,6 +85289,7 @@
                           "members:read",
                           "members:write",
                           "audit:read",
+                          "logs:read",
                           "platform:orgs",
                           "platform:users",
                           "platform:identities",
@@ -85509,6 +85969,7 @@
                                 "members:read",
                                 "members:write",
                                 "audit:read",
+                                "logs:read",
                                 "platform:orgs",
                                 "platform:users",
                                 "platform:identities",
@@ -85650,6 +86111,39 @@
                           },
                           "hasBodies": {
                             "type": "boolean"
+                          },
+                          "resourceId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "apiVersion": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "flags": {
+                            "type": "object",
+                            "properties": {
+                              "idempotencyKey": {
+                                "type": "boolean"
+                              },
+                              "ifMatch": {
+                                "type": "boolean"
+                              },
+                              "version": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "idempotencyKey",
+                              "ifMatch",
+                              "version"
+                            ]
                           }
                         },
                         "required": [
@@ -85667,7 +86161,10 @@
                           "mode",
                           "via",
                           "client",
-                          "hasBodies"
+                          "hasBodies",
+                          "resourceId",
+                          "apiVersion",
+                          "flags"
                         ]
                       },
                       "description": "The 8 latest calls, any source. The first id is the listener cursor (`after`)."
@@ -85995,7 +86492,14 @@
                       "mode": "test",
                       "via": "try",
                       "client": "@passbook/sdk 1.4.2",
-                      "hasBodies": true
+                      "hasBodies": true,
+                      "resourceId": null,
+                      "apiVersion": "2026-11-01",
+                      "flags": {
+                        "idempotencyKey": false,
+                        "ifMatch": false,
+                        "version": true
+                      }
                     }
                   ],
                   "endpoints": [
@@ -87652,6 +88156,373 @@
         ]
       }
     },
+    "/api/v1/request-logs": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "logs:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "List an organization's Test calls, newest first",
+        "operationId": "workbench.listRequestLogs",
+        "tags": [
+          "workbench"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "keyId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-5]xx|[1-5]\\d\\d)$"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_]{2,64}$"
+            },
+            "required": false,
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Calls that touched this pass, template or key."
+            },
+            "required": false,
+            "description": "Calls that touched this pass, template or key.",
+            "name": "passId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Calls that pinned this PassBook-Version date."
+            },
+            "required": false,
+            "description": "Calls that pinned this PassBook-Version date.",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "path",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            },
+            "required": false,
+            "name": "method",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "key",
+                "try",
+                "all"
+              ],
+              "default": "all",
+              "description": "key: calls with a sandbox key; try: Run here; all: both."
+            },
+            "required": false,
+            "description": "key: calls with a sandbox key; try: Run here; all: both.",
+            "name": "source",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "show",
+                "hide"
+              ],
+              "default": "show",
+              "description": "hide: leave out the portal's own background reads (client portal)."
+            },
+            "required": false,
+            "description": "hide: leave out the portal's own background reads (client portal).",
+            "name": "portal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Only calls newer than this log id: the listener cursor."
+            },
+            "required": false,
+            "description": "Only calls newer than this log id: the listener cursor.",
+            "name": "after",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Alias of keyId."
+            },
+            "required": false,
+            "description": "Alias of keyId.",
+            "name": "key",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestLogsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+                      "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+                      "at": 1795570500000,
+                      "method": "GET",
+                      "route": "/api/v1/passes",
+                      "path": "/api/v1/passes",
+                      "query": "limit=25",
+                      "status": 200,
+                      "code": null,
+                      "durationMs": 84,
+                      "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+                      "mode": "test",
+                      "via": "try",
+                      "client": "@passbook/sdk 1.4.2",
+                      "hasBodies": true,
+                      "resourceId": null,
+                      "apiVersion": "2026-11-01",
+                      "flags": {
+                        "idempotencyKey": false,
+                        "ifMatch": false,
+                        "version": true
+                      }
+                    }
+                  ],
+                  "nextCursor": null,
+                  "capped": null,
+                  "bodiesRecorded": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "requestLogs",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/request-logs/{id}": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "logs:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "One Test call, with its redacted bodies for 24 hours where the organization records them",
+        "operationId": "workbench.getRequestLog",
+        "tags": [
+          "workbench"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestLogsRetrieveResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+                  "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+                  "at": 1795570500000,
+                  "method": "GET",
+                  "route": "/api/v1/passes",
+                  "path": "/api/v1/passes",
+                  "query": "limit=25",
+                  "status": 200,
+                  "code": null,
+                  "durationMs": 84,
+                  "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+                  "mode": "test",
+                  "via": "try",
+                  "client": "@passbook/sdk 1.4.2",
+                  "hasBodies": true,
+                  "resourceId": null,
+                  "apiVersion": "2026-11-01",
+                  "flags": {
+                    "idempotencyKey": false,
+                    "ifMatch": false,
+                    "version": true
+                  },
+                  "requestBody": null,
+                  "responseBody": "{\"items\":[],\"nextCursor\":null}",
+                  "bodiesExpireAt": 1796175300000,
+                  "bodiesRecorded": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "requestLogs",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/orgs/{id}/entitlements": {
       "get": {
         "security": [
@@ -88813,7 +89684,8 @@
                               "messages:manage",
                               "scanning:read",
                               "scanning:manage",
-                              "audit:read"
+                              "audit:read",
+                              "logs:read"
                             ]
                           }
                         },
@@ -90170,7 +91042,8 @@
                           "messages:manage",
                           "scanning:read",
                           "scanning:manage",
-                          "audit:read"
+                          "audit:read",
+                          "logs:read"
                         ]
                       }
                     },
@@ -90436,7 +91309,8 @@
                                 "messages:manage",
                                 "scanning:read",
                                 "scanning:manage",
-                                "audit:read"
+                                "audit:read",
+                                "logs:read"
                               ]
                             }
                           },
@@ -105307,6 +106181,11 @@
           },
           {
             "apiKey": [
+              "logs:read"
+            ]
+          },
+          {
+            "apiKey": [
               "brand:manage"
             ]
           },
@@ -105489,6 +106368,11 @@
           {
             "apiKey": [
               "audit:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "logs:read"
             ]
           },
           {

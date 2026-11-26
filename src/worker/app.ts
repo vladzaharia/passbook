@@ -16,6 +16,7 @@ import { developerOrgRoutes } from './modules/dev-access/routes-org.ts';
 import { developerPortalRoutes } from './modules/developer/portal.ts';
 import { requestLog } from './modules/developer/request-log.ts';
 import { developerRoutes } from './modules/developer/routes.ts';
+import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
@@ -173,6 +174,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
+  app.route('/api/v1/request-logs', requestLogRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
