@@ -161,6 +161,23 @@ export interface WalletOrgOptions {
 }
 
 /**
+ * A fresh org (preset legacy) whose Test enrolments are On for each credential, and no template. The
+ * creator is its only member until a reviewer joins.
+ */
+export async function enrolledOrg(
+  admin: Api,
+  name: string,
+  credentials: (Record<string, unknown> & { provider: Provider })[],
+) {
+  const slug = uid(name).toLowerCase();
+  // See walletOrg: provider projections need the credential-ref keyset a first pass makes.
+  await createPass(admin, readSeed().org.id);
+  const org = await createOrgWithRoles(admin, { slug, name: `Wallets ${slug}` });
+  for (const credential of credentials) await enrolTestAccount(admin, org.id, credential);
+  return org;
+}
+
+/**
  * A fresh org (preset legacy: every wallet included) with each provider's Test account, then a template made
  * from a blueprint and released to Test. The release queues the platform's own projections, as in production.
  */
@@ -222,10 +239,16 @@ type Candidate = {
   candidateHash: string;
   projection: { approvedOmissions?: string[] };
 };
-const templatePath = (w: WalletOrg) => `/api/v1/templates/${encodeURIComponent(w.template.id)}`;
+const templatePath = (w: Pick<WalletOrg, 'template'>) =>
+  `/api/v1/templates/${encodeURIComponent(w.template.id)}`;
 
 /** A second member approves the candidate and the author publishes it: the provider's Test release. */
-async function approveAndPublish(admin: Api, w: WalletOrg, provider: Provider, c: Candidate) {
+async function approveAndPublish(
+  admin: Api,
+  w: Pick<WalletOrg, 'org' | 'template'>,
+  provider: Provider,
+  c: Candidate,
+) {
   const scope = { orgId: w.org.id, mode: 'test', provider };
   const reviewer = await templateReviewer(admin, w.org.id);
   try {
@@ -266,7 +289,7 @@ export async function releaseSystemGoogle(admin: Api, w: WalletOrg): Promise<str
  */
 export async function releaseSystem(
   admin: Api,
-  w: WalletOrg,
+  w: Pick<WalletOrg, 'org' | 'template' | 'apple'>,
   provider: Provider,
   options: { cron?: boolean } = {},
 ): Promise<string[]> {
@@ -301,7 +324,7 @@ export async function releaseSystem(
 }
 
 /** The platform's own candidate for the provider, once it has written one. */
-export async function systemCandidate(admin: Api, w: WalletOrg, provider: Provider) {
+export async function systemCandidate(admin: Api, w: Pick<WalletOrg, 'org' | 'template'>, provider: Provider) {
   const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
   const list = await admin.send<{ items: (Candidate & { authorId: string })[] }>(
     'GET',
@@ -315,7 +338,7 @@ export async function systemCandidate(admin: Api, w: WalletOrg, provider: Provid
 /** The provider's active Test release of the template, if any. */
 export async function providerRelease(
   admin: Api,
-  w: WalletOrg,
+  w: Pick<WalletOrg, 'org' | 'template'>,
   provider: Provider,
 ): Promise<{ id: string } | null> {
   const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
@@ -354,7 +377,7 @@ export async function releaseProjection(
 /** A Test pass from the org's Day pass release, with the holder's email. */
 export async function testPass(
   admin: Api,
-  w: WalletOrg,
+  w: Pick<WalletOrg, 'org' | 'apple'>,
   input?: Record<string, unknown>,
   extra: Record<string, unknown> = {},
 ) {

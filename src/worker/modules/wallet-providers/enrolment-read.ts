@@ -9,6 +9,7 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderIssuance } from './provider-policy.ts';
 import { credentialById, findActiveCredential } from './repo-credentials.ts';
 import { type EnrolmentRow, enrolmentsOf, freshCheckId, testRoundTrip } from './repo-enrolments.ts';
+import { enrolmentState } from './wallet-availability.ts';
 
 type Mode = 'live' | 'test';
 type Provider = 'google' | 'samsung';
@@ -36,16 +37,7 @@ export async function enrolmentView(
       ? (await freshCheckId(db, source.id, source.current_version_id, ctx.clock.now())) !== null
       : false;
   const roundTrip = mode === 'live' ? (await testRoundTrip(db, orgId, provider)) !== null : null;
-  const state =
-    !row?.credential_source_id && row?.revoked_at == null
-      ? 'absent'
-      : row?.revoked_at != null
-        ? 'revoked'
-        : row?.platform_hold_at != null
-          ? 'held'
-          : row?.enabled_at != null
-            ? 'on'
-            : 'off';
+  const state = enrolmentState(row);
   return {
     mode,
     provider,

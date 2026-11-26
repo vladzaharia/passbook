@@ -1,6 +1,9 @@
 import { env } from 'cloudflare:workers';
+import { zlibSync } from 'fflate';
 import { envString } from '../../platform/env.ts';
 import { createLogger } from '../../platform/log.ts';
+import { crc32 } from '../templates/package/hash.ts';
+import { setArtTransformForTest } from './assets.ts';
 import { mockProvidersUrl } from './mock-endpoint.ts';
 import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
 import { setReleaseRows } from './repo-e2e-release.ts';
@@ -40,6 +43,47 @@ export function e2eReleaseRefusal(source: object): E2eReleaseRefusal | null {
   return null;
 }
 
+function pngChunk(type: string, data: Uint8Array): Uint8Array {
+  const out = new Uint8Array(12 + data.length);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, data.length);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  view.setUint32(8 + data.length, crc32(out, 4, 8 + data.length));
+  return out;
+}
+
+/** A plain RGBA PNG of exactly the size asked for: the local Images binding cannot cut, this stands in. */
+async function stubCut(
+  _bytes: Uint8Array,
+  { width, height }: { width: number; height: number },
+): Promise<Uint8Array> {
+  const header = new Uint8Array(13);
+  const view = new DataView(header.buffer);
+  view.setUint32(0, width);
+  view.setUint32(4, height);
+  header[8] = 8;
+  header[9] = 6;
+  const stride = 1 + width * 4;
+  const rows = new Uint8Array(height * stride);
+  for (let y = 0; y < height; y++) {
+    rows.fill(255, y * stride + 1, (y + 1) * stride);
+  }
+  const parts = [
+    new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', zlibSync(rows)),
+    pngChunk('IEND', new Uint8Array()),
+  ];
+  const png = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    png.set(part, at);
+    at += part.length;
+  }
+  return png;
+}
+
 /**
  * e2e only (docs/design/wallet-providers/e2e-release.md): opens Google and Samsung in both modes for this
  * isolate. Without the build define this returns at once and the bundler drops the rest of the module;
@@ -55,6 +99,7 @@ export function openE2eRelease(source: object = env): boolean {
     return false;
   }
   setWalletProvidersEnabledForTest(true);
+  setArtTransformForTest(stubCut);
   log.warn('wallet.e2e_release_open', { code: 'WALLET_E2E_RELEASE' });
   return true;
 }
