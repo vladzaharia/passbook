@@ -351,7 +351,8 @@
         403
       ],
       "modules": [
-        "identities"
+        "identities",
+        "workflows"
       ]
     },
     {
