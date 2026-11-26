@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect } from 'react';
+import { Card, CardBody } from '../../ui/index.ts';
 import type { Operation } from '../../ui/operation/index.ts';
 import { AdminOperation, AdminOperations, useOrgOperation } from './admin-operation.tsx';
 
@@ -68,17 +69,19 @@ function Slot({
     onClear?.();
   };
   return (
-    <div className="mb-6">
-      <AdminOperation
-        id={id}
-        orgId={orgId ?? ''}
-        framing={framing}
-        onClose={leave}
-        onGone={leave}
-        {...(doneNote ? { doneNote } : {})}
-        {...(next ? { next } : {})}
-        {...(onSucceeded ? { onSucceeded } : {})}
-      />
-    </div>
+    <Card className="mb-6">
+      <CardBody>
+        <AdminOperation
+          id={id}
+          orgId={orgId ?? ''}
+          framing="plain"
+          onClose={leave}
+          onGone={leave}
+          {...(doneNote ? { doneNote } : {})}
+          {...(next ? { next } : {})}
+          {...(onSucceeded ? { onSucceeded } : {})}
+        />
+      </CardBody>
+    </Card>
   );
 }
