@@ -1,0 +1,110 @@
+/* A key in the inspector: facts, scopes and its last calls. Portal tokens only. */
+.ksi-facts {
+  display: grid;
+  margin: 0;
+  padding: 4px 16px;
+}
+.ksi-fact {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7rem) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding-block: 8px;
+  border-top: 1px solid var(--pk-border-subtle);
+  font-size: 13px;
+}
+.ksi-fact:first-child {
+  border-top: 0;
+}
+.ksi-fact dt {
+  color: var(--pk-text-muted);
+  font-size: 12.5px;
+}
+.ksi-fact dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+  margin: 0;
+  color: var(--pk-text-strong);
+  overflow-wrap: anywhere;
+}
+.ksi-fact code {
+  font: 400 12px / 1.4 var(--pk-font-mono);
+}
+.ksi-fact .muted {
+  color: var(--pk-text-muted);
+  font-size: 12.5px;
+}
+.ksi-spark {
+  width: 96px;
+  height: 24px;
+  fill: none;
+  stroke: var(--pk-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.ksi-spark polyline {
+  vector-effect: non-scaling-stroke;
+}
+.ksi-sec {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.ksi-h {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.ksi-rh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ksi-scopes,
+.ksi-calls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ksi-calls {
+  display: grid;
+  gap: 0;
+}
+.ksi-call {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 8px;
+  margin-inline: -8px;
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-default);
+  font: 400 12px / 1.3 var(--pk-font-mono);
+  text-decoration: none;
+  transition: background-color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.ksi-call:hover {
+  background: var(--pk-state-hover-tint);
+}
+.ksi-call:focus-visible {
+  outline: 2px solid var(--pk-focus);
+}
+.ksi-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ksi-call .bench-time {
+  color: var(--pk-text-muted);
+}

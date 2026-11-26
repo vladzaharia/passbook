@@ -1,0 +1,28 @@
+/** Words on the Keys tool of the Workbench: its list, toolbar and inspector. Terse. */
+export const BENCH_KEYS_COPY = {
+  list: 'Keys',
+  filter: 'Filter keys',
+  search: 'Find a key',
+  of: (shown: number, all: number) => `${shown} of ${all}`,
+  state: { active: 'Active', rolling: 'Rolling', expired: 'Expired' },
+  never: 'Never',
+  unused: 'Unused',
+  inspector: (name: string) => `Key ${name}`,
+  roll: 'Roll',
+  revoke: 'Revoke',
+  facts: {
+    access: 'Access',
+    expires: 'Expires',
+    stops: 'Stops',
+    used: 'Last used',
+    created: 'Created',
+    secret: 'Secret',
+    rate: 'Rate',
+    perMinute: (n: number, tier: string) => `${tier} · ${n} / min`,
+    hour: 'Last hour',
+    calls: (n: number) => `${n} ${n === 1 ? 'call' : 'calls'}`,
+    scopes: (n: number) => `${n} ${n === 1 ? 'scope' : 'scopes'}`,
+  },
+  recent: { title: 'Recent calls', all: 'All calls', none: 'No calls yet', failed: 'Did not load' },
+  closed: { action: 'Start over' },
+} as const;

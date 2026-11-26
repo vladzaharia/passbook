@@ -1,17 +1,31 @@
-import { ExternalLink, MoreHorizontal, Plus, RefreshCw, Zap } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { ExternalLink, Plus, Zap } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
+import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
+import { BENCH_KEYS_COPY as BK } from '../../../shared/copy/developers-bench-keys.ts';
 import { KEYS_COPY as C } from '../../../shared/copy/developers-keys.ts';
 import { envLine } from '../../../shared/developers-keys.ts';
+import { useMediaQuery } from '../../lib/media.ts';
 import { BenchSlot } from '../bench/slots.tsx';
-import { selectInUrl } from '../bench/url.ts';
+import { BENCH_WIDE, BenchSplit } from '../bench/split.tsx';
+import { BenchState } from '../bench/state.tsx';
+import { SearchField, Toolbar } from '../bench/toolbar.tsx';
+import { selectedId } from '../bench/url.ts';
+import { useBenchFilters } from '../bench/use-filters.ts';
+import { useBenchSelection } from '../bench/use-selection.ts';
 import { type Revealed, RevealSheet } from '../ui/reveal-sheet.tsx';
 import { fetchHome } from '../workbench/api.ts';
-import { keyState, masked } from '../workbench/model.ts';
 import { type KeyApi, keyApi } from './api.ts';
-import { accessOf, expiryOf, usedOf } from './model.ts';
+import { KeyInspector } from './key-inspector.tsx';
+import { KeyList } from './key-list.tsx';
+import { matches } from './model.ts';
 import { NewKeySheet } from './new-key-sheet.tsx';
 import { ConfirmKeySheet } from './roll-sheet.tsx';
+
+const idOf = (k: { id: string }) => k.id;
+
+/** A key list longer than this gets a search. */
+const SEARCH_OVER = 8;
 
 type Panel =
   | { kind: 'none' }
@@ -19,31 +33,22 @@ type Panel =
   | { kind: 'confirm'; action: 'roll' | 'revoke'; id: string; name: string }
   | { kind: 'reveal'; revealed: Revealed };
 
-/** The panel the page address asks for: `#new`, or `#<key id>` to roll that key. */
-function fromHash(hash: string, home: DeveloperHome, now: number): Panel {
-  const id = hash.replace(/^#/, '');
-  if (id === 'new') return { kind: 'new' };
-  const key = home.keys.find((k) => k.id === id);
-  return key && keyState(key, now) === 'active'
-    ? { kind: 'confirm', action: 'roll', id, name: key.name }
-    : { kind: 'none' };
-}
-
 export function KeysPage({
   initial,
   csrf,
   api = keyApi(csrf),
   now = Date.now,
-  hash = '',
 }: {
   initial: DeveloperHome;
   csrf: string;
   api?: KeyApi;
   now?: () => number;
-  hash?: string;
 }) {
   const [home, setHome] = useState(initial);
-  const [panel, setPanel] = useState<Panel>(() => fromHash(hash, initial, now()));
+  // `#new` opens the sheet; any other hash is a key to select.
+  const [panel, setPanel] = useState<Panel>(() =>
+    selectedId() === 'new' ? { kind: 'new' } : { kind: 'none' },
+  );
   const [loadError, setLoadError] = useState(false);
   // The island mounts the page only with a sandbox (state is not none).
   const orgId = home.sandbox?.orgId ?? '';
@@ -51,6 +56,14 @@ export function KeysPage({
   const closed = home.state === 'closed';
   const at = now();
   const full = cap !== null && home.keys.length >= cap;
+  const wide = useMediaQuery(BENCH_WIDE);
+
+  const filters = useBenchFilters(['q'], { search: 'q' });
+  const q = filters.values.q ?? '';
+  const showSearch = home.keys.length > SEARCH_OVER || q !== '';
+  const shown = useMemo(() => (q ? home.keys.filter((k) => matches(k, q)) : home.keys), [home, q]);
+  const selection = useBenchSelection({ items: shown, idOf });
+  const { selectedId: picked, selected, select } = selection;
 
   const refresh = useCallback(async () => {
     try {
@@ -60,10 +73,49 @@ export function KeysPage({
       setLoadError(true);
     }
   }, []);
-  // The address drops #new or #<key id> once the panel closes.
+  // `#new` is a sheet, not a selection: the address drops it.
   useEffect(() => {
-    if (panel.kind === 'none') selectInUrl(null);
-  }, [panel.kind]);
+    if (picked === 'new') select(null);
+  }, [picked, select]);
+  // Beside the list the pane is never empty: the first key stands in until one is picked.
+  useEffect(() => {
+    const first = shown[0];
+    if (wide && !selected && picked !== 'new' && first) select(first.id, { open: false });
+  }, [wide, selected, picked, shown, select]);
+  const closePanel = () => {
+    setPanel({ kind: 'none' });
+  };
+
+  const k = selected;
+  const index = k ? shown.findIndex((x) => x.id === k.id) : -1;
+  const inspector = k ? (
+    <KeyInspector
+      k={k}
+      now={at}
+      onRoll={() => setPanel({ kind: 'confirm', action: 'roll', id: k.id, name: k.name })}
+      onRevoke={() => setPanel({ kind: 'confirm', action: 'revoke', id: k.id, name: k.name })}
+      onPrev={index > 0 ? () => selection.step(-1) : undefined}
+      onNext={index >= 0 && index < shown.length - 1 ? () => selection.step(1) : undefined}
+    />
+  ) : null;
+
+  const empty =
+    home.keys.length === 0 ? (
+      <BenchState scene="keys-none">
+        {closed ? null : (
+          <button type="button" className="btn" onClick={() => setPanel({ kind: 'new' })}>
+            <Plus aria-hidden="true" />
+            {C.newKey}
+          </button>
+        )}
+      </BenchState>
+    ) : (
+      <BenchState scene="no-match" heading="h2">
+        <button type="button" className="btn outline" onClick={() => filters.set('q', null)}>
+          {BENCH_COPY.state.clearFilters}
+        </button>
+      </BenchState>
+    );
 
   return (
     <div className="ks">
@@ -82,90 +134,34 @@ export function KeysPage({
           </button>
         </BenchSlot>
       )}
-      {loadError ? (
-        <p className="sm muted">
-          {C.failed}{' '}
-          <button type="button" className="btn sm outline" onClick={() => void refresh()}>
-            {C.retry}
-          </button>
-        </p>
+      {showSearch ? (
+        <Toolbar label={BK.filter}>
+          <SearchField label={BK.search} value={q} onChange={(v) => filters.set('q', v || null)} />
+        </Toolbar>
       ) : null}
-      <section className="card" aria-label={C.title}>
-        {home.keys.length === 0 ? (
-          <p className="card-b sm muted">{closed ? C.closed : C.empty}</p>
-        ) : (
-          <table className="ks-table">
-            <thead>
-              <tr className="ks-row ks-th">
-                {[C.columns.key, C.columns.access, C.columns.expires, C.columns.used].map((h) => (
-                  <th key={h} scope="col">
-                    {h}
-                  </th>
-                ))}
-                <th scope="col">
-                  <span className="sr">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {home.keys.map((k) => {
-                const state = keyState(k, at);
-                return (
-                  <tr key={k.id} id={k.id} className="ks-row">
-                    <td className="ks-key">
-                      <span className="stack g1">
-                        <span className="strong sm">{k.name}</span>
-                        <code className="xs muted">{masked(k)}</code>
-                      </span>
-                    </td>
-                    <td className="sm" data-label={C.columns.access}>
-                      {accessOf(k)}
-                    </td>
-                    <td className="sm" data-label={C.columns.expires}>
-                      {expiryOf(k, at)}
-                    </td>
-                    <td className="sm" data-label={C.columns.used}>
-                      {usedOf(k, at)}
-                    </td>
-                    <td className="ks-acts">
-                      {state === 'active' ? (
-                        <button
-                          type="button"
-                          className="btn sm ghost"
-                          onClick={() =>
-                            setPanel({ kind: 'confirm', action: 'roll', id: k.id, name: k.name })
-                          }
-                        >
-                          <RefreshCw aria-hidden="true" />
-                          {C.roll}
-                        </button>
-                      ) : (
-                        <span className="pill neutral">
-                          {state === 'rolling' ? C.rolling : C.expired}
-                        </span>
-                      )}
-                      <details className="ks-more">
-                        <summary aria-label={`${C.more}: ${k.name}`}>
-                          <MoreHorizontal aria-hidden="true" />
-                        </summary>
-                        <button
-                          type="button"
-                          className="btn sm outline"
-                          onClick={() =>
-                            setPanel({ kind: 'confirm', action: 'revoke', id: k.id, name: k.name })
-                          }
-                        >
-                          {C.revoke}
-                        </button>
-                      </details>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </section>
+      {loadError ? (
+        <BenchState scene="failed" title={C.failed} onRetry={() => void refresh()} />
+      ) : null}
+      {home.keys.length === 0 ? (
+        empty
+      ) : (
+        <BenchSplit
+          label={BK.list}
+          bare
+          open={selection.open && k !== null}
+          onClose={() => selection.setOpen(false)}
+          main={
+            <KeyList
+              keys={shown}
+              all={home.keys.length}
+              now={at}
+              selection={selection}
+              empty={empty}
+            />
+          }
+          pane={inspector}
+        />
+      )}
       <section className="card ks-live" aria-labelledby="ks-live-h">
         <span className="ks-live-i" aria-hidden="true">
           <Zap />
@@ -193,7 +189,7 @@ export function KeysPage({
         <NewKeySheet
           orgId={orgId}
           api={api}
-          onClose={() => setPanel({ kind: 'none' })}
+          onClose={closePanel}
           onMade={(key) => {
             const { secret, ...rest } = key;
             setPanel({
@@ -211,9 +207,10 @@ export function KeysPage({
           name={panel.name}
           orgId={orgId}
           api={api}
-          onClose={() => setPanel({ kind: 'none' })}
+          onClose={closePanel}
           onRevoked={() => {
-            setPanel({ kind: 'none' });
+            closePanel();
+            select(null);
             void refresh();
           }}
           onRolled={({ key, previous }) => {
@@ -236,7 +233,7 @@ export function KeysPage({
           labels={C.reveal}
           prefix="PASSBOOK_KEY="
           copyAs={envLine}
-          onDone={() => setPanel({ kind: 'none' })}
+          onDone={closePanel}
           // The sheet holds the only copy from here on.
           onHide={() =>
             setPanel((p) =>
