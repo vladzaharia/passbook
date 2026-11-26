@@ -248,8 +248,14 @@ SELECT id FROM wallet_google_retirement_complete;
 ALTER TABLE wallet_provider_accounts ADD COLUMN projection_backfilled_at INTEGER
   CHECK (projection_backfilled_at IS NULL OR (typeof(projection_backfilled_at) = 'integer' AND projection_backfilled_at >= 0));
 
--- One platform-authored candidate per source release, provider and mode: the Apple-release job and the backfill
--- may run for the same source, and the second adopts the first's row.
+-- One platform-authored candidate per source release, provider and mode, for the same pins: the Apple-release job
+-- and the backfill may run for the same source, and the second adopts the first's row. A candidate that went stale
+-- (a compiler or pipeline bump, a website, credential, identity or epoch change) has other pins, so a fresh one is
+-- allowed beside it; the older is superseded. Candidates are immutable, so there is no flag to set.
+-- Production has no users or wallet data (owner, 2026-11-25), so no existing row can collide with this index.
 CREATE UNIQUE INDEX template_candidates_system_source
-  ON template_candidates (org_id, mode, provider, source_release_id)
+  ON template_candidates (org_id, mode, provider, source_release_id, provider_account_epoch,
+    provider_account_revision, provider_identity_hash, adapter_revision, audience_policy_revision,
+    json_extract(projection_json, '$.pipeline'), json_extract(projection_json, '$.wallets'),
+    json_extract(projection_json, '$.report'))
   WHERE author_id = 'system:wallet-projection';

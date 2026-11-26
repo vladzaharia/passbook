@@ -12,8 +12,6 @@ import {
 const ENROLMENTS_PER_DRAIN = 5;
 const PAGE = 100;
 const MAX_PAGES = 20;
-/** A platform candidate that is written but not released (a Samsung card not launched) is driven again this often. */
-const REDRIVE_MS = 15 * 60_000;
 
 const MODES = ['live', 'test'] as const;
 const PROVIDERS = ['google', 'samsung'] as const;
@@ -24,7 +22,11 @@ const PROVIDERS = ['google', 'samsung'] as const;
  * queues one `wallet.projection_system` job per such release, then stamps the enrolment. The job is idempotent
  * and an omission that needs approval still waits for a person. A failed send leaves the enrolment unstamped.
  */
-export async function backfillSystemProjections(ctx: ServiceContext): Promise<void> {
+export async function backfillSystemProjections(
+  ctx: ServiceContext,
+  /** Tests only: a smaller page, to reach the page cap. */
+  paging: { page: number; maxPages: number } = { page: PAGE, maxPages: MAX_PAGES },
+): Promise<void> {
   const pairs = PROVIDERS.filter(
     (provider) => SYSTEM_AUTHORED_PROVIDERS.includes(provider) && publishableSchema(provider, 2),
   ).flatMap((provider) =>
@@ -38,11 +40,11 @@ export async function backfillSystemProjections(ctx: ServiceContext): Promise<vo
   for (const enrolment of await listBackfillEnrolments(
     db,
     pairs,
-    startedAt - REDRIVE_MS,
+    startedAt,
     ENROLMENTS_PER_DRAIN,
   )) {
     try {
-      const { count, done } = await queueBackfill(ctx, enrolment);
+      const { count, done } = await queueBackfill(ctx, enrolment, paging);
       // Past the page cap the rest stays pending for the next drain.
       if (done) await stampBackfilled(db, enrolment.id, startedAt);
       ctx.log.info('wallet.projection_backfill_queued', {
@@ -65,11 +67,12 @@ export async function backfillSystemProjections(ctx: ServiceContext): Promise<vo
 async function queueBackfill(
   ctx: ServiceContext,
   e: BackfillEnrolment,
+  paging: { page: number; maxPages: number },
 ): Promise<{ count: number; done: boolean }> {
   let after = '';
   let count = 0;
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const sources = await listUncoveredAppleSources(ctx.env.DB, e, after, PAGE);
+  for (let page = 0; page < paging.maxPages; page++) {
+    const sources = await listUncoveredAppleSources(ctx.env.DB, e, after, paging.page);
     if (sources.length > 0)
       await ctx.env.JOBS.sendBatch(
         sources.map((s) => ({
@@ -86,7 +89,7 @@ async function queueBackfill(
       );
     count += sources.length;
     const last = sources.at(-1);
-    if (!last || sources.length < PAGE) return { count, done: true };
+    if (!last || sources.length < paging.page) return { count, done: true };
     after = last.releaseId;
   }
   return { count, done: false };

@@ -2,6 +2,7 @@
 // backfill queues the Apple release; a Live card that is not launched yet is a skip, and the sweep drives it again
 // later, reusing the candidate, until the release exists.
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { samsungCompiler } from '../../../passkit/wallets/samsung/index.ts';
 import { all } from '../../platform/db.ts';
 import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
@@ -110,6 +111,68 @@ describe('Samsung system candidates are not stranded (CAND-1)', () => {
       kit.clock.advance(16 * 60_000);
       await backfillSystemProjections(ctx);
       expect(mine(f, sent)).toHaveLength(2);
+    } finally {
+      open();
+    }
+  });
+
+  /** An enrolled Samsung kit, flipped, with its first job skipped because the Live card is in review. */
+  async function stranded() {
+    const f = await setupWalletOfferKit({
+      google: 'absent',
+      samsung: 'configured',
+      enrolled: true,
+    });
+    const sent: unknown[] = [];
+    const ctx = ctxWith(f, sent);
+    const open = setWalletProvidersEnabledForTest(true);
+    f.kit.clock.advance(1000);
+    await backfillSystemProjections(ctx);
+    await run(f, mine(f, sent)[0] as Job, 'VERIFYING');
+    return { f, sent, ctx, open };
+  }
+
+  it('replaces a stranded candidate that went stale, and supersedes the old one', async () => {
+    const { f, sent, ctx, open } = await stranded();
+    const { revision, compile } = samsungCompiler;
+    try {
+      const [old] = (await candidates(f)) as { id: string }[];
+      // A compiler bump changes the pipeline pin: the stranded candidate can no longer be released.
+      samsungCompiler.revision = revision + 1;
+      samsungCompiler.compile = compile;
+      f.kit.clock.advance(16 * 60_000);
+      await backfillSystemProjections(ctx);
+      expect(mine(f, sent)).toHaveLength(2);
+      await run(f, mine(f, sent)[1] as Job, 'ACTIVE');
+      const release = await releases(f);
+      expect(release).toMatchObject({ createdBy: SYSTEM_REVIEWER, generation: 1 });
+      expect(release?.candidateId).not.toBe(old?.id);
+      expect(await candidates(f)).toHaveLength(2);
+      // The released candidate covers the source; the stale one is ignored.
+      f.kit.clock.advance(16 * 60_000);
+      await backfillSystemProjections(ctx);
+      expect(mine(f, sent)).toHaveLength(2);
+    } finally {
+      samsungCompiler.revision = revision;
+      samsungCompiler.compile = compile;
+      open();
+    }
+  });
+
+  it('backs off the re-drive of a card that never launches: 15 minutes, then doubling', async () => {
+    const { f, sent, ctx, open } = await stranded();
+    try {
+      const sweep = async (minutes: number) => {
+        f.kit.clock.advance(minutes * 60_000);
+        await backfillSystemProjections(ctx);
+        return mine(f, sent).length;
+      };
+      expect(mine(f, sent)).toHaveLength(1);
+      expect(await sweep(5)).toBe(1);
+      expect(await sweep(11)).toBe(2);
+      expect(await sweep(16)).toBe(3);
+      expect(await sweep(16)).toBe(3);
+      expect(await sweep(16)).toBe(4);
     } finally {
       open();
     }

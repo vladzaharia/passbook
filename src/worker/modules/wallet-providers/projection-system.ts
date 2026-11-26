@@ -68,17 +68,22 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
   const scope: ProjectionScope = { orgId, mode, provider, templateId };
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const db = ctx.env.DB;
-  const earlier = await findSystemCandidate(ctx, scope, job);
   const reviewer = systemAuthority('reviewer', orgId, mode);
-  // A retry resumes where the last run stopped: candidate, then approval, then release.
-  let candidate = earlier ?? null;
-  if (!candidate) {
+  // A fresh platform candidate for this source: pins computed now, written under the system author. A twin
+  // written by a concurrent job (same pins, the unique index of 0230) is adopted, not duplicated.
+  const createFresh = async (): Promise<ProjectionCandidate | null> => {
     const version = await getVersion(db, templateId, job.version);
-    if (!version) return skipped(ctx, job, 'version missing');
+    if (!version) {
+      skipped(ctx, job, 'version missing');
+      return null;
+    }
     const { pins, report } = await computeProjectionPins(ctx, provider, version, 'dry', orgId);
-    if (unreleasable(report)) return skipped(ctx, job, report.status.kind);
+    if (unreleasable(report)) {
+      skipped(ctx, job, report.status.kind);
+      return null;
+    }
     const author = systemAuthority('author', orgId, mode);
-    candidate = await buildProjectionCandidate(
+    const created = await buildProjectionCandidate(
       ctx,
       scope,
       {
@@ -93,8 +98,7 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
       skipped(ctx, job, error.code);
       return null;
     });
-    if (!candidate) return;
-    const created = candidate;
+    if (!created) return null;
     let made: boolean;
     try {
       made = await writeProjectionCandidate(ctx, created, author, {
@@ -102,43 +106,59 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
         detail: auditDetail(created),
       });
     } catch (error) {
-      // A concurrent job's twin (the unique index of 0230) is adopted below, not duplicated.
       if (!(await findSystemCandidate(ctx, scope, job))) throw error;
       made = false;
     }
-    if (!made) {
-      const twin = await findSystemCandidate(ctx, scope, job);
-      if (!twin) return failedWrite(ctx, author);
-      candidate = twin;
-    }
-  }
+    if (made) return created;
+    const twin = await findSystemCandidate(ctx, scope, job);
+    return twin ?? failedWrite(ctx, author);
+  };
+  // A retry resumes where the last run stopped: candidate, then approval, then release.
+  const reused = await findSystemCandidate(ctx, scope, job);
+  let candidate = reused ?? (await createFresh());
+  if (!candidate) return;
   if (candidate.projection.schema !== 2 || candidate.projection.approvedOmissions.length > 0)
     return;
   const head = await getLatestRelease(db, scope);
   if (head?.candidateId === candidate.id) return;
 
-  let checked: ProjectionCandidate;
-  try {
-    checked = await scopedCandidate(ctx, scope, candidate.id, candidate.candidateHash);
-  } catch (error) {
-    if (!(error instanceof ConflictError)) throw error;
-    return skipped(ctx, job, error.code);
+  const check = async (c: ProjectionCandidate): Promise<ProjectionCandidate | null> => {
+    try {
+      return await scopedCandidate(ctx, scope, c.id, c.candidateHash);
+    } catch (error) {
+      if (!(error instanceof ConflictError)) throw error;
+      skipped(ctx, job, error.code);
+      return null;
+    }
+  };
+  let checked = await check(candidate);
+  if (!checked && reused) {
+    // The reused candidate went stale (a compiler or pipeline bump, a website, credential or epoch change) before
+    // it was released. A fresh one has different pins, so the unique index allows it; the stale one is superseded
+    // by being older (the backfill reads only the newest platform candidate of a source).
+    candidate = await createFresh();
+    if (!candidate || candidate.id === reused.id) return;
+    if (candidate.projection.schema !== 2 || candidate.projection.approvedOmissions.length > 0)
+      return;
+    checked = await check(candidate);
   }
+  if (!checked) return;
+  const ready = checked;
   const have = (await selectProjectionApprovals(db, scope)).find(
-    (a) => a.candidateId === checked.id && a.reviewerId === SYSTEM_REVIEWER,
+    (a) => a.candidateId === ready.id && a.reviewerId === SYSTEM_REVIEWER,
   );
   const approval: ApprovalRow = have ?? {
     id: ctx.ids.id(),
-    candidateId: checked.id,
-    candidateHash: checked.candidateHash,
+    candidateId: ready.id,
+    candidateHash: ready.candidateHash,
     reviewerId: SYSTEM_REVIEWER,
     kind: 'peer',
     createdAt: ctx.clock.now(),
   };
   if (!have) {
-    const approved = await writeProjectionApproval(ctx, approval, checked, reviewer, {
+    const approved = await writeProjectionApproval(ctx, approval, ready, reviewer, {
       action: 'template.system_approve',
-      detail: auditDetail(checked),
+      detail: auditDetail(ready),
     });
     if (!approved) return failedWrite(ctx, reviewer);
   }
@@ -146,12 +166,13 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
   // released, or a Live card that is not launched yet, is a skip. The backfill drives it again later.
   if (
     provider === 'samsung' &&
-    !(await ensureSamsungCard(ctx, checked.id, checked.candidateHash, CARD_STATE_MARGIN_MS))
+    !(await ensureSamsungCard(ctx, ready.id, ready.candidateHash, CARD_STATE_MARGIN_MS))
   )
     return skipped(ctx, job, 'card not ready');
-  await publish(ctx, reviewer, scope, checked, approval, head?.generation ?? 0, 'release', null);
+  await publish(ctx, reviewer, scope, ready, approval, head?.generation ?? 0, 'release', null);
 }
 
+// Newest first (`selectProjectionCandidates` orders by creation): a superseded stale candidate is never reused.
 const findSystemCandidate = async (
   ctx: ServiceContext,
   scope: ProjectionScope,

@@ -18,32 +18,63 @@ export interface BackfillSource {
   version: string;
 }
 
+/** Re-drive back-off of a stranded platform candidate: half its age, from 15 minutes up to 6 hours (so it doubles). */
+export const REDRIVE_MIN_MS = 15 * 60_000;
+export const REDRIVE_MAX_MS = 6 * 3_600_000;
+
 /**
  * Enrolments that may issue (On, not held or revoked, plan includes the wallet, org active) and are pending: never
- * swept, turned On since the last sweep, or holding a platform candidate that has no release (a Samsung card not
- * launched yet) and last swept before `redriveBefore`. `pairs` are the released (provider, mode) pairs; the caller
- * never passes an empty list. Never-swept first, then the oldest sweep, so failing enrolments cannot starve the rest.
+ * swept, or last swept before the enrolment was turned On, before the pair's release last changed (a rollback to
+ * draining and back), or before the org's plan or overrides last changed; or holding a stranded platform candidate
+ * (no release, no omissions, newest of its source, source still the Apple head) whose back-off has passed. A
+ * candidate's back-off is half its age, so re-drives double apart and a released or replaced candidate resets it.
+ * `pairs` are the released (provider, mode) pairs; the caller never passes an empty list. Never-swept first, then
+ * the oldest sweep, so failing enrolments cannot starve the rest.
  */
 export async function listBackfillEnrolments(
   db: D1Database,
   pairs: readonly { provider: Provider; mode: Mode }[],
-  redriveBefore: number,
+  now: number,
   limit: number,
 ): Promise<BackfillEnrolment[]> {
   const rows = await all<{ id: string; org_id: string; mode: Mode; provider: Provider }>(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
+     JOIN wallet_provider_releases rel ON rel.provider = a.provider AND rel.mode = a.mode
      WHERE (${pairs.map(() => '(a.provider = ? AND a.mode = ?)').join(' OR ')})
        AND ${walletEnrolmentIssuesSql('a.org_id', 'a.mode', 'a.provider')}
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = a.org_id AND o.status = 'active')
        AND (a.projection_backfilled_at IS NULL
          OR a.projection_backfilled_at < COALESCE(a.enabled_at, 0)
-         OR (a.projection_backfilled_at < ? AND EXISTS (SELECT 1 FROM template_candidates c
+         OR a.projection_backfilled_at < rel.changed_at
+         OR a.projection_backfilled_at < COALESCE((SELECT e.updated_at FROM org_entitlements e
+           WHERE e.org_id = a.org_id), 0)
+         OR a.projection_backfilled_at < COALESCE((SELECT max(x.updated_at) FROM org_entitlement_overrides x
+           WHERE x.org_id = a.org_id), 0)
+         OR EXISTS (SELECT 1 FROM template_candidates c
+           JOIN template_releases src ON src.id = c.source_release_id
            WHERE c.provider_account_id = a.id AND c.author_id = ?
              AND json_array_length(json_extract(c.projection_json, '$.approvedOmissions')) = 0
-             AND NOT EXISTS (SELECT 1 FROM template_releases pr WHERE pr.candidate_id = c.id))))
+             AND a.projection_backfilled_at <= ? - min(max(?, (? - c.created_at) / 2), ?)
+             AND NOT EXISTS (SELECT 1 FROM template_releases pr WHERE pr.candidate_id = c.id)
+             AND NOT EXISTS (SELECT 1 FROM template_candidates n
+               WHERE n.org_id = c.org_id AND n.mode = c.mode AND n.provider = c.provider
+                 AND n.source_release_id = c.source_release_id AND n.author_id = c.author_id
+                 AND n.rowid > c.rowid)
+             AND NOT EXISTS (SELECT 1 FROM template_releases newer
+               WHERE newer.template_id = src.template_id AND newer.org_id IS src.org_id
+                 AND newer.mode = src.mode AND newer.provider = 'apple'
+                 AND newer.generation > src.generation)))
      ORDER BY a.projection_backfilled_at IS NOT NULL, a.projection_backfilled_at, a.id LIMIT ?`,
-    [...pairs.flatMap((p) => [p.provider, p.mode]), redriveBefore, SYSTEM_AUTHOR, limit],
+    [
+      ...pairs.flatMap((p) => [p.provider, p.mode]),
+      SYSTEM_AUTHOR,
+      now,
+      REDRIVE_MIN_MS,
+      now,
+      REDRIVE_MAX_MS,
+      limit,
+    ],
   );
   return rows.map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, provider: r.provider }));
 }
@@ -74,8 +105,12 @@ export async function listUncoveredAppleSources(
          WHERE c.template_id = r.template_id AND c.org_id = r.org_id AND c.mode = r.mode
            AND c.provider = ? AND c.source_release_id = r.id
            AND (c.author_id != ?
-             OR json_array_length(json_extract(c.projection_json, '$.approvedOmissions')) > 0
-             OR EXISTS (SELECT 1 FROM template_releases pr WHERE pr.candidate_id = c.id)))
+             OR EXISTS (SELECT 1 FROM template_releases pr WHERE pr.candidate_id = c.id)
+             OR (json_array_length(json_extract(c.projection_json, '$.approvedOmissions')) > 0
+               AND NOT EXISTS (SELECT 1 FROM template_candidates n
+                 WHERE n.org_id = c.org_id AND n.mode = c.mode AND n.provider = c.provider
+                   AND n.source_release_id = c.source_release_id AND n.author_id = c.author_id
+                   AND n.rowid > c.rowid))))
      ORDER BY r.id LIMIT ?`,
     [e.orgId, e.mode, after, e.provider, SYSTEM_AUTHOR, limit],
   );
