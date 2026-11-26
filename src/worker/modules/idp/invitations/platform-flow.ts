@@ -26,6 +26,7 @@ import { assertHuman, invalidInvitation } from './challenge.ts';
 import { acceptPlatformSubject, claimPlatformAccount } from './platform-accept.ts';
 import { ledgerOfPlatform, platformSignupSpec } from './platform-groups.ts';
 import { type PlatformInvite, resolvePlatform } from './platform-resolve.ts';
+import { INVITE_REASON } from './reasons.ts';
 import { groupNames, insertPlatformSetup } from './repo-platform.ts';
 import { hasEmail, setupsOf } from './repo-resolve.ts';
 import { maskEmail } from './resolve.ts';
@@ -92,7 +93,7 @@ export async function setupPlatform(
       'Too many links for this invitation. Ask for a new invitation.',
     );
   const rpc = idpClient(ctx.env, ctx.log);
-  const write = ledgerOfPlatform(invite, 'invitation.setup');
+  const write = ledgerOfPlatform(invite, INVITE_REASON.setup);
   const signup = await rpc.createSignup(platformSignupSpec(invite), write);
   if ('dryRun' in signup)
     throw new AppError(
@@ -165,7 +166,7 @@ export async function claimExistingPlatform(
       throw noAccount();
     const found = await idpClient(ctx.env, ctx.log).findByVerifiedEmail(
       invite.row.email,
-      ledgerOfPlatform(invite, 'invitation.find'),
+      ledgerOfPlatform(invite, INVITE_REASON.find),
     );
     if (!found) {
       await bump(db, `invclaim:none:${invite.row.id}`, minuteOf(now));

@@ -1,6 +1,7 @@
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { idpClient, idpConfigured } from '../client.ts';
 import { idpCodeOf } from '../errors.ts';
+import { INVITE_REASON } from './reasons.ts';
 import type { InviteRow } from './repo-resolve.ts';
 import { pairedDeveloperOf, setupsOf } from './repo-resolve.ts';
 
@@ -13,7 +14,7 @@ export async function withdrawSetups(
   ctx: ServiceContext,
   kind: InviteRow['kind'] | 'platform',
   invitationId: string,
-  reason = 'invitation.revoked',
+  reason: string = INVITE_REASON.revoked,
 ): Promise<void> {
   if (!idpConfigured(ctx.env)) return;
   const now = ctx.clock.now();

@@ -5,6 +5,7 @@ import { markDirty } from '../repo-dirty.ts';
 import { claimsOfInvitation, insertClaim } from '../repo-invite-claims.ts';
 import { ledgerOfPlatform, platformTargets } from './platform-groups.ts';
 import type { PlatformInvite } from './platform-resolve.ts';
+import { INVITE_REASON } from './reasons.ts';
 import { acceptPlatform, keyOwner, widenPlatformWindow } from './repo-platform.ts';
 import { withdrawSetups } from './withdraw.ts';
 
@@ -54,7 +55,7 @@ export async function acceptPlatformSubject(
     now: ctx.clock.now(),
   });
   if (!landed) throw platformChanged();
-  await withdrawSetups(ctx, 'platform', row.id, 'invitation.accepted');
+  await withdrawSetups(ctx, 'platform', row.id, INVITE_REASON.accepted);
   const claimed = (await claimsOfInvitation(ctx.env.DB, { platform: row.id })).map(
     (c) => c.subject,
   );
@@ -94,6 +95,6 @@ export async function claimPlatformAccount(
   await idpClient(ctx.env, ctx.log).apply(
     subject,
     { add: platformTargets(invite) },
-    ledgerOfPlatform(invite, 'invitation.claim'),
+    ledgerOfPlatform(invite, INVITE_REASON.claim),
   );
 }
