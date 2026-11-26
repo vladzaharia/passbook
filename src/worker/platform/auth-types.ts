@@ -42,6 +42,10 @@ export interface WorkbenchPin {
   orgId: string;
   /** `sandbox_key`: the person's sandbox key. `member`: their membership in a regular org. */
   subject: 'sandbox_key' | 'member';
+  /** The sandbox key the token stands for (also on the person's session below), which the key routes never touch (404). */
+  keyId?: string;
+  /** `sandbox_key` only: the sandbox person's own Test session, which the key routes act as (`api-keys/routes.ts`). */
+  person?: SessionAuth;
 }
 
 export interface ApiKeyAuth {

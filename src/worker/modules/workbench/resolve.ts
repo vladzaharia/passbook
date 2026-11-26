@@ -18,7 +18,7 @@ import { keyAuthOf } from '../api-keys/service.ts';
 import { tryTokenKeyRow } from '../developer/repo-try.ts';
 import { resolveTryToken } from '../developer/try-token.ts';
 import { SHARED_WRITES } from './inventory.ts';
-import { memberTokenRow } from './repo.ts';
+import { memberTokenRow, sandboxPersonRow } from './repo.ts';
 import { tokenBucket, verifyWorkbenchToken, type WorkbenchClaims } from './token.ts';
 
 const ALLOWED: ReadonlySet<string> = new Set(WORKBENCH_ROUTES);
@@ -48,12 +48,61 @@ async function sandboxPrincipal(
   if (!row || row.org_id !== claims.orgId) return null;
   const auth = await keyAuthOf(env, clock, row, caller, options);
   if (!auth) return null;
+  const person = await sandboxPerson(
+    env,
+    claims,
+    row.membership_id,
+    row.session_auth_time,
+    row.session_amr,
+  );
   return {
     ...auth,
+    // The one scope a sandbox's person holds beyond its key: managing the keys under it. The key routes
+    // reach children only, cap them (`api-keys/workbench-cap.ts`) and never the token's own key (404).
+    scopes: auth.scopes.includes('api-keys:write')
+      ? auth.scopes
+      : [...auth.scopes, 'api-keys:write'],
     via: 'try',
     sessionAuthTime: row.session_auth_time,
     sessionAmr: row.session_amr,
-    workbench: { orgId: claims.orgId, subject: 'sandbox_key' },
+    workbench: {
+      orgId: claims.orgId,
+      subject: 'sandbox_key',
+      keyId: claims.ref,
+      ...(person ? { person } : {}),
+    },
+  };
+}
+
+/**
+ * The sandbox person's Test session in their own org, for the key routes: managing a sandbox's keys is what the
+ * person does as the org's admin, so it runs on their membership like a member token, under the same cap. The
+ * person is the one the token's session names; a revoked membership or session leaves none (the routes refuse).
+ */
+async function sandboxPerson(
+  env: AppEnv,
+  claims: WorkbenchClaims,
+  membershipId: string | null,
+  authTime: number | null,
+  amr: SessionAuth['amr'],
+): Promise<SessionAuth | null> {
+  if (!membershipId) return null;
+  const row = await sandboxPersonRow(env.DB, claims.orgId, membershipId, claims.sessionIdHash);
+  if (!row) return null;
+  const roles = parseRoles(row.roles).filter((role) => role !== 'admin');
+  if (roles.length === 0) return null;
+  return {
+    kind: 'session',
+    userId: row.user_id,
+    sessionId: claims.sessionIdHash,
+    roles,
+    csrfSecret: '',
+    amr,
+    authTime,
+    mode: 'test',
+    via: 'try',
+    // Carries the sandbox key's id: the key routes refuse it (404) as they do for the token itself.
+    workbench: { orgId: claims.orgId, subject: 'member', keyId: claims.ref },
   };
 }
 

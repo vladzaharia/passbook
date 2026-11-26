@@ -43,9 +43,11 @@ export function StepLimits({
           <p className="text-sm font-medium text-fg">Mode</p>
           <p className="mt-2 text-sm text-fg-strong">{form.keyMode === 'test' ? 'Test' : 'Live'}</p>
           <p className="mt-1 text-xs text-fg-muted">
-            {form.keyMode === 'test'
-              ? 'Test passes. Their emails stay in the Test inbox. Switch the console to Live for a Live key.'
-              : 'Real passes and real emails. Switch the console to Test for a Test key.'}
+            {form.cap
+              ? 'Test passes. Their emails stay in the Test inbox.'
+              : form.keyMode === 'test'
+                ? 'Test passes. Their emails stay in the Test inbox. Switch the console to Live for a Live key.'
+                : 'Real passes and real emails. Switch the console to Test for a Test key.'}
           </p>
         </div>
       )}

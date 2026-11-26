@@ -1,6 +1,5 @@
 import { Server, User } from 'lucide-react';
 import { FormField, Input, OptionTile, Select } from '@/web/ui/index.ts';
-import { EXPIRY, SHORT_EXPIRY } from './key-kind-fields.ts';
 import type { KeyForm } from './use-key-form.ts';
 
 const KINDS = [
@@ -39,7 +38,7 @@ export function StepBasics({
           />
         )}
       </FormField>
-      {orgId === null ? null : (
+      {orgId === null || form.cap ? null : (
         <fieldset className="flex min-w-0 flex-col">
           <legend className="mb-2 text-sm font-medium text-fg">Type</legend>
           <div className="grid gap-3 @md:grid-cols-2">
@@ -66,7 +65,7 @@ export function StepBasics({
               {...p}
               value={form.expiry}
               onValueChange={form.setExpiry}
-              options={form.short ? SHORT_EXPIRY : EXPIRY}
+              options={form.expiryOptions}
             />
           )}
         </FormField>
