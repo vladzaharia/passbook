@@ -1,4 +1,4 @@
-import type { OrgMembership } from '../../src/shared/contracts/org-membership.ts';
+import type { OrgMembership, OrgRole } from '../../src/shared/contracts/org-membership.ts';
 import {
   type Api,
   apiAs,
@@ -37,7 +37,7 @@ const templatePath = (templateId: string) => `/api/v1/templates/${encodeURICompo
 export async function templateReviewer(
   admin: Api,
   orgId: string,
-  roles: ('template_reviewer' | 'template_publisher')[] = ['template_reviewer'],
+  roles: OrgRole[] = ['template_reviewer'],
 ): Promise<Api> {
   const reviewer = await apiAs('reviewer');
   try {

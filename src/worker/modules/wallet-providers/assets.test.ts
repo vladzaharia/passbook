@@ -7,15 +7,21 @@ import { behaviors } from '../templates/build-check.ts';
 import { analyzePackage } from '../templates/package/analyze.ts';
 import { basicPackage, makePng } from '../templates/package/fixtures.ts';
 import { sha256BytesHex } from '../templates/package/hash.ts';
+import { parsePng } from '../templates/package/png.ts';
 import { type ArtTransform, artTransformFromBinding, deriveWalletArt } from './assets.ts';
 
 const ORIGIN = 'https://wallet.test';
 
 /** Stands in for the Images binding: a PNG of the requested size. */
-const calls: { width: number; height: number; fit: string }[] = [];
-const transform: ArtTransform = async (_bytes, size) => {
+const calls: { width: number; height?: number; fit: string }[] = [];
+const transform: ArtTransform = async (bytes, size) => {
   calls.push(size);
-  return makePng(size.width, size.height);
+  // A downscale names only its width: the height follows the source's aspect, as the Images binding gives it.
+  const source = parsePng(bytes);
+  const height =
+    size.height ??
+    ('error' in source ? size.width : Math.round((source.height * size.width) / source.width));
+  return makePng(size.width, height);
 };
 
 async function setup(assets: Record<string, Uint8Array>) {

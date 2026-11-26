@@ -18,15 +18,23 @@ const KIND = 'template-art';
 /** Crop (`cover`) or downscale (`scale-down`, never enlarges) to PNG. Null: backend unavailable. */
 export type ArtTransform = (
   bytes: Uint8Array,
-  size: { width: number; height: number; fit: 'cover' | 'scale-down' },
+  size: { width: number; height?: number; fit: 'cover' | 'scale-down' },
 ) => Promise<Uint8Array | null>;
 
+let installed: ArtTransform | null = null;
+
+/** The local e2e server only (e2e-release.ts): its Images binding cannot cut, so a stub stands in. */
+export function setArtTransformForTest(transform: ArtTransform | null): void {
+  installed = transform;
+}
+
 export function artTransformFromBinding(images: ImagesBinding | undefined): ArtTransform {
+  if (installed) return installed;
   return async (bytes, { width, height, fit }) => {
     if (!images) return null;
     const result = await images
       .input(new Response(bytes as BufferSource).body as ReadableStream<Uint8Array>)
-      .transform({ width, height, fit })
+      .transform({ width, ...(height === undefined ? {} : { height }), fit })
       .output({ format: 'image/png' });
     return new Uint8Array(await new Response(result.image()).arrayBuffer());
   };
@@ -113,9 +121,11 @@ export async function deriveWalletArt(
   let bytes: Uint8Array = source;
   let { width, height } = plan.png;
   if (out.width !== width || out.height !== height) {
+    // A downscale gives the width alone: both sides of a box that is a pixel off the source's aspect shrink the
+    // width too (1125x432 into 1032x396 comes out 1031 wide), and publication would then refuse its own plan.
     const cut = await transform(source, {
       width: out.width,
-      height: out.height,
+      ...(out.crop ? { height: out.height } : {}),
       fit: out.crop ? 'cover' : 'scale-down',
     });
     const cutPng = cut && parsePng(cut);

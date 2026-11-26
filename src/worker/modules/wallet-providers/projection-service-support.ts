@@ -40,7 +40,7 @@ import {
   walletsHash,
 } from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
-import type { ProjectionAuthority } from './projection-system-authority.ts';
+import { isSelfAuthored, type ProjectionAuthority } from './projection-system-authority.ts';
 import { recordProjectionArt, recordProjectionArtFiles } from './repo-projection-art.ts';
 import {
   getProjectionCandidate,
@@ -121,9 +121,15 @@ export async function failedWrite(
 export function candidateDto(
   row: ProjectionCandidate,
   approvals: ApprovalRow[],
+  /** The caller, when a person: the list says whether approving this would be their own work. */
+  viewerId?: string,
 ): TemplateCandidate {
   const { credentialKeysetCommitment: _credentialKeysetCommitment, ...candidate } = row;
-  return { ...candidate, approvals: approvals.map((a) => ({ ...a })) };
+  return {
+    ...candidate,
+    approvals: approvals.map((a) => ({ ...a })),
+    ...(viewerId ? { selfAuthored: isSelfAuthored(viewerId, row) } : {}),
+  };
 }
 export function releaseDto(
   row: ReleaseRow,

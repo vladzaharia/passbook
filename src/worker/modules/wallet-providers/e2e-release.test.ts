@@ -1,12 +1,22 @@
+import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
 import wranglerConfig from '../../../../wrangler.jsonc?raw';
 import wwdrG4 from '../../../generated/wwdr-g4.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
-import { e2eReleaseRefusal, openE2eRelease } from './e2e-release.ts';
+import { first } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
 import {
+  controlE2eRelease,
+  e2eReleaseControl,
+  e2eReleaseRefusal,
+  openE2eRelease,
+} from './e2e-release.ts';
+import {
+  setWalletReleaseForTest,
   walletProviderEnabledSql,
   walletProviderIssuance,
   walletProviderReleaseReason,
+  walletProviderReleaseState,
 } from './provider-policy.ts';
 
 /** What tools/e2e-server.ts gives a release run: every runtime signal of the local e2e server. */
@@ -86,6 +96,57 @@ describe('a build without the e2e define (every production build, and this test 
     expect(e2eReleaseRefusal(e2e)).toBeNull();
     expect(openE2eRelease(e2e)).toBe(false);
     expect(openE2eRelease()).toBe(false);
+    expectDark();
+  });
+});
+
+describe('the rollback rehearsal (e2e/73-wallets-journeys.spec.ts)', () => {
+  const post = (body: unknown, method = 'POST') =>
+    new Request('http://localhost:5173/__e2e/wallet-release', {
+      method,
+      body: method === 'POST' ? JSON.stringify(body) : undefined,
+    });
+  const source = () => ({ ...e2e, DB: (env as AppEnv).DB });
+  const stateRow = () =>
+    first<{ state: string }>(
+      (env as AppEnv).DB,
+      "SELECT state FROM wallet_provider_releases WHERE provider = 'samsung' AND mode = 'live'",
+    );
+
+  it('moves every provider and mode to draining and back, in the isolate and in the table', async () => {
+    const restore = setWalletReleaseForTest('released');
+    try {
+      const res = await controlE2eRelease(post({ state: 'draining' }), source());
+      expect(res.status).toBe(200);
+      expect(walletProviderReleaseState('google', 'test')).toBe('draining');
+      expect(walletProviderReleaseState('samsung', 'live')).toBe('draining');
+      expect((await stateRow())?.state).toBe('draining');
+      expect((await controlE2eRelease(post({ state: 'released' }), source())).status).toBe(200);
+      expect(walletProviderReleaseState('google', 'test')).toBe('released');
+      expect((await stateRow())?.state).toBe('released');
+    } finally {
+      restore();
+      await (env as AppEnv).DB.prepare(
+        "UPDATE wallet_provider_releases SET state = 'dark', changed_at = 0",
+      ).run();
+    }
+  });
+
+  it('refuses any state but draining and released, and any method but POST', async () => {
+    expect((await controlE2eRelease(post({ state: 'dark' }), source())).status).toBe(400);
+    expect((await controlE2eRelease(post({}), source())).status).toBe(400);
+    expect((await controlE2eRelease(post(undefined, 'GET'), source())).status).toBe(405);
+    expectDark();
+  });
+
+  it('refuses a server the e2e release did not open', async () => {
+    const closed = { ...source(), WALLET_E2E_RELEASE: undefined };
+    expect((await controlE2eRelease(post({ state: 'draining' }), closed)).status).toBe(403);
+    expectDark();
+  });
+
+  it('does not exist in a build without the e2e define', async () => {
+    expect(await e2eReleaseControl(post({ state: 'draining' }), source())).toBeNull();
     expectDark();
   });
 });

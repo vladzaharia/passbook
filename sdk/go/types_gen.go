@@ -13528,6 +13528,7 @@ type TemplatesCandidatesCreateResponse struct {
 	AccountRevision         *int64                                           `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                          `json:"providerIdentityHash,omitempty"`
 	Projection              any                                              `json:"projection,omitempty"`
+	SelfAuthored            *bool                                            `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesCreateResponseApprovalsItem `json:"approvals"`
 }
 
@@ -13567,6 +13568,7 @@ type TemplatesCandidatesListItem struct {
 	AccountRevision         *int64                                     `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                    `json:"providerIdentityHash,omitempty"`
 	Projection              any                                        `json:"projection,omitempty"`
+	SelfAuthored            *bool                                      `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListItemApprovalsItem `json:"approvals"`
 }
 
@@ -13590,6 +13592,7 @@ type TemplatesCandidatesListResponse struct {
 	Items      []TemplatesCandidatesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
 	Current    *TemplatesCandidatesListResponseCurrent    `json:"current,omitempty"`
+	Wallet     *string                                    `json:"wallet,omitempty"`
 }
 
 type TemplatesCandidatesListResponseCurrent struct {
@@ -13659,6 +13662,7 @@ type TemplatesCandidatesListResponseItemsItem struct {
 	AccountRevision         *int64                                                  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                                 `json:"providerIdentityHash,omitempty"`
 	Projection              any                                                     `json:"projection,omitempty"`
+	SelfAuthored            *bool                                                   `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesListResponseItemsItemApprovalsItem `json:"approvals"`
 }
 
@@ -13703,6 +13707,7 @@ type TemplatesCandidatesPromoteResponse struct {
 	AccountRevision         *int64                                            `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string                                           `json:"providerIdentityHash,omitempty"`
 	Projection              any                                               `json:"projection,omitempty"`
+	SelfAuthored            *bool                                             `json:"selfAuthored,omitempty"`
 	Approvals               []TemplatesCandidatesPromoteResponseApprovalsItem `json:"approvals"`
 }
 
