@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { copyWithFeedback } from '../../../developers/shell/copy.ts';
 import { Ticket } from '../../../developers/ui/ticket.tsx';
-import { consoleRunConfirm } from '../../../lib/confirms.ts';
+import { consoleRunConfirm } from '../../../lib/confirms-console.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
 import { ConfirmDialog } from '../../../ui/alert-dialog.tsx';
 import { useBenchKeys } from '../../bench/keys.ts';
