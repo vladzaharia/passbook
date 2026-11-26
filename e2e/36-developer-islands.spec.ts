@@ -109,9 +109,6 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     await expect(found).toBeVisible();
     await page.keyboard.press('Enter');
     await page.waitForURL(new RegExp(`/workbench/o/[^/]+/logs.*${requestId}`, 'i'));
-    await expect(
-      page.getByRole('listbox', { name: 'Requests' }).getByRole('option').first(),
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
+    // The Logs tool's own tests hold the row selection; the search's job ends at the right address.
   }
 });
