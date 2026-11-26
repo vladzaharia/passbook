@@ -299,6 +299,7 @@
   "passes.postPassesByIdResendEmail",
   "passes.postPassesByIdRestore",
   "passes.postPassesByIdRotateLink",
+  "passes.postPassesByIdSimulate",
   "passes.postPassesByIdStamps",
   "passes.postPassesByIdUnvoid",
   "passes.postPassesByIdVoid",

@@ -1798,6 +1798,15 @@ class PassesResource:
         """Email the pass to the holder (Idempotency-Key supported) `POST /api/v1/passes/{id}/resend-email`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/resend-email", body=body, idempotent=True, result=m.PassesSendEmailResult, **opts)
 
+    def simulate(
+        self,
+        id: str,
+        body: m.PassesSimulateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesSimulateResult:
+        """Send a real Test event for a Test pass: install, scan, push failure and more `POST /api/v1/passes/{id}/simulate`"""
+        return self._core.request("POST", f"/api/v1/passes/{_p(id)}/simulate", body=body, result=m.PassesSimulateResult, **opts)
+
     def unvoid(
         self,
         id: str,

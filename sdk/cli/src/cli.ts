@@ -3,6 +3,7 @@ import type { Api } from './api.ts';
 import { receiverUrl } from './forward.ts';
 import { listen } from './listen.ts';
 import { passesCommand } from './passes.ts';
+import { triggerCommand } from './trigger.ts';
 import { inputTypeFile, typeName } from './types-gen.ts';
 
 /** Keep equal to `version` in package.json (a test checks). */
@@ -19,6 +20,9 @@ export const HELP = `passbook <command>
       [--set key=value]... [--idempotency-key <k>]
   passes update <passId>      Change a pass's input. Same body sources.
       [--external-id <id>] [--template-version <v>] [--notify] [--set key=value]... [--idempotency-key <k>]
+  trigger <event>             Send a real Test event for a pass: installed, uninstalled, scanned,
+      [--pass <id>] [--device <id>]   scan_refused, push_failed, updated_on_device or email_failed.
+                                      Without --pass, the newest Test pass.
 
 PASSBOOK_KEY holds a pbp_test_ key. PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
 
@@ -110,6 +114,10 @@ export async function run(argv: string[], io: Io): Promise<number> {
         },
         io.out,
       );
+      return 0;
+    }
+    if (command === 'trigger') {
+      await triggerCommand(api, rest, io.out);
       return 0;
     }
     throw new Error(`Unknown command "${command}". Run passbook --help.`);

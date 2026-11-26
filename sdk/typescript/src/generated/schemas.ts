@@ -7104,6 +7104,8 @@ export type PassesDevicesListResponse = {
       reason: string | null;
     } | null;
     removal: "pending" | "fetched" | "deleted" | null;
+    simulated?: boolean;
+    deviceId?: string;
   }>;
   removal: {
     removedAt: number;
@@ -7304,6 +7306,18 @@ export type PassesSendEmailParams = {
 
 export type PassesSendEmailResponse = {
   ok: true;
+};
+
+export type PassesSimulateParams = {
+  event: "installed" | "uninstalled" | "scanned" | "scan_refused" | "push_failed" | "updated_on_device" | "email_failed";
+  platform?: "apple";
+  deviceId?: string;
+};
+
+export type PassesSimulateResponse = {
+  eventId: string;
+  requestId: string;
+  deviceId?: string;
 };
 
 export type PassesStampsApplyParams = {

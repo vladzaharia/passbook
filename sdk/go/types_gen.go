@@ -8142,6 +8142,8 @@ type PassesDevicesListResponseDevicesItem struct {
 	LastFetch      map[string]any `json:"lastFetch"`
 	LastPush       map[string]any `json:"lastPush"`
 	Removal        *string        `json:"removal"`
+	Simulated      *bool          `json:"simulated,omitempty"`
+	DeviceID       *string        `json:"deviceId,omitempty"`
 }
 
 type PassesDevicesListResult = PassesDevicesListResponse
@@ -8417,6 +8419,22 @@ type PassesSendEmailResponse struct {
 }
 
 type PassesSendEmailResult = PassesSendEmailResponse
+
+type PassesSimulateBody = PassesSimulateParams
+
+type PassesSimulateParams struct {
+	Event    string  `json:"event"`
+	Platform *string `json:"platform,omitempty"`
+	DeviceID *string `json:"deviceId,omitempty"`
+}
+
+type PassesSimulateResponse struct {
+	EventID   string  `json:"eventId"`
+	RequestID string  `json:"requestId"`
+	DeviceID  *string `json:"deviceId,omitempty"`
+}
+
+type PassesSimulateResult = PassesSimulateResponse
 
 type PassesStampsApplyBody = PassesStampsApplyParams
 

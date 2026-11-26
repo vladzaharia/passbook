@@ -1119,6 +1119,10 @@ __all__ = [
     "PassesSendEmailParams",
     "PassesSendEmailResponse",
     "PassesSendEmailResult",
+    "PassesSimulateBody",
+    "PassesSimulateParams",
+    "PassesSimulateResponse",
+    "PassesSimulateResult",
     "PassesStampsApplyBody",
     "PassesStampsApplyParams",
     "PassesStampsApplyParams1",
@@ -8763,6 +8767,8 @@ class PassesDevicesListResponseDevicesItem(_Model):
     lastFetch: _Dict[str, _Any] | None
     lastPush: _Dict[str, _Any] | None
     removal: _Literal["pending", "fetched", "deleted", None] | str
+    simulated: bool | None = None
+    deviceId: str | None = None
 
 class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
@@ -8937,6 +8943,16 @@ class PassesSendEmailParams(_Model):
 
 class PassesSendEmailResponse(_Model):
     ok: _Literal[True]
+
+class PassesSimulateParams(_Model):
+    event: _Literal["installed", "uninstalled", "scanned", "scan_refused", "push_failed", "updated_on_device", "email_failed"] | str
+    platform: _Literal["apple"] | str | None = None
+    deviceId: str | None = None
+
+class PassesSimulateResponse(_Model):
+    eventId: str
+    requestId: str
+    deviceId: str | None = None
 
 class PassesStampsApplyParams1(_Model):
     action: _Literal["add"] | str
@@ -14994,6 +15010,10 @@ PassesRotateLinkResult = PassesRotateLinkResponse
 PassesSendEmailBody = PassesSendEmailParams
 
 PassesSendEmailResult = PassesSendEmailResponse
+
+PassesSimulateBody = PassesSimulateParams
+
+PassesSimulateResult = PassesSimulateResponse
 
 PassesStampsApplyParams = PassesStampsApplyParams1 | PassesStampsApplyParams2
 

@@ -1497,6 +1497,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.simulate", "POST", "/api/v1/passes/id1/simulate", false,
+		`{"event":"installed"}`, `{"eventId":"x","requestId":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassesSimulateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Passes.Simulate(ctx, "id1", &b)
+		},
+	},
+	{
 		"passes.stamps.apply", "POST", "/api/v1/passes/id1/stamps", false,
 		`{"action":"add"}`, `{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0,"reissueRequired":false,"ownerName":"x","ownerEmail":"x","personalization":{},"fieldSources":{},"passJson":{},"assetBaseUrl":"x","assetNames":["x"],"blockedUsers":[{"id":"x","name":"x"}],"downloadUrl":"x","publicUrl":"x","registrations":0,"lastRefreshedAt":0,"versions":[{"version":0,"templateVersion":"x","cause":"create","actorType":"x","actorId":"x","createdAt":0,"purged":false}],"deliveries":[{"id":"x","kind":"push","state":"pending","attempts":0,"errorCode":"x","createdAt":0,"finishedAt":0}],"warnings":[{"severity":"error","code":"x","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {

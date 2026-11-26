@@ -5283,6 +5283,60 @@
       ]
     },
     {
+      "code": "SIMULATE_DEVICE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_DEVICE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "SQL_BIND_BUDGET",
       "statuses": [
         500

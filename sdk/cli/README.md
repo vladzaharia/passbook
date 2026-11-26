@@ -51,6 +51,13 @@ Issues or changes a pass. `ticket.json` holds the Quickstart ticket: `{"template
  --template-version <v>    | update.
  --notify                  | update. Push the change to the holder's wallet.
 
+## trigger
+
+Sends a real Test event for a Test pass: `installed`, `uninstalled`, `scanned`, `scan_refused`, `push_failed`, `updated_on_device` or `email_failed`. Your webhook endpoints get it signed, with the `requestId` it prints. Without `--pass`, it uses the newest Test pass. `--device <id>` targets a device an earlier `installed` returned.
+
+    passbook trigger installed
+    passbook trigger uninstalled --pass <passId> --device <deviceId>
+
 ## Maintaining
 
 `npm run build` here compiles to `dist`; it expects `@passbook/sdk` installed. Publishing is the owner's step.

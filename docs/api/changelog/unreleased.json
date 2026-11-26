@@ -1456,6 +1456,22 @@
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
   },
   {
+    "key": "GET /api/v1/passes/{id}/devices 200.devices[].deviceId: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdDevices",
+    "op": "GET /api/v1/passes/{id}/devices",
+    "change": "200.devices[].deviceId: field added",
+    "note": "Devices made by Simulate carry deviceId, the id the simulate call returned."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/devices 200.devices[].simulated: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdDevices",
+    "op": "GET /api/v1/passes/{id}/devices",
+    "change": "200.devices[].simulated: field added",
+    "note": "Devices made by Simulate carry simulated: true."
+  },
+  {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
     "class": "notable",
     "operationId": "passes.getPassesByIdEvents",
@@ -4123,6 +4139,14 @@
     "op": "POST /api/v1/passes/{id}/restore",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/simulate new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdSimulate",
+    "op": "POST /api/v1/passes/{id}/simulate",
+    "change": "new operation",
+    "note": "Simulate sends a real Test event for a Test pass; its signed webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY."
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
