@@ -2194,6 +2194,84 @@
   }
  },
  {
+  "id": "connections.getConnectionsByIdSetup",
+  "call": "connections.setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/setup",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {},
+   "values": {
+    "endpointUrl": "x",
+    "signatureHeader": "x",
+    "timestampHeader": "x",
+    "hasSecret": false
+   }
+  }
+ },
+ {
   "id": "connections.postConnectionsByIdSync",
   "call": "connections.sync",
   "http": "POST",
@@ -2474,6 +2552,78 @@
     }
    ],
    "nextCursor": null
+  }
+ },
+ {
+  "id": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+  "call": "connectors.recipe_setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+  "pathParams": [
+   {
+    "name": "recipe",
+    "py": "recipe",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {}
   }
  },
  {
@@ -11930,6 +12080,72 @@
     "createdAt": 0
    },
    "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsSetup",
+  "call": "webhook_endpoints.setup.retrieve",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/setup",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "direction": "inbound",
+   "recipe": "custom",
+   "version": "x",
+   "checkedAt": "x",
+   "provider": {
+    "name": "x",
+    "consoleUrl": "x",
+    "docs": [
+     {
+      "label": "x",
+      "url": "x"
+     }
+    ]
+   },
+   "secret": {
+    "origin": "provider",
+    "allowPaste": false,
+    "prefix": "x",
+    "minLength": 0,
+    "whereStep": "x"
+   },
+   "subscriptions": {
+    "perWebhook": "one",
+    "topics": [
+     {
+      "id": "x",
+      "label": "x",
+      "required": false,
+      "verified": false
+     }
+    ]
+   },
+   "steps": [
+    {
+     "id": "x",
+     "side": "provider",
+     "title": "x",
+     "parts": [
+      {
+       "t": "text",
+       "text": "x"
+      }
+     ]
+    }
+   ],
+   "test": {
+    "kind": "button",
+    "text": "x",
+    "command": "x",
+    "issues": false
+   },
+   "troubleshooting": {}
   }
  },
  {

@@ -36,6 +36,7 @@ import { previewUnsaved } from './preview.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import { registerConnectionProbeRoutes } from './probe-routes.ts';
 import * as service from './service.ts';
+import { registerConnectionSetupRoute } from './setup-routes.ts';
 import { testConfig } from './test-config.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
 import { registerWebhookRetentionRoutes } from './webhook-retention-routes.ts';
@@ -92,6 +93,7 @@ connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
+registerConnectionSetupRoute(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
 // A probe that brings its own config or secrets reads through the stored credential: it asks what PATCH asks.
 connectionsRoutes.post('/:id/probe', requireStepUp(STEP_UP_SECONDS, touchesTrust));

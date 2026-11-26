@@ -257,6 +257,10 @@
     "resource": "connections.runs",
     "method": "list"
   },
+  "connections.getConnectionsByIdSetup": {
+    "resource": "connections.setup",
+    "method": "retrieve"
+  },
   "connections.getConnectionsByIdWebhookFailures": {
     "resource": "connections.webhookFailures",
     "method": "list"
@@ -321,6 +325,10 @@
   },
   "connectors.getConnectorsByType": {
     "resource": "connectors",
+    "method": "retrieve"
+  },
+  "connectors.getConnectorsWebhookPushRecipesByRecipeSetup": {
+    "resource": "connectors.recipeSetup",
     "method": "retrieve"
   },
   "delivery.getDelivery": {
@@ -2508,6 +2516,10 @@
   "webhooks.getWebhookEndpointsByIdTests": {
     "resource": "webhookEndpoints.tests",
     "method": "list"
+  },
+  "webhooks.getWebhookEndpointsSetup": {
+    "resource": "webhookEndpoints.setup",
+    "method": "retrieve"
   },
   "webhooks.patchWebhookEndpointsById": {
     "resource": "webhookEndpoints",

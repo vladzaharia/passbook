@@ -74,6 +74,12 @@ export const RecipeInfoSchema = z.object({
   category: ConnectorCategorySchema.default('apis'),
   /** True when the sender generates the secret and the admin pastes it. */
   pasteSecret: z.boolean(),
+  /** One line for the picker: what the sender's record becomes. */
+  line: z.string().optional(),
+  /** Who makes the signing secret: the sender (paste it here) or PassBook (paste it there). */
+  secretOrigin: z.enum(['provider', 'passbook']).optional(),
+  /** Version of the sender's setup guide (`GET /connectors/webhook-push/recipes/{recipe}/setup`). */
+  setupVersion: z.string().optional(),
   /** Whether the org's plan allows this recipe. Always true without an org. */
   entitled: z.boolean(),
   outputFields: z.record(

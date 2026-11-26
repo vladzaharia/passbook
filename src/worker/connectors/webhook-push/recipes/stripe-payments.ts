@@ -1,4 +1,5 @@
 import { ignored, num, obj, type Recipe, record, str } from './shared.ts';
+import { stripePaymentsSetup } from './stripe-payments.setup.ts';
 import { idOf, isEvent, one, stripeEvent } from './stripe-shared.ts';
 
 export const stripePayments: Recipe = {
@@ -11,6 +12,10 @@ export const stripePayments: Recipe = {
   windowMs: 0,
   topics: ['checkout.session.completed', 'charge.refunded'],
   pasteSecret: true,
+  secretOrigin: 'provider',
+  secretScope: 'connection',
+  line: 'Payment to ticket. Voids on full refund.',
+  setup: stripePaymentsSetup,
   outputFields: {
     email: { type: 'string' },
     name: { type: 'string' },

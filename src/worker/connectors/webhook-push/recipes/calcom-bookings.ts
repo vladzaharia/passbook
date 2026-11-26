@@ -1,3 +1,4 @@
+import { calcomBookingsSetup } from './calcom-bookings.setup.ts';
 import { first, HOUR_MS, ignored, isoMs, obj, type Recipe, record, ref, str } from './shared.ts';
 
 const STATUS: Record<string, string> = {
@@ -21,6 +22,10 @@ export const calcomBookings: Recipe = {
   windowMs: HOUR_MS,
   topics: Object.keys(STATUS),
   pasteSecret: false,
+  secretOrigin: 'passbook',
+  secretScope: 'connection',
+  line: 'Booking to pass. Voids when cancelled or moved.',
+  setup: calcomBookingsSetup,
   outputFields: {
     title: { type: 'string' },
     startTime: { type: 'date' },

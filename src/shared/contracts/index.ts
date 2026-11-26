@@ -7,6 +7,7 @@ export * from './common.ts';
 export * from './connection-files.ts';
 export * from './connection-preview.ts';
 export * from './connection-probe.ts';
+export * from './connection-setup.ts';
 export * from './connections.ts';
 export * from './developer.ts';
 export * from './developer-invitations.ts';

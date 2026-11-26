@@ -456,6 +456,19 @@ class ConnectionsRunsResource:
         return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/runs", query={"cursor": cursor, "limit": limit}, result=m.ConnectionsRunsListResult, cursor_param="cursor", **opts)
 
 
+class ConnectionsSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsSetupRetrieveResult:
+        """A webhook connection's setup guide with its URL filled in; never the secret `GET /api/v1/connections/{id}/setup`"""
+        return self._core.request("GET", f"/api/v1/connections/{_p(id)}/setup", result=m.ConnectionsSetupRetrieveResult, **opts)
+
+
 class ConnectionsWebhookFailuresResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -495,6 +508,7 @@ class ConnectionsResource:
         self.uploads = ConnectionsUploadsResource(core)
         self.files = ConnectionsFilesResource(core)
         self.runs = ConnectionsRunsResource(core)
+        self.setup = ConnectionsSetupResource(core)
         self.webhook_failures = ConnectionsWebhookFailuresResource(core)
 
     def create(
@@ -619,9 +633,23 @@ class ConnectionsResource:
         return self._core.request("PATCH", f"/api/v1/connections/{_p(id)}", body=body, result=m.ConnectionsUpdateResult, **opts)
 
 
+class ConnectorsRecipeSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        recipe: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectorsRecipeSetupRetrieveResult:
+        """A sender's webhook setup guide, with the URL and secret left for the console to fill `GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup`"""
+        return self._core.request("GET", f"/api/v1/connectors/webhook-push/recipes/{_p(recipe)}/setup", result=m.ConnectorsRecipeSetupRetrieveResult, **opts)
+
+
 class ConnectorsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.recipe_setup = ConnectorsRecipeSetupResource(core)
 
     def list(
         self,
@@ -2722,6 +2750,18 @@ class TestEmailsResource:
         return self._core.request("GET", f"/api/v1/test-inbox/{_p(id)}", query={"mode": mode}, result=m.TestEmailsRetrieveResult, **opts)
 
 
+class WebhookEndpointsSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WebhookEndpointsSetupRetrieveResult:
+        """The setup guide for the server that receives webhooks `GET /api/v1/webhook-endpoints/setup`"""
+        return self._core.request("GET", "/api/v1/webhook-endpoints/setup", result=m.WebhookEndpointsSetupRetrieveResult, **opts)
+
+
 class WebhookEndpointsCapturesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2830,6 +2870,7 @@ class WebhookEndpointsTestsResource:
 class WebhookEndpointsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.setup = WebhookEndpointsSetupResource(core)
         self.captures = WebhookEndpointsCapturesResource(core)
         self.deliveries = WebhookEndpointsDeliveriesResource(core)
         self.tests = WebhookEndpointsTestsResource(core)

@@ -458,6 +458,25 @@ func (r *ConnectionsRunsResource) List(ctx context.Context, id string, query *Co
 	return newPager[ConnectionsRunsListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
 }
 
+type ConnectionsSetupResource struct {
+	c *core
+}
+
+func newConnectionsSetupResource(c *core) *ConnectionsSetupResource {
+	return &ConnectionsSetupResource{
+		c: c,
+	}
+}
+
+// Retrieve A webhook connection's setup guide with its URL filled in; never the secret `GET /api/v1/connections/{id}/setup`
+func (r *ConnectionsSetupResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsSetupRetrieveResult, error) {
+	var out ConnectionsSetupRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ConnectionsWebhookFailuresResource struct {
 	c *core
 }
@@ -496,6 +515,7 @@ type ConnectionsResource struct {
 	Uploads         *ConnectionsUploadsResource
 	Files           *ConnectionsFilesResource
 	Runs            *ConnectionsRunsResource
+	Setup           *ConnectionsSetupResource
 	WebhookFailures *ConnectionsWebhookFailuresResource
 }
 
@@ -505,6 +525,7 @@ func newConnectionsResource(c *core) *ConnectionsResource {
 		Uploads:         newConnectionsUploadsResource(c),
 		Files:           newConnectionsFilesResource(c),
 		Runs:            newConnectionsRunsResource(c),
+		Setup:           newConnectionsSetupResource(c),
 		WebhookFailures: newConnectionsWebhookFailuresResource(c),
 	}
 }
@@ -631,13 +652,34 @@ func (r *ConnectionsResource) Update(ctx context.Context, id string, body *Conne
 	return &out, nil
 }
 
-type ConnectorsResource struct {
+type ConnectorsRecipeSetupResource struct {
 	c *core
+}
+
+func newConnectorsRecipeSetupResource(c *core) *ConnectorsRecipeSetupResource {
+	return &ConnectorsRecipeSetupResource{
+		c: c,
+	}
+}
+
+// Retrieve A sender's webhook setup guide, with the URL and secret left for the console to fill `GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup`
+func (r *ConnectorsRecipeSetupResource) Retrieve(ctx context.Context, recipe string, opts ...RequestOption) (*ConnectorsRecipeSetupRetrieveResult, error) {
+	var out ConnectorsRecipeSetupRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connectors/webhook-push/recipes/" + pathEscape(recipe) + "/setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ConnectorsResource struct {
+	c           *core
+	RecipeSetup *ConnectorsRecipeSetupResource
 }
 
 func newConnectorsResource(c *core) *ConnectorsResource {
 	return &ConnectorsResource{
-		c: c,
+		c:           c,
+		RecipeSetup: newConnectorsRecipeSetupResource(c),
 	}
 }
 
@@ -2832,6 +2874,25 @@ func (r *TestEmailsResource) Retrieve(ctx context.Context, id string, query *Tes
 	return &out, nil
 }
 
+type WebhookEndpointsSetupResource struct {
+	c *core
+}
+
+func newWebhookEndpointsSetupResource(c *core) *WebhookEndpointsSetupResource {
+	return &WebhookEndpointsSetupResource{
+		c: c,
+	}
+}
+
+// Retrieve The setup guide for the server that receives webhooks `GET /api/v1/webhook-endpoints/setup`
+func (r *WebhookEndpointsSetupResource) Retrieve(ctx context.Context, opts ...RequestOption) (*WebhookEndpointsSetupRetrieveResult, error) {
+	var out WebhookEndpointsSetupRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/webhook-endpoints/setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type WebhookEndpointsCapturesResource struct {
 	c *core
 }
@@ -2937,6 +2998,7 @@ func (r *WebhookEndpointsTestsResource) List(ctx context.Context, id string, opt
 
 type WebhookEndpointsResource struct {
 	c          *core
+	Setup      *WebhookEndpointsSetupResource
 	Captures   *WebhookEndpointsCapturesResource
 	Deliveries *WebhookEndpointsDeliveriesResource
 	Tests      *WebhookEndpointsTestsResource
@@ -2945,6 +3007,7 @@ type WebhookEndpointsResource struct {
 func newWebhookEndpointsResource(c *core) *WebhookEndpointsResource {
 	return &WebhookEndpointsResource{
 		c:          c,
+		Setup:      newWebhookEndpointsSetupResource(c),
 		Captures:   newWebhookEndpointsCapturesResource(c),
 		Deliveries: newWebhookEndpointsDeliveriesResource(c),
 		Tests:      newWebhookEndpointsTestsResource(c),
