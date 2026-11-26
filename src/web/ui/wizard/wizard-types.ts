@@ -11,6 +11,10 @@ export interface WizardStepDef<Id extends string = string> {
   summary?: string | undefined;
   /** Not needed this run because of an earlier choice: hopped by Next and Back, no Review section. */
   skip?: boolean;
+  /** A labelled phase of the rail ("In PassBook", "In Shopify"): a run of steps with the same group sits under one small heading. */
+  group?: string;
+  /** Done and fixed: shown with a lock, not a button, and Back and Next never enter it. `useWizard` sets it from `lockedBefore`. */
+  locked?: boolean;
 }
 
 export type WizardStepState = 'done' | 'current' | 'todo' | 'skipped' | 'invalid';
@@ -33,6 +37,10 @@ export interface WizardOptions<Id extends string> {
   mode?: 'create' | 'edit';
   /** Dialogs pass `open`: the wizard resets when it opens again. */
   open?: boolean;
+  /** Steps before this one are done and locked (a connection that exists: its first phase is edited elsewhere). The wizard opens at it. */
+  lockedBefore?: Id;
+  /** What a locked step says on hover and to screen readers ("Change this on the connection."). */
+  lockedReason?: string;
   /** Edit mode: the draft differs from what was loaded. Save is blocked with "No changes." until it does. */
   dirty?: boolean;
 }
@@ -52,6 +60,7 @@ export interface WizardFrameProps {
   formId: string;
   nextDisabled: boolean;
   nextHint: string | undefined;
+  lockedReason?: string | undefined;
   busy: boolean;
   /** One line at the foot of the step (a refused finish). */
   formError: string | undefined;
@@ -95,6 +104,7 @@ export interface WizardModel<Id extends string = string> {
     /** Typing clears the server's errors on the fields this step owns. */
     onInput(event: FormEvent<HTMLFormElement>): void;
   };
+  lockedReason: string | undefined;
   /** Spread on the page `Wizard`. */
   frame: WizardFrameProps;
   /** The step changed `key` times; WizardStep animates from `direction`. */
@@ -103,7 +113,9 @@ export interface WizardModel<Id extends string = string> {
 }
 
 /** What the rail reads: the page `Wizard` builds this from its props. */
-export type WizardRail = Pick<WizardModel, 'steps' | 'index' | 'mode' | 'go'>;
+export type WizardRail = Pick<WizardModel, 'steps' | 'index' | 'mode' | 'go'> & {
+  lockedReason?: string | undefined;
+};
 
 /** What a step body reads. */
 export type WizardStepView = Pick<

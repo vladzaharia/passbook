@@ -9,6 +9,8 @@ import type { AppBindings } from '../../platform/context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { createScannerStore } from './auth-store.ts';
+import { scanningDeviceRow } from './repo-scanning-devices.ts';
+import { deviceConfigRevision } from './scanning-session-dto.ts';
 import { grantScanMembership, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 export const ORIGIN = 'https://wallet.test';
@@ -85,6 +87,13 @@ export async function sessionWithDevice(
   });
   if (!device.pairing) throw new Error('Expected a device pairing code.');
   return { session, device, headers: await pair(device.pairing.code) };
+}
+
+/** What a device edit must carry as its revision: the digest of what an admin edits. */
+export async function deviceRevision(id: string) {
+  const row = await scanningDeviceRow(kit.env.DB, kit.org.id, id);
+  if (!row) throw new Error('Missing D1 configuration fixture.');
+  return deviceConfigRevision(row);
 }
 
 export async function expectUnassigned(headers: Record<string, string>, passCode: unknown) {
