@@ -4579,13 +4579,5 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesByIdVersionsByVersionWalletReports",
-    "op": "GET /api/v1/templates/{id}/versions/{version}/wallet-reports",
-    "change": "operation added",
-    "note": "Per-wallet (Google, Samsung) fidelity reports for a stored template version, the same report a release pins."
   }
 ]
