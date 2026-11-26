@@ -110903,7 +110903,8 @@
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111123,7 +111124,8 @@
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },

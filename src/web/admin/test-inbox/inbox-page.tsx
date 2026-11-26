@@ -24,9 +24,9 @@ import {
   useNow,
 } from '../../ui/index.ts';
 import { useSettings } from '../settings/queries.ts';
+import { EmailPreview } from './email-sheet.tsx';
 import { type InboxHost, type InboxIo, useInboxHost } from './host.ts';
 import { FailedBadge } from './parts.tsx';
-import { EmailPreview } from './preview.tsx';
 import { useCapturedEmails } from './queries.ts';
 import type { InboxSearch } from './search.ts';
 

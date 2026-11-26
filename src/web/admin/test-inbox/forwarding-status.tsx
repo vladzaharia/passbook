@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { CapturedEmailDetailSchema } from '@/shared/contracts/sandbox.ts';
-import { Button, Callout } from '../../ui/index.ts';
+import { Button } from '../../ui/button.tsx';
+import { Callout } from '../../ui/callout.tsx';
 
 export type Email = z.infer<typeof CapturedEmailDetailSchema>;
 export type SendState = {
