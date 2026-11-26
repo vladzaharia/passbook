@@ -78,7 +78,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
     db,
     `UPDATE operations SET status = ?, steps = ?, step_key = ?, error_code = ?, error_step = ?,
        error_retryable = ?, result = ?, revision = revision + 1, started_at = COALESCE(started_at, ?),
-       updated_at = ?, finished_at = ?, expires_at = COALESCE(?, expires_at), lease_until = NULL
+       updated_at = ?, finished_at = ?, expires_at = ${f.expiresAt === null ? 'expires_at' : '?'}, lease_until = NULL
      WHERE id = ? AND attempt = ? AND ${ACTIVE}`,
     [
       f.status,
@@ -91,7 +91,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
       f.now,
       f.now,
       f.now,
-      f.expiresAt,
+      ...(f.expiresAt === null ? [] : [f.expiresAt]),
       f.id,
       f.attempt,
     ],

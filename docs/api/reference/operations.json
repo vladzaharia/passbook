@@ -48,7 +48,8 @@
       },
       "revision": 3,
       "pollAfterMs": 1471
-    }
+    },
+    "description": "Reads one long-running action: its status, steps with counts, the current line and any error. Send If-None-Match with the ETag to get 304 while nothing changed. An operation you cannot read answers 404."
   },
   "operations.getOperations": {
     "response": {
@@ -104,7 +105,8 @@
         }
       ],
       "nextCursor": "c1.4812"
-    }
+    },
+    "description": "Lists long-running actions. Without orgId it returns those you started and, for platform admins, platform operations; with orgId it adds that organization's operations your role or key scope can read. Newest first."
   },
   "operations.postOperationsByIdCancel": {
     "response": {
@@ -155,7 +157,8 @@
       },
       "revision": 3,
       "pollAfterMs": 1471
-    }
+    },
+    "description": "Stops an operation. A queued one stops at once; a running one stops at its next safe point and keeps the work already done. 409 when its kind cannot be stopped."
   },
   "operations.postOperationsByIdRetry": {
     "request": {
@@ -209,6 +212,7 @@
       },
       "revision": 3,
       "pollAfterMs": 1471
-    }
+    },
+    "description": "Retries a failed operation under the same id with the next attempt. Steps already done stay done. Send an Idempotency-Key so a repeat answers the same operation."
   }
 }

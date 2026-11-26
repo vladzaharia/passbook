@@ -1,5 +1,5 @@
 import type { WorkflowStepConfig } from 'cloudflare:workers';
-import type { Progress, StepHandle } from './progress.ts';
+import type { Progress, StepHandle } from './progress-types.ts';
 
 /** The part of a Workflow `step` that `tracked` uses. */
 export interface StepLike {
