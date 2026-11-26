@@ -2,7 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const dev = join(import.meta.dirname, '..');
+/** The Workbench's tools, and the docs' pieces they share (the docs' ui, shell and search). */
+const wb = join(import.meta.dirname, '..');
+const dev = join(wb, '../developers');
 function sources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory()
@@ -13,22 +15,22 @@ function sources(dir: string): string[] {
   );
 }
 const files = [
-  ...sources(join(dev, 'console')),
+  ...sources(join(wb, 'console')),
   ...sources(join(dev, 'ui')),
   ...sources(join(dev, 'shell')),
-  ...sources(join(dev, 'keys')),
+  ...sources(join(wb, 'keys')),
+  ...sources(join(wb, 'tools')),
 ];
 const islandFiles = [
   ...files,
-  ...['webhooks', 'playground', 'logs', 'quickstart', 'search', 'keys', 'workbench'].flatMap((d) =>
-    sources(join(dev, d)),
-  ),
+  ...['webhooks', 'playground', 'logs', 'quickstart', 'home'].flatMap((d) => sources(join(wb, d))),
+  ...sources(join(dev, 'search')),
 ];
 const text = (f: string) => readFileSync(f, 'utf8');
 
 describe('the page never stores, shows or addresses the try token', () => {
   it('token.ts uses no storage, cookie, URL or history API', () => {
-    const t = text(join(dev, 'console/token.ts'));
+    const t = text(join(wb, 'console/token.ts'));
     expect(t).not.toMatch(
       /localStorage|sessionStorage|indexedDB|document\.cookie|location|history|caches|BroadcastChannel|postMessage|window\.name/,
     );
@@ -37,8 +39,8 @@ describe('the page never stores, shows or addresses the try token', () => {
     const readers = files.filter(
       (f) => /\btoken\(/.test(text(f)) && !f.endsWith('console/token.ts'),
     );
-    expect(readers.map((f) => f.slice(dev.length + 1))).toEqual(['console/send.ts']);
-    const send = text(join(dev, 'console/send.ts'));
+    expect(readers.map((f) => f.slice(wb.length + 1))).toEqual(['console/send.ts']);
+    const send = text(join(wb, 'console/send.ts'));
     expect(send.match(/Bearer /g)).toHaveLength(1);
     // biome-ignore lint/suspicious/noTemplateCurlyInString: the source text being matched
     expect(send).toContain('authorization: `Bearer ${bearer}`');
