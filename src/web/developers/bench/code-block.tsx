@@ -5,7 +5,7 @@ import { CodeView } from '../ui/code-view.tsx';
 import { type CopyAsItem, CopyAsMenu } from '../ui/copy-as-menu.tsx';
 import { CopyBtn, WrapToggle } from '../ui/copy-button.tsx';
 import { JsonTree } from '../ui/json-tree.tsx';
-import './kit.css';
+import './code-block.css';
 
 const NO_CODES: ReadonlySet<string> = new Set();
 
