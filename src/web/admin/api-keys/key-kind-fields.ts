@@ -1,3 +1,5 @@
+import { MINTABLE_PLATFORM_SCOPES, PLATFORM_KEY_SCOPES } from '@/shared/contracts/api-keys.ts';
+
 /** A personal or platform key lives at most 90 days. */
 export const SHORT_EXPIRY = [
   { value: '7', label: '7 days' },
@@ -13,6 +15,10 @@ export const EXPIRY = [
 
 /** A write scope on a Platform key caps it at 30 days; `platform:read` alone keeps 90. */
 export const PLATFORM_WRITE_EXPIRY = SHORT_EXPIRY.filter((o) => o.value !== '90');
+
+/** Platform scopes some route accepts by key; never one the server would refuse at mint. */
+export const offeredPlatformScopes = (): readonly string[] =>
+  PLATFORM_KEY_SCOPES.filter((s) => (MINTABLE_PLATFORM_SCOPES as readonly string[]).includes(s));
 
 export const isPlatformScope = (s: string) => s.startsWith('platform:');
 

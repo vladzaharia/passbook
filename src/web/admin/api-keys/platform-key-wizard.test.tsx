@@ -5,6 +5,16 @@ import { axe } from 'vitest-axe';
 import { json, renderApp } from '@/web/lib/test-utils.tsx';
 import { createKey, next, toReview } from './wizard-test-utils.ts';
 
+vi.mock('@/shared/contracts/api-keys.ts', async (orig) => ({
+  ...(await orig<typeof import('@/shared/contracts/api-keys.ts')>()),
+  MINTABLE_PLATFORM_SCOPES: [
+    'platform:read',
+    'platform:users',
+    'platform:groups',
+    'platform:wallet',
+  ],
+}));
+
 afterEach(() => vi.unstubAllGlobals());
 
 const key = (over: Record<string, unknown> = {}) => ({
@@ -75,6 +85,7 @@ describe('platform keys in the wizard', () => {
     expect(within(dialog).queryByRole('checkbox', { name: 'Read passes' })).toBeNull();
     expect(within(dialog).getByText('Removed: Assign holders.')).toBeInTheDocument();
     expect(within(dialog).getByRole('checkbox', { name: 'Polaris ID groups' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('checkbox', { name: 'Polaris ID claims' })).toBeNull();
     await user.click(within(dialog).getByRole('radio', { name: 'All organizations' }));
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
   });

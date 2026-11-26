@@ -1,8 +1,9 @@
-import { MINTABLE_SCOPES, PLATFORM_KEY_SCOPES } from '@/shared/contracts/api-keys.ts';
+import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { adminPresets, holdableScopes, selectedPreset } from '@/shared/developers-keys.ts';
 import { OptionTile, SegmentedControl } from '@/web/ui/index.ts';
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
+import { offeredPlatformScopes } from './key-kind-fields.ts';
 import { PRESET_FACT } from './key-presets.ts';
 import { ScopePicker } from './scope-picker.tsx';
 import { TerminalRows } from './scope-rows.tsx';
@@ -45,24 +46,26 @@ export function StepAccess({
     form.setCustom(false);
     form.set([...scopes]);
   };
-  const switcher = platform ? (
-    <div className="flex flex-col">
-      <p className="mb-2 text-sm font-medium text-fg">Reaches</p>
-      <SegmentedControl
-        label="Reaches"
-        options={FLAVOURS}
-        value={form.flavour}
-        onValueChange={form.changeFlavour}
-      />
-    </div>
-  ) : null;
+  const platformScopes = offeredPlatformScopes();
+  const switcher =
+    platform && platformScopes.length > 0 ? (
+      <div className="flex flex-col">
+        <p className="mb-2 text-sm font-medium text-fg">Reaches</p>
+        <SegmentedControl
+          label="Reaches"
+          options={FLAVOURS}
+          value={form.flavour}
+          onValueChange={form.changeFlavour}
+        />
+      </div>
+    ) : null;
   if (form.onPlatform)
     return (
       <>
         {switcher}
         {form.idpSession ? (
           <ScopePicker
-            offered={PLATFORM_KEY_SCOPES}
+            offered={platformScopes}
             value={form.scopes}
             onChange={form.set}
             note={form.note}

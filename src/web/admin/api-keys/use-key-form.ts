@@ -4,7 +4,7 @@ import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { isIpOrCidr, splitIps } from './cidr.ts';
-import { PLATFORM_WRITE_EXPIRY, SHORT_EXPIRY } from './key-kind-fields.ts';
+import { offeredPlatformScopes, PLATFORM_WRITE_EXPIRY, SHORT_EXPIRY } from './key-kind-fields.ts';
 import { useKeyScopes } from './use-key-scopes.ts';
 
 /** The least a key can do; more is ticked on purpose. */
@@ -67,7 +67,7 @@ export function useKeyForm(
 
   const role = ROLES.find((r) => r === access);
   const scansWrite = scopes.includes('scans:write') && !role;
-  const onPlatform = orgId === null && flavour === 'platform';
+  const onPlatform = orgId === null && flavour === 'platform' && offeredPlatformScopes().length > 0;
   const platformWrite = onPlatform && scopes.some((s) => s !== 'platform:read');
   const short = orgId === null || kind === 'personal';
   const expiryOptions = platformWrite ? PLATFORM_WRITE_EXPIRY : short ? SHORT_EXPIRY : null;
