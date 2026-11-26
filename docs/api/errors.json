@@ -5643,15 +5643,6 @@
       ]
     },
     {
-      "code": "SCAN_ZONE_LIVE_ONLY",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "scan"
-      ]
-    },
-    {
       "code": "SCIM_AUTH_FAILED",
       "statuses": [
         401

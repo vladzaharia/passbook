@@ -12,7 +12,9 @@ import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { IdempotencyId } from '../../platform/repo-idempotency.ts';
 import { settleStatement } from '../../platform/repo-idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertSharedWrite } from '../orgs/shared-write.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { isDeveloperOrg } from '../passes/repo-authority.ts';
 import { scanningDeviceStatements } from './device-statements.ts';
 import { eventStatements } from './events-statements.ts';
 import { chargeSecrets, SETUP_CALLS } from './key-credentials.ts';
@@ -56,13 +58,13 @@ export const pairsNow = (authority: TenantPassWrite, options: { setupTemplateId?
   mayMintSecrets(authority) && options.setupTemplateId === undefined;
 
 /** What a key may name, checked the same for a dry run and an apply. */
-export function assertSetupScope(authority: TenantPassWrite, plan: ScanSetupPlan): void {
+export async function assertSetupScope(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  plan: ScanSetupPlan,
+): Promise<void> {
   if (authority.kind === 'session') return;
-  if (plan.zones.length > 0 && authority.mode !== 'live')
-    throw new ForbiddenError(
-      'Places are shared with live mode. Make them with a live key.',
-      'SCAN_SETUP_LIVE_ONLY',
-    );
+  if (plan.zones.length > 0) await assertSharedWrite(ctx, authority, authority.orgId, 'zones');
   if (plan.staff.length > 0 && !mayMintSecrets(authority))
     throw new ForbiddenError(
       authority.scope === 'scanning:admin'
@@ -168,7 +170,7 @@ export async function prepareForCaller(
   facts: SetupFacts,
   options: ApplyOptions,
 ) {
-  assertSetupScope(authority, plan);
+  await assertSetupScope(ctx, authority, plan);
   // Scan passes made a session and nothing else, and never stopped on a check.
   const setup: ScanSetupPlan = options.setupTemplateId
     ? { ...plan, sessions: plan.sessions.map((s) => ({ ...s, devices: [] })) }
@@ -210,6 +212,7 @@ export async function applySetupPlan(
     facts,
     options,
   );
+  const sandbox = await isDeveloperOrg(ctx.env.DB, orgId);
   const pairs = pairsNow(authority, options);
   const secrets =
     prepared.staff.length +
@@ -228,7 +231,7 @@ export async function applySetupPlan(
         checks,
         SETUP_GRANT.codes,
         undefined,
-        setupTables(authority),
+        setupTables(authority, sandbox),
       );
     const grants: Grant[] = [grant(prepared.checks)];
     const [shared] = grants;

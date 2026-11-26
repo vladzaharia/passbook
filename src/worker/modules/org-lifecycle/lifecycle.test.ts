@@ -38,6 +38,12 @@ beforeAll(async () => {
       return { id: o.id };
     },
   };
+  // The daily sweep starts a purge per due org; a real instance would outlive the test.
+  (kit.env as { ORG_PURGE: unknown }).ORG_PURGE = {
+    async create(o: { id: string }) {
+      return { id: o.id };
+    },
+  };
   fake.bindSessions(kit.env.DB, kit.clock);
   app = createApp({ stores: fake.stores, clock: kit.clock });
 }, 30_000);

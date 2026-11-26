@@ -16,6 +16,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { brandKitOf } from './brand.ts';
 import { deleteWebLogo, putWebLogo, updateBrandKit } from './brand-web.ts';
+import { assertSharedWrite } from './shared-write.ts';
 
 /**
  * /api/v1/brand: the org's brand kit. A key needs `brand:manage`; a session needs `org:read` to
@@ -48,7 +49,15 @@ async function authorize(
   const orgId = orgOf(auth, requested);
   if (!auth || auth.kind === 'scanner') throw new ForbiddenError();
   assertOrgAccess(auth, orgId);
-  return { orgId, authority: await tenantAuthorityOf(serviceContext(c), auth, orgId, capability) };
+  const ctx = serviceContext(c);
+  return { orgId, authority: await tenantAuthorityOf(ctx, auth, orgId, capability) };
+}
+
+/** A brand write: `org:manage`, and never from a Test key that shares the org with Live. */
+async function authorizeWrite(c: Context<AppBindings>, requested: string | undefined) {
+  const found = await authorize(c, requested, 'org:manage');
+  await assertSharedWrite(serviceContext(c), found.authority, found.orgId, 'the brand kit');
+  return found;
 }
 
 register(
@@ -78,7 +87,7 @@ register(
     response: OrgSchema,
   },
   async (c) => {
-    const { orgId, authority } = await authorize(c, c.req.valid('query').orgId, 'org:manage');
+    const { orgId, authority } = await authorizeWrite(c, c.req.valid('query').orgId);
     return c.json(
       await updateBrandKit(
         serviceContext(c),
@@ -102,7 +111,7 @@ register(
     response: OrgSchema,
   },
   async (c) => {
-    const { orgId, authority } = await authorize(c, c.req.valid('query').orgId, 'org:manage');
+    const { orgId, authority } = await authorizeWrite(c, c.req.valid('query').orgId);
     return c.json(
       await putWebLogo(
         serviceContext(c),
@@ -126,7 +135,7 @@ register(
   },
   async (c) => {
     const query = c.req.valid('query');
-    const { orgId, authority } = await authorize(c, query.orgId, 'org:manage');
+    const { orgId, authority } = await authorizeWrite(c, query.orgId);
     return c.json(
       await deleteWebLogo(
         serviceContext(c),
