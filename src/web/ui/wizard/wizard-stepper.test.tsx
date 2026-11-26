@@ -179,3 +179,44 @@ describe('StepMarker and StepList', () => {
     expect(list.querySelector('[aria-current="step"]')).toHaveTextContent('On screen');
   });
 });
+
+describe('WizardStepper step groups and locks', () => {
+  const grouped = (over: Partial<WizardModel> = {}) => {
+    const wizard = model(['done', 'done', 'current', 'todo'], over);
+    const groups = ['In PassBook', 'In PassBook', 'In Shopify', 'In Shopify'];
+    wizard.steps = wizard.steps.map((s, i) => ({ ...s, group: groups[i] }));
+    return wizard;
+  };
+
+  it('puts each run of steps in a labelled group and leaves an ungrouped rail flat', () => {
+    const { container, rerender } = render(<WizardStepper wizard={grouped()} />);
+    const first = screen.getByRole('group', { name: 'In PassBook' });
+    expect(within(first).getAllByRole('button')).toHaveLength(2);
+    expect(
+      within(screen.getByRole('group', { name: 'In Shopify' })).getByText('Step 3'),
+    ).toBeTruthy();
+    rerender(<WizardStepper wizard={model(['done', 'current'])} />);
+    expect(container.querySelector('[role="group"]')).toBeNull();
+  });
+
+  it('names the group above the compact line', () => {
+    render(<WizardStepper wizard={grouped()} />);
+    const line = screen.getByText(/Step 3 of 4/);
+    expect(line.previousElementSibling).toHaveTextContent('In Shopify');
+  });
+
+  it('shows a locked step as done and locked, with the reason, and no button', () => {
+    const wizard = grouped({ lockedReason: 'Change this on the connection.' });
+    wizard.steps = wizard.steps.map((s, i) => (i < 2 ? { ...s, locked: true } : s));
+    render(<WizardStepper wizard={wizard} />);
+    expect(screen.queryByRole('button', { name: /^Step 1/ })).toBeNull();
+    expect(screen.getAllByText(/done, locked\. Change this on the connection\./)).toHaveLength(2);
+  });
+
+  it('passes axe with groups and locks', async () => {
+    const wizard = grouped({ lockedReason: 'Change this on the connection.' });
+    wizard.steps = wizard.steps.map((s, i) => (i < 2 ? { ...s, locked: true } : s));
+    const { container } = render(<WizardStepper wizard={wizard} />);
+    expect((await axe(container)).violations).toEqual([]);
+  });
+});

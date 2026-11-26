@@ -16,6 +16,8 @@ export interface WizardProps {
   formError?: string | undefined;
   /** A press on a blocked Next; without it the press announces the hint. */
   onBlocked?: () => void;
+  /** What a locked step (`locked` on its def) says on hover: "Change this on the connection." */
+  lockedReason?: string | undefined;
   /** Index of the current step. */
   current: number;
   /** A done step was clicked: go back to it (its state is kept by the caller). */
@@ -117,22 +119,29 @@ function railOf({
   current,
   onStep,
   skipped = [],
-}: Pick<WizardProps, 'steps' | 'states' | 'current' | 'onStep' | 'skipped'>): WizardRail {
+  lockedReason,
+}: Pick<
+  WizardProps,
+  'steps' | 'states' | 'current' | 'onStep' | 'skipped' | 'lockedReason'
+>): WizardRail {
   return {
     mode: 'create',
+    lockedReason,
     index: current,
     steps: steps.map((s, i) => ({
       ...s,
       skip: skipped.includes(s.id),
       state:
         states?.[i] ??
-        (i === current
-          ? 'current'
-          : skipped.includes(s.id)
-            ? 'skipped'
-            : i < current
-              ? 'done'
-              : 'todo'),
+        (s.locked
+          ? 'done'
+          : i === current
+            ? 'current'
+            : skipped.includes(s.id)
+              ? 'skipped'
+              : i < current
+                ? 'done'
+                : 'todo'),
     })),
     go: (to) => {
       const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
@@ -172,6 +181,7 @@ export function Wizard({
   states,
   formError,
   onBlocked,
+  lockedReason,
   ...bar
 }: WizardProps) {
   const blocked = useBlockedSubmit<HTMLDivElement>();
@@ -183,7 +193,7 @@ export function Wizard({
   useEffect(() => {
     previous.current = current;
   }, [current]);
-  const rail = railOf({ steps, states, current, onStep, skipped });
+  const rail = railOf({ steps, states, current, onStep, skipped, lockedReason });
   const view = {
     ...rail,
     id: steps[current]?.id ?? '',
