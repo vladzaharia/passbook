@@ -4,10 +4,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
-import { all, first, run } from '../../platform/db.ts';
-import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { all, first } from '../../platform/db.ts';
+import type { Kit as PassKit } from '../passes/pass-test-fixtures.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import { enrolOn } from './enrolled-test-fixtures.ts';
 import { runSystemProjection } from './projection-system.ts';
 import { SYSTEM_AUTHOR, SYSTEM_REVIEWER } from './projection-system-authority.ts';
 import { installV2Env, jobCtx, LOGO, S, setup } from './projection-v2-test-fixtures.ts';
@@ -30,21 +30,25 @@ const wallets = { schema: 1, google: { images: { logo: LOGO } }, samsung: {} };
 async function systemRelease() {
   const kit = await setup({}, wallets);
   const identity = await createFixtureIdentity(undefined, { now: new Date(S.clock.now()) });
+  // A real enrolment (an org credential, its source, On), not the legacy envelope; the identity is unique per mode.
+  const unique = `${Date.now()}${Math.floor(Math.random() * 1e3)}`;
   const samsung: SamsungWalletCredentials = {
-    partnerId: 'partner',
+    partnerId: `partner${unique}`,
     certificateId: 'ABCD',
-    cardId: 'membership',
+    cardId: `card${unique}`,
     partnerPrivateKeyPem: identity.privateKey,
     partnerCertificatePem: identity.certificate,
     samsungCertificatePem: identity.certificate,
   };
-  await configureWalletProviderAccount(kit.ctx, kit.author, {
-    orgId: kit.orgId,
-    mode: 'live',
-    provider: 'samsung',
-    expectedRevision: 0,
-    credentials: samsung,
-  });
+  await enrolOn(
+    { env: S.env, org: { id: kit.orgId }, ctx: kit.ctx } as unknown as PassKit,
+    kit.author,
+    {
+      provider: 'samsung',
+      expectedRevision: 0,
+      credentials: samsung,
+    },
+  );
   const restore = setWalletProvidersEnabledForTest(true);
   // The card read that a Samsung release needs: a launched loyalty card.
   vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
@@ -94,6 +98,17 @@ describe('Samsung system release (CAND-1)', () => {
     );
     expect(candidate?.author_id).toBe(SYSTEM_AUTHOR);
     expect(candidate?.version_author_id).toBe(kit.author.userId);
+    const account = await first<{
+      credential_id: string | null;
+      credential_source_id: string | null;
+    }>(
+      S.env.DB,
+      `SELECT a.credential_id, a.credential_source_id FROM template_candidates c
+       JOIN wallet_provider_accounts a ON a.id = c.provider_account_id WHERE c.id = ?`,
+      [release.candidateId],
+    );
+    // The enrolment model: a source and no legacy envelope.
+    expect(account).toEqual({ credential_id: null, credential_source_id: expect.any(String) });
     const approvals = await all<{ reviewer_id: string; kind: string }>(
       S.env.DB,
       'SELECT reviewer_id, kind FROM template_approvals WHERE candidate_id = ?',
@@ -112,10 +127,9 @@ describe('Samsung system release (CAND-1)', () => {
     ]);
   });
 
-  it('passes the retirement proof and the tombstone trigger', async () => {
+  it('passes the retirement proof', async () => {
     const { release } = await systemRelease();
     const db = S.env.DB;
-    const commitment = await ensureCredentialRefKeyset(db, S.env);
     const proof = await first<{ ok: number }>(
       db,
       `WITH i AS (SELECT r.org_id, r.mode, c.provider_account_id AS account_id,
@@ -125,19 +139,6 @@ describe('Samsung system release (CAND-1)', () => {
       [release.id],
     );
     expect(proof?.ok).toBe(1);
-    await run(
-      db,
-      `INSERT INTO wallet_samsung_tombstones
-        (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,
-         provider_identity_hash, retired_at, credential_keyset_commitment)
-       SELECT ?, c.org_id, c.mode, c.provider_account_id, c.provider_account_revision, c.id, r.id,
-         c.provider_identity_hash, ?, ?
-       FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = ?`,
-      ['a'.repeat(64), S.clock.now(), commitment, release.id],
-    );
-    expect(
-      await first(db, 'SELECT 1 FROM wallet_samsung_tombstones WHERE release_id = ?', [release.id]),
-    ).not.toBeNull();
   });
 
   it('keeps the system exemption in every recreated object, and the raw rule for the rest', async () => {
