@@ -232,7 +232,11 @@
     { "name": "RL_ACCESS", "namespace_id": "1027", "simple": { "limit": 5, "period": 60 } },
     { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } },
     // Writes a Platform key makes on platform routes, per key (key:<id>); keep equal to PLATFORM_WRITE_LIMIT in rate-limit.ts.
-    { "name": "RL_PLATFORM_WRITE", "namespace_id": "1029", "simple": { "limit": 60, "period": 60 } },
+    {
+      "name": "RL_PLATFORM_WRITE",
+      "namespace_id": "1029",
+      "simple": { "limit": 60, "period": 60 }
+    },
     // Ledger writes for refused webhook deliveries (key: connection id): over budget the row is dropped, never the 401.
     { "name": "RL_WEBHOOK_LEDGER", "namespace_id": "1030", "simple": { "limit": 30, "period": 60 } }
   ],
