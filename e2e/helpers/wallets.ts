@@ -324,7 +324,11 @@ export async function releaseSystem(
 }
 
 /** The platform's own candidate for the provider, once it has written one. */
-export async function systemCandidate(admin: Api, w: Pick<WalletOrg, 'org' | 'template'>, provider: Provider) {
+export async function systemCandidate(
+  admin: Api,
+  w: Pick<WalletOrg, 'org' | 'template'>,
+  provider: Provider,
+) {
   const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
   const list = await admin.send<{ items: (Candidate & { authorId: string })[] }>(
     'GET',
