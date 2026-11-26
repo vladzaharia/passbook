@@ -50,3 +50,19 @@ export async function failStarted(
 ): Promise<void> {
   await progressOf(ctx, op.id, op.attempt).fail(error);
 }
+
+/** A platform operation (readable by platform admins): no org or mode. The caller already proved it is one. */
+export async function startPlatformOperation(
+  ctx: ServiceContext,
+  actor: StartInput['actor'],
+  spec: Pick<OrgStart, 'kind' | 'target' | 'subject' | 'workflowInstanceId'>,
+): Promise<OperationDto> {
+  const { operation } = await startOperationOnce(ctx, {
+    kind: spec.kind,
+    actor,
+    ...(spec.target ? { target: spec.target } : {}),
+    ...(spec.subject ? { subject: spec.subject } : {}),
+    ...(spec.workflowInstanceId ? { workflowInstanceId: spec.workflowInstanceId } : {}),
+  });
+  return operation;
+}

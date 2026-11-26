@@ -37,10 +37,50 @@ const relaunch: NonNullable<OperationRunner['relaunch']> = async (ctx, op, _prev
   return { workflowInstanceId: instanceId };
 };
 
+const workflow: NonNullable<OperationRunner['workflow']> = async (ctx, instanceId) =>
+  ctx.env.BULK_REISSUE.get(instanceId);
+
+/** A platform admin session retries a platform run: the same admin check the start made. */
+const authorizePlatformRetry: NonNullable<OperationRunner['authorizeRetry']> = async (
+  _ctx,
+  _op,
+  caller,
+) => {
+  if (caller.kind !== 'session' || !caller.roles.includes('admin')) throw new ForbiddenError();
+};
+
+const relaunchPlatform: NonNullable<OperationRunner['relaunch']> = async (
+  ctx,
+  op,
+  _previous,
+  caller,
+) => {
+  if (caller.kind !== 'session' || !caller.roles.includes('admin')) throw new ForbiddenError();
+  const target = op.target;
+  const instanceId = await startBulkReissue(
+    ctx,
+    { type: 'user', id: caller.userId },
+    {
+      ...(target?.type === 'identity'
+        ? { identityId: target.id, cause: 'resign' as const }
+        : target?.type === 'template'
+          ? { templateId: target.id }
+          : {}),
+    },
+    {
+      platformSession: { userId: caller.userId, sessionId: caller.sessionId },
+      mode: caller.mode,
+      operation: { actor: { type: 'user', id: caller.userId }, existing: op },
+    },
+  );
+  return { workflowInstanceId: instanceId };
+};
+
 export const operationRunners: OperationRunners = {
-  'passes.reissue': {
-    authorizeRetry,
-    relaunch,
-    workflow: async (ctx, instanceId) => ctx.env.BULK_REISSUE.get(instanceId),
+  'passes.reissue': { authorizeRetry, relaunch, workflow },
+  'passes.reissue_platform': {
+    authorizeRetry: authorizePlatformRetry,
+    relaunch: relaunchPlatform,
+    workflow,
   },
 };

@@ -1,10 +1,6 @@
 import { defineOperationKind } from '../define.ts';
 
-export const passesReissue = defineOperationKind({
-  kind: 'passes.reissue',
-  audience: 'org',
-  read: 'passes:read',
-  write: 'passes:operate',
+const common = {
   cancel: 'never',
   retry: true,
   stepUp: false,
@@ -24,4 +20,21 @@ export const passesReissue = defineOperationKind({
     { key: 'passes', label: 'Rebuild passes', active: 'Rebuilding passes', counts: true },
     { key: 'finish', label: 'Save the result', active: 'Saving the result' },
   ],
+} as const;
+
+export const passesReissue = defineOperationKind({
+  ...common,
+  kind: 'passes.reissue',
+  audience: 'org',
+  read: 'passes:read',
+  write: 'passes:operate',
+});
+
+/** A platform admin's rebuild across organizations (an identity or template shared by many). */
+export const passesReissuePlatform = defineOperationKind({
+  ...common,
+  kind: 'passes.reissue_platform',
+  audience: 'platform',
+  read: null,
+  write: null,
 });

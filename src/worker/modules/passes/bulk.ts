@@ -10,7 +10,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { failStarted, startOrgOperation } from '../operations/start-org.ts';
+import { failStarted, startOrgOperation, startPlatformOperation } from '../operations/start-org.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { getTemplate } from '../templates/repo.ts';
 import { isNotFound, resolveTemplate } from './builder.ts';
@@ -224,22 +224,29 @@ export async function startBulkReissue(
     ...(principal ? { principal } : {}),
   };
   // The row comes before the Workflow, so its first write finds it.
-  const reported = options?.operation && orgId !== null && options.mode ? options.operation : null;
-  const op =
-    reported && orgId !== null && options?.mode
-      ? (reported.existing ??
-        (await startOrgOperation(ctx, reported.actor, {
-          kind: 'passes.reissue',
-          orgId,
-          mode: options.mode,
-          target: body.identityId
-            ? { type: 'identity', id: body.identityId }
-            : templateId
-              ? { type: 'template', id: templateId }
-              : { type: 'org', id: orgId },
-          workflowInstanceId: instanceId,
-        })))
-      : null;
+  const reported = options?.operation && options.mode ? options.operation : null;
+  const kind = options?.platformSession ? 'passes.reissue_platform' : 'passes.reissue';
+  const target = body.identityId
+    ? { type: 'identity', id: body.identityId }
+    : templateId
+      ? { type: 'template', id: templateId }
+      : { type: 'org', id: orgId ?? 'platform' };
+  const op = reported
+    ? (reported.existing ??
+      (orgId !== null && options?.mode
+        ? await startOrgOperation(ctx, reported.actor, {
+            kind,
+            orgId,
+            mode: options.mode,
+            target,
+            workflowInstanceId: instanceId,
+          })
+        : await startPlatformOperation(ctx, reported.actor, {
+            kind,
+            target,
+            workflowInstanceId: instanceId,
+          })))
+    : null;
   if (op) {
     params.operationId = op.id;
     params.operationAttempt = op.attempt;

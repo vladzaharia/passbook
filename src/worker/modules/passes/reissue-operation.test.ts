@@ -12,10 +12,12 @@ import { setupTenantTestAuth } from './tenant-test-fixtures.ts';
 
 let kit: Kit;
 let app: ReturnType<typeof createApp>;
+let admin: () => Record<string, string>;
 
 beforeAll(async () => {
   kit = await setupKit();
   const auth = await setupTenantTestAuth(kit);
+  admin = () => auth.admin();
   app = createApp({ stores: auth.stores, clock: kit.clock });
 });
 
@@ -89,5 +91,39 @@ describe('a rebuild shows as an operation', () => {
         mode: 'live',
       } as never),
     ).rejects.toBeTruthy();
+  });
+});
+
+describe('a platform admin rebuild shows as a platform operation', () => {
+  it('has no org, is read by an admin, and a retry needs an admin', async () => {
+    kit.workflow.created.length = 0;
+    await settle();
+    const res = await app.request(
+      'https://wallet.test/api/v1/passes/bulk-reissue',
+      {
+        method: 'POST',
+        headers: { ...admin(), 'content-type': 'application/json' },
+        body: JSON.stringify({ templateId: kit.template.id }),
+      },
+      kit.env,
+    );
+    expect(res.status).toBe(202);
+    const { operationId } = (await res.json()) as { operationId: string };
+    expect(await opOf(operationId)).toMatchObject({
+      kind: 'passes.reissue_platform',
+      orgId: null,
+      mode: null,
+      target: { type: 'template', id: kit.template.id },
+    });
+    const read = await app.request(
+      `https://wallet.test/api/v1/operations/${operationId}`,
+      { headers: admin() },
+      kit.env,
+    );
+    expect(read.status).toBe(200);
+    const authorize = operationRunners['passes.reissue_platform']?.authorizeRetry;
+    await expect(
+      authorize?.(kit.ctx, await opOf(operationId), { kind: 'session', roles: ['user'] } as never),
+    ).rejects.toMatchObject({ status: 403 });
   });
 });
