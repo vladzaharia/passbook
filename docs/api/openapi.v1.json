@@ -122849,6 +122849,7 @@
                       "timeZone": "America/Los_Angeles",
                       "templateName": "Monthly membership",
                       "status": "active",
+                      "holding": "owned",
                       "channels": [
                         "mobile"
                       ],
