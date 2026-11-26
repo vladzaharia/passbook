@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../lib/test-utils.tsx';
 import { TooltipProvider } from '../tooltip.tsx';
-import { type OperationsClient, OperationsProvider } from './client.ts';
-import { fixtureOperation, SANDBOX_CREATE, STATE_FIXTURES } from './fixtures.test-support.ts';
+import { type OperationsClient, OperationsHttpError, OperationsProvider } from './client.ts';
+import { fixtureOperation, NOW, SANDBOX_CREATE, STATE_FIXTURES } from './fixtures.test-support.ts';
 import { OperationProgress } from './operation-progress.tsx';
 import { OperationTray } from './operation-tray.tsx';
 import { resetOperationCache, trackOperation } from './store.ts';
@@ -37,6 +37,8 @@ const matchMedia = (phone: boolean) =>
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
+  // The fixtures' ends are stamped at NOW; "finished in the last hour" reads the clock.
+  vi.setSystemTime(NOW + 60_000);
   resetOperationCache();
   toasts.action.mockClear();
   toasts.error.mockClear();
@@ -148,5 +150,74 @@ describe('OperationTray', () => {
     act(() => trackOperation(done));
     expect(toasts.action).not.toHaveBeenCalled();
     expect(view.container.querySelector('[data-operation-tray]')).toBeInTheDocument();
+  });
+
+  describe('?op', () => {
+    afterEach(() => window.history.replaceState(null, '', '/'));
+
+    it('restores the sheet of the operation the URL names after a reload', async () => {
+      window.history.replaceState(null, '', '/admin?tab=x&op=op-sandbox.delete-running#top');
+      const get = vi.fn(async () => ({ operation: STATE_FIXTURES.running(), etag: '"e"' }));
+      mount(client({ get }));
+      await settle();
+      const sheet = await screen.findByRole('dialog', { name: 'Delete sandbox' });
+      expect(within(sheet).getByText('Removing Test passes · 4 of 12')).toBeInTheDocument();
+      expect(get).toHaveBeenCalledWith('op-sandbox.delete-running', expect.anything());
+    });
+
+    it('takes ?op off the URL when the sheet closes, keeping the other params and the hash', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      window.history.replaceState(null, '', '/admin?tab=x&op=op-sandbox.delete-running#top');
+      mount(
+        client({ get: vi.fn(async () => ({ operation: STATE_FIXTURES.running(), etag: null })) }),
+      );
+      await settle();
+      const sheet = await screen.findByRole('dialog', { name: 'Delete sandbox' });
+      await user.click(within(sheet).getByRole('button', { name: 'Close' }));
+      expect(window.location.search).toBe('?tab=x');
+      expect(window.location.hash).toBe('#top');
+    });
+
+    it('drops an unknown or foreign id (404) without showing an empty sheet', async () => {
+      window.history.replaceState(null, '', '/admin?op=nope');
+      const get = vi.fn(async () => {
+        throw new OperationsHttpError(404, null);
+      });
+      mount(client({ get }));
+      await settle();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(window.location.search).toBe('');
+    });
+  });
+
+  describe('a finished row with a page', () => {
+    const done = (href: string) => ({
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'succeeded' }),
+      result: { href, ids: {} },
+    });
+    it('opens the page named by a safe app path', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const onNavigate = vi.fn();
+      mount(client(), <OperationTray onNavigate={onNavigate} />);
+      await settle();
+      act(() => trackOperation({ ...done('/developers/quickstart'), status: 'running' }));
+      act(() => trackOperation({ ...done('/developers/quickstart'), revision: 9 }));
+      await user.click(screen.getByRole('button', { name: /Activity/ }));
+      await user.click(await screen.findByRole('button', { name: /Create sandbox/ }));
+      expect(onNavigate).toHaveBeenCalledWith('/developers/quickstart');
+    });
+
+    it('never navigates to anything else: it opens the sheet instead', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const onNavigate = vi.fn();
+      mount(client(), <OperationTray onNavigate={onNavigate} />);
+      await settle();
+      act(() => trackOperation({ ...done('https://evil.example/x'), status: 'running' }));
+      act(() => trackOperation({ ...done('https://evil.example/x'), revision: 9 }));
+      await user.click(screen.getByRole('button', { name: /Activity/ }));
+      await user.click(await screen.findByRole('button', { name: /Create sandbox/ }));
+      expect(onNavigate).not.toHaveBeenCalled();
+      expect(await screen.findByRole('dialog', { name: 'Create sandbox' })).toBeInTheDocument();
+    });
   });
 });

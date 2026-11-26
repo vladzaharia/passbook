@@ -15,6 +15,7 @@ export interface Problem {
   limit?: number;
   used?: number;
   signInUrl?: string;
+  operationId?: string;
 }
 
 /** Where a `Problem.type` points: the catalog page of the code (docs/api/errors.json). */
@@ -59,9 +60,10 @@ export function toProblem(
   let limit: number | undefined;
   let used: number | undefined;
   let signInUrl: string | undefined;
+  let operationId: string | undefined;
 
   if (error instanceof AppError && !isInternalCode(error.code)) {
-    ({ status, code, issues, headers, feature, limit, used, signInUrl } = error);
+    ({ status, code, issues, headers, feature, limit, used, signInUrl, operationId } = error);
     detail = error.message;
   } else if (error instanceof ZodError) {
     status = 422;
@@ -85,6 +87,7 @@ export function toProblem(
     ...(limit === undefined ? {} : { limit }),
     ...(used === undefined ? {} : { used }),
     ...(signInUrl ? { signInUrl } : {}),
+    ...(operationId ? { operationId } : {}),
     ...(headers ? { headers } : {}),
   };
 }

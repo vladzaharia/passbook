@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { OperationProgress } from './operation-progress.tsx';
 import { useOperation } from './use-operation.ts';
@@ -18,7 +19,11 @@ export function OperationSheet({
   zone?: string;
   next?: { label: string; onClick: () => void };
 }) {
-  const { operation } = useOperation(id);
+  const { operation, missing } = useOperation(id);
+  // A `?op` that is unknown, or not the person's: the sheet has nothing to show, so it goes.
+  useEffect(() => {
+    if (id && missing) onClose();
+  }, [id, missing, onClose]);
   const { stop, retry, retrying } = useOperationActions();
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && onClose()}>

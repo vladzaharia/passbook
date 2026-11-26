@@ -1475,6 +1475,30 @@
     "fix": "Sign in with Polaris ID, then send the request again.",
     "retryable": false
   },
+  "OPERATION_NOT_CANCELABLE": {
+    "title": "Operation cannot be stopped",
+    "when": "The operation's kind cannot be stopped, or it has ended.",
+    "fix": "Wait for it to finish. Read it with GET /api/v1/operations/{id}.",
+    "retryable": false
+  },
+  "OPERATION_NOT_FOUND": {
+    "title": "Operation not found",
+    "when": "The id is unknown, or the caller may not read that operation.",
+    "fix": "Check the id. List your operations with GET /api/v1/operations.",
+    "retryable": false
+  },
+  "OPERATION_NOT_RETRYABLE": {
+    "title": "Operation cannot be retried",
+    "when": "The operation has not failed, or its failure cannot be retried.",
+    "fix": "Read it with GET /api/v1/operations/{id}. Start the action again instead.",
+    "retryable": false
+  },
+  "OPERATION_RUNNING": {
+    "title": "Already running",
+    "when": "An operation for the same subject is still active. The response names it in operationId.",
+    "fix": "Follow the operation named in operationId instead of starting another.",
+    "retryable": false
+  },
   "ORG_ACCESS_CHANGED": {
     "title": "Organization access changed",
     "when": "The caller's membership or key access changed while the request ran.",

@@ -51,6 +51,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   nfc_tag_keys: SEALED,
   nfc_tag_programs: SEALED,
   nfc_tag_sun: SEALED,
+  operations: 'progress projection of a running action: grants nothing, kept 7 to 30 days',
   org_exports: 'the export records themselves',
   org_invitation_setups: 'Polaris ID signup token ids of an invitation',
   org_invitations: 'pending invitations carry a token hash: invite again',

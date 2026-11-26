@@ -64,8 +64,14 @@ export function TopBar({ active, bench = false }: { active?: NavKey; bench?: boo
           aria-keyshortcuts="Meta+K Control+K"
         />
       }
-      // The sandbox chip (island) when there is one; nothing otherwise.
-      controls={bench ? null : <span data-island="org-chip" />}
+      // The activity tray (OperationTray, `operations` island) on every page, then the sandbox chip
+      // (island) when there is one; on the bench the strip carries the chip instead.
+      controls={
+        <>
+          <span data-island="operations" />
+          {bench ? null : <span data-island="org-chip" />}
+        </>
+      }
       account={
         <span data-island="account">
           <SignInButton>

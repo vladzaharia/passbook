@@ -1,13 +1,8 @@
 import { Ban, CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import type { OperationStatus } from '../../shared/contracts/operations.ts';
 import type { StatusEntry } from './status.ts';
 
-export type OperationStatus =
-  | 'queued'
-  | 'running'
-  | 'waiting'
-  | 'succeeded'
-  | 'failed'
-  | 'cancelled';
+export type { OperationStatus };
 
 /**
  * Operation states. The API says `succeeded` and `cancelled`; people read Done and Stopped:

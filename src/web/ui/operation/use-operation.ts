@@ -26,6 +26,7 @@ export function useOperation(id: string | null): {
   useEffect(() => {
     // `kick` restarts the loop (refetch, a retry).
     void kick;
+    setMissing(false);
     if (!id || terminal) return;
     const ctl = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;

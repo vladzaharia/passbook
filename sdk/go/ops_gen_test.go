@@ -839,6 +839,34 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"operations.list", "GET", "/api/v1/operations", false,
+		"", `{"items":[{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"operations.retrieve", "GET", "/api/v1/operations/id1", false,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"operations.cancel", "POST", "/api/v1/operations/id1/cancel", false,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Cancel(ctx, "id1")
+		},
+	},
+	{
+		"operations.retry", "POST", "/api/v1/operations/id1/retry", true,
+		"", `{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Operations.Retry(ctx, "id1")
+		},
+	},
+	{
 		"developerInvitations.list", "GET", "/api/v1/orgs/id1/developer-invitations", false,
 		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"state":"pending","createdAt":0,"expiresAt":0,"revokedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

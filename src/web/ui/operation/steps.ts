@@ -7,7 +7,7 @@ import type { Operation } from './types.ts';
 export function stepItems(op: Operation, now: number, zone?: string): StepListItem[] {
   return op.steps.map((s, i) => {
     // A wait the operation is not blocked on (the erase after Done) reads "By Dec 2".
-    const tail = s.state === 'waiting' && op.status !== 'waiting';
+    const tail = s.state === 'waiting' && s.waitingReason === 'due';
     const prev = op.steps[i - 1];
     return {
       id: s.key,
@@ -32,9 +32,9 @@ export function announcement(op: Operation): string {
     case 'queued':
       return 'Starting';
     case 'succeeded':
-      return op.doneTitle ?? op.title;
+      return op.text;
     case 'failed':
-      return `${op.failTitle ?? `Could not ${op.title.toLowerCase()}`}. ${op.error?.message ?? ''}`.trim();
+      return `${op.text}. ${op.error?.message ?? ''}`.trim();
     case 'cancelled':
       return 'Stopped';
     default: {

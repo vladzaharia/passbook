@@ -1136,6 +1136,22 @@
     "note": "Callable with an org-bound key holding nfc:read; the audit log names the key."
   },
   {
+    "key": "GET /api/v1/operations new operation",
+    "class": "additive",
+    "operationId": "operations.getOperations",
+    "op": "GET /api/v1/operations",
+    "change": "new operation",
+    "note": "New. Lists operations you started or can read in an organization; filter by active, mine, kind, target."
+  },
+  {
+    "key": "GET /api/v1/operations/{id} new operation",
+    "class": "additive",
+    "operationId": "operations.getOperationsById",
+    "op": "GET /api/v1/operations/{id}",
+    "change": "new operation",
+    "note": "New. Reads one long-running action with its steps and counts. 304 when If-None-Match carries its ETag."
+  },
+  {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgs",
@@ -3539,6 +3555,22 @@
     "op": "POST /api/v1/offboard",
     "change": "200.more: field added",
     "note": "Up to 100 passes a call. more is true while passes remain: send the same request again."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/cancel new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdCancel",
+    "op": "POST /api/v1/operations/{id}/cancel",
+    "change": "new operation",
+    "note": "New. Stops an operation: a queued one at once, a running one at its next safe point. 409 OPERATION_NOT_CANCELABLE when the kind cannot be stopped."
+  },
+  {
+    "key": "POST /api/v1/operations/{id}/retry new operation",
+    "class": "additive",
+    "operationId": "operations.postOperationsByIdRetry",
+    "op": "POST /api/v1/operations/{id}/retry",
+    "change": "new operation",
+    "note": "New. Retries a failed operation under the same id with the next attempt. Takes an Idempotency-Key. 409 OPERATION_NOT_RETRYABLE or OPERATION_RUNNING."
   },
   {
     "key": "POST /api/v1/orgs 201.kind: field added",

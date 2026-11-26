@@ -18,6 +18,8 @@ import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
 import { tickMessageRules } from '../modules/message-rules/tick.ts';
 import { expireBindings } from '../modules/nfc/expiry.ts';
+import { sweepStalledOperations } from '../modules/operations/stalls.ts';
+import { sweepOperations } from '../modules/operations/sweep.ts';
 import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { expireEntitlementOverrides } from '../modules/orgs/entitlement-expiry.ts';
@@ -91,6 +93,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
     { name: 'passes.import_stuck', run: sweepStuckImports },
     { name: 'passes.bulk_run_stuck', run: sweepBulkRuns },
+    { name: 'operations.stalls', run: sweepStalledOperations },
     { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
     { name: 'idp.drain', run: drainIdp },
@@ -100,6 +103,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
     { name: 'idempotency.sweep', run: sweepIdempotency },
+    { name: 'operations.sweep', run: sweepOperations },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
     { name: 'connections.retention', run: dailyConnections },
