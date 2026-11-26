@@ -14,7 +14,6 @@ export const IDP_COPY = {
   },
   paused: 'Paused in Polaris ID',
   accessPaused: 'Access paused',
-  restoreStarted: 'Restoring access',
   noClaims: 'No claims.',
   noGroups: 'No custom groups.',
   claimsReach: 'Claims reach every app that signs in with Polaris ID.',

@@ -99,7 +99,7 @@ export function MemberTable({
           <div className="flex min-h-10 min-w-0 items-center gap-3">
             <EntityAvatar kind="user" id={member.userId} name={name} size={40} />
             <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="truncate text-sm font-medium text-fg-strong">{name}</span>
                 {member.userId === selfId ? <Badge tone="accent">You</Badge> : null}
                 {member.accessPaused ? <Badge tone="warning">{IDP_COPY.accessPaused}</Badge> : null}

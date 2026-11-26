@@ -1,6 +1,6 @@
 import { UserX } from 'lucide-react';
 import { useState } from 'react';
-import { Button, Card, CardHeader, toast } from '@/web/ui/index.ts';
+import { Button, Card, CardHeader } from '@/web/ui/index.ts';
 import { OffboardDialog } from './offboard-dialog.tsx';
 import { useAccessActions } from './queries.ts';
 
@@ -42,7 +42,6 @@ export function OffboardCard({
         loadError={plan.error}
         onConfirm={async () => {
           await offboard.mutateAsync();
-          toast.info('Offboarding started');
         }}
       />
     </Card>

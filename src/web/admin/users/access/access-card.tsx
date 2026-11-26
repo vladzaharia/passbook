@@ -98,7 +98,7 @@ export function AccessCard({
         destructive: true,
         onSelect: () => setAsking({ kind: 'revoke', role: r.role }),
       });
-    else if (r.role !== 'console' && r.presence !== 'external')
+    else if (r.role !== 'console' && !r.wanted && r.presence !== 'external')
       out.push({
         label: 'Grant',
         icon: UserPlus,
@@ -119,7 +119,6 @@ export function AccessCard({
     if (!asking) return;
     if (asking.kind === 'restore') {
       await actions.restore.mutateAsync(asking.role);
-      toast.info(IDP_COPY.restoreStarted);
     } else if (asking.kind === 'revoke') {
       await actions.grant.mutateAsync({
         role: asking.role as 'developer' | 'support',

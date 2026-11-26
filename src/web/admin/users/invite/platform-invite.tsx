@@ -91,6 +91,7 @@ export function PlatformInviteWizard({
               ))
             )}
             <CheckboxField
+              className="mt-1 border-t border-border pt-3"
               label="Developer access"
               checked={developer}
               onCheckedChange={(on) => setDeveloper(on === true)}
