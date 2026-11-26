@@ -67,7 +67,15 @@ export type Principal =
    * acts while enabled, at this generation (a new link bumps it) and its org is active. It holds one purpose.
    */
   | { kind: 'join'; linkId: string; generation: number }
-  | { kind: 'platform'; userId: string; sessionIdHash: string; orgId?: string; mode?: Mode }
+  | {
+      kind: 'platform';
+      userId: string;
+      sessionIdHash: string;
+      orgId?: string;
+      mode?: Mode;
+      /** Acts on a suspended org too; `grant` allows it for `org.member.revoke` alone (offboarding ends every membership). */
+      inactiveOk?: true;
+    }
   | {
       kind: 'system';
       job: string;
@@ -167,6 +175,12 @@ function holderProof(proof: HolderProof, now: number, b: Binds): string {
  * the principal or its org target is missing. The org and mode always come from a row the check
  * joins (membership, key, scanner, or the org target of a platform or system actor).
  */
+/** `inactiveOk` is for grants only: a read fence never widens to a suspended org. */
+export function assertNoInactiveOk(p: Principal): void {
+  if (p.kind === 'platform' && p.inactiveOk)
+    throw new Error('inactiveOk is for grants, not reads.');
+}
+
 export function actorSql(p: Principal, now: number, b: Binds): string {
   switch (p.kind) {
     case 'membership': {
@@ -243,7 +257,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
           ? p.inactiveOk
             ? `${inactive()} OR ${closed}`
             : closed
-          : p.kind === 'system' && p.inactiveOk
+          : p.inactiveOk
             ? inactive()
             : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
       return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(`${actor} AND ${noLive}`)} AS actor_ok, ${flag(org)} AS org_ok, NULL AS limit_key

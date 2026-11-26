@@ -23,6 +23,34 @@ async function pkce() {
   return { verifier, challenge };
 }
 
+describe('mock oidc client restriction', () => {
+  it('refuses an account outside the required groups and lets one inside in', async () => {
+    const oidc = await setup();
+    oidc.addUser({
+      sub: 'out',
+      email: 'o@example.com',
+      groups: ['wallet_users'],
+      requiresGroups: ['passbook_developers'],
+    });
+    oidc.addUser({
+      sub: 'in',
+      email: 'i@example.com',
+      groups: ['passbook_developers'],
+      requiresGroups: ['passbook_developers'],
+    });
+    const go = async (sub: string) => {
+      const { challenge } = await pkce();
+      const res = await fetch(
+        `${issuer}/authorize?client_id=wallet&redirect_uri=https://app.test/cb&state=s&login_hint=${sub}&code_challenge=${challenge}`,
+        { redirect: 'manual' },
+      );
+      return new URL(res.headers.get('location') ?? '').searchParams;
+    };
+    expect((await go('out')).get('error')).toBe('access_denied');
+    expect((await go('in')).get('code')).toBeTruthy();
+  });
+});
+
 describe('mock oidc', () => {
   it('serves discovery and JWKS through fetch mocking', async () => {
     await setup();

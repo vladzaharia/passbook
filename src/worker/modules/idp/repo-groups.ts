@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 export type GroupKind = 'custom' | 'adopted';
 
@@ -36,13 +36,16 @@ export interface NewGroup {
   now: number;
 }
 
-/** A key is never reused, even after a delete: the insert is refused. */
-export async function insertGroup(db: D1Database, g: NewGroup): Promise<void> {
-  await run(
+/** The statement, so a service can batch it with the group's rules and its audit row. A key is never reused, even after a delete: the insert is refused. */
+export const insertGroupStmt = (db: D1Database, g: NewGroup) =>
+  stmt(
     db,
     'INSERT INTO idp_groups (key, kind, friendly_name, created_by, created_at) VALUES (?, ?, ?, ?, ?)',
     [g.key, g.kind, g.friendlyName, g.createdBy, g.now],
   );
+
+export async function insertGroup(db: D1Database, g: NewGroup): Promise<void> {
+  await insertGroupStmt(db, g).run();
 }
 
 /** The display name only: the group's name never changes. True when a live group changed. */
@@ -73,3 +76,27 @@ export async function markGroupDeleted(db: D1Database, key: string, now: number)
     ).changes > 0
   );
 }
+
+/**
+ * Records that a create is about to be sent. True when an earlier attempt left its intent (the group may already
+ * exist in Polaris ID), false when this one is the first.
+ */
+export async function noteGroupIntent(
+  db: D1Database,
+  key: string,
+  friendlyName: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (
+      await run(
+        db,
+        'INSERT OR IGNORE INTO idp_group_intents (key, friendly_name, created_at) VALUES (?, ?, ?)',
+        [key, friendlyName, now],
+      )
+    ).changes === 0
+  );
+}
+
+export const clearGroupIntentStmt = (db: D1Database, key: string) =>
+  stmt(db, 'DELETE FROM idp_group_intents WHERE key = ?', [key]);

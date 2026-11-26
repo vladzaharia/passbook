@@ -17,7 +17,7 @@ import {
   standardOrg,
   world,
 } from './access-test-fixtures.ts';
-import { desiredState, targetKeys } from './desired.ts';
+import { desiredState, isPlatformAdmin, targetKeys } from './desired.ts';
 import { insertGrant } from './repo-role-grants.ts';
 
 const f = await world();
@@ -383,5 +383,16 @@ describe('desired state: a developer claim needs an active standard org', () => 
     expect((await wants(p.subject)).targets).toEqual(['developer']);
     await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['deleted', org.id]);
     expect((await wants(p.subject)).targets).toEqual([]);
+  });
+});
+
+describe('isPlatformAdmin', () => {
+  it('reads admin from the roles and treats anything unreadable as admin', () => {
+    expect(isPlatformAdmin('["user","admin"]')).toBe(true);
+    expect(isPlatformAdmin('["user"]')).toBe(false);
+    expect(isPlatformAdmin('[]')).toBe(false);
+    expect(isPlatformAdmin('not json')).toBe(true);
+    expect(isPlatformAdmin('{}')).toBe(true);
+    expect(isPlatformAdmin('')).toBe(true);
   });
 });

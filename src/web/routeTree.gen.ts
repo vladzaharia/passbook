@@ -63,6 +63,8 @@ import { Route as AdminPassesImportImportIdRouteImport } from './routes/admin/pa
 import { Route as AdminPlatformApiKeysIndexRouteImport } from './routes/admin/platform/api-keys/index'
 import { Route as AdminPlatformApiKeysKeyIdRouteImport } from './routes/admin/platform/api-keys/$keyId'
 import { Route as AdminPlatformAuditIndexRouteImport } from './routes/admin/platform/audit/index'
+import { Route as AdminPlatformGroupsIndexRouteImport } from './routes/admin/platform/groups/index'
+import { Route as AdminPlatformGroupsKeyRouteImport } from './routes/admin/platform/groups/$key'
 import { Route as AdminPlatformOrgsIndexRouteImport } from './routes/admin/platform/orgs/index'
 import { Route as AdminPlatformOrgsOrgIdRouteImport } from './routes/admin/platform/orgs/$orgId'
 import { Route as AdminPlatformRetentionIndexRouteImport } from './routes/admin/platform/retention/index'
@@ -407,6 +409,17 @@ const AdminPlatformApiKeysKeyIdRoute =
 const AdminPlatformAuditIndexRoute = AdminPlatformAuditIndexRouteImport.update({
   id: '/audit/',
   path: '/audit/',
+  getParentRoute: () => AdminPlatformRouteRoute,
+} as any)
+const AdminPlatformGroupsIndexRoute =
+  AdminPlatformGroupsIndexRouteImport.update({
+    id: '/groups/',
+    path: '/groups/',
+    getParentRoute: () => AdminPlatformRouteRoute,
+  } as any)
+const AdminPlatformGroupsKeyRoute = AdminPlatformGroupsKeyRouteImport.update({
+  id: '/groups/$key',
+  path: '/groups/$key',
   getParentRoute: () => AdminPlatformRouteRoute,
 } as any)
 const AdminPlatformOrgsIndexRoute = AdminPlatformOrgsIndexRouteImport.update({
@@ -825,6 +838,7 @@ export interface FileRoutesByFullPath {
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -847,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups/': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
@@ -941,6 +956,7 @@ export interface FileRoutesByTo {
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -963,6 +979,7 @@ export interface FileRoutesByTo {
   '/admin/passes/import': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings': typeof AdminPlatformSettingsIndexRoute
@@ -1063,6 +1080,7 @@ export interface FileRoutesById {
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -1085,6 +1103,7 @@ export interface FileRoutesById {
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups/': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
@@ -1186,6 +1205,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1208,6 +1228,7 @@ export interface FileRouteTypes {
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
+    | '/admin/platform/groups/'
     | '/admin/platform/orgs/'
     | '/admin/platform/retention/'
     | '/admin/platform/settings/'
@@ -1302,6 +1323,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1324,6 +1346,7 @@ export interface FileRouteTypes {
     | '/admin/passes/import'
     | '/admin/platform/api-keys'
     | '/admin/platform/audit'
+    | '/admin/platform/groups'
     | '/admin/platform/orgs'
     | '/admin/platform/retention'
     | '/admin/platform/settings'
@@ -1423,6 +1446,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1445,6 +1469,7 @@ export interface FileRouteTypes {
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
+    | '/admin/platform/groups/'
     | '/admin/platform/orgs/'
     | '/admin/platform/retention/'
     | '/admin/platform/settings/'
@@ -1883,6 +1908,20 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/admin/platform/audit/'
       preLoaderRoute: typeof AdminPlatformAuditIndexRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
+    '/admin/platform/groups/': {
+      id: '/admin/platform/groups/'
+      path: '/groups'
+      fullPath: '/admin/platform/groups/'
+      preLoaderRoute: typeof AdminPlatformGroupsIndexRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
+    '/admin/platform/groups/$key': {
+      id: '/admin/platform/groups/$key'
+      path: '/groups/$key'
+      fullPath: '/admin/platform/groups/$key'
+      preLoaderRoute: typeof AdminPlatformGroupsKeyRouteImport
       parentRoute: typeof AdminPlatformRouteRoute
     }
     '/admin/platform/orgs/': {
@@ -2346,11 +2385,13 @@ declare module '@tanstack/react-router' {
 interface AdminPlatformRouteRouteChildren {
   AdminPlatformIndexRoute: typeof AdminPlatformIndexRoute
   AdminPlatformApiKeysKeyIdRoute: typeof AdminPlatformApiKeysKeyIdRoute
+  AdminPlatformGroupsKeyRoute: typeof AdminPlatformGroupsKeyRoute
   AdminPlatformOrgsOrgIdRoute: typeof AdminPlatformOrgsOrgIdRoute
   AdminPlatformUsersUserIdRoute: typeof AdminPlatformUsersUserIdRoute
   AdminPlatformWalletAccountsIdentityIdRoute: typeof AdminPlatformWalletAccountsIdentityIdRoute
   AdminPlatformApiKeysIndexRoute: typeof AdminPlatformApiKeysIndexRoute
   AdminPlatformAuditIndexRoute: typeof AdminPlatformAuditIndexRoute
+  AdminPlatformGroupsIndexRoute: typeof AdminPlatformGroupsIndexRoute
   AdminPlatformOrgsIndexRoute: typeof AdminPlatformOrgsIndexRoute
   AdminPlatformRetentionIndexRoute: typeof AdminPlatformRetentionIndexRoute
   AdminPlatformSettingsIndexRoute: typeof AdminPlatformSettingsIndexRoute
@@ -2362,12 +2403,14 @@ interface AdminPlatformRouteRouteChildren {
 const AdminPlatformRouteRouteChildren: AdminPlatformRouteRouteChildren = {
   AdminPlatformIndexRoute: AdminPlatformIndexRoute,
   AdminPlatformApiKeysKeyIdRoute: AdminPlatformApiKeysKeyIdRoute,
+  AdminPlatformGroupsKeyRoute: AdminPlatformGroupsKeyRoute,
   AdminPlatformOrgsOrgIdRoute: AdminPlatformOrgsOrgIdRoute,
   AdminPlatformUsersUserIdRoute: AdminPlatformUsersUserIdRoute,
   AdminPlatformWalletAccountsIdentityIdRoute:
     AdminPlatformWalletAccountsIdentityIdRoute,
   AdminPlatformApiKeysIndexRoute: AdminPlatformApiKeysIndexRoute,
   AdminPlatformAuditIndexRoute: AdminPlatformAuditIndexRoute,
+  AdminPlatformGroupsIndexRoute: AdminPlatformGroupsIndexRoute,
   AdminPlatformOrgsIndexRoute: AdminPlatformOrgsIndexRoute,
   AdminPlatformRetentionIndexRoute: AdminPlatformRetentionIndexRoute,
   AdminPlatformSettingsIndexRoute: AdminPlatformSettingsIndexRoute,

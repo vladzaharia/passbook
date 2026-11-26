@@ -2,10 +2,12 @@ import {
   InvitationAcceptSchema,
   InvitationChallengeSchema,
   InvitationClaimSchema,
+  InvitationConfirmSchema,
   InvitationPreviewSchema,
   InvitationSetupSchema,
   InvitationTokenSchema,
 } from '../../../../shared/contracts/invitations.ts';
+import { inviteKindOf } from '../../../../shared/invitation-link.ts';
 import { UnauthenticatedError } from '../../../platform/errors.ts';
 import { createRouter, register } from '../../../platform/openapi.ts';
 import { clientIp, clientRatePrefix, enforceRateLimit } from '../../../platform/rate-limit.ts';
@@ -14,10 +16,19 @@ import { idpReady } from '../../dev-access/availability.ts';
 import { acceptInvitation } from './accept.ts';
 import { challengeNeeds, invalidInvitation } from './challenge.ts';
 import { claimExisting } from './claim-existing.ts';
+import {
+  acceptPlatformInvite,
+  claimExistingPlatform,
+  confirmPlatform,
+  previewPlatform,
+  setupPlatform,
+} from './platform-flow.ts';
+import { resolvePlatform } from './platform-resolve.ts';
 import { maskEmail, resolveInvite } from './resolve.ts';
 import { setupInvitation } from './setup.ts';
 
 const TAG = 'invitations';
+const isPlatform = (token: string) => inviteKindOf(token) === 'platform';
 
 /**
  * Mount at /api/v1/invitations: the one invitation page's calls for every kind. The secret in the body is the
@@ -45,11 +56,18 @@ register(
   async (c) => {
     await enforceRateLimit(c.env, 'RL_PUBLIC', `invitation:${clientRatePrefix(c)}`);
     const ctx = serviceContext(c);
-    const invite = await resolveInvite(ctx, c.req.valid('json').token);
+    const { token } = c.req.valid('json');
+    if (isPlatform(token)) {
+      const platform = await resolvePlatform(ctx, token);
+      if (platform?.state !== 'pending') throw invalidInvitation();
+      return c.json(await previewPlatform(ctx, platform));
+    }
+    const invite = await resolveInvite(ctx, token);
     if (invite?.state !== 'pending') throw invalidInvitation();
     return c.json({
       kind: invite.kind,
       orgName: invite.row.org_name,
+      groups: [],
       roles: invite.roles,
       developer: invite.developer,
       email: maskEmail(invite.row.email),
@@ -73,7 +91,13 @@ register(
   },
   async (c) => {
     await enforceRateLimit(c.env, 'RL_LOGIN', `invitation:${clientRatePrefix(c)}`);
-    return c.json(await setupInvitation(serviceContext(c), clientIp(c), c.req.valid('json')));
+    const input = c.req.valid('json');
+    const ctx = serviceContext(c);
+    return c.json(
+      isPlatform(input.token)
+        ? await setupPlatform(ctx, clientIp(c), input)
+        : await setupInvitation(ctx, clientIp(c), input),
+    );
   },
 );
 
@@ -97,7 +121,10 @@ register(
   },
   async (c) => {
     await enforceRateLimit(c.env, 'RL_LOGIN', `invitation:${clientRatePrefix(c)}`);
-    await claimExisting(serviceContext(c), clientIp(c), c.req.valid('json'));
+    const input = c.req.valid('json');
+    const ctx = serviceContext(c);
+    if (isPlatform(input.token)) await claimExistingPlatform(ctx, clientIp(c), input);
+    else await claimExisting(ctx, clientIp(c), input);
     return c.json({ ok: true as const });
   },
 );
@@ -124,6 +151,40 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     await enforceRateLimit(c.env, 'RL_LOGIN', `invitation-accept:${auth.userId}`);
-    return c.json(await acceptInvitation(serviceContext(c), auth, c.req.valid('json').token));
+    const ctx = serviceContext(c);
+    const { token } = c.req.valid('json');
+    return c.json(
+      isPlatform(token)
+        ? await acceptPlatformInvite(ctx, auth, token)
+        : await acceptInvitation(ctx, auth, token),
+    );
+  },
+);
+
+register(
+  invitationRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/confirm',
+    summary:
+      'Finish a platform invitation after creating a Polaris ID, if its address matches the invitation',
+    public: true,
+    body: InvitationTokenSchema,
+    response: InvitationConfirmSchema,
+    codes: [
+      'INVITATION_INVALID',
+      'INVITATION_EMAIL_MISMATCH',
+      'INVITATION_EMAIL_UNVERIFIED',
+      'INVITATION_NOT_STARTED',
+      'INVITATION_CONFLICT',
+      'IDP_SIGN_IN_REQUIRED',
+    ],
+  },
+  async (c) => {
+    await enforceRateLimit(c.env, 'RL_LOGIN', `invitation:${clientRatePrefix(c)}`);
+    const { token } = c.req.valid('json');
+    if (!isPlatform(token)) throw invalidInvitation();
+    return c.json(await confirmPlatform(serviceContext(c), token));
   },
 );

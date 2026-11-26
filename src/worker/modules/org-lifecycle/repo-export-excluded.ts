@@ -39,6 +39,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   devices: 'Apple push tokens',
   idp_group_rules: 'which Polaris ID group the org feeds: platform access bookkeeping',
   idp_invite_claims: 'Polaris ID subjects of an invitation: platform access bookkeeping',
+  idp_scim_tokens: 'SCIM receiver token hashes, platform level: no tenant data',
+  idp_group_intents: 'custom Polaris ID groups about to be created, platform level: no tenant data',
   event_feed: DERIVED,
   idempotency_keys: 'dedupe state that expires within 24 hours',
   idempotent_requests: 'dedupe state that expires within 24 hours, with stored responses',

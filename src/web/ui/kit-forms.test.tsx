@@ -62,6 +62,27 @@ describe('TypedConfirmDialog', () => {
     expect(confirm).toBeEnabled();
     expect(dialog.querySelector('.wl-check')).not.toBeNull();
   });
+
+  it('stays off while blocked, whatever is typed, and shows its body', async () => {
+    const user = userEvent.setup();
+    render(
+      <TypedConfirmDialog
+        open
+        onOpenChange={() => {}}
+        title="Offboard Ada?"
+        word="Ada"
+        confirmLabel="Offboard"
+        blocked
+        onConfirm={async () => {}}
+      >
+        <p>Leaves 1 organization</p>
+      </TypedConfirmDialog>,
+    );
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Leaves 1 organization')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('Type Ada to confirm'), 'Ada');
+    expect(within(dialog).getByRole('button', { name: 'Offboard' })).toBeDisabled();
+  });
 });
 
 describe('SecretReveal', () => {

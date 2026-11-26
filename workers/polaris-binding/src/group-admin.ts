@@ -1,20 +1,13 @@
 import { claim } from './breaker.ts';
 import { keyKind } from './claims.ts';
-import { type GroupDto, parseGroup, unexpected } from './group-dto.ts';
+import { createRoleGroup, postGroup } from './group-create.ts';
+import { parseGroup, unexpected } from './group-dto.ts';
 import { ctxMeta, meta, noteCall } from './ledger.ts';
 import { withLock } from './lock.ts';
 import { failure, ok, type Req } from './pocket-http.ts';
-import {
-  assertCtx,
-  assertFriendlyName,
-  assertGroupKey,
-  assertTarget,
-  refuse,
-  sameSet,
-} from './policy.ts';
+import { assertCtx, assertFriendlyName, assertGroupKey, assertTarget, refuse } from './policy.ts';
 import type { Shared } from './shared.ts';
 import {
-  abandonIntent,
   insertIntent,
   listGroupRows,
   setGroupDeleted,
@@ -47,32 +40,6 @@ export function groupAdminApi(s: Shared): GroupAdminApi {
     const data = (res.body as { data?: unknown } | null)?.data;
     if (!Array.isArray(data)) throw unexpected();
     return data.some((g) => (g as { name?: unknown })?.name === name);
-  }
-
-  /** Codes that mean the POST did not land: the pending intent is abandoned at once. */
-  const DEFINITE = ['IDP_CONFLICT', 'IDP_AUTH', 'IDP_NOT_FOUND', 'IDP_FROZEN', 'IDP_MISCONFIGURED'];
-
-  async function post(
-    req: Req,
-    key: string,
-    name: string,
-    friendlyName: string,
-  ): Promise<GroupDto> {
-    let res: Awaited<ReturnType<Req>>;
-    try {
-      res = await req('POST', r.groups, { name, friendlyName });
-      if (!ok(res)) throw failure(res);
-    } catch (error) {
-      if (error instanceof IdpError && DEFINITE.includes(error.code)) await abandonIntent(db, key);
-      throw error;
-    }
-    const created = parseGroup(res.body);
-    const back = await req('GET', r.group(created.id));
-    if (!ok(back)) throw failure(back);
-    const g = parseGroup(back.body);
-    if (g.id !== created.id || g.name !== name || g.friendlyName !== friendlyName)
-      throw new IdpError('IDP_DRIFT', 'The group did not come back as created.');
-    return g;
   }
 
   return {
@@ -149,6 +116,7 @@ export function groupAdminApi(s: Shared): GroupAdminApi {
       const taken = [
         ...registry.entries.map((e) => e.name),
         ...registry.unplaced.map((u) => u.name),
+        ...registry.unplacedProtected.map((u) => u.name),
       ];
       if (taken.includes(name)) await call.guard(m, () => refuse('This group name is reserved.'));
       return call.ledgered(bucketFor(c.dryRun), m, (req) =>
@@ -167,7 +135,7 @@ export function groupAdminApi(s: Shared): GroupAdminApi {
             ref: c.ref,
             at: deps.now(),
           });
-          const g = await post(req, k, name, friendly);
+          const g = await postGroup(s, req, k, name, friendly);
           await setGroupLive(db, k, g.id);
           return { key: k };
         }),
@@ -198,24 +166,7 @@ export function groupAdminApi(s: Shared): GroupAdminApi {
             await noteCall(db, 'dry_run', m, deps.now(), 'dry_run');
             return { dryRun: true as const };
           }
-          await insertIntent(db, {
-            key: target,
-            kind: 'role',
-            name: u.name,
-            friendly: u.friendlyName,
-            ref: c.ref,
-            at: deps.now(),
-          });
-          const g = await post(req, target, u.name, u.friendlyName);
-          // The PassBook client must allow the group, or its members could not sign in: union, never replace.
-          const want = [...new Set([...g.clients, env.PASSBOOK_CLIENT_ID])];
-          const put = await req('PUT', r.groupClients(g.id), { oidcClientIds: want });
-          if (!ok(put)) throw failure(put);
-          const back = await req('GET', r.group(g.id));
-          if (!ok(back)) throw failure(back);
-          if (!sameSet(parseGroup(back.body).clients, want))
-            throw new IdpError('IDP_DRIFT', 'The group clients did not come back as written.');
-          await setGroupLive(db, target, g.id);
+          await createRoleGroup(s, req, target, u, c.ref);
           return { key: target };
         }),
       );

@@ -89,7 +89,8 @@
   "developer.getAccess": {
     "response": {
       "access": "yes",
-      "signInUrl": "https://passbook.mobile/login"
+      "signInUrl": "https://passbook.mobile/login",
+      "invitedBy": ["Northwind Climbing"]
     }
   },
   "developer.getHome": {

@@ -8,6 +8,7 @@ import type { ServiceContext } from '../../../platform/service-context.ts';
 import { idpClient } from '../client.ts';
 import { challengedInvite, ledgerOf } from './challenge.ts';
 import { signupSpecOf } from './groups.ts';
+import { INVITE_REASON } from './reasons.ts';
 import { setupsOf } from './repo-resolve.ts';
 import { insertSetup } from './repo-writes.ts';
 
@@ -36,7 +37,7 @@ export async function setupInvitation(
       'Too many links for this invitation. Ask for a new invitation.',
     );
   const rpc = idpClient(ctx.env, ctx.log);
-  const write = ledgerOf(invite, 'invitation.setup');
+  const write = ledgerOf(invite, INVITE_REASON.setup);
   const signup = await rpc.createSignup(await signupSpecOf(db, invite), write);
   if ('dryRun' in signup)
     throw new AppError(

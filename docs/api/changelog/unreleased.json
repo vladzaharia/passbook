@@ -13,7 +13,7 @@
     "operationId": "brand.deleteBrandWebLogo",
     "op": "DELETE /api/v1/brand/web-logo",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "DELETE /api/v1/brand/web-logo 200.personal: field added",
@@ -158,7 +158,7 @@
     "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
     "op": "DELETE /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -191,6 +191,38 @@
     "op": "DELETE /api/v1/pass-imports/mappings",
     "change": "new operation",
     "note": "Deletes a saved column mapping by name."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/members/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/members/{id}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "DELETE /api/v1/scan/draft new operation",
@@ -281,12 +313,20 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "DELETE /api/v1/users/{id}/holds/{role} new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
+    "op": "DELETE /api/v1/users/{id}/holds/{role}",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
     "key": "DELETE /api/v1/workbench/token new operation",
     "class": "additive",
     "operationId": "workbench.deleteToken",
     "op": "DELETE /api/v1/workbench/token",
     "change": "new operation",
-    "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
+    "note": ""
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"logs:read\" added",
@@ -294,7 +334,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -305,12 +345,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
@@ -321,12 +369,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -343,6 +399,14 @@
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -769,6 +833,14 @@
     "note": "A sender's webhook setup guide as data: steps, topics, secret origin and fix lines. Steps with verified: false may differ at the sender."
   },
   {
+    "key": "GET /api/v1/developer/access 200.invitedBy: field added",
+    "class": "additive",
+    "operationId": "developer.getAccess",
+    "op": "GET /api/v1/developer/access",
+    "change": "200.invitedBy: field added",
+    "note": "Who invited the developer, when the invitation names them."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -782,7 +854,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].apiVersion: field added",
-    "note": "apiVersion is the PassBook-Version date the call pinned."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home 200.calls[].client: field added",
@@ -798,7 +870,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home 200.calls[].resourceId: field added",
@@ -806,7 +878,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].resourceId: field added",
-    "note": "resourceId is the pass, template or key the call touched."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"logs:read\" added",
@@ -814,7 +886,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" added",
@@ -833,12 +905,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "GET /api/v1/developer/home 200.quotas: field added",
     "class": "additive",
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.quotas: field added",
-    "note": "Quotas: what the sandbox holds against its plan caps (passes, templates, endpoints, keys)."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -854,7 +934,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.bodiesRecorded: field added",
-    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].apiVersion: field added",
@@ -862,7 +942,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].apiVersion: field added",
-    "note": "apiVersion is the PassBook-Version date the call pinned."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].flags: field added",
@@ -870,7 +950,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].resourceId: field added",
@@ -878,7 +958,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].resourceId: field added",
-    "note": "resourceId is the pass, template or key the call touched."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs optional parameter query:passId added",
@@ -886,7 +966,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:passId added",
-    "note": "passId filters to the calls that touched a pass, template or key."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs optional parameter query:portal added",
@@ -902,7 +982,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "optional parameter query:version added",
-    "note": "version filters to the calls that pinned a PassBook-Version date."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.apiVersion: field added",
@@ -910,7 +990,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.apiVersion: field added",
-    "note": "apiVersion is the PassBook-Version date the call pinned."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.bodiesRecorded: field added",
@@ -918,7 +998,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.bodiesRecorded: field added",
-    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.bodiesTruncated: field added",
@@ -926,7 +1006,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.bodiesTruncated: field added",
-    "note": "bodiesTruncated is true when a stored body was cut at 8 KB or was too large to keep. Bodies are shown only to a reader who can also read passes."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.flags: field added",
@@ -934,7 +1014,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.resourceId: field added",
@@ -942,7 +1022,7 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.resourceId: field added",
-    "note": "resourceId is the pass, template or key the call touched."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"logs:read\" added",
@@ -950,7 +1030,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:claims\" added",
@@ -959,6 +1039,14 @@
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -974,7 +1062,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.id: field added",
-    "note": "The id as stored. The lookup also takes ids of keys, events, endpoints, captures, delivery attempts and operations."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"capture\" added",
@@ -982,7 +1070,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"capture\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"delivery\" added",
@@ -990,7 +1078,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"delivery\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"device_pass\" added",
@@ -998,7 +1086,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"device_pass\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"endpoint\" added",
@@ -1006,7 +1094,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"endpoint\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"event\" added",
@@ -1014,7 +1102,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"event\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"key\" added",
@@ -1022,7 +1110,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"key\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"live\" added",
@@ -1030,7 +1118,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"live\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"operation\" added",
@@ -1038,7 +1126,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"operation\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve 200.kind: enum value \"sandbox\" added",
@@ -1046,7 +1134,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "200.kind: enum value \"sandbox\" added",
-    "note": "New kind of object the id lookup names."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -1062,7 +1150,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "optional parameter query:orgId added",
-    "note": "orgId looks in an organization where you may use Test. Omit it for your own sandbox."
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
@@ -1230,7 +1318,7 @@
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "optional parameter query:requestId added",
-    "note": "requestId keeps the events that call caused: the x-request-id the response carried."
+    "note": ""
   },
   {
     "key": "GET /api/v1/events/{id} 200|0.requestId: field added",
@@ -1390,7 +1478,7 @@
     "operationId": "events.getEventsByIdDeliveries",
     "op": "GET /api/v1/events/{id}/deliveries",
     "change": "new operation",
-    "note": "Where one event was sent: its delivery to each endpoint, with state and last attempt. Needs passes:read."
+    "note": ""
   },
   {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
@@ -1761,12 +1849,20 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.getOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "200.items[].accessPaused: field added",
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/memberships 200.items[].capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.getOrgsByIdMemberships",
     "op": "GET /api/v1/orgs/{id}/memberships",
     "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
-    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+    "note": ""
   },
   {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
@@ -1790,7 +1886,7 @@
     "operationId": "orgs.getOrgsByIdWorkspace",
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
@@ -1846,7 +1942,7 @@
     "operationId": "organization-memberships.getOrgsMembershipsMe",
     "op": "GET /api/v1/orgs/memberships/me",
     "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
-    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+    "note": ""
   },
   {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
@@ -1934,7 +2030,7 @@
     "operationId": "passes.getPassesByIdDevices",
     "op": "GET /api/v1/passes/{id}/devices",
     "change": "200.devices[].deviceId: field added",
-    "note": "Devices made by Simulate carry deviceId, the id the simulate call returned."
+    "note": ""
   },
   {
     "key": "GET /api/v1/passes/{id}/devices 200.devices[].simulated: field added",
@@ -1942,7 +2038,7 @@
     "operationId": "passes.getPassesByIdDevices",
     "op": "GET /api/v1/passes/{id}/devices",
     "change": "200.devices[].simulated: field added",
-    "note": "Devices made by Simulate carry simulated: true."
+    "note": ""
   },
   {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
@@ -2009,12 +2105,68 @@
     "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
+    "key": "GET /api/v1/platform/idp new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdp",
+    "op": "GET /api/v1/platform/idp",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/calls new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpCalls",
+    "op": "GET /api/v1/platform/idp/calls",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/drift new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpDrift",
+    "op": "GET /api/v1/platform/idp/drift",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroups",
+    "op": "GET /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
     "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
     "op": "GET /api/v1/platform/idp/groups/{key}/claims",
     "change": "new operation",
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
+    "op": "GET /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
+    "op": "GET /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -2078,7 +2230,7 @@
     "operationId": "workbench.listRequestLogs",
     "op": "GET /api/v1/request-logs",
     "change": "new operation",
-    "note": "Lists an organization's Test calls for 7 days, with filters and an after cursor to tail."
+    "note": ""
   },
   {
     "key": "GET /api/v1/request-logs/{id} new operation",
@@ -2086,7 +2238,7 @@
     "operationId": "workbench.getRequestLog",
     "op": "GET /api/v1/request-logs/{id}",
     "change": "new operation",
-    "note": "Reads one Test call, with redacted bodies for 24 hours where the organization records them."
+    "note": ""
   },
   {
     "key": "GET /api/v1/resolve new operation",
@@ -2094,7 +2246,7 @@
     "operationId": "workbench.getResolve",
     "op": "GET /api/v1/resolve",
     "change": "new operation",
-    "note": "What an id is in your Test data. kind live means it exists in Live; open it in admin. Browser and try token only, no key."
+    "note": ""
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -2534,7 +2686,7 @@
     "operationId": "sandbox.getTestInbox",
     "op": "GET /api/v1/test-inbox",
     "change": "200.items[].failed: field added",
-    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+    "note": ""
   },
   {
     "key": "GET /api/v1/test-inbox/{id} 200.failed: field added",
@@ -2542,7 +2694,7 @@
     "operationId": "sandbox.getTestInboxById",
     "op": "GET /api/v1/test-inbox/{id}",
     "change": "200.failed: field added",
-    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+    "note": ""
   },
   {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
@@ -2599,6 +2751,14 @@
     "op": "GET /api/v1/users/{id}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/users/{id}/access new operation",
+    "class": "additive",
+    "operationId": "polaris-access.getUsersByIdAccess",
+    "op": "GET /api/v1/users/{id}/access",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "GET /api/v1/users/{id}/claims new operation",
@@ -2846,7 +3006,7 @@
     "operationId": "workbench.getContexts",
     "op": "GET /api/v1/workbench/contexts",
     "change": "new operation",
-    "note": "The sandbox and organizations where you may use Test, with the tools your roles read in each. Browser only."
+    "note": ""
   },
   {
     "key": "GET /api/v1/workbench/summary new operation",
@@ -2854,7 +3014,7 @@
     "operationId": "workbench.getSummary",
     "op": "GET /api/v1/workbench/summary",
     "change": "new operation",
-    "note": "Navigation counts for one Test context: errors, failed deliveries, emails, expiring keys, quickstart and sandbox quotas. Browser only."
+    "note": ""
   },
   {
     "key": "GET /b/{token}/{passId} new operation",
@@ -2886,7 +3046,7 @@
     "operationId": "brand.patchBrand",
     "op": "PATCH /api/v1/brand",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PATCH /api/v1/brand 200.personal: field added",
@@ -3125,7 +3285,7 @@
     "operationId": "orgs.patchOrgsById",
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
@@ -3136,12 +3296,20 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "200.accessPaused: field added",
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
+  },
+  {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
     "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
     "change": "200.capabilities[]: enum value \"logs:read\" added",
-    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
@@ -3158,6 +3326,14 @@
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
+    "op": "PATCH /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -3365,7 +3541,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
@@ -3374,6 +3550,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
@@ -3405,7 +3589,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:read\" added",
@@ -3477,7 +3661,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3488,12 +3672,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3504,12 +3696,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3520,12 +3720,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3536,12 +3744,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3552,12 +3768,20 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"logs:read\" added",
-    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3566,6 +3790,14 @@
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -4417,12 +4649,20 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
+  },
+  {
     "key": "POST /api/v1/invitations/accept 200.membership.capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "invitations.postInvitationsAccept",
     "op": "POST /api/v1/invitations/accept",
     "change": "200.membership.capabilities[]: enum value \"logs:read\" added",
-    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+    "note": ""
   },
   {
     "key": "POST /api/v1/invitations/accept new operation",
@@ -4439,6 +4679,30 @@
     "op": "POST /api/v1/invitations/claim-existing",
     "change": "new operation",
     "note": "Give the Polaris ID account that has the invited address the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
   },
   {
     "key": "POST /api/v1/invitations/preview new operation",
@@ -4654,7 +4918,7 @@
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
     "change": "201.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "POST /api/v1/orgs 201.personal: field added",
@@ -4822,7 +5086,7 @@
     "operationId": "organization-memberships.postOrgsInvitationsAccept",
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.capabilities[]: enum value \"logs:read\" added",
-    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
@@ -4966,7 +5230,7 @@
     "operationId": "passes.postPassesByIdSimulate",
     "op": "POST /api/v1/passes/{id}/simulate",
     "change": "new operation",
-    "note": "Simulate sends a real Test event for a Test pass; its signed webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY."
+    "note": ""
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
@@ -5023,6 +5287,78 @@
     "op": "POST /api/v1/passes/bulk/channels",
     "change": "200.operationId: field added",
     "note": "operationId names the operation that shows the code replacements; null when none is to be replaced."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/freeze new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.postPlatformIdpFreeze",
+    "op": "POST /api/v1/platform/idp/freeze",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroups",
+    "op": "POST /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
+    "op": "POST /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
+    "op": "POST /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/ensure new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
+    "op": "POST /api/v1/platform/idp/groups/ensure",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/reconcile new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpReconcile",
+    "op": "POST /api/v1/platform/idp/reconcile",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
+    "op": "POST /api/v1/platform/idp/scim-breaker/clear",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -6121,6 +6457,30 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/users/{id}/offboard new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdOffboard",
+    "op": "POST /api/v1/users/{id}/offboard",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRoles",
+    "op": "POST /api/v1/users/{id}/roles",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
+    "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
     "key": "POST /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.postVisitors",
@@ -6182,7 +6542,7 @@
     "operationId": "workbench.postToken",
     "op": "POST /api/v1/workbench/token",
     "change": "new operation",
-    "note": "A 15-minute Test-only token for one org, bound to your session: your sandbox key, or you on x-workbench: test operations. Live: 403 WORKBENCH_TEST_ONLY."
+    "note": ""
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
@@ -6190,7 +6550,7 @@
     "operationId": "brand.putBrandWebLogo",
     "op": "PUT /api/v1/brand/web-logo",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
@@ -6254,7 +6614,7 @@
     "operationId": "orgs.putOrgsByIdBrandingBySlot",
     "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -6473,14 +6833,6 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
-    "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",
-    "class": "notable",
-    "operationId": "",
-    "op": "Test key",
-    "change": "403 MODE_LIVE_REQUIRED: added",
-    "note": "A Test key outside a sandbox can no longer change brand, setup, zones, tag types or saved mappings: 403 MODE_LIVE_REQUIRED. SCAN_ZONE_LIVE_ONLY is retired."
-  },
-  {
     "key": "webhook pass.removed data.runId: field added",
     "class": "additive",
     "operationId": "webhook.pass.removed",
@@ -6511,13 +6863,5 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "webhook sandbox delivery",
-    "class": "notable",
-    "operationId": "",
-    "op": "webhook sandbox delivery",
-    "change": "Test endpoints deliver to their URL",
-    "note": "A sandbox's URL endpoints deliver signed Test events, 60 a minute, with Live's address checks. A fourth endpoint is 409 SANDBOX_ENDPOINT_LIMIT."
   }
 ]

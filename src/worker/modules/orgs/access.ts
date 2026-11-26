@@ -31,7 +31,12 @@ export function parseRoles(json: string): OrgRole[] {
   return value;
 }
 export function memberDto(row: MembershipRow): OrgMember {
-  return { ...membershipDto(row), userName: row.user_name, userEmail: row.user_email };
+  return {
+    ...membershipDto(row),
+    userName: row.user_name,
+    userEmail: row.user_email,
+    ...(row.access_paused === 1 ? { accessPaused: true } : {}),
+  };
 }
 /** `own`: the viewer's own membership list, where their personal org is called "Personal". */
 export function membershipDto(row: MembershipRow, own = false): OrgMembership {

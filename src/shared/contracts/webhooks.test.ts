@@ -179,6 +179,7 @@ describe('API key scopes', () => {
       'platform:templates',
       'platform:audit',
       'platform:claims',
+      'platform:groups',
       'brand:manage',
     ]);
   });

@@ -295,7 +295,7 @@ describe('targets in apply', () => {
 });
 
 describe('signup groups', () => {
-  it('carries the groups of a spec, stores the targets, and a platform signup needs a group', async () => {
+  it('carries the groups of a spec, stores the targets, and a platform signup may carry none', async () => {
     const { api, pocket } = setup();
     await api.createGroup('agency_a', 'Agency A', ctx({ ref: 'mk' }));
     await api.createSignup({ kind: 'member_developer', groups: ['agency_a'] }, ctx({ ref: 'sg' }));
@@ -311,7 +311,9 @@ describe('signup groups', () => {
     expect(await rows('idp_signups')).toMatchObject([
       { kind: 'member_developer', targets: '["developer","console","g:agency_a"]' },
     ]);
-    await expect(api.createSignup({ kind: 'platform' }, ctx())).rejects.toThrow(/^IDP_REFUSED/);
+    expect(await api.createSignup({ kind: 'platform' }, ctx({ ref: 'bare' }))).toHaveProperty(
+      'tokenId',
+    );
     await expect(
       api.createSignup(
         { kind: 'platform', groups: ['a_b', 'c_d', 'e_f', 'g_h', 'i_j', 'k_l'] },

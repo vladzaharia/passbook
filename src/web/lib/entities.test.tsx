@@ -58,7 +58,14 @@ describe('entity registry', () => {
   it('gives each entity its own art and glyph', () => {
     // Borrowed art until BU.1 adds scanner, stub and badge; a blueprint keeps the template's;
     // a visitor keeps the people art.
-    const PENDING_ART: EntityKind[] = ['scanner', 'event', 'staff', 'blueprint', 'visitor'];
+    const PENDING_ART: EntityKind[] = [
+      'scanner',
+      'event',
+      'staff',
+      'blueprint',
+      'visitor',
+      'group',
+    ];
     const arts = ENTITY_KINDS.filter((k) => !PENDING_ART.includes(k)).map((k) => ENTITY[k].art);
     expect(new Set(arts).size).toBe(arts.length);
     for (const art of arts) expect(ART_NAMES).toContain(art);
