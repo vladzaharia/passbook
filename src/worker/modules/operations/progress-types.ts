@@ -44,3 +44,9 @@ export const NOOP: Progress = {
   succeed: async () => {},
   fail: async () => {},
 };
+
+/**
+ * The writer token of a Workflow that reports for an operation another runner holds (the purge of a start over): its
+ * writes are fenced by attempt, not by the runner lease, which a backstop may be holding at that moment.
+ */
+export const WORKFLOW_WRITER = 'workflow';

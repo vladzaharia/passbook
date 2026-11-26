@@ -1,6 +1,8 @@
 /** The developer portal's paths, shared by the generator, the Worker route and the tests. */
 export const PATHS = {
   home: '/developers',
+  /** The Workbench's overview on the home page: its slot is `id="workbench"`. */
+  workbench: '/developers#workbench',
   quickstart: '/developers/quickstart',
   guides: '/developers/guides',
   playground: '/developers/playground',

@@ -91,23 +91,6 @@ export const importObjectKeys = async (
     )
   ).map((r) => r.object_key);
 
-/**
- * Sandbox keys the person's reset minted at or after `stamp`, revoked or not, oldest first. A reset is finished when
- * there is one; a person revoking it later does not make the reset unfinished.
- */
-export const keysSince = (
-  db: D1Database,
-  orgId: string,
-  userId: string,
-  name: string,
-  stamp: number,
-) =>
-  all<{ id: string }>(
-    db,
-    "SELECT id FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' AND created_at >= ? ORDER BY created_at, id",
-    [orgId, userId, name, stamp],
-  );
-
 /** `track_started_at` as stored: null until the first reset. */
 export const trackStartRaw = async (db: D1Database, orgId: string): Promise<number | null> =>
   (
@@ -177,17 +160,3 @@ export const closeReasonOf = async (db: D1Database, orgId: string): Promise<stri
       [orgId],
     )
   )?.close_reason ?? null;
-
-/** When the sandbox's last reset claimed (its audit row): keys minted at or after it belong to that reset. */
-export const lastClaimAt = async (
-  db: D1Database,
-  orgId: string,
-  action: string,
-): Promise<number | null> =>
-  (
-    await first<{ t: number | null }>(
-      db,
-      "SELECT max(at) AS t FROM audit_log WHERE org_id = ? AND action = ? AND target_type = 'org'",
-      [orgId, action],
-    )
-  )?.t ?? null;

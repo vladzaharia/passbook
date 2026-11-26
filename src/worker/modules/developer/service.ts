@@ -1,4 +1,3 @@
-import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
 import type { CreatedDeveloperSandbox, DeveloperSandbox } from '../../../shared/contracts/index.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan-base.ts';
 import {
@@ -7,14 +6,14 @@ import {
   SANDBOX_TEMPLATE_NAME,
 } from '../../../shared/copy/developer.ts';
 import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
-import { isPlatformScope } from '../../platform/api-scopes.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { actorOf } from '../../platform/context.ts';
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { authorizeApiKeys } from '../api-keys/access.ts';
 import { createApiKey } from '../api-keys/service-create.ts';
+import type { Progress, StepHandle } from '../operations/progress-types.ts';
 import { ensureSandboxTerminal } from '../scan/repo-sandbox-terminal.ts';
 import { approveCandidate, publishRelease } from '../templates/releases.ts';
 import { createCandidate } from '../templates/releases-create.ts';
@@ -22,6 +21,7 @@ import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
 import { authorizeWebhooks } from '../webhooks/access.ts';
 import { ensureCapture } from '../webhooks/service-captures.ts';
 import { recordSandboxMade } from './funnel.ts';
+import { KEY_SCOPES } from './key-scopes.ts';
 import {
   approvalOf,
   candidateOf,
@@ -29,18 +29,15 @@ import {
   primaryEmailOf,
   quickstartTemplateOf,
   type SandboxRow,
-  sandboxKeyOf,
   sandboxOfUser,
   ticketOf,
 } from './repo.ts';
 import { closeSandbox, insertSandbox } from './repo-grants.ts';
+import { orgExists } from './repo-sandbox-op.ts';
 
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
 const KEY_TTL_MS = 30 * 86_400_000;
-
-/** A key a sandbox holds can reach everything a test org can, except minting keys, the terminal scope and the live-only scanning setup scope. */
-const KEY_SCOPES = SANDBOX_KEY_SCOPES.filter((s) => !isPlatformScope(s));
 
 /** A new Test personal key for the person (30 days): the secret is in the answer once and nowhere else. */
 export async function mintSandboxKey(
@@ -87,14 +84,7 @@ export const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbo
 });
 
 /** The steps of provisioning, in order. A test fails the request after one to prove a retry completes the rest. */
-export type SandboxStep =
-  | 'org'
-  | 'template'
-  | 'candidate'
-  | 'approval'
-  | 'release'
-  | 'capture'
-  | 'key';
+export type SandboxStep = 'org' | 'template' | 'candidate' | 'approval' | 'release' | 'capture';
 export interface SandboxHooks {
   after?: (step: SandboxStep) => Promise<void>;
 }
@@ -110,14 +100,15 @@ class HookAbort extends Error {
 
 /**
  * The quickstart ticket: a copy of the event-ticket blueprint, released in Test. Each step reads what is already
- * there, so a retry after a failure does only what is missing. Its id, or null if it could not be made.
+ * there, so a retry after a failure does only what is missing. Its id; a failure is logged and thrown, so the
+ * operation stops on the exact step and Retry finishes it.
  */
 export async function quickstartTemplate(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
   tick: (step: SandboxStep) => Promise<void> = async () => undefined,
-): Promise<string | null> {
+): Promise<string> {
   const db = ctx.env.DB;
   const scope = { orgId, mode: 'test', provider: 'apple' } as const;
   try {
@@ -161,47 +152,73 @@ export async function quickstartTemplate(
     return ticket.id;
   } catch (error) {
     if (error instanceof HookAbort) throw error;
-    // The sandbox is still usable: the person can start from a blueprint themselves, or retry.
     ctx.log.error('developer.sandbox_template_failed', {
       orgId,
       code: 'SANDBOX_TEMPLATE_FAILED',
       error,
     });
-    return null;
+    throw new AppError(
+      'SANDBOX_TEMPLATE_FAILED',
+      500,
+      'The ticket template did not finish. Retry.',
+    );
   }
 }
 
+export interface ProvisionOptions {
+  /** When the person's browser first opened the quickstart (the funnel's start). */
+  viewedAt?: number;
+  /** The org to make when there is no sandbox yet: the operation named it when it started. */
+  orgId?: string;
+  hooks?: SandboxHooks;
+}
+
+/** A step handle that writes its end once, however many paths reach it. */
+const once = (handle: StepHandle) => {
+  let ended = false;
+  return async () => {
+    if (ended) return;
+    ended = true;
+    await handle.done();
+  };
+};
+
 /**
  * Makes the caller's sandbox, or finishes it: a developer org, their admin membership, the Quickstart ticket
- * released in Test and a Test personal key (30 days, shown once). One at a time per person; a deleted one frees the slot. A retry after a failure
- * completes what is missing and returns the sandbox; the key is minted once, so a retry that finds it already
- * made returns `key: null` and `previousKey`, and the person rolls it.
+ * released in Test, the capture endpoint and a test scanner, each reported as its own step. A retry after a
+ * failure completes what is missing. The key is not made here: it is minted once afterwards
+ * (`mintSandboxKeyOnce`), so no operation ever holds a secret.
  */
-export async function createSandbox(
+export async function provisionSandbox(
   ctx: ServiceContext,
   session: SessionAuth,
-  hooks: SandboxHooks = {},
-  /** `viewedAt`: when the person's browser first opened the quickstart (the funnel's start). */
-  options: { viewedAt?: number } = {},
-): Promise<CreatedDeveloperSandbox> {
+  progress: Progress,
+  options: ProvisionOptions = {},
+): Promise<DeveloperSandbox> {
   const db = ctx.env.DB;
   const tick = async (step: SandboxStep) => {
     try {
-      await hooks.after?.(step);
+      await options.hooks?.after?.(step);
     } catch (error) {
       throw new HookAbort(error);
     }
   };
   try {
+    const org = progress.step('org');
     let row = await sandboxOfUser(db, session.userId);
     // A closed sandbox is not remade; the person deletes it first (delete.ts) to start over.
     if (row?.closed_at != null) throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
+    // The operation named its org: a different sandbox is a newer one, which this run did not start.
+    if (row && options.orgId && row.org_id !== options.orgId)
+      throw new ConflictError('The sandbox changed. Reload and retry.', 'SANDBOX_CONFLICT');
     const now = ctx.clock.now();
     const fresh = row === null;
     if (!row) {
       const email = await primaryEmailOf(db, session.userId);
       if (!email) throw new NotFoundError('Account not found.', 'USER_NOT_FOUND');
-      const orgId = ctx.ids.id();
+      // A retry whose sandbox was deleted meanwhile finds its org's row still there: it starts a new org.
+      const orgId =
+        options.orgId && !(await orgExists(db, options.orgId)) ? options.orgId : ctx.ids.id();
       const slug = `dev-${ctx.ids.id().replaceAll('-', '').slice(-12)}`;
       await insertSandbox(ctx, {
         id: ctx.ids.id(),
@@ -217,26 +234,40 @@ export async function createSandbox(
         now,
       });
       row = await sandboxOfUser(db, session.userId);
-      await tick('org');
     }
     if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
+    await org.done();
+    await tick('org');
     await recordSandboxMade(ctx, session, row.org_id, options.viewedAt, fresh);
     // Everything in the sandbox is Test: the person acts in it as a Test session.
     const test: SessionAuth = { ...session, mode: 'test' };
-    const templateId = await quickstartTemplate(ctx, test, row.org_id, tick);
+    const template = once(progress.step('template'));
+    let releaseDone: (() => Promise<void>) | null = null;
+    const templateId = await quickstartTemplate(ctx, test, row.org_id, async (step) => {
+      if (step === 'approval') {
+        await template();
+        releaseDone = once(progress.step('release'));
+      }
+      if (step === 'release') await releaseDone?.();
+      await tick(step);
+    });
+    // A ticket released earlier ticks nothing: both steps end here.
+    await template();
+    releaseDone ??= once(progress.step('release'));
+    await releaseDone();
     // The webhook tester's endpoint; a sandbox made before it existed gets it on this call.
+    const capture = progress.step('capture');
     await ensureCapture(
       ctx,
       actorOf(test),
       await authorizeWebhooks(ctx, test, row.org_id, 'integrations:manage'),
     );
+    await capture.done();
     await tick('capture');
+    const scanner = progress.step('scanner');
     await ensureSandboxTerminal(ctx, test, row.org_id);
-    const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
-    if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
-    const key = await mintSandboxKey(ctx, test, row.org_id);
-    await tick('key');
-    return { ...dto(row, templateId), key, previousKey: null };
+    await scanner.done();
+    return dto(row, templateId);
   } catch (error) {
     if (error instanceof HookAbort) throw error.error;
     throw error;

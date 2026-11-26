@@ -10,6 +10,7 @@ import { Sheet, SheetContent } from '../sheet.tsx';
 import { useOperationParam } from './op-param.ts';
 import { OperationRow } from './operation-row.tsx';
 import { OperationSheet } from './operation-sheet.tsx';
+import { useOperationClaimed } from './store.ts';
 import type { Operation } from './types.ts';
 import { useTray } from './use-tray.ts';
 
@@ -69,6 +70,8 @@ export function OperationTray({
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useOperationParam();
   const closeDetail = useCallback(() => setDetail(null), [setDetail]);
+  // A panel on the page that claimed this id shows it: the tray's sheet would double it.
+  const claimed = useOperationClaimed(detail);
   const openOp = (op: Operation) => {
     setOpen(false);
     // The server holds `result.href` to an app path; a client that is handed anything else opens the sheet.
@@ -130,7 +133,7 @@ export function OperationTray({
       <p role="status" aria-label="Activity" aria-live="polite" className="sr-only">
         {endedLine(recent)}
       </p>
-      <OperationSheet id={detail} onClose={closeDetail} zone={zone} />
+      <OperationSheet id={claimed ? null : detail} onClose={closeDetail} zone={zone} />
     </>
   );
 }

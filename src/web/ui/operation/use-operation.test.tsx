@@ -156,7 +156,7 @@ describe('the fetch client', () => {
       seen.push({ url, init });
       if ((init.headers as Record<string, string>)['if-none-match'])
         return new Response(null, { status: 304 });
-      return new Response(JSON.stringify(init.method === 'POST' ? { operation: op } : op), {
+      return new Response(JSON.stringify(op), {
         status: 200,
         headers: { etag: '"op:3"' },
       });

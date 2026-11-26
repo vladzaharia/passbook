@@ -18,7 +18,7 @@ export type ChipState =
 
 const C = BENCH_COPY.chip;
 const ITEMS: readonly [string, string][] = [
-  [C.items.home, `${PATHS.home}#workbench`],
+  [C.items.home, PATHS.workbench],
   [C.items.quickstart, `${PATHS.quickstart}#sandbox`],
   [C.items.startOver, `${PATHS.quickstart}#start-over`],
   [C.items.delete, `${PATHS.quickstart}#delete-sandbox`],

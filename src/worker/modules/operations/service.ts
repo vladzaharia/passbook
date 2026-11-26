@@ -8,7 +8,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/e
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
 import { toDto } from './dto.ts';
-import { orgKinds } from './registry.ts';
+import { orgKinds } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 import { rowById } from './repo.ts';
 import type { Fence } from './repo-fence.ts';

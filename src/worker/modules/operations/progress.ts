@@ -6,8 +6,8 @@ import {
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseSteps } from './dto.ts';
+import { kindOf } from './kinds.ts';
 import { NOOP, OperationCancelled, type Progress, type StepHandle } from './progress-types.ts';
-import { kindOf } from './registry.ts';
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,
@@ -254,8 +254,12 @@ class Reporter implements Progress {
         return;
       }
       const code = this.codeOf(error);
+      // The step that was running; a tail that waits after Done (the erase) is not what failed.
+      const tail = (key: string) =>
+        kindOf(s.row.kind)?.steps.find((d) => d.key === key)?.tail === true;
       const failing =
-        s.steps.find((x) => x.state === 'running' || x.state === 'waiting') ??
+        s.steps.find((x) => x.state === 'running') ??
+        s.steps.find((x) => x.state === 'waiting' && !tail(x.key)) ??
         s.steps.find((x) => x.state === 'pending');
       if (failing) {
         failing.state = 'failed';
