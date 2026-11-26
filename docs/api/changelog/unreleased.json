@@ -1649,6 +1649,14 @@
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
   },
   {
+    "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdEvents",
+    "op": "GET /api/v1/passes/{id}/events",
+    "change": "200.items[].kind: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
     "class": "notable",
     "operationId": "passes.getPassesByIdEvents",
@@ -1719,6 +1727,22 @@
     "op": "GET /api/v1/platform/apple/identities",
     "change": "new operation",
     "note": ""
+  },
+  {
+    "key": "GET /api/v1/platform/apple/identity-moves new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentityMoves",
+    "op": "GET /api/v1/platform/apple/identity-moves",
+    "change": "new operation",
+    "note": "Platform admins list identity move rows with state and reason, including kept_both and unarmed. Session only."
+  },
+  {
+    "key": "GET /api/v1/platform/apple/identity-moves/preview new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentityMovesPreview",
+    "op": "GET /api/v1/platform/apple/identity-moves/preview",
+    "change": "new operation",
+    "note": "Dry run of an identity move: counts of passes, devices and holders, and the passes that stay by reason. Session only."
   },
   {
     "key": "GET /api/v1/platform/entitlement-presets new operation",
@@ -2321,6 +2345,30 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints 200.items[].eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpoints",
+    "op": "GET /api/v1/webhook-endpoints",
+    "change": "200.items[].eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id} 200.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsById",
+    "op": "GET /api/v1/webhook-endpoints/{id}",
+    "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:passId added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
@@ -2337,6 +2385,30 @@
     "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures param query:type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "param query:type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId} 200.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId}",
+    "change": "200.type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:passId added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
@@ -2351,6 +2423,14 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
     "change": "optional parameter query:requestId added",
     "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries param query:type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "param query:type: enum value \"pass.replaced\" added",
+    "note": ""
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.requestId: field added",
@@ -2503,6 +2583,22 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|9.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/tests 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdTests",
+    "op": "GET /api/v1/webhook-endpoints/{id}/tests",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": ""
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
@@ -3022,6 +3118,22 @@
     "op": "PATCH /api/v1/users/{id}/claims",
     "change": "new operation",
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
+    "key": "PATCH /api/v1/webhook-endpoints/{id} 200.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.patchWebhookEndpointsById",
+    "op": "PATCH /api/v1/webhook-endpoints/{id}",
+    "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/webhook-endpoints/{id} body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.patchWebhookEndpointsById",
+    "op": "PATCH /api/v1/webhook-endpoints/{id}",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
@@ -4641,6 +4753,22 @@
     "note": ""
   },
   {
+    "key": "POST /api/v1/platform/apple/identity-moves new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+    "op": "POST /api/v1/platform/apple/identity-moves",
+    "change": "new operation",
+    "note": "Starts the identity.move operation (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key; no token retries or cancels it."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
+    "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
+    "change": "new operation",
+    "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -5785,12 +5913,60 @@
     "note": "POST /wallet-providers/reissue sends every active Google or Samsung copy of an org's passes again. A key needs passes:write."
   },
   {
+    "key": "POST /api/v1/webhook-endpoints 201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpoints",
+    "op": "POST /api/v1/webhook-endpoints",
+    "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpoints",
+    "op": "POST /api/v1/webhook-endpoints",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay 201.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+    "op": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay",
+    "change": "201.type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
     "class": "additive",
     "operationId": "webhooks.postWebhookEndpointsByIdSecret",
     "op": "POST /api/v1/webhook-endpoints/{id}/secret",
     "change": "body.overlapHours: values 1 and 168 added",
     "note": "The old signing secret may now stay valid for 1 hour or 7 days (168) as well as 0, 24 or 72 hours."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/test body.type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsByIdTest",
+    "op": "POST /api/v1/webhook-endpoints/{id}/test",
+    "change": "body.type: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/capture 201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpointsCapture",
+    "op": "POST /api/v1/webhook-endpoints/capture",
+    "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/capture body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsCapture",
+    "op": "POST /api/v1/webhook-endpoints/capture",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",

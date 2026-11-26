@@ -6193,6 +6193,21 @@ export type PassRemovedEvent = {
   sample?: true;
 };
 
+export type PassReplacedEvent = {
+  id: string;
+  type: "pass.replaced";
+  apiVersion: "2026-12-01" | "2026-11-20";
+  createdAt: number;
+  orgId: string;
+  mode: "live" | "test";
+  pass: WebhookPassRef;
+  data: {
+    replacedBy: string;
+  };
+  requestId?: string;
+  sample?: true;
+};
+
 export type PassRestoredEvent = {
   id: string;
   type: "pass.restored";
@@ -6838,7 +6853,7 @@ export type PassesActivityListResponse = {
     id: string;
     passId: string;
     mode: "live" | "test";
-    kind: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.link_rotated" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "email.queued" | "email.sent" | "email.failed" | "email.captured" | "page.opened" | "pass.downloaded" | "bundle.opened" | "bundle.downloaded" | "device.registered" | "device.unregistered" | "device.fetched" | "device.log" | "wallet.saved" | "wallet.removed" | "wallet.messaged" | "push.queued" | "push.sent" | "push.failed" | "scan.checked_in" | "scan.redeemed" | "scan.adjusted" | "scan.rejected" | "scan.checked_out" | "scan.heads_up" | "scan.undone" | "message.applied" | "schedule.applied";
+    kind: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.link_rotated" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "pass.replaced" | "email.queued" | "email.sent" | "email.failed" | "email.captured" | "page.opened" | "pass.downloaded" | "bundle.opened" | "bundle.downloaded" | "device.registered" | "device.unregistered" | "device.fetched" | "device.log" | "wallet.saved" | "wallet.removed" | "wallet.messaged" | "push.queued" | "push.sent" | "push.failed" | "scan.checked_in" | "scan.redeemed" | "scan.adjusted" | "scan.rejected" | "scan.checked_out" | "scan.heads_up" | "scan.undone" | "message.applied" | "schedule.applied";
     device: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "holder" | "scanner" | null;
     actorId: string | null;
@@ -13668,7 +13683,7 @@ export type WebhookCapture = {
   id: string;
   endpointId: string;
   eventId: string;
-  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
   trigger: "event" | "replay" | "test";
   status: number;
   durationMs: number;
@@ -13684,7 +13699,7 @@ export type WebhookCapturePage = {
 
 export type WebhookDeliveryDetail = {
   eventId: string;
-  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
   passId: string;
   externalId: string | null;
   state: "pending" | "delivered" | "failed" | "cancelled";
@@ -13709,7 +13724,7 @@ export type WebhookDeliveryDetail = {
 export type WebhookDeliveryPage = {
   items: Array<{
     eventId: string;
-    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
     passId: string;
     externalId: string | null;
     state: "pending" | "delivered" | "failed" | "cancelled";
@@ -13731,7 +13746,7 @@ export type WebhookEndpoint = {
   url: string | null;
   urlMasked: string;
   description: string;
-  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds: Array<string> | null;
   apiVersion: "2026-12-01" | "2026-11-20";
   status: "active" | "paused" | "disabled";
@@ -13760,7 +13775,7 @@ export type WebhookEndpointsCreateParams = {
   orgId?: string;
   url: string;
   description?: string;
-  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
 };
 
@@ -13786,7 +13801,7 @@ export type WebhookEndpointsDeliveriesReplayResponse = {
 
 export type WebhookEndpointsEnsureCaptureParams = {
   orgId?: string;
-  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
 };
 
 export type WebhookEndpointsRotateSecretParams = {
@@ -13798,7 +13813,7 @@ export type WebhookEndpointsRotateSecretResponse = {
 };
 
 export type WebhookEndpointsSendTestParams = {
-  type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
 };
 
 export type WebhookEndpointsSetupRetrieveResponse = {
@@ -13873,13 +13888,13 @@ export type WebhookEndpointsSetupRetrieveResponse = {
 export type WebhookEndpointsUpdateParams = {
   url?: string;
   description?: "" | string;
-  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
   status?: "active" | "paused";
   apiVersion?: "2026-12-01" | "2026-11-20";
 };
 
-export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
+export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PassReplacedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
 
 export type WebhookPassRef = {
   id: string;
@@ -13890,7 +13905,7 @@ export type WebhookPassRef = {
 export type WebhookTestAttemptPage = {
   items: Array<{
     id: string;
-    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
     ok: boolean;
     status: number | null;
     errorCode: string | null;

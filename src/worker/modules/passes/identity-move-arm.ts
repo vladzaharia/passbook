@@ -37,3 +37,14 @@ export async function armMoveNow(
     detail: { moveId },
   });
 }
+
+/** The console's call: it names the move, and the move names its org. */
+export async function armMoveById(
+  ctx: ServiceContext,
+  by: { userId: string },
+  moveId: string,
+): Promise<void> {
+  const row = await moveById(ctx.env.DB, moveId);
+  if (!row) throw new NotFoundError('Move not found.');
+  await armMoveNow(ctx, by, row.org_id, moveId);
+}

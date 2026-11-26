@@ -498,6 +498,79 @@
           "data"
         ]
       },
+      "PassReplacedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "pass.replaced"
+            ]
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01",
+              "2026-11-20"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "$ref": "#/components/schemas/WebhookPassRef"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "replacedBy": {
+                "type": "string",
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "replacedBy"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ]
+      },
       "PassInstalledEvent": {
         "type": "object",
         "properties": {
@@ -9632,6 +9705,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -9873,6 +9947,7 @@
               "pass.unvoided",
               "pass.removed",
               "pass.restored",
+              "pass.replaced",
               "pass.installed",
               "pass.uninstalled",
               "pass.scanned",
@@ -9961,6 +10036,7 @@
                     "pass.unvoided",
                     "pass.removed",
                     "pass.restored",
+                    "pass.replaced",
                     "pass.installed",
                     "pass.uninstalled",
                     "pass.scanned",
@@ -10083,6 +10159,7 @@
                     "pass.unvoided",
                     "pass.removed",
                     "pass.restored",
+                    "pass.replaced",
                     "pass.installed",
                     "pass.uninstalled",
                     "pass.scanned",
@@ -10153,6 +10230,7 @@
               "pass.unvoided",
               "pass.removed",
               "pass.restored",
+              "pass.replaced",
               "pass.installed",
               "pass.uninstalled",
               "pass.scanned",
@@ -10339,6 +10417,9 @@
             "$ref": "#/components/schemas/PassPrintVoidedEvent"
           },
           {
+            "$ref": "#/components/schemas/PassReplacedEvent"
+          },
+          {
             "$ref": "#/components/schemas/PushFailedEvent"
           },
           {
@@ -10365,6 +10446,7 @@
             "pass.channels_changed": "#/components/schemas/PassChannelsChangedEvent",
             "pass.printed": "#/components/schemas/PassPrintedEvent",
             "pass.print_voided": "#/components/schemas/PassPrintVoidedEvent",
+            "pass.replaced": "#/components/schemas/PassReplacedEvent",
             "push.failed": "#/components/schemas/PushFailedEvent",
             "email.failed": "#/components/schemas/EmailFailedEvent",
             "webhook.test": "#/components/schemas/WebhookTestEvent"
@@ -40923,6 +41005,7 @@
                     "pass.channels_changed",
                     "pass.printed",
                     "pass.print_voided",
+                    "pass.replaced",
                     "email.queued",
                     "email.sent",
                     "email.failed",
@@ -58503,6 +58586,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -58994,6 +59078,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -59115,6 +59200,7 @@
               "pass.unvoided",
               "pass.removed",
               "pass.restored",
+              "pass.replaced",
               "pass.installed",
               "pass.uninstalled",
               "pass.scanned",
@@ -59150,6 +59236,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -111376,6 +111463,7 @@
           "PASS_NOT_FOUND",
           "PASS_REF_TAKEN",
           "PASS_REMOVED",
+          "PASS_REPLACED",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
@@ -129592,6 +129680,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -130090,6 +130179,7 @@
                 "pass.unvoided",
                 "pass.removed",
                 "pass.restored",
+                "pass.replaced",
                 "pass.installed",
                 "pass.uninstalled",
                 "pass.scanned",
@@ -132851,8 +132941,15 @@
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_MOVE_SAME",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDENTITY_RUN_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
+          "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -132929,6 +133026,846 @@
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
           "IDENTITY_NOT_READY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple/identity-moves/preview": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Dry run of an identity move: what would move and what stays, by reason",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "fromIdentityId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "toIdentityId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "toIdentityId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "passes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "registered": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "holders": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "kept": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "required": [
+                    "toIdentityId",
+                    "passes",
+                    "registered",
+                    "holders",
+                    "kept"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getPlatformAppleIdentityMovesPreview",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_MOVE_SAME",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple/identity-moves": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Move rows with their state and reason, including kept_both and unarmed",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "operationId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "issued",
+                "notified",
+                "registered",
+                "voided",
+                "kept",
+                "kept_both",
+                "failed"
+              ]
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "required": false,
+            "name": "reason",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "operationId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "orgId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "fromIdentityId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "toIdentityId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "oldPassId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "newPassId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "planned",
+                              "issued",
+                              "notified",
+                              "registered",
+                              "voided",
+                              "kept",
+                              "kept_both",
+                              "failed"
+                            ]
+                          },
+                          "reason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "conflictCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "registeredAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "voidAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "voidedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "updatedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "operationId",
+                          "orgId",
+                          "fromIdentityId",
+                          "toIdentityId",
+                          "oldPassId",
+                          "newPassId",
+                          "state",
+                          "reason",
+                          "conflictCount",
+                          "registeredAt",
+                          "voidAt",
+                          "voidedAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getPlatformAppleIdentityMoves",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_FORBIDDEN",
+          "ORG_PERSONAL",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Start moving an org's passes to another identity (Idempotency-Key)",
+        "tags": [
+          "wallet-identities"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "fromIdentityId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "toIdentityId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "orgId",
+                  "fromIdentityId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "mode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "live",
+                        "test",
+                        null
+                      ]
+                    },
+                    "target": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "running",
+                              "waiting",
+                              "done",
+                              "failed",
+                              "skipped"
+                            ]
+                          },
+                          "done": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "total": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "detail": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "until": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "waitingReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "blocked",
+                              "due",
+                              null
+                            ]
+                          },
+                          "group": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "startedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "finishedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "state",
+                          "done",
+                          "total",
+                          "detail",
+                          "until",
+                          "waitingReason",
+                          "group",
+                          "startedAt",
+                          "finishedAt"
+                        ]
+                      }
+                    },
+                    "attempt": {
+                      "type": "integer"
+                    },
+                    "cancelable": {
+                      "type": "boolean"
+                    },
+                    "cancelRequested": {
+                      "type": "boolean"
+                    },
+                    "startedBy": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "api_key",
+                            "system"
+                          ]
+                        },
+                        "id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "error": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "retryable": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "step",
+                        "retryable"
+                      ]
+                    },
+                    "result": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "href": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 300
+                        },
+                        "ids": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 80,
+                            "pattern": "^[A-Za-z0-9_.:-]+$"
+                          }
+                        }
+                      },
+                      "required": [
+                        "href",
+                        "ids"
+                      ]
+                    },
+                    "revision": {
+                      "type": "integer"
+                    },
+                    "pollAfterMs": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "status",
+                    "title",
+                    "text",
+                    "orgId",
+                    "mode",
+                    "target",
+                    "step",
+                    "steps",
+                    "attempt",
+                    "cancelable",
+                    "cancelRequested",
+                    "startedBy",
+                    "createdAt",
+                    "startedAt",
+                    "updatedAt",
+                    "finishedAt",
+                    "error",
+                    "result",
+                    "revision",
+                    "pollAfterMs"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_MOVE_SAME",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple/identity-moves/{moveId}/arm": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Start a move row's 24 hours now (Idempotency-Key)",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "moveId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "moveId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "armed": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "moveId",
+                    "armed"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_MOVE_CONFLICT",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
@@ -168080,6 +169017,67 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PassRestoredEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Any 2xx acknowledges the delivery."
+          }
+        }
+      }
+    },
+    "pass.replaced": {
+      "post": {
+        "summary": "The pass was replaced by another pass, which now carries its state.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "The event id; stable across retries."
+            },
+            "required": true,
+            "description": "The event id; stable across retries.",
+            "name": "x-passbook-event-id",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "The event type, such as pass.issued."
+            },
+            "required": true,
+            "description": "The event type, such as pass.issued.",
+            "name": "x-passbook-event-type",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Unix seconds of this attempt."
+            },
+            "required": true,
+            "description": "Unix seconds of this attempt.",
+            "name": "x-passbook-timestamp",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "v1=<hex>, HMAC-SHA256 of `<timestamp>.<body>`; may list more than one while a secret rotates."
+            },
+            "required": true,
+            "description": "v1=<hex>, HMAC-SHA256 of `<timestamp>.<body>`; may list more than one while a secret rotates.",
+            "name": "x-passbook-signature",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassReplacedEvent"
               }
             }
           }

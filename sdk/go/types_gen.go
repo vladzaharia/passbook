@@ -7040,6 +7040,23 @@ type PassRemovedEventData struct {
 	RunID   *string `json:"runId,omitempty"`
 }
 
+type PassReplacedEvent struct {
+	ID         string                `json:"id"`
+	Type       string                `json:"type"`
+	APIVersion string                `json:"apiVersion"`
+	CreatedAt  int64                 `json:"createdAt"`
+	OrgID      string                `json:"orgId"`
+	Mode       string                `json:"mode"`
+	Pass       WebhookPassRef        `json:"pass"`
+	Data       PassReplacedEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
+	Sample     *bool                 `json:"sample,omitempty"`
+}
+
+type PassReplacedEventData struct {
+	ReplacedBy string `json:"replacedBy"`
+}
+
 type PassRestoredEvent struct {
 	ID         string                `json:"id"`
 	Type       string                `json:"type"`

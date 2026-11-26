@@ -905,6 +905,8 @@ __all__ = [
     "PassPrintedEventData",
     "PassRemovedEvent",
     "PassRemovedEventData",
+    "PassReplacedEvent",
+    "PassReplacedEventData",
     "PassRestoredEvent",
     "PassRestoredEventData",
     "PassScanRefusedEvent",
@@ -7900,6 +7902,21 @@ class PassRemovedEventData(_Model):
     message: bool | None = None
     runId: str | None = None
 
+class PassReplacedEvent(_Model):
+    id: str
+    type: _Literal["pass.replaced"]
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
+    createdAt: int
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    pass_: WebhookPassRef = _Field(alias="pass")
+    data: PassReplacedEventData
+    requestId: str | None = None
+    sample: _Literal[True] | None = None
+
+class PassReplacedEventData(_Model):
+    replacedBy: str
+
 class PassRestoredEvent(_Model):
     id: str
     type: _Literal["pass.restored"]
@@ -8548,7 +8565,7 @@ class PassesActivityListItem(_Model):
     id: str
     passId: str
     mode: _Literal["live", "test"] | str
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "pass.replaced", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
@@ -8563,7 +8580,7 @@ class PassesActivityListResponseItemsItem(_Model):
     id: str
     passId: str
     mode: _Literal["live", "test"] | str
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "pass.replaced", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
@@ -14710,7 +14727,7 @@ class WebhookCapture(_Model):
     id: str
     endpointId: str
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     trigger: _Literal["event", "replay", "test"] | str
     status: int
     durationMs: int
@@ -14724,7 +14741,7 @@ class WebhookCapturePage(_Model):
 
 class WebhookDeliveryDetail(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
     state: _Literal["pending", "delivered", "failed", "cancelled"] | str
@@ -14752,7 +14769,7 @@ class WebhookDeliveryPage(_Model):
 
 class WebhookDeliveryPageItemsItem(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
     state: _Literal["pending", "delivered", "failed", "cancelled"] | str
@@ -14771,7 +14788,7 @@ class WebhookEndpoint(_Model):
     url: str | None
     urlMasked: str
     description: str
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None
     apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     status: _Literal["active", "paused", "disabled"] | str
@@ -14797,7 +14814,7 @@ class WebhookEndpointsCreateParams(_Model):
     orgId: str | None = None
     url: str
     description: str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None = None
 
 class WebhookEndpointsDeleteResponse(_Model):
@@ -14815,7 +14832,7 @@ class WebhookEndpointsDeliveriesBulkReplayResponse(_Model):
 
 class WebhookEndpointsDeliveriesListItem(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
     state: _Literal["pending", "delivered", "failed", "cancelled"] | str
@@ -14832,7 +14849,7 @@ class WebhookEndpointsDeliveriesReplayResponse(_Model):
 
 class WebhookEndpointsEnsureCaptureParams(_Model):
     orgId: str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
 
 class WebhookEndpointsRotateSecretParams(_Model):
     overlapHours: _Literal[0] | _Literal[1] | _Literal[24] | _Literal[72] | _Literal[168] | None = None
@@ -14841,7 +14858,7 @@ class WebhookEndpointsRotateSecretResponse(_Model):
     secret: str
 
 class WebhookEndpointsSendTestParams(_Model):
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str | None = None
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str | None = None
 
 class WebhookEndpointsSetupRetrieveResponse(_Model):
     direction: _Literal["inbound", "outbound"] | str
@@ -14928,7 +14945,7 @@ class WebhookEndpointsSetupRetrieveResponseTest(_Model):
 class WebhookEndpointsUpdateParams(_Model):
     url: str | None = None
     description: _Literal[""] | str | str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
     templateIds: _List[str] | None = None
     status: _Literal["active", "paused"] | str | None = None
     apiVersion: _Literal["2026-12-01", "2026-11-20"] | str | None = None
@@ -14943,7 +14960,7 @@ class WebhookTestAttemptPage(_Model):
 
 class WebhookTestAttemptPageItemsItem(_Model):
     id: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     ok: bool
     status: int | None
     errorCode: str | None
@@ -15181,7 +15198,7 @@ DevelopersRemoveResult = DevelopersRemoveResponse
 
 EventsListResult = EventPage
 
-WebhookEvent = _Annotated[PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent | UnknownWebhookEvent, _Field(union_mode="left_to_right")]
+WebhookEvent = _Annotated[PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PassReplacedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent | UnknownWebhookEvent, _Field(union_mode="left_to_right")]
 
 EventsRetrieveResult = WebhookEvent
 

@@ -51,6 +51,7 @@ import {
 } from './modules/orgs/routes-entitlements.ts';
 import { platformPersonalLabelsRoutes } from './modules/orgs/routes-personal-labels.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
+import { identityMoveRoutes } from './modules/passes/routes-identity-moves.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { previewRoutes } from './modules/public/routes-preview.ts';
@@ -214,6 +215,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-identities', walletIdentitiesRoutes);
   app.route('/api/v1/orgs', identityProvisionRoutes);
   app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
+  app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', platformAppleRoutes);
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);
