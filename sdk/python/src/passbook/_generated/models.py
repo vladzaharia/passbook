@@ -1201,53 +1201,91 @@ __all__ = [
     "PlatformEntitlementPresetsUpdateResponsePreset",
     "PlatformGroupsClaimsRetrieveResponse",
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
+    "PlatformGroupsClaimsRetrieveResult",
+    "PlatformGroupsClaimsUpdateBody",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
+    "PlatformGroupsClaimsUpdateResult",
+    "PlatformGroupsCreateBody",
     "PlatformGroupsCreateParams",
     "PlatformGroupsCreateParamsRulesItem",
     "PlatformGroupsCreateResponse",
+    "PlatformGroupsCreateResult",
     "PlatformGroupsDeleteResponse",
+    "PlatformGroupsDeleteResult",
+    "PlatformGroupsEnsureBody",
     "PlatformGroupsEnsureParams",
     "PlatformGroupsEnsureResponse",
+    "PlatformGroupsEnsureResult",
+    "PlatformGroupsListItem",
     "PlatformGroupsListResponse",
     "PlatformGroupsListResponseItemsItem",
+    "PlatformGroupsListResult",
+    "PlatformGroupsMembersCreateBody",
     "PlatformGroupsMembersCreateParams",
     "PlatformGroupsMembersCreateParams1",
     "PlatformGroupsMembersCreateParams2",
     "PlatformGroupsMembersCreateResponse",
+    "PlatformGroupsMembersCreateResult",
     "PlatformGroupsMembersDeleteResponse",
+    "PlatformGroupsMembersDeleteResult",
+    "PlatformGroupsMembersListItem",
     "PlatformGroupsMembersListResponse",
     "PlatformGroupsMembersListResponseItemsItem",
+    "PlatformGroupsMembersListResult",
+    "PlatformGroupsRulesCreateBody",
     "PlatformGroupsRulesCreateParams",
     "PlatformGroupsRulesCreateResponse",
+    "PlatformGroupsRulesCreateResult",
     "PlatformGroupsRulesDeleteResponse",
+    "PlatformGroupsRulesDeleteResult",
+    "PlatformGroupsRulesListItem",
     "PlatformGroupsRulesListResponse",
     "PlatformGroupsRulesListResponseItemsItem",
+    "PlatformGroupsRulesListResult",
+    "PlatformGroupsUpdateBody",
     "PlatformGroupsUpdateParams",
     "PlatformGroupsUpdateResponse",
+    "PlatformGroupsUpdateResult",
+    "PlatformIdpCallsListItem",
     "PlatformIdpCallsListResponse",
     "PlatformIdpCallsListResponseItemsItem",
+    "PlatformIdpCallsListResult",
+    "PlatformIdpCheckBody",
     "PlatformIdpCheckParams",
     "PlatformIdpCheckResponse",
     "PlatformIdpCheckResponseOperation",
     "PlatformIdpCheckResponseOperationStartedBy",
     "PlatformIdpCheckResponseOperationStepsItem",
+    "PlatformIdpCheckResult",
     "PlatformIdpDriftListResponse",
     "PlatformIdpDriftListResponseItemsItem",
+    "PlatformIdpDriftListResult",
     "PlatformIdpPauseParams",
     "PlatformIdpPauseResponse",
     "PlatformIdpRetrieveResponse",
     "PlatformIdpRetrieveResponseBudgetValue",
+    "PlatformIdpRetrieveResult",
     "PlatformIdpScimBreakerClearResponse",
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
     "PlatformIdpScimBreakerClearResponseOperationStepsItem",
+    "PlatformInvitationsCreateBody",
     "PlatformInvitationsCreateParams",
     "PlatformInvitationsCreateResponse",
+    "PlatformInvitationsCreateResponseCreatedBy",
+    "PlatformInvitationsCreateResult",
+    "PlatformInvitationsListItem",
+    "PlatformInvitationsListItemCreatedBy",
     "PlatformInvitationsListResponse",
     "PlatformInvitationsListResponseItemsItem",
+    "PlatformInvitationsListResponseItemsItemCreatedBy",
+    "PlatformInvitationsListResult",
     "PlatformInvitationsResendResponse",
+    "PlatformInvitationsResendResponseCreatedBy",
+    "PlatformInvitationsResendResult",
     "PlatformInvitationsRevokeResponse",
+    "PlatformInvitationsRevokeResult",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -1338,10 +1376,14 @@ __all__ = [
     "PlatformUsersAccessRetrieveResponseRolesItemMembershipsItemOrg",
     "PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItem",
     "PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg",
+    "PlatformUsersAccessRetrieveResult",
     "PlatformUsersClaimsRetrieveResponse",
     "PlatformUsersClaimsRetrieveResponseClaimsValue",
+    "PlatformUsersClaimsRetrieveResult",
+    "PlatformUsersClaimsUpdateBody",
     "PlatformUsersClaimsUpdateParams",
     "PlatformUsersClaimsUpdateResponse",
+    "PlatformUsersClaimsUpdateResult",
     "PlatformUsersEmailsCreateParams",
     "PlatformUsersEmailsCreateResponse",
     "PlatformUsersEmailsCreateResponseEmailsItem",
@@ -1367,6 +1409,7 @@ __all__ = [
     "PlatformUsersHoldsDeleteResponseOperationStepsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersOffboardBody",
     "PlatformUsersOffboardParams",
     "PlatformUsersOffboardResponse",
     "PlatformUsersOffboardResponsePlan",
@@ -1378,6 +1421,7 @@ __all__ = [
     "PlatformUsersOffboardResponsePlanMembershipsItemOrg",
     "PlatformUsersOffboardResponsePlanSponsorshipsItem",
     "PlatformUsersOffboardResponsePlanSponsorshipsItemOrg",
+    "PlatformUsersOffboardResult",
     "PlatformUsersPassesListResponse",
     "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
@@ -1393,6 +1437,7 @@ __all__ = [
     "PlatformUsersRolesRemoveExternalResponseRolesItemMembershipsItemOrg",
     "PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItem",
     "PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg",
+    "PlatformUsersRolesSetBody",
     "PlatformUsersRolesSetParams",
     "PlatformUsersRolesSetResponse",
     "PlatformUsersRolesSetResponseAccount",
@@ -1401,6 +1446,7 @@ __all__ = [
     "PlatformUsersRolesSetResponseRolesItemMembershipsItemOrg",
     "PlatformUsersRolesSetResponseRolesItemSponsorshipsItem",
     "PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg",
+    "PlatformUsersRolesSetResult",
     "PlatformUsersSessionsRevokeAllResponse",
     "PlatformUsersSessionsRevokeResponse",
     "PlatformUsersUpdateParams",
@@ -2399,7 +2445,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:settings", "platform:wallet"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:groups", "platform:claims", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -9534,6 +9580,18 @@ class PlatformGroupsEnsureResponse(_Model):
     key: str
     dryRun: bool
 
+class PlatformGroupsListItem(_Model):
+    key: str
+    kind: _Literal["role", "custom", "adopted"] | str
+    name: str
+    friendlyName: str | None
+    members: int | None
+    claims: _List[str]
+    otherClients: int | None
+    flags: _List[str]
+    rules: int
+    manual: int
+
 class PlatformGroupsListResponse(_Model):
     items: _List[PlatformGroupsListResponseItemsItem]
     nextCursor: str | None
@@ -9566,6 +9624,13 @@ class PlatformGroupsMembersCreateResponse(_Model):
 class PlatformGroupsMembersDeleteResponse(_Model):
     ok: _Literal[True]
 
+class PlatformGroupsMembersListItem(_Model):
+    id: str
+    subject: str
+    userId: str | None
+    source: _Literal["manual", "invitation"] | str
+    createdAt: int
+
 class PlatformGroupsMembersListResponse(_Model):
     items: _List[PlatformGroupsMembersListResponseItemsItem]
     nextCursor: str | None
@@ -9590,6 +9655,12 @@ class PlatformGroupsRulesCreateResponse(_Model):
 class PlatformGroupsRulesDeleteResponse(_Model):
     ok: _Literal[True]
 
+class PlatformGroupsRulesListItem(_Model):
+    id: str
+    orgId: str
+    orgRoles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None
+    createdAt: int
+
 class PlatformGroupsRulesListResponse(_Model):
     items: _List[PlatformGroupsRulesListResponseItemsItem]
     nextCursor: str | None
@@ -9606,6 +9677,16 @@ class PlatformGroupsUpdateParams(_Model):
 class PlatformGroupsUpdateResponse(_Model):
     key: str
     dryRun: bool
+
+class PlatformIdpCallsListItem(_Model):
+    id: int
+    phase: str
+    method: str
+    target: str | None
+    actor: str | None
+    reason: str | None
+    status: str | None
+    at: int
 
 class PlatformIdpCallsListResponse(_Model):
     items: _List[PlatformIdpCallsListResponseItemsItem]
@@ -9759,7 +9840,30 @@ class PlatformInvitationsCreateResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsCreateResponseCreatedBy
     link: str | None = None
+
+class PlatformInvitationsCreateResponseCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
+
+class PlatformInvitationsListItem(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+    createdBy: PlatformInvitationsListItemCreatedBy
+
+class PlatformInvitationsListItemCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsListResponse(_Model):
     items: _List[PlatformInvitationsListResponseItemsItem]
@@ -9775,6 +9879,12 @@ class PlatformInvitationsListResponseItemsItem(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsListResponseItemsItemCreatedBy
+
+class PlatformInvitationsListResponseItemsItemCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsResendResponse(_Model):
     id: str
@@ -9786,7 +9896,13 @@ class PlatformInvitationsResendResponse(_Model):
     expiresAt: int
     acceptedAt: int | None
     revokedAt: int | None
+    createdBy: PlatformInvitationsResendResponseCreatedBy
     link: str | None = None
+
+class PlatformInvitationsResendResponseCreatedBy(_Model):
+    kind: _Literal["user", "key"] | str
+    id: str
+    name: str | None
 
 class PlatformInvitationsRevokeResponse(_Model):
     ok: _Literal[True]
@@ -16253,13 +16369,87 @@ PassesVersionsRetrieveResult = PassDetail
 
 PassesVoidResult = PassSummary
 
+PlatformGroupsClaimsRetrieveResult = PlatformGroupsClaimsRetrieveResponse
+
+PlatformGroupsClaimsUpdateBody = PlatformGroupsClaimsUpdateParams
+
+PlatformGroupsClaimsUpdateResult = PlatformGroupsClaimsUpdateResponse
+
+PlatformGroupsCreateBody = PlatformGroupsCreateParams
+
+PlatformGroupsCreateResult = PlatformGroupsCreateResponse
+
+PlatformGroupsDeleteResult = PlatformGroupsDeleteResponse
+
+PlatformGroupsEnsureBody = PlatformGroupsEnsureParams
+
+PlatformGroupsEnsureResult = PlatformGroupsEnsureResponse
+
+PlatformGroupsListResult = PlatformGroupsListResponse
+
 PlatformGroupsMembersCreateParams = PlatformGroupsMembersCreateParams1 | PlatformGroupsMembersCreateParams2
+
+PlatformGroupsMembersCreateBody = PlatformGroupsMembersCreateParams
+
+PlatformGroupsMembersCreateResult = PlatformGroupsMembersCreateResponse
+
+PlatformGroupsMembersDeleteResult = PlatformGroupsMembersDeleteResponse
+
+PlatformGroupsMembersListResult = PlatformGroupsMembersListResponse
+
+PlatformGroupsRulesCreateBody = PlatformGroupsRulesCreateParams
+
+PlatformGroupsRulesCreateResult = PlatformGroupsRulesCreateResponse
+
+PlatformGroupsRulesDeleteResult = PlatformGroupsRulesDeleteResponse
+
+PlatformGroupsRulesListResult = PlatformGroupsRulesListResponse
+
+PlatformGroupsUpdateBody = PlatformGroupsUpdateParams
+
+PlatformGroupsUpdateResult = PlatformGroupsUpdateResponse
+
+PlatformIdpCallsListResult = PlatformIdpCallsListResponse
+
+PlatformIdpCheckBody = PlatformIdpCheckParams
+
+PlatformIdpCheckResult = PlatformIdpCheckResponse
+
+PlatformIdpDriftListResult = PlatformIdpDriftListResponse
+
+PlatformIdpRetrieveResult = PlatformIdpRetrieveResponse
+
+PlatformInvitationsCreateBody = PlatformInvitationsCreateParams
+
+PlatformInvitationsCreateResult = PlatformInvitationsCreateResponse
+
+PlatformInvitationsListResult = PlatformInvitationsListResponse
+
+PlatformInvitationsResendResult = PlatformInvitationsResendResponse
+
+PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
 PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
 
 PlatformSettingsUpdateBody = PlatformSettingsUpdateParams
 
 PlatformSettingsUpdateResult = PlatformSettingsUpdateResponse
+
+PlatformUsersAccessRetrieveResult = PlatformUsersAccessRetrieveResponse
+
+PlatformUsersClaimsRetrieveResult = PlatformUsersClaimsRetrieveResponse
+
+PlatformUsersClaimsUpdateBody = PlatformUsersClaimsUpdateParams
+
+PlatformUsersClaimsUpdateResult = PlatformUsersClaimsUpdateResponse
+
+PlatformUsersOffboardBody = PlatformUsersOffboardParams
+
+PlatformUsersOffboardResult = PlatformUsersOffboardResponse
+
+PlatformUsersRolesSetBody = PlatformUsersRolesSetParams
+
+PlatformUsersRolesSetResult = PlatformUsersRolesSetResponse
 
 PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 | PlatformWalletCredentialsUpsertParams2
 

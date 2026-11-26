@@ -125,6 +125,8 @@ const RULES: Rule[] = [
   // A staff user is Sam: one world record for the name and every email on it.
   [/^users\./, /(^|\.items\[\d+\])\.name$/, 'Sam Rivera'],
   [/^users\./, /\.(primaryEmail|email|emailClaim)$/, 'sam@example.com'],
+  // A platform invitation's creator is named by its id; the name is optional.
+  [ANY, /\.createdBy\.name$/, null],
   // A sweep the receipt calls ok was verified against the policy (retention/receipt-service.ts).
   [/^retention\./, /\.verified$/, true],
   // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).

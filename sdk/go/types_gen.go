@@ -8924,6 +8924,10 @@ type PlatformGroupsClaimsRetrieveResponseClaimsValue struct {
 	Value any    `json:"value,omitempty"`
 }
 
+type PlatformGroupsClaimsRetrieveResult = PlatformGroupsClaimsRetrieveResponse
+
+type PlatformGroupsClaimsUpdateBody = PlatformGroupsClaimsUpdateParams
+
 type PlatformGroupsClaimsUpdateParams struct {
 	Set map[string]map[string]any `json:"set"`
 }
@@ -8933,6 +8937,10 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	Removed []string `json:"removed"`
 	DryRun  bool     `json:"dryRun"`
 }
+
+type PlatformGroupsClaimsUpdateResult = PlatformGroupsClaimsUpdateResponse
+
+type PlatformGroupsCreateBody = PlatformGroupsCreateParams
 
 type PlatformGroupsCreateParams struct {
 	Key          string                                `json:"key"`
@@ -8950,10 +8958,16 @@ type PlatformGroupsCreateResponse struct {
 	DryRun bool   `json:"dryRun"`
 }
 
+type PlatformGroupsCreateResult = PlatformGroupsCreateResponse
+
 type PlatformGroupsDeleteResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
 }
+
+type PlatformGroupsDeleteResult = PlatformGroupsDeleteResponse
+
+type PlatformGroupsEnsureBody = PlatformGroupsEnsureParams
 
 type PlatformGroupsEnsureParams struct {
 	Role string `json:"role"`
@@ -8962,6 +8976,25 @@ type PlatformGroupsEnsureParams struct {
 type PlatformGroupsEnsureResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
+}
+
+type PlatformGroupsEnsureResult = PlatformGroupsEnsureResponse
+
+type PlatformGroupsListItem struct {
+	Key          string   `json:"key"`
+	Kind         string   `json:"kind"`
+	Name         string   `json:"name"`
+	FriendlyName *string  `json:"friendlyName"`
+	Members      *int64   `json:"members"`
+	Claims       []string `json:"claims"`
+	OtherClients *int64   `json:"otherClients"`
+	Flags        []string `json:"flags"`
+	Rules        int64    `json:"rules"`
+	Manual       int64    `json:"manual"`
+}
+
+type PlatformGroupsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsListResponse struct {
@@ -8982,6 +9015,8 @@ type PlatformGroupsListResponseItemsItem struct {
 	Manual       int64    `json:"manual"`
 }
 
+type PlatformGroupsMembersCreateBody = PlatformGroupsMembersCreateParams
+
 type PlatformGroupsMembersCreateParams = any
 
 type PlatformGroupsMembersCreateParams1 struct {
@@ -9000,8 +9035,24 @@ type PlatformGroupsMembersCreateResponse struct {
 	CreatedAt int64   `json:"createdAt"`
 }
 
+type PlatformGroupsMembersCreateResult = PlatformGroupsMembersCreateResponse
+
 type PlatformGroupsMembersDeleteResponse struct {
 	Ok bool `json:"ok"`
+}
+
+type PlatformGroupsMembersDeleteResult = PlatformGroupsMembersDeleteResponse
+
+type PlatformGroupsMembersListItem struct {
+	ID        string  `json:"id"`
+	Subject   string  `json:"subject"`
+	UserID    *string `json:"userId"`
+	Source    string  `json:"source"`
+	CreatedAt int64   `json:"createdAt"`
+}
+
+type PlatformGroupsMembersListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsMembersListResponse struct {
@@ -9017,6 +9068,8 @@ type PlatformGroupsMembersListResponseItemsItem struct {
 	CreatedAt int64   `json:"createdAt"`
 }
 
+type PlatformGroupsRulesCreateBody = PlatformGroupsRulesCreateParams
+
 type PlatformGroupsRulesCreateParams struct {
 	OrgID    string   `json:"orgId"`
 	OrgRoles []string `json:"orgRoles,omitempty"`
@@ -9029,8 +9082,23 @@ type PlatformGroupsRulesCreateResponse struct {
 	CreatedAt int64    `json:"createdAt"`
 }
 
+type PlatformGroupsRulesCreateResult = PlatformGroupsRulesCreateResponse
+
 type PlatformGroupsRulesDeleteResponse struct {
 	Ok bool `json:"ok"`
+}
+
+type PlatformGroupsRulesDeleteResult = PlatformGroupsRulesDeleteResponse
+
+type PlatformGroupsRulesListItem struct {
+	ID        string   `json:"id"`
+	OrgID     string   `json:"orgId"`
+	OrgRoles  []string `json:"orgRoles"`
+	CreatedAt int64    `json:"createdAt"`
+}
+
+type PlatformGroupsRulesListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsRulesListResponse struct {
@@ -9045,6 +9113,8 @@ type PlatformGroupsRulesListResponseItemsItem struct {
 	CreatedAt int64    `json:"createdAt"`
 }
 
+type PlatformGroupsUpdateBody = PlatformGroupsUpdateParams
+
 type PlatformGroupsUpdateParams struct {
 	FriendlyName string `json:"friendlyName"`
 }
@@ -9052,6 +9122,24 @@ type PlatformGroupsUpdateParams struct {
 type PlatformGroupsUpdateResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
+}
+
+type PlatformGroupsUpdateResult = PlatformGroupsUpdateResponse
+
+type PlatformIdpCallsListItem struct {
+	ID     int64   `json:"id"`
+	Phase  string  `json:"phase"`
+	Method string  `json:"method"`
+	Target *string `json:"target"`
+	Actor  *string `json:"actor"`
+	Reason *string `json:"reason"`
+	Status *string `json:"status"`
+	At     int64   `json:"at"`
+}
+
+type PlatformIdpCallsListQuery struct {
+	Since  *int64  `json:"since,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformIdpCallsListResponse struct {
@@ -9069,6 +9157,8 @@ type PlatformIdpCallsListResponseItemsItem struct {
 	Status *string `json:"status"`
 	At     int64   `json:"at"`
 }
+
+type PlatformIdpCheckBody = PlatformIdpCheckParams
 
 type PlatformIdpCheckParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
@@ -9122,6 +9212,8 @@ type PlatformIdpCheckResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformIdpCheckResult = PlatformIdpCheckResponse
+
 type PlatformIdpDriftListResponse struct {
 	Items      []PlatformIdpDriftListResponseItemsItem `json:"items"`
 	NextCursor any                                     `json:"nextCursor"`
@@ -9134,6 +9226,8 @@ type PlatformIdpDriftListResponseItemsItem struct {
 	Kind    string  `json:"kind"`
 	FoundAt int64   `json:"foundAt"`
 }
+
+type PlatformIdpDriftListResult = PlatformIdpDriftListResponse
 
 type PlatformIdpPauseParams struct {
 	Reason string `json:"reason"`
@@ -9159,6 +9253,8 @@ type PlatformIdpRetrieveResponseBudgetValue struct {
 	Day   float64 `json:"day"`
 	Limit float64 `json:"limit"`
 }
+
+type PlatformIdpRetrieveResult = PlatformIdpRetrieveResponse
 
 type PlatformIdpScimBreakerClearResponse struct {
 	Operation PlatformIdpScimBreakerClearResponseOperation `json:"operation"`
@@ -9208,6 +9304,8 @@ type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformInvitationsCreateBody = PlatformInvitationsCreateParams
+
 type PlatformInvitationsCreateParams struct {
 	Email     string   `json:"email"`
 	Groups    []string `json:"groups,omitempty"`
@@ -9215,16 +9313,48 @@ type PlatformInvitationsCreateParams struct {
 }
 
 type PlatformInvitationsCreateResponse struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
-	Link       *string  `json:"link,omitempty"`
+	ID         string                                     `json:"id"`
+	Email      string                                     `json:"email"`
+	Groups     []string                                   `json:"groups"`
+	Developer  bool                                       `json:"developer"`
+	State      string                                     `json:"state"`
+	CreatedAt  int64                                      `json:"createdAt"`
+	ExpiresAt  int64                                      `json:"expiresAt"`
+	AcceptedAt *int64                                     `json:"acceptedAt"`
+	RevokedAt  *int64                                     `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsCreateResponseCreatedBy `json:"createdBy"`
+	Link       *string                                    `json:"link,omitempty"`
+}
+
+type PlatformInvitationsCreateResponseCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
+}
+
+type PlatformInvitationsCreateResult = PlatformInvitationsCreateResponse
+
+type PlatformInvitationsListItem struct {
+	ID         string                               `json:"id"`
+	Email      string                               `json:"email"`
+	Groups     []string                             `json:"groups"`
+	Developer  bool                                 `json:"developer"`
+	State      string                               `json:"state"`
+	CreatedAt  int64                                `json:"createdAt"`
+	ExpiresAt  int64                                `json:"expiresAt"`
+	AcceptedAt *int64                               `json:"acceptedAt"`
+	RevokedAt  *int64                               `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsListItemCreatedBy `json:"createdBy"`
+}
+
+type PlatformInvitationsListItemCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
+}
+
+type PlatformInvitationsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformInvitationsListResponse struct {
@@ -9233,33 +9363,51 @@ type PlatformInvitationsListResponse struct {
 }
 
 type PlatformInvitationsListResponseItemsItem struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
+	ID         string                                            `json:"id"`
+	Email      string                                            `json:"email"`
+	Groups     []string                                          `json:"groups"`
+	Developer  bool                                              `json:"developer"`
+	State      string                                            `json:"state"`
+	CreatedAt  int64                                             `json:"createdAt"`
+	ExpiresAt  int64                                             `json:"expiresAt"`
+	AcceptedAt *int64                                            `json:"acceptedAt"`
+	RevokedAt  *int64                                            `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsListResponseItemsItemCreatedBy `json:"createdBy"`
+}
+
+type PlatformInvitationsListResponseItemsItemCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
 }
 
 type PlatformInvitationsResendResponse struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Groups     []string `json:"groups"`
-	Developer  bool     `json:"developer"`
-	State      string   `json:"state"`
-	CreatedAt  int64    `json:"createdAt"`
-	ExpiresAt  int64    `json:"expiresAt"`
-	AcceptedAt *int64   `json:"acceptedAt"`
-	RevokedAt  *int64   `json:"revokedAt"`
-	Link       *string  `json:"link,omitempty"`
+	ID         string                                     `json:"id"`
+	Email      string                                     `json:"email"`
+	Groups     []string                                   `json:"groups"`
+	Developer  bool                                       `json:"developer"`
+	State      string                                     `json:"state"`
+	CreatedAt  int64                                      `json:"createdAt"`
+	ExpiresAt  int64                                      `json:"expiresAt"`
+	AcceptedAt *int64                                     `json:"acceptedAt"`
+	RevokedAt  *int64                                     `json:"revokedAt"`
+	CreatedBy  PlatformInvitationsResendResponseCreatedBy `json:"createdBy"`
+	Link       *string                                    `json:"link,omitempty"`
 }
+
+type PlatformInvitationsResendResponseCreatedBy struct {
+	Kind string  `json:"kind"`
+	ID   string  `json:"id"`
+	Name *string `json:"name"`
+}
+
+type PlatformInvitationsResendResult = PlatformInvitationsResendResponse
 
 type PlatformInvitationsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
+
+type PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
@@ -9924,6 +10072,8 @@ type PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg struct {
 	Name string `json:"name"`
 }
 
+type PlatformUsersAccessRetrieveResult = PlatformUsersAccessRetrieveResponse
+
 type PlatformUsersClaimsRetrieveResponse struct {
 	Claims    map[string]PlatformUsersClaimsRetrieveResponseClaimsValue `json:"claims"`
 	OtherKeys int64                                                     `json:"otherKeys"`
@@ -9934,6 +10084,10 @@ type PlatformUsersClaimsRetrieveResponseClaimsValue struct {
 	Value any    `json:"value,omitempty"`
 }
 
+type PlatformUsersClaimsRetrieveResult = PlatformUsersClaimsRetrieveResponse
+
+type PlatformUsersClaimsUpdateBody = PlatformUsersClaimsUpdateParams
+
 type PlatformUsersClaimsUpdateParams struct {
 	Set map[string]map[string]any `json:"set"`
 }
@@ -9943,6 +10097,8 @@ type PlatformUsersClaimsUpdateResponse struct {
 	Removed []string `json:"removed"`
 	DryRun  bool     `json:"dryRun"`
 }
+
+type PlatformUsersClaimsUpdateResult = PlatformUsersClaimsUpdateResponse
 
 type PlatformUsersEmailsCreateParams struct {
 	Email string `json:"email"`
@@ -10196,6 +10352,8 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
+type PlatformUsersOffboardBody = PlatformUsersOffboardParams
+
 type PlatformUsersOffboardParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
 }
@@ -10257,6 +10415,8 @@ type PlatformUsersOffboardResponsePlanSponsorshipsItemOrg struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type PlatformUsersOffboardResult = PlatformUsersOffboardResponse
 
 type PlatformUsersPassesListResponse struct {
 	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
@@ -10383,6 +10543,8 @@ type PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg struct
 	Name string `json:"name"`
 }
 
+type PlatformUsersRolesSetBody = PlatformUsersRolesSetParams
+
 type PlatformUsersRolesSetParams struct {
 	Role  string `json:"role"`
 	Grant bool   `json:"grant"`
@@ -10432,6 +10594,8 @@ type PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type PlatformUsersRolesSetResult = PlatformUsersRolesSetResponse
 
 type PlatformUsersSessionsRevokeAllResponse struct {
 	Ok bool `json:"ok"`

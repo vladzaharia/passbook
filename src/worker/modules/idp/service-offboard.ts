@@ -10,14 +10,14 @@ import { managerOf } from '../orgs/actor.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';
 import { setUserStatus } from '../users/service.ts';
 import { offboardable, offboardPlan } from './offboard-plan.ts';
-import { limited, needBinding, replay, startIdpOp } from './ops-start.ts';
+import { type Caller, limited, needBinding, replay, startIdpOp } from './ops-start.ts';
 import { revokeAllGrants } from './repo-role-grants.ts';
 import { orgInfo } from './repo-user-access.ts';
 
 export const offboardTarget = (userId: string) => ({ type: 'user', id: userId });
 
 /** The plan, or the reason the user cannot be offboarded. Reads only. */
-async function checked(ctx: ServiceContext, userId: string) {
+export async function checked(ctx: ServiceContext, userId: string) {
   needBinding(ctx);
   const { admin } = await offboardable(ctx, userId);
   if (admin)
@@ -110,6 +110,7 @@ async function endAccess(
  */
 export async function startOffboard(
   ctx: ServiceContext,
+  caller: Caller,
   auth: SessionAuth,
   userId: string,
   dryRun: boolean,
@@ -118,16 +119,16 @@ export async function startOffboard(
   // A replay is answered before any state check: the offboard it made has already emptied the plan.
   const known = dryRun
     ? null
-    : await replay(ctx, auth, 'idp.offboard', idempotencyKey, offboardTarget(userId));
+    : await replay(ctx, caller, 'idp.offboard', idempotencyKey, offboardTarget(userId));
   if (known) return { plan: await offboardPlan(ctx, userId), operation: known };
   const plan = await checked(ctx, userId);
   if (dryRun) return { plan, operation: null };
   const [blocker] = plan.blockers;
   if (blocker)
     throw new ConflictError(`${blocker.org.name} needs another org admin first.`, 'LAST_ORG_ADMIN');
-  await limited(ctx, auth);
+  await limited(ctx, caller);
   await endAccess(ctx, auth, plan);
-  const operation = await startIdpOp(ctx, auth, {
+  const operation = await startIdpOp(ctx, caller, {
     kind: 'idp.offboard',
     target: offboardTarget(userId),
     subject: { userId },

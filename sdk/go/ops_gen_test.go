@@ -1629,6 +1629,185 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.idp.retrieve", "GET", "/api/v1/platform/idp", false,
+		"", `{"connected":false,"mode":"dry_run","frozen":false,"keyExpiresAt":0,"problems":["x"],"budget":{},"lastScimAt":0,"drift":{},"breakerOpen":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.idp.calls.list", "GET", "/api/v1/platform/idp/calls", false,
+		"", `{"items":[{"id":0,"phase":"x","method":"x","target":"x","actor":"x","reason":"x","status":"x","at":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Calls.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.idp.drift.list", "GET", "/api/v1/platform/idp/drift", false,
+		"", `{"items":[{"id":"x","userId":"x","target":"x","kind":"x","foundAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Drift.List(ctx)
+		},
+	},
+	{
+		"platform.groups.list", "GET", "/api/v1/platform/idp/groups", false,
+		"", `{"items":[{"key":"x","kind":"role","name":"x","friendlyName":"x","members":0,"claims":["x"],"otherClients":0,"flags":["x"],"rules":0,"manual":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.create", "POST", "/api/v1/platform/idp/groups", false,
+		`{"key":"x","friendlyName":"x"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.groups.ensure", "POST", "/api/v1/platform/idp/groups/ensure", false,
+		`{"role":"console"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsEnsureBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Ensure(ctx, &b)
+		},
+	},
+	{
+		"platform.groups.update", "PATCH", "/api/v1/platform/idp/groups/id1", false,
+		`{"friendlyName":"x"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.delete", "DELETE", "/api/v1/platform/idp/groups/id1", false,
+		"", `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Delete(ctx, "id1")
+		},
+	},
+	{
+		"platform.groups.claims.retrieve", "GET", "/api/v1/platform/idp/groups/id1/claims", false,
+		"", `{"claims":{},"otherKeys":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Claims.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.groups.claims.update", "PATCH", "/api/v1/platform/idp/groups/id1/claims", false,
+		`{"set":{}}`, `{"set":["x"],"removed":["x"],"dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsClaimsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Claims.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.members.list", "GET", "/api/v1/platform/idp/groups/id1/members", false,
+		"", `{"items":[{"id":"x","subject":"x","userId":"x","source":"manual","createdAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Members.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.members.create", "POST", "/api/v1/platform/idp/groups/id1/members", false,
+		`{"userId":"x"}`, `{"id":"x","subject":"x","userId":"x","source":"manual","createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsMembersCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Members.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.members.delete", "DELETE", "/api/v1/platform/idp/groups/id1/members/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Members.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.groups.rules.list", "GET", "/api/v1/platform/idp/groups/id1/rules", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgRoles":["org_admin"],"createdAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Rules.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.rules.create", "POST", "/api/v1/platform/idp/groups/id1/rules", false,
+		`{"orgId":"x"}`, `{"id":"x","orgId":"x","orgRoles":["org_admin"],"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsRulesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Rules.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.rules.delete", "DELETE", "/api/v1/platform/idp/groups/id1/rules/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Rules.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.idp.check", "POST", "/api/v1/platform/idp/reconcile", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpCheckBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.Check(ctx, &b)
+		},
+	},
+	{
+		"platform.invitations.list", "GET", "/api/v1/platform/invitations", false,
+		"", `{"items":[{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.invitations.create", "POST", "/api/v1/platform/invitations", false,
+		`{"email":"x"}`, `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformInvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Invitations.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.invitations.revoke", "DELETE", "/api/v1/platform/invitations/id1", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.Revoke(ctx, "id1")
+		},
+	},
+	{
+		"platform.invitations.resend", "POST", "/api/v1/platform/invitations/id1/resend", false,
+		"", `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.Resend(ctx, "id1")
+		},
+	},
+	{
 		"platform.settings.retrieve", "GET", "/api/v1/platform/settings", false,
 		"", `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -2303,6 +2482,53 @@ var generatedOps = []opCase{
 		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.Retrieve(ctx, "id1", nil)
+		},
+	},
+	{
+		"platform.users.access.retrieve", "GET", "/api/v1/users/id1/access", false,
+		"", `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Access.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.claims.retrieve", "GET", "/api/v1/users/id1/claims", false,
+		"", `{"claims":{},"otherKeys":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Claims.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.claims.update", "PATCH", "/api/v1/users/id1/claims", false,
+		`{"set":{}}`, `{"set":["x"],"removed":["x"],"dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersClaimsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Claims.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.offboard", "POST", "/api/v1/users/id1/offboard", false,
+		`{}`, `{"plan":{"userId":"x","memberships":[{"org":{"id":"x","name":"x"},"membershipId":"x"}],"kept":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grants":["developer"],"personalKeys":0,"platformKeys":["x"],"sessions":0,"sandboxOrgId":"x","removes":["console"],"external":["console"],"blockers":[{"org":{"id":"x","name":"x"},"code":"LAST_ORG_ADMIN"}]},"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersOffboardBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Offboard(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.roles.set", "POST", "/api/v1/users/id1/roles", false,
+		`{"role":"developer","grant":false}`, `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersRolesSetBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Roles.Set(ctx, "id1", &b)
 		},
 	},
 	{

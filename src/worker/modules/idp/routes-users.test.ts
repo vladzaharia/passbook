@@ -20,15 +20,15 @@ describe('access', () => {
   it('is for platform admins; writes need a Polaris ID sign-in', async () => {
     const p = await linked();
     const key = await makeApiKey(f());
-    const routes: [string, string, boolean][] = [
-      ['GET', `${base(p.id)}/access`, false],
-      ['POST', `${base(p.id)}/roles`, true],
-      ['POST', `${base(p.id)}/roles/console/remove-external`, true],
-      ['POST', `${base(p.id)}/offboard`, true],
+    const routes: [string, string, boolean, string][] = [
+      ['GET', `${base(p.id)}/access`, false, 'MISSING_SCOPE'],
+      ['POST', `${base(p.id)}/roles`, true, 'MISSING_SCOPE'],
+      ['POST', `${base(p.id)}/roles/console/remove-external`, true, 'PERSON_REQUIRED'],
+      ['POST', `${base(p.id)}/offboard`, true, 'MISSING_SCOPE'],
     ];
-    for (const [method, path, write] of routes) {
+    for (const [method, path, write, keyCode] of routes) {
       expect((await start(path, method, {})).status).toBe(401);
-      await expectProblem(await start(path, method, key.headers), 403, 'PERSON_REQUIRED');
+      await expectProblem(await start(path, method, key.headers), 403, keyCode);
       await expectProblem(
         await start(path, method, (await admin(['user'])).headers),
         403,

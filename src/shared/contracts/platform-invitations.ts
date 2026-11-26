@@ -33,6 +33,8 @@ export const PlatformInvitationSchema = z.object({
   expiresAt: TimestampSchema,
   acceptedAt: TimestampSchema.nullable(),
   revokedAt: TimestampSchema.nullable(),
+  /** The person, or the Platform key, that made it. A key's invitations end with the key. */
+  createdBy: z.object({ kind: z.enum(['user', 'key']), id: IdSchema, name: z.string().nullable() }),
 });
 export type PlatformInvitation = z.infer<typeof PlatformInvitationSchema>;
 

@@ -1,19 +1,20 @@
 import { HoldParamSchema, ReconcileIdpSchema } from '../../../shared/contracts/idp-ops.ts';
 import { StartedOperationSchema } from '../../../shared/contracts/operations.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
-import { startBreakerClear, startCheck, startRestore } from './ops-start.ts';
+import { callerOf, startBreakerClear, startCheck, startRestore } from './ops-start.ts';
 
 const TAG = 'polaris operations';
-/** Platform admins signed in with Polaris ID recently, never a key or break-glass. */
-const AUTH = {
+/** Platform admins signed in with Polaris ID recently, never break-glass. Without `key` a key gets 403 PERSON_REQUIRED. */
+const PERSON = {
   platform: 'platform:users',
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
+/** The check now (or its dry run) is bounded and reversible: a Platform key may start it. */
+const AUTH = { ...PERSON, key: true } as const;
 
 const noStore = (router: ReturnType<typeof createRouter>) =>
   router.use('*', async (c, next) => {
@@ -37,15 +38,13 @@ register(
     params: HoldParamSchema,
     status: 202,
     response: StartedOperationSchema,
-    auth: AUTH,
+    auth: PERSON,
   },
   async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const { id, role } = c.req.valid('param');
     const operation = await startRestore(
       serviceContext(c),
-      auth,
+      callerOf(c),
       id,
       role,
       idempotencyKeyHeader(c.req.header('idempotency-key')),
@@ -75,11 +74,9 @@ register(
     auth: AUTH,
   },
   async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const operation = await startCheck(
       serviceContext(c),
-      auth,
+      callerOf(c),
       c.req.valid('json').dryRun,
       idempotencyKeyHeader(c.req.header('idempotency-key')),
     );
@@ -99,14 +96,12 @@ register(
     operationId: 'polaris-operations.postPlatformIdpScimBreakerClear',
     status: 202,
     response: StartedOperationSchema,
-    auth: AUTH,
+    auth: PERSON,
   },
   async (c) => {
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const operation = await startBreakerClear(
       serviceContext(c),
-      auth,
+      callerOf(c),
       idempotencyKeyHeader(c.req.header('idempotency-key')),
     );
     c.header('location', `/api/v1/operations/${operation.id}`);

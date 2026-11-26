@@ -4,8 +4,10 @@ import type {
   IdpCallListSchema,
   IdpStatusSchema,
 } from '../../../shared/contracts/idp-access.ts';
+import type { Actor } from '../../platform/actor.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { auditActorOf, bindingActorOf } from './actor.ts';
 import { idpClient, idpConfigured } from './client.ts';
 import { idpCodeOf } from './errors.ts';
 import { needBinding } from './ops-start.ts';
@@ -13,7 +15,6 @@ import { openDrift, openDriftCounts } from './repo-drift.ts';
 import { breakerOpen } from './repo-scim.ts';
 import { lastScimChange } from './repo-user-access.ts';
 import { BREAKER_KEY, BREAKER_LATCH_MS } from './scim-effects.ts';
-import type { Actor } from './service-roles.ts';
 
 type Status = z.infer<typeof IdpStatusSchema>;
 
@@ -91,12 +92,11 @@ export async function freezeIdp(
   const result = await idpClient(ctx.env, ctx.log).freeze('admin_pause', {
     ref: `freeze-${ctx.requestId ?? ctx.ids.id()}`,
     reason: 'freeze',
-    actor: { kind: 'user', id: actor.id },
+    actor: bindingActorOf(actor),
   });
   if (result === 'frozen')
     await recordAudit(ctx, {
-      actorType: actor.type,
-      actorId: actor.id,
+      ...auditActorOf(actor),
       action: 'idp.freeze',
       targetType: 'idp',
       targetId: 'binding',
