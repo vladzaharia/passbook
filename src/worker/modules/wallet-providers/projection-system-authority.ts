@@ -36,19 +36,18 @@ export const isSystemAuthored = (candidate: { authorId: string }): boolean =>
   candidate.authorId === SYSTEM_AUTHOR;
 
 /**
- * Providers whose candidates the platform authors and approves itself. Google only: the release and
- * approval triggers exempt the system author for Google, so a Samsung system release would be refused.
+ * Providers whose candidates the platform authors and approves itself. The release, approval, retirement and
+ * tombstone proofs (0141, 0229) exempt the system author for exactly these.
  */
-export const SYSTEM_AUTHORED_PROVIDERS: readonly string[] = ['google'];
+export const SYSTEM_AUTHORED_PROVIDERS: readonly string[] = ['google', 'samsung'];
 
 /**
- * Independence from the Apple version author. A Google system candidate is exempt: its author is the
- * platform, so the person who wrote the version (a solo admin included) may approve it. Samsung is not
- * exempt: its retirement and tombstone proofs (0043, 0050, repo-instance-retirement-sql.ts) keep the
- * raw predicate. The author itself is never exempt: `reviewer != author` stays in every statement.
+ * Independence from the Apple version author. A system candidate (Google or Samsung) is exempt: its author is
+ * the platform, so the person who wrote the version (a solo admin included) may approve it. A human candidate
+ * keeps the raw predicate. The author itself is never exempt: `reviewer != author` stays in every statement.
  */
 export const versionAuthorIndependentSql = (candidate: string, reviewer: string): string =>
-  `(${candidate}.version_author_id IS NULL OR (${candidate}.author_id = '${SYSTEM_AUTHOR}' AND ${candidate}.provider = 'google') OR ${reviewer} != ${candidate}.version_author_id)`;
+  `(${candidate}.version_author_id IS NULL OR (${candidate}.author_id = '${SYSTEM_AUTHOR}' AND ${candidate}.provider IN (${SYSTEM_AUTHORED_PROVIDERS.map((p) => `'${p}'`).join(', ')})) OR ${reviewer} != ${candidate}.version_author_id)`;
 
 /**
  * A stored approval that stands for this candidate: an independent reviewer's, or a `sole` one, which
