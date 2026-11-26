@@ -315,10 +315,11 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'wallet_provider.migration_resolve': a('Wallet account migration resolved', I.edit, 'info'),
 };
 
-export const humanize = (code: string) => {
-  const s = code.replace(/[._]+/g, ' ').trim();
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
+export const humanize = (code: string) =>
+  code
+    .replace(/[._]+/g, ' ')
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
 
 /** Sentence for an audit action code; unknown codes are humanized. */
 export function actionLabel(action: string): string {
