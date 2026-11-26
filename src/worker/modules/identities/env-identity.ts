@@ -15,6 +15,12 @@ export interface ResolvedIdentity extends PassIdentity {
   material: SigningMaterial;
 }
 
+/** What a metadata read of an identity names: its id and certificate (never the key), when one is known. */
+export interface PeekedIdentity {
+  id: string;
+  certificate?: string | null;
+}
+
 export interface IdentityResolver {
   /**
    * Identity for a new pass: explicit id, else the org default, else the platform identity.
@@ -38,8 +44,8 @@ export interface IdentityResolver {
     orgId: string,
     identityId: string | null | undefined,
     now: number,
-  ): Promise<{ id: string }>;
-  peekById?(identityId: string): Promise<{ id: string }>;
+  ): Promise<PeekedIdentity>;
+  peekById?(identityId: string): Promise<PeekedIdentity>;
 }
 
 /** Intermediate for chain checks: SIGNER_PLATFORM_INTERMEDIATE override, else the bundled WWDR G4. */

@@ -869,6 +869,12 @@
     "fix": "Pick a superseded certificate from the identity's history.",
     "retryable": false
   },
+  "IDENTITY_CHAIN_INVALID": {
+    "title": "Identity chain invalid",
+    "when": "The signing identity's certificate does not verify against the Apple intermediate, so it cannot sign passes.",
+    "fix": "Upload the identity's certificate again, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_CHANGED": {
     "title": "Identity changed",
     "when": "The identity changed while its certificate was being activated.",

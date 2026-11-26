@@ -107433,6 +107433,7 @@
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",
@@ -107613,6 +107614,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",
@@ -107889,6 +107891,7 @@
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",

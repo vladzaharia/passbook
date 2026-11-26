@@ -1,13 +1,27 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  createFixtureIdentity,
+  FIXTURE_IDENTITY,
+} from '../../../passkit/testing/fixture-identity.ts';
+import { run } from '../../platform/db.ts';
 import type { LogData, Logger } from '../../platform/log.ts';
 import type { BroadcastKit } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handleOperationRun } from '../operations/jobs.ts';
 import { SECOND_ID } from './identity-move-resolver-test-fixtures.ts';
-import { moveKit, opRow, orgWithPasses, startMove } from './identity-move-test-fixtures.ts';
+import { previewIdentityMove } from './identity-move-start.ts';
+import {
+  count,
+  DAY,
+  moveKit,
+  opRow,
+  orgWithPasses,
+  startMove,
+} from './identity-move-test-fixtures.ts';
 
-// The second identity's certificate comes from another CA than the Worker's intermediate: the way a seed made
-// with its own fixture generator fails when the first replacement is signed.
+// The second identity's certificate comes from another CA than the Worker's intermediate while `state.broken` is
+// set: the way a seed made with its own fixture generator fails when a replacement is signed.
+const state = vi.hoisted(() => ({ broken: false }));
 vi.mock('../identities/resolver.ts', async (importOriginal) => {
   const original = await importOriginal<typeof import('../identities/resolver.ts')>();
   const { createFixtureIdentity, FIXTURE_IDENTITY } = await import(
@@ -25,11 +39,13 @@ vi.mock('../identities/resolver.ts', async (importOriginal) => {
         ...platform,
         id: SECOND_ID,
         orgId: null,
-        material: {
-          certificate: stranger.certificate,
-          privateKey: stranger.privateKey,
-          intermediate: platform.material.intermediate,
-        },
+        material: state.broken
+          ? {
+              certificate: stranger.certificate,
+              privateKey: stranger.privateKey,
+              intermediate: platform.material.intermediate,
+            }
+          : platform.material,
       };
     };
     return {
@@ -51,10 +67,75 @@ beforeAll(async () => {
   kit = await moveKit();
 });
 
-describe('a move that cannot sign its replacements', () => {
+afterEach(() => {
+  state.broken = false;
+});
+
+const refused = (error: unknown) =>
+  expect(error).toMatchObject({ code: 'IDENTITY_CHAIN_INVALID', status: 409 });
+
+describe('a target identity that cannot sign', () => {
+  it('is refused at start, before an operation or a row exists', async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    state.broken = true;
+    refused(await startMove(kit, org.id).catch((e: unknown) => e));
+    expect(await count(kit, 'SELECT count(*) AS n FROM pass_moves WHERE org_id = ?', org.id)).toBe(
+      0,
+    );
+    expect(
+      await count(
+        kit,
+        'SELECT count(*) AS n FROM operations WHERE kind = ? AND target_id = ?',
+        'identity.move',
+        org.id,
+      ),
+    ).toBe(0);
+  });
+
+  it('is reported by the preview from its certificate alone', async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    const stranger = await createFixtureIdentity(
+      { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.test.stranger' },
+      { now: new Date('2026-01-01T00:00:00.000Z'), days: 3650, caDays: 3650 },
+    );
+    await run(
+      kit.env.DB,
+      "INSERT INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-stranger', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
+          provenance, purpose, is_default, issuing, created_at)
+       VALUES ('identity-stranger', NULL, 'Stranger', 'pass.test.stranger', ?, 'db', 'cred-stranger', ?, ?, 'platform', 'passes', 0, 1, 1)`,
+      [FIXTURE_IDENTITY.teamIdentifier, stranger.certificate, kit.clock.now() + 365 * DAY],
+    );
+    refused(
+      await previewIdentityMove(jobCtxOf(kit), {
+        orgId: org.id,
+        fromIdentityId: 'platform',
+        toIdentityId: 'identity-stranger',
+      }).catch((e: unknown) => e),
+    );
+  });
+
+  it("is not reported for the Worker's own certificate", async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    await expect(
+      previewIdentityMove(jobCtxOf(kit), {
+        orgId: org.id,
+        fromIdentityId: SECOND_ID,
+        toIdentityId: 'platform',
+      }),
+    ).resolves.toMatchObject({ toIdentityId: 'platform' });
+  });
+});
+
+describe('a move whose identity stops signing after it started', () => {
   it('fails, and the log names the step and the signing check, not only OPERATION_FAILED', async () => {
     const { org } = await orgWithPasses(kit, 1);
     const op = await startMove(kit, org.id);
+    state.broken = true;
     const lines: { level: string; event: string; data: LogData }[] = [];
     const log: Logger = {
       debug: () => {},

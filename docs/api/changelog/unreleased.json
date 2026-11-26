@@ -2198,7 +2198,7 @@
     "operationId": "wallet-identities.getPlatformAppleIdentityMovesPreview",
     "op": "GET /api/v1/platform/apple/identity-moves/preview",
     "change": "new operation",
-    "note": "Dry run of an identity move: counts of passes, devices and holders, and the passes that stay by reason. Session only."
+    "note": "Dry run of an identity move: pass, device and holder counts, kept passes by reason. 409 IDENTITY_CHAIN_INVALID if the target cannot sign. Session only."
   },
   {
     "key": "GET /api/v1/platform/entitlement-presets new operation",
@@ -5622,7 +5622,7 @@
     "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
     "op": "POST /api/v1/platform/apple/identity-moves",
     "change": "new operation",
-    "note": "Starts the identity.move operation (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key; no token retries or cancels it."
+    "note": "Starts the identity.move operation (202). Session only, recent sign-in, Idempotency-Key. 409 IDENTITY_CHAIN_INVALID if the target cannot sign."
   },
   {
     "key": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm new operation",

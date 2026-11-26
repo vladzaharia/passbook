@@ -1,7 +1,9 @@
+import { assertCanSign } from '../../../passkit/index.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { intermediatePem } from '../identities/env-identity.ts';
 import { sendOperationRun } from '../operations/jobs.ts';
 import { startOperation } from '../operations/start.ts';
 import { depsOf } from './deps.ts';
@@ -16,6 +18,31 @@ export interface MoveInput {
   toIdentityId?: string | null;
   /** A caller-derived operation id (`operationIdFor`): a repeat of the same start answers the same operation. */
   id?: string;
+}
+
+/**
+ * Runs the checks `signPass` makes on the certificate, so a target that cannot sign is refused before a row is
+ * planned instead of failing the first replacement. Only the certificate is read, never the key.
+ */
+async function assertTargetSigns(ctx: ServiceContext, certificate: string | null | undefined) {
+  // No certificate to read: a test double. A real identity row always has one.
+  if (!certificate) return;
+  try {
+    await assertCanSign(
+      { certificate, intermediate: intermediatePem(ctx.env) },
+      { now: new Date(ctx.clock.now()) },
+    );
+  } catch (error) {
+    if ((error as { code?: unknown }).code === 'SIGN_CERT_NOT_VALID')
+      throw new ConflictError(
+        'The new identity has expired. Renew it, then try again.',
+        'IDENTITY_EXPIRED',
+      );
+    throw new ConflictError(
+      'The new identity does not chain to the Apple intermediate. Check it, then try again.',
+      'IDENTITY_CHAIN_INVALID',
+    );
+  }
 }
 
 /** The identities and the org of a move, refused early: a move to an identity that cannot issue never starts. */
@@ -34,6 +61,7 @@ async function checked(ctx: ServiceContext, input: MoveInput, keyless = false) {
   if (!from || !to) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
   if (from.id === to.id)
     throw new ConflictError('The passes are already on that identity.', 'IDENTITY_MOVE_SAME');
+  await assertTargetSigns(ctx, 'material' in to ? to.material.certificate : to.certificate);
   return { fromId: from.id, toId: to.id };
 }
 

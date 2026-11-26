@@ -85,7 +85,7 @@ const chainChecks = new Map<string, Promise<boolean>>();
 
 /** The RSA check of signer against WWDR is the same on every call; validity dates are not cached. */
 function chainIsValid(
-  material: SigningMaterial,
+  material: Pick<SigningMaterial, 'certificate' | 'intermediate'>,
   signer: pki.Certificate,
   intermediate: pki.Certificate,
   engine: pki.ICryptoEngine,
@@ -141,15 +141,18 @@ export async function buildManifest(
   return { manifest, bytes: encoder.encode(JSON.stringify(manifest)) };
 }
 
-/** Detached CMS signature (SHA-256 digest, signingTime, signer + WWDR chain) over manifest.json. */
-export async function signManifest(
-  manifestBytes: Uint8Array,
-  material: SigningMaterial,
+/**
+ * Every check `signManifest` makes before it signs: the certificate and the WWDR intermediate are current, the
+ * intermediate issued the certificate, the certificate is for the identity the pass names (when given), and the
+ * RSA chain verifies. Throws a SigningError with a stable `code`; touches no private key.
+ */
+export async function assertCanSign(
+  material: Pick<SigningMaterial, 'certificate' | 'intermediate'>,
   options: {
     now?: Date;
     expectedIdentity?: { passTypeIdentifier: string; teamIdentifier: string };
   } = {},
-): Promise<Uint8Array> {
+): Promise<{ signer: pki.Certificate; intermediate: pki.Certificate }> {
   const now = options.now ?? new Date();
   const signer = certificateFromPem(material.certificate);
   const intermediate = certificateFromPem(material.intermediate);
@@ -177,9 +180,23 @@ export async function signManifest(
       'Pass identity does not match signing certificate',
     );
   }
-  const engine = webCrypto();
-  if (!(await chainIsValid(material, signer, intermediate, engine)))
+  if (!(await chainIsValid(material, signer, intermediate, webCrypto())))
     throw new SigningError('SIGN_CHAIN_INVALID', 'Invalid certificate chain');
+  return { signer, intermediate };
+}
+
+/** Detached CMS signature (SHA-256 digest, signingTime, signer + WWDR chain) over manifest.json. */
+export async function signManifest(
+  manifestBytes: Uint8Array,
+  material: SigningMaterial,
+  options: {
+    now?: Date;
+    expectedIdentity?: { passTypeIdentifier: string; teamIdentifier: string };
+  } = {},
+): Promise<Uint8Array> {
+  const now = options.now ?? new Date();
+  const { signer, intermediate } = await assertCanSign(material, { ...options, now });
+  const engine = webCrypto();
 
   const data = manifestBytes.buffer.slice(
     manifestBytes.byteOffset,

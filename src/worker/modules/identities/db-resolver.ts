@@ -1,5 +1,5 @@
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
-import type { AppEnv } from '../../platform/env.ts';
+import { type AppEnv, envString } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import {
@@ -180,14 +180,21 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
   /** The row an id names, without its key: the legacy id stands for the env identity when it has no row. */
   const peekRow = async (
     id: string,
-  ): Promise<{ id: string; orgId: string | null; purpose: string }> => {
+  ): Promise<{ id: string; orgId: string | null; purpose: string; certificate: string | null }> => {
     const row = await getIdentityRow(env.DB, id);
+    const legacy =
+      id === PLATFORM_IDENTITY_ID ? (envString(env, 'SIGNER_PLATFORM_CERTIFICATE') ?? null) : null;
     if (row) {
       if (row.source !== 'env' && !row.cert_pem) throw notFound();
-      return { id: row.id, orgId: row.org_id, purpose: row.purpose };
+      return {
+        id: row.id,
+        orgId: row.org_id,
+        purpose: row.purpose,
+        certificate: row.source === 'env' ? legacy : row.cert_pem,
+      };
     }
     if (id === PLATFORM_IDENTITY_ID && envIdentityPresent(env))
-      return { id, orgId: null, purpose: 'passes' };
+      return { id, orgId: null, purpose: 'passes', certificate: legacy };
     throw notFound();
   };
 
@@ -196,25 +203,26 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     byId,
     byRow: (row) => resolveRow(env, row),
     async peekById(id) {
-      return { id: (await peekRow(id)).id };
+      const { certificate } = await peekRow(id);
+      return { id, certificate };
     },
     async peekForOrg(orgId, identityId, now) {
       const scoped = async (id: string) => {
         const meta = await peekRow(id);
         if (meta.purpose !== 'passes') throw notFound();
         if (meta.orgId !== null && meta.orgId !== orgId) throw notFound();
-        return meta.id;
+        return { id: meta.id, certificate: meta.certificate };
       };
       if (identityId) {
-        const id = await scoped(identityId);
-        const refused = await refusal(env, id, now);
+        const found = await scoped(identityId);
+        const refused = await refusal(env, found.id, now);
         if (refused) throw refused;
-        return { id };
+        return found;
       }
       const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
       if (orgDefault) {
         const refused = await refusal(env, orgDefault, now);
-        if (!refused) return { id: await scoped(orgDefault) };
+        if (!refused) return scoped(orgDefault);
         if (refused.code !== 'IDENTITY_RETIRED') {
           await scoped(orgDefault);
           throw refused;
@@ -223,12 +231,15 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
       const fallback = await getDefaultRow(env.DB);
       if (fallback && fallback.purpose !== 'passes') throw notFound();
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
-        if (!(await refusal(env, fallback.id, now))) return { id: (await peekRow(fallback.id)).id };
+        if (!(await refusal(env, fallback.id, now))) {
+          const { id, certificate } = await peekRow(fallback.id);
+          return { id, certificate };
+        }
       }
-      const id = (await peekRow(PLATFORM_IDENTITY_ID)).id;
+      const { id, certificate } = await peekRow(PLATFORM_IDENTITY_ID);
       const refused = await refusal(env, id, now);
       if (refused) throw refused;
-      return { id };
+      return { id, certificate };
     },
     async forOrg(orgId, identityId, now) {
       // An org may use its own identities and global ones, never another org's.

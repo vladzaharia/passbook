@@ -1974,6 +1974,15 @@
       ]
     },
     {
+      "code": "IDENTITY_CHAIN_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_CHANGED",
       "statuses": [
         409
@@ -2006,7 +2015,8 @@
         409
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {

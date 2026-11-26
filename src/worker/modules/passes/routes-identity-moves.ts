@@ -51,7 +51,7 @@ register(
     query: IdentityMoveOrgQuerySchema,
     response: IdentityMovePreviewSchema,
     auth: READ,
-    codes: [...ERRORS, 'IDENTITY_MOVE_SAME'],
+    codes: [...ERRORS, 'IDENTITY_MOVE_SAME', 'IDENTITY_CHAIN_INVALID'],
   },
   async (c) => {
     adminOf(c);
@@ -88,7 +88,7 @@ register(
     status: 202,
     response: OperationSchema,
     auth: WRITE,
-    codes: [...ERRORS, 'IDENTITY_MOVE_SAME', 'OPERATION_RUNNING'],
+    codes: [...ERRORS, 'IDENTITY_MOVE_SAME', 'IDENTITY_CHAIN_INVALID', 'OPERATION_RUNNING'],
   },
   async (c) => {
     requireIdempotencyKey(c);
