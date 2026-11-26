@@ -18,6 +18,7 @@ import {
 import { personLabel } from '../../lib/format.ts';
 import { UserTagsCard } from '../tags/user-tags-card.tsx';
 import { useUser, useUserMutations } from './queries.ts';
+import { UserPassesCard } from './user-passes-card.tsx';
 import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
 
 export function UserDetailPage({ userId }: { userId: string }) {
@@ -123,6 +124,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
           passes={user.passes}
           passCount={user.passCount}
         />
+        <UserPassesCard userId={user.id} />
         <EmailsCard user={user} self={self} />
         <SessionsCard user={user} self={self} now={Date.now()} />
         <IdentitiesCard user={user} />

@@ -1,6 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { OkSchema } from '@/shared/contracts/common.ts';
-import { UserDetailSchema, UserListSchema, UserSchema } from '@/shared/contracts/users.ts';
+import {
+  UserDetailSchema,
+  UserListSchema,
+  UserPassListSchema,
+  UserSchema,
+} from '@/shared/contracts/users.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 
 export interface UserFilters {
@@ -31,6 +36,24 @@ export function useUser(id: string) {
     queryKey: detailKey(id),
     queryFn: ({ signal }) => api.get(path(id), UserDetailSchema, { signal }),
   });
+}
+
+export function useUserPasses(id: string) {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: ['users', 'passes', id],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get(`${path(id)}/passes`, UserPassListSchema, {
+          query: { cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+      // Each read is audited: no refetch on focus, and a page stays fresh for a while.
+      staleTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    }),
+  );
 }
 
 export function useUserMutations(id: string) {
