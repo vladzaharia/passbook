@@ -33,7 +33,7 @@ describe('what the strip knows', () => {
       slug: 'acme-dev',
       orgId: 'org-1',
       mode: 'test',
-      key: { name: 'Default', prefix: 'pbp_test_PB8a' },
+      key: { id: 'k1', name: 'Default', prefix: 'pbp_test_PB8a' },
     });
     vi.resetModules();
     const fetchMock = route(signedIn);
@@ -58,7 +58,7 @@ describe('the context strip', () => {
     slug: 'acme-dev',
     orgId: 'org-1',
     mode: 'test',
-    key: { name: 'Default', prefix: 'pbp_test_PB8a' },
+    key: { id: 'k1', name: 'Default', prefix: 'pbp_test_PB8a' },
   };
 
   it('says Test, the sandbox and the key in use', async () => {
@@ -66,7 +66,9 @@ describe('the context strip', () => {
     render(<ContextStrip tool="logs" model={ready} />);
     for (const text of ['Test', 'acme-dev', 'Default', 'pbp_test_PB8a…'])
       expect(screen.getByText(text)).toBeTruthy();
-    expect(screen.getByTitle('Key: Default')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Default/ }).getAttribute('href')).toBe(
+      '/developers/logs?key=k1',
+    );
     expect(screen.queryByRole('meter')).toBeNull();
   });
 

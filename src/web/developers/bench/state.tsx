@@ -128,7 +128,7 @@ export function BenchState({
 const GATE_DOCS: Record<BenchTool, string | undefined> = {
   console: PATHS.reference,
   webhooks: `${PATHS.reference}/webhook-endpoints`,
-  logs: undefined,
+  logs: PATHS.reference,
   keys: PATHS.guides,
 };
 

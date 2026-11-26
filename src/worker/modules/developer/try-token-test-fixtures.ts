@@ -1,9 +1,10 @@
 import { expect, vi } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { CreatedDeveloperSandboxSchema, TryTokenSchema } from '../../../shared/contracts/index.ts';
+import { TryTokenSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { createAuthStores } from '../../stores.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
+import { makeSandbox } from './sandbox-test-fixtures.ts';
 
 export const ORIGIN = 'https://wallet.test';
 /** What a browser sends with every fetch from the portal page. */
@@ -49,18 +50,20 @@ export async function tryKit() {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
     const browser = { ...session.headers, ...BROWSER };
-    const res = await app.request(
-      `${ORIGIN}/api/v1/developer/sandbox`,
-      {
-        method: 'POST',
-        headers: { ...browser, 'content-type': 'application/json' },
-        body: JSON.stringify({ turnstileToken: 'ok' }),
-      },
-      kit.env,
+    const made = await makeSandbox(
+      (method, path, headers, body) =>
+        app.request(
+          `${ORIGIN}/api/v1${path}`,
+          {
+            method,
+            headers: { ...headers, 'content-type': 'application/json' },
+            ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+          },
+          kit.env,
+        ),
+      browser,
     );
-    expect(res.status, await res.clone().text()).toBe(201);
-    const made = CreatedDeveloperSandboxSchema.parse(await res.json());
-    if (!made.key) throw new Error('A new sandbox returns its key.');
+    if (!made.key) throw new Error('A new sandbox mints its key.');
     return { user, session, browser, made, key: made.key };
   }
 
