@@ -177,7 +177,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
   app.route('/api/v1/workbench', workbenchRoutes);
-  app.route('/api/v1/resolve', resolveRoutes);
+  app.route('/api/v1', resolveRoutes);
   app.route('/api/v1/workbench', workbenchReadRoutes);
   app.route('/api/v1/request-logs', requestLogRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.

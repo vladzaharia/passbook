@@ -91541,17 +91541,12 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_REQUIRED",
+          "ORG_NOT_FOUND",
           "RATE_LIMITED",
-          "RESOLVE_NOT_FOUND",
-          "SANDBOX_NOT_FOUND",
-          "SANDBOX_TEST_ONLY",
+          "SANDBOX_KEY_MISSING",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WORKBENCH_CONTEXT_NOT_FOUND",
-          "WORKBENCH_TEST_ONLY"
+          "WORKBENCH_CONTEXT_NOT_FOUND"
         ]
       }
     },

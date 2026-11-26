@@ -9542,16 +9542,20 @@
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_REQUIRED",
-    "RESOLVE_NOT_FOUND",
-    "SANDBOX_NOT_FOUND",
     "SANDBOX_TEST_ONLY",
     "UNAUTHENTICATED",
-    "WORKBENCH_CONTEXT_NOT_FOUND",
     "WORKBENCH_TEST_ONLY"
   ],
   "workbench get /contexts": [
     "FORBIDDEN",
     "UNAUTHENTICATED"
+  ],
+  "workbench get /resolve": [
+    "FORBIDDEN",
+    "RESOLVE_NOT_FOUND",
+    "SANDBOX_NOT_FOUND",
+    "UNAUTHENTICATED",
+    "WORKBENCH_CONTEXT_NOT_FOUND"
   ],
   "workbench get /summary": [
     "FORBIDDEN",

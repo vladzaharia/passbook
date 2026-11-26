@@ -14,15 +14,19 @@ import { logCaller } from '../developer/routes-logs.ts';
 import { workbenchContexts } from './contexts.ts';
 import { workbenchSummary } from './summary.ts';
 
-/** `GET /api/v1/resolve`: what an id is in a Test context. A person's browser, or a try token; never a key. */
+/**
+ * `GET /api/v1/resolve`: what an id is in a Test context. A person's browser, or a try token; never a key.
+ * Mounted at `/api/v1` with its own path: the request log's `/` shares the `workbench` tag, and the route
+ * code table is keyed by tag, method and router-local path.
+ */
 export const resolveRoutes = createRouter();
-resolveRoutes.use('*', logCaller);
+resolveRoutes.use('/resolve', logCaller);
 register(
   resolveRoutes,
   'workbench',
   {
     method: 'get',
-    path: '/',
+    path: '/resolve',
     summary: 'What a pasted id is in your Test data: a request, a pass, an event, a key, or Live',
     operationId: 'workbench.getResolve',
     query: ResolveQuerySchema,
