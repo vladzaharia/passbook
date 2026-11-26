@@ -228,7 +228,7 @@ async function main(argv: string[]) {
               'x-smcs-partner-id': key.partnerId as string,
               'x-request-id': 'rec',
             }
-          : {},
+          : ({} as Record<string, string>),
       literals: [card, ref, ...(key ? [key.partnerId as string] : [])],
       out: resolve(root, 'test/fixtures/wallets/samsung'),
       dryRun: !real,
