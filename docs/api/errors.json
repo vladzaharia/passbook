@@ -3276,10 +3276,16 @@
     {
       "code": "OPERATION_NOT_RETRYABLE",
       "statuses": [
+        404,
+        409
+      ],
+      "primary": [
+        404,
         409
       ],
       "modules": [
-        "operations"
+        "operations",
+        "passes"
       ]
     },
     {

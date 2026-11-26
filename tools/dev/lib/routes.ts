@@ -76,6 +76,15 @@ export function parseRoutes(json: string, source = 'route list'): Route[] {
   });
 }
 
+/** The scanning run also covers the unpaired screens, which live in scanner.json. */
+export function withCompanions(files: string[]): string[] {
+  const has = (n: string) => files.some((f) => f.endsWith(`/${n}`) || f === n);
+  if (!has('scanning.json') || has('scanner.json')) return files;
+  const at = files.findIndex((f) => f.endsWith('scanning.json'));
+  const f = files[at] as string;
+  return [...files, f.replace(/scanning\.json$/, 'scanner.json')];
+}
+
 export const loadRoutes = (file: string): Route[] => parseRoutes(readFileSync(file, 'utf8'), file);
 
 const PLACEHOLDER = /\{([A-Za-z]+)\}/g;

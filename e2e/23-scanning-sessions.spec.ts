@@ -138,20 +138,31 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     );
     await page.screenshot({ path: 'test-results/shared-session-admin.png', fullPage: true });
     const phoneCard = page.getByTestId('session-device').filter({ hasText: second.name });
-    await phoneCard.getByRole('button', { name: 'Configure device', exact: true }).click();
     const configuration = page.getByRole('dialog', { name: `Configure ${second.name}` });
-    await configuration.getByRole('button', { name: /^Operator/ }).click();
-    await configuration.getByRole('combobox', { name: 'Reader', exact: true }).click();
-    await page.getByRole('option', { name: 'Camera', exact: true }).click();
-    // The sheet closes when the PATCH lands. Wait for that response, so a rejected save (a stale
-    // revision) fails here with its status instead of as a sheet that never closed, and a slow one
-    // under load gets the time it needs.
-    const saved = page.waitForResponse(
-      (r) =>
-        r.request().method() === 'PATCH' && /\/scanning-sessions\/[^/]+\/devices\//.test(r.url()),
-    );
-    await configuration.getByRole('button', { name: 'Save device', exact: true }).click();
-    expect((await saved).status()).toBe(200);
+    // The paired devices write to their own rows in the background (reports, sign-ins), and a write that lands while the sheet is
+    // open moves the device's revision: the save is then refused as stale (409). That refusal is the product working,
+    // so the test opens the sheet again on the fresh revision and saves once more.
+    for (let attempt = 1; ; attempt++) {
+      await phoneCard.getByRole('button', { name: 'Configure device', exact: true }).click();
+      await configuration.getByRole('button', { name: /^Operator/ }).click();
+      await configuration.getByRole('combobox', { name: 'Reader', exact: true }).click();
+      await page.getByRole('option', { name: 'Camera', exact: true }).click();
+      // The sheet closes when the PATCH lands. Wait for that response, so a rejected save fails here with its status
+      // instead of as a sheet that never closed, and a slow one under load gets the time it needs.
+      const saved = page.waitForResponse(
+        (r) =>
+          r.request().method() === 'PATCH' && /\/scanning-sessions\/[^/]+\/devices\//.test(r.url()),
+      );
+      await configuration.getByRole('button', { name: 'Save device', exact: true }).click();
+      const status = (await saved).status();
+      if (status === 409 && attempt < 3) {
+        await page.keyboard.press('Escape');
+        await expect(configuration).toBeHidden();
+        continue;
+      }
+      expect(status).toBe(200);
+      break;
+    }
     await expect(configuration).toBeHidden({ timeout: 15_000 });
     // A refresh that raced the save returns the old configuration; each retry reads again.
     await expect(async () => {

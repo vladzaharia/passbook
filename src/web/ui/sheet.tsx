@@ -39,6 +39,8 @@ export interface SheetContentProps
   hideClose?: boolean;
   /** Visible header content (the wordmark on the nav sheet); the title stays the name. */
   header?: ReactNode;
+  /** Actions pinned under the scroll body, never over it (a submit button joins its form with `form`). */
+  footer?: ReactNode;
 }
 
 /**
@@ -117,6 +119,7 @@ export function SheetContent({
   hideTitle,
   hideClose,
   header,
+  footer,
   className,
   children,
   onCloseAutoFocus,
@@ -165,6 +168,11 @@ export function SheetContent({
           )}
         </div>
         <SheetBody>{children}</SheetBody>
+        {footer ? (
+          <div className="grid shrink-0 gap-2 border-t border-border bg-surface-raised p-4">
+            {footer}
+          </div>
+        ) : null}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
