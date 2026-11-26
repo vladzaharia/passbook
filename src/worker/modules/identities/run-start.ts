@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { PLATFORM_SLOTS, type PlatformSlot, platformTarget } from './provision-platform.ts';
 import { getManagedState, identityCertByPassType } from './repo-provision.ts';
@@ -83,6 +83,10 @@ export async function startPlatformProvision(
   ctx: ServiceContext,
   input: { slot: PlatformSlot; createdBy: string | null },
 ): Promise<StartedRun> {
+  if (!Object.hasOwn(PLATFORM_SLOTS, input.slot))
+    throw new ValidationError('Unknown platform slot.', [
+      { path: 'slot', message: 'Use root or devtest.' },
+    ]);
   const held = await identityCertByPassType(ctx.env.DB, PLATFORM_SLOTS[input.slot].passType);
   if (held?.cert_pem)
     throw new ConflictError(

@@ -17,7 +17,7 @@ describe('0234 platform identities', () => {
     ).toEqual({ org_id: null });
     await expect(
       run(env.DB, "UPDATE signing_identities SET purpose = 'other' WHERE id = 'platform'"),
-    ).rejects.toThrow(/CHECK/);
+    ).rejects.toThrow(/immutable/);
   });
 
   it('fails the migration when an org already holds devtest', async () => {
@@ -30,6 +30,22 @@ describe('0234 platform identities', () => {
     await run(kit.env.DB, "UPDATE identity_handles SET org_id = ? WHERE handle = 'devtest'", [
       org.id,
     ]);
+    await expect(run(kit.env.DB, check)).rejects.toThrow(/malformed JSON/);
+  });
+
+  it('runs the abort check before the ALTER and also covers an uploaded platform pass type', async () => {
+    expect(migration.indexOf('SELECT json(')).toBeLessThan(migration.indexOf('ALTER TABLE'));
+    const kit = await setupKit();
+    const check = /SELECT json\([\s\S]*?;/.exec(migration)?.[0] ?? '';
+    await run(
+      kit.env.DB,
+      "INSERT INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-held', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, is_default, created_at)
+       VALUES ('held-root', NULL, 'Held', 'pass.mobile.passbook', 'TEAM123456', 'db', 'cred-held', 0, 1)`,
+    );
     await expect(run(kit.env.DB, check)).rejects.toThrow(/malformed JSON/);
   });
 });

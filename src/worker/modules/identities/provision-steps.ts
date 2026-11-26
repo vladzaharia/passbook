@@ -178,8 +178,27 @@ export async function stepKey(ctx: ServiceContext, runId: string): Promise<void>
     );
     return;
   }
-  // A half-built identity's own pending key stays until activation replaces it.
-  for (const stale of await listCertificateRows(db, row.id))
+  // A half-built identity's own pending key stays until activation replaces it. A run that lost its
+  // order response reuses it, so the certificate Apple may already have made is adopted, not ordered again.
+  const rows = await listCertificateRows(db, row.id);
+  const own = rows.find(
+    (c) => c.state === 'pending' && c.origin === 'asc' && c.credential_id === row.credential_id,
+  );
+  const ownRun = own ? await runByCert(db, own.id) : null;
+  if (own && ownRun?.external_ref && ownRun.csr_pubkey_sha256) {
+    const old = JSON.parse(ownRun.external_ref) as RunRef;
+    if (old.csrDerB64) {
+      await patchRunRef(
+        db,
+        runId,
+        { certId: own.id, csrDerB64: old.csrDerB64 },
+        ctx.clock.now(),
+        ownRun.csr_pubkey_sha256,
+      );
+      return;
+    }
+  }
+  for (const stale of rows)
     if (
       stale.state === 'pending' &&
       stale.origin === 'asc' &&

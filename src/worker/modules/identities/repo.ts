@@ -49,6 +49,7 @@ export function pageIdentityRows(
   limit: number,
   orgId?: string,
   kind?: IdentityRow['provenance'],
+  purpose?: IdentityRow['purpose'],
 ): Promise<IdentityRow[]> {
   const where = [
     ...(after
@@ -56,13 +57,20 @@ export function pageIdentityRows(
       : []),
     ...(orgId ? ['org_id = ?'] : []),
     ...(kind ? ['provenance = ?'] : []),
+    ...(purpose ? ['purpose = ?'] : []),
   ];
   return all<IdentityRow>(
     db,
     `SELECT ${COLUMNS} FROM signing_identities
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY created_at, id LIMIT ?`,
-    [...(after ? [after] : []), ...(orgId ? [orgId] : []), ...(kind ? [kind] : []), limit],
+    [
+      ...(after ? [after] : []),
+      ...(orgId ? [orgId] : []),
+      ...(kind ? [kind] : []),
+      ...(purpose ? [purpose] : []),
+      limit,
+    ],
   );
 }
 

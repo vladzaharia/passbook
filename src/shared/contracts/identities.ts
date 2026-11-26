@@ -18,6 +18,8 @@ export const PushKeyInfoSchema = z.object({
   dependentCount: z.number().int().nonnegative(),
 });
 
+/** The platform's own identity slots: pass.mobile.passbook and the device-test pass type. */
+export const PlatformSlotSchema = z.enum(['root', 'devtest']);
 export const IdentityKindSchema = z.enum(['platform', 'managed', 'own']);
 export const IdentityStatusSchema = z.enum([
   'provisioning',
