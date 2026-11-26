@@ -222,6 +222,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
           users: 'passbook_users',
         },
         layout: 'v2',
+        transport: 'https',
         layoutSuspect: false,
         keyExpiresAt: null,
         checkedAt: now(),

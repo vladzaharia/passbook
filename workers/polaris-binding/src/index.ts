@@ -1,9 +1,21 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
 import { createApi } from './api.ts';
+import type { Deps } from './pocket-http.ts';
 import type { BindingEnv, IdpRpc } from './types.ts';
 
-const api = (env: BindingEnv) =>
-  createApi(env, { fetch: (input, init) => fetch(input, init), now: () => Date.now() });
+/** The origin stays the request URL and Host, so Polaris ID routes a bound request as it routes a public one. The key header is kept either way: the binding is not authentication. */
+export const depsFor = (env: BindingEnv): Deps => {
+  const polaris = env.POLARIS;
+  return polaris
+    ? {
+        fetch: (input, init) => polaris.fetch(new Request(input, init)),
+        now: () => Date.now(),
+        transport: 'binding',
+      }
+    : { fetch: (input, init) => fetch(input, init), now: () => Date.now(), transport: 'https' };
+};
+
+const api = (env: BindingEnv) => createApi(env, depsFor(env));
 
 /** Exactly the RPC methods of design 5.3: every public method here is callable by the main Worker. There is no thaw. */
 export class PolarisBinding extends WorkerEntrypoint<BindingEnv> implements IdpRpc {

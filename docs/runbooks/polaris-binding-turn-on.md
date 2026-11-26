@@ -75,11 +75,21 @@ In Polaris ID's application configuration check that signup default custom claim
 npx wrangler deploy --config workers/polaris-binding/wrangler.jsonc
 ```
 
-## 9. Check health
+## 9. Use a service binding (optional, owner)
 
-Check that `health()` reports `ok: true`, `mode: "dry_run"`, the group names, no warnings and the key expiry. If every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+Only when Polaris ID is a Worker in the same Cloudflare account (service bindings do not cross accounts). Add `{ "binding": "POLARIS", "service": "pocket-id" }` to `services` in `workers/polaris-binding/wrangler.jsonc` (`pocket-id` is the Polaris ID Worker on this account), keep `POCKET_ID_ORIGIN` as it is (it stays the request URL and Host), then deploy:
 
-Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
+```sh name=deploy-binding-polaris confirm="Redeploy the polaris-binding Worker with the POLARIS service binding?"
+npx wrangler deploy --config workers/polaris-binding/wrangler.jsonc
+```
+
+Then check `health().transport` is `binding` (step 10). The key is still sent: the binding is not authentication. If a bound call fails, the Worker fails closed with `IDP_UPSTREAM` and logs `binding.upstream_unreachable`; it never falls back to HTTPS.
+
+## 10. Check health
+
+Check that `health()` reports `ok: true`, `mode: "dry_run"`, `transport` (`https`, or `binding` after step 9), the group names, no warnings and the key expiry. If every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+
+Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`, `binding.upstream_unreachable`.
 
 ## Next
 

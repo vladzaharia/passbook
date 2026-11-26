@@ -89,7 +89,10 @@ export async function recordProof(
   ]);
 }
 
-export type HealthCore = Omit<Health, 'budget' | 'layout' | 'ok' | 'mode' | 'frozen'> & {
+export type HealthCore = Omit<
+  Health,
+  'budget' | 'layout' | 'transport' | 'ok' | 'mode' | 'frozen'
+> & {
   keySubject: string | null;
   /** Targets (`g:<key>`) whose group is renamed, gone or refused: writes to them stop. */
   blocked: string[];
