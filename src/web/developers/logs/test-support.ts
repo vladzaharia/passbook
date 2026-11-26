@@ -38,6 +38,7 @@ export const detail = (n: number, over: Partial<RequestLogDetail> = {}): Request
   requestBody: '{"name":"Ada"}',
   responseBody: '{"id":"p1","ok":true}',
   bodiesExpireAt: Date.now() + 3_600_000,
+  bodiesRecorded: true,
   ...over,
 });
 
