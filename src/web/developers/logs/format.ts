@@ -16,13 +16,3 @@ export const count = (n: number): string => String(n).replace(/\B(?=(\d{3})+(?!\
 /** The pill tone of a status: 2xx success, 3xx info, 4xx warning, 5xx danger. */
 export const flavour = (status: number): 'success' | 'info' | 'warning' | 'danger' =>
   status >= 500 ? 'danger' : status >= 400 ? 'warning' : status >= 300 ? 'info' : 'success';
-
-/** A stored body for display: JSON indented, a marker as it is, nothing as null. */
-export function prettyBody(raw: string | null): string | null {
-  if (raw === null || raw === '') return null;
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
-  }
-}

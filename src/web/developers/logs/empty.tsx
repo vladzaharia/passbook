@@ -1,96 +1,81 @@
-import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
+import { useEffect, useState } from 'react';
+import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
+import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { Buddy } from '../../ui/art/buddy.tsx';
-import { LensArt } from '../../ui/art/lens.tsx';
-import { LogArt } from '../../ui/art/log.tsx';
-import '../../ui/art/scenes/inspect.css';
-import { CopyButton } from '../ui/code.tsx';
-import { CodeView } from '../ui/code-view.tsx';
-import { draw } from './state.tsx';
+import { BenchCode } from '../bench/code-block.tsx';
+import { BenchState } from '../bench/state.tsx';
+import { LOG_API } from './model.ts';
 
-const E = LOGS_COPY.empty;
+const S = LOGS_BENCH_COPY.state;
 
 /** The one call to make first: a read any sandbox key may make, with the key from the environment. */
 const firstCall = (origin: string) =>
   `curl ${origin}/api/v1/passes?limit=1 \\\n  -H "Authorization: Bearer $PASSBOOK_KEY"`;
 
-interface FirstCallProps {
-  origin: string;
-  /** The sandbox has a key to call with; without one the card says so, once, and links to make one. */
-  hasKey: boolean;
-  /** Calls exist from the portal (Run here, its own reads): how many, and the way to show them. */
-  portal?: { count: number; show: () => void };
-}
-
-/** Calls exist, all from the portal and hidden by default: say so, and show them in one tap. */
-function HiddenCalls({ count, show }: { count: number; show: () => void }) {
-  return (
-    <section className="card logs-first" aria-labelledby="logs-first-t">
-      <Buddy mood="curious" size="sm" scene="inspect" prop={<LogArt size="sm" />} />
-      <h2 id="logs-first-t" className="h2">
-        {E.hidden(count)}
-      </h2>
-      <button type="button" className="btn outline" onClick={show}>
-        {E.showHidden}
-      </button>
-    </section>
-  );
+/** How many calls exist from the portal (Run here, its own reads): the default view hides them. */
+function usePortalCalls(): number {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let live = true;
+    fetch(`${LOG_API}?source=try&limit=100`, { headers: { accept: 'application/json' } })
+      .then(async (res) => (res.ok ? ((await res.json()) as { items: unknown[] }).items.length : 0))
+      .then((n) => live && setCount(n))
+      .catch((error: unknown) => {
+        // The empty state shows without the hint; the page's handler hears why.
+        reportError(error);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+  return count;
 }
 
 /**
  * Nothing logged yet: the buddy looks over the empty log, and the card holds the one thing to do next, the call
- * itself ready to copy, or the way to a key when there is none.
+ * itself ready to copy, or the way to a key when there is none. Calls from the portal alone are said and shown
+ * in one tap.
  */
-function FirstCall({ origin, hasKey, portal }: FirstCallProps) {
-  if (portal) return <HiddenCalls {...portal} />;
+export function FirstCall({ hasKey, onShowPortal }: { hasKey: boolean; onShowPortal: () => void }) {
+  const portal = usePortalCalls();
+  if (portal > 0)
+    return (
+      <BenchState scene="logs-idle" title={S.hidden(portal)}>
+        <button type="button" className="btn outline" onClick={onShowPortal}>
+          {S.showHidden}
+        </button>
+      </BenchState>
+    );
   return (
-    <section className="card logs-first" aria-labelledby="logs-first-t">
-      <Buddy mood="curious" size="sm" scene="inspect" prop={<LogArt size="sm" />} />
-      <h2 id="logs-first-t" className="h2">
-        {hasKey ? E.title : E.noKeyTitle}
-      </h2>
+    <BenchState scene="logs-idle" title={hasKey ? undefined : S.noCalls}>
       {hasKey ? (
-        <div className="code logs-curl">
-          <div className="code-h">
-            <span className="tab" aria-current="true">
-              curl
-            </span>
-            <CopyButton label={E.copy} />
-          </div>
-          <CodeView code={firstCall(origin)} lang="curl" label="curl" />
+        <div className="logs-first">
+          <BenchCode label="curl" lang="curl" body={firstCall(location.origin)} empty={S.noCalls} />
         </div>
       ) : (
-        <p className="sm muted">{E.noKey}</p>
+        <p className="sm muted">{S.noKey}</p>
       )}
       <div className="logs-first-a">
         {hasKey ? null : (
           <a className="btn" href={PATHS.keys}>
-            {E.makeKey}
+            {S.makeKey}
           </a>
         )}
-        <a className="btn outline" href={PATHS.console}>
-          {E.console}
+        <a className={hasKey ? 'btn' : 'btn outline'} href={PATHS.console}>
+          {S.console}
         </a>
       </div>
-    </section>
+    </BenchState>
   );
 }
 
-export const showFirstCall = (el: HTMLElement, props: FirstCallProps) =>
-  draw(el, <FirstCall {...props} />);
-
-/** Filters that match nothing: the log under the lens, and the way back. */
-export const showNoMatch = (el: HTMLElement, onClear: () => void) =>
-  draw(
-    el,
-    <div className="logs-nomatch">
-      <span className="logs-lens" aria-hidden="true">
-        <LogArt size="sm" still />
-        <LensArt size="sm" still />
-      </span>
-      <p className="sm">{E.noMatch}</p>
-      <button type="button" className="btn outline sm" onClick={onClear}>
-        {E.clear}
+/** Filters that match nothing: the way back. */
+export function NoMatch({ onClear }: { onClear: () => void }) {
+  return (
+    <BenchState scene="no-match">
+      <button type="button" className="btn outline" onClick={onClear}>
+        {BENCH_COPY.state.clearFilters}
       </button>
-    </div>,
+    </BenchState>
   );
+}

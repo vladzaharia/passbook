@@ -1,282 +1,85 @@
-/* The request log island: "Your API" strip, filter row, one-line rows with a status tick, the exchange that opens
-   in place, the first-call card and the listener's mark. Tokens only; motion is transform and opacity. */
+/* Logs on the bench: what a request row and its inspector add to the primitives (bench/list.css,
+   inspector.css). Tokens only; nothing here moves. */
 
-/* ---------- Listening ---------- */
-.logs-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--pk-text-muted);
-}
-.logs-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--pk-success);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--pk-success) 22%, transparent);
-}
-.logs-live[data-state="paused"] .logs-dot {
-  background: var(--pk-text-subtle);
-  box-shadow: none;
-}
-/* Each answered poll blinks the dot once: the page is listening, and nothing moves between polls. */
-@media (prefers-reduced-motion: no-preference) {
-  .logs-dot.blink {
-    animation: logs-blink 600ms ease-out;
-  }
-}
-@keyframes logs-blink {
-  from {
-    opacity: 0.3;
-  }
-}
-.logs-resume {
-  color: var(--pk-accent-fg);
-  font-weight: 500;
-}
-.logs-resume:hover {
-  text-decoration: underline;
-}
-
-/* ---------- Your API ---------- */
-.logs-api.card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 20px;
-  min-height: 52px;
-  padding: 8px 16px;
-}
-.api-t {
-  margin: 0;
-  padding-right: 20px;
-  border-right: 1px solid var(--pk-border-subtle);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-}
-/* Shares the title's line and wraps inside itself, so the title's rule never stands alone. */
-.api-facts {
-  display: flex;
-  flex: 1 1 0;
+.logs-main {
+  display: grid;
+  gap: 12px;
   min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 24px;
+  transition: opacity var(--wl-dur-hover) var(--wl-ease-move);
+}
+/* A refetch keeps the old rows; they dim while the new ones come. */
+.logs-main[data-busy] .bench-list {
+  opacity: 0.6;
+}
+.logs-full {
   margin: 0;
-}
-.api-fact {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-}
-.api-fact dd {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 13px;
-  color: var(--pk-text-strong);
-}
-.api-key code {
-  font-size: 12px;
-}
-.api-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 28px;
-  margin-inline: -6px;
-  padding: 0 6px;
+  padding: 8px 12px;
   border-radius: var(--pk-radius-md);
-  color: var(--pk-text-strong);
-}
-.api-more:hover {
-  background: var(--pk-state-hover-tint);
-}
-.api-more svg {
-  width: 14px;
-  height: 14px;
-  color: var(--pk-text-muted);
-  transition: transform var(--wl-dur-hover) var(--wl-ease-move);
-}
-.api-more[aria-expanded="true"] svg {
-  transform: rotate(180deg);
-}
-.api-calls {
-  margin-left: auto;
-}
-.api-calls strong {
-  min-width: 2ch;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: end;
-}
-.api-spark {
-  width: 96px;
-  height: 24px;
-  overflow: visible;
-}
-.api-spark polyline {
-  fill: none;
-  stroke: var(--pk-accent);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-.api-spark polygon {
-  fill: color-mix(in oklab, var(--pk-accent) 14%, transparent);
-}
-.api-scopes {
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 10px 0 4px;
-  border-top: 1px solid var(--pk-border-subtle);
-}
-.api-scopes[hidden] {
-  display: none;
+  background: var(--pk-warning-subtle);
+  color: var(--pk-text-default);
+  box-shadow: inset 0 0 0 1px var(--pk-warning-border);
 }
 
-/* ---------- Filter row (the kit's FilterBar) ---------- */
-.logs-bar {
+/* The path: the head shrinks to an ellipsis, the last segment and the query stay; ids are dimmed. */
+.logs-path {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  min-width: 0;
 }
-/* `.btn` sets its own display, which would beat the hidden attribute. */
-.logs-bar[hidden],
-.logs-bar [hidden] {
-  display: none;
-}
-.logs-q {
-  position: relative;
-  width: clamp(10rem, 22vw, 16rem);
-}
-.logs-q > svg {
-  position: absolute;
-  top: 50%;
-  left: 12px;
-  translate: 0 -50%;
-  color: var(--pk-text-muted);
-  pointer-events: none;
-}
-.logs-q input {
-  padding-left: 36px;
-  font-size: 13px;
-}
-.ksel {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 8.5rem;
-  max-width: 14rem;
-  height: 36px;
-  padding: 0 10px 0 12px;
-  border: 1px solid var(--pk-border-strong);
-  border-radius: var(--pk-radius-md);
-  background: var(--wl-field);
-  font-size: 14px;
-  white-space: nowrap;
-  color: var(--pk-text-default);
-  transition: border-color var(--wl-dur-hover) var(--wl-ease-move);
-}
-.ksel:hover {
-  border-color: color-mix(in oklab, var(--pk-border-strong), var(--pk-text-muted) 35%);
-}
-.ksel-l {
-  color: var(--pk-text-muted);
-}
-.ksel-v {
+.logs-head {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.ksel > svg {
-  margin-left: auto;
+.logs-tail {
+  flex: none;
+  white-space: nowrap;
+}
+.logs-id {
   color: var(--pk-text-muted);
 }
-.ksel select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  font-size: 16px;
-  cursor: pointer;
+.logs-err {
+  color: var(--pk-text-default);
+  font: 400 12px / 1 var(--pk-font-mono);
 }
-.ksel:has(select:focus-visible) {
-  outline: 2px solid var(--pk-focus);
-  outline-offset: 1px;
-}
-.ksel[data-set] {
-  border-color: var(--pk-accent);
-  background: var(--pk-accent-subtle);
-  color: var(--pk-text-strong);
-}
-.ksel:has(select:disabled) {
-  opacity: 0.55;
-}
-.ksel select:disabled {
-  cursor: not-allowed;
-}
-.logs-clear svg {
-  width: 16px;
-  height: 16px;
-}
-.logs-note {
-  margin: 0 0 0 auto;
-  text-align: end;
-}
-.logs-full {
-  margin: 0 0 12px;
-  padding: 10px 14px;
+.logs-ms[data-slow] {
   color: var(--pk-warning);
-  background: var(--pk-warning-subtle);
-  border: 1px solid color-mix(in oklab, var(--pk-warning-border) 55%, transparent);
-  border-radius: var(--pk-radius-md);
 }
-@media (max-width: 640px) {
-  .logs-bar {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .logs-q,
-  .logs-note,
-  .logs-clear {
-    grid-column: 1 / -1;
-  }
-  .logs-q {
-    width: auto;
-  }
-  .ksel {
-    min-width: 0;
-    max-width: none;
-  }
-  .logs-note {
-    margin: 0;
-    text-align: start;
-  }
+
+/* The inspector's facts are one wrapping line of muted mono. */
+.logs-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  color: var(--pk-text-muted);
+  font: 400 12px / 18px var(--pk-font-mono);
 }
-/* Below 1024 the facts need the whole width: the title takes its own row. */
-@media (max-width: 1024px) {
-  .api-t {
-    flex: 1 1 100%;
-    padding: 0;
-    border: 0;
-  }
+.logs-facts > * + *::before {
+  content: "·";
+  margin-inline-end: 12px;
+  color: var(--pk-border-strong);
 }
-@media (pointer: coarse) {
-  .ksel,
-  .logs-q input {
-    height: 44px;
-  }
-  .logs-q input {
-    font-size: 16px;
-  }
+.logs-none {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+
+/* The first call, in the empty state's card. */
+.logs-first {
+  width: min(100%, 36rem);
+  text-align: start;
+}
+.logs-first-a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.logs-quiet {
+  margin: 0;
+  padding: 10px 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
 }

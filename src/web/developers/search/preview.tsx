@@ -75,7 +75,7 @@ function ErrorPane({ code, index }: { code: string; index: SearchIndex }) {
           </p>
         </>
       ) : null}
-      <Actions href={e.href} second={{ label: P.log, href: `${PATHS.logs}#code=${e.code}` }} />
+      <Actions href={e.href} second={{ label: P.log, href: `${PATHS.logs}?code=${e.code}` }} />
     </div>
   );
 }
