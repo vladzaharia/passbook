@@ -127,6 +127,7 @@ describe('the request log writes', () => {
     expect((await send()).status).toBeGreaterThanOrEqual(400);
     await t.settle();
     const [off] = await t.rows(std.id);
+    expect(off?.has_bodies).toBe(0);
     expect(off).toMatchObject({
       method: 'POST',
       route: '/api/v1/passes',
@@ -145,7 +146,9 @@ describe('the request log writes', () => {
     clearSettingsCache(t.kit.env.DB);
     await send();
     await t.settle();
-    const [, on] = await t.rows(std.id);
+    const rows = await t.rows(std.id);
+    expect(rows).toHaveLength(2);
+    const on = rows.find((r) => r.id !== off?.id);
     expect(on?.has_bodies).toBe(1);
     expect(on?.response_body).not.toBeNull();
     expect(`${on?.request_body}${on?.response_body}`).not.toContain('hello');
