@@ -79,14 +79,18 @@ export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence 
   );
 }
 
-/** Starter rows: only the session of the person who started them. Never a key. */
+/** Starter rows: the person who started them; an own-only session only what its own session started. Never a key. */
 export function starterFenceFor(
   ctx: ServiceContext,
   auth: AuthContext,
   writer = false,
 ): Fence | null {
   return auth.kind === 'session'
-    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), writer)
+    ? starterFence(
+        { userId: auth.userId, sessionId: auth.sessionId },
+        ctx.clock.now(),
+        writer || isOwnOnly(auth),
+      )
     : null;
 }
 

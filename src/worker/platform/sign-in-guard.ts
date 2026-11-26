@@ -164,12 +164,7 @@ export async function peekBody(c: Context<AppBindings>): Promise<Record<string, 
  * carries the admin role.
  */
 export function assertConsoleGroup(c: Context<AppBindings>, session: SessionAuth): void {
-  if (
-    c.env.OIDC_CONSOLE_GROUP_REQUIRED !== 'true' ||
-    session.amr !== 'oidc' ||
-    hasConsoleGroup(session.roles)
-  )
-    return;
+  if (consoleGroupOk(c, session)) return;
   reportDenied(c, 'FORBIDDEN', session);
   throw new ForbiddenError(
     "You don't have console access. Ask an administrator.",
@@ -177,14 +172,15 @@ export function assertConsoleGroup(c: Context<AppBindings>, session: SessionAuth
   );
 }
 
+/** The console group rule: not required, not a Polaris ID session, or the group is held. */
+const consoleGroupOk = (c: Context<AppBindings>, session: SessionAuth): boolean =>
+  c.env.OIDC_CONSOLE_GROUP_REQUIRED !== 'true' ||
+  session.amr !== 'oidc' ||
+  hasConsoleGroup(session.roles);
+
 /** Whether the session passes the console checks (`idp` level and the console group), without refusing. */
 export function hasConsoleAccess(c: Context<AppBindings>, session: SessionAuth): boolean {
-  return (
-    canUseConsole(session, serviceContext(c).clock.now()) &&
-    (c.env.OIDC_CONSOLE_GROUP_REQUIRED !== 'true' ||
-      session.amr !== 'oidc' ||
-      hasConsoleGroup(session.roles))
-  );
+  return canUseConsole(session, serviceContext(c).clock.now()) && consoleGroupOk(c, session);
 }
 
 /** `RouteAuth.developer`: the developer role, or a platform admin. */

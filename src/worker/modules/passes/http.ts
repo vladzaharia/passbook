@@ -7,6 +7,7 @@ import {
   type ApiScope,
   type AuthContext,
   assertOrgAccess,
+  isMarkedOwnOnly,
   modeOf,
   proveCapability,
   type Role,
@@ -98,6 +99,7 @@ export async function tenantAuthorityOf(
   if (orgAccessRevision === null) throw new ForbiddenError();
   let authority: TenantPassWrite;
   if (auth.kind === 'session') {
+    if (isMarkedOwnOnly(auth)) throw new ForbiddenError();
     const membership = await requireOrgCapability(ctx, auth.userId, orgId, capability);
     authority = {
       kind: 'session',
