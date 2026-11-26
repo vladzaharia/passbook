@@ -8,6 +8,7 @@ import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
+import { keyReach } from './key-kind-fields.ts';
 import { KeyNameLink } from './key-name-link.tsx';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 
@@ -63,9 +64,9 @@ export function keyColumns({
                 <KeyNameLink orgId={orgId} id={k.id}>
                   {k.name}
                 </KeyNameLink>
-                {k.kind === 'service' && !k.parentKeyId ? null : (
+                {(k.kind === 'service' || k.kind === 'platform') && !k.parentKeyId ? null : (
                   <span className="shrink-0 text-xs font-normal text-fg-muted">
-                    {k.parentKeyId ? 'Child' : k.kind === 'personal' ? 'Personal' : 'Platform'}
+                    {k.parentKeyId ? 'Child' : 'Personal'}
                   </span>
                 )}
               </span>
@@ -82,6 +83,16 @@ export function keyColumns({
         );
       },
     },
+    ...(orgId === null
+      ? [
+          {
+            header: 'Access',
+            id: 'access',
+            meta: { nowrap: true },
+            cell: ({ row }: { row: { original: ApiKey } }) => keyReach(row.original),
+          } satisfies DataColumnDef<ApiKey, never>,
+        ]
+      : []),
     {
       header: 'Mode',
       id: 'mode',

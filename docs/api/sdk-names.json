@@ -1529,7 +1529,7 @@
   },
   "polaris-setup.postPlatformIdpSetup": {
     "resource": "platform.idp.setup",
-    "method": "run"
+    "method": "start"
   },
   "public.getBByToken": {
     "resource": "public.bundles",
@@ -2255,6 +2255,10 @@
     "sdk": false,
     "reason": "The browser session and its CSRF token."
   },
+  "settings.getPlatformSettings": {
+    "resource": "platform.settings",
+    "method": "retrieve"
+  },
   "settings.getSettings": {
     "resource": "settings",
     "method": "retrieve"
@@ -2274,6 +2278,10 @@
   "settings.postSettingsReplyToResend": {
     "resource": "settings.replyTo",
     "method": "resendConfirmation"
+  },
+  "settings.putPlatformSettings": {
+    "resource": "platform.settings",
+    "method": "update"
   },
   "settings.putSettings": {
     "resource": "settings",

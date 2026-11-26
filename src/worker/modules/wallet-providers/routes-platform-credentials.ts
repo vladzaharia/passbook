@@ -41,6 +41,8 @@ import { walletReleaseRoutes } from './routes-release.ts';
 
 /** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
 export const walletPlatformRoutes = createRouter();
+// First, ahead of the router guard below: it ignores a Bearer key, and the release routes declare their own access.
+walletPlatformRoutes.route('/', walletReleaseRoutes);
 guard(walletPlatformRoutes, requireAdmin);
 walletPlatformRoutes.use('*', async (c, next) => {
   await next();
@@ -48,7 +50,6 @@ walletPlatformRoutes.use('*', async (c, next) => {
 });
 
 walletPlatformRoutes.route('/', googleManagedPlatformRoutes);
-walletPlatformRoutes.route('/', walletReleaseRoutes);
 
 const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   const auth = authOf(c);

@@ -55,7 +55,12 @@ describe('access', () => {
     for (const [who, code] of cases)
       await expectProblem(await h.call(url(t.user.id), { headers: who.headers }), 403, code);
     const key = await makeApiKey(f());
-    expect((await h.call(url(t.user.id), { headers: key.headers })).status).toBe(401);
+    // The claims routes are person-only: a Platform key gets 403, not the old 401 (design K4).
+    await expectProblem(
+      await h.call(url(t.user.id), { headers: key.headers }),
+      403,
+      'PERSON_REQUIRED',
+    );
     expect((await h.call(url(t.user.id), { headers: admin.headers })).status).toBe(200);
     // The same rule for groups.
     expect((await h.call('/api/v1/platform/idp/groups/console/claims')).status).toBe(401);

@@ -27,6 +27,32 @@ export function declareOidcOnly<T extends object>(guard: T): T {
 }
 export const isOidcOnly = (guard: object): boolean => oidcOnly.has(guard);
 
+/** How a `platform` route treats a key: `key` (any request), `conditional` (`key.unless`), `person` (never). */
+export type PlatformKeyMode = 'key' | 'conditional' | 'person';
+const platformKeys = new WeakMap<object, { mode: PlatformKeyMode; scope: string }>();
+
+/** Declares a `platform` route's key access and scope, so the route inventory and the OpenAPI document read one answer. */
+export function declarePlatformKey<T extends object>(
+  guard: T,
+  mode: PlatformKeyMode,
+  scope: string,
+): T {
+  platformKeys.set(guard, { mode, scope });
+  return guard;
+}
+export const platformKeyOf = (
+  guard: object,
+): { mode: PlatformKeyMode; scope: string } | undefined => platformKeys.get(guard);
+
+const platformKeysOwn = new WeakSet<object>();
+
+/** Marks a `scope` guard a Platform key may pass for reads (`platformKeys: 'own'`), so the route inventory lists it. */
+export function declarePlatformKeysOwn<T extends object>(guard: T): T {
+  platformKeysOwn.add(guard);
+  return guard;
+}
+export const isPlatformKeysOwn = (guard: object): boolean => platformKeysOwn.has(guard);
+
 /** The level a guard enforces, or undefined when it is no session guard. */
 export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(guard);
 

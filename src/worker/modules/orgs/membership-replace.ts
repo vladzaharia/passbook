@@ -3,19 +3,20 @@ import type {
   OrgMember,
   OrgRole,
 } from '../../../shared/contracts/org-membership.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { AuthContext } from '../../platform/auth.ts';
 import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { memberDto, parseRoles } from './access.ts';
+import { auditOf, keyRoleGuard, orgActorOf } from './actor.ts';
 import { checkInviteAllowed } from './invitation-limits.ts';
 import {
   assertNotPersonal,
   changed,
   deliverInvitation,
   INVITATION_TTL,
-  managerOf,
+  storedRoles,
 } from './membership-service.ts';
 import { replaceInvitation, replaceMembership } from './repo-member-replace.ts';
 import { membersLimit, notLastOrgAdmin } from './repo-member-writes.ts';
@@ -28,17 +29,18 @@ import * as repo from './repo-members.ts';
  */
 export async function resendOrgInvitation(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: AuthContext,
   orgId: string,
   invitationId: string,
 ): Promise<OrgInvitation> {
-  const manager = await managerOf(ctx, auth, orgId);
+  const actor = await orgActorOf(ctx, auth, orgId, 'members:manage');
   await assertNotPersonal(ctx, orgId);
   await assertNotPreviewOnly(ctx.env.DB, orgId);
   const old = await repo.invitationById(ctx.env.DB, orgId, invitationId);
   if (!old || old.revoked_at !== null || old.accepted_at !== null) throw changed();
   const now = ctx.clock.now();
-  await checkInviteAllowed(ctx, { actorId: auth.userId, orgId, email: old.email }, true);
+  keyRoleGuard(actor, storedRoles(old.roles));
+  await checkInviteAllowed(ctx, { actorId: actor.rateKey, orgId, email: old.email }, true);
   const roles = parseRoles(old.roles);
   const token = ctx.ids.token(32);
   const row = {
@@ -50,17 +52,16 @@ export async function resendOrgInvitation(
     expires: now + INVITATION_TTL,
   };
   // An expired invitation was not counted against the members limit; its successor is.
-  const checks = old.expires_at <= now ? [...manager.checks, membersLimit(now)] : manager.checks;
-  await replaceInvitation(ctx, manager.principal, checks, old.id, row, {
-    orgId,
-    actorType: 'user',
-    actorId: auth.userId,
-    action: 'org_invitation.resend',
-    targetType: 'org_invitation',
-    targetId: row.id,
-    detail: { replaces: old.id },
-  });
-  await deliverInvitation(ctx, auth, manager, orgId, row.id, row.email, roles, token);
+  const checks = old.expires_at <= now ? [...actor.checks, membersLimit(now)] : actor.checks;
+  await replaceInvitation(
+    ctx,
+    actor.principal,
+    checks,
+    old.id,
+    row,
+    auditOf(actor, orgId, 'org_invitation.resend', 'org_invitation', row.id, { replaces: old.id }),
+  );
+  await deliverInvitation(ctx, actor, orgId, row.id, row.email, roles, token);
   return {
     id: row.id,
     orgId,
@@ -80,13 +81,14 @@ export async function resendOrgInvitation(
  */
 export async function changeOrgMemberRoles(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: AuthContext,
   orgId: string,
   membershipId: string,
   roles: OrgRole[],
 ): Promise<OrgMember> {
-  const manager = await managerOf(ctx, auth, orgId);
+  const actor = await orgActorOf(ctx, auth, orgId, 'members:manage');
   await assertNotPersonal(ctx, orgId);
+  keyRoleGuard(actor, roles);
   const current = await repo.activeMembershipById(ctx.env.DB, orgId, membershipId);
   if (!current) throw new NotFoundError('Member not found.', 'MEMBERSHIP_NOT_FOUND');
   const answer = async (id: string) => {
@@ -95,6 +97,7 @@ export async function changeOrgMemberRoles(
     return memberDto(row);
   };
   const before = parseRoles(current.roles);
+  keyRoleGuard(actor, before);
   if (before.length === roles.length && before.every((role) => roles.includes(role)))
     return answer(current.id);
   const now = ctx.clock.now();
@@ -113,18 +116,14 @@ export async function changeOrgMemberRoles(
   try {
     await replaceMembership(
       ctx,
-      manager.principal,
-      losesAdmin ? [...manager.checks, notLastOrgAdmin(current.id)] : manager.checks,
+      actor.principal,
+      losesAdmin ? [...actor.checks, notLastOrgAdmin(current.id)] : actor.checks,
       next,
-      {
-        orgId,
-        actorType: 'user',
-        actorId: auth.userId,
-        action: 'org_membership.roles',
-        targetType: 'org_membership',
-        targetId: next.membershipId,
-        detail: { replaces: current.id, from: before, to: roles },
-      },
+      auditOf(actor, orgId, 'org_membership.roles', 'org_membership', next.membershipId, {
+        replaces: current.id,
+        from: before,
+        to: roles,
+      }),
       { config: 'LAST_ORG_ADMIN' },
     );
   } catch (error) {

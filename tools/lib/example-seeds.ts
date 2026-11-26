@@ -949,15 +949,19 @@ export const SEEDS: Record<string, unknown> = {
     versions: [{ ...KEYSET.versions[0], state: 'retired', stateAt: T.now }],
   },
   'nfc-keysets.postNfcKeysetsByIdReenrol response': { moved: 12, ownKey: 0, keyset: KEYSET },
+  // A key never gives or changes an admin role (KEY_CANNOT_ADMINISTER), so the examples a key runs use another.
   'organization-memberships.postOrgsByIdInvitations request': {
     email: 'priya@example.com',
-    roles: ['org_admin'],
+    roles: ['pass_operator'],
+  },
+  'organization-memberships.patchOrgsByIdMembershipsByMembershipId request': {
+    roles: ['read_only'],
   },
   'organization-memberships.postOrgsByIdInvitations response': {
     id: uuid('invitation-priya'),
     orgId: IDS.org,
     email: 'priya@example.com',
-    roles: ['org_admin'],
+    roles: ['pass_operator'],
     createdAt: T.now,
     expiresAt: T.now + 7 * 24 * 3_600_000,
     revokedAt: null,

@@ -1,22 +1,40 @@
 ---
 tags: runbook, wallet, google, samsung, release, production
 confirm: true
+profile: passbook-owner
+env:
+  API_URL: https://passbook.mobile
 ---
 # Wallet Provider Flip
 
 Owner only. Agents never run `--remote` or deploy. Releases Google or Samsung in one mode (Test before Live), turns on the orgs that set up before the flip, and rolls back through `draining`. Background: "Wallet release" in [operations](../operations.md).
 
-The platform state is read and applied in the browser, on the Release card of Platform > Wallet accounts (the Google and Samsung tabs). The enable-ready routes need a recent Polaris ID sign-in, which the card asks for itself, so no session cookie or token goes into a profile or a command. The blocks below are the deploy gate and CI.
+The release report and the enable-ready dry run are read with a Platform key (`platform:read` and `platform:wallet`, see [[Platform Keys]]), so no session cookie goes into a command. The apply is a person's: it stays on the Release card of Platform > Wallet accounts (the Google and Samsung tabs), which asks for a recent Polaris ID sign-in itself. A key that sends `apply: true` gets 403 `PERSON_REQUIRED`. The other blocks are the deploy gate and CI.
 
 ## Prerequisites
 
-- You are signed in to PassBook as a platform admin.
+- You are signed in to PassBook as a platform admin (for the apply, step 4).
+- Profile `passbook-owner` defines `PASSBOOK_KEY`: a Platform key with `platform:read` and `platform:wallet`, made in the console (Platform > API keys) for this flip and revoked after it. It never appears in a command line.
 - `gh` is signed in to the repository (for step 3).
 - The repository root is a Ledge workspace.
 
-## 1. Read the Release card
+## 1. Read the release report
 
-Open <https://passbook.mobile/admin/platform/wallet-accounts>, pick the Google or Samsung tab and read the card for the mode you will flip. Before the flip PR merges:
+Define the call, then read the report. It is `GET /api/v1/platform/wallet-release`: the same data as the Release card on Platform > Wallet accounts (the Google and Samsung tabs).
+
+```sh name=define-call confirm=no
+: "${PASSBOOK_KEY:?add PASSBOOK_KEY to profile passbook-owner}" &&
+pbk() { curl -sS -w '\nHTTP %{http_code}\n' -K - -H 'content-type: application/json' "$@" <<EOF
+header = "Authorization: Bearer $PASSBOOK_KEY"
+EOF
+}
+```
+
+```sh name=release-report confirm=no
+pbk "$API_URL/api/v1/platform/wallet-release"
+```
+
+Read the entry for the mode you will flip. Before the flip PR merges:
 
 - The mode reads Dark, and its credential shows a passing check.
 - No organization is blocked as `Legacy account with no source`: a deploy refuses while one exists.
@@ -50,18 +68,28 @@ Finds the deploy run of the flip commit. It must end successful before step 4.
 gh run list --workflow deploy.yml --branch main --limit 3
 ```
 
-## 4. Enable ready, in the card
+## 4. Enable ready
 
-After the flip, the mode reads Released. On the same card:
+After the flip, the mode reads Released. Set the provider and mode, then dry run with the key. It changes nothing.
 
-1. Run dry run. It lists the Off enrolments that were never On and would turn On. An organization that switched itself Off (`Organization turned it Off`) or whose hold was released is not listed; only that organization turns it back On. Confirm the list is the one you expect.
+```sh name=set-release confirm=no
+export PROVIDER="${PROVIDER:-google}" && export MODE="${MODE:-test}"
+```
+
+```sh name=enable-ready-dry-run confirm=no
+pbk -X POST -d '{"apply":false}' "$API_URL/api/v1/platform/wallet-release/$PROVIDER/$MODE/enable-ready"
+```
+
+The apply is on the Release card, signed in as a platform admin:
+
+1. The dry run above lists the Off enrolments that were never On and would turn On. An organization that switched itself Off (`Organization turned it Off`) or whose hold was released is not listed; only that organization turns it back On. Confirm the list is the one you expect.
 2. Apply, then Turn on. The card sends exactly the listed organizations and each gets its own audit row. If it asks you to confirm it is you, sign in again and click again.
-3. If the card says the ready list changed, it names who was added or dropped. Read that, then Run the dry run again and apply the new list.
+3. If the card says the ready list changed, it names who was added or dropped. Read that, then run the dry run again and apply the new list.
 4. Writes go in batches of 20. If an apply fails part way, the earlier batches stay On. Run the dry run again: it lists only what is still Off. Repeat until it says nothing is ready.
 
 ## 5. Verify
 
-On the card the mode reads Released, the intended organizations are Issuing, and Ready is 0. Check Wallet copies and the check pill once more.
+On the card the mode reads Released, the intended organizations are Issuing, and Ready is 0. Check Wallet copies and the check pill once more, or read the report again with `release-report`. Then revoke the Platform key: Platform > API keys > the key > Revoke.
 
 ## Rollback
 

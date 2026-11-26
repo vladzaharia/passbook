@@ -4836,6 +4836,249 @@
   }
  },
  {
+  "id": "organization-memberships.getOrgsByIdInvitations",
+  "call": "invitations.list",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "email": "x",
+     "roles": [
+      "org_admin"
+     ],
+     "createdAt": 0,
+     "expiresAt": 0,
+     "revokedAt": 0,
+     "acceptedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "organization-memberships.postOrgsByIdInvitations",
+  "call": "invitations.create",
+  "http": "POST",
+  "path": "/api/v1/orgs/{id}/invitations",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "email": "x",
+   "roles": [
+    "org_admin"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "email": "x",
+   "roles": [
+    "org_admin"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0,
+   "acceptedAt": 0
+  }
+ },
+ {
+  "id": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId",
+  "call": "invitations.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/invitations/{invitationId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "invitationId",
+    "py": "invitation_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
+  "call": "invitations.resend",
+  "http": "POST",
+  "path": "/api/v1/orgs/{id}/invitations/{invitationId}/resend",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "invitationId",
+    "py": "invitation_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "email": "x",
+   "roles": [
+    "org_admin"
+   ],
+   "createdAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0,
+   "acceptedAt": 0
+  }
+ },
+ {
+  "id": "organization-memberships.getOrgsByIdMemberships",
+  "call": "memberships.list",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/memberships",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgName": "x",
+     "orgSlug": "x",
+     "userId": "x",
+     "roles": [
+      "org_admin"
+     ],
+     "capabilities": [
+      "org:read"
+     ],
+     "createdAt": 0,
+     "revokedAt": 0,
+     "userName": "x",
+     "userEmail": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+  "call": "memberships.update_roles",
+  "http": "PATCH",
+  "path": "/api/v1/orgs/{id}/memberships/{membershipId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "membershipId",
+    "py": "membership_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "roles": [
+    "org_admin"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "orgSlug": "x",
+   "userId": "x",
+   "roles": [
+    "org_admin"
+   ],
+   "capabilities": [
+    "org:read"
+   ],
+   "createdAt": 0,
+   "revokedAt": 0,
+   "userName": "x",
+   "userEmail": "x"
+  }
+ },
+ {
+  "id": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId",
+  "call": "memberships.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/orgs/{id}/memberships/{membershipId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "membershipId",
+    "py": "membership_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "entitlements.getOrgsByIdPlan",
   "call": "orgs.plan.retrieve",
   "http": "GET",
@@ -7959,6 +8202,153 @@
    "ownerUserId": "x",
    "modifiedAt": 0,
    "createdAt": 0
+  }
+ },
+ {
+  "id": "settings.getPlatformSettings",
+  "call": "platform.settings.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/settings",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "scope": "platform",
+     "key": "x",
+     "source": "org",
+     "updatedAt": 0,
+     "updatedBy": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "settings.putPlatformSettings",
+  "call": "platform.settings.update",
+  "http": "PUT",
+  "path": "/api/v1/platform/settings",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "values": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "scope": "platform",
+     "key": "x",
+     "source": "org",
+     "updatedAt": 0,
+     "updatedBy": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "wallet-platform.getPlatformWalletRelease",
+  "call": "platform.wallet_release.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/wallet-release",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "releases": [
+    {
+     "provider": "google",
+     "mode": "live",
+     "state": "dark",
+     "credentials": [
+      {
+       "id": "x",
+       "scope": "platform",
+       "orgId": "x",
+       "mode": "live",
+       "provider": "google",
+       "identityHint": "x",
+       "provenance": "platform",
+       "revision": 0,
+       "verifiedAt": 0,
+       "revokedAt": 0,
+       "createdAt": 0,
+       "updatedAt": 0,
+       "cardTypes": [
+        "x"
+       ],
+       "lastCheck": {
+        "ok": true,
+        "code": null,
+        "at": 0
+       }
+      }
+     ],
+     "enrolments": [
+      {
+       "orgId": "x",
+       "orgName": "x",
+       "status": "issuing",
+       "blocks": [
+        "plan"
+       ]
+      }
+     ],
+     "templates": {
+      "ready": 0,
+      "withOmissions": 0,
+      "awaitingReview": 0,
+      "none": 0
+     },
+     "instances": {
+      "open": 0,
+      "retired": 0
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
+  "call": "platform.wallet_release.enable_ready",
+  "http": "POST",
+  "path": "/api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
+  "pathParams": [
+   {
+    "name": "provider",
+    "py": "provider",
+    "integer": false
+   },
+   {
+    "name": "mode",
+    "py": "mode",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "applied": false,
+   "enrolments": [
+    {
+     "orgId": "x",
+     "orgName": "x"
+    }
+   ]
   }
  },
  {

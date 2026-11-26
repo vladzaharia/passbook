@@ -3620,6 +3620,8 @@ type IdentityRunsStartManagedResponse struct {
 	FinishedAt *int64  `json:"finishedAt"`
 }
 
+type InvitationsCreateBody = InvitationsCreateParams
+
 type InvitationsCreateParams struct {
 	Email string   `json:"email"`
 	Roles []string `json:"roles"`
@@ -3634,6 +3636,23 @@ type InvitationsCreateResponse struct {
 	ExpiresAt  int64    `json:"expiresAt"`
 	RevokedAt  *int64   `json:"revokedAt"`
 	AcceptedAt *int64   `json:"acceptedAt"`
+}
+
+type InvitationsCreateResult = InvitationsCreateResponse
+
+type InvitationsListItem struct {
+	ID         string   `json:"id"`
+	OrgID      string   `json:"orgId"`
+	Email      string   `json:"email"`
+	Roles      []string `json:"roles"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+}
+
+type InvitationsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type InvitationsListResponse struct {
@@ -3663,9 +3682,13 @@ type InvitationsResendResponse struct {
 	AcceptedAt *int64   `json:"acceptedAt"`
 }
 
+type InvitationsResendResult = InvitationsResendResponse
+
 type InvitationsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
+
+type InvitationsRevokeResult = InvitationsRevokeResponse
 
 type JoinLinksRetrieveResponse struct {
 	Link   map[string]any                        `json:"link"`
@@ -3742,6 +3765,27 @@ type LegalHoldsReleaseResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type MembershipsListItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgSlug      string   `json:"orgSlug"`
+	Personal     *bool    `json:"personal,omitempty"`
+	TestOnly     *bool    `json:"testOnly,omitempty"`
+	UserID       string   `json:"userId"`
+	Roles        []string `json:"roles"`
+	Capabilities []string `json:"capabilities"`
+	CreatedAt    int64    `json:"createdAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	UserName     *string  `json:"userName"`
+	UserEmail    *string  `json:"userEmail"`
+	AccessPaused *bool    `json:"accessPaused,omitempty"`
+}
+
+type MembershipsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
 type MembershipsListResponse struct {
 	Items      []MembershipsListResponseItemsItem `json:"items"`
 	NextCursor *string                            `json:"nextCursor"`
@@ -3768,6 +3812,10 @@ type MembershipsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type MembershipsRevokeResult = MembershipsRevokeResponse
+
+type MembershipsUpdateRolesBody = MembershipsUpdateRolesParams
+
 type MembershipsUpdateRolesParams struct {
 	Roles []string `json:"roles"`
 }
@@ -3788,6 +3836,8 @@ type MembershipsUpdateRolesResponse struct {
 	UserEmail    *string  `json:"userEmail"`
 	AccessPaused *bool    `json:"accessPaused,omitempty"`
 }
+
+type MembershipsUpdateRolesResult = MembershipsUpdateRolesResponse
 
 type MessageRulesCountDueBody = MessageRulesCountDueParams
 
@@ -9783,6 +9833,89 @@ type PlatformSettingsRetrieveImpactResponse struct {
 	EmailOnlyUsers int64 `json:"emailOnlyUsers"`
 }
 
+type PlatformSettingsRetrieveResponse struct {
+	Items          []PlatformSettingsRetrieveResponseItemsItem `json:"items"`
+	ConfigRevision *int64                                      `json:"configRevision,omitempty"`
+	Oidc           *PlatformSettingsRetrieveResponseOidc       `json:"oidc,omitempty"`
+	Released       *PlatformSettingsRetrieveResponseReleased   `json:"released,omitempty"`
+}
+
+type PlatformSettingsRetrieveResponseItemsItem struct {
+	Scope             string   `json:"scope"`
+	Key               string   `json:"key"`
+	Value             any      `json:"value,omitempty"`
+	Default           any      `json:"default,omitempty"`
+	Source            string   `json:"source"`
+	Ceiling           *int64   `json:"ceiling,omitempty"`
+	BlockedByPlatform *bool    `json:"blockedByPlatform,omitempty"`
+	BlockedByPlan     *bool    `json:"blockedByPlan,omitempty"`
+	PlanBlocked       []string `json:"planBlocked,omitempty"`
+	UpdatedAt         *int64   `json:"updatedAt"`
+	UpdatedBy         *string  `json:"updatedBy"`
+}
+
+type PlatformSettingsRetrieveResponseOidc struct {
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
+}
+
+type PlatformSettingsRetrieveResponseReleased struct {
+	Google  bool `json:"google"`
+	Samsung bool `json:"samsung"`
+}
+
+type PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
+
+type PlatformSettingsUpdateBody = PlatformSettingsUpdateParams
+
+type PlatformSettingsUpdateParams struct {
+	Values         map[string]any `json:"values"`
+	ConfigRevision *int64         `json:"configRevision,omitempty"`
+}
+
+type PlatformSettingsUpdateResponse struct {
+	Items          []PlatformSettingsUpdateResponseItemsItem `json:"items"`
+	ConfigRevision *int64                                    `json:"configRevision,omitempty"`
+	Oidc           *PlatformSettingsUpdateResponseOidc       `json:"oidc,omitempty"`
+	Released       *PlatformSettingsUpdateResponseReleased   `json:"released,omitempty"`
+}
+
+type PlatformSettingsUpdateResponseItemsItem struct {
+	Scope             string   `json:"scope"`
+	Key               string   `json:"key"`
+	Value             any      `json:"value,omitempty"`
+	Default           any      `json:"default,omitempty"`
+	Source            string   `json:"source"`
+	Ceiling           *int64   `json:"ceiling,omitempty"`
+	BlockedByPlatform *bool    `json:"blockedByPlatform,omitempty"`
+	BlockedByPlan     *bool    `json:"blockedByPlan,omitempty"`
+	PlanBlocked       []string `json:"planBlocked,omitempty"`
+	UpdatedAt         *int64   `json:"updatedAt"`
+	UpdatedBy         *string  `json:"updatedBy"`
+}
+
+type PlatformSettingsUpdateResponseOidc struct {
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
+}
+
+type PlatformSettingsUpdateResponseReleased struct {
+	Google  bool `json:"google"`
+	Samsung bool `json:"samsung"`
+}
+
+type PlatformSettingsUpdateResult = PlatformSettingsUpdateResponse
+
 type PlatformStatusListIncidentsResponse struct {
 	Items      []PlatformStatusListIncidentsResponseItemsItem `json:"items"`
 	NextCursor *string                                        `json:"nextCursor"`
@@ -10762,6 +10895,8 @@ type PlatformWalletEnrollmentsListResponseItemsItem struct {
 	UpdatedAt int64          `json:"updatedAt"`
 }
 
+type PlatformWalletReleaseEnableReadyBody = PlatformWalletReleaseEnableReadyParams
+
 type PlatformWalletReleaseEnableReadyParams struct {
 	Apply  *bool    `json:"apply,omitempty"`
 	OrgIds []string `json:"orgIds,omitempty"`
@@ -10776,6 +10911,8 @@ type PlatformWalletReleaseEnableReadyResponseEnrolmentsItem struct {
 	OrgID   string `json:"orgId"`
 	OrgName string `json:"orgName"`
 }
+
+type PlatformWalletReleaseEnableReadyResult = PlatformWalletReleaseEnableReadyResponse
 
 type PlatformWalletReleaseRetrieveResponse struct {
 	Releases []PlatformWalletReleaseRetrieveResponseReleasesItem `json:"releases"`
@@ -10838,6 +10975,8 @@ type PlatformWalletReleaseRetrieveResponseReleasesItemTemplates struct {
 	AwaitingReview int64 `json:"awaitingReview"`
 	None           int64 `json:"none"`
 }
+
+type PlatformWalletReleaseRetrieveResult = PlatformWalletReleaseRetrieveResponse
 
 type PrintJobsCreateBody = PrintJobsCreateParams
 

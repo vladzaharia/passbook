@@ -353,6 +353,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysById",
@@ -375,6 +383,14 @@
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"logs:read\" added",
@@ -407,6 +423,14 @@
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -913,6 +937,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "GET /api/v1/developer/home 200.quotas: field added",
     "class": "additive",
     "operationId": "developer.getHome",
@@ -1047,6 +1079,14 @@
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -2207,6 +2247,14 @@
     "op": "GET /api/v1/platform/personal-org-labels",
     "change": "new operation",
     "note": "Platform admins read the names of personal organizations, which are not listed, to label them in views that show an org by id."
+  },
+  {
+    "key": "GET /api/v1/platform/settings new operation",
+    "class": "additive",
+    "operationId": "settings.getPlatformSettings",
+    "op": "GET /api/v1/platform/settings",
+    "change": "new operation",
+    "note": "Read the platform settings. A Platform key reads them with platform:read or platform:settings."
   },
   {
     "key": "GET /api/v1/platform/wallet-credentials 200.items[].lastCheck: field added",
@@ -3568,6 +3616,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "class": "additive",
     "operationId": "api-keys.createApiKeys",
@@ -3632,6 +3688,30 @@
     "note": "Keys may hold nfc:read or nfc:write, named on the key and never from a role; not for platform keys."
   },
   {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:read\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:settings\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:settings\" added",
+    "note": "Platform keys may hold platform:settings: read and write the platform settings, except sign-in (auth.*, oidc.*), which is a person's (403 PERSON_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:wallet\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:wallet\" added",
+    "note": "Platform keys may hold platform:wallet: the wallet release report and the enable-ready dry run. An apply is a person's (403 PERSON_REQUIRED)."
+  },
+  {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -3688,6 +3768,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
@@ -3710,6 +3798,14 @@
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
@@ -3736,6 +3832,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
@@ -3758,6 +3862,14 @@
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
@@ -3784,6 +3896,14 @@
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
@@ -3806,6 +3926,14 @@
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
     "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -6729,6 +6857,14 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
+    "key": "PUT /api/v1/platform/settings new operation",
+    "class": "additive",
+    "operationId": "settings.putPlatformSettings",
+    "op": "PUT /api/v1/platform/settings",
+    "change": "new operation",
+    "note": "Change platform settings: an admin session (sign-in settings need a recent sign-in) or a platform:settings key that never names auth.* or oidc.*."
+  },
+  {
     "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field added",
     "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
@@ -6855,6 +6991,14 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Test key",
+    "change": "403 MODE_LIVE_REQUIRED: added",
+    "note": "A Test key outside a sandbox can no longer change brand, setup, zones, tag types or saved mappings: 403 MODE_LIVE_REQUIRED. SCAN_ZONE_LIVE_ONLY is retired."
   },
   {
     "key": "webhook pass.removed data.runId: field added",

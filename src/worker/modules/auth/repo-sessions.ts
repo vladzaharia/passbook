@@ -131,6 +131,13 @@ export async function revokeSessionsWithRole(
   return changes;
 }
 
+/**
+ * The admin role was taken from this person: their `access_revision` moves, so every key they made as an admin
+ * (`creator_access_revision`) ends, and stays ended if they are later given the role back.
+ */
+export const endAdminAccess = (db: Db, userId: string) =>
+  run(db, 'UPDATE users SET access_revision = access_revision + 1 WHERE id = ?', [userId]);
+
 export const listLiveSessions = (db: Db, userId: string, now: number) =>
   all<SessionRow>(
     db,

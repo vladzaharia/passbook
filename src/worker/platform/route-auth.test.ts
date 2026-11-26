@@ -3,13 +3,22 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { type FakeAuth, fakeAuth } from '../../../test/helpers/fake-auth.ts';
-import { CreateApiKeySchema, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
+import {
+  CreateApiKeySchema,
+  MINTABLE_PLATFORM_SCOPES,
+  MINTABLE_SCOPES,
+} from '../../shared/contracts/api-keys.ts';
 import { OrgCapabilitySchema, OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { createApp } from '../app.ts';
 import { delegableScopes } from '../modules/api-keys/access.ts';
 import { rolesGranting } from '../modules/orgs/access.ts';
 import { requireTenantSession, requireTenantSessionOrApiKey } from '../modules/passes/http.ts';
-import { isPlatformScope, scopeCapability, scopeExercises } from './api-scopes.ts';
+import {
+  isPlatformScope,
+  scopeCapability,
+  scopeExercises,
+  type TenantScope,
+} from './api-scopes.ts';
 import {
   API_SCOPES,
   type ApiScope,
@@ -72,7 +81,7 @@ const principals: Record<string, Principal> = {
     'sec-fetch-site': 'cross-site',
   }),
   'unknown key': () => ({ authorization: 'Bearer wlt_nope_nope' }),
-  'key with every scope': withScopes([...API_SCOPES]),
+  'key with every scope': withScopes(API_SCOPES.filter((s) => !isPlatformScope(s))),
   'key with passes:read': withScopes(['passes:read']),
   'key with passes:write': withScopes(['passes:write']),
   'key with templates:read': withScopes(['templates:read']),
@@ -157,9 +166,12 @@ async function expectSame(
   declared: Guard,
   legacy: Guard,
   legacyTag: (auth: AuthContext) => ApiScope | undefined = () => undefined,
+  /** Principals the declaration deliberately answers differently (see platform-key-isolation.test.ts). */
+  except?: RegExp,
 ) {
   for (const [name, principal] of Object.entries(principals))
     for (const method of METHODS) {
+      if (except?.test(name)) continue;
       const [now, before] = await Promise.all([
         run(declared, verified, principal, method),
         run(legacy, legacyTag, principal, method),
@@ -196,7 +208,7 @@ describe('requireCaller matches the guards it replaced', () => {
     );
   });
   it('scope: any of several', async () => {
-    const several: ApiScope[] = ['templates:read', 'passes:read'];
+    const several: TenantScope[] = ['templates:read', 'passes:read'];
     await expectSame(
       requireCaller({ scope: several }),
       legacyTenantSessionOrApiKey(several),
@@ -228,7 +240,14 @@ describe('requireCaller matches the guards it replaced', () => {
   });
   it('human replaces requireSession, and platform replaces requireAdmin', async () => {
     await expectSame(requireCaller({ human: true }), legacyRequireSession);
-    await expectSame(requireCaller({ platform: 'platform:orgs' }), legacyRequireAdmin);
+    // A `platform` route reads a Bearer header: a key never falls back to a cookie, and a platform route that
+    // takes no key refuses one (platform-key-isolation.test.ts). Every cookie principal answers as before.
+    await expectSame(
+      requireCaller({ platform: 'platform:orgs' }),
+      legacyRequireAdmin,
+      undefined,
+      /key|bearer (scheme|\(wls_\))/i,
+    );
   });
   it('the passes/http.ts guards are declarations now and keep their behaviour', async () => {
     await expectSame(requireTenantSession, legacyTenantSession);
@@ -320,6 +339,8 @@ describe('mintable scopes', () => {
       'logs:read',
       'members:read',
       'members:write',
+      // A Platform key's scopes join as routes accept them (platform-keys L2); route-inventory.test.ts pins the list.
+      ...MINTABLE_PLATFORM_SCOPES,
     ]);
   });
   it('are all a key can be created with: any other scope is a validation error', () => {
@@ -389,7 +410,7 @@ describe('RouteSpec.auth', () => {
     expect((await call(router, fake, '/keyed', {})).status).toBe(401);
     expect((await call(router, fake, '/human', key([...API_SCOPES]))).status).toBe(401);
     expect((await call(router, fake, '/human', fake.user())).status).toBe(200);
-    expect((await call(router, fake, '/platform', key([...API_SCOPES]))).status).toBe(401);
+    expect((await call(router, fake, '/platform', key([...API_SCOPES]))).status).toBe(403);
     expect((await call(router, fake, '/platform', fake.user())).status).toBe(403);
     expect((await call(router, fake, '/platform', fake.admin())).status).toBe(200);
   });
