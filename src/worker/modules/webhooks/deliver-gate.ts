@@ -1,8 +1,8 @@
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureHourFull } from './capture.ts';
-import type { EndpointRow } from './repo-endpoints.ts';
 import { isDeveloperOrg } from './repo-capture.ts';
+import type { EndpointRow } from './repo-endpoints.ts';
 import { hostOf } from './url.ts';
 
 /**

@@ -2,16 +2,16 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { fakeRateLimiter } from '../../../../test/helpers/fakes.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
-import { dispatchLane } from './dispatch.ts';
 import { type Api, BASE, setupApi } from './api-test-fixtures.ts';
 import {
-  drain,
   deliveryOf,
+  drain,
   endpointWithSecret,
   type Net,
   reset,
   stubNet,
 } from './deliver-test-fixtures.ts';
+import { dispatchLane } from './dispatch.ts';
 
 let api: Api;
 let net: Net;
