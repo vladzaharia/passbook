@@ -72,6 +72,7 @@ function fakeApi(pages: () => Capture[], schema: Record<string, unknown> = {}): 
         return { id };
       },
     },
+    requestLogs: { list: async () => ({ items: [] }) },
   };
 }
 

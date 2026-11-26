@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
+import { useOrgPlan } from '../plan/queries.ts';
 import { ORG_FIELDS } from './fields-org.ts';
 import { useSettings } from './queries.ts';
 import { SettingsForm } from './settings-form.tsx';
@@ -12,6 +13,7 @@ const inGroup = (group: string) =>
 const GENERAL = inGroup('General');
 const EMAIL_LIMITS = inGroup('Email limits');
 const PRIVACY = inGroup('Privacy');
+const BODIES_KEY = 'requestLog.bodies';
 
 function FormCard({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -48,9 +50,21 @@ function ReadOnlySettings({ orgId }: { orgId: string }) {
 }
 
 /** The organization's own settings; an empty input follows the platform default. */
-export function OrgSettingsSections({ orgId, canManage }: { orgId: string; canManage: boolean }) {
+export function OrgSettingsSections({
+  orgId,
+  canManage,
+  sandbox = false,
+}: {
+  orgId: string;
+  canManage: boolean;
+  /** A sandbox always records bodies, so the switch is not offered. */
+  sandbox?: boolean;
+}) {
+  const plan = useOrgPlan(orgId, canManage && !sandbox);
   if (!canManage) return <ReadOnlySettings orgId={orgId} />;
   const scope = `org:${orgId}`;
+  const api = plan.data?.features.find((f) => f.key === 'api')?.level != null;
+  const privacy = sandbox || !api ? PRIVACY.filter((f) => f.key !== BODIES_KEY) : PRIVACY;
   return (
     <>
       <FormCard title="General">
@@ -60,7 +74,7 @@ export function OrgSettingsSections({ orgId, canManage }: { orgId: string; canMa
         <SettingsForm scope={scope} fields={EMAIL_LIMITS} />
       </FormCard>
       <FormCard title="Privacy">
-        <SettingsForm scope={scope} fields={PRIVACY} />
+        <SettingsForm scope={scope} fields={privacy} />
       </FormCard>
     </>
   );

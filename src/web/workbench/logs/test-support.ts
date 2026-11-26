@@ -27,6 +27,9 @@ export const entry = (n: number, over: Partial<RequestLogEntry> = {}): RequestLo
   via: null,
   client: 'curl/8.7.1',
   hasBodies: true,
+  resourceId: null,
+  apiVersion: null,
+  flags: { idempotencyKey: false, ifMatch: false, version: false },
   ...over,
 });
 
@@ -35,6 +38,8 @@ export const detail = (n: number, over: Partial<RequestLogDetail> = {}): Request
   requestBody: '{"name":"Ada"}',
   responseBody: '{"id":"p1","ok":true}',
   bodiesExpireAt: Date.now() + 3_600_000,
+  bodiesRecorded: true,
+  bodiesTruncated: false,
   ...over,
 });
 

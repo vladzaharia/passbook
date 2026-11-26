@@ -317,6 +317,7 @@ describe('mintable scopes', () => {
       'nfc:write',
       'api-keys:write',
       'audit:read',
+      'logs:read',
       'members:read',
       'members:write',
     ]);

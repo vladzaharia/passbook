@@ -2091,6 +2091,30 @@ func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceB
 	return &out, nil
 }
 
+type RequestLogsResource struct {
+	c *core
+}
+
+func newRequestLogsResource(c *core) *RequestLogsResource {
+	return &RequestLogsResource{
+		c: c,
+	}
+}
+
+// List List an organization's Test calls, newest first `GET /api/v1/request-logs`
+func (r *RequestLogsResource) List(ctx context.Context, query *RequestLogsListQuery, opts ...RequestOption) *Pager[RequestLogsListItem] {
+	return newPager[RequestLogsListItem](r.c, call{method: "GET", path: "/api/v1/request-logs", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve One Test call, with its redacted bodies for 24 hours where the organization records them `GET /api/v1/request-logs/{id}`
+func (r *RequestLogsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*RequestLogsRetrieveResult, error) {
+	var out RequestLogsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/request-logs/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type RollCallsResource struct {
 	c *core
 }
@@ -3131,6 +3155,7 @@ type Resources struct {
 	PrintJobs            *PrintJobsResource
 	BulkRuns             *BulkRunsResource
 	PassViews            *PassViewsResource
+	RequestLogs          *RequestLogsResource
 	RollCalls            *RollCallsResource
 	ScanEvents           *ScanEventsResource
 	ScanSetups           *ScanSetupsResource
@@ -3170,6 +3195,7 @@ func newResources(c *core) Resources {
 		PrintJobs:            newPrintJobsResource(c),
 		BulkRuns:             newBulkRunsResource(c),
 		PassViews:            newPassViewsResource(c),
+		RequestLogs:          newRequestLogsResource(c),
 		RollCalls:            newRollCallsResource(c),
 		ScanEvents:           newScanEventsResource(c),
 		ScanSetups:           newScanSetupsResource(c),

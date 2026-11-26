@@ -1561,6 +1561,20 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"requestLogs.list", "GET", "/api/v1/request-logs", false,
+		"", `{"items":[{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false}}],"nextCursor":null,"capped":"hour","bodiesRecorded":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"requestLogs.retrieve", "GET", "/api/v1/request-logs/id1", false,
+		"", `{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false},"requestBody":"x","responseBody":"x","bodiesExpireAt":0,"bodiesRecorded":false,"bodiesTruncated":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"rollCalls.retrieveOpen", "GET", "/api/v1/roll-calls", false,
 		"", `{"rollCall":{"id":"x","placeNames":["x"],"startedAt":0,"startedBy":"x","endedAt":0,"endedBy":"x","rev":0,"serverNow":0,"counts":{"total":0,"present":0,"out":0,"unconfirmed":0,"notConfirmedOut":0,"late":0,"inNow":0,"tappedIn":0},"people":[{"passId":"x","holder":"x","plan":"x","host":"x","place":"x","placeName":"x","since":0,"basis":"in_now","presence":"in","late":false,"mark":{"status":"present","by":"x","at":0},"notConfirmedOut":false}]}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

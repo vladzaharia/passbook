@@ -41,6 +41,9 @@ const call = (i: number, over: Partial<RequestLogEntry> = {}): RequestLogEntry =
   via: null,
   client: 'curl/8.7.1',
   hasBodies: true,
+  resourceId: null,
+  apiVersion: null,
+  flags: { idempotencyKey: false, ifMatch: false, version: false },
   ...over,
 });
 

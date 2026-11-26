@@ -7934,6 +7934,96 @@
   }
  },
  {
+  "id": "workbench.listRequestLogs",
+  "call": "request_logs.list",
+  "http": "GET",
+  "path": "/api/v1/request-logs",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "requestId": "x",
+     "at": 0,
+     "method": "x",
+     "route": "x",
+     "path": "x",
+     "query": "x",
+     "status": 0,
+     "code": "x",
+     "durationMs": 0,
+     "keyId": "x",
+     "mode": "live",
+     "via": "try",
+     "client": "x",
+     "hasBodies": false,
+     "resourceId": "x",
+     "apiVersion": "x",
+     "flags": {
+      "idempotencyKey": false,
+      "ifMatch": false,
+      "version": false
+     }
+    }
+   ],
+   "nextCursor": null,
+   "capped": "hour",
+   "bodiesRecorded": false
+  }
+ },
+ {
+  "id": "workbench.getRequestLog",
+  "call": "request_logs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/request-logs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "requestId": "x",
+   "at": 0,
+   "method": "x",
+   "route": "x",
+   "path": "x",
+   "query": "x",
+   "status": 0,
+   "code": "x",
+   "durationMs": 0,
+   "keyId": "x",
+   "mode": "live",
+   "via": "try",
+   "client": "x",
+   "hasBodies": false,
+   "resourceId": "x",
+   "apiVersion": "x",
+   "flags": {
+    "idempotencyKey": false,
+    "ifMatch": false,
+    "version": false
+   },
+   "requestBody": "x",
+   "responseBody": "x",
+   "bodiesExpireAt": 0,
+   "bodiesRecorded": false,
+   "bodiesTruncated": false
+  }
+ },
+ {
   "id": "roll-calls.getRollCalls",
   "call": "roll_calls.retrieve_open",
   "http": "GET",
