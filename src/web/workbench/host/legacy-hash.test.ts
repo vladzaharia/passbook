@@ -34,7 +34,8 @@ describe('legacyHref', () => {
   });
 
   it('sends the old Quickstart sandbox hashes to the Sandbox area', () => {
-    expect(legacyHref('quickstart', 'sandbox')).toBe('/workbench/sandbox#sandbox');
+    // The Quickstart's own step 2 (sign-in returns to it) is not a moved hash.
+    expect(legacyHref('quickstart', 'sandbox')).toBeNull();
     expect(legacyHref('quickstart', 'start-over')).toBe('/workbench/sandbox#start-over');
     expect(legacyHref('quickstart', 'delete-sandbox')).toBe('/workbench/sandbox#delete-sandbox');
   });

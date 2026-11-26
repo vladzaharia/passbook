@@ -3,8 +3,11 @@ import { type WbTool, wbHref } from '@/shared/workbench.ts';
 import type { Json } from '../../developers/model/types.ts';
 import { writePrefill } from './prefill.ts';
 
-/** The Quickstart hashes of the old docs page: the sandbox's own area now. */
-const SANDBOX_HASHES: ReadonlySet<string> = new Set(['sandbox', 'start-over', 'delete-sandbox']);
+/**
+ * The Quickstart hashes of the old docs page that the sandbox's own area took over. `#sandbox` is not
+ * one: it is the Quickstart's own step 2, where sign-in returns, so it stays.
+ */
+const SANDBOX_HASHES: ReadonlySet<string> = new Set(['start-over', 'delete-sandbox']);
 
 /**
  * Where an old docs link really goes, or null. `/developers/console#<op>?body=<json>&q.<name>=<v>`
