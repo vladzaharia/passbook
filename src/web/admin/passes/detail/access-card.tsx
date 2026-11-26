@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 import { hoursText } from '@/passkit/template/access/scope.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { formatDateTime, formatWeekdayTime } from '../../../lib/format.ts';
-import { localZone } from '../../../lib/timezones.ts';
 import { Badge, Card, CardBody, CardHeader, KeyValue } from '../../../ui/index.ts';
 import { checkedAtNames } from '../../scanning/zones/checked-at.ts';
 import { useZones } from '../../scanning/zones-query.ts';
+import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
 import {
   type AccessState,
   type AccessStatus,
@@ -96,6 +96,7 @@ function Body({ state, checkedAt }: { state: AccessState; checkedAt: string[] })
 export function AccessCard({ pass, manifest }: { pass: PassDetailDto; manifest: unknown }) {
   const access = accessOf(manifest);
   const zones = useZones();
+  const orgZone = useOrgTimeZone(pass.orgId);
   const list = zones.data?.items;
   const state = useMemo(
     () =>
@@ -105,10 +106,10 @@ export function AccessCard({ pass, manifest }: { pass: PassDetailDto; manifest: 
             pass.personalization,
             (list ?? []).map((z) => ({ key: z.key, name: z.name, timeZone: z.effectiveTimeZone })),
             Date.now(),
-            localZone(),
+            orgZone,
           )
         : null,
-    [access, pass.personalization, list],
+    [access, pass.personalization, list, orgZone],
   );
   const checkedAt = useMemo(() => {
     const keys = new Set(state?.zones.map((z) => z.key));

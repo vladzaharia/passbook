@@ -3,6 +3,7 @@ import type { HistoryItem } from '../../../../shared/contracts/scan-history.ts';
 import { scanLine } from '../../../../shared/copy/scan.ts';
 import { reasonHeadline } from '../../../../shared/copy/scan-headline.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
+import { DEFAULT_TIME_ZONE } from '../../../../shared/time-zone.ts';
 import {
   dayBefore,
   formatCount,
@@ -10,7 +11,6 @@ import {
   formatTime,
   todayKey,
 } from '../../../lib/format.ts';
-import { localZone } from '../../../lib/timezones.ts';
 
 const H = OPERATOR_COPY.history;
 
@@ -103,7 +103,7 @@ export function groupDays(
   zone: string | undefined,
   now: number,
 ): Day[] {
-  const tz = zone ?? localZone();
+  const tz = zone ?? DEFAULT_TIME_ZONE;
   const today = todayKey(tz, now);
   const yesterday = dayBefore(today);
   const days: Day[] = [];

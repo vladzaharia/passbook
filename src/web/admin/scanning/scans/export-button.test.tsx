@@ -5,6 +5,10 @@ import { axe } from 'vitest-axe';
 import { installDomShims } from '@/web/lib/test-utils.tsx';
 import { ExportButton, exportQuery } from './export-button.tsx';
 
+vi.mock('@/web/admin/settings/use-org-time-zone.ts', () => ({
+  useOrgTimeZone: () => 'America/Los_Angeles',
+}));
+
 installDomShims();
 afterEach(() => vi.unstubAllGlobals());
 
