@@ -267,25 +267,27 @@ describe('identities list', () => {
     await screen.findByText('No identities');
     await ui.click(screen.getByRole('button', { name: 'Upload' }));
     const dialog = await screen.findByRole('dialog');
-    await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
-    expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
-    // Label and file: the first is focused and the count announced.
-    expect(dialog.querySelector('input[type="file"]')).toHaveAttribute('aria-invalid', 'true');
+    const next = () => ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await next();
+    expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     await waitFor(() => expect(within(dialog).getByLabelText(/Label/)).toHaveFocus());
-    expect(await within(dialog).findByText('2 fields need attention')).toBeInTheDocument();
+    await ui.type(within(dialog).getByLabelText(/Label/), 'Acme');
+    await next();
+    await next();
+    expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
+    expect(dialog.querySelector('input[type="file"]')).toHaveAttribute('aria-invalid', 'true');
     expect(posted).toBe(0);
 
     await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
-    await ui.type(within(dialog).getByLabelText(/Label/), 'Acme');
     await ui.click(within(dialog).getByLabelText('Certificate (PEM)'));
     await ui.paste('-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----');
     await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
     await ui.paste(pemBlock('PRIVATE KEY', 'abc'));
-    await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
+    await next();
+    await ui.click(within(dialog).getByRole('button', { name: 'Upload identity' }));
     expect(
       await within(dialog).findByText('Key does not match the certificate.'),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText('Certificate and key do not match.')).toBeInTheDocument();
     expect(posted).toBe(1);
   });
 });
@@ -337,6 +339,7 @@ describe('identity detail', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'Add push key' }));
     const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(dialog.querySelector('input[type=file]')).toHaveFocus());
     await ui.click(within(dialog).getByRole('button', { name: 'Add key' }));
     expect(await within(dialog).findByText('Choose a .p8 file.')).toBeInTheDocument();
     const file = new File([pemBlock('PRIVATE KEY', 'AAAA')], 'AuthKey_AB12CD34EF.p8');
@@ -503,13 +506,16 @@ describe('identity detail', () => {
     await screen.findByText('No identities');
     await ui.click(screen.getByRole('button', { name: 'Upload' }));
     const dialog = await screen.findByRole('dialog');
-    await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
     await ui.type(within(dialog).getByLabelText(/Label/), 'Acme');
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await ui.click(await within(dialog).findByRole('radio', { name: 'PEM certificate and key' }));
     await ui.click(within(dialog).getByLabelText('Certificate (PEM)'));
     await ui.paste('-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----');
     await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
     await ui.paste(pemBlock('PRIVATE KEY', 'abc'));
-    await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(within(dialog).getByRole('region', { name: 'Identity' })).toHaveTextContent('Acme');
+    await ui.click(within(dialog).getByRole('button', { name: 'Upload identity' }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/admin/platform/wallet-accounts/i9'),
     );

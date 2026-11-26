@@ -17,8 +17,8 @@ import {
 } from '@/web/ui/index.ts';
 import { type Keyset, useKeysets, useKeysetWrites } from './api.ts';
 import { ImportDialog } from './import-dialog.tsx';
-import { RotateDialog } from './key-forms.tsx';
 import { DisableDialog, ReenrolDialog, RevokeDialog } from './recover-dialogs.tsx';
+import { RotateDialog } from './rotate-dialog.tsx';
 import { SdmProfile } from './sdm-profile.tsx';
 import { fill, kindOf, tagCount, tagUrl } from './words.ts';
 

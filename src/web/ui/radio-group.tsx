@@ -16,6 +16,8 @@ export interface RadioGroupProps {
   name?: string;
   orientation?: 'vertical' | 'horizontal';
   className?: string;
+  /** A dialog opens with the chosen option focused (`data-autofocus`). */
+  autoFocus?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export function RadioGroup({
   name,
   orientation = 'vertical',
   className,
+  autoFocus,
 }: RadioGroupProps) {
   const auto = useId();
   const group = name ?? auto;
@@ -61,6 +64,7 @@ export function RadioGroup({
                 value={o.value}
                 checked={value === o.value}
                 disabled={o.disabled}
+                data-autofocus={autoFocus && value === o.value ? '' : undefined}
                 onChange={() => onValueChange(o.value)}
                 className={RADIO}
               />

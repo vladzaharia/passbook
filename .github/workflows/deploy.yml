@@ -74,6 +74,10 @@ jobs:
       # Same gates as the manual recipe; each leaves the tree clean or fails.
       - name: Gates
         if: steps.order.outputs.run == 'true'
+        # Diff against the commit being deployed, not origin/main: main may have moved on since ci passed.
+        env:
+          OPENAPI_BASE: ${{ env.SHA }}
+          MIGRATIONS_BASE: ${{ env.SHA }}
         run: |
           npm run gen
           test -z "$(git status --porcelain)" || { echo "::error::gen changed files"; git status --porcelain; exit 1; }

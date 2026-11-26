@@ -219,7 +219,7 @@ describe('check', () => {
     const user = userEvent.setup();
     await open(checked(), { '/api/v1/pass-imports/imp1/rows': () => json(ROWS) });
     await user.click(await screen.findByRole('button', { name: 'Back' }));
-    expect(await screen.findByText('Match columns')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Match the columns' })).toBeTruthy();
   });
 
   it('discards the draft and returns to the import page', async () => {

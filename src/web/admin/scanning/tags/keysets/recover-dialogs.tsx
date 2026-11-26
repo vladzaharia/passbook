@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
 import {
-  Button,
-  Callout,
   ConfirmDialog,
-  Dialog,
-  DialogContent,
-  Label,
+  FormDialog,
+  FormField,
   Select,
   TypedConfirmDialog,
   toast,
+  useFormErrors,
 } from '@/web/ui/index.ts';
 import type { Keyset } from './api.ts';
 import { fill, tagCount } from './words.ts';
@@ -82,61 +79,42 @@ export function ReenrolDialog({
 }) {
   const C = KEYSET_COPY.reenrol;
   const [to, setTo] = useState(targets[0]?.id);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function move() {
-    if (!to) return;
-    setBusy(true);
-    setError('');
-    try {
-      const out = await reenrol(to);
-      toast.success(
-        `${fill(C.done, { n: out.moved })}${out.ownKey ? `. ${fill(C.own, { n: out.ownKey })}` : ''}`,
-      );
-      onClose();
-    } catch (cause) {
-      setError(errorMessage(cause));
-      setBusy(false);
-    }
-  }
+  const check = useFormErrors({
+    to: !to ? C.none : tagCount(keyset) === 0 ? 'This keyset has no tags.' : undefined,
+  });
   return (
-    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-      <DialogContent
-        title={fill(C.title, { name: keyset.name })}
-        description={fill(C.body, { n: tagCount(keyset) })}
-        closeButton={!busy}
-        footer={
-          <>
-            <Button variant="outline" disabled={busy} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              loading={busy}
-              disabled={!to || tagCount(keyset) === 0}
-              onClick={() => void move()}
-            >
-              {C.confirm}
-            </Button>
-          </>
-        }
-      >
-        <div className="grid gap-4">
-          {error ? <Callout tone="danger">{error}</Callout> : null}
-          {targets.length === 0 ? (
-            <p className="text-sm text-fg-muted">{C.none}</p>
-          ) : (
-            <div className="grid gap-2">
-              <Label htmlFor="reenrol-to">{C.pick}</Label>
-              <Select
-                id="reenrol-to"
-                value={to}
-                onValueChange={setTo}
-                options={targets.map((t) => ({ value: t.id, label: t.name }))}
-              />
-            </div>
+    <FormDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={fill(C.title, { name: keyset.name })}
+      description={fill(C.body, { n: tagCount(keyset) })}
+      dirty={to !== targets[0]?.id}
+      check={check}
+      submitLabel={C.confirm}
+      onSubmit={async () => {
+        if (!to) return;
+        const out = await reenrol(to);
+        toast.success(
+          `${fill(C.done, { n: out.moved })}${out.ownKey ? `. ${fill(C.own, { n: out.ownKey })}` : ''}`,
+        );
+        onClose();
+      }}
+    >
+      {targets.length === 0 ? (
+        <p className="text-sm text-fg-muted">{C.none}</p>
+      ) : (
+        <FormField label={C.pick} error={check.errors.to}>
+          {(p) => (
+            <Select
+              {...p}
+              data-autofocus
+              value={to}
+              onValueChange={setTo}
+              options={targets.map((t) => ({ value: t.id, label: t.name }))}
+            />
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        </FormField>
+      )}
+    </FormDialog>
   );
 }

@@ -211,6 +211,21 @@ describe('organization wallet accounts', () => {
     expect(document.body.textContent).not.toContain('U0VDUkVUX0tFWQ');
   });
 
+  it('refuses a bad credential form with one line and focuses the first field', async () => {
+    const user = userEvent.setup();
+    await renderOrgAccounts({
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers(),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    await user.click(within(google).getByRole('button', { name: 'Add credentials' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByText('Check the highlighted fields.')).toBeInTheDocument();
+    await waitFor(() => expect(within(dialog).getByLabelText(/Issuer ID/)).toHaveFocus());
+    expect(within(dialog).getAllByText('Required.').length).toBe(3);
+  });
+
   it('sends optional per-type Samsung cards beside the default card', async () => {
     const user = userEvent.setup();
     const saved: Record<string, unknown>[] = [];
@@ -386,6 +401,25 @@ describe('platform wallet accounts', () => {
     await user.type(within(dialog).getByLabelText(/Reason/), 'abuse');
     await user.click(within(dialog).getByRole('button', { name: 'Hold' }));
     await waitFor(() => expect(calls).toContain('hold {"reason":"abuse"}'));
+  });
+
+  it('clears the hold reason when the dialog is cancelled', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: handlers(),
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Google' }));
+    await user.click(await screen.findByRole('button', { name: 'Hold North, Live' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(within(dialog).getByLabelText(/Reason/)).toHaveFocus());
+    await user.type(within(dialog).getByLabelText(/Reason/), 'abuse');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await user.click(screen.getByRole('button', { name: 'Hold North, Live' }));
+    expect(await within(await screen.findByRole('dialog')).findByLabelText(/Reason/)).toHaveValue(
+      '',
+    );
   });
 
   it('loads more enrolments with the cursor', async () => {

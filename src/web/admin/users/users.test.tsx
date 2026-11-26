@@ -98,7 +98,7 @@ describe('users list', () => {
     const passes = screen.getByRole('link', {
       name: 'Find passes for ada@example.com',
     });
-    expect(passes.getAttribute('href')).toBe('/admin/passes?q=ada%40example.com');
+    expect(passes.getAttribute('href')).toBe('/admin/users/u2#passes');
     expect(screen.getByText('3', { selector: 'span.tabular-nums' }).closest('a')).toBeNull();
     expect(screen.getByText('Polaris ID, Email link')).toBeInTheDocument();
     // Role chips are neutral, never accent or success.
@@ -223,7 +223,7 @@ describe('user detail', () => {
     expect(screen.queryByText(/Mozilla/)).toBeNull();
     expect(screen.getByRole('link', { name: 'Find passes' })).toHaveAttribute(
       'href',
-      '/admin/passes?q=ada%40example.com',
+      '/admin/users/u2#passes',
     );
     expect(
       within(screen.getByRole('main')).getByRole('link', { name: 'Audit log' }),
