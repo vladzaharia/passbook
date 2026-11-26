@@ -224,7 +224,7 @@ export function revokedOld(db: D1Database, now: number, limit: number): Promise<
   return all<MoveRow>(
     db,
     `SELECT ${COLUMNS} FROM pass_moves
-     WHERE (state IN ('issued', 'notified') OR (state = 'kept' AND reason = 'reminded')
+     WHERE (state IN ('issued', 'notified', 'kept_both') OR (state = 'kept' AND reason = 'reminded')
          OR (state = 'registered' AND (claim_until IS NULL OR claim_until <= ?)))
        AND NOT EXISTS (SELECT 1 FROM passes o WHERE o.id = pass_moves.old_pass_id AND o.status = 'active'
          AND o.removed_at IS NULL AND o.deleted_at IS NULL)

@@ -28,7 +28,7 @@ export async function revokeReplacement(
   await setState(
     ctx.env.DB,
     row.id,
-    ['issued', 'notified', 'registered', 'kept'],
+    ['issued', 'notified', 'registered', 'kept', 'kept_both'],
     { state: 'kept', reason },
     ctx.clock.now(),
   );

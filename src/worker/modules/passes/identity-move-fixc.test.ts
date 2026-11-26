@@ -24,6 +24,7 @@ import {
 } from './identity-move-test-fixtures.ts';
 import { forwardedId } from './pass-replaced.ts';
 import { ICON_PNG } from './pass-test-fixtures.ts';
+import { voidPass } from './service.ts';
 
 const crash = vi.hoisted(() => ({ finish: false }));
 
@@ -182,6 +183,22 @@ describe('N2: a replacement a device holds is never voided by the move', () => {
       await all(db(), 'SELECT 1 FROM registrations WHERE pass_id = ?', [next.id]),
     ).toHaveLength(1);
     expect(await stateOf(old.id)).toEqual(['kept_both', 'connection']);
+  });
+});
+
+describe('K1: an admin revocation of a kept_both old pass revokes the replacement', () => {
+  it('voids the replacement when the old pass is voided after the row went kept_both', async () => {
+    const { org, old, next } = await movedWith();
+    await addNew(next);
+    await seedConnection(old);
+    kit.clock.advance(DAY);
+    await sweep();
+    expect(await stateOf(old.id)).toEqual(['kept_both', 'connection']);
+    await voidPass(ctx(), { type: 'user', id: 'admin-1' }, old.id, org.id);
+    await sweep();
+    expect((await passOf(kit, old.id)).status).toBe('voided');
+    expect((await passOf(kit, next.id)).status).toBe('voided');
+    expect(await stateOf(old.id)).toEqual(['kept', 'old_revoked']);
   });
 });
 
