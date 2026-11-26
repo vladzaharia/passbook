@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
 import { mailFiles, nextMagicToken } from '../../lib/demo-client.ts';
 import { emailOf, PORTAL } from '../../lib/demo-data.ts';
-import { DEMO_OWNER_SUB } from '../../lib/demo-tenancy.ts';
+import { DEMO_OWNER_SUB, DEMO_REVIEWER_SUB } from '../../lib/demo-tenancy.ts';
 import type { Role } from './routes.ts';
 
 const root = resolve(import.meta.dirname, '../../..');
@@ -91,6 +91,7 @@ export async function contextFor(
   const ctx = await open(base);
   if (role === 'platform') await breakglass(ctx);
   else if (role === 'org') await oidc(ctx, base, DEMO_OWNER_SUB);
+  else if (role === 'member') await oidc(ctx, base, DEMO_REVIEWER_SUB);
   else await magicLink(ctx, base, emailFor[role] as string);
   if (!(await signedIn(ctx))) throw new Error(`Sign-in as ${role} did not stick.`);
   mkdirSync(dirname(file), { recursive: true });

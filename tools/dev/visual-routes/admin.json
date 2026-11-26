@@ -270,7 +270,7 @@
     "name": "admin-settings-platform"
   },
   {
-    "role": "org",
+    "role": "member",
     "path": "/admin/platform/users",
     "name": "admin-platform-denied"
   },
