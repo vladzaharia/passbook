@@ -17,6 +17,11 @@ beforeAll(async () => {
     clock: f.kit.clock,
   });
   sandboxId = (await makeOrg(f.kit.fx, { kind: 'developer' })).id;
+  await run(
+    f.kit.env.DB,
+    "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'scanning.devices', '1', 1)",
+    [sandboxId],
+  );
 });
 
 type Mode = 'live' | 'test';
@@ -142,7 +147,7 @@ describe('saved import mappings', () => {
 });
 
 describe('zones', () => {
-  it('refuses a Test key to edit, archive and restore a zone', async () => {
+  it('refuses a Test key to create, edit, archive and restore a zone', async () => {
     const id = f.kit.fx.ids.id();
     await run(
       f.kit.env.DB,
@@ -150,6 +155,7 @@ describe('zones', () => {
       [id, orgId()],
     );
     const t = await keyOf(['scanning:write'], 'test');
+    await refused(await send('POST', '/scan-zones', t, { orgId: orgId(), key: 'tz', name: 'T' }));
     await refused(await send('PATCH', `/scan-zones/${id}`, t, { name: 'Renamed' }));
     await refused(await send('POST', `/scan-zones/${id}/archive`, t));
     await refused(await send('POST', `/scan-zones/${id}/restore`, t));
@@ -160,5 +166,26 @@ describe('zones', () => {
         ])
       )?.name,
     ).toBe('Zone');
+  });
+
+  it('lets a Live key and a sandbox Test key make, edit, archive and restore', async () => {
+    for (const [mode, org] of [
+      ['live', orgId()],
+      ['test', sandboxId],
+    ] as const) {
+      const k = await keyOf(['scanning:write'], mode, org);
+      const made = await send('POST', '/scan-zones', k, {
+        orgId: org,
+        key: `z-${mode}`,
+        name: `Z ${mode}`,
+      });
+      expect(made.status, mode + (await made.clone().text())).toBe(201);
+      const id = ((await made.json()) as { id: string }).id;
+      expect(
+        (await send('PATCH', `/scan-zones/${id}`, k, { name: `Renamed ${mode}` })).status,
+      ).toBe(200);
+      expect((await send('POST', `/scan-zones/${id}/archive`, k)).status).toBe(200);
+      expect((await send('POST', `/scan-zones/${id}/restore`, k)).status).toBe(200);
+    }
   });
 });

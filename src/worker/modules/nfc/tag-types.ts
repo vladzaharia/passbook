@@ -19,7 +19,6 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
-import { assertSharedWrite } from '../orgs/shared-write.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import {
@@ -51,9 +50,7 @@ export async function tagTypeAccess(
   if (auth.kind === 'session' && !(await getOrgAccess(ctx, auth.userId, orgId))) throw notFound();
   if (auth.kind === 'api_key' && auth.orgId !== orgId) throw notFound();
   assertOrgAccess(auth, orgId);
-  const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
-  if (capability === 'scanning:manage') await assertSharedWrite(ctx, authority, orgId, 'tag types');
-  return authority;
+  return tenantAuthorityOf(ctx, auth, orgId, capability);
 }
 
 const TABLES = ['nfc_tag_types', 'nfc_tag_type_templates'] as const;

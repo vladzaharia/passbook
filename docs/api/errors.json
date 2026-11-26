@@ -2993,7 +2993,6 @@
         403
       ],
       "modules": [
-        "dev-access",
         "orgs"
       ]
     },
@@ -5209,15 +5208,6 @@
       ],
       "modules": [
         "passes"
-      ]
-    },
-    {
-      "code": "SCAN_ZONE_LIVE_ONLY",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "scan"
       ]
     },
     {

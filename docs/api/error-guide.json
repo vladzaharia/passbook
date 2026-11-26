@@ -1399,7 +1399,7 @@
   },
   "MODE_LIVE_REQUIRED": {
     "title": "Live key required",
-    "when": "A Test key tried to change state that Live also reads (the brand kit, setup, zones, tag types, saved import mappings or members) in an organization that also has Live passes. A sandbox organization allows it.",
+    "when": "A Test key tried to change state that Live also reads (the brand kit, setup, zones, tag types, saved import mappings or members) in an organization that also has Live passes. A sandbox organization allows it. Template authoring is the exception: a Test key may clone and request review of templates, which changes no Live pass.",
     "fix": "Use a live key for this change.",
     "retryable": false
   },
@@ -2397,12 +2397,6 @@
     "title": "Key used for another setup",
     "when": "This Idempotency-Key went with a different body.",
     "fix": "Use a new key for a different setup.",
-    "retryable": false
-  },
-  "SCAN_ZONE_LIVE_ONLY": {
-    "title": "Live key needed",
-    "when": "Zones are shared with live mode, so a test key cannot make or change them.",
-    "fix": "Use a live key.",
     "retryable": false
   },
   "SCAN_MODE_LIVE_ONLY": {

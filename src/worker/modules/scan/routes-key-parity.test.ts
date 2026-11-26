@@ -327,7 +327,7 @@ describe('review fixes', () => {
     expect(((await lists.json()) as { items?: unknown[] }).items ?? []).toEqual([]);
   });
 
-  it('names its own code when a test key writes a zone', async () => {
+  it('names the shared-write code when a test key writes a zone', async () => {
     const test = await keyOf(['scanning:write'], 'test');
     const res = await send('POST', '/scan-zones', test.headers, {
       orgId: orgId(),
@@ -335,7 +335,7 @@ describe('review fixes', () => {
       name: 'T',
     });
     const body = (await res.json()) as { code: string; detail?: string };
-    expect(body, JSON.stringify(body)).toMatchObject({ code: 'SCAN_ZONE_LIVE_ONLY' });
+    expect(body, JSON.stringify(body)).toMatchObject({ code: 'MODE_LIVE_REQUIRED' });
     expect(res.status).toBe(403);
   });
 
