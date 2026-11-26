@@ -376,6 +376,7 @@ describe('passbook passes', () => {
       makeClient: () => ({
         ...fakeApi(() => []),
         passes: {
+          ...fakeApi(() => []).passes,
           create: async () => {
             throw Object.assign(new Error('x'), {
               code: 'VALIDATION',
