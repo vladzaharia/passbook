@@ -146,7 +146,8 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
     // Apple may filter by prefix: read every page, since the exact match can be on any of them.
     for (let page = 0; path && page < MAX_PAGES; page++) {
       // The first page rides on the caller's reservation; each later read is charged to the same bucket.
-      if (page > 0) await reserve(db, crypto.randomUUID(), 'createPassType', identifier, null, deps.now());
+      if (page > 0)
+        await reserve(db, crypto.randomUUID(), 'createPassType', identifier, null, deps.now());
       const res = await req('GET', path);
       const found = many(res)
         .map(passType)

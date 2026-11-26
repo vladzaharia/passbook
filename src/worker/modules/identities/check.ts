@@ -45,8 +45,11 @@ export async function checkIdentityRow(
     await resolveRow(ctx.env, row);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
-    result.ok = false;
-    result.code = error.code;
+    // A legacy row whose env material was removed after the default moved is retired, not broken.
+    if (error.code !== 'IDENTITY_RETIRED') {
+      result.ok = false;
+      result.code = error.code;
+    }
   }
   await writeSystemValue(ctx.env.DB, key(row.id), result, now);
   return result;

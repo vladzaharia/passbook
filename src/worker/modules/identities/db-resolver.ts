@@ -3,6 +3,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import {
+  envIdentityPresent,
   type IdentityResolver,
   intermediatePem,
   PLATFORM_IDENTITY_ID,
@@ -92,6 +93,14 @@ export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<Resolve
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
+    // The default moved on and the env material was removed: a retired row says so, not "not configured".
+    if (row.issuing === 0 && !envIdentityPresent(env)) {
+      createLogger().warn('identity.platform_retired', {
+        code: 'IDENTITY_RETIRED',
+        identityId: row.id,
+      });
+      throw new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
+    }
     const identity = readEnvIdentity(env);
     // Installed passes key on the row's pass type and team: never sign them as anything else.
     if (platformEnvMismatch(identity, row)) {
@@ -132,6 +141,13 @@ async function refusal(env: AppEnv, id: string, now: number): Promise<ConflictEr
       'IDENTITY_EXPIRED',
     );
   return null;
+}
+
+/** The identity new platform-owned passes sign with: the default platform row, else the env one. */
+export async function resolveDefaultPlatform(env: AppEnv): Promise<ResolvedIdentity> {
+  const row = await getDefaultRow(env.DB);
+  if (row && row.org_id === null && row.purpose === 'passes') return resolveRow(env, row);
+  return createDbIdentityResolver(env).platform();
 }
 
 export function createDbIdentityResolver(env: AppEnv): IdentityResolver {

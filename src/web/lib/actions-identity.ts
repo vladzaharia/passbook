@@ -12,6 +12,7 @@ export const IDENTITY_RUN_ACTIONS = {
   ...PASS_RUN_ACTIONS,
   'identity.expired': a('Identity expired', Clock, 'danger'),
   'identity.expiring': a('Identity expiring', Clock, 'warning'),
+  'identity.platform_default_changed': a('Default identity changed', rotate, 'info'),
   'identity.provision_requested': a('Identity requested', rotate, 'info'),
   'identity.pass_type_created': a('Pass type ready', rotate, 'success'),
   'identity.certificate_issued': a('Certificate issued', rotate, 'success'),
