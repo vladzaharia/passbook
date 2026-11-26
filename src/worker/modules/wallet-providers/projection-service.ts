@@ -11,10 +11,9 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { FeatureNotIncludedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { authorizeTemplateWrite, holdsTemplateCapability } from '../templates/access.ts';
+import { authorizeTemplateWrite } from '../templates/access.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { approvalKind, soleAuditDetail } from '../templates/sole-reviewer.ts';
-import { walletAvailability } from './enrolment-read.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import { currentReview } from './projection-review-current.ts';
 import {
@@ -29,6 +28,8 @@ import { isSelfAuthored } from './projection-system-authority.ts';
 import { walletEntitled } from './repo-enrolment-gate.ts';
 import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
 import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
+import { holdsTemplateCapability } from './review-capability.ts';
+import { walletAvailability } from './wallet-availability.ts';
 
 export {
   activeProjectionRelease,

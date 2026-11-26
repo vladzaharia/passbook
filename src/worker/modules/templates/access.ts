@@ -65,23 +65,6 @@ export async function authorizeTemplateWrite(
   return authority;
 }
 
-/** Whether a signed-in person holds the capability in the organization; a refusal is `false`, anything else throws. */
-export async function holdsTemplateCapability(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  orgId: string,
-  capability: TemplateCapability,
-): Promise<boolean> {
-  if (auth?.kind !== 'session') return false;
-  try {
-    await authorizeTemplateWrite(ctx, auth, orgId, capability);
-    return true;
-  } catch (error) {
-    if (error instanceof ForbiddenError) return false;
-    throw error;
-  }
-}
-
 /**
  * Test-mode keys only: Live approval and release stay with people. The key acts as the member who
  * created it, so the same reviewer rules apply to that member's work.
