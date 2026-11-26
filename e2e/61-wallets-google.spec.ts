@@ -413,14 +413,7 @@ test('an upcoming event that has ended rolls off the Google object with no edit'
     return JSON.stringify(ticket?.textModulesData ?? []);
   };
   expect(await upcoming()).toContain('Opening night');
-  // Nobody edits the pass: the next event boundary schedules the recompile (lifecycle-instance-schedule.ts).
-  // An edit puts the instance on the drain's list, which then parks it until the next boundary. (A copy no edit
-  // has touched is not listed: see the report on first-tap instances.)
-  await admin.send('PATCH', passPath(holder.id), { input: { note: 'See you there.' } }, TEST);
-  await syncUntil(
-    async () => (await upcoming()).includes('See you there.'),
-    'the edit reaches Google',
-  );
+  // Nobody edits the pass: the first tap parked the instance until the next event boundary.
   await syncUntil(
     async () => !(await upcoming()).includes('Opening night'),
     'the first event rolls off',
