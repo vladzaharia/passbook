@@ -94,9 +94,9 @@ describe('what the Run island reads', () => {
     );
   });
 
-  it('draws the console slot as a sign-in card until the island takes over', () => {
+  it('draws the console slot as the signed-out Gate until the island takes over', () => {
     const html = read('developers/console.html');
     expect(html).toContain('data-mode="console"');
-    expect(html).toMatch(/data-island="run"[^>]*><div class="card card-b stack g3">/);
+    expect(html).toMatch(/data-island="run"[^>]*><section class="card gate" data-gate=""/);
   });
 });

@@ -1,12 +1,12 @@
 import { Download } from 'lucide-react';
 import { useState } from 'react';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { problemToError } from '@/web/lib/errors.ts';
 import { modeHeaders } from '@/web/lib/mode.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { Button, toast } from '@/web/ui/index.ts';
 import type { ScanningSearch } from '../search.ts';
 
-/** The export route's query: the list's current filters, the window up to now, and the viewer's zone. */
+/** The export route's query: the list's current filters, the window up to now, and the org's zone. */
 export function exportQuery(
   orgId: string,
   from: number,
@@ -55,6 +55,7 @@ export function ExportButton({
   search: ScanningSearch;
 }) {
   const [busy, setBusy] = useState(false);
+  const timeZone = useOrgTimeZone(orgId);
   return (
     <Button
       variant="secondary"
@@ -63,7 +64,6 @@ export function ExportButton({
       onClick={async () => {
         setBusy(true);
         try {
-          const timeZone = localZone();
           await download(exportQuery(orgId, from, Date.now(), search, timeZone));
         } catch (error) {
           toast.error(error, 'Could not export');

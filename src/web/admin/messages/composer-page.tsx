@@ -237,6 +237,7 @@ function ComposerForm({
                   onChange={change}
                   details={chosen}
                   error={checks.errors.fields}
+                  orgId={orgId}
                 />
               )}
             </CardBody>

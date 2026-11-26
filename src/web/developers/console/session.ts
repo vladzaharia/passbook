@@ -41,7 +41,7 @@ async function json(res: Response): Promise<Record<string, unknown>> {
 
 async function read(): Promise<Session> {
   const head = { accept: 'application/json' };
-  const me = await json(await fetch(`${API}/session`, { headers: head }));
+  const me = await json(await fetch(`${API}/session`, { headers: head, cache: 'no-store' }));
   if (me.authenticated !== true || typeof me.csrfToken !== 'string') return { kind: 'out' };
   const user = me.user as { primaryEmail?: unknown } | undefined;
   const email = typeof user?.primaryEmail === 'string' ? user.primaryEmail : null;
@@ -56,7 +56,7 @@ async function read(): Promise<Session> {
     return { kind: 'out' };
   }
   const csrf = me.csrfToken;
-  const res = await fetch(`${API}/developer/sandbox`, { headers: head });
+  const res = await fetch(`${API}/developer/sandbox`, { headers: head, cache: 'no-store' });
   if (res.status === 401) return { kind: 'out' };
   const body = await json(res);
   const box = body.sandbox as Record<string, unknown> | null | undefined;

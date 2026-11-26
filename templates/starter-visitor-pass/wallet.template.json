@@ -393,6 +393,7 @@
     "size": "cr80p",
     "barcode": "qr",
     "kind": "badge",
-    "holder": false
+    "holder": false,
+    "ink": "mono"
   }
 }

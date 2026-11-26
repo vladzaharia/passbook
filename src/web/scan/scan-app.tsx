@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
-import { localZone } from '@/web/lib/timezones.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import type { ScanAdminScopeSchema } from '../../shared/contracts/scan.ts';
 import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { errorMessage } from '../lib/errors.ts';
@@ -56,7 +56,7 @@ function ScanBoot() {
       ? {
           orgId,
           setupId,
-          timeZone: params.get('timeZone') ?? localZone(),
+          timeZone: params.get('timeZone') ?? DEFAULT_TIME_ZONE,
           ...(eventId ? { eventId } : {}),
           ...(params.get('templateIds')
             ? { templateIds: params.get('templateIds')?.split(',') }
