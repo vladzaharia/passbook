@@ -13,6 +13,7 @@ export const RULE_COPY = {
   yearlyNeedsDate: 'Every year works with a date input.',
   nobodyDue: 'No passes are due in the next 14 days.',
   sendAtRange: 'Pick a time between 08:00 and 20:30.',
+  stale: 'Someone else saved this message.',
   paused: {
     RULE_CREATOR_REVOKED: 'Paused. The person who saved it lost access. Save it again to resume.',
     RULE_INPUT_MISSING: 'Paused. A template no longer has the date or message field.',

@@ -91,7 +91,7 @@ export function WizardActions<Id extends string>({
   onCancel,
 }: {
   wizard: WizardModel<Id>;
-  /** A verb and a noun: "Create key". */
+  /** A verb and a noun ("Create key"); in edit mode "Save" or "Save and resume". */
   finishLabel: string;
   /** The finish is hard to take back. */
   finishTone?: 'danger';
@@ -99,13 +99,7 @@ export function WizardActions<Id extends string>({
   onCancel: () => void;
 }) {
   const label =
-    wizard.primary === 'finish'
-      ? wizard.mode === 'edit'
-        ? 'Save'
-        : finishLabel
-      : wizard.primary === 'review'
-        ? 'Review'
-        : 'Next';
+    wizard.primary === 'finish' ? finishLabel : wizard.primary === 'review' ? 'Review' : 'Next';
   return (
     <WizardButtons
       first={wizard.first}

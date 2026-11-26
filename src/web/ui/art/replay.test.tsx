@@ -209,8 +209,9 @@ describe('scene stylesheets', () => {
   });
 
   // Scenes start once the art has landed (700 ms); nothing moves on its own past 5 s (WCAG 2.2.2).
-  it('never loop and settle within 5 s of the page', () => {
+  it('never loop and settle within 5 s of the page, except busy: pending work', () => {
     for (const [f, text] of all) {
+      if (f === 'busy.css') continue;
       expect(text, f).not.toMatch(/\binfinite\b/);
       for (const m of text.matchAll(/animation:\s*([^;]+);/g)) {
         for (const item of (m[1] ?? '').split(/,(?![^(]*\))/)) {
@@ -223,6 +224,17 @@ describe('scene stylesheets', () => {
         }
       }
     }
+  });
+
+  // The one loop: it marks a running operation and the scene changes when it ends (busy.css).
+  it('loop busy only while motion is welcome, on transforms, with no run past a cycle', () => {
+    const text = css('busy.css');
+    expect(text.match(/infinite/g)?.length).toBe(2);
+    const outside = blocks(text)
+      .filter(([sel]) => !sel.startsWith('@keyframes'))
+      .filter(([sel]) => !sel.startsWith('@media (prefers-reduced-motion: no-preference)'));
+    expect(outside).toEqual([]);
+    expect(text.match(/\d+ms/g)?.every((t) => Number.parseInt(t, 10) <= 900)).toBe(true);
   });
 
   it('end the search walk where it began: seated at the centre, the "?" gone', () => {
