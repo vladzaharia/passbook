@@ -1,6 +1,5 @@
 import { Send } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import type { Mode } from '@/shared/contracts/common.ts';
+import { type ReactNode, useEffect, useState } from 'react';
 import { isApiError } from '@/web/lib/errors.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import {
@@ -14,12 +13,10 @@ import {
   Skeleton,
 } from '../../ui/index.ts';
 import { type Email, ForwardingStatus, type SendState } from './forwarding-status.tsx';
-import {
-  type InboxSendScope,
-  useCapturedEmail,
-  useSendCapturedToMe,
-  useVerifiedInboxEmails,
-} from './queries.ts';
+import type { InboxHost } from './host.ts';
+import { FailedBadge } from './parts.tsx';
+import { useCapturedEmail, useVerifiedInboxEmails } from './queries.ts';
+import { useSendCapturedToMe } from './send.ts';
 
 type View = 'html' | 'text';
 
@@ -30,13 +27,13 @@ const VIEWS = [
 
 function Details({
   email,
-  orgId,
+  forLink,
   send,
   view,
   onView,
 }: {
   email: Email;
-  orgId: string;
+  forLink: ForLink;
   send: SendState;
   view: View;
   onView: (view: View) => void;
@@ -48,21 +45,10 @@ function Details({
           { label: 'Would go to', value: email.to },
           {
             label: 'For',
-            value: email.passId ? (
-              <MetaLink
-                to="/admin/passes/$passId"
-                params={{ passId: email.passId }}
-                search={{ orgId }}
-              >
-                {email.kind === 'bundle' ? 'A bundle' : 'A pass'}
-              </MetaLink>
-            ) : email.kind === 'bundle' ? (
-              'A bundle'
-            ) : (
-              'A pass'
-            ),
+            value: email.passId ? forLink(email) : email.kind === 'bundle' ? 'A bundle' : 'A pass',
           },
           { label: 'Captured', value: formatDateTime(email.createdAt) },
+          ...(email.failed ? [{ label: 'Delivery', value: <FailedBadge /> }] : []),
         ]}
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -132,21 +118,30 @@ function Message({ email, orgId, view }: { email: Email; orgId: string; view: Vi
   );
 }
 
-function PreviewContent({
+type ForLink = (email: Email) => ReactNode;
+
+/**
+ * One captured message, whatever frames it: the details, a sandboxed frame and Send to me. `frame`
+ * puts the title and the body in the host's own surface (admin's sheet, the Workbench's inspector).
+ */
+export function EmailDetail({
   id,
   orgId,
   userId,
-  canOperate,
-  sendScope,
+  host,
+  forLink,
+  frame,
 }: {
   id: string;
   orgId: string;
   userId: string;
-  canOperate: boolean;
-  sendScope: InboxSendScope;
+  host: InboxHost;
+  forLink: ForLink;
+  frame: (title: string, body: ReactNode) => ReactNode;
 }) {
-  const email = useCapturedEmail(id, orgId);
-  const emails = useVerifiedInboxEmails(userId, canOperate);
+  const { canOperate } = host;
+  const email = useCapturedEmail(id, orgId, host);
+  const emails = useVerifiedInboxEmails(host, canOperate);
   const verified = Boolean(
     emails.isSuccess &&
       !emails.isFetching &&
@@ -174,7 +169,7 @@ function PreviewContent({
     orgId,
     userId,
     canSend,
-    sendScope,
+    host,
     (to) => {
       const own = emails.data?.items.some(
         (item) =>
@@ -201,55 +196,51 @@ function PreviewContent({
     refresh: () => void email.refetch(),
     send: () => send.mutate(),
   };
-  return (
-    <SheetContent title={data?.subject ?? 'Test email'} className="w-[min(100vw,40rem)]">
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {email.isError ? (
-          <>
-            <ErrorState
-              inline
-              error={email.error}
-              retryLabel="Reload email"
-              onRetry={() => email.refetch()}
-            />
-            {pending || !send.isIdle ? (
-              <p className="text-sm text-fg-muted">
-                Reloading checks this email; it will not send a copy.
-              </p>
-            ) : null}
-          </>
-        ) : data ? (
-          <Details email={data} orgId={orgId} send={sendState} view={view} onView={setView} />
-        ) : (
-          <Skeleton className="h-64 w-full" />
-        )}
-        <div aria-live="polite">
-          {data ? <ForwardingStatus email={data} send={sendState} /> : null}
-        </div>
-        {data ? <Message email={data} orgId={orgId} view={view} /> : null}
+  return frame(
+    data?.subject ?? 'Test email',
+    <>
+      {email.isError ? (
+        <>
+          <ErrorState
+            inline
+            error={email.error}
+            retryLabel="Reload email"
+            onRetry={() => email.refetch()}
+          />
+          {pending || !send.isIdle ? (
+            <p className="text-sm text-fg-muted">
+              Reloading checks this email; it will not send a copy.
+            </p>
+          ) : null}
+        </>
+      ) : data ? (
+        <Details email={data} forLink={forLink} send={sendState} view={view} onView={setView} />
+      ) : (
+        <Skeleton className="h-64 w-full" />
+      )}
+      <div aria-live="polite">
+        {data ? <ForwardingStatus email={data} send={sendState} /> : null}
       </div>
-    </SheetContent>
+      {data ? <Message email={data} orgId={orgId} view={view} /> : null}
+    </>,
   );
 }
 
-/** One captured message: the details, a sandboxed frame and Send to me. */
+/** One captured message in admin's right sheet. */
 export function EmailPreview({
   id,
   orgId,
   userId,
-  mode,
-  canOperate,
-  sendScope,
+  host,
   onClose,
 }: {
   id: string;
   orgId: string;
   userId: string;
-  mode: Mode;
-  canOperate: boolean;
-  sendScope: InboxSendScope;
+  host: InboxHost;
   onClose: () => void;
 }) {
+  const { mode } = host;
   const [opened] = useState(() => ({ orgId, userId, mode }));
   const current =
     mode === 'test' && opened.orgId === orgId && opened.userId === userId && opened.mode === mode;
@@ -259,12 +250,25 @@ export function EmailPreview({
   return (
     <Sheet open={current} onOpenChange={(open) => !open && onClose()}>
       {current ? (
-        <PreviewContent
+        <EmailDetail
           id={id}
           orgId={orgId}
           userId={userId}
-          canOperate={canOperate}
-          sendScope={sendScope}
+          host={host}
+          forLink={(email) => (
+            <MetaLink
+              to="/admin/passes/$passId"
+              params={{ passId: email.passId as string }}
+              search={{ orgId }}
+            >
+              {email.kind === 'bundle' ? 'A bundle' : 'A pass'}
+            </MetaLink>
+          )}
+          frame={(title, body) => (
+            <SheetContent title={title} className="w-[min(100vw,40rem)]">
+              <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">{body}</div>
+            </SheetContent>
+          )}
         />
       ) : null}
     </Sheet>
