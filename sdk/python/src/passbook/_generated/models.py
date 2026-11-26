@@ -9108,7 +9108,6 @@ class PlatformUsersEmailsCreateResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsCreateResponsePassesItem(_Model):
     id: str
-    title: str
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9163,7 +9162,6 @@ class PlatformUsersEmailsDeleteResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsDeleteResponsePassesItem(_Model):
     id: str
-    title: str
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9218,7 +9216,6 @@ class PlatformUsersEmailsMakePrimaryResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsMakePrimaryResponsePassesItem(_Model):
     id: str
-    title: str
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9269,6 +9266,7 @@ class PlatformUsersPassesListResponseItemsItem(_Model):
     timeZone: str
     templateName: str
     status: _Literal["active", "voided"] | str
+    holding: _Literal["owned", "waiting"] | str
     channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
     issuedAt: int
     updatedAt: int
@@ -9304,7 +9302,6 @@ class PlatformUsersRetrieveResponseIdentitiesItem(_Model):
 
 class PlatformUsersRetrieveResponsePassesItem(_Model):
     id: str
-    title: str
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str

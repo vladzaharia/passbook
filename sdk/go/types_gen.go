@@ -8722,7 +8722,6 @@ type PlatformUsersEmailsCreateResponseIdentitiesItem struct {
 
 type PlatformUsersEmailsCreateResponsePassesItem struct {
 	ID           string `json:"id"`
-	Title        string `json:"title"`
 	TemplateName string `json:"templateName"`
 	OrgName      string `json:"orgName"`
 	Status       string `json:"status"`
@@ -8783,7 +8782,6 @@ type PlatformUsersEmailsDeleteResponseIdentitiesItem struct {
 
 type PlatformUsersEmailsDeleteResponsePassesItem struct {
 	ID           string `json:"id"`
-	Title        string `json:"title"`
 	TemplateName string `json:"templateName"`
 	OrgName      string `json:"orgName"`
 	Status       string `json:"status"`
@@ -8844,7 +8842,6 @@ type PlatformUsersEmailsMakePrimaryResponseIdentitiesItem struct {
 
 type PlatformUsersEmailsMakePrimaryResponsePassesItem struct {
 	ID           string `json:"id"`
-	Title        string `json:"title"`
 	TemplateName string `json:"templateName"`
 	OrgName      string `json:"orgName"`
 	Status       string `json:"status"`
@@ -8901,6 +8898,7 @@ type PlatformUsersPassesListResponseItemsItem struct {
 	TimeZone     string   `json:"timeZone"`
 	TemplateName string   `json:"templateName"`
 	Status       string   `json:"status"`
+	Holding      string   `json:"holding"`
 	Channels     []string `json:"channels"`
 	IssuedAt     int64    `json:"issuedAt"`
 	UpdatedAt    int64    `json:"updatedAt"`
@@ -8940,7 +8938,6 @@ type PlatformUsersRetrieveResponseIdentitiesItem struct {
 
 type PlatformUsersRetrieveResponsePassesItem struct {
 	ID           string `json:"id"`
-	Title        string `json:"title"`
 	TemplateName string `json:"templateName"`
 	OrgName      string `json:"orgName"`
 	Status       string `json:"status"`

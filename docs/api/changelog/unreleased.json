@@ -197,7 +197,7 @@
     "operationId": "users.deleteUsersByIdEmailsByEmail",
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.passes[].title: field removed",
-    "note": "Owned passes no longer carry title (holder personalization). Read a person's passes from GET /api/v1/users/{id}/passes."
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"console\" added",
@@ -1573,7 +1573,7 @@
     "operationId": "users.getUsersById",
     "op": "GET /api/v1/users/{id}",
     "change": "200.passes[].title: field removed",
-    "note": "Owned passes no longer carry title (holder personalization). Read a person's passes from GET /api/v1/users/{id}/passes."
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
   },
   {
     "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"console\" added",
@@ -4194,7 +4194,7 @@
     "operationId": "users.postUsersByIdEmails",
     "op": "POST /api/v1/users/{id}/emails",
     "change": "202.passes[].title: field removed",
-    "note": "Owned passes no longer carry title (holder personalization). Read a person's passes from GET /api/v1/users/{id}/passes."
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
   },
   {
     "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
@@ -4234,7 +4234,7 @@
     "operationId": "users.postUsersByIdEmailsByEmailPrimary",
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.passes[].title: field removed",
-    "note": "Owned passes no longer carry title (holder personalization). Read a person's passes from GET /api/v1/users/{id}/passes."
+    "note": "Owned passes no longer carry title (holder personalization); see GET /users/{id}/passes."
   },
   {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",

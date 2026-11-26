@@ -58306,6 +58306,9 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
+                "title": {
+                  "type": "string"
+                },
                 "templateName": {
                   "type": "string"
                 },
@@ -58789,6 +58792,9 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
+                "title": {
+                  "type": "string"
+                },
                 "templateName": {
                   "type": "string"
                 },
@@ -59086,6 +59092,9 @@
                   "minLength": 1,
                   "maxLength": 64
                 },
+                "title": {
+                  "type": "string"
+                },
                 "templateName": {
                   "type": "string"
                 },
@@ -59382,6 +59391,9 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 64
+                },
+                "title": {
+                  "type": "string"
                 },
                 "templateName": {
                   "type": "string"

@@ -62,10 +62,12 @@ export const UserDetailSchema = UserSchema.extend({
       method: z.string(),
     }),
   ),
-  /** First 100 owned passes, with no holder title; `passCount` is the total. */
+  /** First 100 owned passes, title is no longer sent; `passCount` is the total. */
   passes: z.array(
     z.object({
       id: IdSchema,
+      /** Deprecated: never sent (holder personalization). Read passes from GET /users/{id}/passes. */
+      title: z.string().optional(),
       templateName: z.string(),
       orgName: z.string(),
       status: PassStatusSchema,
