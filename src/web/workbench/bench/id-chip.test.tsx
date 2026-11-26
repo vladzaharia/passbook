@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import { IdChip, jumpTargets, shortId } from './id-chip.tsx';
 import { Trace, traceNodes } from './trace.tsx';
 import { loadRequestEvents } from './trace-events.ts';
@@ -154,14 +155,13 @@ describe('the trace', () => {
 
 describe('the chip is named by what it shows (WCAG 2.5.3)', () => {
   it('holds its visible text in its accessible name, which axe checks', async () => {
-    const axe = (await import('axe-core')).default;
     const { container } = render(
       <>
         <IdChip id={REQ} kind="request" prefix="req" />
         <IdChip id="key-1" kind="key" prefix="key" text="Sandbox key" />
       </>,
     );
-    const res = await axe.run(container, { runOnly: ['label-content-name-mismatch'] });
+    const res = await axe(container, { runOnly: ['label-content-name-mismatch'] });
     expect(res.violations).toEqual([]);
     expect(screen.getByRole('button', { name: 'Copy key id Sandbox key' })).toBeTruthy();
   });
