@@ -212,6 +212,21 @@ describe('a sheet restored from the URL still offers Retry', () => {
 
 describe('another tab', () => {
   it('a sign-out or account switch there empties this tab of the operations it held', async () => {
+    // jsdom has no BroadcastChannel: a small bus between channels of one name stands in for the browser's.
+    const channels = new Set<{ onmessage: (() => void) | null }>();
+    class Bus {
+      onmessage: (() => void) | null = null;
+      constructor() {
+        channels.add(this);
+      }
+      postMessage() {
+        for (const other of channels) if (other !== this) other.onmessage?.();
+      }
+      close() {
+        channels.delete(this);
+      }
+    }
+    vi.stubGlobal('BroadcastChannel', Bus);
     await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => json({ items: [passFixture()], nextCursor: null }) },
     });

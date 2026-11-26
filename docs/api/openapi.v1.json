@@ -83431,6 +83431,9 @@
                   "required": [
                     "ok"
                   ]
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }
@@ -83447,6 +83450,12 @@
           }
         },
         "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "confirmLostPhone",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        },
         "security": [
           {
             "session": []
