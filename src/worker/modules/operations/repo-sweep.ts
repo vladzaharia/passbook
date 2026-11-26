@@ -16,6 +16,21 @@ export function runningSilentSince(
   );
 }
 
+/** Waiting rows silent since `before`: the sweep keeps only those that still have steps to do (a lost wake-up). */
+export function waitingSilentSince(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<OperationRow[]> {
+  return all<OperationRow>(
+    db,
+    `SELECT ${COLUMNS} FROM operations
+     WHERE status = 'waiting' AND COALESCE(heartbeat_at, created_at) < ?
+     ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`,
+    [before, limit],
+  );
+}
+
 /** A live runner or Workflow: push the heartbeat out. */
 export async function bumpHeartbeat(db: D1Database, id: string, now: number): Promise<void> {
   await run(
@@ -39,7 +54,7 @@ export async function markResent(
   const { changes } = await run(
     db,
     `UPDATE operations SET resends = resends + 1, lease_until = NULL, heartbeat_at = ?
-     WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running')`,
+     WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running', 'waiting')`,
     [now, id, attempt, seen],
   );
   return changes === 1;

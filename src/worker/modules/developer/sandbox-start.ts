@@ -23,7 +23,8 @@ interface Spec {
   idempotencyKey: string | undefined;
   /** A delete is its Workflow's: its first instance is named for the operation, and there is no lease or backstop job. */
   workflow?: true;
-  work: (op: OperationDto, progress: Progress) => Promise<void>;
+  /** `lease` is the token the in-request run writes under (none for a workflow-backed kind). */
+  work: (op: OperationDto, progress: Progress, lease?: string) => Promise<void>;
 }
 
 /**
@@ -41,6 +42,8 @@ export async function startSandboxOp(
     : ctx.ids.id();
   const known = await rowById(ctx.env.DB, id);
   if (known) return toDto(known);
+  // The in-request run holds a lease token from the start: a backstop that takes the lease over fences it out.
+  const lease = spec.workflow ? undefined : ctx.ids.id();
   const { operation: op, created } = await startOperationOnce(ctx, {
     id,
     kind: spec.kind,
@@ -49,13 +52,20 @@ export async function startSandboxOp(
     session: auth.sessionId,
     subject: { userId: auth.userId },
     // Named for the operation and attempt: the day's sweep can never hold the same name.
-    ...(spec.workflow ? { workflowInstanceId: `${id}-r1` } : { lease: true as const }),
+    ...(spec.workflow
+      ? { workflowInstanceId: `${id}-r1` }
+      : { lease: true as const, leaseOwner: lease as string }),
   });
   // Two starts with one key race to insert: only the one that inserted runs the work.
   if (!created) return op;
-  const run = () => spec.work(op, progressOf(ctx, op.id, op.attempt));
-  if (spec.workflow)
-    ctx.waitUntil(run().catch((error) => progressOf(ctx, op.id, op.attempt).fail(error)));
+  const run = async () => {
+    try {
+      await spec.work(op, progressOf(ctx, op.id, op.attempt, lease), lease);
+    } catch (error) {
+      await progressOf(ctx, op.id, op.attempt, lease).fail(error);
+    }
+  };
+  if (spec.workflow) ctx.waitUntil(run());
   else await runInRequest(ctx, op.id, op.attempt, run);
   return op;
 }

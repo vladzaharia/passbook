@@ -81,7 +81,8 @@ register(
       kind: 'sandbox.create',
       orgId: row?.org_id ?? ctx.ids.id(),
       idempotencyKey: key,
-      work: (op, progress) => createRun(ctx, auth, op, progress, { viewedAt: input.viewedAt }),
+      work: (op, progress, lease) =>
+        createRun(ctx, auth, op, progress, { viewedAt: input.viewedAt, lease }),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);
     return c.json({ operation }, 202);
@@ -179,7 +180,8 @@ register(
       kind: row ? 'sandbox.recreate' : 'sandbox.create',
       orgId: row?.org_id ?? ctx.ids.id(),
       idempotencyKey: key,
-      work: (op, progress) => (row ? recreateRun : createRun)(ctx, auth, op, progress, options),
+      work: (op, progress, lease) =>
+        (row ? recreateRun : createRun)(ctx, auth, op, progress, { ...options, lease }),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);
     return c.json({ operation }, 202);
@@ -219,7 +221,7 @@ register(
       kind: 'sandbox.reset',
       orgId: row.org_id,
       idempotencyKey: key,
-      work: (op, progress) => resetRun(ctx, auth, op, progress),
+      work: (op, progress, lease) => resetRun(ctx, auth, op, progress, { lease }),
     });
     c.header('location', `/api/v1/operations/${operation.id}`);
     c.header('cache-control', 'no-store');

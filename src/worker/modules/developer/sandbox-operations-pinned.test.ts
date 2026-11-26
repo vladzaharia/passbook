@@ -12,11 +12,15 @@ import { type OrgPurgeParams, runOrgPurge } from '../../workflows/org-purge.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { handleOperationRun } from '../operations/jobs.ts';
+import { progressOf } from '../operations/progress.ts';
 import { NOOP } from '../operations/progress-types.ts';
+import { claimLease } from '../operations/repo.ts';
 import { markResent } from '../operations/repo-sweep.ts';
+import { sweepStalledOperations } from '../operations/stalls.ts';
 import { startOperation } from '../operations/start.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { resetSandbox } from './reset.ts';
+import { createRun, recreateRun } from './sandbox-runs.ts';
 import {
   captureQueue,
   makeSandbox,
@@ -47,9 +51,17 @@ const sleeping = {
   sleepUntil: () => new Promise<void>(() => {}),
 };
 const created = new Set<string>();
+/** While set, a started purge waits: the test runs it when it wants the passes voided. */
+let holdPurge = false;
+const held: { id: string; params: OrgPurgeParams }[] = [];
 const purges = vi.fn(async (opts: { id: string; params: OrgPurgeParams }) => {
   if (purgeStart === 'fail') throw new Error('workflow binding down');
+  if (created.has(opts.id)) throw new Error('instance.already_exists');
   created.add(opts.id);
+  if (holdPurge) {
+    held.push(opts);
+    return {};
+  }
   void runOrgPurge(kit.env, opts.params, sleeping as never, undefined, kit.clock, 0);
   return {};
 });
@@ -474,5 +486,170 @@ describe('the operations table and a developer org (L6)', () => {
     } finally {
       undo();
     }
+  });
+});
+
+const authOf = async (p: Awaited<ReturnType<typeof person>>): Promise<SessionAuth> => ({
+  kind: 'session',
+  userId: p.user.id,
+  sessionId: await sha256Hex(p.session.cookieValue),
+  roles: ['user', 'developer'],
+  csrfSecret: p.session.csrf,
+  amr: 'oidc',
+  authTime: kit.clock.now(),
+  mode: 'live',
+});
+
+describe('a start over never sticks waiting (N1)', () => {
+  it('a purge that finishes during a backstop’s claim is not lost: the run sends the job it missed', async () => {
+    const s = await sandboxOf();
+    holdPurge = true;
+    const started = await send('POST', '/developer/sandbox/recreate', s.headers, {
+      turnstileToken: 'ok',
+    });
+    const id = ((await started.json()) as { operation: OperationDto }).operation.id;
+    await vi.waitFor(() => expect(held.some((h) => h.params.operationId === id)).toBe(true));
+    const purge = held.find((h) => h.params.operationId === id) as (typeof held)[number];
+    holdPurge = false;
+    const stale = await getOp(s.headers, id);
+    expect(stale.steps.find((x) => x.key === 'passes')?.state).not.toBe('done');
+    // The backstop takes the lease while the passes are still voiding...
+    await run(
+      kit.env.DB,
+      'UPDATE operations SET lease_until = 1, lease_owner = NULL WHERE id = ?',
+      [id],
+    );
+    expect(
+      await claimLease(kit.env.DB, id, 1, kit.clock.now(), kit.clock.now() + 60_000, 'bk'),
+    ).toBe(true);
+    // ...the purge reaches its wait and sends its one job, which finds the lease taken and goes...
+    void runOrgPurge(kit.env, purge.params, sleeping as never, undefined, kit.clock, 0);
+    await vi.waitFor(() =>
+      expect(queue.jobs.some((j) => j.operationId === id && !j.delayed)).toBe(true),
+    );
+    const before = queue.jobs.length;
+    await expect(
+      runJob({ kind: 'operation.run', operationId: id, attempt: 1 }),
+    ).resolves.toBeUndefined();
+    expect(await getOp(s.headers, id)).toMatchObject({ status: 'waiting' });
+    // ...and the backstop's run lets go: it looks again, and sends the job.
+    const auth = await authOf(s);
+    await recreateRun(
+      createServiceContext(kit.env, { clock: kit.clock }),
+      auth,
+      stale,
+      progressOf(createServiceContext(kit.env, { clock: kit.clock }), id, 1, 'bk'),
+      { lease: 'bk' },
+    );
+    expect(queue.jobs.length).toBeGreaterThan(before);
+    const done = await settleWithJobs(send, s.headers, id, queue, runJob);
+    expect(done.status, JSON.stringify(done.error)).toBe('succeeded');
+  });
+
+  it('the sweep fails a waiting row with steps to do and no one holding it, after one resend', async () => {
+    const p = await person();
+    const ctx = createServiceContext(kit.env, { clock: kit.clock });
+    const op = await startOperation(ctx, {
+      kind: 'sandbox.recreate',
+      target: { type: 'sandbox', id: ctx.ids.id() },
+      actor: { type: 'user', id: p.user.id },
+      session: await sha256Hex(p.session.cookieValue),
+      subject: { userId: p.user.id },
+    });
+    const pr = progressOf(ctx, op.id, 1);
+    for (const key of ['close', 'keys', 'passes']) await pr.step(key).done();
+    await pr.waiting('erase', { until: kit.clock.now() + 7 * 86_400_000, due: true });
+    expect((await getOp(p.headers, op.id)).status).toBe('waiting');
+    const mine = () => queue.jobs.filter((j) => j.operationId === op.id).length;
+    kit.clock.advance(11 * 60_000);
+    await sweepStalledOperations(ctx);
+    expect(mine()).toBe(1);
+    expect((await getOp(p.headers, op.id)).status).toBe('waiting');
+    kit.clock.advance(11 * 60_000);
+    await sweepStalledOperations(ctx);
+    const failed = await getOp(p.headers, op.id);
+    expect(failed).toMatchObject({ status: 'failed' });
+    expect(failed.error).toMatchObject({ code: 'OPERATION_STALLED', retryable: true });
+    expect(failed.step).toBe('org');
+  });
+
+  it('leaves a waiting row alone when only its tail is left', async () => {
+    const p = await person();
+    const ctx = createServiceContext(kit.env, { clock: kit.clock });
+    const op = await startOperation(ctx, {
+      kind: 'sandbox.delete',
+      target: { type: 'sandbox', id: ctx.ids.id() },
+      actor: { type: 'user', id: p.user.id },
+      session: await sha256Hex(p.session.cookieValue),
+      subject: { userId: p.user.id },
+    });
+    const pr = progressOf(ctx, op.id, 1);
+    for (const key of ['close', 'keys', 'passes']) await pr.step(key).done();
+    await pr.waiting('erase', { until: kit.clock.now() + 7 * 86_400_000, due: true });
+    kit.clock.advance(60 * 60_000);
+    await sweepStalledOperations(ctx);
+    expect(queue.jobs.filter((j) => j.operationId === op.id)).toHaveLength(0);
+    // Read from the table: the person's session is an hour old.
+    expect(
+      (
+        await first<{ status: string }>(kit.env.DB, 'SELECT status FROM operations WHERE id = ?', [
+          op.id,
+        ])
+      )?.status,
+    ).toBe('waiting');
+  });
+});
+
+describe('the in-request run holds a lease token (V4)', () => {
+  it('raises OPERATION_LEASE_LOST once a backstop has taken the lease over', async () => {
+    const p = await person();
+    const ctx = createServiceContext(kit.env, { clock: kit.clock });
+    const auth = await authOf(p);
+    const op = await startOperation(ctx, {
+      kind: 'sandbox.create',
+      target: { type: 'sandbox', id: ctx.ids.id() },
+      actor: { type: 'user', id: p.user.id },
+      session: auth.sessionId,
+      subject: { userId: p.user.id },
+      lease: true,
+      leaseOwner: 'tok',
+    });
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((r) => {
+      open = r;
+    });
+    const work = createRun(ctx, auth, op, progressOf(ctx, op.id, 1, 'tok'), {
+      lease: 'tok',
+      hooks: {
+        after: async (step) => {
+          if (step === 'org') await gate;
+        },
+      },
+    }).catch((error: unknown) => error);
+    await vi.waitFor(async () =>
+      expect((await getOp(p.headers, op.id)).steps.find((x) => x.key === 'org')?.state).toBe(
+        'done',
+      ),
+    );
+    // The request is slow past its lease; the backstop claims it.
+    await run(kit.env.DB, 'UPDATE operations SET lease_until = 1 WHERE id = ?', [op.id]);
+    expect(
+      await claimLease(kit.env.DB, op.id, 1, kit.clock.now(), kit.clock.now() + 60_000, 'other'),
+    ).toBe(true);
+    open();
+    expect(await work).toMatchObject({ code: 'OPERATION_LEASE_LOST' });
+    expect((await getOp(p.headers, op.id)).steps.find((x) => x.key === 'template')?.state).toBe(
+      'pending',
+    );
+  });
+
+  it('a started operation carries its token', async () => {
+    const s = await sandboxOf();
+    const row = await first<{ lease_owner: string | null }>(
+      kit.env.DB,
+      "SELECT lease_owner FROM operations WHERE kind = 'sandbox.create' AND actor_id = ?",
+      [s.user.id],
+    );
+    expect(row?.lease_owner).toBeTruthy();
   });
 });

@@ -3,6 +3,7 @@ import type { OperationDto, OperationResult } from '../../../shared/contracts/op
 import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isActive, parseSteps } from '../operations/dto.ts';
 import { progressOf } from '../operations/progress.ts';
 import type { Progress } from '../operations/progress-types.ts';
 import { releaseLease, rowById } from '../operations/repo.ts';
@@ -132,6 +133,13 @@ export async function recreateRun(
   if (!stepDone(op, 'passes')) {
     if (await startPurge(ctx, op, orgId, `${op.id}-r${op.attempt}`, false)) {
       await releaseLease(ctx.env.DB, op.id, op.attempt, options.lease ?? null);
+      // The purge may have finished its voiding while this run held the lease: its one-shot job found the lease
+      // taken and went. Look again now it is free, and send the job it could not.
+      const now = await rowById(ctx.env.DB, op.id);
+      const voided =
+        parseSteps(now?.steps ?? '[]').find((s) => s.key === 'passes')?.state === 'done';
+      if (now && isActive(now.status) && voided)
+        await ctx.env.JOBS.send({ kind: 'operation.run', operationId: op.id, attempt: op.attempt });
       return;
     }
     await progress.step('passes').skip();

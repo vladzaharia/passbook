@@ -3,6 +3,7 @@ import {
   OperationResultSchema,
 } from '../../../shared/contracts/operations.ts';
 import { first, run, stmt } from '../../platform/db.ts';
+import { WORKFLOW_WRITER } from './progress-types.ts';
 
 const ACTIVE = `status IN ('queued', 'running', 'waiting')`;
 
@@ -37,7 +38,7 @@ export function writeStep(
     `UPDATE operations SET steps = json_set(steps, ?, json(?)), step_key = ?, status = ?,
        revision = revision + 1, started_at = COALESCE(started_at, ?), updated_at = ?, heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
+     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ? OR ? = '${WORKFLOW_WRITER}')
      RETURNING status, cancel_requested`,
     [
       at,
@@ -50,6 +51,7 @@ export function writeStep(
       w.leaseUntil,
       w.id,
       w.attempt,
+      w.lease ?? '',
       w.lease ?? '',
     ],
   );
@@ -64,9 +66,9 @@ export async function writeHeartbeat(
     db,
     `UPDATE operations SET heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
+     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ? OR ? = '${WORKFLOW_WRITER}')
      RETURNING status, cancel_requested`,
-    [w.now, w.leaseUntil, w.id, w.attempt, w.lease ?? ''],
+    [w.now, w.leaseUntil, w.id, w.attempt, w.lease ?? '', w.lease ?? ''],
   );
 }
 
@@ -103,7 +105,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
        updated_at = ?, finished_at = ?, expires_at = ${f.expiresAt === null ? 'expires_at' : '?'}, lease_until = NULL
      WHERE id = ? AND attempt = ? AND ${
        f.onlyQueued ? "status = 'queued' AND (lease_until IS NULL OR lease_until <= ?)" : ACTIVE
-     }${f.lease === undefined ? '' : ' AND (lease_owner IS NULL OR lease_owner = ?)'}`,
+     }${f.lease === undefined ? '' : ` AND (lease_owner IS NULL OR lease_owner = ? OR ? = '${WORKFLOW_WRITER}')`}`,
     [
       f.status,
       f.steps,
@@ -119,7 +121,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
       f.id,
       f.attempt,
       ...(f.onlyQueued ? [f.now] : []),
-      ...(f.lease === undefined ? [] : [f.lease]),
+      ...(f.lease === undefined ? [] : [f.lease, f.lease]),
     ],
   );
 }

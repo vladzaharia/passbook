@@ -31,6 +31,8 @@ export interface StartInput {
   workflowInstanceId?: string;
   /** An in-request run claims the runner lease now (`runInRequest`). */
   lease?: true;
+  /** The token the in-request run writes under: a backstop that takes the lease over fences it out. */
+  leaseOwner?: string;
 }
 
 /**
@@ -103,6 +105,7 @@ export function startOperationStmt(ctx: ServiceContext, input: StartInput) {
       dedupeKey: dedupeKeyOf(input),
       workflowInstanceId: input.workflowInstanceId ?? null,
       leaseUntil: input.lease ? now + LEASE_MS : null,
+      leaseOwner: input.lease ? (input.leaseOwner ?? null) : null,
       now,
       expiresAt: def.audience === 'starter' ? now + KEEP_MS.starter : null,
     }),
