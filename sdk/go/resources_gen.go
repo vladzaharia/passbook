@@ -458,6 +458,25 @@ func (r *ConnectionsRunsResource) List(ctx context.Context, id string, query *Co
 	return newPager[ConnectionsRunsListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
 }
 
+type ConnectionsWebhookArrivalsResource struct {
+	c *core
+}
+
+func newConnectionsWebhookArrivalsResource(c *core) *ConnectionsWebhookArrivalsResource {
+	return &ConnectionsWebhookArrivalsResource{
+		c: c,
+	}
+}
+
+// List List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals`
+func (r *ConnectionsWebhookArrivalsResource) List(ctx context.Context, id string, query *ConnectionsWebhookArrivalsListQuery, opts ...RequestOption) (*ConnectionsWebhookArrivalsListResult, error) {
+	var out ConnectionsWebhookArrivalsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/webhook-arrivals", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ConnectionsWebhookFailuresResource struct {
 	c *core
 }
@@ -496,6 +515,7 @@ type ConnectionsResource struct {
 	Uploads         *ConnectionsUploadsResource
 	Files           *ConnectionsFilesResource
 	Runs            *ConnectionsRunsResource
+	WebhookArrivals *ConnectionsWebhookArrivalsResource
 	WebhookFailures *ConnectionsWebhookFailuresResource
 }
 
@@ -505,6 +525,7 @@ func newConnectionsResource(c *core) *ConnectionsResource {
 		Uploads:         newConnectionsUploadsResource(c),
 		Files:           newConnectionsFilesResource(c),
 		Runs:            newConnectionsRunsResource(c),
+		WebhookArrivals: newConnectionsWebhookArrivalsResource(c),
 		WebhookFailures: newConnectionsWebhookFailuresResource(c),
 	}
 }

@@ -257,6 +257,10 @@
     "resource": "connections.runs",
     "method": "list"
   },
+  "connections.getConnectionsByIdWebhookArrivals": {
+    "resource": "connections.webhookArrivals",
+    "method": "list"
+  },
   "connections.getConnectionsByIdWebhookFailures": {
     "resource": "connections.webhookFailures",
     "method": "list"

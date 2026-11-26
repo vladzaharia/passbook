@@ -669,6 +669,23 @@ export const SEEDS: Record<string, unknown> = {
     ],
     durationMs: 1650,
   },
+  'connections.getConnectionsByIdWebhookArrivals response': {
+    items: [
+      {
+        id: uuid('webhook-arrival'),
+        receivedAt: T.updated,
+        lastAt: T.updated,
+        outcome: 'rejected',
+        reason: 'signature_mismatch',
+        topic: null,
+        contentClass: 'json',
+        eventRef: null,
+        usedPrevious: false,
+        count: 2,
+      },
+    ],
+    nextCursor: null,
+  },
   'connections.getConnectionsByIdWebhookFailures response': {
     items: [
       {
