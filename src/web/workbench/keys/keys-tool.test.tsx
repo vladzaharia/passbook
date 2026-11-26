@@ -219,8 +219,8 @@ describe('Keys in the Workbench', () => {
         '/api/v1/api-keys/k2': () => detail({ id: 'k2', name: 'Other', orgId: 'sbx' }),
       },
     });
-    expect(await screen.findByRole('option', { name: /Sandbox key/ })).toBeInTheDocument();
-    await user.click(screen.getByRole('option', { name: /Sandbox key/ }));
+    expect(await screen.findByRole('option', { name: /In use/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: /In use/ }));
     expect(await screen.findByRole('heading', { name: 'Sandbox', level: 2 })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Revoke' })).toBeNull();
     await user.click(screen.getByRole('option', { name: /Other/ }));

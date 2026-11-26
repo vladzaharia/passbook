@@ -145,13 +145,13 @@ function ScopedKeys({
       items={items}
       idOf={idOf}
       row={(k) => ({
-        title: k.name,
-        meta: (
+        title: (
           <>
-            <code>{keyPrefix(k)}</code>
-            {host?.own?.(k) ? ' · Sandbox key' : null}
+            {k.name}
+            {host?.own?.(k) ? <span className="wb-keys-own"> In use</span> : null}
           </>
         ),
+        meta: <code>{keyPrefix(k)}</code>,
         trail: <StatusChip tone={TONE[keyState(k, now)]}>{keyState(k, now)}</StatusChip>,
       })}
       tone={(k) => TONE[keyState(k, now)]}
@@ -183,11 +183,13 @@ function ScopedKeys({
     ),
   };
   const pane = selectedId ? (
-    <KeysHostProvider value={inPane}>
-      <Suspense fallback={<SkeletonRows label="Loading API key" />}>
-        <KeyDetailView access={access} keyId={selectedId} />
-      </Suspense>
-    </KeysHostProvider>
+    <div className="wb-keys-pane">
+      <KeysHostProvider value={inPane}>
+        <Suspense fallback={<SkeletonRows label="Loading API key" />}>
+          <KeyDetailView access={access} keyId={selectedId} />
+        </Suspense>
+      </KeysHostProvider>
+    </div>
   ) : (
     <p className="wb-keys-none">Select a key</p>
   );
