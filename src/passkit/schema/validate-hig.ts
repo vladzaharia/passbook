@@ -204,13 +204,13 @@ function checkLocalTime(ctx: ValidationContext): void {
       const report = field.timeStyle === 'PKDateStyleNone' ? ctx.warn : ctx.error;
       report(
         'LOCAL_TIME',
-        'This time is in UTC but shown as local; write it with the local offset or set a time zone.',
+        'This time has no local offset, so holders see the wrong hour. Write it with the local offset or set a time zone.',
         `${path}.value`,
       );
     } else if (located)
       ctx.warn(
         'LOCAL_TIME',
-        'This time is in UTC; use the local offset and ignoresTimeZone so it reads in local time.',
+        'This time has no local offset, so holders may see the wrong hour. Use the local offset and ignoresTimeZone.',
         `${path}.value`,
       );
   }

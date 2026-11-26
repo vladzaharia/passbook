@@ -117,6 +117,16 @@
   border-radius: 9999px;
   background: none;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.bp-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.bp-swatch::-webkit-color-swatch,
+.bp-swatch::-moz-color-swatch {
+  border: 0;
+  border-radius: 9999px;
 }
 @media (pointer: coarse) {
   .bp-swatch {

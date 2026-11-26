@@ -245,7 +245,7 @@ export function Kpis({
         <ul
           aria-label="More counts"
           style={{ '--i': kpis.length } as CSSProperties}
-          className="flex flex-wrap items-baseline gap-x-5 gap-y-1 px-1 text-sm"
+          className="flex flex-wrap items-baseline gap-x-5 gap-y-1 px-1 text-sm [&>li]:whitespace-nowrap"
         >
           <Secondary
             id={`${countScope}:voided`}
@@ -255,13 +255,8 @@ export function Kpis({
           />
           <Secondary id={`${countScope}:devices`} label="Devices" value={t.devices} {...passes()} />
           <li aria-hidden className="h-4 w-px bg-border max-sm:hidden" />
+          <li aria-hidden className="basis-full sm:hidden" />
           <li className="text-xs text-fg-muted">{RANGE_LABEL[range]}</li>
-          <li className="text-fg-muted">
-            Email outcomes: Unknown (needs review){' '}
-            <span className="font-semibold text-fg tabular-nums">
-              {formatCount(t.emailUnknown)}
-            </span>
-          </li>
           <Secondary id={`${countScope}:issued`} label="Issued" value={t.issued} {...passes()} />
           <Secondary id={`${countScope}:updated`} label="Updated" value={t.updated} {...passes()} />
           <Secondary
@@ -271,6 +266,12 @@ export function Kpis({
             {...passes()}
             missing={missing('downloads')}
           />
+          <li className="text-fg-muted">
+            Email outcomes: Unknown (needs review){' '}
+            <span className="font-semibold text-fg tabular-nums">
+              {formatCount(t.emailUnknown)}
+            </span>
+          </li>
         </ul>
       </div>
     </div>

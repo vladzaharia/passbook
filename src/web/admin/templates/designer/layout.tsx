@@ -14,6 +14,7 @@ export function DesignerLayout({
   preview,
   issues,
   readOnly = false,
+  previewOnPhone = true,
 }: {
   templateId: string;
   orgId?: string | undefined;
@@ -21,20 +22,22 @@ export function DesignerLayout({
   preview: ReactNode;
   issues: ReactNode;
   readOnly?: boolean;
+  /** A preview that cannot be read at phone width leaves only the notice and the way back. */
+  previewOnPhone?: boolean;
 }) {
   const phone = useMediaQuery(PHONE);
   if (phone) {
     return (
       <div className="grid gap-4">
-        <Callout tone="info" title="Preview only">
+        <Callout tone="info" title={previewOnPhone ? 'Preview only' : 'Use a larger screen'}>
           The designer needs a tablet or desktop screen.
         </Callout>
-        {preview}
         <Button asChild variant="outline" className="justify-self-center">
           <Link to="/admin/templates/$templateId" params={{ templateId }} search={{ orgId }}>
             Back to template
           </Link>
         </Button>
+        {previewOnPhone ? preview : null}
       </div>
     );
   }

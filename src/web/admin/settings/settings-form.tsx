@@ -31,9 +31,11 @@ export interface SettingsFormProps {
   guard?: (values: Record<string, unknown>) => SaveGuard | null;
   /** Under the fields: a preview wants the card's width, and one toggle beside it would float. */
   aside?: (draft: Draft) => ReactNode;
+  /** Ungrouped fields sit in two columns on wide screens (short number fields with long help). */
+  columns?: boolean;
 }
 
-export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps) {
+export function SettingsForm({ scope, fields, guard, aside, columns }: SettingsFormProps) {
   const query = useSettings(scope);
   const save = useSaveSettings(scope);
   const platform = scope === 'platform';
@@ -203,6 +205,7 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
         advancedDirty={advancedDirty}
         edit={edit}
         reset={reset}
+        {...(columns ? { columns } : {})}
       />
       {aside?.(draft)}
       <SaveBar

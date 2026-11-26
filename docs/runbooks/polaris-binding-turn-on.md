@@ -9,7 +9,7 @@ Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
 One-time setup of `workers/polaris-binding`, the separate Worker that holds the Polaris ID API key and is the only place PassBook writes to Polaris ID. It has no route and no `workers.dev` host. Its D1 (`polaris-binding`) holds minted signup tokens, known accounts, role grants, health cache, freezes and the append-only call ledger. It starts in dry run (`WRITE_MODE` `dry_run`): reads happen, writes are computed and ledgered, nothing is sent. Policy and budgets are in [docs/operations.md](../operations.md#polaris-id-binding).
 
-The main Worker's `IDP` service binding and the SCIM receiver come in later changes; this note does not cover them. Cloudflare fails a deploy whose binding names a missing Worker, so this Worker goes live first.
+The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and comes in a later change. For the SCIM receiver, see [[SCIM Receiver Setup]] after this note. Cloudflare fails a deploy whose binding names a missing Worker, so this Worker goes live first.
 
 On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of the user that made it. Treat the key as identity provider access, and never give CI a Cloudflare token that can deploy `polaris-binding`.
 

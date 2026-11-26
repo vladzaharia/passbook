@@ -57,7 +57,7 @@ export function BlueprintsPage() {
         <EmptyState art="template" title="No blueprints" />
       ) : (
         <>
-          <div data-art-host="" className="wl-buddy-room relative mb-6 sm:w-72">
+          <div data-art-host="" className="wl-buddy-room relative mb-6 pt-2 sm:w-72">
             <Buddy
               size="sm"
               at="end"

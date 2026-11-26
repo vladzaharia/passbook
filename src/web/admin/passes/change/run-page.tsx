@@ -65,33 +65,40 @@ export function ChangeRunPage({ runId }: { runId: string }) {
   const [stopping, setStopping] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const list = orgId ? orgPath(orgId, '/passes') : '/admin/passes';
-  const header = (
+  const headerOf = (run: typeof b) => (
     <PageHeader
       title={C.run.title}
       breadcrumbs={[{ label: 'Passes', to: list }, { label: 'Change' }]}
       meta={
-        b ? (
+        run ? (
           <Badge
-            tone={b.state === 'sent' ? 'success' : b.state === 'failed' ? 'danger' : 'neutral'}
+            tone={run.state === 'sent' ? 'success' : run.state === 'failed' ? 'danger' : 'neutral'}
           >
-            {soon ? C.run.starting : (C.run.states[b.state] ?? b.state)}
+            {soon ? C.run.starting : (C.run.states[run.state] ?? run.state)}
           </Badge>
         ) : undefined
       }
     />
   );
+  const header = headerOf(mine ? b : undefined);
   if (scope.isLoading) return <SkeletonDetail label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   if (!orgId) return <OrgChooser />;
   if (!canManage) return <ForbiddenPage />;
   if (found.isError)
-    return detailError(found, { entity: 'broadcast', to: list, back: 'Passes', header });
+    return detailError(found, {
+      entity: 'broadcast',
+      noun: 'Change run',
+      to: list,
+      back: 'passes',
+      header,
+    });
   if (b && !mine)
     return (
       <>
         {header}
-        <DetailNotFound entity="broadcast" to={list} back="Passes" />
+        <DetailNotFound entity="broadcast" noun="Change run" to={list} back="passes" />
       </>
     );
   if (!b) return <SkeletonDetail label="Loading the run" />;

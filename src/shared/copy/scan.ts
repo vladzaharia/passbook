@@ -204,7 +204,6 @@ export const SCAN_COPY = {
     tapOut: 'Tap out',
     checkOut: 'Check out',
     markAsOut: 'Mark as out',
-    markOutShort: 'Out',
     letIn: 'Let in',
     signInToAct: 'Sign in to act',
     letInAnyway: 'Let in anyway',

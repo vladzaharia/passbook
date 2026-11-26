@@ -7,7 +7,7 @@ import { formatColor, formatCount, formatDay, formatMaybeDate } from '../../../l
 import { Badge } from '../../../ui/index.ts';
 
 const GROUP = {
-  colors: 'Colours',
+  colors: 'Colors',
   front: 'Front',
   back: 'Back',
   images: 'Images',

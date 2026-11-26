@@ -77,12 +77,7 @@ function MessageDetailLoader({ broadcastId, outcome, onOutcome }: MessageDetailP
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   if (resourceScope === 'not-found' || resourceScope === 'choose-org')
-    return (
-      <>
-        <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />
-        <DetailNotFound entity="broadcast" to="/admin/messages" />
-      </>
-    );
+    return <DetailNotFound entity="broadcast" to="/admin/messages" heading />;
   if (
     canFetch &&
     query.isError &&
@@ -90,10 +85,15 @@ function MessageDetailLoader({ broadcastId, outcome, onOutcome }: MessageDetailP
       !scope.hasExplicitOrg ||
       (isApiError(query.error) && (query.error.isForbidden || query.error.isNotFound)))
   )
+    // Not found is its own heading: a "Message" title above "Message not found" restates it.
     return detailError(query, {
       entity: 'broadcast',
       to: '/admin/messages',
-      header: <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />,
+      ...(isApiError(query.error) && query.error.isNotFound
+        ? {}
+        : {
+            header: <PageHeader title="Message" breadcrumbs={[...CRUMBS, { label: 'Message' }]} />,
+          }),
     });
   const orgId = scope.orgId;
   if (resourceScope !== 'ready' || !orgId || !b || b.orgId !== orgId)

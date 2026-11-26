@@ -34,7 +34,8 @@
 
   --scan-dock-h: 174px;
   --scan-card-top: 84px;
-  --scan-card-bottom: calc(var(--scan-dock-h) + 140px);
+  /* The buddy stands on the dock edge (106 px tall, 141 wide from 640 px): the card ends above its head. */
+  --scan-card-bottom: calc(var(--scan-dock-h) + 116px);
   --scan-card-w: 342px;
 }
 @media (prefers-color-scheme: light) {
@@ -66,7 +67,7 @@
 @media (min-width: 640px) {
   :root {
     --scan-card-top: 117px;
-    --scan-card-bottom: calc(var(--scan-dock-h) + 140px);
+    --scan-card-bottom: calc(var(--scan-dock-h) + 116px);
     --scan-card-w: 560px;
   }
 }
@@ -74,14 +75,15 @@
   :root {
     --scan-dock-h: 128px;
     --scan-card-top: 108px;
-    --scan-card-bottom: calc(var(--scan-dock-h) + 188px);
+    /* The full-size buddy is 192 px tall. */
+    --scan-card-bottom: calc(var(--scan-dock-h) + 202px);
     --scan-card-w: 980px;
   }
 }
 /* A landscape tablet is short: the small buddy, as on a phone. */
 @media (min-width: 1024px) and (max-height: 900px) {
   :root {
-    --scan-card-bottom: calc(var(--scan-dock-h) + 184px);
+    --scan-card-bottom: calc(var(--scan-dock-h) + 116px);
   }
 }
 @media (max-height: 650px) {

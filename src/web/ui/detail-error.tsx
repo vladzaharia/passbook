@@ -35,7 +35,7 @@ export function detailError(
       ) : (
         <ErrorState
           error={error}
-          subject={subjectOf(notFound.entity)}
+          subject={notFound.noun?.toLowerCase() ?? subjectOf(notFound.entity)}
           onRetry={() => query.refetch()}
         />
       )}

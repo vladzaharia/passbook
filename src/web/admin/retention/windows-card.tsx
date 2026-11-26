@@ -40,7 +40,7 @@ export function WindowsCard({ orgId, canManage }: { orgId: string; canManage: bo
           {canManage ? RETENTION_COPY.windowsNote : RETENTION_COPY.readOnlyWindows}
         </p>
         {canManage ? (
-          <SettingsForm scope={`org:${orgId}`} fields={FIELDS} />
+          <SettingsForm scope={`org:${orgId}`} fields={FIELDS} columns />
         ) : (
           <EffectiveWindows orgId={orgId} />
         )}
