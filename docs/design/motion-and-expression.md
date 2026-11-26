@@ -98,7 +98,7 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 ## Buddy cameos
 
 The mascot turns up at real moments, one per view, decorative (`aria-hidden`, never focusable).
-Each scene plays once; only the riffle loops, and only while an import runs.
+Each scene plays once; only the riffle and the `busy` scene loop, and only while work is pending: an import, an operation.
 
 ### The buddy
 
@@ -241,6 +241,7 @@ Other cameos, unchanged:
 | --- | --- | --- | --- |
 | Empty state | The buddy's eyes drop to the action under the pointer or focus | 200 ms | `art-wallet.css` |
 | Template upload | Seated on the drop zone's 2 px border with the template art as its prop (one active art). Passes reach up and the mouth opens for a hovering file (curious); a chosen file gets a squash and stays neutral (nothing is imported yet); an import past 600 ms riffles the passes left to right (900 ms cycle) until it ends; a refusal sighs. Happy only on the result card, where it cheers | 320 ms; 640 ms squash | `admin/templates/upload-*` |
+| Operation running | Seated on the progress panel's top edge (`busy`): the passes riffle left to right and the eyes follow (900 ms cycle) until the operation ends; with a counted step it rides the run bar instead. Done: one cheer. Failed: sorry. Stopped or waiting: neutral | 900 ms loop; 480 ms pop | `ui/operation/operation-progress.tsx` |
 | Signed out | The sign-in scene's top card waves from the pocket once, within two minutes of a sign-out in this tab | 860 ms at 700 ms | `portal/login-*` |
 | Wordmark | Hello, once per browser session (SPA): the passes pop out of the pocket left to right (420 ms bounce, 60 ms apart, from 120 ms), then a wink at 640 ms. Hover (fine pointers, SPA and SSR): the passes perk up 1 unit and the smile widens | 840 ms; 160 ms | `ui/layout/brand-mark.css` |
 
