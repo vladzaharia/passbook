@@ -220,3 +220,5 @@ Files: `/Users/vlad/Repos/wallet/src/worker/modules/wallet-providers/` (relative
 7. **Button assets and script**: Image Resources page toolkit v2025_2.0 (Logo Toolkit) for brand rules; copy the Add to Wallet script (with `rdclickurl`/`rdimpressionurl`) from the card's detail page.
 8. **Ask Samsung Support** (`https://developer.samsung.com/dashboard/support/wallet`) to confirm: multi-tenant branding on one card; allowed ticket/coupon issuance for a platform; inbound AUTH token lifetime and path format; Samsung server IPs if needed; supported countries; rotation of the Samsung certificate; extension attribute `extendedFields`.
 9. Secrets to provide to the platform (never in git): partner private key PEM, partner signed certificate PEM, Samsung certificate PEM, `partnerId`, `certificateId`, `cardId`. Cert expiry dates for monitoring.
+
+**Preview note.** On a loyalty card `bgImage` fills the whole card and is cut by its rounded corners; the designer's Samsung preview does the same (`.wp-s-bg`, `object-fit: cover`). Art running to the card edge there is the card, not a clipping bug.

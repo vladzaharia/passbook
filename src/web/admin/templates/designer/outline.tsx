@@ -1,11 +1,8 @@
-import { ChevronRight } from 'lucide-react';
-import { type ReactNode, useId } from 'react';
-import { useChangeCount } from '../../../lib/motion.ts';
-import { Badge } from '../../../ui/index.ts';
 import { AccessSection } from './access/access-section.tsx';
 import { readAccess } from './access/model.ts';
 import { useDesigner } from './context.tsx';
 import { readCounters } from './counters.ts';
+import { Disclosure } from './disclosure.tsx';
 import { readInputs } from './inputs.ts';
 import {
   type DraftAsset,
@@ -14,8 +11,6 @@ import {
   groupsFor,
   legacyStyleOf,
   listCount,
-  type Section,
-  sectionLabel,
   styleOf,
 } from './model.ts';
 import { ActionsSection } from './scan/actions/actions-section.tsx';
@@ -31,59 +26,6 @@ import { StampsSection } from './section-stamps.tsx';
 import { StyleSection } from './section-style.tsx';
 import { TemplateSection } from './section-template.tsx';
 import { STRIP_STYLES } from './stamps.ts';
-
-/** The count pops when it changes, not when the page opens. */
-function Count({ n }: { n: number }) {
-  const changes = useChangeCount(n);
-  return (
-    <Badge key={changes} className={changes > 0 ? 'dz-count' : undefined}>
-      {n}
-    </Badge>
-  );
-}
-
-function Disclosure({
-  section,
-  count,
-  index,
-  children,
-}: {
-  section: Section;
-  count?: number | undefined;
-  index: number;
-  children: ReactNode;
-}) {
-  const { state, select } = useDesigner();
-  const open = state.select.section === section;
-  const id = useId();
-  return (
-    <li
-      className="dz-section"
-      data-open={open || undefined}
-      style={{ '--i': index } as React.CSSProperties}
-    >
-      <h2>
-        <button
-          type="button"
-          className="dz-head"
-          data-target={section}
-          aria-expanded={open}
-          aria-controls={id}
-          onClick={() => select(open ? { section: 'none' } : { section })}
-        >
-          <ChevronRight aria-hidden className="dz-chevron size-4 shrink-0" />
-          <span className="min-w-0 flex-1 truncate text-left">{sectionLabel(section)}</span>
-          {count !== undefined ? <Count n={count} /> : null}
-        </button>
-      </h2>
-      {open ? (
-        <section id={id} aria-label={sectionLabel(section)} className="dz-panel">
-          {children}
-        </section>
-      ) : null}
-    </li>
-  );
-}
 
 /** Image slots with a file of their own, whatever the scales. */
 const filledSlots = (assets: readonly DraftAsset[]): number =>

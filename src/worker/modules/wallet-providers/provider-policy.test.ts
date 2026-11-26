@@ -26,6 +26,7 @@ import {
   WalletProviderDisabledError,
   walletProviderEnabledSql,
   walletProviderReleaseReason,
+  walletReleaseByMode,
 } from './provider-policy.ts';
 import { providerRetirementPending } from './repo-sync-retention.ts';
 import { samsungCallbackRoutes } from './routes-callbacks.ts';
@@ -79,6 +80,36 @@ describe('wallet provider policy', () => {
     expect(walletProviderEnabledSql('i.provider')).toBe("i.provider IN ('google', 'samsung')");
     restore();
     expect(walletProviderReleaseReason('samsung')).toBe('not_released');
+  });
+});
+
+describe('release line', () => {
+  it('names the wallet in the refusal, in plain words', () => {
+    const message = (provider: 'google' | 'samsung') => {
+      try {
+        assertWalletProviderEnabled(provider, 'live');
+      } catch (cause) {
+        return (cause as Error).message;
+      }
+      return '';
+    };
+    expect(message('google')).toBe("Google Wallet isn't released yet.");
+    expect(message('samsung')).toBe("Samsung Wallet isn't released yet.");
+  });
+
+  it('reports every provider and mode from the one policy', () => {
+    expect(walletReleaseByMode().google.live).toEqual({
+      state: 'disabled',
+      reason: 'not_released',
+    });
+    const restore = setWalletProvidersEnabledForTest(true, 'test');
+    try {
+      const release = walletReleaseByMode();
+      expect(release.samsung.test).toEqual({ state: 'enabled' });
+      expect(release.samsung.live.state).toBe('disabled');
+    } finally {
+      restore();
+    }
   });
 });
 

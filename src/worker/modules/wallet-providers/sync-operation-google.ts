@@ -4,6 +4,7 @@ import type { GoogleObjectCommon } from '../../../passkit/wallets/google/types.t
 import { currentPassJson, getPass } from '../passes/repo-read-pass.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { googleCallbackClassProjection } from './google-callback-binding.ts';
+import { refreshGoogleClassReview } from './google-class-review.ts';
 import { compileGooglePass, projectionGoogleType } from './google-compile.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import { markWalletClaimUncertain } from './instance.ts';
@@ -199,7 +200,15 @@ export async function runGoogleWalletProviderOperation(
         });
         // Object first, message second: a message failure never fails the write it describes.
         await sendGoogleMessage(execution, binding.scope, messageIdentity, prepared);
-        return complete(ctx, claim, op, { kind: 'success' });
+        const settled = await complete(ctx, claim, op, { kind: 'success' });
+        // Google's review of the class is read after the write, off this run's budget; a failure is logged.
+        ctx.waitUntil(
+          refreshGoogleClassReview(ctx, binding.scope, {
+            releaseId: op.identityProjectionReleaseId,
+            ...partition,
+          }),
+        );
+        return settled;
       }
       const rendered = renderGoogleProjection(approved.projection, passJson);
       const original = renderGoogleProjection(binding.original.projection, passJson);

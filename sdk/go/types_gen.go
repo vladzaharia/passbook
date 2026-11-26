@@ -8345,6 +8345,7 @@ type PassesRetrieveProviderStatusResponseProviders1 struct {
 	PriorGenerationRetirementPending bool                                                    `json:"priorGenerationRetirementPending"`
 	Installation                     string                                                  `json:"installation"`
 	Reported                         *PassesRetrieveProviderStatusResponseProviders1Reported `json:"reported,omitempty"`
+	ClassReview                      *string                                                 `json:"classReview,omitempty"`
 	Issuance                         any                                                     `json:"issuance"`
 }
 
@@ -8369,6 +8370,7 @@ type PassesRetrieveProviderStatusResponseProviders2 struct {
 	PriorGenerationRetirementPending bool                                                    `json:"priorGenerationRetirementPending"`
 	Installation                     string                                                  `json:"installation"`
 	Reported                         *PassesRetrieveProviderStatusResponseProviders2Reported `json:"reported,omitempty"`
+	ClassReview                      *string                                                 `json:"classReview,omitempty"`
 	Issuance                         any                                                     `json:"issuance"`
 }
 
@@ -9611,6 +9613,7 @@ type PlatformWalletCredentialsChecksRetrieveResponse struct {
 type PlatformWalletCredentialsListResponse struct {
 	Items      []PlatformWalletCredentialsListResponseItemsItem `json:"items"`
 	NextCursor *string                                          `json:"nextCursor"`
+	Release    PlatformWalletCredentialsListResponseRelease     `json:"release"`
 }
 
 type PlatformWalletCredentialsListResponseItemsItem struct {
@@ -9640,6 +9643,57 @@ type PlatformWalletCredentialsListResponseItemsItemLastCheck2 struct {
 	Ok   bool   `json:"ok"`
 	Code string `json:"code"`
 	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsListResponseRelease struct {
+	Google  PlatformWalletCredentialsListResponseReleaseGoogle  `json:"google"`
+	Samsung PlatformWalletCredentialsListResponseReleaseSamsung `json:"samsung"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogle struct {
+	Live any `json:"live"`
+	Test any `json:"test"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleLive1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleLive2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleTest1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseGoogleTest2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsung struct {
+	Live any `json:"live"`
+	Test any `json:"test"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungLive1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungLive2 struct {
+	State string `json:"state"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungTest1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PlatformWalletCredentialsListResponseReleaseSamsungTest2 struct {
+	State string `json:"state"`
 }
 
 type PlatformWalletCredentialsMigrateResponse struct {
@@ -13189,6 +13243,50 @@ type TemplatesCandidatesListQuery struct {
 type TemplatesCandidatesListResponse struct {
 	Items      []TemplatesCandidatesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
+	Current    *TemplatesCandidatesListResponseCurrent    `json:"current,omitempty"`
+}
+
+type TemplatesCandidatesListResponseCurrent struct {
+	Version         string                                       `json:"version"`
+	SourceReleaseID string                                       `json:"sourceReleaseId"`
+	Report          TemplatesCandidatesListResponseCurrentReport `json:"report"`
+}
+
+type TemplatesCandidatesListResponseCurrentReport struct {
+	Schema           int64                                                   `json:"schema"`
+	Target           string                                                  `json:"target"`
+	Type             string                                                  `json:"type"`
+	CompilerRevision int64                                                   `json:"compilerRevision"`
+	Status           any                                                     `json:"status"`
+	Items            []TemplatesCandidatesListResponseCurrentReportItemsItem `json:"items"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesCandidatesListResponseCurrentReportStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
 }
 
 type TemplatesCandidatesListResponseItemsItem struct {
@@ -13781,6 +13879,7 @@ type TemplatesReleasesCreateResponse struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesCreateResult = TemplatesReleasesCreateResponse
@@ -13808,6 +13907,7 @@ type TemplatesReleasesListItem struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesListQuery struct {
@@ -13846,6 +13946,7 @@ type TemplatesReleasesListResponseItemsItem struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesReleasesReleaseBody = ReleaseTemplate
@@ -13952,6 +14053,7 @@ type TemplatesReleasesRollbackResponse struct {
 	AccountID               *string `json:"accountId,omitempty"`
 	AccountRevision         *int64  `json:"accountRevision,omitempty"`
 	ProviderIdentityHash    *string `json:"providerIdentityHash,omitempty"`
+	GoogleReview            *string `json:"googleReview,omitempty"`
 }
 
 type TemplatesRetrieveInputSchemaResult = TemplateInputSchema
@@ -14146,6 +14248,87 @@ type TemplatesVersionsRetrieveResponseReportIssuesItemFix struct {
 }
 
 type TemplatesVersionsRetrieveResult = TemplatesVersionsRetrieveResponse
+
+type TemplatesVersionsRetrieveWalletReportsResponse struct {
+	Google  TemplatesVersionsRetrieveWalletReportsResponseGoogle  `json:"google"`
+	Samsung TemplatesVersionsRetrieveWalletReportsResponseSamsung `json:"samsung"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogle struct {
+	Schema           int64                                                           `json:"schema"`
+	Target           string                                                          `json:"target"`
+	Type             string                                                          `json:"type"`
+	CompilerRevision int64                                                           `json:"compilerRevision"`
+	Status           any                                                             `json:"status"`
+	Items            []TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem `json:"items"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseGoogleStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsung struct {
+	Schema           int64                                                            `json:"schema"`
+	Target           string                                                           `json:"target"`
+	Type             string                                                           `json:"type"`
+	CompilerRevision int64                                                            `json:"compilerRevision"`
+	Status           any                                                              `json:"status"`
+	Items            []TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem `json:"items"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungItemsItem struct {
+	Capability string `json:"capability"`
+	Path       string `json:"path"`
+	Support    string `json:"support"`
+	Severity   string `json:"severity"`
+	Group      string `json:"group"`
+	Chosen     bool   `json:"chosen"`
+	Message    string `json:"message"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus1 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus2 struct {
+	Kind string `json:"kind"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus3 struct {
+	Kind  string `json:"kind"`
+	Count int64  `json:"count"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResponseSamsungStatus4 struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+type TemplatesVersionsRetrieveWalletReportsResult = TemplatesVersionsRetrieveWalletReportsResponse
 
 type TerminalActBody = TerminalActParams
 

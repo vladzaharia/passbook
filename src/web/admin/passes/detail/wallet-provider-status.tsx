@@ -85,6 +85,9 @@ function headline(status: WalletProviderInstanceStatus): {
     operation?.state === 'retry'
   )
     return { label: 'Updating', tone: 'neutral' };
+  if (status.classReview === 'rejected') return { label: 'Rejected by Google', tone: 'danger' };
+  if (status.classReview === 'waiting')
+    return { label: 'Waiting for Google review', tone: 'neutral' };
   if (operation?.state === 'succeeded') return { label: 'Up to date', tone: 'success' };
   return { label: status.lifecycle === 'absent' ? 'Not added' : 'Ready', tone: 'neutral' };
 }

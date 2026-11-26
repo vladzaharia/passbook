@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react';
 import { PREVIEW_COPY, walletName } from '@/shared/copy/previews.ts';
+import { WALLETS_COPY } from '@/shared/copy/wallets.ts';
 import { Callout } from '../ui/callout.tsx';
 import { EmptyState } from '../ui/empty-state.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
 import { GoogleCard } from '../wallet-previews/google/google-card.tsx';
 import { SamsungCard } from '../wallet-previews/samsung/samsung-card.tsx';
+import { WalletReport } from '../wallet-report/wallet-report.tsx';
 import { FacePair, type PreviewFace } from './face-pair.tsx';
-import { FidelityNotes } from './fidelity-notes.tsx';
 import type { WalletPreviews } from './use-wallet-previews.ts';
 
 /**
@@ -19,6 +21,8 @@ export function WalletChannel({
   notes = true,
   face,
   onFace,
+  fit = true,
+  action,
 }: {
   target: 'google' | 'samsung';
   previews: WalletPreviews;
@@ -28,6 +32,10 @@ export function WalletChannel({
   notes?: boolean | undefined;
   face?: PreviewFace | undefined;
   onFace?: ((face: PreviewFace) => void) | undefined;
+  /** Size the frame to the face shown (the Wallets tab). */
+  fit?: boolean | undefined;
+  /** A link out of the report: Edit in Wallets, where the page has that tab. */
+  action?: ReactNode;
 }) {
   const wallet = walletName(target);
   if (previews.state === 'loading')
@@ -65,19 +73,24 @@ export function WalletChannel({
         face={side}
       />
     ) : null;
+  // The report beside the card already says why; alone, the card's place says it.
   const card = compiled.blocked ? (
-    <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
-      {compiled.blocked.message}
-    </Callout>
+    notes ? (
+      <div className="wm-blocked-card wl-hatch">{WALLETS_COPY.report.noPreview}</div>
+    ) : (
+      <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
+        {compiled.blocked.message}
+      </Callout>
+    )
   ) : (
-    <FacePair front={cardOf('front')} back={cardOf('back')} face={face} onFace={onFace} />
+    <FacePair front={cardOf('front')} back={cardOf('back')} face={face} onFace={onFace} fit={fit} />
   );
   return (
     <div className="wp-wrap w-full" data-testid={`${target}-channel`}>
       {notes ? (
         <div className="wp-split">
           <div className="min-w-0">{card}</div>
-          <FidelityNotes report={report} />
+          <WalletReport report={report} host="pane" footerAction={action} />
         </div>
       ) : (
         card

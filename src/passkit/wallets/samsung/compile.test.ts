@@ -53,6 +53,16 @@ describe('fidelity report', () => {
   });
 });
 
+describe('store card title', () => {
+  it('is the organization, never the balance the card face already shows', async () => {
+    const v = await view('starter-store-card');
+    const a = attributes(compile(v));
+    expect(a.balance).toBe('25 USD');
+    expect(a.title).toBe(v.org);
+    expect(a.title).not.toBe(a.balance);
+  });
+});
+
 describe('type selection', () => {
   it('maps eventTicket, coupon and storeCard to their own types', async () => {
     expect(compile(await view('starter-event-ticket')).type).toBe('ticket');
@@ -225,6 +235,18 @@ describe('state, time and the envelope', () => {
       attributes: { title: 'Beispiel' },
     });
     expect(data.localization?.[0]?.attributes.noticeDesc).toContain('Eintritt: General');
+  });
+});
+
+describe('change text', () => {
+  it("writes a notifying field's change message into the notice with its value filled in", async () => {
+    const v = await view('starter-store-card');
+    const field = v.fields[0];
+    if (!field) throw new Error('fixture has no field');
+    field.changeMessage = 'Now %@ (100%%)';
+    const r = compile(v);
+    expect(attributes(r).noticeDesc).toContain(`Now ${field.text} (100%)`);
+    expect(lines(r)).toContain(`messaging.notify | difference | ${field.path}`);
   });
 });
 

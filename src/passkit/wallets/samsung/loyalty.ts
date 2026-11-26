@@ -5,6 +5,7 @@ import { finishCard, firstText } from './card.ts';
 import { setAppLink, setBarcode, setContacts, setLocations } from './code.ts';
 import { type Run, setDisplay } from './context.ts';
 import { eventWindow, setWindow } from './dates.ts';
+import { roleText } from './format.ts';
 import { pickImage, setColors, setImage } from './media.ts';
 
 export const LOYALTY_NATIVE: ReadonlySet<WalletRole> = new Set<WalletRole>([
@@ -20,10 +21,20 @@ export const LOYALTY_NATIVE: ReadonlySet<WalletRole> = new Set<WalletRole>([
   'support',
 ]);
 
+/** The title role, unless the card already shows it as the balance or points: then the organization, as Google's. */
+function cardTitle(run: Run): string {
+  const { roles } = run.view;
+  const title = roles.title ? roleText(roles.title).trim() : '';
+  const shown = [roles.balance, roles.points].flatMap((r) => (r ? [roleText(r).trim()] : []));
+  const fields = new Set([...(roles.balance?.fields ?? []), ...(roles.points?.fields ?? [])]);
+  const repeats = shown.includes(title) || (roles.title?.fields ?? []).some((f) => fields.has(f));
+  return repeats ? run.view.org : firstText(run, 'title');
+}
+
 export function buildLoyalty(run: Run): void {
   const { view } = run;
   const used = new Set<string>();
-  setDisplay(run, 'title', firstText(run, 'title'));
+  setDisplay(run, 'title', cardTitle(run));
   setDisplay(run, 'providerName', view.org);
   const appLink = setAppLink(run);
 
