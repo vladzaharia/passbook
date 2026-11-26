@@ -100,6 +100,36 @@ describe('kit lint', () => {
     }
   });
 
+  // One status vocabulary on the Workbench: bench/status-chip.tsx (and bench/list.tsx's tick). A
+  // tool draws no pill, no `*-code` or `*-status` class and no data-tone of its own.
+  it('shows status on the Workbench tools only through the bench StatusChip', () => {
+    // Moving onto the bench in WB3 (logs), WB4 (webhooks), WB5 (keys) and WB7 (home): each removes its own.
+    const pending = new Set([
+      'developers/keys/keys-page.tsx',
+      'developers/logs/rail.ts',
+      'developers/logs/row.ts',
+      'developers/webhooks/deliveries.tsx',
+      'developers/webhooks/endpoints.tsx',
+      'developers/webhooks/url-events.tsx',
+      'developers/workbench/calls.tsx',
+      'developers/workbench/cards.tsx',
+      'developers/workbench/stats.tsx',
+      'developers/workbench/workbench.tsx',
+    ]);
+    const tools = /^developers\/(console|webhooks|logs|keys|workbench)\//;
+    const classes = /\bclass(?:Name)?[=:]\s*\{?\s*[`'"][^`'"]*\b(?:pill|[a-z]+-(?:code|status))\b/;
+    for (const { path, text } of files) {
+      if (!tools.test(path) || pending.has(path)) continue;
+      expect(text, path).not.toMatch(classes);
+      expect(text, path).not.toMatch(/\bdata-tone\b/);
+    }
+    // The list only shrinks: a file that no longer breaks the rule leaves it.
+    for (const path of pending) {
+      const text = files.find((f) => f.path === path)?.text ?? '';
+      expect(classes.test(text) || /\bdata-tone\b/.test(text), path).toBe(true);
+    }
+  });
+
   // pass-card only spots addresses in pass text to break them; it validates nothing.
   it('checks emails with strictEmail (shared/email.ts), not a regex of its own', () => {
     for (const { path, text } of files) {
