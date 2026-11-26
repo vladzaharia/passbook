@@ -1,12 +1,14 @@
+import { IDP_COPY } from './idp.ts';
+
 /** Platform words for Polaris ID: sync status, differences, the calls ledger and groups. */
 
 /** What a difference between Polaris ID and PassBook means, by kind. */
 export const DRIFT_KIND: Record<string, { label: string; hint: string }> = {
   missing: { label: 'Missing', hint: 'PassBook wants it; Polaris ID does not have it.' },
   unexpected: { label: 'Extra', hint: 'Polaris ID has it; no reason in PassBook wants it.' },
-  external_added: { label: 'Added in Polaris ID', hint: 'Kept. PassBook never removes it.' },
+  external_added: { label: IDP_COPY.account.external, hint: 'Kept. PassBook never removes it.' },
   owner_removed: { label: 'Removed in Polaris ID', hint: 'The role is paused until restored.' },
-  disabled_in_idp: { label: 'Disabled in Polaris ID', hint: 'The account is off there.' },
+  disabled_in_idp: { label: IDP_COPY.account.disabled, hint: 'The account is off there.' },
   admin_changed: { label: 'Admin changed', hint: 'PassBook never touches admins.' },
   unknown_member: { label: 'Unknown member', hint: 'No PassBook user has this account.' },
   apply_failed: { label: 'Change failed', hint: 'Polaris ID refused the last change.' },
@@ -63,9 +65,6 @@ export const GROUP_FLAG: Record<string, string> = {
 export const GROUP_COPY = {
   keyFixed: "Group name can't change after it's created.",
   otherApps: 'Other apps that use this group lose it.',
-  claims: 'Claims reach every app that signs in with Polaris ID.',
-  noGroups: 'No custom groups.',
-  noClaims: 'No claims.',
   noRules: 'No org rules.',
   noMembers: 'No manual members.',
   hasMembers: 'Has members.',
@@ -73,7 +72,6 @@ export const GROUP_COPY = {
   usedByOthers: 'Used by other apps in Polaris ID.',
   roleGroup: "A role group can't be deleted.",
   adoptedGroup: "An adopted group can't be deleted.",
-  dryRun: 'Dry run: nothing was sent to Polaris ID.',
 } as const;
 
 /** The Polaris ID name a custom group gets in every app's `groups` claim. */

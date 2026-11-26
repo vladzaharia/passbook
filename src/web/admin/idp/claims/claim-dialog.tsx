@@ -9,12 +9,20 @@ import {
 import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { FormDialog, FormField, Input, Select, Textarea, useFormErrors } from '@/web/ui/index.ts';
 
-const TYPES = [
-  { value: 'text', label: 'Text' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'json', label: 'JSON' },
-] as const;
+export const CLAIM_TYPE_LABEL: Record<ClaimType, string> = {
+  text: 'Text',
+  number: 'Number',
+  boolean: 'Yes or no',
+  json: 'JSON',
+};
+const TYPES = (Object.keys(CLAIM_TYPE_LABEL) as ClaimType[]).map((value) => ({
+  value,
+  label: CLAIM_TYPE_LABEL[value],
+}));
+
+/** Group claims live under the binding's namespace; a user's may also be a listed key. */
+const NAMESPACED = /^passbook_[a-z0-9_]{1,48}$/;
+export const CLAIM_NAMESPACE = 'passbook_';
 
 /** The typed value from what was entered; text stays text even when it looks like a number. */
 export function parseValue(type: ClaimType, raw: string): ClaimValue | string {
@@ -34,13 +42,22 @@ export function parseValue(type: ClaimType, raw: string): ClaimValue | string {
   }
 }
 
-/** Add or change one claim. Claims reach every app that signs in with Polaris ID, so the key and type are checked here too. */
+/** Text form of a stored value, for editing. */
+export const rawOf = (current: { type: ClaimType; value: unknown } | undefined): string =>
+  current === undefined
+    ? ''
+    : typeof current.value === 'string'
+      ? current.value
+      : JSON.stringify(current.value, null, current.type === 'json' ? 2 : 0);
+
+/** Add or change one claim on a user or a group. Claims reach every app that signs in with Polaris ID, so the key and type are checked here too. */
 export function ClaimDialog({
   open,
   onOpenChange,
   existing,
   current,
   taken,
+  namespaced = false,
   onSave,
 }: {
   open: boolean;
@@ -48,27 +65,26 @@ export function ClaimDialog({
   existing: string | null;
   current: { type: ClaimType; value: unknown } | undefined;
   taken: readonly string[];
+  /** Keys must start with `passbook_` (groups). */
+  namespaced?: boolean;
   onSave: (key: string, value: ClaimValue) => Promise<unknown>;
 }) {
   // The parent remounts the dialog per target (`key`), so the draft starts from the claim being edited.
-  const [key, setKey] = useState(existing ?? '');
+  const [key, setKey] = useState(existing ?? (namespaced ? CLAIM_NAMESPACE : ''));
   const [type, setType] = useState<ClaimType>(current?.type ?? 'text');
-  const [raw, setRaw] = useState(() =>
-    current === undefined
-      ? ''
-      : typeof current.value === 'string'
-        ? current.value
-        : JSON.stringify(current.value, null, current.type === 'json' ? 2 : 0),
-  );
+  const [raw, setRaw] = useState(() => rawOf(current));
 
   const parsed = parseValue(type, type === 'boolean' && raw === '' ? 'true' : raw);
-  const keyError = !ClaimKeySchema.safeParse(key).success
-    ? 'Use letters, digits, _ . : -.'
-    : !existing && taken.includes(key)
-      ? 'This claim already exists.'
+  const keyError = namespaced
+    ? NAMESPACED.test(key)
+      ? undefined
+      : 'Start with passbook_, then letters, digits or _.'
+    : !ClaimKeySchema.safeParse(key).success
+      ? 'Use letters, digits, _ . : -.'
       : undefined;
+  const takenError = !existing && taken.includes(key) ? 'This claim already exists.' : undefined;
   const valueError = typeof parsed === 'string' ? parsed : undefined;
-  const check = useFormErrors({ key: keyError, value: valueError });
+  const check = useFormErrors({ key: keyError ?? takenError, value: valueError });
 
   return (
     <FormDialog
@@ -79,7 +95,7 @@ export function ClaimDialog({
       description={IDP_COPY.claimsReach}
       submitLabel="Save claim"
       check={check}
-      dirty={key !== '' || raw !== ''}
+      dirty={key !== (existing ?? (namespaced ? CLAIM_NAMESPACE : '')) || raw !== rawOf(current)}
       onSubmit={async () => {
         if (typeof parsed === 'string') return;
         await onSave(key, parsed);
@@ -93,10 +109,12 @@ export function ClaimDialog({
               {...p}
               data-autofocus
               autoComplete="off"
+              spellCheck={false}
               readOnly={existing !== null}
-              placeholder="department"
+              className="font-mono"
+              placeholder={namespaced ? 'passbook_plan' : 'department'}
               value={key}
-              onChange={(e) => setKey(e.target.value)}
+              onChange={(e) => setKey(namespaced ? e.target.value.toLowerCase() : e.target.value)}
             />
           )}
         </FormField>
@@ -121,8 +139,8 @@ export function ClaimDialog({
                 value={raw === 'false' ? 'false' : 'true'}
                 onValueChange={setRaw}
                 options={[
-                  { value: 'true', label: 'True' },
-                  { value: 'false', label: 'False' },
+                  { value: 'true', label: 'Yes' },
+                  { value: 'false', label: 'No' },
                 ]}
               />
             ) : type === 'json' ? (

@@ -256,7 +256,7 @@ describe('Groups and Claims', () => {
     });
     const ui = userEvent.setup();
     expect(await screen.findByText('Staff')).toBeInTheDocument();
-    expect(await screen.findByText('2 other claims set in Polaris ID')).toBeInTheDocument();
+    expect(await screen.findByText('2 other claims set in Polaris ID.')).toBeInTheDocument();
     await ui.click(screen.getByRole('button', { name: 'Add claim' }));
     const dialog = await screen.findByRole('dialog', { name: 'Add claim' });
     await ui.type(within(dialog).getByLabelText(/Key/), 'dept');

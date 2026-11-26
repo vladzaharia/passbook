@@ -1,11 +1,7 @@
+import { IDP_COPY } from '@/shared/copy/idp.ts';
 import type { ConfirmCopy } from './confirms.ts';
 
-const ROLE: Record<string, string> = {
-  console: 'Console',
-  developer: 'Developer',
-  support: 'Support',
-};
-const roleName = (role: string) => ROLE[role] ?? role;
+const roleName = (role: string): string => (IDP_COPY.role as Record<string, string>)[role] ?? role;
 
 /** Revoking a platform grant; the sync takes the role away in Polaris ID. */
 export function revokeRoleConfirm(role: string, person: string): ConfirmCopy {

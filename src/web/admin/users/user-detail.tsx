@@ -23,7 +23,7 @@ import { GroupsCard } from './access/groups-card.tsx';
 import { OffboardCard } from './access/offboard.tsx';
 import { useAccess } from './access/queries.ts';
 import { UserOperation } from './access/user-operation.tsx';
-import { ClaimsCard } from './claims/claims-card.tsx';
+import { UserClaimsCard } from './claims/user-claims-card.tsx';
 import { useUser, useUserMutations } from './queries.ts';
 import { UserPassesCard } from './user-passes-card.tsx';
 import { AccountCard, EmailsCard, IdentitiesCard, SessionsCard } from './user-sections.tsx';
@@ -144,7 +144,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
         {access.available ? (
           <>
             <GroupsCard userId={user.id} person={name} />
-            <ClaimsCard userId={user.id} />
+            <UserClaimsCard userId={user.id} />
             {self || access.data?.platformAdmin ? null : (
               <OffboardCard userId={user.id} name={name} onStarted={setOpId} />
             )}

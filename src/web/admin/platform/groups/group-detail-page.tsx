@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Cloud, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { GROUP_COPY } from '@/shared/copy/idp-platform.ts';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { ApiError } from '@/web/lib/errors.ts';
 import {
@@ -109,7 +109,7 @@ function Detail({ groupKey }: { groupKey: string }) {
                   const sent = await ensure.mutateAsync(
                     group.key as 'console' | 'developer' | 'support',
                   );
-                  toast.success(sent.dryRun ? GROUP_COPY.dryRun : 'Group created in Polaris ID');
+                  toast.success(sent.dryRun ? IDP_COPY.dryRun : 'Group created in Polaris ID');
                 } catch (cause) {
                   toast.error(cause, 'Could not create the group');
                 }

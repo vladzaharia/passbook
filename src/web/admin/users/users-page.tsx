@@ -21,7 +21,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { personLabel } from '../../lib/format.ts';
-import { useIdpConnected } from './access/queries.ts';
+import { useIdpConnected } from '../idp/status-queries.ts';
 import { PlatformInviteWizard } from './invite/platform-invite.tsx';
 import { methodsLabel } from './labels.ts';
 import { useUserList } from './queries.ts';

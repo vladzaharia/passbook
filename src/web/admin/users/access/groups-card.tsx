@@ -18,12 +18,13 @@ import {
   SkeletonRows,
   toast,
 } from '@/web/ui/index.ts';
-import { type UserGroup, useGroupMembership, useUserGroups } from './queries.ts';
+import { useGroupActions } from '../../platform/groups/queries.ts';
+import { type UserGroup, useUserGroups } from './queries.ts';
 
 /** The custom groups the user was added to by hand, with Add and Remove. Org rules show on the group's page. */
 export function GroupsCard({ userId, person }: { userId: string; person: string }) {
   const groups = useUserGroups(userId, true);
-  const { add, remove } = useGroupMembership(userId);
+  const { addMember, removeMember } = useGroupActions();
   const [adding, setAdding] = useState(false);
   const [pick, setPick] = useState('');
   const [removing, setRemoving] = useState<UserGroup | null>(null);
@@ -84,7 +85,7 @@ export function GroupsCard({ userId, person }: { userId: string; person: string 
         onClose={() => setPick('')}
         onSubmit={async () => {
           if (!pick) throw new UserMessageError('Choose a group.');
-          await add.mutateAsync(pick);
+          await addMember.mutateAsync({ key: pick, member: { userId } });
           toast.success('Added to group');
         }}
       >
@@ -108,7 +109,8 @@ export function GroupsCard({ userId, person }: { userId: string; person: string 
           : { title: '', confirmLabel: '', description: '' })}
         destructive
         onConfirm={async () => {
-          if (removing) await remove.mutateAsync(removing);
+          if (removing)
+            await removeMember.mutateAsync({ key: removing.key, id: removing.memberId });
         }}
       />
     </Card>

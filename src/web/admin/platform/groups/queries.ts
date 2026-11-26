@@ -17,8 +17,11 @@ import {
 import { api } from '@/web/lib/api.ts';
 import { IDP_KEY } from '../../idp/status-queries.ts';
 
-const BASE = '/api/v1/platform/idp/groups';
-const at = (key: string, rest = '') => `${BASE}/${encodeURIComponent(key)}${rest}`;
+export const GROUPS_PATH = '/api/v1/platform/idp/groups';
+const BASE = GROUPS_PATH;
+export const at = (key: string, rest = '') => `${BASE}/${encodeURIComponent(key)}${rest}`;
+/** A user's page lists the groups holding them; a member change there or here refreshes both. */
+export const USER_GROUPS_KEY = [...IDP_KEY, 'user-groups'] as const;
 export const groupKeys = {
   list: [...IDP_KEY, 'groups'] as const,
   rules: (key: string) => [...IDP_KEY, 'groups', key, 'rules'] as const,
@@ -99,12 +102,12 @@ export function useGroupActions() {
     addMember: useMutation({
       mutationFn: (v: { key: string; member: CreateGroupMember }) =>
         api.post(at(v.key, '/members'), GroupMemberSchema, v.member),
-      onSuccess: (_r, v) => refresh(groupKeys.members(v.key)),
+      onSuccess: (_r, v) => refresh(groupKeys.members(v.key), USER_GROUPS_KEY),
     }),
     removeMember: useMutation({
       mutationFn: (v: { key: string; id: string }) =>
         api.deleteJson(at(v.key, `/members/${encodeURIComponent(v.id)}`), OkSchema),
-      onSuccess: (_r, v) => refresh(groupKeys.members(v.key)),
+      onSuccess: (_r, v) => refresh(groupKeys.members(v.key), USER_GROUPS_KEY),
     }),
     setClaims: useMutation({
       mutationFn: (v: { key: string; change: UpdateClaims }) =>

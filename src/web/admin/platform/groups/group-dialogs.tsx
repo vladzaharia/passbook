@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { type Group, GroupFriendlyNameSchema } from '@/shared/contracts/idp-access.ts';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { GROUP_COPY } from '@/shared/copy/idp-platform.ts';
 import { deleteGroupConfirm } from '@/web/lib/confirms-idp.ts';
 import {
@@ -40,7 +41,7 @@ export function RenameGroupDialog({
       onSubmit={async () => {
         if (!group || !parsed.success) return;
         const sent = await rename.mutateAsync({ key: group.key, friendlyName: parsed.data });
-        toast.success(sent.dryRun ? GROUP_COPY.dryRun : 'Group renamed');
+        toast.success(sent.dryRun ? IDP_COPY.dryRun : 'Group renamed');
         onClose();
       }}
     >
@@ -91,7 +92,7 @@ export function DeleteGroupDialog({
       onConfirm={async () => {
         if (!group) return;
         const sent = await remove.mutateAsync(group.key);
-        toast.success(sent.dryRun ? GROUP_COPY.dryRun : `${name} deleted`);
+        toast.success(sent.dryRun ? IDP_COPY.dryRun : `${name} deleted`);
         onDeleted?.();
       }}
     />

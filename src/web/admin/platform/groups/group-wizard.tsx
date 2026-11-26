@@ -2,7 +2,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
 import type { GroupResult } from '@/shared/contracts/idp-access.ts';
-import { GROUP_COPY, groupName } from '@/shared/copy/idp-platform.ts';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
+import { groupName } from '@/shared/copy/idp-platform.ts';
 import { Button, useWizard, WizardDialog, WizardReview } from '@/web/ui/index.ts';
 import { useOrgNames } from '../../orgs/queries.ts';
 import { StepName, StepRules } from './group-wizard-steps.tsx';
@@ -75,7 +76,7 @@ export function GroupWizard({
               body: (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-fg-muted">
-                    {made.dryRun ? GROUP_COPY.dryRun : `${groupName(made.key)} is in Polaris ID.`}
+                    {made.dryRun ? IDP_COPY.dryRun : `${groupName(made.key)} is in Polaris ID.`}
                   </p>
                   <div className="flex justify-end gap-2">
                     <Button variant={made.dryRun ? 'primary' : 'outline'} onClick={done}>

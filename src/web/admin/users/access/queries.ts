@@ -6,8 +6,6 @@ import {
   ClaimsViewSchema,
   GroupListSchema,
   GroupMemberListSchema,
-  GroupMemberSchema,
-  IdpStatusSchema,
   type OffboardPlan,
   OffboardStartedSchema,
   type UpdateClaims,
@@ -16,10 +14,10 @@ import type { IdpRoleSchema } from '@/shared/contracts/idp-ops.ts';
 import { StartedOperationSchema } from '@/shared/contracts/operations.ts';
 import { api } from '@/web/lib/api.ts';
 import { trackOperation } from '@/web/ui/operation/index.ts';
+import { at, GROUPS_PATH, USER_GROUPS_KEY } from '../../platform/groups/queries.ts';
 
 type Role = z.infer<typeof IdpRoleSchema>;
 const userPath = (id: string) => `/api/v1/users/${encodeURIComponent(id)}`;
-const groupPath = (key: string) => `/api/v1/platform/idp/groups/${encodeURIComponent(key)}`;
 
 const accessKey = (id: string) => ['idp', 'access', id] as const;
 const claimsKey = (id: string) => ['idp', 'claims', id] as const;
@@ -32,17 +30,6 @@ export function useAccess(userId: string) {
     retry: false,
   });
   return { ...query, available: query.data?.connected === true };
-}
-
-/** True when the binding is connected: the Users page offers Invite only then. */
-export function useIdpConnected(): boolean {
-  const query = useQuery({
-    queryKey: ['idp', 'status'],
-    queryFn: ({ signal }) => api.get('/api/v1/platform/idp', IdpStatusSchema, { signal }),
-    retry: false,
-    staleTime: 60_000,
-  });
-  return query.data?.connected === true;
 }
 
 /** Starts an operation the page then shows: it lands in the tray and the page's `?op` panel. */
@@ -129,16 +116,16 @@ export interface GroupChoice {
  */
 export function useUserGroups(userId: string, enabled: boolean) {
   return useQuery({
-    queryKey: ['idp', 'user-groups', userId],
+    queryKey: [...USER_GROUPS_KEY, userId],
     enabled,
     retry: false,
     queryFn: async ({ signal }) => {
-      const list = await api.get('/api/v1/platform/idp/groups', GroupListSchema, { signal });
+      const list = await api.get(GROUPS_PATH, GroupListSchema, { signal });
       const groups = list.items.filter((g) => g.kind !== 'role');
       const label = (g: (typeof groups)[number]) => g.friendlyName ?? g.name;
       const held = await Promise.all(
         groups.map(async (g) => {
-          const members = await api.get(`${groupPath(g.key)}/members`, GroupMemberListSchema, {
+          const members = await api.get(at(g.key, '/members'), GroupMemberListSchema, {
             signal,
           });
           const mine = members.items.find((m) => m.userId === userId);
@@ -153,20 +140,4 @@ export function useUserGroups(userId: string, enabled: boolean) {
       };
     },
   });
-}
-
-export function useGroupMembership(userId: string) {
-  const client = useQueryClient();
-  const refresh = () => client.invalidateQueries({ queryKey: ['idp', 'user-groups', userId] });
-  return {
-    add: useMutation({
-      mutationFn: (key: string) =>
-        api.post(`${groupPath(key)}/members`, GroupMemberSchema, { userId }),
-      onSuccess: refresh,
-    }),
-    remove: useMutation({
-      mutationFn: (g: UserGroup) => api.delete(`${groupPath(g.key)}/members/${g.memberId}`),
-      onSuccess: refresh,
-    }),
-  };
 }

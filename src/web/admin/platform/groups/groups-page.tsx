@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Group } from '@/shared/contracts/idp-access.ts';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { GROUP_COPY } from '@/shared/copy/idp-platform.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import {
@@ -62,7 +63,7 @@ function GroupsList() {
         onCreate: async (g) => {
           try {
             const sent = await ensure.mutateAsync(g.key as 'console' | 'developer' | 'support');
-            toast.success(sent.dryRun ? GROUP_COPY.dryRun : 'Group created in Polaris ID');
+            toast.success(sent.dryRun ? IDP_COPY.dryRun : 'Group created in Polaris ID');
           } catch (cause) {
             toast.error(cause, 'Could not create the group');
           }
@@ -92,7 +93,7 @@ function GroupsList() {
             data={rows}
             getRowId={(g) => g.key}
             columns={columns}
-            empty={<EmptyState art={ENTITY.group.art} title={GROUP_COPY.noGroups} />}
+            empty={<EmptyState art={ENTITY.group.art} title={IDP_COPY.noGroups} />}
           />
           {list.isSuccess && !hasCustom ? (
             <Card>
@@ -100,7 +101,7 @@ function GroupsList() {
                 <EmptyState
                   inline
                   art={ENTITY.group.art}
-                  title={GROUP_COPY.noGroups}
+                  title={IDP_COPY.noGroups}
                   action={
                     <Button
                       variant="outline"

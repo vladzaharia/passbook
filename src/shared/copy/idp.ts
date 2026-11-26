@@ -19,7 +19,7 @@ export const IDP_COPY = {
   claimsReach: 'Claims reach every app that signs in with Polaris ID.',
   inviteForwarded: "This account doesn't use the invited address.",
   inviteUnverified: 'Confirm your email in Polaris ID, then try again.',
-  dryRun: 'Polaris ID changes are in dry run.',
+  dryRun: 'Dry run: nothing was sent to Polaris ID.',
 } as const;
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

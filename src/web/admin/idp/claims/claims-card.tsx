@@ -1,5 +1,7 @@
+import type { UseQueryResult } from '@tanstack/react-query';
 import { Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import type { ClaimsView, UpdateClaims } from '@/shared/contracts/idp-access.ts';
 import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { removeClaimConfirm } from '@/web/lib/confirms-idp.ts';
 import {
@@ -9,29 +11,45 @@ import {
   CardHeader,
   ConfirmDialog,
   EmptyState,
+  ErrorState,
   ListRow,
   ListRows,
   RowActions,
   SkeletonRows,
   toast,
 } from '@/web/ui/index.ts';
-import { useClaims, useSetClaims } from '../access/queries.ts';
-import { ClaimDialog } from './claim-dialog.tsx';
+import { CLAIM_TYPE_LABEL, ClaimDialog } from './claim-dialog.tsx';
 
-const show = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value));
+const shown = (value: unknown): string => {
+  const text = typeof value === 'string' ? value : JSON.stringify(value);
+  return text.length > 80 ? `${text.slice(0, 79)}…` : text;
+};
 
-/** Key, value and type of the claims PassBook manages; others' claims are only counted. */
-export function ClaimsCard({ userId }: { userId: string }) {
-  const claims = useClaims(userId, true);
-  const set = useSetClaims(userId);
+/** The claims PassBook manages on a user or a group: key, type and value; others' claims are only counted. */
+export function ClaimsCard({
+  query,
+  save,
+  namespaced = false,
+  hideOnError = false,
+  id,
+}: {
+  query: UseQueryResult<ClaimsView>;
+  /** Sends the change; `dryRun` is true while Polaris ID changes are in dry run. */
+  save: (change: UpdateClaims) => Promise<{ dryRun?: boolean }>;
+  namespaced?: boolean;
+  /** The user card hides when the binding is absent. */
+  hideOnError?: boolean;
+  id?: string;
+}) {
   const [editing, setEditing] = useState<{ key: string } | 'new' | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  if (claims.isError) return null;
-  const entries = Object.entries(claims.data?.claims ?? {});
-  const other = claims.data?.otherKeys ?? 0;
+  if (hideOnError && query.isError) return null;
+  const entries = Object.entries(query.data?.claims ?? {});
+  const other = query.data?.otherKeys ?? 0;
+  const copy = removeClaimConfirm(removing ?? '');
 
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader
         title="Claims"
         actions={
@@ -46,8 +64,15 @@ export function ClaimsCard({ userId }: { userId: string }) {
         }
       />
       <CardBody>
-        {claims.isPending ? (
+        {query.isPending ? (
           <SkeletonRows rows={2} label="Loading claims" />
+        ) : query.isError ? (
+          <ErrorState
+            inline
+            subject="claims"
+            error={query.error}
+            onRetry={() => void query.refetch()}
+          />
         ) : entries.length === 0 ? (
           <EmptyState inline art="log" title={IDP_COPY.noClaims} />
         ) : (
@@ -56,9 +81,13 @@ export function ClaimsCard({ userId }: { userId: string }) {
               <ListRow
                 key={key}
                 leading={<Tag aria-hidden />}
-                title={<span className="font-mono text-xs">{key}</span>}
-                pills={<span className="text-xs text-fg-muted">{claim.type}</span>}
-                meta={show(claim.value)}
+                title={<code className="font-mono text-xs">{key}</code>}
+                meta={
+                  <>
+                    {CLAIM_TYPE_LABEL[claim.type]} ·{' '}
+                    <span className="break-all">{shown(claim.value)}</span>
+                  </>
+                }
                 trailing={
                   <RowActions
                     label={`Actions for ${key}`}
@@ -78,7 +107,9 @@ export function ClaimsCard({ userId }: { userId: string }) {
           </ListRows>
         )}
         {other > 0 ? (
-          <p className="mt-3 text-xs text-fg-muted">{other} other claims set in Polaris ID</p>
+          <p className="mt-3 text-xs text-fg-muted">
+            {other} other {other === 1 ? 'claim' : 'claims'} set in Polaris ID.
+          </p>
         ) : null}
       </CardBody>
       <ClaimDialog
@@ -86,24 +117,25 @@ export function ClaimsCard({ userId }: { userId: string }) {
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
         existing={editing && editing !== 'new' ? editing.key : null}
-        current={editing && editing !== 'new' ? claims.data?.claims[editing.key] : undefined}
+        current={editing && editing !== 'new' ? query.data?.claims[editing.key] : undefined}
         taken={entries.map(([key]) => key)}
+        namespaced={namespaced}
         onSave={async (key, value) => {
-          await set.mutateAsync({ set: { [key]: value } });
-          toast.success('Claim saved');
+          const sent = await save({ set: { [key]: value } });
+          toast.success(sent.dryRun ? IDP_COPY.dryRun : 'Claim saved');
         }}
       />
       <ConfirmDialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        {...(removing
-          ? removeClaimConfirm(removing)
-          : { title: '', confirmLabel: '', description: '' })}
+        title={copy.title}
+        description={copy.description}
+        confirmLabel={copy.confirmLabel}
         destructive
         onConfirm={async () => {
           if (!removing) return;
-          await set.mutateAsync({ set: { [removing]: null } });
-          toast.success('Claim removed');
+          const sent = await save({ set: { [removing]: null } });
+          toast.success(sent.dryRun ? IDP_COPY.dryRun : 'Claim removed');
         }}
       />
     </Card>
