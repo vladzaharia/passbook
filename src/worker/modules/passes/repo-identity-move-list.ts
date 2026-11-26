@@ -15,11 +15,15 @@ export function listMoves(
 ): Promise<MoveRow[]> {
   const where = ['id > ?'];
   const args: (string | number)[] = [q.after];
+  // `wallet_copy` finds every `wallet_copy:<provider>` row.
+  if (q.reason !== undefined) {
+    where.push("(reason = ? OR reason LIKE ? || ':%')");
+    args.push(q.reason, q.reason);
+  }
   for (const [column, value] of [
     ['org_id', q.orgId],
     ['op_id', q.opId],
     ['state', q.state],
-    ['reason', q.reason],
   ] as const)
     if (value !== undefined) {
       where.push(`${column} = ?`);

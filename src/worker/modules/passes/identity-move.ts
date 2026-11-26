@@ -39,6 +39,7 @@ import {
   voidedByMove,
   voidRef,
 } from './repo-identity-move-timers.ts';
+import { heldReason } from './repo-identity-move-wallet.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';
@@ -198,9 +199,10 @@ export async function voidDue(
       await setState(db, row.id, ['registered'], { state: 'kept', reason: 'new_gone' }, now);
       return 'kept';
     }
-    // The old pass took on something the move cannot carry since it was planned. A device holds the replacement,
-    // so neither pass is voided: both stay live, and the row says why.
-    const why = await keptReason(db, row.old_pass_id);
+    // The old pass took on something the move cannot carry since it was planned, or a device holds a wallet copy
+    // of it that the replacement lacks. A device holds the replacement, so neither pass is voided: both stay live,
+    // and the row says why.
+    const why = (await keptReason(db, row.old_pass_id)) ?? (await heldReason(db, row));
     if (why !== null) {
       await setState(db, row.id, ['registered'], { state: 'kept_both', reason: why }, now);
       ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: why });

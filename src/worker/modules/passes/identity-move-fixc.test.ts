@@ -97,17 +97,6 @@ async function seedConnection(old: Old) {
     old.id,
   ]);
 }
-async function seedWalletCopy(p: Old) {
-  await run(db(), 'PRAGMA ignore_check_constraints = ON');
-  await run(db(), 'DROP TRIGGER IF EXISTS wallet_provider_generation_insert_guard');
-  await run(db(), 'PRAGMA defer_foreign_keys = ON');
-  await run(
-    db(),
-    `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation, lifecycle,
-       desired_version, created_at, updated_at) VALUES (?, ?, ?, 'live', 'google', ?, 'active', 1, 1, 1)`,
-    [kit.fx.ids.id(), p.id, p.orgId, p.credentialGeneration],
-  );
-}
 const addNote = (old: Old, key: string, body: string) =>
   run(
     db(),
@@ -150,18 +139,15 @@ const photoOf = (passId: string) =>
   );
 
 describe('N2: a replacement a device holds is never voided by the move', () => {
-  it.each([
-    ['connection', seedConnection],
-    ['wallet_copy', seedWalletCopy],
-  ])('keeps both live when a %s appears on the old pass mid-move', async (reason, seed) => {
+  it('keeps both live when a connection appears on the old pass mid-move', async () => {
     const { old, next } = await movedWith();
     await addNew(next);
-    await seed(old);
+    await seedConnection(old);
     kit.clock.advance(DAY);
     await sweep();
     expect((await passOf(kit, old.id)).status).toBe('active');
     expect((await passOf(kit, next.id)).status).toBe('active');
-    expect(await stateOf(old.id)).toEqual(['kept_both', reason]);
+    expect(await stateOf(old.id)).toEqual(['kept_both', 'connection']);
     // Nothing later voids either pass, nor sends a reminder.
     const sent = kit.mailer.sent.length;
     kit.clock.advance(40 * DAY);

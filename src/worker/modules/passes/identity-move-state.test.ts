@@ -393,12 +393,12 @@ describe('H1: what cannot be carried keeps the pass, by name', () => {
     );
   }
 
-  it('plans a pass with a live Google or Samsung copy as kept, and counts it in the dry run', async () => {
+  it('plans a pass with a live Google or Samsung copy as moving: the replacement is offered a new copy', async () => {
     const { org, passes } = await orgWithPasses(kit, 2);
     await seedWalletCopy(passes[0] as Old);
     expect(await countCandidates(db(), org.id, 'platform')).toMatchObject({
-      passes: 1,
-      kept: { wallet_copy: 1 },
+      passes: 2,
+      kept: {},
     });
     const planned = await candidates(db(), {
       orgId: org.id,
@@ -406,9 +406,7 @@ describe('H1: what cannot be carried keeps the pass, by name', () => {
       after: '',
       limit: 10,
     });
-    expect(planned.filter((c) => c.reason !== null)).toEqual([
-      { id: (passes[0] as Old).id, reason: 'wallet_copy' },
-    ]);
+    expect(planned.map((c) => c.reason)).toEqual([null, null]);
   });
 
   it('re-checks at the void: a pass that gained something uncarriable stays, and so does the replacement a device holds', async () => {

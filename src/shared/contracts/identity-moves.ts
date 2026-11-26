@@ -32,7 +32,7 @@ export const IdentityMovePreviewSchema = z.object({
   /** Of those, the ones with a device registration. */
   registered: z.number().int().nonnegative(),
   holders: z.number().int().nonnegative(),
-  /** Passes that stay on the old identity, by reason (connection, wallet_copy, user_tag, transfer). */
+  /** Passes that stay on the old identity, by reason (connection, user_tag, transfer). */
   kept: z.record(z.string(), z.number().int().nonnegative()),
 });
 
@@ -53,7 +53,7 @@ export const IdentityMoveSchema = z.object({
   oldPassId: IdSchema,
   newPassId: IdSchema,
   state: IdentityMoveStateSchema,
-  /** Why the row is kept, kept_both, failed or unarmed. */
+  /** Why the row is kept, kept_both (`wallet_copy:<providers>` when a device holds a Google or Samsung copy the replacement lacks), failed or unarmed. */
   reason: z.string().nullable(),
   /** Fields edited on both passes since the copy. */
   conflictCount: z.number().int().nonnegative(),

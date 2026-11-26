@@ -2,14 +2,13 @@ import { all, first } from '../../platform/db.ts';
 
 /**
  * Why a pass cannot move faithfully and stays on its identity, or NULL: the one place a reason is decided, for
- * the plan, the dry run and the void's re-check (`stillMovable`). A connection owns the serial it syncs. A
- * Google or Samsung copy is named by a hash of the pass id, so it cannot follow the pass. A tag bound to the
- * holder (not the pass) is anchored on a pass its owner holds. Everything else a pass carries is copied or
- * re-pointed (`identity-move-state.ts`).
+ * the plan, the dry run and the void's re-check (`stillMovable`). A connection owns the serial it syncs. A tag
+ * bound to the holder (not the pass) is anchored on a pass its owner holds. Everything else a pass carries is
+ * copied or re-pointed (`identity-move-state.ts`). A Google or Samsung copy is named by a hash of the pass id,
+ * so it cannot follow: the replacement is offered a new one, and the void waits only for a copy a device holds
+ * (`repo-identity-move-wallet.ts`).
  */
 export const KEPT = `CASE WHEN p.connection_id IS NOT NULL THEN 'connection'
-  WHEN EXISTS (SELECT 1 FROM wallet_provider_instances w WHERE w.pass_id = p.id
-    AND w.lifecycle IN ('active', 'revoking')) THEN 'wallet_copy'
   WHEN EXISTS (SELECT 1 FROM tag_bindings b WHERE b.pass_id = p.id AND b.scope = 'user'
     AND b.ended_at IS NULL) THEN 'user_tag' END`;
 

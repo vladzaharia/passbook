@@ -14,6 +14,7 @@ import {
   type PhotoRow,
   sealedOf,
 } from './repo-identity-move-state.ts';
+import { walletOverrides } from './repo-identity-move-wallet.ts';
 import type { Pass } from './repo-map.ts';
 
 /** The tables the carry writes through its grant; the rest are plain rows of this module's own. */
@@ -129,6 +130,44 @@ export async function writeRows(
 }
 
 /**
+ * The old pass's own Google and Samsung switches go along, so the replacement is offered the providers the
+ * holder had (the offer list reads the channel gate); a switch the replacement already has stays.
+ */
+export async function copyWalletChannels(
+  ctx: ServiceContext,
+  old: Pass,
+  made: Pass,
+): Promise<void> {
+  const overrides = await walletOverrides(ctx.env.DB, old.id);
+  if (overrides.length === 0) return;
+  const g = jobGrant(ctx, {
+    purpose: 'org_mode.job.pass.identity_move_channels',
+    job: 'identity-move',
+    orgId: made.orgId,
+    mode: made.mode,
+    target: made.id,
+    checks: [rowIs('passes', made.id, { deleted_at: null }, 'lineage')],
+    codes: CREATE_CODES,
+    tables: ['pass_channels'],
+  });
+  for (const o of overrides)
+    g.insertSelect(
+      'pass_channels',
+      ['channel', 'override', 'set_by', 'set_at'],
+      [o.channel, o.override, 'system', ctx.clock.now()],
+      {
+        from: {
+          table: 'passes',
+          where: { id: made.id },
+          copy: { pass_id: 'id', template_id: 'template_id' },
+        },
+        when: [notExists('pass_channels', { pass_id: made.id, channel: o.channel })],
+      },
+    );
+  await g.commit();
+}
+
+/**
  * Apple personalization is sealed under the pass id, so it is opened with the old id and sealed again under the
  * replacement's: the holder is not asked for it a second time.
  */
@@ -172,6 +211,7 @@ export async function carryState(
   const db = ctx.env.DB;
   const before = await carriedCount(db, made.id);
   await writeRows(ctx, made, files, state.notes);
+  await copyWalletChannels(ctx, old, made);
   await copyCheckIn(db, old, made.id, ctx.clock.now());
   await copyPersonalization(ctx, old, made);
   return (await carriedCount(db, made.id)) > before;
