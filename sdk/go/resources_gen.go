@@ -1265,6 +1265,81 @@ func (r *OrgsResource) UpdatePassSetup(ctx context.Context, orgId string, body *
 	return &out, nil
 }
 
+type InvitationsResource struct {
+	c *core
+}
+
+func newInvitationsResource(c *core) *InvitationsResource {
+	return &InvitationsResource{
+		c: c,
+	}
+}
+
+// Create Invite an organization member `POST /api/v1/orgs/{id}/invitations`
+func (r *InvitationsResource) Create(ctx context.Context, id string, body *InvitationsCreateBody, opts ...RequestOption) (*InvitationsCreateResult, error) {
+	var out InvitationsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List organization invitations `GET /api/v1/orgs/{id}/invitations`
+func (r *InvitationsResource) List(ctx context.Context, id string, query *InvitationsListQuery, opts ...RequestOption) *Pager[InvitationsListItem] {
+	return newPager[InvitationsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations", query: queryValues(query)}, "cursor", opts)
+}
+
+// Resend Resend an organization invitation `POST /api/v1/orgs/{id}/invitations/{invitationId}/resend`
+func (r *InvitationsResource) Resend(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*InvitationsResendResult, error) {
+	var out InvitationsResendResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations/" + pathEscape(invitationId) + "/resend"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Revoke Revoke an organization invitation `DELETE /api/v1/orgs/{id}/invitations/{invitationId}`
+func (r *InvitationsResource) Revoke(ctx context.Context, id string, invitationId string, opts ...RequestOption) (*InvitationsRevokeResult, error) {
+	var out InvitationsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/invitations/" + pathEscape(invitationId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type MembershipsResource struct {
+	c *core
+}
+
+func newMembershipsResource(c *core) *MembershipsResource {
+	return &MembershipsResource{
+		c: c,
+	}
+}
+
+// List List organization memberships `GET /api/v1/orgs/{id}/memberships`
+func (r *MembershipsResource) List(ctx context.Context, id string, query *MembershipsListQuery, opts ...RequestOption) *Pager[MembershipsListItem] {
+	return newPager[MembershipsListItem](r.c, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships", query: queryValues(query)}, "cursor", opts)
+}
+
+// Revoke Revoke an organization membership `DELETE /api/v1/orgs/{id}/memberships/{membershipId}`
+func (r *MembershipsResource) Revoke(ctx context.Context, id string, membershipId string, opts ...RequestOption) (*MembershipsRevokeResult, error) {
+	var out MembershipsRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships/" + pathEscape(membershipId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdateRoles Change an organization member's roles `PATCH /api/v1/orgs/{id}/memberships/{membershipId}`
+func (r *MembershipsResource) UpdateRoles(ctx context.Context, id string, membershipId string, body *MembershipsUpdateRolesBody, opts ...RequestOption) (*MembershipsUpdateRolesResult, error) {
+	var out MembershipsUpdateRolesResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/orgs/" + pathEscape(id) + "/memberships/" + pathEscape(membershipId), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsMappingsResource struct {
 	c *core
 }
@@ -3037,6 +3112,8 @@ type Resources struct {
 	DeveloperInvitations *DeveloperInvitationsResource
 	Developers           *DevelopersResource
 	Orgs                 *OrgsResource
+	Invitations          *InvitationsResource
+	Memberships          *MembershipsResource
 	PassImports          *PassImportsResource
 	Passes               *PassesResource
 	PrintJobs            *PrintJobsResource
@@ -3076,6 +3153,8 @@ func newResources(c *core) Resources {
 		DeveloperInvitations: newDeveloperInvitationsResource(c),
 		Developers:           newDevelopersResource(c),
 		Orgs:                 newOrgsResource(c),
+		Invitations:          newInvitationsResource(c),
+		Memberships:          newMembershipsResource(c),
 		PassImports:          newPassImportsResource(c),
 		Passes:               newPassesResource(c),
 		PrintJobs:            newPrintJobsResource(c),

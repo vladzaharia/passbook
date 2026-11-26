@@ -935,6 +935,63 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"invitations.list", "GET", "/api/v1/orgs/id1/invitations", false,
+		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"invitations.create", "POST", "/api/v1/orgs/id1/invitations", false,
+		`{"email":"x","roles":["org_admin"]}`, `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b InvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Invitations.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"invitations.revoke", "DELETE", "/api/v1/orgs/id1/invitations/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
+		"invitations.resend", "POST", "/api/v1/orgs/id1/invitations/id2/resend", false,
+		"", `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Resend(ctx, "id1", "id2")
+		},
+	},
+	{
+		"memberships.list", "GET", "/api/v1/orgs/id1/memberships", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"memberships.updateRoles", "PATCH", "/api/v1/orgs/id1/memberships/id2", false,
+		`{"roles":["org_admin"]}`, `{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b MembershipsUpdateRolesBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Memberships.UpdateRoles(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"memberships.revoke", "DELETE", "/api/v1/orgs/id1/memberships/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
 		"orgs.plan.retrieve", "GET", "/api/v1/orgs/id1/plan", false,
 		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

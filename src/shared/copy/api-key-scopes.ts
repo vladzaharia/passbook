@@ -24,7 +24,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'nfc:read': 'Read NFC tags',
   'nfc:write': 'Assign, remove and report NFC tags',
   'audit:read': 'Read the audit log (Live keys)',
-  'members:read': 'Read developer invitations and developers',
-  'members:write': 'Invite and remove developers (Live keys)',
+  'members:read': 'Read members and developers',
+  'members:write': 'Invite and remove members and developers (Live keys)',
   'api-keys:write': 'Manage its own child keys',
 };

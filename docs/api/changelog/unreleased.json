@@ -240,12 +240,44 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -262,6 +294,22 @@
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -584,6 +632,22 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "GET /api/v1/developer/home new operation",
     "class": "additive",
     "operationId": "developer.getHome",
@@ -606,6 +670,22 @@
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -2735,6 +2815,22 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "class": "additive",
     "operationId": "api-keys.createApiKeys",
@@ -2831,12 +2927,44 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -2847,12 +2975,44 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -2863,12 +3023,44 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "New scope platform:groups. Only a Platform key holds it, never an organization key."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read. Only a Platform key holds it, never an organization key: it reads every platform route a key may call."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",

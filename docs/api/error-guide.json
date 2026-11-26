@@ -1289,6 +1289,12 @@
     "fix": "Check the keyset id and the key's mode.",
     "retryable": false
   },
+  "KEY_CANNOT_ADMINISTER": {
+    "title": "Key cannot administer",
+    "when": "An API key tried to give, change or remove an organization admin role.",
+    "fix": "Give or remove admin roles in the console.",
+    "retryable": false
+  },
   "KEY_CREATOR_GONE": {
     "title": "Key creator deleted",
     "when": "The user who created this key no longer exists.",

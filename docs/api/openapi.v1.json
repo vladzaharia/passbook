@@ -10464,6 +10464,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "platform:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -10473,6 +10474,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -10612,6 +10614,7 @@
                         "members:read",
                         "members:write",
                         "audit:read",
+                        "platform:read",
                         "platform:orgs",
                         "platform:users",
                         "platform:identities",
@@ -10621,6 +10624,7 @@
                         "platform:templates",
                         "platform:audit",
                         "platform:claims",
+                        "platform:groups",
                         "brand:manage"
                       ]
                     }
@@ -10845,6 +10849,7 @@
                         "members:read",
                         "members:write",
                         "audit:read",
+                        "platform:read",
                         "platform:orgs",
                         "platform:users",
                         "platform:identities",
@@ -10854,6 +10859,7 @@
                         "platform:templates",
                         "platform:audit",
                         "platform:claims",
+                        "platform:groups",
                         "brand:manage"
                       ]
                     }
@@ -11076,6 +11082,7 @@
                     "members:read",
                     "members:write",
                     "audit:read",
+                    "platform:read",
                     "platform:orgs",
                     "platform:users",
                     "platform:identities",
@@ -11085,6 +11092,7 @@
                     "platform:templates",
                     "platform:audit",
                     "platform:claims",
+                    "platform:groups",
                     "brand:manage"
                   ]
                 }
@@ -11311,6 +11319,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "platform:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -11320,6 +11329,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -11723,6 +11733,7 @@
                 "members:read",
                 "members:write",
                 "audit:read",
+                "platform:read",
                 "platform:orgs",
                 "platform:users",
                 "platform:identities",
@@ -11732,6 +11743,7 @@
                 "platform:templates",
                 "platform:audit",
                 "platform:claims",
+                "platform:groups",
                 "brand:manage"
               ]
             }
@@ -63828,6 +63840,7 @@
                       "members:read",
                       "members:write",
                       "audit:read",
+                      "platform:read",
                       "platform:orgs",
                       "platform:users",
                       "platform:identities",
@@ -63837,6 +63850,7 @@
                       "platform:templates",
                       "platform:audit",
                       "platform:claims",
+                      "platform:groups",
                       "brand:manage"
                     ]
                   }
@@ -84830,6 +84844,7 @@
                           "members:read",
                           "members:write",
                           "audit:read",
+                          "platform:read",
                           "platform:orgs",
                           "platform:users",
                           "platform:identities",
@@ -84839,6 +84854,7 @@
                           "platform:templates",
                           "platform:audit",
                           "platform:claims",
+                          "platform:groups",
                           "brand:manage"
                         ]
                       }
@@ -85509,6 +85525,7 @@
                                 "members:read",
                                 "members:write",
                                 "audit:read",
+                                "platform:read",
                                 "platform:orgs",
                                 "platform:users",
                                 "platform:identities",
@@ -85518,6 +85535,7 @@
                                 "platform:templates",
                                 "platform:audit",
                                 "platform:claims",
+                                "platform:groups",
                                 "brand:manage"
                               ]
                             }
@@ -90536,6 +90554,16 @@
     },
     "/api/v1/orgs/{id}/memberships": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List organization memberships",
         "tags": [
           "organization-memberships"
@@ -90631,16 +90659,16 @@
           "resource": "memberships",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -90649,6 +90677,16 @@
     },
     "/api/v1/orgs/{id}/invitations": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "members:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List organization invitations",
         "tags": [
           "organization-memberships"
@@ -90718,22 +90756,32 @@
           "resource": "invitations",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Invite an organization member",
         "tags": [
           "organization-memberships"
@@ -90805,22 +90853,23 @@
           "resource": "invitations",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVITATION_PENDING",
+          "KEY_CANNOT_ADMINISTER",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -90830,6 +90879,16 @@
     },
     "/api/v1/orgs/{id}/invitations/{invitationId}": {
       "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Revoke an organization invitation",
         "tags": [
           "organization-memberships"
@@ -90886,13 +90945,9 @@
           "resource": "invitations",
           "method": "revoke"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_BUDGET",
           "IDP_CONFLICT",
@@ -90900,8 +90955,12 @@
           "IDP_NOT_MANAGED",
           "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MEMBERSHIP_CONFLICT",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -90910,6 +90969,16 @@
     },
     "/api/v1/orgs/{id}/memberships/{membershipId}": {
       "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Revoke an organization membership",
         "tags": [
           "organization-memberships"
@@ -90966,25 +91035,36 @@
           "resource": "memberships",
           "method": "revoke"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "KEY_CANNOT_ADMINISTER",
           "LAST_ORG_ADMIN",
           "MEMBERSHIP_CONFLICT",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
       },
       "patch": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Change an organization member's roles",
         "tags": [
           "organization-memberships"
@@ -91072,24 +91152,25 @@
           "resource": "memberships",
           "method": "updateRoles"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "KEY_CANNOT_ADMINISTER",
           "LAST_ORG_ADMIN",
           "MEMBERSHIP_CONFLICT",
           "MEMBERSHIP_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -91099,6 +91180,16 @@
     },
     "/api/v1/orgs/{id}/invitations/{invitationId}/resend": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "members:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Resend an organization invitation",
         "tags": [
           "organization-memberships"
@@ -91164,23 +91255,24 @@
           "resource": "invitations",
           "method": "resend"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVITATION_PENDING",
+          "KEY_CANNOT_ADMINISTER",
           "MEMBERSHIP_CONFLICT",
+          "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_FORBIDDEN",
           "ORG_PERSONAL_SINGLE_MEMBER",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -96822,6 +96914,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Read an organization's features: preset, overrides and the presets to choose from",
         "tags": [
@@ -96911,6 +97004,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Set an organization's preset and overrides, against the revision the caller read",
         "tags": [
@@ -97024,6 +97118,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Read every preset with its values and the organizations on it",
         "tags": [
@@ -97085,6 +97180,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue)",
         "tags": [
@@ -97173,6 +97269,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Names of the personal organizations, which are not listed, for views that show an org by id",
         "tags": [
@@ -128587,6 +128684,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Apple provisioner's call ledger",
         "tags": [
@@ -129196,6 +129294,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Read a user's Polaris ID claims (the ones PassBook manages)",
         "tags": [
@@ -129278,6 +129377,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Set or remove a user's Polaris ID claims",
         "tags": [
@@ -129381,6 +129481,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Read a Polaris ID group's claims (the ones PassBook manages)",
         "tags": [
@@ -129459,6 +129560,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:claims",
         "summary": "Set or remove a Polaris ID group's claims",
         "tags": [
@@ -132355,6 +132457,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:audit",
         "summary": "Query the platform audit log",
         "tags": [
@@ -132709,6 +132812,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:audit",
         "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour)",
         "tags": [
@@ -134566,6 +134670,7 @@
             "session": []
           }
         ],
+        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
         "tags": [
