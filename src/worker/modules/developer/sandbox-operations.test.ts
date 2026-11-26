@@ -414,6 +414,36 @@ describe('sandbox.delete', () => {
     expect(stored?.workflow_instance_id).toBe(`${failed.id}-r2`);
   });
 
+  it('stops on the first step when the delete is refused (a legal hold), and says so with its generic sentence', async () => {
+    const s = await sandboxOf();
+    await run(
+      kit.env.DB,
+      "INSERT INTO retention_holds (id, org_id, placed_by_kind, placed_by, reason, created_at) VALUES (?, ?, 'platform', 'p', 'r', 1)",
+      [kit.f.ids.id(), s.made.orgId],
+    );
+    const held = await startAndSettle(send, s.headers, 'DELETE', '/developer/sandbox');
+    expect(held).toMatchObject({
+      status: 'failed',
+      step: 'close',
+      text: 'Could not delete sandbox',
+    });
+    expect(held.error).toMatchObject({
+      code: 'OPERATION_FAILED',
+      message: 'Something went wrong. Retry.',
+      retryable: true,
+    });
+    expect(states(held)).toEqual([
+      ['close', 'failed'],
+      ['keys', 'pending'],
+      ['passes', 'pending'],
+      ['erase', 'pending'],
+    ]);
+    // Nothing of the sandbox was touched.
+    expect(
+      await first(kit.env.DB, 'SELECT 1 FROM developer_sandboxes WHERE user_id = ?', [s.user.id]),
+    ).not.toBeNull();
+  });
+
   it('keeps the three a day, and cannot be stopped', async () => {
     const s = await sandboxOf();
     for (let i = 0; i < 3; i++)

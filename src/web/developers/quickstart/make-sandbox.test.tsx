@@ -22,7 +22,8 @@ function api(routes: Record<string, Response | Response[]>) {
     const key = `${init?.method ?? 'GET'} ${String(input).replace('/api/v1', '')}`;
     const entry = routes[key];
     if (!entry) return new Response('{}', { status: 404 });
-    const n = (seen[key] = (seen[key] ?? -1) + 1);
+    const n = seen[key] ?? 0;
+    seen[key] = n + 1;
     return (
       Array.isArray(entry) ? (entry[Math.min(n, entry.length - 1)] as Response) : entry
     ).clone();

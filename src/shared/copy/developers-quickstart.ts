@@ -49,15 +49,8 @@ export const QS_COPY = {
       locked: 'Run your first request first.',
     },
   },
-  /** Step 2: what the server made, and the key box. */
+  /** Step 2: the key box, and the repair line when setup did not finish. */
   made: {
-    org: 'Organization',
-    template: 'Ticket template',
-    templateLine: 'Released in Test',
-    capture: 'Capture endpoint',
-    captureLine: 'Signed, never sent',
-    key: 'Key',
-    keyLine: '30 days',
     once: 'Shown once',
     copyEnv: 'Copy .env',
     copied: 'Copied',
