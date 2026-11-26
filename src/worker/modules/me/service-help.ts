@@ -1,9 +1,11 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { isStrongAmr } from '../../../shared/sign-in.ts';
 import { bump } from '../../platform/counters.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { withinCaps, withinDailyCap, withinIpCap } from '../auth/magic-caps.ts';
 import { issueMagicLink } from '../auth/magic-service.ts';
 import { revokeAllForUser } from '../auth/sessions.ts';
 import { recipientEmailBudget } from '../delivery/repo-email-budget.ts';
@@ -36,6 +38,7 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const LOST_PER_PASS_HOUR = 3;
 const LOST_PER_USER_DAY = 10;
+const CONFIRM_PER_PASS_HOUR = 3;
 
 async function queueMail(
   ctx: ServiceContext,
@@ -70,12 +73,18 @@ const FRESH_MS = 10 * 60_000;
 
 /**
  * Lost phone replaces the code and signs every other device out, so the one that asks must have just proved the
- * inbox: a session that came from an email link in the last 10 minutes. A finder holding a stolen session does not
+ * inbox: a session that came from an email link, or a Polaris ID sign-in, in the last 10 minutes. A finder holding a stolen session does not
  * have it; the owner confirms by a link and the action runs from that new session, which is the one kept.
  */
 async function assertFreshEmailSession(ctx: ServiceContext, sessionId: string) {
   const born = await repo.sessionBirth(ctx.env.DB, sessionId);
-  if (born?.amr !== 'magic_link' || ctx.clock.now() - born.created_at > FRESH_MS)
+  const since = ctx.clock.now() - FRESH_MS;
+  // An email link just opened, or a strong (Polaris ID) sign-in just proven: either shows the person is here now.
+  const fresh =
+    born !== null &&
+    ((born.amr === 'magic_link' && born.created_at >= since) ||
+      (isStrongAmr(born.amr) && (born.auth_time ?? born.created_at) >= since));
+  if (!fresh)
     throw new AppError(
       'EMAIL_CONFIRMATION_REQUIRED',
       409,
@@ -89,11 +98,19 @@ export async function sendLostPhoneConfirmation(
   userId: string,
   passId: string,
   bindingHash: string,
+  ipPrefix: string | null,
 ) {
-  const { row, to } = await ownedActive(ctx, userId, passId);
-  if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost-confirm:${userId}`)))
+  const { to } = await ownedActive(ctx, userId, passId);
+  // The same caps as a sign-in request (address, day, address per hour, network), and a count per pass.
+  const now = ctx.clock.now();
+  if (
+    !(await withinIpCap(ctx, ipPrefix)) ||
+    !(await withinCaps(ctx, to)) ||
+    !(await withinDailyCap(ctx)) ||
+    (await bump(ctx.env.DB, `holder-lost-confirm:pass:${passId}`, now - (now % HOUR))) >
+      CONFIRM_PER_PASS_HOUR
+  )
     throw new RateLimitedError();
-  await assertRecipientBudget(ctx, row.mode, to);
   await issueMagicLink(ctx, {
     email: to,
     purpose: 'sign_in',

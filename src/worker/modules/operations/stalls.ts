@@ -84,18 +84,11 @@ function lostWakeUp(row: OperationRow, now: number): boolean {
       .map((s) => s.key),
   );
   const steps = parseSteps(row.steps);
-  // A timed wait whose end has long passed: the look that should have ended it was lost.
-  if (
-    steps.some(
-      (s) =>
-        s.state === 'waiting' &&
-        s.waitingReason === 'due' &&
-        !tails.has(s.key) &&
-        s.until !== null &&
-        s.until < now - LOST_LOOK_GRACE_MS,
-    )
-  )
-    return true;
+  // One rule for a timed wait: not ended yet is planned, whatever is pending behind it (a lost phone's mail);
+  // ended long ago, the look that should have ended it was lost.
+  const timed = steps.filter((s) => s.state === 'waiting' && !tails.has(s.key) && s.until !== null);
+  if (timed.some((s) => (s.until ?? 0) >= now - LOST_LOOK_GRACE_MS)) return false;
+  if (timed.some((s) => s.waitingReason === 'due')) return true;
   // A step blocked until a time (Apple, a rate window) is a wait the operation is meant to sit in.
   if (steps.some((s) => s.state === 'waiting' && s.waitingReason === 'blocked')) return false;
   return steps.some((s) => s.state === 'pending' && !tails.has(s.key));

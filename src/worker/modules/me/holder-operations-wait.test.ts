@@ -157,6 +157,31 @@ describe('a lost phone waits for the wallets, then sends the new pass', () => {
     expect(s.sent.filter((x) => x.job.kind === 'pass.holder_mail')).toHaveLength(1);
   });
 
+  it('a healthy 90-minute wait is never swept as stalled, and ends with the mail sent', async () => {
+    const s = await setup();
+    const started = await waitingLost(s);
+    state.pending = true;
+    const mine = (x: { job: Job }) =>
+      x.job.kind === 'operation.run' && x.job.operationId === started.id;
+    let at = 0;
+    // The sweep every 3 minutes; each look the queue made runs when it is due.
+    while (at < 90 * 60_000) {
+      s.kit.clock.advance(3 * 60_000);
+      at += 3 * 60_000;
+      await sweepStalledOperations(jobCtxOf(s.kit));
+      const due = s.sent.filter(mine);
+      s.sent.length = 0;
+      for (const x of due) await runJob(x.job, jobCtxOf(s.kit));
+      expect((await s.op(started.id)).status).toBe('waiting');
+    }
+    state.pending = false;
+    await runJob({ kind: 'operation.run', operationId: started.id, attempt: 1 }, jobCtxOf(s.kit));
+    const mails = s.sent.filter((x) => x.job.kind === 'pass.holder_mail');
+    expect(mails).toHaveLength(1);
+    await runJob(mails[0]?.job as Job, jobCtxOf(s.kit));
+    expect((await s.op(started.id)).status).toBe('succeeded');
+  });
+
   it('a lost look ends failed, and the mail is never promised', async () => {
     const s = await setup();
     const started = await waitingLost(s);

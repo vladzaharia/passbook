@@ -225,8 +225,8 @@ export async function hasPendingOwnRemoval(
 
 /** How a session began: its method and when. Null when it is gone. */
 export const sessionBirth = (db: Db, idHash: string) =>
-  first<{ amr: string; created_at: number }>(
+  first<{ amr: string; created_at: number; auth_time: number | null }>(
     db,
-    'SELECT amr, created_at FROM sessions WHERE id_hash = ? AND revoked_at IS NULL',
+    'SELECT amr, created_at, auth_time FROM sessions WHERE id_hash = ? AND revoked_at IS NULL',
     [idHash],
   );

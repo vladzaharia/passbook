@@ -102,6 +102,19 @@ export function ShowQrButton({ passTitle, url }: { passTitle: string; url: strin
   );
 }
 
+const RESEND_AFTER_MS = 60_000;
+const confirmKey = (passId: string) => `lost-confirm:${passId}`;
+
+/** Whether a new confirmation may go: none sent yet, or the last one is past the cooldown. */
+function confirmationDue(passId: string): boolean {
+  const sent = Number(sessionStorage.getItem(confirmKey(passId)) ?? 0);
+  return Date.now() - sent >= RESEND_AFTER_MS;
+}
+
+function markConfirmation(passId: string): void {
+  sessionStorage.setItem(confirmKey(passId), String(Date.now()));
+}
+
 /** A second tap while the first runs shows that one; anything else is an error. */
 function useShowRunning() {
   const { follow } = useHolderOperations();
@@ -163,7 +176,10 @@ function useHolderHelp(passId: string) {
       } catch (error) {
         // Not a fresh email session: the owner confirms by a link, and the action runs from that session.
         if (!(isApiError(error) && error.code === 'EMAIL_CONFIRMATION_REQUIRED')) throw error;
+        // One link at a time: a second tap inside the cooldown only says to look in the inbox.
+        if (!confirmationDue(passId)) return null;
         await sendLostPhoneConfirmation(passId);
+        markConfirmation(passId);
         return null;
       }
     },

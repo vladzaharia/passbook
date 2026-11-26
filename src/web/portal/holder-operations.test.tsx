@@ -13,6 +13,7 @@ import { cachedOperation, resetOperationCache, trackOperation } from '../ui/oper
 import { passFixture } from './fixtures.ts';
 
 afterEach(() => {
+  sessionStorage.clear();
   vi.unstubAllGlobals();
   resetOperationCache();
   window.history.replaceState(null, '', '/');
@@ -142,6 +143,35 @@ describe('I lost my phone as an operation', () => {
 });
 
 describe('lost phone asks for a fresh email confirmation', () => {
+  it('sends one link, and a second tap inside the minute only says to look in the inbox', async () => {
+    sessionStorage.clear();
+    const user = userEvent.setup();
+    let links = 0;
+    await renderApp('/passes/p1', {
+      handlers: {
+        '/api/v1/me/passes/p1': () => json(passFixture()),
+        '/api/v1/me/passes/p1/lost-phone': () =>
+          problem(409, 'EMAIL_CONFIRMATION_REQUIRED', 'Confirm by email first.'),
+        '/api/v1/me/passes/p1/lost-phone/confirmation': () => {
+          links++;
+          return json({ ok: true }, 202);
+        },
+      },
+    });
+    for (let i = 0; i < 2; i++) {
+      await openMore(user, HOLDER_COPY.lostPhone);
+      await user.click(
+        within(await screen.findByRole('alertdialog')).getByRole('button', {
+          name: 'Replace pass',
+        }),
+      );
+      await waitFor(() =>
+        expect(screen.getAllByText(HOLDER_COPY.lostPhoneConfirm).length).toBeGreaterThan(0),
+      );
+    }
+    expect(links).toBe(1);
+  });
+
   it('sends the link when the session is not fresh, and says so', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
@@ -162,7 +192,7 @@ describe('lost phone asks for a fresh email confirmation', () => {
     await user.click(
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Replace pass' }),
     );
-    expect(await screen.findByText(HOLDER_COPY.lostPhoneConfirm)).toBeVisible();
+    expect((await screen.findAllByText(HOLDER_COPY.lostPhoneConfirm))[0]).toBeVisible();
     expect(calls).toEqual(['lost', 'confirmation']);
   });
 

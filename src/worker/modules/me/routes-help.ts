@@ -9,8 +9,9 @@ import { currentUserId } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { MAGIC_COOKIE, readCookie, setBindingCookie } from '../auth/cookies.ts';
+import { ipPrefix, MAGIC_COOKIE, readCookie, setBindingCookie } from '../auth/cookies.ts';
 import { MAGIC_TTL_MS } from '../auth/magic-service.ts';
 import { lostMyPhone, resendMyPass, sendLostPhoneConfirmation } from './service-help.ts';
 
@@ -77,7 +78,7 @@ export function registerMyPassHelp(router: Router): void {
     },
     async (c) => {
       const ctx = serviceContext(c);
-      // As the sign-in request: the link works only in this browser.
+      // As the sign-in request: only the 6-digit code is bound to this browser. The link works anywhere; the inbox is the proof.
       const existing = readCookie(c, MAGIC_COOKIE);
       const binding = existing && existing.length >= 32 ? existing : ctx.ids.token(32);
       setBindingCookie(c, MAGIC_COOKIE, binding, MAGIC_TTL_MS / 1000);
@@ -87,6 +88,7 @@ export function registerMyPassHelp(router: Router): void {
           currentUserId(c),
           c.req.valid('param').id,
           await sha256Hex(binding),
+          ipPrefix(clientIp(c)),
         ),
         202,
       );

@@ -50,9 +50,13 @@ describe('lost phone needs a fresh email confirmation', () => {
     expect(row?.scan_code).toBe(before);
   });
 
-  it('refuses a Polaris ID session even when it is new', async () => {
+  it('refuses a Polaris ID session proven long ago', async () => {
     const s = await setup();
-    const oidc = await makeSession(s.kit.fx, { userId: s.user.id, amr: 'oidc' });
+    const oidc = await makeSession(s.kit.fx, {
+      userId: s.user.id,
+      amr: 'oidc',
+      authTime: s.kit.clock.now() - 60 * MIN,
+    });
     const res = await s.post(`/passes/${s.pass.id}/lost-phone`, oidc.headers);
     expect(res.status).toBe(409);
   });
@@ -75,6 +79,26 @@ describe('lost phone needs a fresh email confirmation', () => {
     expect(run.status).toBe(202);
     expect((await s.read('x', fresh.headers)).status).toBe(404);
     expect((await s.read('x', s.mine.headers)).status).toBe(401);
+  });
+
+  it('accepts a Polaris ID sign-in proven in the last 10 minutes', async () => {
+    const s = await setup();
+    const oidc = await makeSession(s.kit.fx, {
+      userId: s.user.id,
+      amr: 'oidc',
+      authTime: s.kit.clock.now(),
+    });
+    const res = await s.post(`/passes/${s.pass.id}/lost-phone`, oidc.headers);
+    expect(res.status).toBe(202);
+  });
+
+  it('holds the confirmation mail to the sign-in caps and 3 an hour per pass', async () => {
+    const s = await setup();
+    const codes: number[] = [];
+    for (let i = 0; i < 5; i++)
+      codes.push((await s.post(`/passes/${s.pass.id}/lost-phone/confirmation`)).status);
+    expect(codes.slice(0, 3)).toEqual([202, 202, 202]);
+    expect(codes).toContain(429);
   });
 
   it('will not mail the link for a pass that is not the caller own', async () => {
