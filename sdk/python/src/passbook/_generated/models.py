@@ -1183,6 +1183,14 @@ __all__ = [
     "PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem",
     "PlatformAppleIdentitiesListResponseOpenRunsItem",
     "PlatformAppleIdentitiesMakeDefaultResponse",
+    "PlatformAppleIdentityMovesListResponse",
+    "PlatformAppleIdentityMovesListResponseItemsItem",
+    "PlatformAppleIdentityMovesPreviewResponse",
+    "PlatformAppleIdentityMovesStartParams",
+    "PlatformAppleIdentityMovesStartResponse",
+    "PlatformAppleIdentityMovesStartResponseStartedBy",
+    "PlatformAppleIdentityMovesStartResponseStepsItem",
+    "PlatformAppleIdentityMovesStartTimerResponse",
     "PlatformAuditEntriesListResponse",
     "PlatformAuditEntriesListResponseItemsItem",
     "PlatformEntitlementPresetsListResponse",
@@ -9363,6 +9371,83 @@ class PlatformAppleIdentitiesListResponseOpenRunsItem(_Model):
 class PlatformAppleIdentitiesMakeDefaultResponse(_Model):
     identityId: str
     changed: bool
+
+class PlatformAppleIdentityMovesListResponse(_Model):
+    items: _List[PlatformAppleIdentityMovesListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformAppleIdentityMovesListResponseItemsItem(_Model):
+    id: str
+    operationId: str
+    orgId: str
+    fromIdentityId: str
+    toIdentityId: str
+    oldPassId: str
+    newPassId: str
+    state: _Literal["planned", "issued", "notified", "registered", "voided", "kept", "kept_both", "failed"] | str
+    reason: str | None
+    conflictCount: int
+    registeredAt: int | None
+    voidAt: int | None
+    voidedAt: int | None
+    updatedAt: int
+
+class PlatformAppleIdentityMovesPreviewResponse(_Model):
+    toIdentityId: str
+    passes: int
+    registered: int
+    holders: int
+    kept: _Dict[str, int]
+
+class PlatformAppleIdentityMovesStartParams(_Model):
+    orgId: str
+    fromIdentityId: str
+    toIdentityId: str | None = None
+
+class PlatformAppleIdentityMovesStartResponse(_Model):
+    id: str
+    kind: str
+    status: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    title: str
+    text: str
+    orgId: str | None
+    mode: _Literal["live", "test", None] | str
+    target: _Dict[str, _Any] | None
+    step: str | None
+    steps: _List[PlatformAppleIdentityMovesStartResponseStepsItem]
+    attempt: int
+    cancelable: bool
+    cancelRequested: bool
+    startedBy: PlatformAppleIdentityMovesStartResponseStartedBy
+    createdAt: int
+    startedAt: int | None
+    updatedAt: int
+    finishedAt: int | None
+    error: _Dict[str, _Any] | None
+    result: _Dict[str, _Any] | None
+    revision: int
+    pollAfterMs: int
+
+class PlatformAppleIdentityMovesStartResponseStartedBy(_Model):
+    type: _Literal["user", "api_key", "system"] | str
+    id: str | None
+
+class PlatformAppleIdentityMovesStartResponseStepsItem(_Model):
+    key: str
+    label: str
+    state: _Literal["pending", "running", "waiting", "done", "failed", "skipped"] | str
+    done: int | None
+    total: int | None
+    detail: str | None
+    until: int | None
+    waitingReason: _Literal["blocked", "due", None] | str
+    group: str | None
+    startedAt: int | None
+    finishedAt: int | None
+
+class PlatformAppleIdentityMovesStartTimerResponse(_Model):
+    moveId: str
+    armed: _Literal[True]
 
 class PlatformAuditEntriesListResponse(_Model):
     items: _List[PlatformAuditEntriesListResponseItemsItem]

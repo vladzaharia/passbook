@@ -7651,6 +7651,96 @@ export type PlatformAppleIdentitiesMakeDefaultResponse = {
   changed: boolean;
 };
 
+export type PlatformAppleIdentityMovesListResponse = {
+  items: Array<{
+    id: string;
+    operationId: string;
+    orgId: string;
+    fromIdentityId: string;
+    toIdentityId: string;
+    oldPassId: string;
+    newPassId: string;
+    state: "planned" | "issued" | "notified" | "registered" | "voided" | "kept" | "kept_both" | "failed";
+    reason: string | null;
+    conflictCount: number;
+    registeredAt: number | null;
+    voidAt: number | null;
+    voidedAt: number | null;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformAppleIdentityMovesPreviewResponse = {
+  toIdentityId: string;
+  passes: number;
+  registered: number;
+  holders: number;
+  kept: Record<string, number>;
+};
+
+export type PlatformAppleIdentityMovesStartParams = {
+  orgId: string;
+  fromIdentityId: string;
+  toIdentityId?: string | null;
+};
+
+export type PlatformAppleIdentityMovesStartResponse = {
+  id: string;
+  kind: string;
+  status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  title: string;
+  text: string;
+  orgId: string | null;
+  mode: "live" | "test" | null;
+  target: {
+    type: string;
+    id: string;
+  } | null;
+  step: string | null;
+  steps: Array<{
+    key: string;
+    label: string;
+    state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+    done: number | null;
+    total: number | null;
+    detail: string | null;
+    until: number | null;
+    waitingReason: "blocked" | "due" | null;
+    group: string | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+  }>;
+  attempt: number;
+  cancelable: boolean;
+  cancelRequested: boolean;
+  startedBy: {
+    type: "user" | "api_key" | "system";
+    id: string | null;
+  };
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  error: {
+    code: string;
+    message: string;
+    step: string | null;
+    retryable: boolean;
+  } | null;
+  result: {
+    href: string | null;
+    ids: Record<string, string>;
+  } | null;
+  revision: number;
+  pollAfterMs: number;
+};
+
+export type PlatformAppleIdentityMovesStartTimerResponse = {
+  moveId: string;
+  armed: true;
+};
+
 export type PlatformAuditEntriesListResponse = {
   items: Array<{
     id: number;

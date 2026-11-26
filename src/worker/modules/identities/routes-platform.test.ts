@@ -18,7 +18,6 @@ import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { setupKit } from '../passes/pass-test-fixtures.ts';
 
 const BASE = '/api/v1/platform/apple/identities';
 let appEnv: AppEnv;
