@@ -1525,7 +1525,7 @@
   },
   "OPERATION_NOT_RETRYABLE": {
     "title": "Operation cannot be retried",
-    "when": "The operation has not failed, or its failure cannot be retried.",
+    "when": "The operation has not failed, or its failure cannot be retried. A run id that does not name a repeatable run is 404.",
     "fix": "Read it with GET /api/v1/operations/{id}. Start the action again instead.",
     "retryable": false
   },
