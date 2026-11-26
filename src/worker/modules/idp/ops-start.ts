@@ -1,3 +1,4 @@
+import type { StartSetup } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, UnavailableError } from '../../platform/errors.ts';
@@ -17,15 +18,29 @@ import { restoreTarget } from './ops-runs.ts';
 import { latchedAt } from './repo-scim.ts';
 import { statesOfUser } from './repo-state.ts';
 import { BREAKER_KEY, BREAKER_LATCH_MS } from './scim-effects.ts';
+import { setupTarget } from './setup-run.ts';
+import { rotateTarget } from './setup-token.ts';
 import type { WritableRole } from './types.ts';
 
 type Spec = {
-  kind: 'idp.check' | 'idp.dry_run' | 'idp.restore' | 'idp.breaker_clear' | 'idp.offboard';
+  kind:
+    | 'idp.check'
+    | 'idp.dry_run'
+    | 'idp.restore'
+    | 'idp.breaker_clear'
+    | 'idp.offboard'
+    | 'idp.setup'
+    | 'idp.scim_rotate';
   target?: { type: string; id: string };
   subject?: Record<string, string>;
   idempotencyKey: string | undefined;
-  /** The audit row for the start: who did it, to what. */
-  audit: { action: string; targetType: string; targetId: string };
+  /** The audit row for the start: who did it, to what. `null`: a preview writes none. */
+  audit: {
+    action: string;
+    targetType: string;
+    targetId: string;
+    detail?: Record<string, unknown>;
+  } | null;
 };
 
 /**
@@ -84,14 +99,15 @@ export async function startIdpOp(
     ...(spec.subject ? { subject: spec.subject } : {}),
   });
   if (!created) return operation;
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: auth.userId,
-    action: spec.audit.action,
-    targetType: spec.audit.targetType,
-    targetId: spec.audit.targetId,
-    detail: { operationId: operation.id },
-  });
+  if (spec.audit)
+    await recordAudit(ctx, {
+      actorType: 'user',
+      actorId: auth.userId,
+      action: spec.audit.action,
+      targetType: spec.audit.targetType,
+      targetId: spec.audit.targetId,
+      detail: spec.audit.detail ?? { operationId: operation.id },
+    });
   await sendOperationRun(ctx, operation.id, operation.attempt);
   return operation;
 }
@@ -171,5 +187,57 @@ export async function startBreakerClear(
     target: { type: 'scim_breaker', id: String(trippedAt) },
     idempotencyKey,
     audit: { action: 'idp.breaker_clear', targetType: 'idp', targetId: 'scim_breaker' },
+  });
+}
+
+/**
+ * Set up Polaris ID, or preview it: a dry run unless `dryRun` is false, and a preview writes nothing, audit
+ * included. The run's choices ride in the target, so a replay with another body is a different request.
+ */
+export async function startSetup(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  body: StartSetup,
+  idempotencyKey: string | undefined,
+): Promise<OperationDto> {
+  const target = setupTarget(body.dryRun, body.items);
+  const again = await replay(ctx, auth, 'idp.setup', idempotencyKey, target);
+  if (again) return again;
+  needBinding(ctx);
+  await limited(ctx, auth);
+  return startIdpOp(ctx, auth, {
+    kind: 'idp.setup',
+    target,
+    idempotencyKey,
+    audit: body.dryRun
+      ? null
+      : { action: 'idp.setup', targetType: 'idp', targetId: 'setup', detail: { dryRun: false } },
+  });
+}
+
+/** Rotate the SCIM token, or preview it. */
+export async function startRotate(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  dryRun: boolean,
+  idempotencyKey: string | undefined,
+): Promise<OperationDto> {
+  const target = rotateTarget(dryRun);
+  const again = await replay(ctx, auth, 'idp.scim_rotate', idempotencyKey, target);
+  if (again) return again;
+  needBinding(ctx);
+  await limited(ctx, auth);
+  return startIdpOp(ctx, auth, {
+    kind: 'idp.scim_rotate',
+    target,
+    idempotencyKey,
+    audit: dryRun
+      ? null
+      : {
+          action: 'idp.scim_rotate',
+          targetType: 'idp',
+          targetId: 'scim_token',
+          detail: { dryRun: false },
+        },
   });
 }

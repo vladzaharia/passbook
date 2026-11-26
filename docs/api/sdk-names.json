@@ -1519,6 +1519,18 @@
     "resource": "platform.idp",
     "method": "pause"
   },
+  "polaris-setup.getPlatformIdpSetup": {
+    "resource": "platform.idp.setup",
+    "method": "retrieve"
+  },
+  "polaris-setup.postPlatformIdpScimTokenRotate": {
+    "resource": "platform.idp.scimToken",
+    "method": "rotate"
+  },
+  "polaris-setup.postPlatformIdpSetup": {
+    "resource": "platform.idp.setup",
+    "method": "run"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",

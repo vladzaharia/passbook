@@ -3,6 +3,8 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { OperationRunner, OperationRunners } from '../operations/registry.ts';
 import { offboardRun } from './ops-offboard.ts';
 import { breakerRun, checkRun, restoreRun } from './ops-runs.ts';
+import { setupRun } from './setup-run.ts';
+import { rotateRun } from './setup-token.ts';
 
 /** A retry runs the start's checks again: a platform admin signed in with Polaris ID (no break-glass), and the rate limit. */
 const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ctx, op, caller) => {
@@ -29,4 +31,6 @@ export const operationRunners: OperationRunners = {
   'idp.restore': { run: restoreRun, authorizeRetry },
   'idp.breaker_clear': { run: breakerRun, authorizeRetry },
   'idp.offboard': { run: offboardRun, authorizeRetry },
+  'idp.setup': { run: setupRun, authorizeRetry },
+  'idp.scim_rotate': { run: rotateRun, authorizeRetry },
 };

@@ -66497,6 +66497,766 @@
           "operation"
         ]
       },
+      "PlatformIdpSetupRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "dry_run",
+              "live",
+              null
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "binding",
+                    "polaris_settings",
+                    "client",
+                    "groups",
+                    "client_groups",
+                    "client_restricted",
+                    "client_logo",
+                    "scim_token",
+                    "scim_provider",
+                    "scim_sync",
+                    "scim_mirror",
+                    "write_mode"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "done",
+                    "needed",
+                    "blocked"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "owner": {
+                  "type": "boolean"
+                },
+                "counts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  }
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "placed",
+                          "allowed",
+                          "needed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "state"
+                    ]
+                  }
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "items"
+        ]
+      },
+      "PlatformIdpSetupRunParams": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean",
+            "default": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "groups",
+                "client_groups",
+                "client_restricted",
+                "client_logo",
+                "scim_provider",
+                "scim_sync"
+              ]
+            },
+            "maxItems": 6
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlatformIdpSetupRunResponse": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "waiting",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "orgId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "live",
+                  "test",
+                  null
+                ]
+              },
+              "target": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "waiting",
+                        "done",
+                        "failed",
+                        "skipped"
+                      ]
+                    },
+                    "done": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "until": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "waitingReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "blocked",
+                        "due",
+                        null
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "state",
+                    "done",
+                    "total",
+                    "detail",
+                    "until",
+                    "waitingReason",
+                    "group",
+                    "startedAt",
+                    "finishedAt"
+                  ]
+                }
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "cancelable": {
+                "type": "boolean"
+              },
+              "cancelRequested": {
+                "type": "boolean"
+              },
+              "startedBy": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "api_key",
+                      "system"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finishedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "step": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "step",
+                  "retryable"
+                ]
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "ids": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^[A-Za-z0-9_.:-]+$"
+                    }
+                  }
+                },
+                "required": [
+                  "href",
+                  "ids"
+                ]
+              },
+              "revision": {
+                "type": "integer"
+              },
+              "pollAfterMs": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "status",
+              "title",
+              "text",
+              "orgId",
+              "mode",
+              "target",
+              "step",
+              "steps",
+              "attempt",
+              "cancelable",
+              "cancelRequested",
+              "startedBy",
+              "createdAt",
+              "startedAt",
+              "updatedAt",
+              "finishedAt",
+              "error",
+              "result",
+              "revision",
+              "pollAfterMs"
+            ]
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      },
+      "PlatformIdpScimTokenRotateParams": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlatformIdpScimTokenRotateResponse": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "waiting",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "orgId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "mode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "live",
+                  "test",
+                  null
+                ]
+              },
+              "target": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "step": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "waiting",
+                        "done",
+                        "failed",
+                        "skipped"
+                      ]
+                    },
+                    "done": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "detail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "until": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "waitingReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "blocked",
+                        "due",
+                        null
+                      ]
+                    },
+                    "group": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "state",
+                    "done",
+                    "total",
+                    "detail",
+                    "until",
+                    "waitingReason",
+                    "group",
+                    "startedAt",
+                    "finishedAt"
+                  ]
+                }
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "cancelable": {
+                "type": "boolean"
+              },
+              "cancelRequested": {
+                "type": "boolean"
+              },
+              "startedBy": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "api_key",
+                      "system"
+                    ]
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "id"
+                ]
+              },
+              "createdAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "startedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finishedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "step": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "step",
+                  "retryable"
+                ]
+              },
+              "result": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "ids": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^[A-Za-z0-9_.:-]+$"
+                    }
+                  }
+                },
+                "required": [
+                  "href",
+                  "ids"
+                ]
+              },
+              "revision": {
+                "type": "integer"
+              },
+              "pollAfterMs": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "status",
+              "title",
+              "text",
+              "orgId",
+              "mode",
+              "target",
+              "step",
+              "steps",
+              "attempt",
+              "cancelable",
+              "cancelRequested",
+              "startedBy",
+              "createdAt",
+              "startedAt",
+              "updatedAt",
+              "finishedAt",
+              "error",
+              "result",
+              "revision",
+              "pollAfterMs"
+            ]
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      },
       "PlatformIdpRetrieveResponse": {
         "type": "object",
         "properties": {
@@ -139882,6 +140642,194 @@
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/setup": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:status",
+        "summary": "What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.",
+        "operationId": "polaris-setup.getPlatformIdpSetup",
+        "tags": [
+          "polaris-setup"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpSetupRetrieveResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp.setup",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      },
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:settings",
+        "summary": "Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`).",
+        "operationId": "polaris-setup.postPlatformIdpSetup",
+        "tags": [
+          "polaris-setup"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformIdpSetupRunParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpSetupRunResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp.setup",
+          "method": "run"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/idp/scim-token/rotate": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:settings",
+        "summary": "Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`).",
+        "operationId": "polaris-setup.postPlatformIdpScimTokenRotate",
+        "tags": [
+          "polaris-setup"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformIdpScimTokenRotateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformIdpScimTokenRotateResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.idp.scimToken",
+          "method": "rotate"
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       }
     },

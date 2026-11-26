@@ -26,6 +26,7 @@ import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
 import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
+import { idpSetupRoutes } from './modules/idp/routes-setup.ts';
 import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
 import { userAccessRoutes } from './modules/idp/routes-users.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
@@ -234,6 +235,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/users', userAccessRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
   app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpSetupRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/platform', platformInvitationRoutes);

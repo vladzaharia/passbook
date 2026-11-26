@@ -2462,6 +2462,105 @@
       ]
     },
     {
+      "code": "IDP_SETUP_AUTH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_BINDING_ABSENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_WRONG",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_LAYOUT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_MIRROR_EMPTY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SCIM_PUSH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SETTINGS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_TOKEN",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403
