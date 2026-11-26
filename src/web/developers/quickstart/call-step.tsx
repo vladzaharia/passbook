@@ -60,6 +60,7 @@ export function RunStep({
             codes={codes}
             lang={lang}
             onLang={onLang}
+            name="Create pass"
             lit={['input', 'attendee', 'ticketId']}
             base="create"
           />

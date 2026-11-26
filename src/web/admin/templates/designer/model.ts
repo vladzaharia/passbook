@@ -83,6 +83,10 @@ export const hasBothFaces = (pass: Dict): boolean =>
   isRecord(pass.posterGeneric) &&
   PASS_STYLES.some((s) => s !== 'posterGeneric' && isRecord(pass[s]));
 
+/** With both layouts the Edit layout toggle picks the face the card draws; undefined otherwise. */
+export const previewTargetOf = (pass: Dict, target?: Target): 'ios27' | 'legacy' | undefined =>
+  hasBothFaces(pass) ? (target === 'poster' ? 'ios27' : 'legacy') : undefined;
+
 export function dictOf(pass: Dict, target?: Target): Dict {
   const dict = pass[styleOf(pass, target)];
   return isRecord(dict) ? dict : {};

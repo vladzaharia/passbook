@@ -1,11 +1,9 @@
 import { releaseHead } from '../../platform/authority-checks.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
+import { reviews, soleReviewerSql } from '../templates/repo-sole-reviewer.ts';
 import { projectionPolicy } from './projection-contract.ts';
-import {
-  type ProjectionAuthority,
-  versionAuthorIndependentSql,
-} from './projection-system-authority.ts';
+import { approvalStandsSql, type ProjectionAuthority } from './projection-system-authority.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { projectionGrant } from './repo-projection-grants.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
@@ -66,7 +64,10 @@ export async function writeProjectionRelease(
           AND c.provider = ${p(c.provider)} AND c.candidate_hash = ${p(c.candidateHash)}
           AND c.credential_keyset_commitment = ${pinnedKeysetSql}
           AND ap.credential_keyset_commitment = c.credential_keyset_commitment
-          AND ap.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'ap.reviewer_id')}
+          AND ${approvalStandsSql('ap', 'c')}
+          AND (${p(input.action)} != 'release' OR ap.kind != 'sole' OR (NOT EXISTS (SELECT 1 FROM org_memberships m
+            WHERE m.org_id = c.org_id AND m.created_at > ap.created_at AND ${reviews('m')})
+            AND ${soleReviewerSql('c.org_id', () => 'ap.reviewer_id')}))
           AND c.adapter_revision = ${p(policy.adapterRevision)}
           AND c.adapter_capabilities = ${p(JSON.stringify(policy.adapterCapabilities))}
           AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}

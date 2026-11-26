@@ -200,5 +200,27 @@
         "from": 1794000000000
       }
     }
+  },
+  "scan.postScanSignOut": {
+    "snippet": {
+      "headers": {
+        "x-passbook-device": "door-1"
+      },
+      "request": {
+        "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "tag": "returned"
+      }
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "snippet": {
+      "request": {
+        "id": "04A1B2C3D4E5F6",
+        "format": "hex",
+        "binding": "pass",
+        "label": "Wristband 14"
+      }
+    }
   }
 }

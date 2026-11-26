@@ -1,5 +1,7 @@
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
-import { BuddyArt } from '../../ui/art/buddy-art.tsx';
+import { PATHS } from '../../../shared/developers.ts';
+import { Gate } from '../ui/gate.tsx';
 
 /**
  * The request log's prerendered page: the signed-out state. The islands replace it once the session reads the
@@ -15,17 +17,7 @@ export function LogsView() {
       </div>
       <div className="logs-api" data-island="api-rail" />
       <div className="logs-main" data-island="logs">
-        <section className="card pstate" data-kind="empty" aria-labelledby="logs-gate-t">
-          <BuddyArt size="sm" at="end" still />
-          <h2 id="logs-gate-t" className="h2 pstate-t">
-            {LOGS_COPY.signedOut}
-          </h2>
-          <div className="pstate-a">
-            <a className="btn" href="/login?next=%2Fdevelopers%2Flogs">
-              {LOGS_COPY.signIn}
-            </a>
-          </div>
-        </section>
+        <Gate title={GATE_COPY.lines.logs} next={PATHS.logs} />
       </div>
     </>
   );

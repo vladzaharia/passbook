@@ -525,5 +525,12 @@
         "panel": null
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "cr80p",
+    "barcode": "qr",
+    "kind": "badge",
+    "holder": false
   }
 }

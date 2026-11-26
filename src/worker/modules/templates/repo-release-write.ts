@@ -221,7 +221,6 @@ export async function writeApproval(
         a.reviewerId,
         authority.kind === 'platform' ? '' : authority.membershipId,
         a.kind,
-        a.createdAt,
         authority.kind === 'api_key',
       ),
       ...keyChecks(authority.kind),

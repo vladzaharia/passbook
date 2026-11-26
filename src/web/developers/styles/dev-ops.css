@@ -100,3 +100,9 @@
 .status-list .incident .row {
   width: 100%;
 }
+
+.status-banner .status-face {
+  width: 36px;
+  height: auto;
+  flex: none;
+}

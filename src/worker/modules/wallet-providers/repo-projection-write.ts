@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
+import { soleReviewerSql } from '../templates/repo-sole-reviewer.ts';
 import { hasCredentialSql } from './account-presence.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import {
@@ -180,14 +181,18 @@ export async function writeProjectionCandidate(
 }
 
 /** The candidate as approved: hash, authors, policy, keyset, source and the account's epoch. */
-const approvable = (c: ProjectionCandidate, reviewerId: string) => {
+const approvable = (c: ProjectionCandidate, reviewerId: string, kind: ApprovalRow['kind']) => {
   const policy = projectionPolicy(c.provider);
   return check(
     'lineage',
     (p) => `EXISTS (SELECT 1 FROM template_candidates c
       WHERE c.id = ${p(c.id)} AND c.org_id = a.org_id AND c.mode = ${p(c.mode)} AND c.provider = ${p(c.provider)}
         AND c.candidate_hash = ${p(c.candidateHash)}
-        AND c.author_id != ${p(reviewerId)} AND ${versionAuthorIndependentSql('c', p(reviewerId))}
+        AND ${
+          kind === 'sole'
+            ? soleReviewerSql('c.org_id', () => p(reviewerId))
+            : `c.author_id != ${p(reviewerId)} AND ${versionAuthorIndependentSql('c', p(reviewerId))}`
+        }
         AND c.adapter_revision = ${p(policy.adapterRevision)}
         AND c.adapter_capabilities = ${p(JSON.stringify(policy.adapterCapabilities))}
         AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}
@@ -203,7 +208,9 @@ export async function writeProjectionApproval(
   authority: ProjectionAuthority,
   audit: ProjectionAudit,
 ): Promise<boolean> {
-  const g = projectionGrant(ctx, authority, 'approve', c.mode, a.id, [approvable(c, a.reviewerId)]);
+  const g = projectionGrant(ctx, authority, 'approve', c.mode, a.id, [
+    approvable(c, a.reviewerId, a.kind),
+  ]);
   if (!g || a.reviewerId !== authority.userId) return false;
   return commitOne(ctx, g, 'approve', a.id, authority, c.orgId, c.templateId, audit, () =>
     g.insertJoined('template_approvals', {
@@ -212,10 +219,18 @@ export async function writeProjectionApproval(
         'id',
         'candidate_hash',
         'reviewer_id',
+        'kind',
         'created_at',
         'credential_keyset_commitment',
       ],
-      values: [a.id, a.candidateHash, a.reviewerId, a.createdAt, c.credentialKeysetCommitment],
+      values: [
+        a.id,
+        a.candidateHash,
+        a.reviewerId,
+        a.kind,
+        a.createdAt,
+        c.credentialKeysetCommitment,
+      ],
       returning: ['id'],
     }),
   );

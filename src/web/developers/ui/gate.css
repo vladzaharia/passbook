@@ -1,0 +1,71 @@
+/* The signed-out card: the buddy sits on its top edge, the line and the buttons beside it. Never stretched. */
+.gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 40px;
+  padding: 20px;
+  background: var(--dp-stage);
+  overflow: visible;
+}
+.gate-t {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.gate-a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-right: 72px;
+}
+.gate-a .btn {
+  width: auto;
+  flex: none;
+}
+/* The eyes follow Sign in: the button sits to the buddy's left. */
+.gate .wl-art [data-look] {
+  transition: translate 180ms ease-out;
+}
+.gate:has(.gate-a a:is(:hover, :focus-visible)) .wl-art [data-look] {
+  translate: -1.6px 0.8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate .wl-art [data-look] {
+    transition: none;
+  }
+  .gate:has(.gate-a a:is(:hover, :focus-visible)) .wl-art [data-look] {
+    translate: none;
+  }
+}
+@media (max-width: 640px) {
+  .gate {
+    margin-top: 56px;
+    padding: 16px;
+  }
+  .gate-a {
+    margin-right: 0;
+  }
+}
+/* In the Try it ticket: a small card on the ticket's body; the buddy sits on its edge, clear of the sample above. */
+.gate-inline {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin: 56px 16px 16px;
+  padding: 16px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--dp-stage);
+}
+.gate-inline .gate-a {
+  margin-right: 72px;
+}
+@media (max-width: 640px) {
+  .gate-inline .gate-a {
+    margin-right: 0;
+  }
+}

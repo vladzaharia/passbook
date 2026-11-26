@@ -283,4 +283,33 @@ export function registerCommitFenceActions() {
       { code: 'SCAN_CONFIG_CHANGED' },
     );
   });
+  it('fences an alone approval when another approver is added after the read', async () => {
+    const me = await kit.staff('desk');
+    await run(kit.env.DB, 'UPDATE scan_staff SET disabled_at = ? WHERE org_id = ? AND id != ?', [
+      kit.clock.now(),
+      kit.org.id,
+      me.id,
+    ]);
+    const pass = await kit.scanPass(managerTemplate);
+    const scanner = await kit.scanner({
+      templateIds: [managerTemplate],
+      settings: { ...tracking, approvals: 'desk', staffSignIn: true },
+    });
+    await run(
+      kit.env.DB,
+      'UPDATE scanners SET staff_id = ?, staff_since = ?, staff_seen_at = ? WHERE id = ?',
+      [me.id, kit.clock.now(), kit.clock.now(), scanner.id],
+    );
+    await expectFencedAction(
+      scanner,
+      pass,
+      async () => {
+        await kit.staff('desk');
+      },
+      {
+        extra: { approval: { staffId: me.id, pin: me.pin, alone: true } },
+        code: 'SCAN_STAFF_CHANGED',
+      },
+    );
+  });
 }

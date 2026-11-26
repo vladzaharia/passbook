@@ -1,5 +1,6 @@
 import { Hash, Lock, RotateCw } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { classify } from '../../../shared/developers-search.ts';
@@ -8,6 +9,7 @@ import { actionItem, groupsOf, guideItem, item } from './items.tsx';
 import { type Lookup, loadIndex, reportMiss, resolveId } from './net.ts';
 import { Preview } from './preview.tsx';
 import { hintFor, isEmpty, narrow, type Results, search, wordsOf } from './rank.ts';
+import { suggestions } from './suggest.ts';
 import type { SearchIndex } from './types.ts';
 
 const C = SEARCH_COPY;
@@ -219,14 +221,31 @@ export function SearchPalette({
       hint={C.hints.footer}
       emptyLabel={quiet ? null : C.empty(query.trim())}
       empty={
-        hint ? (
+        index && results && isEmpty(results) && !quiet ? (
           <div className="srch-empty">
-            <p className="sm muted">{hint.text}</p>
+            {hint ? (
+              <>
+                <p className="sm muted">{hint.text}</p>
+                <div className="srch-pills">
+                  {hint.links.map((l) => (
+                    <a key={l.href} className="pill neutral" href={l.href}>
+                      {l.label}
+                    </a>
+                  ))}
+                </div>
+              </>
+            ) : null}
             <div className="srch-pills">
-              {hint.links.map((l) => (
-                <a key={l.href} className="pill neutral" href={l.href}>
-                  {l.label}
-                </a>
+              <span className="sm muted">{GATE_COPY.search.try}</span>
+              {suggestions(index).map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  className="pill neutral mono"
+                  onClick={() => setQuery(term)}
+                >
+                  {term}
+                </button>
               ))}
             </div>
           </div>

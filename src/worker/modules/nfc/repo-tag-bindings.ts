@@ -1,4 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
+import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { all, first } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -146,4 +148,20 @@ export async function lapsedBindings(db: Db, now: number, limit: number): Promis
       [now, limit],
     )
   ).map((r) => ({ id: r.id, orgId: r.org_id, mode: r.mode, tagId: r.tag_id, passId: r.pass_id }));
+}
+
+/** The pass is in the principal's org and mode and, for a key limited to templates or styles, inside its limits. */
+export async function passInTenantLimits(
+  db: D1Database,
+  principal: Principal,
+  now: number,
+  passId: string,
+): Promise<boolean> {
+  const p = authorityPredicate(principal, { scope: 'org_mode', now });
+  const row = await first<{ id: string }>(
+    db,
+    `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND p.id = ? AND ${tenantFilter('p', 'passes')}`,
+    [...p.params, passId],
+  );
+  return row !== null;
 }

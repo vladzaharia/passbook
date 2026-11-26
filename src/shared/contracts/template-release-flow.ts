@@ -144,12 +144,14 @@ export type ReleaseResult = z.infer<typeof ReleaseResultSchema>;
 /** The release route answers a result, or a plan when `dryRun` is set. */
 export const ReleaseResponseSchema = z.union([ReleaseResultSchema, ReleasePlanSchema]);
 
-/** `POST /templates/{id}/review`: peer approvals on both modes' candidates for `version`. */
+/** `POST /templates/{id}/review`: approvals on both modes' candidates for `version`; peer ones, or the author's own with `alone`. */
 export const ReviewTemplateSchema = z.strictObject({
   orgId: IdSchema.optional(),
   version: z.string().min(1).max(64),
   /** Also release, when the reviewer can publish. */
   release: z.boolean().optional(),
+  /** The author confirms approving their own work: allowed when they are the org's only reviewer. */
+  alone: z.boolean().optional(),
   note: z.string().trim().min(1).max(500).optional(),
 });
 export type ReviewTemplate = z.infer<typeof ReviewTemplateSchema>;

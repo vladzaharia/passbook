@@ -1,5 +1,5 @@
 import { hasCredentialSql } from './account-presence.ts';
-import { versionAuthorIndependentSql } from './projection-system-authority.ts';
+import { approvalStandsSql } from './projection-system-authority.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
 /**
@@ -142,8 +142,7 @@ export function walletInstanceProofSql(
               AND candidate.credential_keyset_commitment = ${op}.credential_keyset_commitment
               AND approval.credential_keyset_commitment = ${op}.credential_keyset_commitment))
             AND ((${i}.provider != 'samsung' OR json_extract(candidate.projection_json, '$.schema') = 2)
-              AND (approval.reviewer_id != candidate.author_id
-                AND ${versionAuthorIndependentSql('candidate', 'approval.reviewer_id')}
+              AND (${approvalStandsSql('approval', 'candidate')}
                 AND original.adapter_revision = ${op}.adapter_revision
                 AND original.audience_policy_revision = ${op}.policy_revision)))))
     )

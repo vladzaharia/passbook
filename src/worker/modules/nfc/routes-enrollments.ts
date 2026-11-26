@@ -13,7 +13,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { listEnrollScanners } from './enrollment-scanners.ts';
 import { cancelEnrollment, getEnrollment, requestEnrollment } from './enrollments.ts';
 import { passFacts } from './repo-tag-bindings.ts';
-import { actingIn, orgNotFound, passNotFound } from './route-access.ts';
+import { actingIn, CONSOLE, orgNotFound, passNotFound } from './route-access.ts';
 import { tagAuthorityOf } from './tags-admin.ts';
 
 const TAG = 'nfc-tags';
@@ -29,6 +29,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'get',
       path: '/scanners',
       summary: 'Scanners that can take a tag request',
+      auth: CONSOLE,
       query: TagScannerQuerySchema.extend(CursorQuerySchema.shape),
       response: pageOf(TagScannerSchema),
     },
@@ -66,7 +67,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'post',
       path: '/passes/{passId}/enrollments',
       summary: 'Ask a scanner to read a tag for a pass',
-      xFeature: { key: 'nfc', atLeast: 'basic' },
+      auth: { ...CONSOLE, feature: { key: 'nfc', atLeast: 'basic' } },
       params: PassParam,
       body: CreateTagEnrollmentSchema,
       response: TagEnrollmentSchema,
@@ -87,6 +88,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'get',
       path: '/passes/{passId}/enrollments/{id}',
       summary: 'A tag request',
+      auth: CONSOLE,
       params: EnrollmentParam,
       response: TagEnrollmentSchema,
     },
@@ -105,6 +107,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'delete',
       path: '/passes/{passId}/enrollments/{id}',
       summary: 'Cancel a tag request',
+      auth: CONSOLE,
       params: EnrollmentParam,
       response: TagEnrollmentSchema,
     },
