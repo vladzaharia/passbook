@@ -40,13 +40,13 @@ describe('the id chip', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     render(<IdChip id={REQ} kind="request" prefix="req" />);
     const face = screen.getByRole('button', { name: new RegExp(`, Copy request id ${REQ}$`) });
-    expect(face.textContent).toBe('req01938a1b…4a5b');
+    expect(face.textContent).toBe('req 01938a1b…4a5b');
     await act(async () => fireEvent.click(face));
     expect(writeText).toHaveBeenCalledWith(REQ);
-    expect(face.textContent).toBe('reqCopied');
+    expect(face.textContent).toBe('req Copied');
     expect(face.dataset.state).toBe('copied');
     act(() => vi.advanceTimersByTime(1600));
-    expect(face.textContent).toBe('req01938a1b…4a5b');
+    expect(face.textContent).toBe('req 01938a1b…4a5b');
   });
 
   it('opens its menu from the keyboard and gives focus back on Escape', () => {
