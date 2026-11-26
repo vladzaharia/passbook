@@ -1,6 +1,7 @@
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getManagedState } from './repo-provision.ts';
+import { PLATFORM_SLOTS, type PlatformSlot, platformTarget } from './provision-platform.ts';
+import { getManagedState, identityCertByPassType } from './repo-provision.ts';
 import { findOpenRun, finishRun, insertRun, type RunKind, type RunRow } from './repo-runs.ts';
 
 export interface StartedRun {
@@ -71,6 +72,30 @@ export function startProvision(
     orgId: input.orgId,
     createdBy: input.createdBy,
     ref: input.handle ? { requestedHandle: input.handle } : {},
+  });
+}
+
+/**
+ * One of the platform's own identities (`root`: pass.mobile.passbook, `devtest`): pass type, key and
+ * certificate, with no org. It opens to new passes but never becomes the default.
+ */
+export async function startPlatformProvision(
+  ctx: ServiceContext,
+  input: { slot: PlatformSlot; createdBy: string | null },
+): Promise<StartedRun> {
+  const held = await identityCertByPassType(ctx.env.DB, PLATFORM_SLOTS[input.slot].passType);
+  if (held?.cert_pem)
+    throw new ConflictError(
+      'This platform identity is already set up.',
+      'IDENTITY_ALREADY_PROVISIONED',
+    );
+  return startRun(ctx, {
+    kind: 'provision',
+    targetType: 'identity',
+    targetId: platformTarget(input.slot),
+    orgId: null,
+    createdBy: input.createdBy,
+    ref: { platformSlot: input.slot },
   });
 }
 

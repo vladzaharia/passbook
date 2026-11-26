@@ -31,7 +31,7 @@ export class FakeApple {
   refuse = false;
   /** Answer createPassType with this identifier instead of the requested one. */
   wrongIdentifier: string | null = null;
-  dropNext: 'createPassType' | 'createCertificate' | null = null;
+  dropNext: 'createPassType' | 'createPlatformPassType' | 'createCertificate' | null = null;
 
   readonly ca: FakeWwdr;
   readonly now: () => number;
@@ -41,7 +41,7 @@ export class FakeApple {
     this.now = now;
   }
 
-  private drop(method: 'createPassType' | 'createCertificate') {
+  private drop(method: 'createPassType' | 'createPlatformPassType' | 'createCertificate') {
     if (this.dropNext !== method) return;
     this.dropNext = null;
     throw new Error('socket closed');
@@ -64,6 +64,19 @@ export class FakeApple {
     const ref = { ascId: `asc-pt-${handle}`, identifier, name };
     this.passTypes.set(identifier, ref);
     this.drop('createPassType');
+    return { ...ref, outcome: 'created' };
+  }
+
+  async createPlatformPassType(slot: 'root' | 'devtest'): Promise<CreatedPassType> {
+    this.calls.push('createPlatformPassType');
+    const identifier =
+      this.wrongIdentifier ??
+      (slot === 'root' ? 'pass.mobile.passbook' : 'pass.mobile.passbook.devtest');
+    const held = this.passTypes.get(identifier);
+    if (held) return { ...held, outcome: 'existing' };
+    const ref = { ascId: `asc-pt-${slot}`, identifier, name: `PassBook ${slot}` };
+    this.passTypes.set(identifier, ref);
+    this.drop('createPlatformPassType');
     return { ...ref, outcome: 'created' };
   }
 

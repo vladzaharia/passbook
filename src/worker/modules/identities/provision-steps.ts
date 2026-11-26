@@ -10,8 +10,8 @@ import {
 import { buildIdentityMaterial } from './certificates.ts';
 import { generateCsr } from './csr.ts';
 import { intermediatePem } from './env-identity.ts';
-import { passTypeOf } from './handles.ts';
 import { openPendingKey, sealPendingKey } from './pending-key.ts';
+import { isPlatformRun, loadPlatform, provisionTarget } from './provision-platform.ts';
 import {
   auditOnce,
   beginStep,
@@ -33,7 +33,6 @@ import {
   insertProvisioningIdentity,
   managedIdentityOf,
   openIdentity,
-  setAscPassTypeId,
   setNextRotation,
   setOrgDefaultIdentity,
 } from './repo-provision.ts';
@@ -46,12 +45,15 @@ export const ROTATE_BEFORE_MS = 60 * DAY;
 export async function stepLoad(
   ctx: ServiceContext,
   runId: string,
-): Promise<{ kind: RunRow['kind']; done: boolean }> {
+): Promise<{ kind: RunRow['kind']; done: boolean; platform: boolean }> {
   const { run } = await loadRun(ctx, runId);
-  if (run.state === 'succeeded') return { kind: run.kind, done: true };
+  const platform = isPlatformRun(run);
+  if (run.state === 'succeeded') return { kind: run.kind, done: true, platform };
   const loaded = await beginStep(ctx, runId, 'load');
   const db = ctx.env.DB;
-  if (run.kind === 'provision') {
+  if (platform) {
+    await loadPlatform(ctx, loaded);
+  } else if (run.kind === 'provision') {
     const org = await getOrgRow(db, run.target_id);
     if (!org || org.status === 'deleted')
       throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
@@ -86,41 +88,7 @@ export async function stepLoad(
         'IDENTITY_NOT_ROTATABLE',
       );
   }
-  return { kind: run.kind, done: false };
-}
-
-/** Records the pass type Apple has, found or created, and audits it: the handle is reserved for this org, so a found one is ours. */
-export async function recordPassType(
-  ctx: ServiceContext,
-  runId: string,
-  passType: { ascId: string },
-  outcome: 'found' | 'created' = 'found',
-): Promise<void> {
-  const loaded = await loadRun(ctx, runId);
-  await patchRef(ctx, runId, { ascPassTypeId: passType.ascId });
-  if (loaded.run.kind === 'rotate') {
-    await setAscPassTypeId(ctx.env.DB, loaded.run.target_id, passType.ascId);
-    return;
-  }
-  await auditOnce(
-    ctx,
-    loaded,
-    'identity.pass_type_created',
-    { passTypeIdentifier: passTypeOf(loaded.ref.handle ?? ''), outcome },
-    null,
-  );
-}
-
-export async function identifierOf(ctx: ServiceContext, identityId: string): Promise<string> {
-  const row = await getIdentityRow(ctx.env.DB, identityId);
-  if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
-  return row.pass_type_identifier;
-}
-
-export async function orgNameOf(ctx: ServiceContext, orgId: string): Promise<string> {
-  const org = await getOrgRow(ctx.env.DB, orgId);
-  if (!org) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  return org.name;
+  return { kind: run.kind, done: false, platform };
 }
 
 /** The identity row of a rotate run, or the managed row a provision run builds. */
@@ -140,9 +108,10 @@ export async function stepKey(ctx: ServiceContext, runId: string): Promise<void>
   if (known && (known.state === 'pending' || known.state === 'active') && ref.csrDerB64) return;
 
   if (run.kind === 'provision') {
-    const passType = passTypeOf(ref.handle ?? '');
+    const target = provisionTarget(run, ref);
+    const { passType } = target;
     const existing = await identityByPassType(db, passType);
-    if (existing && existing.org_id !== run.target_id)
+    if (existing && existing.org_id !== target.orgId)
       throw new ConflictError('This pass type belongs to another identity.', 'IDENTITY_PTI_TAKEN');
     if (!existing) {
       if (!ref.ascPassTypeId)
@@ -152,11 +121,13 @@ export async function stepKey(ctx: ServiceContext, runId: string): Promise<void>
       const certId = ctx.ids.id();
       await insertProvisioningIdentity(db, {
         id: identityId,
-        orgId: run.target_id,
-        label: `Managed ${ref.handle}`,
+        orgId: target.orgId,
+        label: target.label,
         passTypeIdentifier: passType,
         teamIdentifier: ctx.env.PLATFORM_TEAM_ID,
-        handle: ref.handle ?? '',
+        handle: target.handle,
+        provenance: target.provenance,
+        purpose: target.purpose,
         ascPassTypeId: ref.ascPassTypeId,
         nfcEnabled: false,
         pending: {
@@ -165,7 +136,7 @@ export async function stepKey(ctx: ServiceContext, runId: string): Promise<void>
           origin: 'asc',
           credential: await sealPendingKey(ctx.env, {
             id: ctx.ids.id(),
-            orgId: run.target_id,
+            orgId: target.orgId,
             privateKeyPem: csr.privateKeyPem,
             pubkeySha256: csr.pubkeySha256,
           }),
