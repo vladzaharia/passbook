@@ -53,7 +53,14 @@ describe('account menu', () => {
     const user = userEvent.setup();
     await renderApp('/admin', { session: 'admin' });
     const menu = await openMenu(user);
-    expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Developers', 'Sign out']);
+    expect(items(menu)).toEqual([
+      'My passes',
+      'Account',
+      'Admin',
+      'Workbench',
+      'Developers',
+      'Sign out',
+    ]);
     expect(within(menu).getByText('test@example.com')).toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: 'Admin' })).toHaveAttribute(
       'aria-current',
@@ -88,7 +95,7 @@ describe('account menu', () => {
     await renderApp('/', { session: 'user', memberships: [membershipFixture('o1')] });
     await waitFor(async () => {
       const menu = await openMenu(user);
-      expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Sign out']);
+      expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Workbench', 'Sign out']);
     });
   });
 
