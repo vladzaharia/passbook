@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { PassJson } from '@/passkit/types.ts';
-import { normalize, type PassView } from '@/shared/pass-view/index.ts';
+import { normalize, type PassTarget, type PassView } from '@/shared/pass-view/index.ts';
 import { FacePair } from '../../../channel-previews/face-pair.tsx';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { PassCardStage } from '../../../pass-card/index.tsx';
@@ -40,12 +40,20 @@ function usePartDrop(passJson: Record<string, unknown> | null | undefined) {
   return host;
 }
 
-function DesignerFace({ view, face }: { view: PassView; face: 'front' | 'back' }) {
+function DesignerFace({
+  view,
+  face,
+  target,
+}: {
+  view: PassView;
+  face: 'front' | 'back';
+  target: PassTarget;
+}) {
   return (
     <PassCardStage
       view={view}
       face={face}
-      target="ios27"
+      target={target}
       tilt
       glow
       className="mx-auto w-full max-w-xs"
@@ -61,6 +69,7 @@ export function DesignerPreview({
   checking,
   stripUrl,
   assetOverrides,
+  target = 'ios27',
 }: {
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
@@ -70,6 +79,8 @@ export function DesignerPreview({
   stripUrl?: string | null;
   /** File name to URL: the organization's logo and icon, where they apply. */
   assetOverrides?: Record<string, string> | undefined;
+  /** The face the Edit layout toggle has selected; iOS 27 when the pass has one layout. */
+  target?: PassTarget;
 }) {
   const host = usePartDrop(passJson);
   const view = useMemo(() => {
@@ -92,8 +103,8 @@ export function DesignerPreview({
         <LoadingRail show={checking} />
         {view ? (
           <FacePair
-            front={<DesignerFace view={view} face="front" />}
-            back={<DesignerFace view={view} face="back" />}
+            front={<DesignerFace view={view} face="front" target={target} />}
+            back={<DesignerFace view={view} face="back" target={target} />}
           />
         ) : passJson ? (
           <p role="alert" className="text-sm text-danger">

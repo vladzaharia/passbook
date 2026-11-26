@@ -1835,9 +1835,7 @@
   },
   "scan.postScanSignOut": {
     "resource": "terminal",
-    "method": "signOutEverywhere",
-    "sdk": false,
-    "reason": "Scanner device protocol; needs a paired scanner session."
+    "method": "signOutEverywhere"
   },
   "scan.postScanStaff": {
     "resource": "terminal.staff",

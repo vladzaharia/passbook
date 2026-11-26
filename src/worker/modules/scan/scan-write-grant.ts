@@ -3,12 +3,22 @@ import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.t
 import { exists, type GrantCond, not } from '../../platform/authority-cond.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
 import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
+import { onlyApproverCheck } from './repo-staff.ts';
 import { tagBindingCheck } from './repo-tags-resolve.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
+
+/** A manager whose PIN was verified. `sole`: they approved their own request as the only approver (re-counted at commit). */
+export interface ScanApprover {
+  id: string;
+  authEpoch: number;
+  deskOk?: boolean;
+  sole?: { scanId: string };
+}
 
 export interface ScanWriteInput {
   purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind' | 'tag.enroll' | 'hold' | 'roll_call' | 'note'}`;
@@ -19,7 +29,7 @@ export interface ScanWriteInput {
   templateId?: string;
   pass?: { id: string; facts: ScanPassFacts };
   /** A manager whose PIN was verified for this action. */
-  approver?: { id: string; authEpoch: number; deskOk?: boolean } | null;
+  approver?: ScanApprover | null;
   /** Held: the answer shown names this gate holder and must still be true. */
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
   /** None of the presented credential's references may be retired by a transfer in this mode. */
@@ -28,7 +38,7 @@ export interface ScanWriteInput {
   checks?: readonly Check[];
   target?: string;
   codes?: DenialOptions['codes'];
-  /** Mark as out only (C16): a paused session still lets the desk clear who is inside; its config epoch is still compared. */
+  /** Mark as out only (C16): a paused session still lets the desk clear who is inside (a sign-out refuses it); its config epoch is still compared. */
   pausedSession?: boolean;
   /** Unguarded tables the grant's parts write. */
   tables?: string[];
@@ -40,7 +50,7 @@ export interface ScanWriteInput {
  */
 export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWriteInput): Grant {
   const templateId = i.templateId ?? i.pass?.facts.pass.templateId;
-  return grant(ctx, {
+  const g = grant(ctx, {
     purpose: i.purpose,
     principal: scanPrincipal(actor),
     ...(i.target ? { target: i.target } : {}),
@@ -71,6 +81,9 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
             ),
           ]
         : []),
+      ...(i.approver?.sole
+        ? [onlyApproverCheck(actor.orgId, i.approver.id, actor.settings.approvals === 'desk')]
+        : []),
       ...(i.holder
         ? [
             exactlyOne(
@@ -96,6 +109,24 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       ...i.codes,
     },
   });
+  // The audit row commits with the scan: nothing records the approval without the grant holding.
+  if (i.approver?.sole)
+    g.add(
+      grantedAudit(g, ctx, {
+        orgId: actor.orgId,
+        actorType: actor.scanner ? 'scanner' : 'system',
+        actorId: actor.scanner?.id ?? null,
+        action: 'scan.approved_alone',
+        targetType: 'scan',
+        targetId: i.approver.sole.scanId,
+        detail: {
+          kind: 'sole',
+          staffId: i.approver.id,
+          role: i.approver.deskOk ? 'desk' : 'manager',
+        },
+      }),
+    );
+  return g;
 }
 
 /** Every table a scan write grant may name; each purpose lists what it writes. */

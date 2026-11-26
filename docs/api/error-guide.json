@@ -1697,6 +1697,12 @@
     "fix": "Enter the correct PIN; repeated misses lock the entry for a while.",
     "retryable": true
   },
+  "PIN_ALONE_NOT_SELF": {
+    "title": "Approve your own request",
+    "when": "An approval with alone: true named someone other than the signed-in staff member.",
+    "fix": "Send your own staff id, or drop alone and ask another approver.",
+    "retryable": false
+  },
   "PIN_MANAGER_REQUIRED": {
     "title": "Manager required",
     "when": "The action needs a manager and none was chosen.",
@@ -2657,6 +2663,12 @@
     "fix": "Check the ID against the reader or the supplier's list.",
     "retryable": false
   },
+  "TAG_KEY_LIMITED": {
+    "title": "Key limited to templates",
+    "when": "A key limited to templates assigned a typed tag ID or a user-scope tag, or listed tags that are not spare.",
+    "fix": "Assign a spare tag to a pass with scope pass, or use a key without template limits.",
+    "retryable": false
+  },
   "TAG_KEY_UNREADABLE": {
     "title": "Tag key unreadable",
     "when": "A stored tag key could not be decrypted.",
@@ -2687,10 +2699,22 @@
     "fix": "Check the tag id.",
     "retryable": false
   },
+  "TAG_NOT_LENT": {
+    "title": "Tag is not lent",
+    "when": "A lent tag was tapped to sign out or read a pass, but the tag is not on loan.",
+    "fix": "Name the pass instead, or lend the tag first.",
+    "retryable": false
+  },
   "TAG_NO_ACCOUNT": {
     "title": "Holder has no account",
     "when": "The person has no account to bind the tag to yet.",
     "fix": "Assign the tag to the pass instead.",
+    "retryable": false
+  },
+  "TAG_PASS_EXPIRED": {
+    "title": "Pass has ended",
+    "when": "The pass's validity window has ended, so it takes no new tag.",
+    "fix": "Extend the pass's end date, or assign the tag to another pass.",
     "retryable": false
   },
   "TAG_PASS_NOT_ACCEPTED": {

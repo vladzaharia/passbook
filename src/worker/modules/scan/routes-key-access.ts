@@ -9,6 +9,6 @@ export const tillKeyAccess = declareKeyAccess(
     read: [],
     write: ['scans:write'],
     documentOnly: true,
-    only: /\/scan\/(?:resolve|actions|scans\/\{scanId\}\/undo)$/,
+    only: /\/scan\/(?:resolve|actions|sign-out|scans\/\{scanId\}\/undo)$/,
   },
 );

@@ -830,6 +830,19 @@ class MessageRulesResource:
         return self._core.request("PUT", f"/api/v1/message-rules/{_p(id)}", body=body, result=m.MessageRulesUpdateResult, **opts)
 
 
+class NfcBindingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def delete(
+        self,
+        binding_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcBindingsDeleteResult:
+        """Remove a tag from its pass or person `DELETE /api/v1/nfc/bindings/{bindingId}`"""
+        return self._core.request("DELETE", f"/api/v1/nfc/bindings/{_p(binding_id)}", result=m.NfcBindingsDeleteResult, **opts)
+
+
 class NfcKeysetsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -905,6 +918,78 @@ class NfcKeysetsResource:
         return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/rotate", body=body, result=m.NfcKeysetsRotateResult, **opts)
 
 
+class NfcTagsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def assign(
+        self,
+        pass_id: str,
+        body: m.NfcTagsAssignBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcTagsAssignResult:
+        """Assign a typed tag ID or a spare tag to a pass `POST /api/v1/nfc/passes/{passId}/tags/assign`"""
+        return self._core.request("POST", f"/api/v1/nfc/passes/{_p(pass_id)}/tags/assign", body=body, result=m.NfcTagsAssignResult, **opts)
+
+    def list(
+        self,
+        *,
+        status: _Literal["assigned", "spare", "lent", "lost", "retired"] | None = None,
+        pass_id: str | None = None,
+        binding: _Literal["pass", "user"] | None = None,
+        q: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.NfcTagsListItem]:
+        """List tags `GET /api/v1/nfc/tags`"""
+        return self._core.paginate("GET", "/api/v1/nfc/tags", query={"status": status, "passId": pass_id, "binding": binding, "q": q, "cursor": cursor, "limit": limit}, result=m.NfcTagsListResult, cursor_param="cursor", **opts)
+
+    def list_for_pass(
+        self,
+        pass_id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.NfcTagsListForPassItem]:
+        """Tags that open a pass `GET /api/v1/nfc/passes/{passId}/tags`"""
+        return self._core.paginate("GET", f"/api/v1/nfc/passes/{_p(pass_id)}/tags", query={"cursor": cursor}, result=m.NfcTagsListForPassResult, cursor_param="cursor", **opts)
+
+    def list_history(
+        self,
+        id: str,
+        *,
+        cursor: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.NfcTagsListHistoryItem]:
+        """Every binding a tag has had `GET /api/v1/nfc/tags/{id}/history`"""
+        return self._core.paginate("GET", f"/api/v1/nfc/tags/{_p(id)}/history", query={"cursor": cursor}, result=m.NfcTagsListHistoryResult, cursor_param="cursor", **opts)
+
+    def report_lost(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcTagsReportLostResult:
+        """Report a tag lost `POST /api/v1/nfc/tags/{id}/lost`"""
+        return self._core.request("POST", f"/api/v1/nfc/tags/{_p(id)}/lost", result=m.NfcTagsReportLostResult, **opts)
+
+    def restore(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcTagsRestoreResult:
+        """Restore a retired or lost tag `POST /api/v1/nfc/tags/{id}/restore`"""
+        return self._core.request("POST", f"/api/v1/nfc/tags/{_p(id)}/restore", result=m.NfcTagsRestoreResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcTagsRetrieveResult:
+        """Get a tag `GET /api/v1/nfc/tags/{id}`"""
+        return self._core.request("GET", f"/api/v1/nfc/tags/{_p(id)}", result=m.NfcTagsRetrieveResult, **opts)
+
+
 class NfcTagTypesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -949,7 +1034,9 @@ class NfcTagTypesResource:
 class NfcResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.bindings = NfcBindingsResource(core)
         self.keysets = NfcKeysetsResource(core)
+        self.tags = NfcTagsResource(core)
         self.tag_types = NfcTagTypesResource(core)
 
 
@@ -2076,6 +2163,14 @@ class TerminalResource:
     ) -> m.TerminalResolveResult:
         """Read a code `POST /api/v1/scan/resolve`"""
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
+
+    def sign_out_everywhere(
+        self,
+        body: m.TerminalSignOutEverywhereBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TerminalSignOutEverywhereResult:
+        """Sign someone out: out of every place, and collect a lent tag `POST /api/v1/scan/sign-out`"""
+        return self._core.request("POST", "/api/v1/scan/sign-out", body=body, result=m.TerminalSignOutEverywhereResult, **opts)
 
 
 class ScannersPairingResource:

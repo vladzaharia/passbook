@@ -104,7 +104,9 @@ it('releases from the dialog: dry run first, then one call with a key', async ()
   expect(within(dialog).getByRole('region', { name: 'Colours' })).toHaveTextContent('Background');
   expect(dialog).toHaveTextContent('12 passes update');
   expect(dialog).toHaveTextContent('9 on phones');
-  await user.click(within(dialog).getByRole('button', { name: 'Release' }));
+  expect(dialog).toHaveTextContent('No one else can review here. Approve it yourself?');
+  expect(within(dialog).queryByRole('button', { name: /another reviewer/i })).toBeNull();
+  await user.click(within(dialog).getByRole('button', { name: 'Approve and release' }));
   await waitFor(() =>
     expect(posts.some((p) => p.url.searchParams.get('dryRun') !== 'true')).toBe(true),
   );

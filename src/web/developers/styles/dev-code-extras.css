@@ -55,3 +55,57 @@
     --src-fade: 0px;
   }
 }
+
+/* Copy as: a block header's menu and the console inspector's. */
+.menu {
+  position: relative;
+}
+.menu-list {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 5;
+  min-width: 10rem;
+  padding: 4px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-overlay);
+  box-shadow: var(--pk-elevation-3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .menu-list {
+    animation: dp-menu var(--wl-dur-enter) var(--wl-ease-out);
+  }
+}
+@keyframes dp-menu {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--pk-text-default);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+}
+/* The kit's accent hover on .btn has five selectors' weight; a ghost menu button stays a quiet tint. */
+.menu > .btn.ghost.sm:hover:not(:disabled):not([aria-disabled="true"]),
+.menu > .btn.ghost:active,
+.menu > .btn.ghost[aria-expanded="true"] {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+  box-shadow: none;
+}

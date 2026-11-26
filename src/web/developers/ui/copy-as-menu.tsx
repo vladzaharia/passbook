@@ -1,18 +1,30 @@
 import { ChevronDown } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
-import { COPY_LANGS, type CopyLang, copyAs, type Sent } from '../console/copy-as.ts';
-import { copyToClipboard as copyText } from '../shell/copy.ts';
+import { CODE_COPY } from '../../../shared/copy/developers-code.ts';
+import { copyWithFeedback } from '../shell/copy.ts';
 
-/** "Copy as" in four languages: the exact request that ran, with `$PASSBOOK_KEY` where the key goes. */
-export function CopyAsMenu({ sent }: { sent: Sent }) {
+export interface CopyAsItem {
+  key: string;
+  label: string;
+  /** Read when picked, so a menu never holds a stale sample. */
+  text: () => string;
+}
+
+/** "Copy as" for an island: one item per language, plus whatever the caller adds (Markdown). */
+export function CopyAsMenu({ items }: { items: CopyAsItem[] }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const id = useId();
-  const pick = async (lang: CopyLang, label: string) => {
+  const pick = (item: CopyAsItem) => {
     setOpen(false);
-    setDone((await copyText(copyAs(lang, sent))) ? `Copied as ${label}` : 'Could not copy');
-    setTimeout(() => setDone(null), 1800);
+    const button = root.current?.closest('.code')?.querySelector<HTMLElement>('.copy') ?? null;
+    // Inside a block the Copy button shows the check; elsewhere this button says what happened.
+    void copyWithFeedback(item.text(), button).then((ok) => {
+      if (button) return;
+      setDone(ok ? CODE_COPY.copiedAs(item.label) : CODE_COPY.copyFailed);
+      setTimeout(() => setDone(null), 1800);
+    });
   };
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Escape and focus-out close the menu; the buttons inside are the controls
@@ -37,20 +49,20 @@ export function CopyAsMenu({ sent }: { sent: Sent }) {
         aria-controls={id}
         onClick={() => setOpen(!open)}
       >
-        {done ?? 'Copy as'}
+        {done ?? CODE_COPY.copyAs}
         <ChevronDown aria-hidden="true" />
       </button>
       {open ? (
         <div className="menu-list" role="menu" id={id}>
-          {COPY_LANGS.map((l) => (
+          {items.map((item) => (
             <button
-              key={l.lang}
+              key={item.key}
               type="button"
               role="menuitem"
               className="menu-item"
-              onClick={() => void pick(l.lang, l.label)}
+              onClick={() => pick(item)}
             >
-              {l.label}
+              {item.label}
             </button>
           ))}
         </div>

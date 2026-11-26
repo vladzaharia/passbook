@@ -78,6 +78,8 @@ export type TenantPassWrite =
       scopes: ApiScope[];
       scope: ApiScope;
       mode: Mode;
+      /** The key is limited to templates or styles: it reached a route that enforces that (`templateScoped`). */
+      limited?: true;
     };
 
 /**
@@ -131,6 +133,7 @@ export async function tenantAuthorityOf(
       scopes: [...auth.scopes],
       scope,
       mode: auth.mode,
+      ...(auth.limited ? { limited: true as const } : {}),
     };
   } else {
     throw new ForbiddenError();

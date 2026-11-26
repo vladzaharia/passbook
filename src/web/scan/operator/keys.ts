@@ -157,6 +157,9 @@ export interface ShortcutRow {
   when?: 'record' | 'rollCall' | 'views' | 'walkIn';
 }
 
+/** The list-switch keys for `n` views, as the sheet and the status bar both show them. */
+export const viewKeys = (n: number): string => `⌥1-${n}`;
+
 /** What the `?` sheet lists. `⌘` is drawn as Ctrl off a Mac. */
 export const SHORTCUTS: readonly ShortcutRow[] = [
   { id: 'scan', group: 'anywhere', keys: ['Scan'], label: 'Scan a code, from anywhere' },
@@ -172,7 +175,7 @@ export const SHORTCUTS: readonly ShortcutRow[] = [
   { id: 'safe', group: 'record', keys: ['S'], label: 'Safe', when: 'rollCall' },
   { id: 'gone', group: 'record', keys: ['X'], label: 'Out', when: 'rollCall' },
   { id: 'close', group: 'record', keys: ['Esc'], label: 'Close person', when: 'record' },
-  { id: 'views', group: 'lists', keys: ['⌥1', '⌥2'], label: 'Switch list', when: 'views' },
+  { id: 'views', group: 'lists', keys: [viewKeys(2)], label: 'Switch list', when: 'views' },
   { id: 'undo', group: 'anywhere', keys: ['⌘Z'], label: 'Undo last' },
   { id: 'help', group: 'anywhere', keys: ['?'], label: 'This sheet' },
 ];

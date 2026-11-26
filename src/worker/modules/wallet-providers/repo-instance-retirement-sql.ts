@@ -1,3 +1,5 @@
+import { approvalStandsSql } from './projection-system-authority.ts';
+
 /** Trusted alias only. A placeholder has never acquired any external identity or response. */
 export function walletNoProviderArtifactsSql(instanceAlias: string): string {
   if (!/^[a-z][a-z0-9_]*$/i.test(instanceAlias)) throw new Error('Invalid trusted SQL alias');
@@ -49,9 +51,7 @@ export function samsungRetirementProjectionSql(i: string): string {
       AND retirement_candidate.provider = 'samsung')
       AND (retirement_release.candidate_hash = retirement_candidate.candidate_hash
       AND retirement_approval.candidate_hash = retirement_candidate.candidate_hash
-      AND retirement_approval.reviewer_id != retirement_candidate.author_id
-      AND (retirement_candidate.version_author_id IS NULL
-        OR retirement_approval.reviewer_id != retirement_candidate.version_author_id)
+      AND ${approvalStandsSql('retirement_approval', 'retirement_candidate')}
       AND retirement_release.credential_keyset_commitment = ${i}.credential_keyset_commitment
       AND retirement_candidate.credential_keyset_commitment = ${i}.credential_keyset_commitment
       AND retirement_approval.credential_keyset_commitment = ${i}.credential_keyset_commitment)

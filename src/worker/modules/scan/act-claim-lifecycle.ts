@@ -25,7 +25,7 @@ import {
   releaseClaimStmt,
   type ScanRow,
 } from './repo-scans.ts';
-import { approverStatement } from './repo-staff.ts';
+import { approverForRequest } from './repo-staff.ts';
 import { planCandidateReads } from './resolve-candidates.ts';
 import { afterReads } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -165,10 +165,10 @@ export async function replayOrReopenClaim(
         ...(overrideQuery ? [overrideQuery] : []),
         ...(req.approval
           ? [
-              approverStatement(
+              approverForRequest(
                 ctx.env.DB,
                 actor.orgId,
-                req.approval.staffId,
+                req.approval,
                 actor.settings.approvals === 'desk',
               ),
             ]

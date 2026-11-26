@@ -210,8 +210,10 @@ async function releaseValid(
       a.candidateHash !== r.candidateHash ||
       !text(a.reviewerId) ||
       !text(c.authorId) ||
-      a.reviewerId === c.authorId ||
-      a.reviewerId === c.versionAuthorId ||
+      // A sole or Test approval is the author's own; the release trigger only admits it for the org's only reviewer.
+      (a.kind !== 'sole' &&
+        a.kind !== 'test' &&
+        (a.reviewerId === c.authorId || a.reviewerId === c.versionAuthorId)) ||
       c.templateId !== r.templateId ||
       c.orgId !== r.orgId ||
       c.mode !== r.mode ||

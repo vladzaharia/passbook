@@ -17,7 +17,7 @@ async function content(slug: string) {
   return { c, manifest, design };
 }
 
-/** Every blueprint without a paper block, with the class it derives. */
+/** Blueprints and the class they print as (a block or derived). */
 const DERIVED = [
   ['starter-boarding-pass', 'journey'],
   ['starter-transit-ticket', 'journey'],
@@ -42,7 +42,7 @@ describe('derived classes', () => {
 
   it('an ID class is staff-only unless its block says otherwise', async () => {
     const { c, design } = await content('starter-staff-badge');
-    expect(design.holder).toBe(true);
+    expect(design.holder).toBe(false);
     expect(withKind(design, c.kind).holder).toBe(false);
     // A block with a kind but no `holder` leaves it to the class.
     expect(

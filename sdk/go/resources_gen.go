@@ -851,6 +851,25 @@ func (r *MessageRulesResource) Update(ctx context.Context, id string, body *Mess
 	return &out, nil
 }
 
+type NfcBindingsResource struct {
+	c *core
+}
+
+func newNfcBindingsResource(c *core) *NfcBindingsResource {
+	return &NfcBindingsResource{
+		c: c,
+	}
+}
+
+// Delete Remove a tag from its pass or person `DELETE /api/v1/nfc/bindings/{bindingId}`
+func (r *NfcBindingsResource) Delete(ctx context.Context, bindingId string, opts ...RequestOption) (*NfcBindingsDeleteResult, error) {
+	var out NfcBindingsDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/nfc/bindings/" + pathEscape(bindingId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type NfcKeysetsResource struct {
 	c *core
 }
@@ -929,6 +948,67 @@ func (r *NfcKeysetsResource) Rotate(ctx context.Context, id string, body *NfcKey
 	return &out, nil
 }
 
+type NfcTagsResource struct {
+	c *core
+}
+
+func newNfcTagsResource(c *core) *NfcTagsResource {
+	return &NfcTagsResource{
+		c: c,
+	}
+}
+
+// Assign Assign a typed tag ID or a spare tag to a pass `POST /api/v1/nfc/passes/{passId}/tags/assign`
+func (r *NfcTagsResource) Assign(ctx context.Context, passId string, body *NfcTagsAssignBody, opts ...RequestOption) (*NfcTagsAssignResult, error) {
+	var out NfcTagsAssignResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/passes/" + pathEscape(passId) + "/tags/assign", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List tags `GET /api/v1/nfc/tags`
+func (r *NfcTagsResource) List(ctx context.Context, query *NfcTagsListQuery, opts ...RequestOption) *Pager[NfcTagsListItem] {
+	return newPager[NfcTagsListItem](r.c, call{method: "GET", path: "/api/v1/nfc/tags", query: queryValues(query)}, "cursor", opts)
+}
+
+// ListForPass Tags that open a pass `GET /api/v1/nfc/passes/{passId}/tags`
+func (r *NfcTagsResource) ListForPass(ctx context.Context, passId string, query *NfcTagsListForPassQuery, opts ...RequestOption) *Pager[NfcTagsListForPassItem] {
+	return newPager[NfcTagsListForPassItem](r.c, call{method: "GET", path: "/api/v1/nfc/passes/" + pathEscape(passId) + "/tags", query: queryValues(query)}, "cursor", opts)
+}
+
+// ListHistory Every binding a tag has had `GET /api/v1/nfc/tags/{id}/history`
+func (r *NfcTagsResource) ListHistory(ctx context.Context, id string, query *NfcTagsListHistoryQuery, opts ...RequestOption) *Pager[NfcTagsListHistoryItem] {
+	return newPager[NfcTagsListHistoryItem](r.c, call{method: "GET", path: "/api/v1/nfc/tags/" + pathEscape(id) + "/history", query: queryValues(query)}, "cursor", opts)
+}
+
+// ReportLost Report a tag lost `POST /api/v1/nfc/tags/{id}/lost`
+func (r *NfcTagsResource) ReportLost(ctx context.Context, id string, opts ...RequestOption) (*NfcTagsReportLostResult, error) {
+	var out NfcTagsReportLostResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/tags/" + pathEscape(id) + "/lost"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Restore Restore a retired or lost tag `POST /api/v1/nfc/tags/{id}/restore`
+func (r *NfcTagsResource) Restore(ctx context.Context, id string, opts ...RequestOption) (*NfcTagsRestoreResult, error) {
+	var out NfcTagsRestoreResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/tags/" + pathEscape(id) + "/restore"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Get a tag `GET /api/v1/nfc/tags/{id}`
+func (r *NfcTagsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*NfcTagsRetrieveResult, error) {
+	var out NfcTagsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/nfc/tags/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type NfcTagTypesResource struct {
 	c *core
 }
@@ -973,14 +1053,18 @@ func (r *NfcTagTypesResource) Update(ctx context.Context, id string, body *NfcTa
 
 type NfcResource struct {
 	c        *core
+	Bindings *NfcBindingsResource
 	Keysets  *NfcKeysetsResource
+	Tags     *NfcTagsResource
 	TagTypes *NfcTagTypesResource
 }
 
 func newNfcResource(c *core) *NfcResource {
 	return &NfcResource{
 		c:        c,
+		Bindings: newNfcBindingsResource(c),
 		Keysets:  newNfcKeysetsResource(c),
+		Tags:     newNfcTagsResource(c),
 		TagTypes: newNfcTagTypesResource(c),
 	}
 }
@@ -2206,6 +2290,15 @@ func (r *TerminalResource) Act(ctx context.Context, body *TerminalActBody, opts 
 func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBody, opts ...RequestOption) (*TerminalResolveResult, error) {
 	var out TerminalResolveResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan/resolve", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// SignOutEverywhere Sign someone out: out of every place, and collect a lent tag `POST /api/v1/scan/sign-out`
+func (r *TerminalResource) SignOutEverywhere(ctx context.Context, body *TerminalSignOutEverywhereBody, opts ...RequestOption) (*TerminalSignOutEverywhereResult, error) {
+	var out TerminalSignOutEverywhereResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan/sign-out", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

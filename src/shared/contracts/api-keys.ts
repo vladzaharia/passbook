@@ -36,6 +36,8 @@ export const MINTABLE_SCOPES = [
   'scan-setup:read',
   'scanning:admin',
   'nfc:keys',
+  'nfc:read',
+  'nfc:write',
   'api-keys:write',
   'audit:read',
   'members:read',
