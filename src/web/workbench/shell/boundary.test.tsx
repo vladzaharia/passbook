@@ -43,7 +43,8 @@ const SESSION_PATHS = new Set([
  * the list shrinks to zero and the test below fails if it grows.
  */
 const SESSION_CLIENT_EXEMPT: readonly { path: string; movedBy: string }[] = [
-  { path: '/api/v1/developer/sandbox', movedBy: 'T1' },
+  // Home (T1) is on the token. Console's run-entry and Quickstart still read the sandbox on the session.
+  { path: '/api/v1/developer/sandbox', movedBy: 'T5' },
   { path: '/api/v1/developer/home', movedBy: 'T8' },
 ];
 const EXEMPT_PATHS = new Set(SESSION_CLIENT_EXEMPT.map((e) => e.path));
