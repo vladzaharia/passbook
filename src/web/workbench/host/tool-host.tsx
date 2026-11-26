@@ -1,20 +1,22 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
 import { PATHS } from '@/shared/developers.ts';
 import { useSession } from '../../lib/session.ts';
-import { createToolApi, type ToolApi } from './api.ts';
+import { ToolScopeProvider } from '../../lib/tool-api.tsx';
+import { createToolApi, type WorkbenchApi } from './api.ts';
 import type { WbContext } from './contexts.ts';
 import { markSessionGone } from './session-gone.ts';
 import { dropToken, dueIn, workbenchToken } from './token.ts';
 
 /**
  * What every Workbench tool builds on (design §1.8): the context it runs in, the token client
- * pinned to Test, and the links out. Tools read it through `useToolHost()` and `useToolApi()`;
- * nothing in `workbench/**` imports the admin client (`lib/api.ts`) or mode (`lib/mode.ts`).
+ * pinned to Test, and the links out. Shared tools reach the client through the one tool scope
+ * (`lib/tool-api.tsx`: `useToolApi`, `useToolMode`), which this host pins; Workbench pages read the
+ * rest through `useToolHost()`. Nothing in `workbench/**` imports `lib/api.ts` or `lib/mode.ts`.
  */
 export interface ToolHost {
   context: WbContext;
   mode: 'test';
-  api: ToolApi;
+  api: WorkbenchApi;
   links: { admin: string; docs: string };
 }
 
@@ -71,7 +73,13 @@ export function ToolHostProvider({
     [context, orgId, csrf],
   );
   useRenewal(orgId, csrf);
-  return <HostContext.Provider value={value}>{children}</HostContext.Provider>;
+  return (
+    <HostContext.Provider value={value}>
+      <ToolScopeProvider api={value.api} mode="test" orgId={orgId}>
+        {children}
+      </ToolScopeProvider>
+    </HostContext.Provider>
+  );
 }
 
 /** The host a tool runs in, or null outside a context (signed out, the chooser). */
@@ -84,6 +92,3 @@ export function useToolHost(): ToolHost {
   if (!host) throw new Error('useToolHost outside a Workbench context.');
   return host;
 }
-
-/** The token client for the current context: the only way a tool reaches tenant data. */
-export const useToolApi = (): ToolApi => useToolHost().api;

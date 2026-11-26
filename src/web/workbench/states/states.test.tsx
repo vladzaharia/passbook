@@ -3,8 +3,9 @@ import { render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { ApiError } from '../../lib/errors.ts';
+import { useToolApi, useToolMode, useToolScope } from '../../lib/tool-api.tsx';
 import { NoAccessState } from '../../ui/no-access-state.tsx';
-import { ToolHostProvider, useToolApi } from '../host/tool-host.tsx';
+import { ToolHostProvider, useToolHost } from '../host/tool-host.tsx';
 import { failedLine, ResettingState, ToolEmpty } from './states.tsx';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -70,21 +71,32 @@ describe('ToolHost', () => {
       tools: ['home' as const],
       closed: false,
     };
-    const { result } = renderHook(() => useToolApi(), {
-      wrapper: ({ children }) => (
-        <QueryClientProvider
-          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-        >
-          <ToolHostProvider context={context}>{children}</ToolHostProvider>
-        </QueryClientProvider>
-      ),
-    });
-    expect(result.current.orgId).toBe('o1');
+    const { result } = renderHook(
+      () => ({
+        api: useToolApi(),
+        mode: useToolMode(),
+        scope: useToolScope(),
+        host: useToolHost(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider
+            client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+          >
+            <ToolHostProvider context={context}>{children}</ToolHostProvider>
+          </QueryClientProvider>
+        ),
+      },
+    );
+    // The one tool scope (lib/tool-api.tsx) carries the token client, pinned to Test.
+    expect(result.current.api).toBe(result.current.host.api);
+    expect(result.current.mode).toBe('test');
+    expect(result.current.scope?.orgId).toBe('o1');
     await expect(
-      result.current.get('/api/v1/passes', z.object({ ok: z.boolean() })),
+      result.current.api.get('/api/v1/passes', z.object({ ok: z.boolean() })),
     ).resolves.toEqual({
       ok: true,
     });
-    expect(() => renderHook(() => useToolApi())).toThrow(/outside a Workbench context/);
+    expect(() => renderHook(() => useToolHost())).toThrow(/outside a Workbench context/);
   });
 });

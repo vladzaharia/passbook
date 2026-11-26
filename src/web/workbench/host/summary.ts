@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import type { ToolApi } from './api.ts';
+import type { WorkbenchApi } from './api.ts';
 
 /**
  * `GET /workbench/summary` (design §1.6, §3.6, S5): the nav's attention, counted after this
@@ -11,6 +11,8 @@ export const SUMMARY_POLL_MS = 30_000;
 
 const count = z.number().int().nonnegative().catch(0);
 export const SummarySchema = z.object({
+  /** Server time: seen marks are server timestamps, never the device clock. */
+  now: z.number().optional().catch(undefined),
   quickstart: z.object({ done: z.number(), total: z.number() }).nullable().catch(null),
   errors: count,
   failedDeliveries: count,
@@ -24,12 +26,16 @@ export type WbSummary = z.infer<typeof SummarySchema>;
 export const SEEN_AREAS = ['logs', 'events', 'inbox'] as const;
 export type SeenArea = (typeof SEEN_AREAS)[number];
 
-export function useWorkbenchSummary(api: ToolApi | null, since: Partial<Record<SeenArea, number>>) {
-  const query: Record<string, number | undefined> = {};
+export function useWorkbenchSummary(
+  api: WorkbenchApi | null,
+  since: Partial<Record<SeenArea, number>>,
+) {
+  const query: Record<string, string | number | undefined> = { orgId: api?.orgId };
   for (const area of SEEN_AREAS) query[`since[${area}]`] = since[area];
   return useQuery({
     queryKey: ['workbench', 'summary', api?.orgId, since] as const,
-    queryFn: ({ signal }) => (api as ToolApi).get(SUMMARY_PATH, SummarySchema, { query, signal }),
+    queryFn: ({ signal }) =>
+      (api as WorkbenchApi).get(SUMMARY_PATH, SummarySchema, { query, signal }),
     enabled: api !== null,
     // Every 30 s while the tab is visible (react-query pauses the interval when hidden).
     refetchInterval: SUMMARY_POLL_MS,

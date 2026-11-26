@@ -63,9 +63,10 @@ export const contextsQuery = (userId: string | undefined) =>
     staleTime: 60_000,
   });
 
+/** Polaris ID sessions only: an email link never opens the Workbench (spaces.ts). */
 export function useWorkbenchContexts() {
   const { authed } = useSession();
-  return useQuery(contextsQuery(authed?.user.id));
+  return useQuery(contextsQuery(authed?.amr === 'oidc' ? authed.user.id : undefined));
 }
 
 const rememberKey = (userId: string) => `wb-context:${userId}`;

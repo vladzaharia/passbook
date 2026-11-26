@@ -8,18 +8,30 @@ type Query = Record<string, string | number | boolean | null | undefined>;
 export interface ToolRequest {
   query?: Query;
   signal?: AbortSignal;
+  /** Gives up after this long with a `timeout` ApiError. */
+  timeoutMs?: number;
   headers?: Record<string, string>;
   ifMatch?: string;
 }
 
+type Method = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
 /**
  * Every tenant call from a Workbench page (design §2.3, L13): a bearer Workbench token,
  * `credentials: 'omit'` so no session cookie rides along, and no mode header (the token is Test).
+ * Its methods are the session client's, so it fits `lib/tool-api.tsx`'s `ToolApi` (DC1's tool
+ * scope) and a shared tool runs on it unchanged.
  */
-export interface ToolApi {
+export interface WorkbenchApi {
   readonly orgId: string;
   get<S extends z.ZodType>(path: string, schema: S, opts?: ToolRequest): Promise<z.infer<S>>;
   post<S extends z.ZodType>(
+    path: string,
+    schema: S,
+    body?: unknown,
+    opts?: ToolRequest,
+  ): Promise<z.infer<S>>;
+  put<S extends z.ZodType>(
     path: string,
     schema: S,
     body?: unknown,
@@ -33,6 +45,7 @@ export interface ToolApi {
   ): Promise<z.infer<S>>;
   deleteJson<S extends z.ZodType>(path: string, schema: S, opts?: ToolRequest): Promise<z.infer<S>>;
   delete(path: string, opts?: ToolRequest): Promise<void>;
+  action(method: Method, path: string, body?: unknown, opts?: ToolRequest): Promise<void>;
 }
 
 export interface ToolApiDeps {
@@ -59,7 +72,7 @@ export function buildQuery(path: string, query?: Query): string {
   return qs ? `${path}${path.includes('?') ? '&' : '?'}${qs}` : path;
 }
 
-export function createToolApi(deps: ToolApiDeps): ToolApi {
+export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
   const doFetch = deps.fetch ?? ((input, init) => fetch(input, init));
 
   async function bearer(): Promise<string> {
@@ -78,6 +91,9 @@ export function createToolApi(deps: ToolApiDeps): ToolApi {
     if (opts.ifMatch) headers['if-match'] = opts.ifMatch;
     if (body !== undefined) headers['content-type'] = 'application/json';
     const url = buildQuery(path, opts.query);
+    const timeout = opts.timeoutMs === undefined ? undefined : AbortSignal.timeout(opts.timeoutMs);
+    const signal =
+      timeout && opts.signal ? AbortSignal.any([opts.signal, timeout]) : (timeout ?? opts.signal);
     const attempt = async () => {
       try {
         return await doFetch(url, {
@@ -85,10 +101,12 @@ export function createToolApi(deps: ToolApiDeps): ToolApi {
           headers: { ...headers, authorization: `Bearer ${await bearer()}` },
           body: body === undefined ? undefined : JSON.stringify(body),
           credentials: 'omit',
-          signal: opts.signal,
+          signal,
         });
       } catch (cause) {
         if (opts.signal?.aborted || cause instanceof ApiError) throw cause;
+        if (timeout?.aborted)
+          throw new ApiError({ status: 0, code: 'timeout', detail: STATE_COPY.timeout });
         throw new ApiError({ status: 0, code: 'network', detail: STATE_COPY.network });
       }
     };
@@ -110,10 +128,14 @@ export function createToolApi(deps: ToolApiDeps): ToolApi {
     orgId: deps.orgId,
     get: (path, schema, opts) => json('GET')(path, schema, undefined, opts),
     post: json('POST'),
+    put: json('PUT'),
     patch: json('PATCH'),
     deleteJson: (path, schema, opts) => json('DELETE')(path, schema, undefined, opts),
     async delete(path, opts) {
       await readJson(await send('DELETE', path, undefined, opts), z.unknown(), path);
+    },
+    async action(method, path, body, opts) {
+      await readJson(await send(method, path, body, opts), z.unknown(), path);
     },
   };
 }
