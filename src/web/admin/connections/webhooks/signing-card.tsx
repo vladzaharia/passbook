@@ -2,7 +2,7 @@ import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { Button, Card, CardBody, CardHeader, KeyValue, useNow } from '../../../ui/index.ts';
-import { VerifyGuide } from './verify-guide.tsx';
+import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
 
 /**
  * Signing: when the secret was made and whether an old one still signs. The secret itself is

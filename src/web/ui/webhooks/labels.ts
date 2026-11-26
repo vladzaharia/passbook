@@ -1,5 +1,5 @@
 import type { WebhookEventType } from '@/shared/contracts/webhooks.ts';
-import { entityLabel } from '../../../lib/entity-label.ts';
+import { entityLabel } from '../../lib/entity-label.ts';
 
 export const EVENT_LABEL: Record<WebhookEventType, string> = {
   'pass.issued': 'Issued',

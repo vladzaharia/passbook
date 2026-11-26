@@ -191,6 +191,7 @@ export function toolAssets(
     return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
   const base = (scripts[0] as string).replace(/^\/assets\//, '');
   const loader = new RegExp(
+    // A route chunk that also holds code its lazy children share exports more than the component: `.then(e=>e.t)`.
     `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
   );
   for (const f of files) {

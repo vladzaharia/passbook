@@ -1,4 +1,4 @@
-import { errorMessage, isApiError } from '../../../lib/errors.ts';
+import { errorMessage, isApiError } from '../../lib/errors.ts';
 
 /**
  * Words for a refused replay. A bulk replay that fails before its first chunk commits answers 503

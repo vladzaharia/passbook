@@ -4,7 +4,7 @@ import {
   EVENT_GROUPS,
   EVENT_LABEL,
   responseLabel,
-} from '../../web/admin/connections/webhooks/labels.ts';
+} from '../../web/ui/webhooks/labels.ts';
 import { ApiScopeSchema } from './common.ts';
 import {
   CreateWebhookEndpointSchema,

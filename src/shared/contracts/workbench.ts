@@ -61,6 +61,7 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/events/:id',
   'GET /api/v1/webhook-endpoints',
   'POST /api/v1/webhook-endpoints',
+  'GET /api/v1/webhook-endpoints/setup',
   'GET /api/v1/webhook-endpoints/:id',
   'PATCH /api/v1/webhook-endpoints/:id',
   'DELETE /api/v1/webhook-endpoints/:id',

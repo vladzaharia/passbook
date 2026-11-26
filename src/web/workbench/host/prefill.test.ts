@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { PREFILL_KEY, readPrefill, writePrefill } from './prefill.ts';
+import { consolePrefillPath, PREFILL_KEY, readPrefill, writePrefill } from './prefill.ts';
 
 afterEach(() => sessionStorage.clear());
 
@@ -13,9 +13,27 @@ describe('prefill', () => {
     expect(readPrefill('n1')).toBeNull();
   });
 
-  it('makes a nonce when none is given, and reads nothing for an unknown one', () => {
-    const nonce = writePrefill({ op: 'a', body: { x: 1 } });
+  it('makes a nonce when none is given, keeps path and body, and reads nothing for an unknown one', () => {
+    const nonce = writePrefill({ op: 'events.getEventsById', path: { id: 'ev1' }, body: { a: 1 } });
     expect(nonce).toMatch(/^[0-9a-f-]{36}$/);
+    expect(readPrefill(nonce as string)).toEqual({
+      op: 'events.getEventsById',
+      path: { id: 'ev1' },
+      body: { a: 1 },
+    });
     expect(readPrefill('nope')).toBeNull();
+  });
+
+  it('refuses a broken entry', () => {
+    sessionStorage.setItem(`${PREFILL_KEY}bad`, '{nope');
+    expect(readPrefill('bad')).toBeNull();
+    sessionStorage.setItem(`${PREFILL_KEY}noop`, JSON.stringify({ query: {} }));
+    expect(readPrefill('noop')).toBeNull();
+  });
+
+  it('puts the operation and the nonce in the link, never a body', () => {
+    const href = consolePrefillPath('o1', { op: 'createPass', body: { name: 'x' } });
+    expect(href).toMatch(/^\/workbench\/o\/o1\/console\?op=createPass&prefill=[\w-]+$/);
+    expect(href).not.toMatch(/name/);
   });
 });
