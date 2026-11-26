@@ -1,13 +1,17 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
-import type { WalletCredential, WalletProvider } from '@/shared/contracts/wallet-providers.ts';
+import type {
+  WalletCredential,
+  WalletProvider,
+  WalletProviderIssuance,
+} from '@/shared/contracts/wallet-providers.ts';
 import { revokeWalletCredentialConfirm } from '@/web/lib/confirms-wallet.ts';
 import { ApiError } from '@/web/lib/errors.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { Button, ConfirmDialog, StatusPill, toast } from '@/web/ui/index.ts';
 import { checkFresh } from './check.ts';
-import { CHECK_WAIT, COPY, checkWords, PROVIDER_NAME, safeError } from './copy.ts';
+import { CHECK_WAIT, COPY, checkWords, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialDialog } from './credential-dialog.tsx';
 import { type CredentialTarget, isAbort, useCheckCredential, useWalletActions } from './queries.ts';
 
@@ -41,6 +45,7 @@ export function CredentialRow({
   canManage,
   label,
   fresh,
+  issuance,
 }: {
   target: CredentialTarget;
   provider: WalletProvider;
@@ -50,6 +55,8 @@ export function CredentialRow({
   label?: string;
   /** The server's check freshness, when this credential is an enrolment's source. */
   fresh?: boolean;
+  /** The wallet's release state in this slot's mode: a dark wallet says so in the dialog. */
+  issuance?: WalletProviderIssuance;
 }) {
   const actions = useWalletActions();
   const sessionMode = useMode();
@@ -130,6 +137,7 @@ export function CredentialRow({
         open={open}
         onOpenChange={setOpen}
         save={(body) => actions.saveCredential(target, body)}
+        notice={issuance ? releaseLine(provider, issuance) : null}
       />
       {credential ? (
         <ConfirmDialog

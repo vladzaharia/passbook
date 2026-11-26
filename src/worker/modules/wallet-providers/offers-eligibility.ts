@@ -3,6 +3,7 @@ import type { EffectiveChannels, OfferHold } from '../../../shared/contracts/cha
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
+import { PreviewOnlyError } from '../developer/fence.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo.ts';
@@ -18,6 +19,7 @@ import { type ApprovedProjection, getApprovedProjection } from './projection-ser
 import { walletProviderEnabled } from './provider-policy.ts';
 import { canRenderProjection } from './render-projection.ts';
 import { accountCheckFailing } from './repo-account-health.ts';
+import { googlePassClassRejected } from './repo-google-class-write.ts';
 import { walletOfferSnapshotCurrent } from './repo-offers.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
 import {
@@ -177,6 +179,8 @@ export async function offerStillCurrent(
     await runtimeAccountCheck(ctx, runtimeScope, approved.projection.provider);
   } catch (error) {
     if (error instanceof WalletRuntimeError && error.code === 'account_unavailable') return false;
+    // A developer org never issues a real offer: not current, never an error.
+    if (error instanceof PreviewOnlyError) return false;
     throw error;
   }
   const refHash = offer ? await sha256Hex(offer.ref) : undefined;
@@ -241,6 +245,8 @@ export async function eligibleWalletProvider(
   // Q6: an account whose credential last failed its check shows no badge, until a check passes again.
   if (await accountCheckFailing(ctx.env.DB, approved.release.accountId)) return null;
   if (!canRenderProjection(approved.projection, snapshot.passJson)) return null;
+  // A class Google rejected shows no card: this pass offers nothing until its class is approved.
+  if (provider === 'google' && (await googlePassClassRejected(ctx.env.DB, pass.id))) return null;
   if (approved.projection.schema === 2 && provider === 'samsung') {
     // Compiled cards: the pass must compile to the approved type and the stored card read must be
     // fresh. A request path never calls Samsung; the sync job keeps the row current.

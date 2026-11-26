@@ -11,6 +11,8 @@ export interface DesignerApi {
   select: (select: Selection) => void;
   /** Opens a section and moves focus to the control the target names. */
   focusTarget: (select: Selection) => void;
+  /** Opens the Wallets tab on one wallet. */
+  openWallets?: (wallet: 'google' | 'samsung') => void;
   dispatch: (action: Action) => void;
   /** Mutable assets of the saved version: where to read files that have a hash. */
   assetBase: string;
@@ -32,4 +34,9 @@ export function useDesigner(): DesignerApi {
   const api = useContext(Ctx);
   if (!api) throw new Error('useDesigner needs a DesignerProvider.');
   return api;
+}
+
+/** The designer's api where it may be absent (a preview used outside the designer). */
+export function useDesignerMaybe(): DesignerApi | null {
+  return useContext(Ctx);
 }

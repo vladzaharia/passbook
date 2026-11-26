@@ -151,7 +151,7 @@ async function applyOne(
       const written = await hasVersionFrom(ctx.env.DB, passId, 'broadcast', row.started_at ?? 0);
       return { ...base, outcome: written ? 'updated' : 'unchanged' };
     }
-    // Google and Samsung copies have their own limits, apart from Apple's; nothing is sent to them yet.
+    // Google and Samsung copies have their own limits, apart from Apple's; the wallet sync sends them the new version.
     const providers =
       notify && !result.silenced ? budgetOutcomes(await providerBudgets(ctx, result.pass)) : null;
     await recordPassEvent(ctx, {

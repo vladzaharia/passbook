@@ -50,6 +50,7 @@ import {
   setStampsInput,
   setStampsProp,
 } from './stamps.ts';
+import { applyWalletsOp, type WalletsOp } from './wallets/ops-wallets.ts';
 
 /** Every edit the designer makes. Plain data, so the history can replay and tests can read it. */
 export type Op =
@@ -88,7 +89,8 @@ export type Op =
   | CounterOp
   | ScanOp
   | ActionsOp
-  | AccessOp;
+  | AccessOp
+  | WalletsOp;
 
 /** Rewrites every reference left to a renamed input, with the merge engine's own walk. */
 function renameReferences(doc: DesignDoc, from: string, to: string): DesignDoc {
@@ -203,5 +205,14 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
     case 'access-rules':
     case 'access-suspend':
       return applyAccessOp(doc, o);
+    case 'wallets-role':
+    case 'wallets-roles':
+    case 'wallets-type':
+    case 'wallets-class-key':
+    case 'wallets-subtype':
+    case 'wallets-omit':
+    case 'wallets-required':
+    case 'wallets-image':
+      return applyWalletsOp(doc, o);
   }
 }

@@ -56,7 +56,29 @@
           }
         }
       ],
-      "nextCursor": null
+      "nextCursor": null,
+      "release": {
+        "google": {
+          "live": {
+            "state": "disabled",
+            "reason": "not_released"
+          },
+          "test": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        },
+        "samsung": {
+          "live": {
+            "state": "disabled",
+            "reason": "not_released"
+          },
+          "test": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        }
+      }
     }
   },
   "wallet-platform.putPlatformWalletCredentials": {

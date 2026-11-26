@@ -59,6 +59,7 @@ export function FacePair({
   face,
   onFace,
   label = 'Side',
+  fit,
   className,
 }: {
   front: ReactNode;
@@ -66,6 +67,8 @@ export function FacePair({
   face?: PreviewFace | undefined;
   onFace?: ((face: PreviewFace) => void) | undefined;
   label?: string | undefined;
+  /** One face leaves the layout when hidden, so the frame is as tall as the face shown. */
+  fit?: boolean | undefined;
   className?: string | undefined;
 }) {
   const [own, setOwn] = useState<PreviewFace>('front');
@@ -75,7 +78,11 @@ export function FacePair({
     onFace?.(next);
   };
   return (
-    <div className={className ? `fp ${className}` : 'fp'} data-face={shown}>
+    <div
+      className={className ? `fp ${className}` : 'fp'}
+      data-face={shown}
+      data-fit={fit || undefined}
+    >
       <div className="fp-faces">
         <div className="fp-face" data-side="front">
           {front}

@@ -236,6 +236,14 @@ export const SCAN_STATUS = {
   pin_locked: { label: 'Locked', tone: 'warning', icon: Lock },
 } as const satisfies Record<string, StatusEntry>;
 
+/** A wallet's fidelity report: Ready, Ready with omissions (n), Blocked and Off. One pill everywhere. */
+export const WALLET_FIDELITY_STATUS = {
+  wallet_ready: { label: 'Ready', tone: 'success', icon: CircleCheck },
+  wallet_omissions: { label: 'Ready with omissions', tone: 'warning', icon: TriangleAlert },
+  wallet_blocked: { label: 'Blocked', tone: 'danger', icon: OctagonX },
+  wallet_off: { label: 'Off', tone: 'neutral', icon: CircleDashed },
+} as const satisfies Record<string, StatusEntry>;
+
 export const STATUS_VOCAB = {
   ...HEALTH_STATUS,
   ...PASS_STATUS,
@@ -250,6 +258,7 @@ export const STATUS_VOCAB = {
   ...MARKER_STATUS,
   ...MODE_STATUS,
   ...SCAN_STATUS,
+  ...WALLET_FIDELITY_STATUS,
 } as const;
 export type StatusKey = keyof typeof STATUS_VOCAB;
 

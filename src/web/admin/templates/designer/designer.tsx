@@ -15,7 +15,6 @@ import {
   Button,
   Callout,
   SaveBar,
-  SegmentedControl,
   toast,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
@@ -26,6 +25,7 @@ import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
 import { type CreateDesign, useCreateFlow } from './create-flow.ts';
 import { DesignerHeader } from './designer-header.tsx';
+import { type DesignerMode, ModeSwitch, useDesignerModes } from './designer-modes.tsx';
 import { clearDraft } from './drafts.ts';
 import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
@@ -47,13 +47,10 @@ import { DesignerStage } from './stage.tsx';
 import { useStampsPreview } from './stamp-preview.ts';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
+import type { WalletName } from './wallets/roles-model.ts';
+import { useWalletChannels } from './wallets/use-wallet-channels.ts';
+import { WalletsMode } from './wallets/wallets-mode.tsx';
 import './designer.css';
-
-type DesignerMode = 'pass' | 'scan';
-const MODES = [
-  { value: 'pass', label: 'Pass' },
-  { value: 'scan', label: 'Scan screen' },
-] as const;
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */
 export interface ReadOnlyDesign {
@@ -79,6 +76,10 @@ export interface DesignerProps {
   prompt?: ReactNode;
   /** A draft of a blueprint: Create template makes the template; nothing exists before. */
   create?: CreateDesign;
+  /** The mode and wallet to open on (the page's `?mode=wallets&wallet=samsung`). */
+  view?: { mode?: DesignerMode | undefined; wallet?: WalletName | undefined };
+  /** The mode or the focused wallet changed: the page keeps its address in step. */
+  onView?: (mode: DesignerMode, wallet: WalletName | undefined) => void;
 }
 
 export function Designer({
@@ -91,6 +92,8 @@ export function Designer({
   readOnly,
   prompt,
   create,
+  view,
+  onView,
 }: DesignerProps) {
   const templateId = template.id;
   const name = template.name;
@@ -99,12 +102,6 @@ export function Designer({
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
   );
-  const [mode, setMode] = useState<DesignerMode>('pass');
-  const selections = useRef<Record<DesignerMode, Selection>>({
-    pass: state.select,
-    scan: { section: 'scan-display' },
-  });
-  selections.current[mode] = state.select;
   const [restored, setRestored] = useState(draft !== null);
   const root = useRef<HTMLDivElement>(null);
   const latest = useRef(state.doc);
@@ -129,29 +126,16 @@ export function Designer({
     [readOnly],
   );
   const choose = useCallback((s: Selection) => dispatch({ type: 'select', select: s }), []);
-  const changeMode = useCallback(
-    (next: DesignerMode) => {
-      if (next === mode) return;
-      dispatch({ type: 'select', select: selections.current[next] });
-      setMode(next);
-    },
-    [mode],
-  );
-  const focusTarget = useCallback(
-    (s: Selection) => {
-      const targetMode = s.section === 'scan-display' ? 'scan' : 'pass';
-      if (targetMode !== mode) setMode(targetMode);
-      dispatch({ type: 'select', select: s });
-      const id = s.key ? `${s.section}:${s.key}` : s.section;
-      // The section opens on the next render; focus what the issue names once it exists.
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() =>
-          root.current?.querySelector<HTMLElement>(`[data-target="${CSS.escape(id)}"]`)?.focus(),
-        ),
-      );
-    },
-    [mode],
-  );
+  const wallets = useWalletChannels(create ? undefined : templateId, selectedOrg);
+  const modes = useDesignerModes({
+    select: state.select,
+    dispatch,
+    root,
+    wallets: wallets.listed,
+    initial: view ?? {},
+    onView,
+  });
+  const { mode, setMode, focusTarget, openWallets } = modes;
 
   // A new field opens its editor and takes focus, once per add.
   const handled = useRef(0);
@@ -182,6 +166,13 @@ export function Designer({
       : blocking;
   const live = useRef({ blocked, checking: check.checking });
   live.current = { blocked, checking: check.checking };
+  const issuesList = (
+    <Issues
+      issues={issues}
+      checking={readOnly ? false : check.checking}
+      failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+    />
+  );
   const created = useCreateFlow(create, blocked);
   // A new template is unsaved until Create template, edits or not.
   const guard = useUnsavedChangesGuard(create ? created.made === null : dirty);
@@ -209,13 +200,25 @@ export function Designer({
       edit,
       select: choose,
       focusTarget,
+      openWallets,
       dispatch,
       assetBase: base_,
       readOnly: Boolean(readOnly),
       stamps: stamps.slider,
       orgId: selectedOrg,
     }),
-    [state, select, edit, choose, focusTarget, base_, readOnly, stamps.slider, selectedOrg],
+    [
+      state,
+      select,
+      edit,
+      choose,
+      focusTarget,
+      openWallets,
+      base_,
+      readOnly,
+      stamps.slider,
+      selectedOrg,
+    ],
   );
 
   return (
@@ -236,14 +239,7 @@ export function Designer({
         />
         {readOnly?.notice}
         {prompt}
-        <div className="mb-4">
-          <SegmentedControl
-            label="Designer mode"
-            options={MODES}
-            value={mode}
-            onValueChange={changeMode}
-          />
-        </div>
+        <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
         {restored && !phone && !readOnly ? (
           <Callout
             className="mb-4"
@@ -265,18 +261,23 @@ export function Designer({
             Restored your unsaved draft.
           </Callout>
         ) : null}
-        {mode === 'scan' ? (
+        {mode === 'wallets' ? (
+          <WalletsMode
+            templateId={templateId}
+            passJson={readOnly ? readOnly.passJson : shownPass}
+            checking={readOnly ? false : check.checking}
+            issues={issues}
+            channels={wallets}
+            wallet={modes.wallet}
+            onWallet={modes.setWallet}
+            onPass={() => setMode('pass')}
+          />
+        ) : mode === 'scan' ? (
           <ScanModeSafe
             onBack={() => setMode('pass')}
             templateId={templateId}
             orgId={selectedOrg ?? null}
-            issues={
-              <Issues
-                issues={issues}
-                checking={readOnly ? false : check.checking}
-                failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
-              />
-            }
+            issues={issuesList}
           />
         ) : (
           <DesignerLayout
@@ -300,13 +301,7 @@ export function Designer({
                 stripUrl={stamps.stripUrl}
               />
             }
-            issues={
-              <Issues
-                issues={issues}
-                checking={readOnly ? false : check.checking}
-                failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
-              />
-            }
+            issues={issuesList}
           />
         )}
         {phone || readOnly ? null : (

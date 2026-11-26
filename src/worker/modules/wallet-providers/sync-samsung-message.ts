@@ -7,7 +7,7 @@ import { insertWalletMessagedEvent } from './repo-wallet-messaged.ts';
 import type { WalletSyncOperationExecution } from './sync-operation-context.ts';
 
 /**
- * Samsung has no notifying call: a change message reaches the card as `noticeDesc` (the compiler writes it
+ * Samsung has no notifying call: a change message reaches the card as `noticeDesc` (`buildNotice` writes it
  * with the rest of the card) and Samsung decides what the holder is told. When an update carries a message
  * the ledger says so, as `updated` (the sync log's "Updated only"), once per operation however often it runs.
  */

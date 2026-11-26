@@ -11,6 +11,7 @@ import {
   KEY,
   platformEnrolment,
   renderOrgAccounts,
+  walletRelease,
 } from './wallet-accounts-test-fixtures.ts';
 
 const READ: OrgCapability[] = ['org:read', 'integrations:read'];
@@ -52,6 +53,7 @@ describe('organization wallet accounts', () => {
     expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
     expect(within(samsung).getByText('Pick a source first.')).toBeInTheDocument();
+    expect(within(samsung).getByText("Samsung Wallet isn't released yet.")).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -366,6 +368,7 @@ describe('platform wallet accounts', () => {
       json({
         items: [credential({ scope: 'platform', orgId: null, mode: 'live' })],
         nextCursor: null,
+        release: walletRelease(true),
       }),
     '/api/v1/platform/wallet-enrolments': () => json({ items, nextCursor: null }),
   });

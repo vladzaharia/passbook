@@ -92,9 +92,12 @@ export async function messageKit(restore: (() => void)[]) {
   const [offer] = await listWalletOffers(kit.ctx, f.pass.id);
   const token = offer?.href.split('/')[2] ?? '';
   await issueWalletOffer(kit.ctx, token, 'google');
+  // The review read a sync run starts under waitUntil must finish before a test marks its call window.
+  await kit.settle();
   const db = kit.env.DB;
   const drain = async () => {
     await drainWalletProviderSync(jobCtx);
+    await kit.settle();
   };
   return {
     f,

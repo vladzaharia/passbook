@@ -19,14 +19,17 @@ import {
   TemplateVersionDetailSchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
+import { WalletReportsSchema } from '../../../shared/contracts/wallet-fidelity.ts';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { analyzePackage } from './package/analyze.ts';
 import { basicPackage, makePng, zipOf } from './package/fixtures.ts';
-import { crc32, sha1Hex } from './package/hash.ts';
+import { buildKey, crc32, sha1Hex } from './package/hash.ts';
 import { createTemplateRegistry } from './registry.ts';
+import { getVersion } from './repo.ts';
 import { generatedSource } from './sync.ts';
 import { fakeAssets, importZip, templateAuthor } from './testing.ts';
 
@@ -366,5 +369,78 @@ describe('search, uploads and packages', () => {
     );
     const m = JSON.parse(new TextDecoder().decode(files['wallet.template.json'])) as object;
     expect(m).not.toHaveProperty('org');
+  });
+});
+
+describe('package round trip with wallets', () => {
+  const WALLETS = {
+    schema: 1,
+    google: { type: 'generic', images: { logo: 'wallets/google/logo.png' } },
+    samsung: { type: 'generic' },
+  };
+  const art = () => ({ 'wallets/google/logo.png': makePng(660, 660) });
+  const withWallets = (name: string) =>
+    zipOf(
+      basicPackage({
+        'wallet.template.json': JSON.stringify({ ...manifest(name), wallets: WALLETS }),
+        ...art(),
+      }),
+    );
+
+  it('exports then imports the same version, build key, wallets block and art bytes', async () => {
+    const first = await importZip(env, clock, {
+      orgId: org.id,
+      zip: withWallets('Round Trip'),
+      name: 'Round Trip',
+    });
+    expect(first.result).not.toBeNull();
+    const id = first.result?.templateId ?? '';
+    const res = await call(`/${id}/package`);
+    expect(res.status).toBe(200);
+    const exported = new Uint8Array(await res.arrayBuffer());
+    const files = unzipSync(exported);
+    expect(files['wallets/google/logo.png']).toEqual(art()['wallets/google/logo.png']);
+
+    const again = await importZip(env, clock, { orgId: org.id, zip: exported, name: 'Round Trip' });
+    expect(again.result).toEqual(first.result);
+    const row = await getVersion(env.DB, id, first.result?.version ?? '');
+    expect(row?.manifest.wallets).toEqual(WALLETS);
+
+    const keyOf = async (zip: Uint8Array) => {
+      const a = await analyzePackage(new Map(Object.entries(unzipSync(zip))), {
+        uploaded: true,
+        fallbackName: 'Round Trip',
+        behaviors: (await import('./build-check.ts')).behaviors,
+      });
+      if (!('version' in a)) throw new Error('package did not analyze');
+      return { version: a.version, key: buildKey(a), wallets: a.manifest.wallets };
+    };
+    const original = await keyOf(withWallets('Round Trip'));
+    const roundTripped = await keyOf(exported);
+    expect(roundTripped).toEqual(original);
+    expect(roundTripped.version).toBe(first.result?.version);
+  });
+
+  it('reports each target for the stored version', async () => {
+    const t = await importZip(env, clock, {
+      orgId: org.id,
+      zip: withWallets('Report Card'),
+      name: 'Report Card',
+    });
+    const res = await call(`/${t.result?.templateId}/versions/${t.result?.version}/wallet-reports`);
+    expect(res.status).toBe(200);
+    const body = WalletReportsSchema.parse(await res.json());
+    expect(body.google.target).toBe('google');
+    expect(body.samsung.target).toBe('samsung');
+    expect((await call(`/${t.result?.templateId}/versions/nope/wallet-reports`)).status).toBe(404);
+    expect(
+      (
+        await call(
+          `/${t.result?.templateId}/versions/${t.result?.version}/wallet-reports`,
+          {},
+          outsider,
+        )
+      ).status,
+    ).toBe(404);
   });
 });

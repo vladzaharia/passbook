@@ -23,6 +23,18 @@ function holderReport(row: Pick<WalletProviderStatusRow, 'savedAt' | 'removedAt'
   return savedAt === null ? {} : { reported: { event: 'saved' as const, at: savedAt } };
 }
 
+/** What the pass's Google class review means for the author; absent when there is no class yet. */
+function classReview(row: Pick<WalletProviderStatusRow, 'classReview'>) {
+  if (row.classReview === null) return {};
+  const review =
+    row.classReview === 'REJECTED'
+      ? 'rejected'
+      : row.classReview === 'APPROVED'
+        ? 'approved'
+        : 'waiting';
+  return { classReview: review };
+}
+
 /** Authorize the actual pass, then fence both its incarnation and authority in the status read. */
 export async function getWalletProviderPassStatus(
   ctx: ServiceContext,
@@ -57,6 +69,7 @@ export async function getWalletProviderPassStatus(
         priorGenerationRetirementPending: row.priorRetirementPending === 1,
         installation: 'unknown',
         ...holderReport(row),
+        ...classReview(row),
         issuance: walletProviderIssuance(row.provider, pass.mode),
       })),
     });

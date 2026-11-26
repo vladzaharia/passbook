@@ -1,4 +1,7 @@
-import type { WalletProvider } from '@/shared/contracts/wallet-providers.ts';
+import type {
+  WalletProvider,
+  WalletProviderIssuance,
+} from '@/shared/contracts/wallet-providers.ts';
 import { ApiError } from '@/web/lib/errors.ts';
 
 export const PROVIDER_NAME: Record<WalletProvider, string> = {
@@ -9,7 +12,6 @@ export const PROVIDER_NAME: Record<WalletProvider, string> = {
 export const COPY = {
   readOnly: 'Read-only. Managing wallet accounts needs integrations:manage.',
   noIntegrationAccess: 'Google and Samsung accounts need integrations access.',
-  notReleased: 'Not open to holders yet.',
   platformSource: 'PassBook',
   ownSource: 'Own account',
   noPlatform: 'PassBook has no account for this mode.',
@@ -23,6 +25,27 @@ export const COPY = {
   sourceSwitchedOff: 'Source changed. Turned off.',
   empty: 'No organizations enrolled',
 } as const;
+
+export const RELEASE = {
+  notReleased: (name: string) => `${name} isn't released yet.`,
+  testOnly: (name: string) => `${name} is released in Test only.`,
+};
+
+type ModeIssuance = Record<'live' | 'test', WalletProviderIssuance>;
+
+/** One mode's line: shown only while the wallet is dark in it. Null when released. */
+export function releaseLine(provider: WalletProvider, issuance: WalletProviderIssuance) {
+  return issuance.state === 'disabled' ? RELEASE.notReleased(PROVIDER_NAME[provider]) : null;
+}
+
+/** The provider's line across both modes: dark in both, or open in Test only. */
+export function releaseSummary(provider: WalletProvider, by: ModeIssuance) {
+  const name = PROVIDER_NAME[provider];
+  const live = by.live.state === 'enabled';
+  const test = by.test.state === 'enabled';
+  if (!live && !test) return RELEASE.notReleased(name);
+  return test && !live ? RELEASE.testOnly(name) : null;
+}
 
 /** Why the switch cannot turn on, in the order a person fixes it. */
 export const BLOCKER = {
