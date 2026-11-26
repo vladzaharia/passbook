@@ -25,6 +25,13 @@ WHEN EXISTS (SELECT 1 FROM json_each(NEW.scopes) s WHERE s.value LIKE 'platform:
       AND (NEW.expires_at IS NULL OR NEW.expires_at > NEW.created_at + 2678400000)))
 BEGIN SELECT RAISE(ABORT, 'platform key breaks its mint rules'); END;
 
+-- Every Platform key, All-organizations ones included, records its creator's current `access_revision` (the rule above
+-- only covers rows with a platform scope).
+CREATE TRIGGER api_keys_platform_revision BEFORE INSERT ON api_keys
+WHEN NEW.kind = 'platform'
+  AND NEW.creator_access_revision IS NOT (SELECT access_revision FROM users WHERE id = NEW.created_by)
+BEGIN SELECT RAISE(ABORT, 'platform key breaks its mint rules'); END;
+
 -- A key made by an admin lives only while that admin does. `creator_access_revision` is the creator's
 -- `users.access_revision` at mint (null on every other key): the key is live only while it is still the same, so
 -- a disable and re-enable, or the removal of the admin role, ends it for good. Set once.

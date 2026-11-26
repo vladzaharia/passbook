@@ -247,6 +247,9 @@ describe('the row refuses what the mint refuses', () => {
       await expect(insert('platform', null, ['platform:users'], { revision })).rejects.toThrow(
         broken,
       );
+    // An All-organizations key (no platform scope) holds the same revision rule.
+    for (const revision of [2, null])
+      await expect(insert('platform', null, ['passes:read'], { revision })).rejects.toThrow(broken);
     await expect(insert('platform', null, ['platform:read'], { days: 90 })).resolves.toBeDefined();
     await expect(
       insert('platform', null, ['platform:read', 'platform:users'], { days: 90 }),
@@ -363,6 +366,25 @@ describe('a Platform key lives only while its creator is the admin who made it',
     expect(await keyState(f(), key)).toEqual({ gate: false, grant: false });
   });
 
+  it('is suspended by an open disabled_in_idp report: a dry run only files it, and moves no revision', async () => {
+    const user = await admin();
+    const key = await make(user.id);
+    await run(
+      h.env.DB,
+      `INSERT INTO idp_drift (id, run_id, user_id, subject, target, kind, found_at)
+       VALUES (?, 'run', ?, 'sub-dry', 'console', 'disabled_in_idp', 1)`,
+      [crypto.randomUUID(), user.id],
+    );
+    expect(await keyState(f(), key)).toEqual({ gate: false, grant: false });
+    expect(await resolve(key.secret)).toBeNull();
+    await run(
+      h.env.DB,
+      "UPDATE idp_drift SET resolved_at = 2, resolution = 'applied' WHERE resolved_at IS NULL",
+    );
+    expect(await keyState(f(), key)).toEqual({ gate: true, grant: true });
+    expect(await resolve(key.secret)).not.toBeNull();
+  });
+
   it('is dead when its creator was never an admin, or is gone', async () => {
     const plain = await makeUser(f());
     expect(await resolve((await make(plain.id)).secret)).toBeNull();
@@ -475,12 +497,14 @@ describe('a grant re-checks the creator at commit', () => {
     const hash = await sha256Hex('x');
     await withoutTrigger(s.f.env.DB, 'api_keys_platform_scopes', () =>
       withoutTrigger(s.f.env.DB, 'api_keys_platform_key_rules', () =>
-        withoutTrigger(s.f.env.DB, 'api_keys_kind_rules', () =>
-          run(
-            s.f.env.DB,
-            `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, created_by)
+        withoutTrigger(s.f.env.DB, 'api_keys_platform_revision', () =>
+          withoutTrigger(s.f.env.DB, 'api_keys_kind_rules', () =>
+            run(
+              s.f.env.DB,
+              `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, created_by)
            VALUES (?, ?, 'forged', 'frg', ?, '["platform:orgs"]', 'live', 1, 'platform', ?)`,
-            [id, s.org.id, hash, s.user.id],
+              [id, s.org.id, hash, s.user.id],
+            ),
           ),
         ),
       ),
