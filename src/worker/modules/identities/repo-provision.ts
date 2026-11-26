@@ -6,11 +6,14 @@ import { type PendingCertificate, pendingCertificateStmts } from './repo-certifi
 
 export interface ProvisioningIdentity {
   id: string;
-  orgId: string;
+  /** Null for a platform identity. */
+  orgId: string | null;
   label: string;
   passTypeIdentifier: string;
   teamIdentifier: string;
-  handle: string;
+  handle: string | null;
+  provenance: 'managed' | 'platform';
+  purpose: 'passes' | 'device_test';
   ascPassTypeId: string;
   nfcEnabled: boolean;
   pending: PendingCertificate;
@@ -18,8 +21,8 @@ export interface ProvisioningIdentity {
 }
 
 /**
- * The managed identity before it has a certificate: the pending key is its credential, `issuing` is 0
- * and no org points at it, so nothing signs with it until activation.
+ * The managed or platform identity before it has a certificate: the pending key is its credential,
+ * `issuing` is 0 and nothing defaults to it, so nothing signs with it until activation.
  */
 export async function insertProvisioningIdentity(
   db: D1Database,
@@ -32,8 +35,8 @@ export async function insertProvisioningIdentity(
       db,
       `INSERT INTO signing_identities
          (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, nfc_enabled,
-          is_default, issuing, provenance, rotation, handle, asc_pass_type_id, asc_account, created_at)
-       VALUES (?, ?, ?, ?, ?, 'db', ?, ?, 0, 0, 'managed', 'auto', ?, ?, 'platform', ?)`,
+          is_default, issuing, provenance, purpose, rotation, handle, asc_pass_type_id, asc_account, created_at)
+       VALUES (?, ?, ?, ?, ?, 'db', ?, ?, 0, 0, ?, ?, 'auto', ?, ?, 'platform', ?)`,
       [
         p.id,
         p.orgId,
@@ -42,6 +45,8 @@ export async function insertProvisioningIdentity(
         p.teamIdentifier,
         p.pending.credential.id,
         p.nfcEnabled,
+        p.provenance,
+        p.purpose,
         p.handle,
         p.ascPassTypeId,
         p.now,
@@ -87,6 +92,15 @@ export function identityByPassType(db: D1Database, passTypeIdentifier: string) {
   return first<{ id: string; org_id: string | null }>(
     db,
     'SELECT id, org_id FROM signing_identities WHERE pass_type_identifier = ?',
+    [passTypeIdentifier],
+  );
+}
+
+/** The row for a pass type with its certificate, to tell a set-up platform slot from an empty one. */
+export function identityCertByPassType(db: D1Database, passTypeIdentifier: string) {
+  return first<{ id: string; org_id: string | null; cert_pem: string | null }>(
+    db,
+    'SELECT id, org_id, cert_pem FROM signing_identities WHERE pass_type_identifier = ?',
     [passTypeIdentifier],
   );
 }

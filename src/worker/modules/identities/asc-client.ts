@@ -47,6 +47,7 @@ export function ascClient(env: { APPLE?: unknown }): AppleRpc {
   };
   return {
     createPassType: (handle, name, runId) => call((r) => r.createPassType(handle, name, runId)),
+    createPlatformPassType: (slot, runId) => call((r) => r.createPlatformPassType(slot, runId)),
     createCertificate: (id, csr, nfc, runId) =>
       call((r) => r.createCertificate(id, csr, nfc, runId)),
     reportCertificateActive: (id, runId) => call((r) => r.reportCertificateActive(id, runId)),

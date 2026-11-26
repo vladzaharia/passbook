@@ -19,6 +19,7 @@ import { developerRoutes } from './modules/developer/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
+import { platformIdentityRoutes } from './modules/identities/routes-platform.ts';
 import { identityRevokeRoutes } from './modules/identities/routes-revoke.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
@@ -28,6 +29,7 @@ import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims
 import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
 import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
 import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
+import { idpSetupRoutes } from './modules/idp/routes-setup.ts';
 import { userAccessRoutes } from './modules/idp/routes-users.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
@@ -57,6 +59,7 @@ import {
 } from './modules/orgs/routes-entitlements.ts';
 import { platformPersonalLabelsRoutes } from './modules/orgs/routes-personal-labels.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
+import { identityMoveRoutes } from './modules/passes/routes-identity-moves.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { previewRoutes } from './modules/public/routes-preview.ts';
@@ -208,10 +211,14 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
   // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
   app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpSetupRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/platform', platformInvitationRoutes);
   app.route('/api/v1/platform', groupClaimsRoutes);
+  // Person-only: a key gets PERSON_REQUIRED.
+  app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
+  app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', platformPersonalLabelsRoutes);

@@ -69,7 +69,34 @@ const MEMBER = {
 };
 
 /** `<operationId> <request|response>` to its example. */
+/** Setup half done: the groups are placed, the app is not restricted yet, and the SCIM items wait for it. */
+const SETUP_VIEW = {
+  mode: 'live',
+  items: [
+    { key: 'binding', status: 'done' },
+    { key: 'polaris_settings', status: 'done' },
+    { key: 'client', status: 'done' },
+    { key: 'groups', status: 'done', counts: { placed: 5, total: 5 } },
+    {
+      key: 'client_groups',
+      status: 'needed',
+      counts: { missing: 1, other: 0 },
+      rows: [
+        { key: 'console', state: 'allowed' },
+        { key: 'support', state: 'needed' },
+        { key: 'wallet_org_admins', state: 'allowed' },
+      ],
+    },
+    { key: 'client_restricted', status: 'needed', reason: 'after:client_groups' },
+    { key: 'scim_provider', status: 'needed', reason: 'after:client_restricted' },
+    { key: 'write_mode', status: 'done', note: 'dry_run' },
+  ],
+};
+
 export const HEADLINE: Record<string, unknown> = {
+  'polaris-setup.getPlatformIdpSetup response': SETUP_VIEW,
+  'polaris-setup.postPlatformIdpSetup request': { dryRun: false, items: ['groups'] },
+  'polaris-setup.postPlatformIdpScimTokenRotate request': { dryRun: false },
   'polaris-claims.getUsersByIdClaims response': CLAIMS_VIEW,
   'polaris-claims.patchUsersByIdClaims request': CLAIMS_SET,
   'polaris-claims.patchUsersByIdClaims response': CLAIMS_DONE,

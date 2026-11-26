@@ -3,14 +3,24 @@ import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { Logger } from '../../platform/log.ts';
-import { PLATFORM_IDENTITY_ID, readEnvIdentity } from './env-identity.ts';
+import { envIdentityPresent, PLATFORM_IDENTITY_ID, readEnvIdentity } from './env-identity.ts';
 
 /**
  * Upserts the env-sourced platform signing identity row (needed by passes.identity_id FK). Idempotent.
  * The pass type and team are written once, on insert: installed passes key on them, so a changed env
- * value is logged and nothing is written or signed.
+ * value is logged and nothing is written or signed. Once the default moved to a managed platform
+ * identity the legacy row stops issuing and its env material may be removed: the row is kept and this
+ * does nothing, so status and the daily check stop failing on `IDENTITY_NOT_CONFIGURED`.
  */
 export async function ensurePlatformIdentity(env: AppEnv, now: number, log: Logger): Promise<void> {
+  if (!envIdentityPresent(env)) {
+    const retired = await first<{ issuing: number }>(
+      env.DB,
+      'SELECT issuing FROM signing_identities WHERE id = ?',
+      [PLATFORM_IDENTITY_ID],
+    );
+    if (retired?.issuing === 0) return;
+  }
   const identity = readEnvIdentity(env);
   const existing = await first<{ pass_type_identifier: string; team_identifier: string }>(
     env.DB,

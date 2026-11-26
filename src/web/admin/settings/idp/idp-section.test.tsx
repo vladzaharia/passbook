@@ -50,6 +50,7 @@ const handlers = (over: Record<string, (u: URL, i?: RequestInit) => Response> = 
   '/api/v1/settings': () => json(settings),
   '/api/v1/platform/idp': () => json(status()),
   '/api/v1/platform/idp/drift': () => json({ items: [], nextCursor: null }),
+  '/api/v1/platform/idp/setup': () => json({ mode: 'dry_run', items: [] }),
   ...over,
 });
 

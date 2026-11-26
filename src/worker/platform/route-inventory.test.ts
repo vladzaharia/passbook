@@ -372,6 +372,7 @@ const PLATFORM_KEY_ROUTES: string[] = [
   'GET /api/v1/platform/idp/groups/:key/claims',
   'GET /api/v1/platform/idp/groups/:key/members',
   'GET /api/v1/platform/idp/groups/:key/rules',
+  'GET /api/v1/platform/idp/setup',
   'GET /api/v1/platform/invitations',
   'GET /api/v1/platform/settings',
   'GET /api/v1/platform/wallet-release',
@@ -385,6 +386,9 @@ const PLATFORM_KEY_ROUTES: string[] = [
   'POST /api/v1/platform/idp/groups/:key/rules',
   'POST /api/v1/platform/idp/groups/ensure',
   'POST /api/v1/platform/idp/reconcile',
+  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
+  'POST /api/v1/platform/idp/scim-token/rotate',
+  'POST /api/v1/platform/idp/setup',
   'POST /api/v1/platform/invitations',
   'POST /api/v1/platform/invitations/:id/resend',
   'POST /api/v1/users/:id/roles',
@@ -401,6 +405,12 @@ const PLATFORM_KEY_CONDITIONAL: string[] = [
  * Person-only by design (§2.3): no `key`, each with its criterion. A follow-up that adds keys never touches this list.
  */
 const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  // P3: PassBook's own Apple signing identities: adding one or choosing the default decides who signs passes.
+  'POST /api/v1/platform/apple/identities',
+  'POST /api/v1/platform/apple/identities/:id/default',
+  // P3: moving orgs between signing identities re-signs their passes; the arm step is the go/no-go.
+  'POST /api/v1/platform/apple/identity-moves',
+  'POST /api/v1/platform/apple/identity-moves/:moveId/arm',
   // P3: hard-deletes the identity, its credential and the team's last push key.
   'DELETE /api/v1/identities/:id',
   // P3: closes the org with platform authority, the act §2.3 lists as person-only.
@@ -438,6 +448,9 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
  * to `PLATFORM_KEY_ROUTES` (or `PLATFORM_KEY_CONDITIONAL`), emptying this list. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
  */
 const PLATFORM_KEY_DEFERRED: string[] = [
+  'GET /api/v1/platform/apple/identities',
+  'GET /api/v1/platform/apple/identity-moves',
+  'GET /api/v1/platform/apple/identity-moves/preview',
   'DELETE /api/v1/identities/:id/push-key',
   'DELETE /api/v1/users/:id/sessions/:sessionId',
   'GET /api/v1/audit/platform',

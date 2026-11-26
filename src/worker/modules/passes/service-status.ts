@@ -8,7 +8,7 @@ import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { pinnedStatus, type RunWrite } from './bulk-write.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
-import { publishPass } from './publish.ts';
+import { type PublishCommit, publishPass } from './publish.ts';
 import type { Pass } from './repo-map.ts';
 import type { ScopeArg } from './scope.ts';
 
@@ -26,6 +26,10 @@ export interface StatusExtras {
   guard?: (current: Pass) => void;
   /** A bulk run's pins and id (find-and-act runs): the pass must still be at the run's version. */
   runWrite?: RunWrite;
+  /** Rows that commit with the status write, in its grant (an identity move's re-pointed state). */
+  commit?: PublishCommit;
+  /** Changes the pass's `externalId` in the same write (null clears it). */
+  externalId?: string | null;
 }
 
 /** The void or restore of one pass with everything it owns: its events, its audit row and its print PDFs. */
@@ -54,11 +58,14 @@ export async function setPassStatus(
     ...(extras.source ? { source: extras.source } : {}),
     ...(extras.sourceRef ? { sourceRef: extras.sourceRef } : {}),
     ...(extras.notify === undefined ? {} : { notify: extras.notify }),
+    ...(extras.commit ? { commit: extras.commit } : {}),
     ...(extras.expectedVersion === undefined ? {} : { expectedVersion: extras.expectedVersion }),
     ...(checks.length > 0 ? { dispatch: false } : {}),
     mutate: (cur) => {
       extras.guard?.(cur);
-      return pin(cur);
+      return extras.externalId === undefined
+        ? pin(cur)
+        : { ...pin(cur), externalId: extras.externalId };
     },
   });
   // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.

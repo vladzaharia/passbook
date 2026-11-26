@@ -18,6 +18,7 @@ export const EVENT_SETS: readonly {
       'pass.unvoided',
       'pass.removed',
       'pass.restored',
+      'pass.replaced',
       'pass.channels_changed',
     ],
   },

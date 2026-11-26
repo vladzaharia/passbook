@@ -7118,6 +7118,23 @@ type PassRemovedEventData struct {
 	RunID   *string `json:"runId,omitempty"`
 }
 
+type PassReplacedEvent struct {
+	ID         string                `json:"id"`
+	Type       string                `json:"type"`
+	APIVersion string                `json:"apiVersion"`
+	CreatedAt  int64                 `json:"createdAt"`
+	OrgID      string                `json:"orgId"`
+	Mode       string                `json:"mode"`
+	Pass       WebhookPassRef        `json:"pass"`
+	Data       PassReplacedEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
+	Sample     *bool                 `json:"sample,omitempty"`
+}
+
+type PassReplacedEventData struct {
+	ReplacedBy string `json:"replacedBy"`
+}
+
 type PassRestoredEvent struct {
 	ID         string                `json:"id"`
 	Type       string                `json:"type"`
@@ -8858,6 +8875,190 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	At         int64   `json:"at"`
 }
 
+type PlatformAppleIdentitiesCreateParams struct {
+	Slot string `json:"slot"`
+}
+
+type PlatformAppleIdentitiesCreateResponse struct {
+	ID         string  `json:"id"`
+	OrgID      *string `json:"orgId"`
+	Kind       string  `json:"kind"`
+	TargetType string  `json:"targetType"`
+	TargetID   string  `json:"targetId"`
+	State      string  `json:"state"`
+	Step       *string `json:"step"`
+	Attempt    int64   `json:"attempt"`
+	WaitingFor *string `json:"waitingFor"`
+	ErrorCode  *string `json:"errorCode"`
+	CreatedAt  int64   `json:"createdAt"`
+	UpdatedAt  int64   `json:"updatedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+}
+
+type PlatformAppleIdentitiesListResponse struct {
+	Items    []PlatformAppleIdentitiesListResponseItemsItem    `json:"items"`
+	OpenRuns []PlatformAppleIdentitiesListResponseOpenRunsItem `json:"openRuns"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItem struct {
+	ID                 string                                                    `json:"id"`
+	OrgID              *string                                                   `json:"orgId"`
+	Label              string                                                    `json:"label"`
+	PassTypeIdentifier string                                                    `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                                    `json:"teamIdentifier"`
+	Source             string                                                    `json:"source"`
+	CertSha256         *string                                                   `json:"certSha256"`
+	CertSubject        *string                                                   `json:"certSubject"`
+	CertSerial         *string                                                   `json:"certSerial"`
+	NotBefore          *int64                                                    `json:"notBefore"`
+	NotAfter           *int64                                                    `json:"notAfter"`
+	DaysRemaining      *int64                                                    `json:"daysRemaining"`
+	ApnsBinding        *string                                                   `json:"apnsBinding"`
+	ApnsAvailable      bool                                                      `json:"apnsAvailable"`
+	PushMethod         *string                                                   `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                            `json:"pushKey,omitempty"`
+	ApnsHealth         string                                                    `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                                    `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                                   `json:"apnsReason,omitempty"`
+	PassCount          *int64                                                    `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                      `json:"nfcEnabled"`
+	NFCKeys            []PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                      `json:"isDefault"`
+	CreatedAt          int64                                                     `json:"createdAt"`
+	Kind               *string                                                   `json:"kind,omitempty"`
+	Status             *string                                                   `json:"status,omitempty"`
+	Rotation           *string                                                   `json:"rotation,omitempty"`
+	Issuing            *bool                                                     `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                                    `json:"nextRotationAt,omitempty"`
+	Handle             *string                                                   `json:"handle,omitempty"`
+	Slot               *string                                                   `json:"slot"`
+	Purpose            string                                                    `json:"purpose"`
+	Managed            string                                                    `json:"managed"`
+	RegistrationCount  int64                                                     `json:"registrationCount"`
+	OpenRunID          *string                                                   `json:"openRunId"`
+	Dormant            bool                                                      `json:"dormant"`
+	Readiness          PlatformAppleIdentitiesListResponseItemsItemReadiness     `json:"readiness"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemReadiness struct {
+	Eligible       bool   `json:"eligible"`
+	Certificate    bool   `json:"certificate"`
+	Issuing        *bool  `json:"issuing"`
+	PushHealthy    *bool  `json:"pushHealthy"`
+	PushProbeAt    *int64 `json:"pushProbeAt"`
+	PushProbeFresh *bool  `json:"pushProbeFresh"`
+	DeviceTest     *bool  `json:"deviceTest"`
+	Ready          bool   `json:"ready"`
+}
+
+type PlatformAppleIdentitiesListResponseOpenRunsItem struct {
+	Slot  string `json:"slot"`
+	RunID string `json:"runId"`
+}
+
+type PlatformAppleIdentitiesMakeDefaultResponse struct {
+	IdentityID string `json:"identityId"`
+	Changed    bool   `json:"changed"`
+}
+
+type PlatformAppleIdentityMovesListResponse struct {
+	Items      []PlatformAppleIdentityMovesListResponseItemsItem `json:"items"`
+	NextCursor *string                                           `json:"nextCursor"`
+}
+
+type PlatformAppleIdentityMovesListResponseItemsItem struct {
+	ID             string  `json:"id"`
+	OperationID    string  `json:"operationId"`
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   string  `json:"toIdentityId"`
+	OldPassID      string  `json:"oldPassId"`
+	NewPassID      string  `json:"newPassId"`
+	State          string  `json:"state"`
+	Reason         *string `json:"reason"`
+	ConflictCount  int64   `json:"conflictCount"`
+	RegisteredAt   *int64  `json:"registeredAt"`
+	VoidAt         *int64  `json:"voidAt"`
+	VoidedAt       *int64  `json:"voidedAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+}
+
+type PlatformAppleIdentityMovesPreviewResponse struct {
+	ToIdentityID string           `json:"toIdentityId"`
+	Passes       int64            `json:"passes"`
+	Registered   int64            `json:"registered"`
+	Holders      int64            `json:"holders"`
+	Kept         map[string]int64 `json:"kept"`
+}
+
+type PlatformAppleIdentityMovesStartParams struct {
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   *string `json:"toIdentityId,omitempty"`
+}
+
+type PlatformAppleIdentityMovesStartResponse struct {
+	ID              string                                             `json:"id"`
+	Kind            string                                             `json:"kind"`
+	Status          string                                             `json:"status"`
+	Title           string                                             `json:"title"`
+	Text            string                                             `json:"text"`
+	OrgID           *string                                            `json:"orgId"`
+	Mode            *string                                            `json:"mode"`
+	Target          map[string]any                                     `json:"target"`
+	Step            *string                                            `json:"step"`
+	Steps           []PlatformAppleIdentityMovesStartResponseStepsItem `json:"steps"`
+	Attempt         int64                                              `json:"attempt"`
+	Cancelable      bool                                               `json:"cancelable"`
+	CancelRequested bool                                               `json:"cancelRequested"`
+	StartedBy       PlatformAppleIdentityMovesStartResponseStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                              `json:"createdAt"`
+	StartedAt       *int64                                             `json:"startedAt"`
+	UpdatedAt       int64                                              `json:"updatedAt"`
+	FinishedAt      *int64                                             `json:"finishedAt"`
+	Error           map[string]any                                     `json:"error"`
+	Result          map[string]any                                     `json:"result"`
+	Revision        int64                                              `json:"revision"`
+	PollAfterMs     int64                                              `json:"pollAfterMs"`
+}
+
+type PlatformAppleIdentityMovesStartResponseStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformAppleIdentityMovesStartResponseStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformAppleIdentityMovesStartTimerResponse struct {
+	MoveID string `json:"moveId"`
+	Armed  bool   `json:"armed"`
+}
+
 type PlatformAuditEntriesListResponse struct {
 	Items      []PlatformAuditEntriesListResponseItemsItem `json:"items"`
 	NextCursor *string                                     `json:"nextCursor"`
@@ -8924,10 +9125,6 @@ type PlatformGroupsClaimsRetrieveResponseClaimsValue struct {
 	Value any    `json:"value,omitempty"`
 }
 
-type PlatformGroupsClaimsRetrieveResult = PlatformGroupsClaimsRetrieveResponse
-
-type PlatformGroupsClaimsUpdateBody = PlatformGroupsClaimsUpdateParams
-
 type PlatformGroupsClaimsUpdateParams struct {
 	Set map[string]map[string]any `json:"set"`
 }
@@ -8937,10 +9134,6 @@ type PlatformGroupsClaimsUpdateResponse struct {
 	Removed []string `json:"removed"`
 	DryRun  bool     `json:"dryRun"`
 }
-
-type PlatformGroupsClaimsUpdateResult = PlatformGroupsClaimsUpdateResponse
-
-type PlatformGroupsCreateBody = PlatformGroupsCreateParams
 
 type PlatformGroupsCreateParams struct {
 	Key          string                                `json:"key"`
@@ -8958,16 +9151,10 @@ type PlatformGroupsCreateResponse struct {
 	DryRun bool   `json:"dryRun"`
 }
 
-type PlatformGroupsCreateResult = PlatformGroupsCreateResponse
-
 type PlatformGroupsDeleteResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
 }
-
-type PlatformGroupsDeleteResult = PlatformGroupsDeleteResponse
-
-type PlatformGroupsEnsureBody = PlatformGroupsEnsureParams
 
 type PlatformGroupsEnsureParams struct {
 	Role string `json:"role"`
@@ -8976,25 +9163,6 @@ type PlatformGroupsEnsureParams struct {
 type PlatformGroupsEnsureResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
-}
-
-type PlatformGroupsEnsureResult = PlatformGroupsEnsureResponse
-
-type PlatformGroupsListItem struct {
-	Key          string   `json:"key"`
-	Kind         string   `json:"kind"`
-	Name         string   `json:"name"`
-	FriendlyName *string  `json:"friendlyName"`
-	Members      *int64   `json:"members"`
-	Claims       []string `json:"claims"`
-	OtherClients *int64   `json:"otherClients"`
-	Flags        []string `json:"flags"`
-	Rules        int64    `json:"rules"`
-	Manual       int64    `json:"manual"`
-}
-
-type PlatformGroupsListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsListResponse struct {
@@ -9015,8 +9183,6 @@ type PlatformGroupsListResponseItemsItem struct {
 	Manual       int64    `json:"manual"`
 }
 
-type PlatformGroupsMembersCreateBody = PlatformGroupsMembersCreateParams
-
 type PlatformGroupsMembersCreateParams = any
 
 type PlatformGroupsMembersCreateParams1 struct {
@@ -9035,24 +9201,8 @@ type PlatformGroupsMembersCreateResponse struct {
 	CreatedAt int64   `json:"createdAt"`
 }
 
-type PlatformGroupsMembersCreateResult = PlatformGroupsMembersCreateResponse
-
 type PlatformGroupsMembersDeleteResponse struct {
 	Ok bool `json:"ok"`
-}
-
-type PlatformGroupsMembersDeleteResult = PlatformGroupsMembersDeleteResponse
-
-type PlatformGroupsMembersListItem struct {
-	ID        string  `json:"id"`
-	Subject   string  `json:"subject"`
-	UserID    *string `json:"userId"`
-	Source    string  `json:"source"`
-	CreatedAt int64   `json:"createdAt"`
-}
-
-type PlatformGroupsMembersListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsMembersListResponse struct {
@@ -9068,8 +9218,6 @@ type PlatformGroupsMembersListResponseItemsItem struct {
 	CreatedAt int64   `json:"createdAt"`
 }
 
-type PlatformGroupsRulesCreateBody = PlatformGroupsRulesCreateParams
-
 type PlatformGroupsRulesCreateParams struct {
 	OrgID    string   `json:"orgId"`
 	OrgRoles []string `json:"orgRoles,omitempty"`
@@ -9082,23 +9230,8 @@ type PlatformGroupsRulesCreateResponse struct {
 	CreatedAt int64    `json:"createdAt"`
 }
 
-type PlatformGroupsRulesCreateResult = PlatformGroupsRulesCreateResponse
-
 type PlatformGroupsRulesDeleteResponse struct {
 	Ok bool `json:"ok"`
-}
-
-type PlatformGroupsRulesDeleteResult = PlatformGroupsRulesDeleteResponse
-
-type PlatformGroupsRulesListItem struct {
-	ID        string   `json:"id"`
-	OrgID     string   `json:"orgId"`
-	OrgRoles  []string `json:"orgRoles"`
-	CreatedAt int64    `json:"createdAt"`
-}
-
-type PlatformGroupsRulesListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformGroupsRulesListResponse struct {
@@ -9113,8 +9246,6 @@ type PlatformGroupsRulesListResponseItemsItem struct {
 	CreatedAt int64    `json:"createdAt"`
 }
 
-type PlatformGroupsUpdateBody = PlatformGroupsUpdateParams
-
 type PlatformGroupsUpdateParams struct {
 	FriendlyName string `json:"friendlyName"`
 }
@@ -9122,24 +9253,6 @@ type PlatformGroupsUpdateParams struct {
 type PlatformGroupsUpdateResponse struct {
 	Key    string `json:"key"`
 	DryRun bool   `json:"dryRun"`
-}
-
-type PlatformGroupsUpdateResult = PlatformGroupsUpdateResponse
-
-type PlatformIdpCallsListItem struct {
-	ID     int64   `json:"id"`
-	Phase  string  `json:"phase"`
-	Method string  `json:"method"`
-	Target *string `json:"target"`
-	Actor  *string `json:"actor"`
-	Reason *string `json:"reason"`
-	Status *string `json:"status"`
-	At     int64   `json:"at"`
-}
-
-type PlatformIdpCallsListQuery struct {
-	Since  *int64  `json:"since,omitempty"`
-	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformIdpCallsListResponse struct {
@@ -9157,8 +9270,6 @@ type PlatformIdpCallsListResponseItemsItem struct {
 	Status *string `json:"status"`
 	At     int64   `json:"at"`
 }
-
-type PlatformIdpCheckBody = PlatformIdpCheckParams
 
 type PlatformIdpCheckParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
@@ -9212,8 +9323,6 @@ type PlatformIdpCheckResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
-type PlatformIdpCheckResult = PlatformIdpCheckResponse
-
 type PlatformIdpDriftListResponse struct {
 	Items      []PlatformIdpDriftListResponseItemsItem `json:"items"`
 	NextCursor any                                     `json:"nextCursor"`
@@ -9226,8 +9335,6 @@ type PlatformIdpDriftListResponseItemsItem struct {
 	Kind    string  `json:"kind"`
 	FoundAt int64   `json:"foundAt"`
 }
-
-type PlatformIdpDriftListResult = PlatformIdpDriftListResponse
 
 type PlatformIdpPauseParams struct {
 	Reason string `json:"reason"`
@@ -9253,8 +9360,6 @@ type PlatformIdpRetrieveResponseBudgetValue struct {
 	Day   float64 `json:"day"`
 	Limit float64 `json:"limit"`
 }
-
-type PlatformIdpRetrieveResult = PlatformIdpRetrieveResponse
 
 type PlatformIdpScimBreakerClearResponse struct {
 	Operation PlatformIdpScimBreakerClearResponseOperation `json:"operation"`
@@ -9304,7 +9409,140 @@ type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
-type PlatformInvitationsCreateBody = PlatformInvitationsCreateParams
+type PlatformIdpScimTokenRotateBody = PlatformIdpScimTokenRotateParams
+
+type PlatformIdpScimTokenRotateParams struct {
+	DryRun *bool `json:"dryRun,omitempty"`
+}
+
+type PlatformIdpScimTokenRotateResponse struct {
+	Operation PlatformIdpScimTokenRotateResponseOperation `json:"operation"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperation struct {
+	ID              string                                                 `json:"id"`
+	Kind            string                                                 `json:"kind"`
+	Status          string                                                 `json:"status"`
+	Title           string                                                 `json:"title"`
+	Text            string                                                 `json:"text"`
+	OrgID           *string                                                `json:"orgId"`
+	Mode            *string                                                `json:"mode"`
+	Target          map[string]any                                         `json:"target"`
+	Step            *string                                                `json:"step"`
+	Steps           []PlatformIdpScimTokenRotateResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                                  `json:"attempt"`
+	Cancelable      bool                                                   `json:"cancelable"`
+	CancelRequested bool                                                   `json:"cancelRequested"`
+	StartedBy       PlatformIdpScimTokenRotateResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                                  `json:"createdAt"`
+	StartedAt       *int64                                                 `json:"startedAt"`
+	UpdatedAt       int64                                                  `json:"updatedAt"`
+	FinishedAt      *int64                                                 `json:"finishedAt"`
+	Error           map[string]any                                         `json:"error"`
+	Result          map[string]any                                         `json:"result"`
+	Revision        int64                                                  `json:"revision"`
+	PollAfterMs     int64                                                  `json:"pollAfterMs"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpScimTokenRotateResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpScimTokenRotateResult = PlatformIdpScimTokenRotateResponse
+
+type PlatformIdpSetupRetrieveResponse struct {
+	Mode  *string                                     `json:"mode"`
+	Items []PlatformIdpSetupRetrieveResponseItemsItem `json:"items"`
+}
+
+type PlatformIdpSetupRetrieveResponseItemsItem struct {
+	Key    string                                              `json:"key"`
+	Status string                                              `json:"status"`
+	Reason *string                                             `json:"reason,omitempty"`
+	Owner  *bool                                               `json:"owner,omitempty"`
+	Counts map[string]int64                                    `json:"counts,omitempty"`
+	Rows   []PlatformIdpSetupRetrieveResponseItemsItemRowsItem `json:"rows,omitempty"`
+	Note   *string                                             `json:"note,omitempty"`
+}
+
+type PlatformIdpSetupRetrieveResponseItemsItemRowsItem struct {
+	Key   string `json:"key"`
+	State string `json:"state"`
+}
+
+type PlatformIdpSetupRetrieveResult = PlatformIdpSetupRetrieveResponse
+
+type PlatformIdpSetupStartBody = PlatformIdpSetupStartParams
+
+type PlatformIdpSetupStartParams struct {
+	DryRun *bool    `json:"dryRun,omitempty"`
+	Items  []string `json:"items,omitempty"`
+}
+
+type PlatformIdpSetupStartResponse struct {
+	Operation PlatformIdpSetupStartResponseOperation `json:"operation"`
+}
+
+type PlatformIdpSetupStartResponseOperation struct {
+	ID              string                                            `json:"id"`
+	Kind            string                                            `json:"kind"`
+	Status          string                                            `json:"status"`
+	Title           string                                            `json:"title"`
+	Text            string                                            `json:"text"`
+	OrgID           *string                                           `json:"orgId"`
+	Mode            *string                                           `json:"mode"`
+	Target          map[string]any                                    `json:"target"`
+	Step            *string                                           `json:"step"`
+	Steps           []PlatformIdpSetupStartResponseOperationStepsItem `json:"steps"`
+	Attempt         int64                                             `json:"attempt"`
+	Cancelable      bool                                              `json:"cancelable"`
+	CancelRequested bool                                              `json:"cancelRequested"`
+	StartedBy       PlatformIdpSetupStartResponseOperationStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                             `json:"createdAt"`
+	StartedAt       *int64                                            `json:"startedAt"`
+	UpdatedAt       int64                                             `json:"updatedAt"`
+	FinishedAt      *int64                                            `json:"finishedAt"`
+	Error           map[string]any                                    `json:"error"`
+	Result          map[string]any                                    `json:"result"`
+	Revision        int64                                             `json:"revision"`
+	PollAfterMs     int64                                             `json:"pollAfterMs"`
+}
+
+type PlatformIdpSetupStartResponseOperationStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformIdpSetupStartResponseOperationStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformIdpSetupStartResult = PlatformIdpSetupStartResponse
 
 type PlatformInvitationsCreateParams struct {
 	Email     string   `json:"email"`
@@ -9313,48 +9551,16 @@ type PlatformInvitationsCreateParams struct {
 }
 
 type PlatformInvitationsCreateResponse struct {
-	ID         string                                     `json:"id"`
-	Email      string                                     `json:"email"`
-	Groups     []string                                   `json:"groups"`
-	Developer  bool                                       `json:"developer"`
-	State      string                                     `json:"state"`
-	CreatedAt  int64                                      `json:"createdAt"`
-	ExpiresAt  int64                                      `json:"expiresAt"`
-	AcceptedAt *int64                                     `json:"acceptedAt"`
-	RevokedAt  *int64                                     `json:"revokedAt"`
-	CreatedBy  PlatformInvitationsCreateResponseCreatedBy `json:"createdBy"`
-	Link       *string                                    `json:"link,omitempty"`
-}
-
-type PlatformInvitationsCreateResponseCreatedBy struct {
-	Kind string  `json:"kind"`
-	ID   string  `json:"id"`
-	Name *string `json:"name"`
-}
-
-type PlatformInvitationsCreateResult = PlatformInvitationsCreateResponse
-
-type PlatformInvitationsListItem struct {
-	ID         string                               `json:"id"`
-	Email      string                               `json:"email"`
-	Groups     []string                             `json:"groups"`
-	Developer  bool                                 `json:"developer"`
-	State      string                               `json:"state"`
-	CreatedAt  int64                                `json:"createdAt"`
-	ExpiresAt  int64                                `json:"expiresAt"`
-	AcceptedAt *int64                               `json:"acceptedAt"`
-	RevokedAt  *int64                               `json:"revokedAt"`
-	CreatedBy  PlatformInvitationsListItemCreatedBy `json:"createdBy"`
-}
-
-type PlatformInvitationsListItemCreatedBy struct {
-	Kind string  `json:"kind"`
-	ID   string  `json:"id"`
-	Name *string `json:"name"`
-}
-
-type PlatformInvitationsListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	Link       *string  `json:"link,omitempty"`
 }
 
 type PlatformInvitationsListResponse struct {
@@ -9363,51 +9569,33 @@ type PlatformInvitationsListResponse struct {
 }
 
 type PlatformInvitationsListResponseItemsItem struct {
-	ID         string                                            `json:"id"`
-	Email      string                                            `json:"email"`
-	Groups     []string                                          `json:"groups"`
-	Developer  bool                                              `json:"developer"`
-	State      string                                            `json:"state"`
-	CreatedAt  int64                                             `json:"createdAt"`
-	ExpiresAt  int64                                             `json:"expiresAt"`
-	AcceptedAt *int64                                            `json:"acceptedAt"`
-	RevokedAt  *int64                                            `json:"revokedAt"`
-	CreatedBy  PlatformInvitationsListResponseItemsItemCreatedBy `json:"createdBy"`
-}
-
-type PlatformInvitationsListResponseItemsItemCreatedBy struct {
-	Kind string  `json:"kind"`
-	ID   string  `json:"id"`
-	Name *string `json:"name"`
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
 }
 
 type PlatformInvitationsResendResponse struct {
-	ID         string                                     `json:"id"`
-	Email      string                                     `json:"email"`
-	Groups     []string                                   `json:"groups"`
-	Developer  bool                                       `json:"developer"`
-	State      string                                     `json:"state"`
-	CreatedAt  int64                                      `json:"createdAt"`
-	ExpiresAt  int64                                      `json:"expiresAt"`
-	AcceptedAt *int64                                     `json:"acceptedAt"`
-	RevokedAt  *int64                                     `json:"revokedAt"`
-	CreatedBy  PlatformInvitationsResendResponseCreatedBy `json:"createdBy"`
-	Link       *string                                    `json:"link,omitempty"`
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	Link       *string  `json:"link,omitempty"`
 }
-
-type PlatformInvitationsResendResponseCreatedBy struct {
-	Kind string  `json:"kind"`
-	ID   string  `json:"id"`
-	Name *string `json:"name"`
-}
-
-type PlatformInvitationsResendResult = PlatformInvitationsResendResponse
 
 type PlatformInvitationsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
-
-type PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
@@ -10072,8 +10260,6 @@ type PlatformUsersAccessRetrieveResponseRolesItemSponsorshipsItemOrg struct {
 	Name string `json:"name"`
 }
 
-type PlatformUsersAccessRetrieveResult = PlatformUsersAccessRetrieveResponse
-
 type PlatformUsersClaimsRetrieveResponse struct {
 	Claims    map[string]PlatformUsersClaimsRetrieveResponseClaimsValue `json:"claims"`
 	OtherKeys int64                                                     `json:"otherKeys"`
@@ -10084,10 +10270,6 @@ type PlatformUsersClaimsRetrieveResponseClaimsValue struct {
 	Value any    `json:"value,omitempty"`
 }
 
-type PlatformUsersClaimsRetrieveResult = PlatformUsersClaimsRetrieveResponse
-
-type PlatformUsersClaimsUpdateBody = PlatformUsersClaimsUpdateParams
-
 type PlatformUsersClaimsUpdateParams struct {
 	Set map[string]map[string]any `json:"set"`
 }
@@ -10097,8 +10279,6 @@ type PlatformUsersClaimsUpdateResponse struct {
 	Removed []string `json:"removed"`
 	DryRun  bool     `json:"dryRun"`
 }
-
-type PlatformUsersClaimsUpdateResult = PlatformUsersClaimsUpdateResponse
 
 type PlatformUsersEmailsCreateParams struct {
 	Email string `json:"email"`
@@ -10352,8 +10532,6 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
-type PlatformUsersOffboardBody = PlatformUsersOffboardParams
-
 type PlatformUsersOffboardParams struct {
 	DryRun *bool `json:"dryRun,omitempty"`
 }
@@ -10415,8 +10593,6 @@ type PlatformUsersOffboardResponsePlanSponsorshipsItemOrg struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
-
-type PlatformUsersOffboardResult = PlatformUsersOffboardResponse
 
 type PlatformUsersPassesListResponse struct {
 	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
@@ -10543,8 +10719,6 @@ type PlatformUsersRolesRemoveExternalResponseRolesItemSponsorshipsItemOrg struct
 	Name string `json:"name"`
 }
 
-type PlatformUsersRolesSetBody = PlatformUsersRolesSetParams
-
 type PlatformUsersRolesSetParams struct {
 	Role  string `json:"role"`
 	Grant bool   `json:"grant"`
@@ -10594,8 +10768,6 @@ type PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
-
-type PlatformUsersRolesSetResult = PlatformUsersRolesSetResponse
 
 type PlatformUsersSessionsRevokeAllResponse struct {
 	Ok bool `json:"ok"`

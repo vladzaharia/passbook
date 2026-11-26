@@ -6,9 +6,15 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { getOrgRow } from '../orgs/repo.ts';
 import { RESERVED_HANDLES } from './handles.ts';
+import type { PlatformSlot } from './provision-platform.ts';
 import { managedIdentityOf } from './repo-provision.ts';
 import { cancelRunRow, getRun, pageRuns, type RunRow } from './repo-runs.ts';
-import { type StartedRun, startProvision, startRotation } from './run-start.ts';
+import {
+  type StartedRun,
+  startPlatformProvision,
+  startProvision,
+  startRotation,
+} from './run-start.ts';
 
 export function toRunDto(r: RunRow): IdentityRunDto {
   return {
@@ -84,6 +90,19 @@ export async function startManagedIdentity(
   const started = await startProvision(ctx, {
     orgId,
     ...(handle ? { handle } : {}),
+    createdBy: actor.type === 'user' ? actor.id : null,
+  });
+  return toRunDto(await requireRun(ctx, started.runId));
+}
+
+/** Starts the setup run of a platform slot; an open run for the slot is returned as is. */
+export async function startPlatformIdentity(
+  ctx: ServiceContext,
+  actor: Actor,
+  slot: PlatformSlot,
+): Promise<IdentityRunDto> {
+  const started = await startPlatformProvision(ctx, {
+    slot,
     createdBy: actor.type === 'user' ? actor.id : null,
   });
   return toRunDto(await requireRun(ctx, started.runId));

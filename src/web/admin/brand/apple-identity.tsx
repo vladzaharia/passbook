@@ -9,21 +9,11 @@ import { Button } from '@/web/ui/index.ts';
 import { NewManagedIdentityDialog } from '../wallet-accounts/apple/new-managed-dialog.tsx';
 import { OrgAppleHistory } from '../wallet-accounts/org-apple-history.tsx';
 import './brand.css';
-import { RunSteps } from './run-steps.tsx';
+import { RunSteps, stepIndex } from './run-steps.tsx';
 
 const COPY = PASS_SETUP_COPY.channelsCard;
 const KINDS = PASS_SETUP_COPY.identityKinds;
 const ACTIVE = new Set(['queued', 'running', 'waiting']);
-
-/** Which of the four run steps is current, from the workflow's step name. */
-function stepIndex(step: string | null): number {
-  if (!step) return 0;
-  if (/finish|done/.test(step)) return 4;
-  if (/push|apns/.test(step)) return 3;
-  if (/cert|csr|issue/.test(step)) return 2;
-  if (/type|identifier|create/.test(step)) return 1;
-  return 0;
-}
 
 /** An identifier that wraps only after a dot, never inside a part. */
 const breakAtDots = (id: string) =>

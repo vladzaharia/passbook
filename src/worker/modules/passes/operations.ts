@@ -3,6 +3,7 @@ import type { OperationRunner, OperationRunners } from '../operations/registry.t
 import { actorOfAuth } from '../operations/start-org.ts';
 import { startBulkReissue } from './bulk.ts';
 import { tenantAuthorityOf } from './http.ts';
+import { runIdentityMove } from './identity-move-run.ts';
 import { limitKeyReissues } from './key-reissue-limit.ts';
 import { decodeReissue } from './reissue-target.ts';
 import { releaseRunGuardOf } from './repo-ops.ts';
@@ -70,6 +71,12 @@ const relaunchPlatform: NonNullable<OperationRunner['relaunch']> = async (
 };
 
 export const operationRunners: OperationRunners = {
+  'identity.move': {
+    run: (ctx, op, lease) => runIdentityMove(ctx, op, lease),
+    // The row is a platform row, so the service already hides it from keys; this refuses them again.
+    // A move writes Live passes and pushes them: a person at the console, never a token.
+    authorizeRetry: authorizePlatformRetry,
+  },
   'passes.reissue': { authorizeRetry, relaunch, workflow },
   'passes.reissue_platform': {
     authorizeRetry: authorizePlatformRetry,

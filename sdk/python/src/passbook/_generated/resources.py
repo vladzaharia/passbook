@@ -2050,229 +2050,44 @@ class PassViewsResource:
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
 
 
-class PlatformIdpCallsResource:
+class PlatformIdpScimTokenResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
-    def list(
+    def rotate(
         self,
-        *,
-        since: int | None | None = None,
-        cursor: str | None = None,
+        body: m.PlatformIdpScimTokenRotateBody | _Dict[str, _Any] | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.PlatformIdpCallsListItem]:
-        """The binding's ledger of calls to Polaris ID from `since` (ms), a page at a time. `GET /api/v1/platform/idp/calls`"""
-        return self._core.paginate("GET", "/api/v1/platform/idp/calls", query={"since": since, "cursor": cursor}, result=m.PlatformIdpCallsListResult, cursor_param="cursor", **opts)
+    ) -> m.PlatformIdpScimTokenRotateResult:
+        """Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`). `POST /api/v1/platform/idp/scim-token/rotate`"""
+        return self._core.request("POST", "/api/v1/platform/idp/scim-token/rotate", body=body, result=m.PlatformIdpScimTokenRotateResult, **opts)
 
 
-class PlatformIdpDriftResource:
+class PlatformIdpSetupResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
-    def list(
+    def retrieve(
         self,
         **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformIdpDriftListResult:
-        """Open differences between Polaris ID and PassBook. `GET /api/v1/platform/idp/drift`"""
-        return self._core.request("GET", "/api/v1/platform/idp/drift", result=m.PlatformIdpDriftListResult, **opts)
+    ) -> m.PlatformIdpSetupRetrieveResult:
+        """What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read. `GET /api/v1/platform/idp/setup`"""
+        return self._core.request("GET", "/api/v1/platform/idp/setup", result=m.PlatformIdpSetupRetrieveResult, **opts)
+
+    def start(
+        self,
+        body: m.PlatformIdpSetupStartBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpSetupStartResult:
+        """Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`). `POST /api/v1/platform/idp/setup`"""
+        return self._core.request("POST", "/api/v1/platform/idp/setup", body=body, result=m.PlatformIdpSetupStartResult, **opts)
 
 
 class PlatformIdpResource:
     def __init__(self, core: Core) -> None:
         self._core = core
-        self.calls = PlatformIdpCallsResource(core)
-        self.drift = PlatformIdpDriftResource(core)
-
-    def check(
-        self,
-        body: m.PlatformIdpCheckBody | _Dict[str, _Any] | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformIdpCheckResult:
-        """Check now: compare every Polaris ID group with PassBook. `dryRun` records differences and changes nothing. Answers 202 with an operation (`idp.check` or `idp.dry_run`). `POST /api/v1/platform/idp/reconcile`"""
-        return self._core.request("POST", "/api/v1/platform/idp/reconcile", body=body, result=m.PlatformIdpCheckResult, **opts)
-
-    def retrieve(
-        self,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformIdpRetrieveResult:
-        """Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences. `GET /api/v1/platform/idp`"""
-        return self._core.request("GET", "/api/v1/platform/idp", result=m.PlatformIdpRetrieveResult, **opts)
-
-
-class PlatformGroupsClaimsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def retrieve(
-        self,
-        key: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsClaimsRetrieveResult:
-        """Read a Polaris ID group's claims (the ones PassBook manages) `GET /api/v1/platform/idp/groups/{key}/claims`"""
-        return self._core.request("GET", f"/api/v1/platform/idp/groups/{_p(key)}/claims", result=m.PlatformGroupsClaimsRetrieveResult, **opts)
-
-    def update(
-        self,
-        key: str,
-        body: m.PlatformGroupsClaimsUpdateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsClaimsUpdateResult:
-        """Set or remove a Polaris ID group's claims `PATCH /api/v1/platform/idp/groups/{key}/claims`"""
-        return self._core.request("PATCH", f"/api/v1/platform/idp/groups/{_p(key)}/claims", body=body, result=m.PlatformGroupsClaimsUpdateResult, **opts)
-
-
-class PlatformGroupsMembersResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def create(
-        self,
-        key: str,
-        body: m.PlatformGroupsMembersCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsMembersCreateResult:
-        """Add a manual member, by user or Polaris ID subject `POST /api/v1/platform/idp/groups/{key}/members`"""
-        return self._core.request("POST", f"/api/v1/platform/idp/groups/{_p(key)}/members", body=body, result=m.PlatformGroupsMembersCreateResult, **opts)
-
-    def delete(
-        self,
-        key: str,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsMembersDeleteResult:
-        """Remove a manual member `DELETE /api/v1/platform/idp/groups/{key}/members/{id}`"""
-        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}/members/{_p(id)}", result=m.PlatformGroupsMembersDeleteResult, **opts)
-
-    def list(
-        self,
-        key: str,
-        *,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.PlatformGroupsMembersListItem]:
-        """List a group's manual members `GET /api/v1/platform/idp/groups/{key}/members`"""
-        return self._core.paginate("GET", f"/api/v1/platform/idp/groups/{_p(key)}/members", query={"cursor": cursor}, result=m.PlatformGroupsMembersListResult, cursor_param="cursor", **opts)
-
-
-class PlatformGroupsRulesResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def create(
-        self,
-        key: str,
-        body: m.PlatformGroupsRulesCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsRulesCreateResult:
-        """Add an org rule: members of the org join the group `POST /api/v1/platform/idp/groups/{key}/rules`"""
-        return self._core.request("POST", f"/api/v1/platform/idp/groups/{_p(key)}/rules", body=body, result=m.PlatformGroupsRulesCreateResult, **opts)
-
-    def delete(
-        self,
-        key: str,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsRulesDeleteResult:
-        """End an org rule `DELETE /api/v1/platform/idp/groups/{key}/rules/{id}`"""
-        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}/rules/{_p(id)}", result=m.PlatformGroupsRulesDeleteResult, **opts)
-
-    def list(
-        self,
-        key: str,
-        *,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.PlatformGroupsRulesListItem]:
-        """List a group's org rules `GET /api/v1/platform/idp/groups/{key}/rules`"""
-        return self._core.paginate("GET", f"/api/v1/platform/idp/groups/{_p(key)}/rules", query={"cursor": cursor}, result=m.PlatformGroupsRulesListResult, cursor_param="cursor", **opts)
-
-
-class PlatformGroupsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-        self.claims = PlatformGroupsClaimsResource(core)
-        self.members = PlatformGroupsMembersResource(core)
-        self.rules = PlatformGroupsRulesResource(core)
-
-    def create(
-        self,
-        body: m.PlatformGroupsCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsCreateResult:
-        """Create a custom Polaris ID group `POST /api/v1/platform/idp/groups`"""
-        return self._core.request("POST", "/api/v1/platform/idp/groups", body=body, result=m.PlatformGroupsCreateResult, **opts)
-
-    def delete(
-        self,
-        key: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsDeleteResult:
-        """Delete an empty custom group PassBook created `DELETE /api/v1/platform/idp/groups/{key}`"""
-        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}", result=m.PlatformGroupsDeleteResult, **opts)
-
-    def ensure(
-        self,
-        body: m.PlatformGroupsEnsureBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsEnsureResult:
-        """Create a configured role group in Polaris ID `POST /api/v1/platform/idp/groups/ensure`"""
-        return self._core.request("POST", "/api/v1/platform/idp/groups/ensure", body=body, result=m.PlatformGroupsEnsureResult, **opts)
-
-    def list(
-        self,
-        *,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.PlatformGroupsListItem]:
-        """List the Polaris ID groups PassBook manages `GET /api/v1/platform/idp/groups`"""
-        return self._core.paginate("GET", "/api/v1/platform/idp/groups", query={"cursor": cursor}, result=m.PlatformGroupsListResult, cursor_param="cursor", **opts)
-
-    def update(
-        self,
-        key: str,
-        body: m.PlatformGroupsUpdateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformGroupsUpdateResult:
-        """Rename a group's display name `PATCH /api/v1/platform/idp/groups/{key}`"""
-        return self._core.request("PATCH", f"/api/v1/platform/idp/groups/{_p(key)}", body=body, result=m.PlatformGroupsUpdateResult, **opts)
-
-
-class PlatformInvitationsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def create(
-        self,
-        body: m.PlatformInvitationsCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformInvitationsCreateResult:
-        """Invite a person to Polaris ID groups `POST /api/v1/platform/invitations`"""
-        return self._core.request("POST", "/api/v1/platform/invitations", body=body, result=m.PlatformInvitationsCreateResult, **opts)
-
-    def list(
-        self,
-        *,
-        cursor: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.PlatformInvitationsListItem]:
-        """List platform invitations `GET /api/v1/platform/invitations`"""
-        return self._core.paginate("GET", "/api/v1/platform/invitations", query={"cursor": cursor}, result=m.PlatformInvitationsListResult, cursor_param="cursor", **opts)
-
-    def resend(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformInvitationsResendResult:
-        """Send a platform invitation again with a new link `POST /api/v1/platform/invitations/{id}/resend`"""
-        return self._core.request("POST", f"/api/v1/platform/invitations/{_p(id)}/resend", result=m.PlatformInvitationsResendResult, **opts)
-
-    def revoke(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformInvitationsRevokeResult:
-        """Revoke a platform invitation `DELETE /api/v1/platform/invitations/{id}`"""
-        return self._core.request("DELETE", f"/api/v1/platform/invitations/{_p(id)}", result=m.PlatformInvitationsRevokeResult, **opts)
+        self.scim_token = PlatformIdpScimTokenResource(core)
+        self.setup = PlatformIdpSetupResource(core)
 
 
 class PlatformSettingsResource:
@@ -2317,81 +2132,12 @@ class PlatformWalletReleaseResource:
         return self._core.request("GET", "/api/v1/platform/wallet-release", result=m.PlatformWalletReleaseRetrieveResult, **opts)
 
 
-class PlatformUsersAccessResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def retrieve(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformUsersAccessRetrieveResult:
-        """A user's Polaris ID access: per role what PassBook wants and why, what Polaris ID showed, and any pause. `GET /api/v1/users/{id}/access`"""
-        return self._core.request("GET", f"/api/v1/users/{_p(id)}/access", result=m.PlatformUsersAccessRetrieveResult, **opts)
-
-
-class PlatformUsersClaimsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def retrieve(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformUsersClaimsRetrieveResult:
-        """Read a user's Polaris ID claims (the ones PassBook manages) `GET /api/v1/users/{id}/claims`"""
-        return self._core.request("GET", f"/api/v1/users/{_p(id)}/claims", result=m.PlatformUsersClaimsRetrieveResult, **opts)
-
-    def update(
-        self,
-        id: str,
-        body: m.PlatformUsersClaimsUpdateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformUsersClaimsUpdateResult:
-        """Set or remove a user's Polaris ID claims `PATCH /api/v1/users/{id}/claims`"""
-        return self._core.request("PATCH", f"/api/v1/users/{_p(id)}/claims", body=body, result=m.PlatformUsersClaimsUpdateResult, **opts)
-
-
-class PlatformUsersRolesResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def set(
-        self,
-        id: str,
-        body: m.PlatformUsersRolesSetBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformUsersRolesSetResult:
-        """Grant or revoke a platform role (developer or support). The sync adds or removes the Polaris ID group within a minute. `POST /api/v1/users/{id}/roles`"""
-        return self._core.request("POST", f"/api/v1/users/{_p(id)}/roles", body=body, result=m.PlatformUsersRolesSetResult, **opts)
-
-
-class PlatformUsersResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-        self.access = PlatformUsersAccessResource(core)
-        self.claims = PlatformUsersClaimsResource(core)
-        self.roles = PlatformUsersRolesResource(core)
-
-    def offboard(
-        self,
-        id: str,
-        body: m.PlatformUsersOffboardBody | _Dict[str, _Any] | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.PlatformUsersOffboardResult:
-        """Offboard a user: end their memberships, developer sponsorships, platform grants and keys, sign them out and disable them, then take their Polaris ID roles away. `dryRun` answers 200 with the plan and changes nothing. Otherwise 202 with the plan and an operation (`idp.offboard`). 409 `IDP_PLATFORM_ADMIN` for a platform admin, `LAST_ORG_ADMIN` when an org would lose its last admin. `POST /api/v1/users/{id}/offboard`"""
-        return self._core.request("POST", f"/api/v1/users/{_p(id)}/offboard", body=body, result=m.PlatformUsersOffboardResult, **opts)
-
-
 class PlatformResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.idp = PlatformIdpResource(core)
-        self.groups = PlatformGroupsResource(core)
-        self.invitations = PlatformInvitationsResource(core)
         self.settings = PlatformSettingsResource(core)
         self.wallet_release = PlatformWalletReleaseResource(core)
-        self.users = PlatformUsersResource(core)
 
 
 class RequestLogsResource:
@@ -3263,7 +3009,7 @@ class WebhookEndpointsCapturesResource:
         *,
         cursor: str | None = None,
         limit: int | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
@@ -3318,7 +3064,7 @@ class WebhookEndpointsDeliveriesResource:
         cursor: str | None = None,
         limit: int | None = None,
         state: _Literal["pending", "delivered", "failed", "cancelled"] | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],

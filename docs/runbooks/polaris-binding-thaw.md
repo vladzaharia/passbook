@@ -7,6 +7,8 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
+Settings, Polaris ID shows freezes and their state. First turn-on: [[Polaris Binding Turn On]].
+
 Use to lift a freeze. `freeze` writes a row to `idp_freezes` and every write then answers `IDP_FROZEN`; reads continue. No RPC thaws, so the owner updates the row directly. Triggers allow only that one update, once per row. Find out why it froze before thawing (Workers Logs: `binding.breaker`, `binding.drift`, `binding.unsafe_config`).
 
 ## Prerequisites

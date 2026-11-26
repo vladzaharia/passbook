@@ -10,13 +10,14 @@ const passTypeBody = (id: string, identifier: string) => ({
 beforeEach(resetLedger);
 
 describe('apple-provisioner allowlist', () => {
-  it('exposes exactly the seven RPC methods', () => {
+  it('exposes exactly the eight RPC methods', () => {
     expect(Object.getOwnPropertyNames(AppleProvisioner.prototype).sort()).toEqual(
       [
         'calls',
         'constructor',
         'createCertificate',
         'createPassType',
+        'createPlatformPassType',
         'findPassType',
         'listCertificates',
         'reportCertificateActive',
@@ -53,15 +54,21 @@ describe('apple-provisioner allowlist', () => {
     });
   });
 
-  it.each(['Wallet', 'wallet', 'a', 'has-hyphen', 'dotted.name', 'x'.repeat(31), 'admin'])(
-    'refuses handle %s without calling Apple',
-    async (handle) => {
-      const { api, seen } = stubApple(() => ({ body: {} }));
-      await expect(api.createPassType(handle, 'Name')).rejects.toThrow(/^ASC_REFUSED/);
-      expect(seen).toHaveLength(0);
-      expect((await ledger()).map((r) => r.phase)).toEqual(['refused']);
-    },
-  );
+  it.each([
+    'Wallet',
+    'wallet',
+    'a',
+    'has-hyphen',
+    'dotted.name',
+    'x'.repeat(31),
+    'admin',
+    'devtest',
+  ])('refuses handle %s without calling Apple', async (handle) => {
+    const { api, seen } = stubApple(() => ({ body: {} }));
+    await expect(api.createPassType(handle, 'Name')).rejects.toThrow(/^ASC_REFUSED/);
+    expect(seen).toHaveLength(0);
+    expect((await ledger()).map((r) => r.phase)).toEqual(['refused']);
+  });
 
   it('refuses to find or certify identifiers and pass types outside the allowlist', async () => {
     const { api, seen } = stubApple(() => ({ body: {} }));
@@ -79,7 +86,7 @@ describe('apple-provisioner allowlist', () => {
       body: { data: [passTypeBody('PLAT', 'pass.im.plrs.wallet').data] },
     }));
     expect((await api.findPassType('pass.im.plrs.wallet'))?.ascId).toBe('PLAT');
-    expect(seen[0]?.path).toBe('/v1/passTypeIds?filter[identifier]=pass.im.plrs.wallet&limit=10');
+    expect(seen[0]?.path).toBe('/v1/passTypeIds?filter[identifier]=pass.im.plrs.wallet&limit=200');
     await expect(api.listCertificates('PLAT')).resolves.toHaveLength(1);
   });
 
@@ -132,5 +139,67 @@ describe('apple-provisioner allowlist', () => {
     const csr = await makeCsr(PTI, ecKeys);
     await expect(api.createCertificate('PT1', csr, false)).rejects.toThrow(/^ASC_REFUSED/);
     expect(seen).toHaveLength(0);
+  });
+
+  it.each([
+    ['root', 'pass.mobile.passbook', 'PassBook'],
+    ['devtest', 'pass.mobile.passbook.devtest', 'PassBook Test'],
+  ] as const)('creates the %s platform pass type with exact constants', async (slot, id, name) => {
+    const { api, seen } = stubApple(() => ({ status: 201, body: passTypeBody('PTP', id) }));
+    expect(await api.createPlatformPassType(slot, 'run-1')).toMatchObject({
+      ascId: 'PTP',
+      identifier: id,
+      outcome: 'created',
+    });
+    expect(seen[0]?.body).toEqual({
+      data: { type: 'passTypeIds', attributes: { identifier: id, name } },
+    });
+    expect((await api.createPlatformPassType(slot)).outcome).toBe('existing');
+    expect(seen).toHaveLength(1);
+    expect((await ledger()).some((r) => r.method === 'createPassType' && r.target === id)).toBe(
+      true,
+    );
+  });
+
+  it('adopts a platform pass type Apple already has when create answers 409', async () => {
+    const { api } = stubApple(({ method }) =>
+      method === 'POST'
+        ? { status: 409, body: { errors: [{ code: 'ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE' }] } }
+        : { body: { data: [passTypeBody('PT7', 'pass.mobile.passbook').data] } },
+    );
+    expect(await api.createPlatformPassType('root')).toMatchObject({
+      ascId: 'PT7',
+      outcome: 'adopted',
+    });
+  });
+
+  it.each(['wallet', 'legacy', 'pass.im.plrs.wallet', '', 'constructor'])(
+    'refuses platform slot %s without calling Apple',
+    async (slot) => {
+      const { api, seen } = stubApple(() => ({ body: {} }));
+      await expect(api.createPlatformPassType(slot as unknown as 'root')).rejects.toThrow(
+        /^ASC_REFUSED/,
+      );
+      expect(seen).toHaveLength(0);
+    },
+  );
+
+  it('keeps the legacy identifiers refused and the root findable and orderable', async () => {
+    const { api, seen } = stubApple(() => ({ body: { data: [] } }));
+    await expect(api.findPassType('pass.mobile.passbook.')).rejects.toThrow(/^ASC_REFUSED/);
+    await expect(api.createPassType('passbook', 'Name')).rejects.toThrow(/^ASC_REFUSED/);
+    expect(seen).toHaveLength(0);
+    await expect(api.findPassType('pass.mobile.passbook')).resolves.toBeNull();
+    await seedPassType('pass.mobile.passbook.wallet', 'PTW');
+    await expect(
+      api.createCertificate('PTW', await makeCsr('pass.mobile.passbook.wallet'), false),
+    ).rejects.toThrow(/^ASC_REFUSED/);
+    await seedPassType('pass.mobile.passbook', 'PTR');
+    const certBody = { data: { id: 'CR', attributes: { certificateType: 'PASS_TYPE_ID' } } };
+    const ok = stubApple(() => ({ status: 201, body: certBody }));
+    const csr = await makeCsr('pass.mobile.passbook');
+    await expect(ok.api.createCertificate('PTR', csr, false)).resolves.toMatchObject({
+      ascId: 'CR',
+    });
   });
 });

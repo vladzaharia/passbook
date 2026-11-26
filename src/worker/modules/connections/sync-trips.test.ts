@@ -70,8 +70,8 @@ describe('connection sync round trips', () => {
     const log = counted.tripLog();
     const heads = `\n${log.map((t) => `[${t.length}] ${t[0]?.replace(/\s+/g, ' ').slice(0, 40)}`).join('\n')}`;
     // The whole sync run (run bookkeeping, connection and org fences, the listing, the publish): a ceiling
-    // that catches a regression, not a goal. 80 since the developer-org fence reads the org kind once per build.
-    expect(counted.count(), heads).toBeLessThanOrEqual(80);
+    // that catches a regression, not a goal. 81: the developer-org fence reads the org kind once per build, and the publish reads whether an identity move replaced the pass.
+    expect(counted.count(), heads).toBeLessThanOrEqual(81);
     // The publish reads its pass state in the one bundle trip, not as single reads.
     const singles = log.filter(
       (t) =>

@@ -128,6 +128,10 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 3 },
     tables: ['nfc_tag_programs', 'nfc_tag_admin_keys'],
   },
+  'modules/passes/identity-move-state.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['pass_personalizations'],
+  },
   'modules/passes/create-records.ts': { calls: { sealPart: 2 }, tables: SEALS },
   'modules/passes/create-row.ts': { calls: { issueToken: 2 }, tables: SEALS },
   'modules/passes/credential-transfer.ts': {

@@ -2175,263 +2175,65 @@ func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceB
 	return &out, nil
 }
 
-type PlatformIdpCallsResource struct {
+type PlatformIdpScimTokenResource struct {
 	c *core
 }
 
-func newPlatformIdpCallsResource(c *core) *PlatformIdpCallsResource {
-	return &PlatformIdpCallsResource{
+func newPlatformIdpScimTokenResource(c *core) *PlatformIdpScimTokenResource {
+	return &PlatformIdpScimTokenResource{
 		c: c,
 	}
 }
 
-// List The binding's ledger of calls to Polaris ID from `since` (ms), a page at a time. `GET /api/v1/platform/idp/calls`
-func (r *PlatformIdpCallsResource) List(ctx context.Context, query *PlatformIdpCallsListQuery, opts ...RequestOption) *Pager[PlatformIdpCallsListItem] {
-	return newPager[PlatformIdpCallsListItem](r.c, call{method: "GET", path: "/api/v1/platform/idp/calls", query: queryValues(query)}, "cursor", opts)
+// Rotate Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`). `POST /api/v1/platform/idp/scim-token/rotate`
+func (r *PlatformIdpScimTokenResource) Rotate(ctx context.Context, body *PlatformIdpScimTokenRotateBody, opts ...RequestOption) (*PlatformIdpScimTokenRotateResult, error) {
+	var out PlatformIdpScimTokenRotateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/scim-token/rotate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
-type PlatformIdpDriftResource struct {
+type PlatformIdpSetupResource struct {
 	c *core
 }
 
-func newPlatformIdpDriftResource(c *core) *PlatformIdpDriftResource {
-	return &PlatformIdpDriftResource{
+func newPlatformIdpSetupResource(c *core) *PlatformIdpSetupResource {
+	return &PlatformIdpSetupResource{
 		c: c,
 	}
 }
 
-// List Open differences between Polaris ID and PassBook. `GET /api/v1/platform/idp/drift`
-func (r *PlatformIdpDriftResource) List(ctx context.Context, opts ...RequestOption) (*PlatformIdpDriftListResult, error) {
-	var out PlatformIdpDriftListResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/idp/drift"}, &out, opts); err != nil {
+// Retrieve What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read. `GET /api/v1/platform/idp/setup`
+func (r *PlatformIdpSetupResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformIdpSetupRetrieveResult, error) {
+	var out PlatformIdpSetupRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/idp/setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Start Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`). `POST /api/v1/platform/idp/setup`
+func (r *PlatformIdpSetupResource) Start(ctx context.Context, body *PlatformIdpSetupStartBody, opts ...RequestOption) (*PlatformIdpSetupStartResult, error) {
+	var out PlatformIdpSetupStartResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/setup", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
 }
 
 type PlatformIdpResource struct {
-	c     *core
-	Calls *PlatformIdpCallsResource
-	Drift *PlatformIdpDriftResource
+	c         *core
+	ScimToken *PlatformIdpScimTokenResource
+	Setup     *PlatformIdpSetupResource
 }
 
 func newPlatformIdpResource(c *core) *PlatformIdpResource {
 	return &PlatformIdpResource{
-		c:     c,
-		Calls: newPlatformIdpCallsResource(c),
-		Drift: newPlatformIdpDriftResource(c),
+		c:         c,
+		ScimToken: newPlatformIdpScimTokenResource(c),
+		Setup:     newPlatformIdpSetupResource(c),
 	}
-}
-
-// Check Check now: compare every Polaris ID group with PassBook. `dryRun` records differences and changes nothing. Answers 202 with an operation (`idp.check` or `idp.dry_run`). `POST /api/v1/platform/idp/reconcile`
-func (r *PlatformIdpResource) Check(ctx context.Context, body *PlatformIdpCheckBody, opts ...RequestOption) (*PlatformIdpCheckResult, error) {
-	var out PlatformIdpCheckResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/reconcile", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Retrieve Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences. `GET /api/v1/platform/idp`
-func (r *PlatformIdpResource) Retrieve(ctx context.Context, opts ...RequestOption) (*PlatformIdpRetrieveResult, error) {
-	var out PlatformIdpRetrieveResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/idp"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformGroupsClaimsResource struct {
-	c *core
-}
-
-func newPlatformGroupsClaimsResource(c *core) *PlatformGroupsClaimsResource {
-	return &PlatformGroupsClaimsResource{
-		c: c,
-	}
-}
-
-// Retrieve Read a Polaris ID group's claims (the ones PassBook manages) `GET /api/v1/platform/idp/groups/{key}/claims`
-func (r *PlatformGroupsClaimsResource) Retrieve(ctx context.Context, key string, opts ...RequestOption) (*PlatformGroupsClaimsRetrieveResult, error) {
-	var out PlatformGroupsClaimsRetrieveResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/claims"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Update Set or remove a Polaris ID group's claims `PATCH /api/v1/platform/idp/groups/{key}/claims`
-func (r *PlatformGroupsClaimsResource) Update(ctx context.Context, key string, body *PlatformGroupsClaimsUpdateBody, opts ...RequestOption) (*PlatformGroupsClaimsUpdateResult, error) {
-	var out PlatformGroupsClaimsUpdateResult
-	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/claims", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformGroupsMembersResource struct {
-	c *core
-}
-
-func newPlatformGroupsMembersResource(c *core) *PlatformGroupsMembersResource {
-	return &PlatformGroupsMembersResource{
-		c: c,
-	}
-}
-
-// Create Add a manual member, by user or Polaris ID subject `POST /api/v1/platform/idp/groups/{key}/members`
-func (r *PlatformGroupsMembersResource) Create(ctx context.Context, key string, body *PlatformGroupsMembersCreateBody, opts ...RequestOption) (*PlatformGroupsMembersCreateResult, error) {
-	var out PlatformGroupsMembersCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/members", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Delete Remove a manual member `DELETE /api/v1/platform/idp/groups/{key}/members/{id}`
-func (r *PlatformGroupsMembersResource) Delete(ctx context.Context, key string, id string, opts ...RequestOption) (*PlatformGroupsMembersDeleteResult, error) {
-	var out PlatformGroupsMembersDeleteResult
-	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/members/" + pathEscape(id)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List a group's manual members `GET /api/v1/platform/idp/groups/{key}/members`
-func (r *PlatformGroupsMembersResource) List(ctx context.Context, key string, query *PlatformGroupsMembersListQuery, opts ...RequestOption) *Pager[PlatformGroupsMembersListItem] {
-	return newPager[PlatformGroupsMembersListItem](r.c, call{method: "GET", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/members", query: queryValues(query)}, "cursor", opts)
-}
-
-type PlatformGroupsRulesResource struct {
-	c *core
-}
-
-func newPlatformGroupsRulesResource(c *core) *PlatformGroupsRulesResource {
-	return &PlatformGroupsRulesResource{
-		c: c,
-	}
-}
-
-// Create Add an org rule: members of the org join the group `POST /api/v1/platform/idp/groups/{key}/rules`
-func (r *PlatformGroupsRulesResource) Create(ctx context.Context, key string, body *PlatformGroupsRulesCreateBody, opts ...RequestOption) (*PlatformGroupsRulesCreateResult, error) {
-	var out PlatformGroupsRulesCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/rules", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Delete End an org rule `DELETE /api/v1/platform/idp/groups/{key}/rules/{id}`
-func (r *PlatformGroupsRulesResource) Delete(ctx context.Context, key string, id string, opts ...RequestOption) (*PlatformGroupsRulesDeleteResult, error) {
-	var out PlatformGroupsRulesDeleteResult
-	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/rules/" + pathEscape(id)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List a group's org rules `GET /api/v1/platform/idp/groups/{key}/rules`
-func (r *PlatformGroupsRulesResource) List(ctx context.Context, key string, query *PlatformGroupsRulesListQuery, opts ...RequestOption) *Pager[PlatformGroupsRulesListItem] {
-	return newPager[PlatformGroupsRulesListItem](r.c, call{method: "GET", path: "/api/v1/platform/idp/groups/" + pathEscape(key) + "/rules", query: queryValues(query)}, "cursor", opts)
-}
-
-type PlatformGroupsResource struct {
-	c       *core
-	Claims  *PlatformGroupsClaimsResource
-	Members *PlatformGroupsMembersResource
-	Rules   *PlatformGroupsRulesResource
-}
-
-func newPlatformGroupsResource(c *core) *PlatformGroupsResource {
-	return &PlatformGroupsResource{
-		c:       c,
-		Claims:  newPlatformGroupsClaimsResource(c),
-		Members: newPlatformGroupsMembersResource(c),
-		Rules:   newPlatformGroupsRulesResource(c),
-	}
-}
-
-// Create Create a custom Polaris ID group `POST /api/v1/platform/idp/groups`
-func (r *PlatformGroupsResource) Create(ctx context.Context, body *PlatformGroupsCreateBody, opts ...RequestOption) (*PlatformGroupsCreateResult, error) {
-	var out PlatformGroupsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/groups", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Delete Delete an empty custom group PassBook created `DELETE /api/v1/platform/idp/groups/{key}`
-func (r *PlatformGroupsResource) Delete(ctx context.Context, key string, opts ...RequestOption) (*PlatformGroupsDeleteResult, error) {
-	var out PlatformGroupsDeleteResult
-	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/platform/idp/groups/" + pathEscape(key)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Ensure Create a configured role group in Polaris ID `POST /api/v1/platform/idp/groups/ensure`
-func (r *PlatformGroupsResource) Ensure(ctx context.Context, body *PlatformGroupsEnsureBody, opts ...RequestOption) (*PlatformGroupsEnsureResult, error) {
-	var out PlatformGroupsEnsureResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/idp/groups/ensure", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List the Polaris ID groups PassBook manages `GET /api/v1/platform/idp/groups`
-func (r *PlatformGroupsResource) List(ctx context.Context, query *PlatformGroupsListQuery, opts ...RequestOption) *Pager[PlatformGroupsListItem] {
-	return newPager[PlatformGroupsListItem](r.c, call{method: "GET", path: "/api/v1/platform/idp/groups", query: queryValues(query)}, "cursor", opts)
-}
-
-// Update Rename a group's display name `PATCH /api/v1/platform/idp/groups/{key}`
-func (r *PlatformGroupsResource) Update(ctx context.Context, key string, body *PlatformGroupsUpdateBody, opts ...RequestOption) (*PlatformGroupsUpdateResult, error) {
-	var out PlatformGroupsUpdateResult
-	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/platform/idp/groups/" + pathEscape(key), body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformInvitationsResource struct {
-	c *core
-}
-
-func newPlatformInvitationsResource(c *core) *PlatformInvitationsResource {
-	return &PlatformInvitationsResource{
-		c: c,
-	}
-}
-
-// Create Invite a person to Polaris ID groups `POST /api/v1/platform/invitations`
-func (r *PlatformInvitationsResource) Create(ctx context.Context, body *PlatformInvitationsCreateBody, opts ...RequestOption) (*PlatformInvitationsCreateResult, error) {
-	var out PlatformInvitationsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/invitations", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List platform invitations `GET /api/v1/platform/invitations`
-func (r *PlatformInvitationsResource) List(ctx context.Context, query *PlatformInvitationsListQuery, opts ...RequestOption) *Pager[PlatformInvitationsListItem] {
-	return newPager[PlatformInvitationsListItem](r.c, call{method: "GET", path: "/api/v1/platform/invitations", query: queryValues(query)}, "cursor", opts)
-}
-
-// Resend Send a platform invitation again with a new link `POST /api/v1/platform/invitations/{id}/resend`
-func (r *PlatformInvitationsResource) Resend(ctx context.Context, id string, opts ...RequestOption) (*PlatformInvitationsResendResult, error) {
-	var out PlatformInvitationsResendResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/invitations/" + pathEscape(id) + "/resend"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Revoke Revoke a platform invitation `DELETE /api/v1/platform/invitations/{id}`
-func (r *PlatformInvitationsResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*PlatformInvitationsRevokeResult, error) {
-	var out PlatformInvitationsRevokeResult
-	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/platform/invitations/" + pathEscape(id)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
 }
 
 type PlatformSettingsResource struct {
@@ -2490,116 +2292,19 @@ func (r *PlatformWalletReleaseResource) Retrieve(ctx context.Context, opts ...Re
 	return &out, nil
 }
 
-type PlatformUsersAccessResource struct {
-	c *core
-}
-
-func newPlatformUsersAccessResource(c *core) *PlatformUsersAccessResource {
-	return &PlatformUsersAccessResource{
-		c: c,
-	}
-}
-
-// Retrieve A user's Polaris ID access: per role what PassBook wants and why, what Polaris ID showed, and any pause. `GET /api/v1/users/{id}/access`
-func (r *PlatformUsersAccessResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*PlatformUsersAccessRetrieveResult, error) {
-	var out PlatformUsersAccessRetrieveResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/users/" + pathEscape(id) + "/access"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformUsersClaimsResource struct {
-	c *core
-}
-
-func newPlatformUsersClaimsResource(c *core) *PlatformUsersClaimsResource {
-	return &PlatformUsersClaimsResource{
-		c: c,
-	}
-}
-
-// Retrieve Read a user's Polaris ID claims (the ones PassBook manages) `GET /api/v1/users/{id}/claims`
-func (r *PlatformUsersClaimsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*PlatformUsersClaimsRetrieveResult, error) {
-	var out PlatformUsersClaimsRetrieveResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/users/" + pathEscape(id) + "/claims"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Update Set or remove a user's Polaris ID claims `PATCH /api/v1/users/{id}/claims`
-func (r *PlatformUsersClaimsResource) Update(ctx context.Context, id string, body *PlatformUsersClaimsUpdateBody, opts ...RequestOption) (*PlatformUsersClaimsUpdateResult, error) {
-	var out PlatformUsersClaimsUpdateResult
-	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/users/" + pathEscape(id) + "/claims", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformUsersRolesResource struct {
-	c *core
-}
-
-func newPlatformUsersRolesResource(c *core) *PlatformUsersRolesResource {
-	return &PlatformUsersRolesResource{
-		c: c,
-	}
-}
-
-// Set Grant or revoke a platform role (developer or support). The sync adds or removes the Polaris ID group within a minute. `POST /api/v1/users/{id}/roles`
-func (r *PlatformUsersRolesResource) Set(ctx context.Context, id string, body *PlatformUsersRolesSetBody, opts ...RequestOption) (*PlatformUsersRolesSetResult, error) {
-	var out PlatformUsersRolesSetResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/users/" + pathEscape(id) + "/roles", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-type PlatformUsersResource struct {
-	c      *core
-	Access *PlatformUsersAccessResource
-	Claims *PlatformUsersClaimsResource
-	Roles  *PlatformUsersRolesResource
-}
-
-func newPlatformUsersResource(c *core) *PlatformUsersResource {
-	return &PlatformUsersResource{
-		c:      c,
-		Access: newPlatformUsersAccessResource(c),
-		Claims: newPlatformUsersClaimsResource(c),
-		Roles:  newPlatformUsersRolesResource(c),
-	}
-}
-
-// Offboard Offboard a user: end their memberships, developer sponsorships, platform grants and keys, sign them out and disable them, then take their Polaris ID roles away. `dryRun` answers 200 with the plan and changes nothing. Otherwise 202 with the plan and an operation (`idp.offboard`). 409 `IDP_PLATFORM_ADMIN` for a platform admin, `LAST_ORG_ADMIN` when an org would lose its last admin. `POST /api/v1/users/{id}/offboard`
-func (r *PlatformUsersResource) Offboard(ctx context.Context, id string, body *PlatformUsersOffboardBody, opts ...RequestOption) (*PlatformUsersOffboardResult, error) {
-	var out PlatformUsersOffboardResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/users/" + pathEscape(id) + "/offboard", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 type PlatformResource struct {
 	c             *core
 	Idp           *PlatformIdpResource
-	Groups        *PlatformGroupsResource
-	Invitations   *PlatformInvitationsResource
 	Settings      *PlatformSettingsResource
 	WalletRelease *PlatformWalletReleaseResource
-	Users         *PlatformUsersResource
 }
 
 func newPlatformResource(c *core) *PlatformResource {
 	return &PlatformResource{
 		c:             c,
 		Idp:           newPlatformIdpResource(c),
-		Groups:        newPlatformGroupsResource(c),
-		Invitations:   newPlatformInvitationsResource(c),
 		Settings:      newPlatformSettingsResource(c),
 		WalletRelease: newPlatformWalletReleaseResource(c),
-		Users:         newPlatformUsersResource(c),
 	}
 }
 

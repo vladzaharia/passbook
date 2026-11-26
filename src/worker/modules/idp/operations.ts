@@ -3,6 +3,8 @@ import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { OperationRunner, OperationRunners } from '../operations/registry.ts';
 import { offboardRun } from './ops-offboard.ts';
 import { breakerRun, checkRun, restoreRun } from './ops-runs.ts';
+import { setupRun } from './setup-run.ts';
+import { rotateRun } from './setup-token.ts';
 
 /** A retry runs the start's checks again: a platform admin signed in with Polaris ID (no break-glass), and the rate limit. */
 const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ctx, op, caller) => {
@@ -15,7 +17,12 @@ const authorizeRetry: NonNullable<OperationRunner['authorizeRetry']> = async (ct
     );
   if (op.error?.code === 'IDP_NOT_WANTED')
     throw new AppError('IDP_NOT_WANTED', 409, 'Nothing wants this role now.');
-  if (caller.kind !== 'session' || !caller.roles.includes('admin') || caller.amr !== 'oidc')
+  if (
+    caller.kind !== 'session' ||
+    caller.workbench ||
+    !caller.roles.includes('admin') ||
+    caller.amr !== 'oidc'
+  )
     throw new ForbiddenError(
       'Sign in with Polaris ID as a platform admin.',
       'IDP_SIGN_IN_REQUIRED',
@@ -29,4 +36,6 @@ export const operationRunners: OperationRunners = {
   'idp.restore': { run: restoreRun, authorizeRetry },
   'idp.breaker_clear': { run: breakerRun, authorizeRetry },
   'idp.offboard': { run: offboardRun, authorizeRetry },
+  'idp.setup': { run: setupRun, authorizeRetry },
+  'idp.scim_rotate': { run: rotateRun, authorizeRetry },
 };
