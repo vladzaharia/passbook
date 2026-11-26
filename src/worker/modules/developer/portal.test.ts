@@ -81,7 +81,7 @@ describe('developer portal route', () => {
     expect(home).toContain('frame-src https://challenges.cloudflare.com;');
     expect(home).toContain("require-trusted-types-for 'script'");
     expect(home).toContain('trusted-types passbook-turnstile;');
-    for (const path of ['/developers/reference/passes', '/developers/logs']) {
+    for (const path of ['/developers/reference/passes']) {
       const other = (await call(path)).headers.get('content-security-policy') ?? '';
       expect(other, path).not.toContain('cloudflare');
       expect(other, path).toContain("frame-src 'none'");

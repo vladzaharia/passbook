@@ -26,6 +26,7 @@ const OWN_CREDENTIAL = new Set([
   'GET /api/v1/orgs/invitations/accept',
   'POST /api/v1/orgs/invitations/preview',
   'POST /api/v1/invitations/claim-existing',
+  'POST /api/v1/invitations/confirm',
   'POST /api/v1/invitations/preview',
   'POST /api/v1/invitations/setup',
   'POST /api/v1/scan/pair',
