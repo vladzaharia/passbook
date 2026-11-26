@@ -184,9 +184,11 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       status: 'paused',
       revision: update.updatedAt,
     });
-    await refreshScannerSession(phone);
+    const paused = (session: { workspace?: { session: { status: string } } | null }) =>
+      session.workspace?.session.status === 'paused';
+    await refreshScannerSession(phone, paused);
     await expect(phone.getByRole('heading', { name: 'Session paused', exact: true })).toBeVisible();
-    await refreshScannerSession(customer);
+    await refreshScannerSession(customer, paused);
     await expect(
       customer.getByRole('heading', { name: 'Session paused', exact: true }),
     ).toBeVisible();
