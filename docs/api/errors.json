@@ -1718,6 +1718,15 @@
       ]
     },
     {
+      "code": "GROUP_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "HOLDER_CHANGED",
       "statuses": [
         409
@@ -2209,6 +2218,15 @@
       ]
     },
     {
+      "code": "IDP_GROUP_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_HOLD_NOT_FOUND",
       "statuses": [
         404
@@ -2219,6 +2237,15 @@
     },
     {
       "code": "IDP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_MEMBER_EXISTS",
       "statuses": [
         409
       ],
@@ -2319,7 +2346,35 @@
     {
       "code": "IDP_REFUSED",
       "statuses": [
+        409,
         403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_ORG_REFUSED",
+      "statuses": [
+        409
       ],
       "modules": [
         "idp"
@@ -3036,6 +3091,15 @@
       ],
       "modules": [
         "orgs"
+      ]
+    },
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -4314,6 +4378,7 @@
         404
       ],
       "modules": [
+        "idp",
         "message-rules"
       ]
     },

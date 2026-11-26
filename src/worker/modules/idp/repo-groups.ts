@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 export type GroupKind = 'custom' | 'adopted';
 
@@ -36,13 +36,16 @@ export interface NewGroup {
   now: number;
 }
 
-/** A key is never reused, even after a delete: the insert is refused. */
-export async function insertGroup(db: D1Database, g: NewGroup): Promise<void> {
-  await run(
+/** The statement, so a service can batch it with the group's rules and its audit row. A key is never reused, even after a delete: the insert is refused. */
+export const insertGroupStmt = (db: D1Database, g: NewGroup) =>
+  stmt(
     db,
     'INSERT INTO idp_groups (key, kind, friendly_name, created_by, created_at) VALUES (?, ?, ?, ?, ?)',
     [g.key, g.kind, g.friendlyName, g.createdBy, g.now],
   );
+
+export async function insertGroup(db: D1Database, g: NewGroup): Promise<void> {
+  await insertGroupStmt(db, g).run();
 }
 
 /** The display name only: the group's name never changes. True when a live group changed. */
