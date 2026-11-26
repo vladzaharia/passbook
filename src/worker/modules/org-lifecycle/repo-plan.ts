@@ -80,6 +80,8 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('template_imports'),
   inOrg('workflow_runs'),
   inOrg('identity_runs'),
+  inOrg('pass_moves'),
+  inOrg('identity_moves'),
   inOrg('wallet_org_cards'),
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
