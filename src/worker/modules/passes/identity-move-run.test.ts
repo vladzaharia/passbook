@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { deviceToken } from '../../../../test/helpers/index.ts';
+import { deviceToken, makeApiKey } from '../../../../test/helpers/index.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
@@ -62,6 +62,16 @@ const onSecond = (orgId: string) =>
     orgId,
     SECOND_ID,
   );
+const platformKeyHeaders = async () => {
+  const key = await makeApiKey(kit.fx, {
+    orgId: null,
+    kind: 'platform',
+    scopes: ['platform:identities'],
+    expiresAt: kit.clock.now() + 30 * DAY,
+    ipAllow: ['198.51.100.0/24'],
+  });
+  return { ...key.headers, 'cf-connecting-ip': '198.51.100.7' };
+};
 const post = (path: string, headers: Record<string, string>) =>
   app.request(`${ORIGIN}/api/v1/operations${path}`, { method: 'POST', headers }, kit.env);
 
@@ -334,7 +344,7 @@ describe('who may stop or retry it', () => {
     });
     const keys = [
       await keyHeaders(kit, ['passes:operate']),
-      await keyHeaders(kit, ['platform:identities'], null),
+      await platformKeyHeaders(),
       await auth.apiKey({ scopes: ['passes:write'] }),
     ];
     for (const headers of [...keys, auth.user()]) {
@@ -352,10 +362,7 @@ describe('who may stop or retry it', () => {
     await run(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
     await runMove(kit, op);
     expect((await opRow(kit, op.id)).status).toBe('failed');
-    for (const headers of [
-      await keyHeaders(kit, ['passes:operate']),
-      await keyHeaders(kit, ['platform:identities'], null),
-    ])
+    for (const headers of [await keyHeaders(kit, ['passes:operate']), await platformKeyHeaders()])
       expect((await post(`/${op.id}/retry`, headers)).status).toBeGreaterThanOrEqual(400);
     expect((await opRow(kit, op.id)).attempt).toBe(1);
     await run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
