@@ -432,7 +432,7 @@ ORDER BY a.id
 Google and Samsung are released per mode in two places that must agree: `RELEASE` in
 `src/worker/modules/wallet-providers/release.ts` (the Worker) and the `wallet_provider_releases` row (the
 database's issuance guards, 0229). `npm run check:rules` (check-migrations) and `release-mirror.test.ts` fail when
-they differ.
+they differ. The owner's steps (readiness read, enable-ready, flip, rollback) are the runbook [Wallet Provider Flip](runbooks/wallet-provider-flip.md).
 
 | State | New copies, offers, Samsung references | Updates, messages | Voids, removals, transfers, retirement |
 | --- | --- | --- | --- |
@@ -463,7 +463,7 @@ is dark.
 On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
 org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
 On. Review the list, then send `{"apply": true, "orgIds": [...]}` with the listed orgs: exactly those turn On,
-each with its own audit row. Apply is refused (409) when the list changed and while the mode is not released.
+each with its own audit row. Apply is refused (409) when the list changed and while the mode is not released. Writes go in batches of 20; after a failed batch the earlier ones stay On and the next dry run lists the rest.
 
 **Rollback** is `draining`, never straight to `dark`: the same one-cell PR and one-statement migration with
 `state = 'draining'`. Copies already in wallets keep getting voids and removals; badges and offers go away; the

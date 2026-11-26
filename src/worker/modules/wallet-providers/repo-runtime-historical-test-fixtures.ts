@@ -14,6 +14,8 @@ export interface HistoricalSamsungRef {
   promotedAt: number | null;
   retiredAt?: number | null;
   envelope: Envelope;
+  /** Insert with the reference guard in place. */
+  keepGuard?: boolean;
 }
 
 export interface HistoricalProviderInstance {
@@ -30,6 +32,8 @@ export interface HistoricalProviderInstance {
   operationId: string;
   now: number;
   retirementRequestedAt?: number | null;
+  /** Insert with the generation guard in place (the release row must be open); default drops it for the insert. */
+  keepGuard?: boolean;
   /** Optional pre-existing upsert; absent when the caller seeds its own historical operation. */
   upsert?: { requestHash: string; state: 'pending' | 'succeeded' };
 }
@@ -44,7 +48,7 @@ export async function insertHistoricalProviderInstance(
   );
   if (!trigger?.sql) throw new Error('Missing provider generation guard');
   const statements = [
-    stmt(db, 'DROP TRIGGER wallet_provider_generation_insert_guard'),
+    stmt(db, input.keepGuard ? 'SELECT 1' : 'DROP TRIGGER wallet_provider_generation_insert_guard'),
     stmt(
       db,
       `INSERT INTO wallet_provider_instances
@@ -82,7 +86,7 @@ export async function insertHistoricalProviderInstance(
         input.credentialGeneration,
       ],
     ),
-    stmt(db, trigger.sql),
+    stmt(db, input.keepGuard ? 'SELECT 1' : trigger.sql),
   ];
   if (input.upsert)
     statements.splice(
@@ -125,6 +129,7 @@ async function insertHistoricalArtifact(
   db: D1Database,
   guard: 'wallet_provider_generation_samsung_ref' | 'wallet_provider_generation_offer_insert',
   statement: D1PreparedStatement,
+  keepGuard = false,
 ) {
   const trigger = await first<{ sql: string }>(
     db,
@@ -133,9 +138,9 @@ async function insertHistoricalArtifact(
   );
   if (!trigger?.sql) throw new Error('Missing provider artifact guard');
   const result = await batch(db, [
-    stmt(db, `DROP TRIGGER ${guard}`),
+    stmt(db, keepGuard ? 'SELECT 1' : `DROP TRIGGER ${guard}`),
     statement,
-    stmt(db, trigger.sql),
+    stmt(db, keepGuard ? 'SELECT 1' : trigger.sql),
   ]);
   if (result[1]?.meta.changes !== 1) throw new Error('Missing historical provider artifact');
 }
@@ -174,6 +179,7 @@ export async function insertHistoricalSamsungRef(
         input.instanceId,
       ],
     ),
+    input.keepGuard,
   );
 }
 

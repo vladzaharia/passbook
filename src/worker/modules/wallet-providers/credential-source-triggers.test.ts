@@ -8,6 +8,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest, walletEnrolmentIssues } from './provider-policy.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { findEnrolmentGateRow } from './repo-enrolment-gate.ts';
 import { enrol, platformSource, seedInstance } from './wallet-roundtrip-test-fixtures.ts';
 
@@ -146,6 +147,7 @@ describe('credential presence in the projection and binding triggers', () => {
   // released, and activates once they are.
   it('a new-model-only account does too, once released', async () => {
     const update = await prepare('new-model');
+    await darkRows(env.DB);
     await expect(update()).rejects.toThrow('provider issuance is unavailable');
     await run(env.DB, "UPDATE wallet_provider_releases SET state = 'released', changed_at = 0");
     expect((await update()).changes).toBeGreaterThan(0);

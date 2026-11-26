@@ -140,7 +140,7 @@ export async function releaseReport(
 const CHUNK = 20;
 const changed = () =>
   new ConflictError(
-    'The ready list changed since the dry run. Run it again and review the list.',
+    'The ready list changed since the dry run, or an earlier apply committed part of it. Run the dry run again: it lists what is still Off.',
     'WALLET_RELEASE_READY_CHANGED',
   );
 
@@ -149,7 +149,7 @@ const changed = () =>
  * has not blocked the channel and whose enable plan passes (plan, source, check, Live round trip, no hold). A dry
  * run lists them. An apply names the orgs the dry run listed and turns exactly those On, each under its own
  * platform grant and audit row, only while the provider is released in the mode; any difference is a 409. Writes
- * go in batches of CHUNK, each atomic.
+ * go in batches of CHUNK, each atomic; a failure after the first batch leaves the earlier ones On and the next dry run lists the rest.
  */
 export async function enableReady(
   ctx: ServiceContext,
@@ -186,6 +186,14 @@ export async function enableReady(
     try {
       await grantedBatch(ctx.env.DB, grants.slice(i, i + CHUNK));
     } catch (error) {
+      // Earlier chunks stay committed; the next dry run lists the remainder.
+      if (i > 0)
+        ctx.log.error('wallet.release_enable_ready_partial', {
+          code: 'WALLET_RELEASE_PARTIAL',
+          provider,
+          mode,
+          committed: i,
+        });
       throw mapWalletWriteError(error);
     }
   }

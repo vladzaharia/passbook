@@ -11,6 +11,7 @@ import { deletePass, updatePass, voidPass } from '../passes/service.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { listWalletOffers } from './offers.ts';
 import { setWalletProvidersEnabledForTest, setWalletReleaseForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 const restore: (() => void)[] = [];
@@ -26,7 +27,8 @@ const system = { type: 'system', id: null } as const;
 
 /** A tapped, promoted Samsung card in the GB market (released), then Samsung Live set to draining. */
 async function drainingCard(enrolled: boolean) {
-  const t = await setupSamsungCallbacks({ enrolled });
+  // Every database guard stays, and the table's row goes to draining with the code's.
+  const t = await setupSamsungCallbacks({ enrolled, guards: true });
   const mock = createMockWallets();
   const calls: string[] = [];
   vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -48,6 +50,7 @@ async function drainingCard(enrolled: boolean) {
   await drainWalletProviderSync(ctx);
   expect(mock.samsungRefs.get(t.refId)?.state).toBe('UPDATED');
   restore.push(setWalletReleaseForTest('draining', { provider: 'samsung', mode: 'live' }));
+  await releaseRows(t.kit.env.DB, 'draining');
   const scope = { orgId: t.kit.org.id, mode: 'live', principal: 'session' } as const;
   const sent = () => mock.samsungRefs.get(t.refId)?.state;
   const updates = () => calls.filter((p) => p.endsWith('/updates')).length;

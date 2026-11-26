@@ -179,8 +179,14 @@ describe('the database guards open one pair at a time', () => {
       expect(await refusal(offer(id))).toContain('provider offer is unavailable');
       expect(await refusal(samsungRef(id))).toContain('provider reference is unavailable');
       // Only a revoke may be queued while draining: no update, no message's upsert.
-      expect(await refusal(operation(id, 'upsert'))).toContain('provider is draining');
-      expect(String(await refusal(operation(id, 'revoke')))).not.toContain('draining');
+      // The operation guard (0208) refuses a placeholder's first upsert for its own reasons; it is lifted so the
+      // release rule (0229, which also covers dark) is what answers.
+      expect(
+        await withoutTrigger(k.env.DB, 'wallet_provider_generation_operation_guard', () =>
+          refusal(operation(id, 'upsert')),
+        ),
+      ).toContain('provider is not released');
+      expect(String(await refusal(operation(id, 'revoke')))).not.toContain('not released');
       expect(
         await refusal(
           run(

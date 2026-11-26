@@ -31,8 +31,9 @@ export const previousGenerationsSettledSql = (i: string) =>
 /**
  * The account's credential is of the identity the instance was created under (D6): a rotation keeps it, a change
  * loses it. An enrolment's identity cannot change while an instance is open (wallet_enrolments_identity_in_use),
- * and a Samsung enrolment's is the partner alone while a card's identity adds its card id, so the hashes only
- * compare for Google; the runtime still checks the card identity against the decrypted credential.
+ * and a Samsung enrolment's is the partner alone while a card's identity adds its card id, so for Samsung the
+ * partner identity of the credential version the instance last operated under is compared instead; the runtime
+ * still checks the card identity against the decrypted credential.
  */
 export const revokeIdentitySql = (i: string) =>
   `EXISTS (SELECT 1 FROM wallet_provider_accounts account
@@ -43,7 +44,10 @@ export const revokeIdentitySql = (i: string) =>
       `(COALESCE(credential.identity_hash, account.identity_hash) = (SELECT original.provider_identity_hash
         FROM template_releases rel JOIN template_candidates original ON original.id = rel.candidate_id
         WHERE rel.id = ${i}.identity_projection_release_id)
-        OR (account.provider = 'samsung' AND account.credential_source_id IS NOT NULL))`,
+        OR (account.provider = 'samsung' AND account.credential_source_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM wallet_provider_instance_operations dop
+          JOIN wallet_credential_versions dv ON dv.id = dop.credential_version_id
+          WHERE dop.id = ${i}.desired_operation_id AND dv.identity_hash = account.identity_hash)))`,
     ])})`;
 
 /**

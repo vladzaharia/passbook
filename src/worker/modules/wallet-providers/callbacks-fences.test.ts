@@ -13,6 +13,7 @@ import { ensureSamsungFetchRef, getSamsungRefreshTarget } from './callbacks-ref.
 import { replaceCallbackKeysetForTest, setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { configureOn } from './legacy-on-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { darkRows } from './release-test-fixtures.ts';
 import { findSamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-callbacks.ts';
 import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
 
@@ -216,6 +217,7 @@ describe('Samsung callback authority fences', () => {
       },
     };
     expect(await whileDisabledForTest(ensureSamsungFetchRef, noMint, binding)).toBeNull();
+    await darkRows(t.kit.env.DB);
     await expect(
       run(
         t.kit.env.DB,

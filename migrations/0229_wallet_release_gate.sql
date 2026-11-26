@@ -12,9 +12,9 @@
 -- draining channel cannot come back on. Once released, a copy inserted active needs the same approved-release proof
 -- a placeholder needs to activate (0207 binding rule).
 --
--- Draining refuses in the database too: an un-void (revoking or revoked back to active) and every operation but a
--- revoke (an update, a message's upsert; a trigger beside the 0208 operation guard). Dark needs neither term: no
--- copy can be active, revoking or revoked there (going dark needs none open), so the 0208 rules already refuse.
+-- Draining refuses in the database too: an un-void (revoking or revoked back to active). Every operation but a
+-- revoke (an update, a message's upsert, the upsert on a ready placeholder) needs the release, in dark and draining
+-- alike; the 0208 operation guard (recreated at the end) also needs the enrolment On and not held.
 
 CREATE TABLE wallet_provider_releases (
   provider TEXT NOT NULL CHECK (provider IN ('google', 'samsung')),
@@ -85,11 +85,11 @@ WHEN (OLD.lifecycle = 'ready' AND NEW.lifecycle = 'active' AND NOT EXISTS (
 BEGIN SELECT RAISE(ABORT, 'provider issuance is unavailable'); END;
 
 CREATE TRIGGER wallet_provider_generation_operation_draining BEFORE INSERT ON wallet_provider_instance_operations
-WHEN NEW.kind != 'revoke' AND EXISTS (
+WHEN NEW.kind != 'revoke' AND NOT EXISTS (
   SELECT 1 FROM wallet_provider_instances i JOIN wallet_provider_releases release
-    ON release.provider = i.provider AND release.mode = i.mode AND release.state = 'draining'
+    ON release.provider = i.provider AND release.mode = i.mode AND release.state = 'released'
   WHERE i.id = NEW.instance_id)
-BEGIN SELECT RAISE(ABORT, 'provider is draining: only a revoke is sent'); END;
+BEGIN SELECT RAISE(ABORT, 'provider is not released: only a revoke is sent'); END;
 
 DROP TRIGGER wallet_provider_generation_offer_insert;
 CREATE TRIGGER wallet_provider_generation_offer_insert BEFORE INSERT ON wallet_provider_offer_refs
@@ -237,7 +237,7 @@ BEGIN SELECT RAISE(ABORT, 'legacy wallet accounts are closed; use an enrolment')
 
 -- 4. A Samsung tombstone's insert proof (0199 body) asked for the account's configure event at the tombstone's
 -- revision, which an enrolment account does not have. It now also accepts the version the tombstone pins: a version
--- of a Samsung credential the org may use, on an account with a source. Every other term is unchanged.
+-- of a Samsung credential the org may use and with the account's own identity, on an account with a source. Every other term is unchanged.
 
 DROP TRIGGER wallet_samsung_tombstones_approved_insert;
 CREATE TRIGGER wallet_samsung_tombstones_approved_insert BEFORE INSERT ON wallet_samsung_tombstones
@@ -262,7 +262,56 @@ WHEN NOT EXISTS (
       SELECT 1 FROM wallet_credential_versions pin_v
       JOIN wallet_credentials pin_c ON pin_c.id = pin_v.credential_id AND pin_c.mode = NEW.mode
         AND pin_c.provider = 'samsung' AND (pin_c.scope = 'platform' OR pin_c.org_id = NEW.org_id)
+        AND pin_c.identity_hash IS a.identity_hash
       WHERE pin_v.id = NEW.credential_version_id)))
     AND (json_extract(c.projection_json, '$.schema') = 2 OR h.candidate_id IS NOT NULL)
 )
 BEGIN SELECT RAISE(ABORT, 'Samsung tombstone requires verified release evidence'); END;
+
+-- 5. The operation guard (0208 body): an upsert, on an active copy or on a ready placeholder, also needs the
+-- enrolment On and not held, so an Off or held org's copy is not updated by a path that skipped the code check. A
+-- revoke is unchanged.
+
+DROP TRIGGER wallet_provider_generation_operation_guard;
+CREATE TRIGGER wallet_provider_generation_operation_guard BEFORE INSERT ON wallet_provider_instance_operations
+WHEN NOT EXISTS (
+  SELECT 1 FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id
+  WHERE i.id = NEW.instance_id AND i.lifecycle IN ('active', 'revoking', 'revoked')
+    AND i.account_id IS NOT NULL AND p.org_id = i.org_id AND p.mode = i.mode
+    AND NEW.credential_keyset_commitment = i.credential_keyset_commitment
+    AND i.credential_generation <= p.credential_generation
+    AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id
+      AND t.state = 'pending' AND t.source_generation = p.credential_generation)
+    AND (NEW.kind = 'revoke' OR (i.lifecycle = 'active' AND i.retirement_requested_at IS NULL
+      AND p.row_version = NEW.pass_row_version
+      AND NEW.account_epoch = (SELECT a.authority_epoch FROM wallet_provider_accounts a WHERE a.id = i.account_id
+        AND a.enabled_at IS NOT NULL AND a.platform_hold_at IS NULL)
+      AND p.lifecycle_generation = NEW.lifecycle_generation
+      AND p.credential_generation = NEW.pass_credential_generation
+      AND p.credential_generation = i.credential_generation
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending')))
+)
+AND NOT EXISTS (
+  SELECT 1 FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id
+  WHERE i.id = NEW.instance_id AND NEW.kind = 'upsert' AND NEW.version = 1
+    AND i.lifecycle = 'ready' AND i.account_id IS NULL AND i.retirement_requested_at IS NULL
+    AND p.org_id = i.org_id AND p.mode = i.mode
+    AND NEW.credential_keyset_commitment = i.credential_keyset_commitment
+    AND p.row_version = NEW.pass_row_version
+    AND p.lifecycle_generation = NEW.lifecycle_generation
+    AND p.credential_generation = NEW.pass_credential_generation
+    AND p.credential_generation = i.credential_generation
+    AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending')
+    AND EXISTS (
+      SELECT 1 FROM wallet_provider_accounts a
+      JOIN template_releases r ON r.id = NEW.projection_release_id
+        AND r.org_id = i.org_id AND r.mode = i.mode AND r.provider = i.provider AND r.source = 'approved'
+      JOIN template_candidates c ON c.id = r.candidate_id AND c.provider_account_id = a.id
+        AND c.provider_account_epoch = a.authority_epoch
+      WHERE a.org_id = i.org_id AND a.mode = i.mode AND a.provider = i.provider
+        AND COALESCE(a.credential_id, a.credential_source_id) IS NOT NULL AND a.revoked_at IS NULL
+        AND NEW.account_epoch = a.authority_epoch
+        AND a.enabled_at IS NOT NULL AND a.platform_hold_at IS NULL
+    )
+)
+BEGIN SELECT RAISE(ABORT, 'provider operation is not authorized'); END;

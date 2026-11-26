@@ -14,6 +14,7 @@ import {
   getWalletProviderReadiness,
   revokeWalletProviderAccount,
 } from './account-service.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 
 const ENABLE_RULES = [
   'wallet_enrolments_step',
@@ -25,6 +26,9 @@ const ENABLE_RULES = [
 /** Turns a legacy envelope account On, as if enabled; a no-op when it already is. */
 export async function legacyOn(db: D1Database, accountId: string | null): Promise<void> {
   if (!accountId) throw new Error('No legacy account to turn on.');
+  // Tests that turn an account On open only the code side of the release; the database's operation guard needs the
+  // table's row too (0229), so it opens with the account.
+  await releaseRows(db);
   const set = async () => {
     await run(
       db,

@@ -12,7 +12,7 @@ export interface SamsungRetirementScope {
 
 /**
  * What a configure event and its envelope prove for a legacy account, an enrolment account proves by its refs:
- * every Samsung ref of the instance pins a version of a credential the org may use (its own or the platform's).
+ * every Samsung ref of the instance pins a version of a credential the org may use (its own or the platform's) with the account's own identity.
  */
 const enrolmentPinsSql = (instance: string, account: string, org: string, mode: string) =>
   `(EXISTS (SELECT 1 FROM wallet_provider_accounts src_a WHERE src_a.id = ${account}
@@ -21,6 +21,7 @@ const enrolmentPinsSql = (instance: string, account: string, org: string, mode: 
       AND NOT EXISTS (SELECT 1 FROM wallet_credential_versions pin_v
         JOIN wallet_credentials pin_c ON pin_c.id = pin_v.credential_id AND pin_c.mode = ${mode}
           AND pin_c.provider = 'samsung' AND (pin_c.scope = 'platform' OR pin_c.org_id = ${org})
+          AND pin_c.identity_hash IS (SELECT id_a.identity_hash FROM wallet_provider_accounts id_a WHERE id_a.id = ${account})
         WHERE pin_v.id = pin_ref.credential_version_id)))`;
 
 const retirementJoins = `FROM wallet_provider_instances i
@@ -54,7 +55,7 @@ const retirementJoins = `FROM wallet_provider_instances i
     AND ${approvalStandsSql('approval', 'candidate')}`;
 // Materialize the current authority and the historical proof separately. Joining all
 // of their predicates to an INSERT makes D1 exceed its expression-depth limit.
-const retirementCtes = `WITH retirement_base AS MATERIALIZED (
+export const retirementCtes = `WITH retirement_base AS MATERIALIZED (
   SELECT i.id AS instance_id, i.org_id, i.mode, i.account_id, i.credential_keyset_commitment,
     i.retirement_requested_at, p.template_id, candidate.id AS candidate_id,
     candidate.provider_account_revision AS account_revision, candidate.provider_identity_hash,
