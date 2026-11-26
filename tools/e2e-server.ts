@@ -3,8 +3,12 @@ import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { copyFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
+import {
+  createFixtureIdentity,
+  FIXTURE_IDENTITY,
+} from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
+import { E2E_KEK_V1 } from './lib/e2e-kek.ts';
 import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
 import { E2E_RELEASE_SQL } from './lib/e2e-release.ts';
 
@@ -21,9 +25,13 @@ const release = process.env.WALLET_E2E_RELEASE === '1';
 const scimToken = randomBytes(24).toString('hex');
 const varsFile = resolve(root, '.dev.vars.e2e');
 rmSync(varsFile, { force: true });
-const fixture = await createFixtureIdentity();
+// The platform's root pass type is a sibling under the same CA, so a spec can seed a database identity
+// that signs with the Worker's own intermediate (e2e/helpers/platform-root.ts reads it from the state folder).
+const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
+  siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
+});
 writeDevVars(varsFile, {
-  KEK_V1: randomBytes(32).toString('base64'),
+  KEK_V1: E2E_KEK_V1,
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_ISSUER: oidcIssuer,
   PUBLIC_BASE_URL: e2eOrigin,
@@ -72,6 +80,9 @@ execFileSync(
   ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
   { cwd: root, stdio: 'inherit' },
 );
+writeFileSync(resolve(state, 'platform-root.json'), JSON.stringify(fixture.siblings[0], null, 2), {
+  mode: 0o600,
+});
 // The Polaris ID binding's own D1 (test/idp-e2e/wrangler.jsonc), with the migration the real Worker deploys.
 execFileSync(
   'npx',
