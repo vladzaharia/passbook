@@ -146,17 +146,20 @@ export function listExpiredPreviousSecrets(
 }
 
 /** True when another connection holds this secret fingerprint as its current or previous secret. */
-export async function secretFingerprintTaken(
+/** The org and recipe of every other connection holding this fingerprint as its current or previous secret. */
+export async function secretFingerprintHolders(
   db: D1Database,
   fingerprint: string,
   ownConnectionId: string | null,
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 FROM connections WHERE (webhook_secret_fp = ? OR webhook_prev_secret_fp = ?)
-         AND id IS NOT ? LIMIT 1`,
-      [fingerprint, fingerprint, ownConnectionId],
-    )) !== null
+): Promise<{ orgId: string; recipe: unknown }[]> {
+  const rows = await all<{ org_id: string; config: string }>(
+    db,
+    `SELECT org_id, config FROM connections WHERE (webhook_secret_fp = ? OR webhook_prev_secret_fp = ?)
+       AND id IS NOT ?`,
+    [fingerprint, fingerprint, ownConnectionId],
   );
+  return rows.map((r) => ({
+    orgId: r.org_id,
+    recipe: (JSON.parse(r.config) as { recipe?: unknown } | null)?.recipe,
+  }));
 }

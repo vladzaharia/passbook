@@ -343,5 +343,59 @@
         }
       ]
     }
+  },
+  "webhooks.getWebhookEndpointsSetup": {
+    "description": "The setup guide for the server that receives webhooks.",
+    "response": {
+      "direction": "outbound",
+      "recipe": "outbound",
+      "version": "2026-11-25",
+      "checkedAt": "2026-11-25",
+      "provider": {
+        "name": "Your server",
+        "consoleUrl": null,
+        "docs": []
+      },
+      "secret": {
+        "origin": "passbook",
+        "allowPaste": false,
+        "prefix": null,
+        "minLength": 38,
+        "whereStep": null
+      },
+      "subscriptions": {
+        "perWebhook": "many",
+        "topics": []
+      },
+      "steps": [
+        {
+          "id": "verify",
+          "side": "provider",
+          "title": "Verify each request",
+          "parts": [
+            {
+              "t": "field",
+              "label": "Signature header",
+              "value": "x-passbook-signature",
+              "choose": false
+            },
+            {
+              "t": "warn",
+              "text": "Use the raw bytes, not re-serialized JSON."
+            }
+          ],
+          "verified": true
+        }
+      ],
+      "test": {
+        "kind": "send",
+        "text": "Send a test from PassBook. Done after one 2xx.",
+        "command": null,
+        "issues": false
+      },
+      "troubleshooting": {
+        "timeout": "No answer in time. Answer 2xx first, then do the work."
+      }
+    }
   }
 }

@@ -48,7 +48,7 @@ export function useSessionFixes(
           patch.mutate(() =>
             api.patch(`/api/v1/scanning-sessions/${s.id}/devices/${d.id}`, ScanningDeviceSchema, {
               overrides: { ...d.overrides, direction: fix.direction },
-              revision: d.updatedAt,
+              revision: d.configRevision,
             }),
           );
           return;

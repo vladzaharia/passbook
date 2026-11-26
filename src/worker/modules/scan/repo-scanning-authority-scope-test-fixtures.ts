@@ -2,11 +2,11 @@
 import { expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
-import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionRow } from './repo-scanning-sessions.ts';
 import {
   CHECK_IN,
   created,
+  deviceRevision,
   expectUnassigned,
   kit,
   pair,
@@ -199,19 +199,19 @@ export function registerScanningAuthorityScope() {
     const templateId = await kit.scanTemplate('Concurrent edits', { actions: [CHECK_IN] });
     const { session, device } = await sessionWithDevice({ templateIds: [templateId] });
     const parent = await scanningSessionRow(kit.env.DB, kit.org.id, session.id);
-    const child = await scanningDeviceRow(kit.env.DB, kit.org.id, device.id);
-    if (!parent || !child) throw new Error('Missing D1 configuration fixture.');
+    if (!parent) throw new Error('Missing D1 configuration fixture.');
     const sessionEdits = await Promise.all(
       ['One', 'Two'].map((name) =>
         request('PATCH', `/scanning-sessions/${session.id}`, { name, revision: parent.updated_at }),
       ),
     );
     expect(sessionEdits.map((response) => response.status).sort()).toEqual([200, 409]);
+    const revision = await deviceRevision(device.id);
     const deviceEdits = await Promise.all(
       ['First', 'Second'].map((name) =>
         request('PATCH', `/scanning-sessions/${session.id}/devices/${device.id}`, {
           name,
-          revision: child.updated_at,
+          revision,
         }),
       ),
     );

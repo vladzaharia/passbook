@@ -1,3 +1,4 @@
+import { calcomBookingsSetup } from './calcom-bookings.setup.ts';
 import { first, HOUR_MS, ignored, isoMs, obj, type Recipe, record, ref, str } from './shared.ts';
 
 const STATUS: Record<string, string> = {
@@ -21,6 +22,10 @@ export const calcomBookings: Recipe = {
   windowMs: HOUR_MS,
   topics: Object.keys(STATUS),
   pasteSecret: false,
+  secretOrigin: 'passbook',
+  secretScope: 'connection',
+  line: 'Booking to pass. Voids when cancelled or moved.',
+  setup: calcomBookingsSetup,
   outputFields: {
     title: { type: 'string' },
     startTime: { type: 'date' },
@@ -44,6 +49,8 @@ export const calcomBookings: Recipe = {
   adapt({ body }) {
     const o = obj(body);
     const type = str(o?.triggerEvent);
+    // The Ping test button sends PING with no booking in it (shape UNVERIFIED, see the setup guide).
+    if (type === 'PING') return ignored('ping');
     const payload = obj(o?.payload);
     const created = isoMs(o?.createdAt);
     const uid = ref(payload?.uid);

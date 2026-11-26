@@ -1,4 +1,5 @@
 import { ignored, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { tickettailorTicketsSetup } from './tickettailor-tickets.setup.ts';
 
 // Envelope `{ id, created_at, event, resource_url, payload }`, signature, events:
 // https://developers.tickettailor.com/docs/webhook/structure and /security and /configuration
@@ -16,6 +17,10 @@ export const tickettailorTickets: Recipe = {
   windowMs: 0,
   topics: TOPICS,
   pasteSecret: true,
+  secretOrigin: 'provider',
+  secretScope: 'connection',
+  line: 'Issued ticket to pass. Voids when voided or refunded.',
+  setup: tickettailorTicketsSetup,
   outputFields: {
     ticketId: { type: 'string' },
     orderId: { type: 'string' },
@@ -42,7 +47,8 @@ export const tickettailorTickets: Recipe = {
     const t = obj(o?.payload);
     if (!o || type === null || sent === null || !eventId || !t)
       return ignored('unrecognized_shape');
-    if (!TOPICS.includes(type)) return ignored('unknown_type');
+    // The help article lists lowercase names; the topic list is uppercase. Either spelling is the same event.
+    if (!TOPICS.includes(type.toUpperCase())) return ignored('unknown_type');
     const id = ref(t.id);
     if (!id) return ignored('no_ref');
     const status = str(t.status);
