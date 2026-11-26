@@ -70,11 +70,9 @@ const DEF: LocalOperationDef = {
 function useEnrollOperation(shown: boolean, ask: string) {
   const { operation, driver } = useLocalOperation(DEF);
   useEffect(() => {
-    if (!shown) {
-      driver.complete('sent');
-      driver.step('screen');
-    } else {
-      driver.complete('sent');
+    driver.complete('sent');
+    if (!shown) driver.wait('screen', ask);
+    else {
       driver.complete('screen');
       driver.wait('read', ask);
     }
