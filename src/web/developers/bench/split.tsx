@@ -1,10 +1,22 @@
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect, useRef } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef } from 'react';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 
 /** The frame's one wide breakpoint: from here the pane sits beside the main column. */
 export const BENCH_WIDE = '(min-width: 1180px)';
+/** From here a closed pane opens as a drawer; below, as a bottom sheet. */
+export const BENCH_TABLET = '(min-width: 720px)';
+
+/** The pane's shape where a piece of it is drawn, and how to close it (drawer and sheet only). */
+export interface PaneShape {
+  shape: 'side' | 'drawer' | 'sheet';
+  close?: () => void;
+}
+const Pane = createContext<PaneShape>({ shape: 'side' });
+
+/** The shape of the pane around the caller: the Inspector shows Close and Prev / Next only in a drawer or sheet. */
+export const usePaneShape = (): PaneShape => useContext(Pane);
 
 const reduced = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,12 +31,15 @@ function PaneDialog({
   onClose,
   label,
   edge,
+  bare,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   label: string;
   edge: 'start' | 'end';
+  /** The content brings its own header and Close (the Inspector). */
+  bare: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -70,18 +85,24 @@ function PaneDialog({
         if (e.target === ref.current) onClose();
       }}
     >
-      <div className="bench-sheet-h">
-        <span className="bench-grab" aria-hidden="true" />
-        <button
-          type="button"
-          className="btn ghost sm bench-sheet-x"
-          aria-label={BENCH_COPY.pane.close}
-          onClick={onClose}
-        >
-          <X aria-hidden="true" />
-        </button>
+      {bare ? (
+        <span className="bench-grab" data-bare="" aria-hidden="true" />
+      ) : (
+        <div className="bench-sheet-h">
+          <span className="bench-grab" aria-hidden="true" />
+          <button
+            type="button"
+            className="btn ghost sm bench-sheet-x"
+            aria-label={BENCH_COPY.pane.close}
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </button>
+        </div>
+      )}
+      <div className="bench-sheet-b" data-bare={bare || undefined}>
+        {children}
       </div>
-      <div className="bench-sheet-b">{children}</div>
     </dialog>
   );
 }
@@ -99,6 +120,7 @@ export function BenchSplit({
   open,
   onClose,
   label,
+  bare = false,
 }: {
   layout?: 'split' | 'index';
   /** The list (split) or the stage (index). */
@@ -110,10 +132,13 @@ export function BenchSplit({
   onClose: () => void;
   /** The pane's name, for its landmark and its dialog. */
   label: string;
+  /** The pane is an Inspector: it draws its own header, Close and Prev / Next. */
+  bare?: boolean;
 }) {
   const wide = useMediaQuery(BENCH_WIDE);
+  const tablet = useMediaQuery(BENCH_TABLET);
   const side = wide ? (
-    <aside className="bench-pane" aria-label={label}>
+    <aside className="bench-pane" aria-label={label} data-bare={bare || undefined}>
       {pane}
     </aside>
   ) : null;
@@ -128,8 +153,11 @@ export function BenchSplit({
           onClose={onClose}
           label={label}
           edge={layout === 'index' ? 'start' : 'end'}
+          bare={bare}
         >
-          {pane}
+          <Pane.Provider value={{ shape: tablet ? 'drawer' : 'sheet', close: onClose }}>
+            {pane}
+          </Pane.Provider>
         </PaneDialog>
       )}
     </div>

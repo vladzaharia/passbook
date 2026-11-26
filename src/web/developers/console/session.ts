@@ -10,6 +10,8 @@ export interface Sandbox {
   orgId: string;
   orgSlug: string;
   templateId: string | null;
+  /** The org's IANA zone (WB0): every Workbench time shows in it, never UTC. */
+  timeZone?: string;
 }
 
 export type Session =
@@ -84,6 +86,7 @@ async function read(): Promise<Session> {
       orgId: String(box.orgId),
       orgSlug: String(box.orgSlug),
       templateId: typeof box.templateId === 'string' ? box.templateId : null,
+      ...(typeof box.timeZone === 'string' ? { timeZone: box.timeZone } : {}),
     },
   };
 }
