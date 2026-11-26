@@ -16,6 +16,12 @@ import { supportContacts } from '../public/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { bundleSnapshot } from './bundle.ts';
+import { FIRST_CHECK_S, sendRemovalCheck } from './operations.ts';
+import {
+  activeHolderOperation,
+  assertNoActiveHolderOperation,
+  startHolderOperation,
+} from './operations-start.ts';
 import { sameSnapshot } from './pass-snapshot.ts';
 import * as repo from './repo.ts';
 import { tagsByPass } from './repo-tags.ts';
@@ -238,14 +244,17 @@ export async function getMyPass(ctx: ServiceContext, userId: string, passId: str
 export async function refreshMyPass(
   ctx: ServiceContext,
   userId: string,
+  sessionId: string,
   passId: string,
   deps: MeDeps = defaultDeps,
 ) {
+  const who = { userId, sessionId };
   const row = await ownedRow(ctx, userId, passId);
   if (row.status === 'voided') throw new ConflictError('This pass is voided.', 'PASS_VOIDED');
   if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `refresh:${passId}`))) {
     throw new RateLimitedError();
   }
+  let operationId: string | undefined;
   const { requestedAt, cooldownSeconds } = await deps.requestRefresh(
     ctx,
     passId,
@@ -266,8 +275,28 @@ export async function refreshMyPass(
       externalRef: row.external_ref,
       ownerUserId: userId,
     },
+    undefined,
+    {
+      onClaimed: async () => {
+        // A refresh still running on this pass is the one this click joins: its job carries the id.
+        operationId =
+          (await activeHolderOperation(ctx, who, 'holder.refresh', passId)) ?? undefined;
+        if (operationId) return undefined;
+        const op = await startHolderOperation(ctx, who, 'holder.refresh', passId);
+        await op.progress.step('check').done();
+        operationId = op.id;
+        return op.id;
+      },
+    },
   );
-  return { accepted: true as const, requestedAt, cooldownSeconds };
+  // Inside the cooldown nothing new starts: the earlier refresh's operation, if it still runs.
+  operationId ??= (await activeHolderOperation(ctx, who, 'holder.refresh', passId)) ?? undefined;
+  return {
+    accepted: true as const,
+    requestedAt,
+    cooldownSeconds,
+    ...(operationId ? { operationId } : {}),
+  };
 }
 
 /** The pass as the holder saw it: the transfer refuses if it moved since. */
@@ -295,7 +324,26 @@ export async function removeMyPass(
 ) {
   const row = await repo.getPassForRemoval(ctx.env.DB, userId, passId);
   if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return deps.removePassFromUser(ctx, passId, userId, sessionId, sourceOf(userId, row));
+  const who = { userId, sessionId };
+  await assertNoActiveHolderOperation(ctx, who, 'holder.remove', passId);
+  const result = await deps.removePassFromUser(
+    ctx,
+    passId,
+    userId,
+    sessionId,
+    sourceOf(userId, row),
+  );
+  const op = await startHolderOperation(ctx, who, 'holder.remove', passId);
+  await op.progress.step('account').done();
+  if (result.state === 'completed') {
+    await op.progress.step('wallets').skip();
+    await op.progress.succeed();
+  } else {
+    await op.progress.waiting('wallets', { reason: 'Waiting for your wallets' });
+    // The wallets let go on the minute cron: look again until they have.
+    await sendRemovalCheck(ctx, op.id, 1, FIRST_CHECK_S);
+  }
+  return { ...result, operationId: op.id };
 }
 
 export async function getMyRemoval(ctx: ServiceContext, userId: string, transferId: string) {

@@ -81,8 +81,18 @@ describe('self-removal credential transfers', () => {
     const passPath = `/api/v1/me/passes/${t.pass.id}`;
     const removed = await call(passPath, session.headers, 'DELETE');
     expect(removed.status).toBe(202);
-    const result = (await removed.json()) as { transferId: string; state: string };
-    expect(result).toEqual({ transferId: expect.any(String), state: 'pending' });
+    const started = (await removed.json()) as {
+      transferId: string;
+      state: string;
+      operationId: string;
+    };
+    expect(started).toEqual({
+      transferId: expect.any(String),
+      state: 'pending',
+      operationId: expect.any(String),
+    });
+    // The receipt is the transfer alone: the operation is read at /operations.
+    const { operationId: _operationId, ...result } = started;
     const receiptPath = `/api/v1/me/pass-removals/${result.transferId}`;
     expect(await (await call(receiptPath)).json()).toEqual(result);
     await expectProblem(await call(receiptPath, other.headers), 404, 'REMOVAL_NOT_FOUND');
@@ -193,14 +203,18 @@ describe('self-removal credential transfers', () => {
     );
     expect(response.status).toBe(200);
     const result = (await response.json()) as { transferId: string; state: string };
-    expect(result).toEqual({ transferId: expect.any(String), state: 'completed' });
+    expect(result).toEqual({
+      transferId: expect.any(String),
+      state: 'completed',
+      operationId: expect.any(String),
+    });
     expect((await getPass(kit.env.DB, pass.id))?.ownerUserId).toBeNull();
     const receipt = await app.request(
       `${ORIGIN}/api/v1/me/pass-removals/${result.transferId}`,
       { headers: session.headers },
       kit.env,
     );
-    expect(await receipt.json()).toEqual(result);
+    expect(await receipt.json()).toEqual({ transferId: result.transferId, state: result.state });
   });
 
   it('fences an archive object when a transfer starts while its bytes are read', async () => {

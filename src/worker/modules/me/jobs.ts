@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { lastRotationAt, noticeQueuedSince } from '../channels/repo-replace.ts';
 import { dispatchSafely, enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { hasPendingIssuanceTransfer } from '../delivery/repo-issuance-recovery.ts';
+import { progressOf } from '../operations/progress.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 
 const MAIL_ACTION = {
@@ -21,9 +22,14 @@ export async function handleHolderMail(
   job: JobOf<'pass.holder_mail'>,
   ctx: ServiceContext,
 ): Promise<void> {
+  // The holder's operation, when there is one: it shows each step and where this stopped.
+  const progress = progressOf(ctx, job.operationId, 1);
   // A lost-phone transfer still finishing: fail so the queue retries after its backoff.
-  if (await hasPendingIssuanceTransfer(ctx.env.DB, job.passId))
+  if (await hasPendingIssuanceTransfer(ctx.env.DB, job.passId)) {
+    if (job.reason === 'lost_phone')
+      await progress.waiting('wallets', { reason: 'Waiting for your wallets' });
     throw new ConflictError('The pass is changing. Retrying.', 'HOLDER_TRANSFER_PENDING');
+  }
   const pass = await getPass(ctx.env.DB, job.passId);
   if (
     !pass ||
@@ -31,8 +37,12 @@ export async function handleHolderMail(
     !pass.holderEmail ||
     pass.status === 'voided' ||
     pass.removedAt !== null
-  )
+  ) {
+    await progress.fail(new AppError('PASS_NOT_FOUND', 404, 'Pass not found.'));
     return;
+  }
+  if (job.reason === 'lost_phone') await progress.step('wallets').done();
+  const mail = progress.step('mail');
   // A notice is queued once per new code: a retry after a crash finds the audit row of the first.
   if (job.reason === 'codes_replaced') {
     const since = await lastRotationAt(ctx.env.DB, pass.orgId, pass.id);
@@ -59,7 +69,10 @@ export async function handleHolderMail(
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.warn('holder.mail_skipped', { passId: pass.id, code: error.code });
+    await progress.fail(error);
     return;
   }
   ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
+  await mail.done();
+  await progress.succeed();
 }

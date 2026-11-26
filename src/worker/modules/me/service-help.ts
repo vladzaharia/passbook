@@ -8,6 +8,7 @@ import { revokeAllForUser } from '../auth/sessions.ts';
 import { recipientEmailBudget } from '../delivery/repo-email-budget.ts';
 import { rotateOwnPassCredentials } from '../holders/service-rotate.ts';
 import { CredentialTransferReissueRequired } from '../passes/credential-transfer.ts';
+import { assertNoActiveHolderOperation, startHolderOperation } from './operations-start.ts';
 import * as repo from './repo.ts';
 import { sourceOf } from './service.ts';
 
@@ -39,18 +40,28 @@ async function queueMail(
   userId: string,
   passId: string,
   reason: 'resend' | 'lost_phone',
+  operationId: string,
 ) {
-  await ctx.env.JOBS.send({ kind: 'pass.holder_mail', passId, userId, reason });
+  await ctx.env.JOBS.send({ kind: 'pass.holder_mail', passId, userId, reason, operationId });
 }
 
 /** Send my own pass to the email it was issued to; the delivery caps apply. */
-export async function resendMyPass(ctx: ServiceContext, userId: string, passId: string) {
+export async function resendMyPass(
+  ctx: ServiceContext,
+  userId: string,
+  sessionId: string,
+  passId: string,
+) {
   const { row, to } = await ownedActive(ctx, userId, passId);
+  const who = { userId, sessionId };
+  await assertNoActiveHolderOperation(ctx, who, 'holder.resend', passId);
   if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-resend:${passId}`)))
     throw new RateLimitedError();
   await assertRecipientBudget(ctx, row.mode, to);
-  await queueMail(ctx, userId, passId, 'resend');
-  return { ok: true as const };
+  const op = await startHolderOperation(ctx, who, 'holder.resend', passId);
+  await op.progress.step('check').done();
+  await queueMail(ctx, userId, passId, 'resend', op.id);
+  return { ok: true as const, operationId: op.id };
 }
 
 /**
@@ -64,6 +75,8 @@ export async function lostMyPhone(
   passId: string,
 ) {
   const { row } = await ownedActive(ctx, userId, passId);
+  const who = { userId, sessionId };
+  await assertNoActiveHolderOperation(ctx, who, 'holder.lost_phone', passId);
   if (
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${userId}`)) ||
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${passId}`))
@@ -90,17 +103,29 @@ export async function lostMyPhone(
       );
     throw error;
   });
-  // The lost phone's other sessions end with the old code: a finder cannot open My passes.
-  await revokeAllForUser(ctx, userId, sessionId);
-  await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: userId,
-    action: 'user.sessions_revoke',
-    targetType: 'user',
-    targetId: userId,
-    detail: { reason: 'lost_phone' },
-  });
-  // A pending transfer finishes later; the job waits for it and then mails the new pass.
-  await queueMail(ctx, userId, passId, 'lost_phone');
-  return result;
+  const op = await startHolderOperation(ctx, who, 'holder.lost_phone', passId);
+  try {
+    await op.progress.step('rotate').done();
+    // The lost phone's other sessions end with the old code: a finder cannot open My passes. This session stays,
+    // and the operation is pinned to it, so the holder watches the rest.
+    await revokeAllForUser(ctx, userId, sessionId);
+    await recordAudit(ctx, {
+      actorType: 'user',
+      actorId: userId,
+      action: 'user.sessions_revoke',
+      targetType: 'user',
+      targetId: userId,
+      detail: { reason: 'lost_phone' },
+    });
+    await op.progress.step('signout').done();
+    if (result.state === 'pending')
+      await op.progress.waiting('wallets', { reason: 'Waiting for your wallets' });
+    else await op.progress.step('wallets').skip();
+    // A pending transfer finishes later; the job waits for it and then mails the new pass.
+    await queueMail(ctx, userId, passId, 'lost_phone', op.id);
+  } catch (error) {
+    await op.progress.fail(error);
+    throw error;
+  }
+  return { ...result, operationId: op.id };
 }

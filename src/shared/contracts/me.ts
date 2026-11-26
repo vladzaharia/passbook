@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { EffectiveChannelsSchema } from './channels.ts';
-import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, OkSchema, pageOf, TimestampSchema } from './common.ts';
 import { WalletProviderIssuanceSchema, WalletProviderSchema } from './wallet-providers.ts';
 
 /** A capability link to an available native wallet; installation is not known. */
@@ -125,13 +125,19 @@ export const RemovePassResponseSchema = z.object({
   /** Null when the credential could not change and the pass was unlinked without a transfer. */
   transferId: IdSchema.nullable(),
   state: z.enum(['pending', 'completed']),
+  /** The start of a removal or lost-phone request: its progress, at GET /operations/{id}. Never on the receipt. */
+  operationId: IdSchema.optional(),
 });
 export const RefreshResponseSchema = z.object({
   accepted: z.literal(true),
   requestedAt: TimestampSchema,
   /** Seconds before the next refresh is accepted (settings refresh.userCooldownSeconds). */
   cooldownSeconds: z.number().int(),
+  /** The refresh's progress, at GET /operations/{id}. Absent when an earlier refresh already covers this one. */
+  operationId: IdSchema.optional(),
 });
+/** POST /api/v1/me/passes/{id}/resend: the email's progress is the operation. */
+export const ResendResponseSchema = OkSchema.extend({ operationId: IdSchema.optional() });
 
 /** GET /api/v1/me/passes.pkpasses?part=N: my active passes as .pkpasses bundles of up to 10. */
 export const MY_PASSES_BUNDLE_PATH = '/api/v1/me/passes.pkpasses';

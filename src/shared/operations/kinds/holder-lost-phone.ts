@@ -1,0 +1,18 @@
+import { defineOperationKind } from '../define.ts';
+import { holderCommon, holderDedupe, holderErrors } from '../holder.ts';
+
+export const holderLostPhone = defineOperationKind({
+  ...holderCommon,
+  kind: 'holder.lost_phone',
+  dedupe: holderDedupe,
+  errors: holderErrors,
+  title: 'Lost phone',
+  doneTitle: 'New pass sent',
+  failTitle: 'Could not replace the pass',
+  steps: [
+    { key: 'rotate', label: 'Replace code and link', active: 'Replacing your code and link' },
+    { key: 'signout', label: 'Sign out other devices', active: 'Signing out other devices' },
+    { key: 'wallets', label: 'Update your wallets', active: 'Updating your wallets' },
+    { key: 'mail', label: 'Email the new pass', active: 'Emailing the new pass' },
+  ],
+});

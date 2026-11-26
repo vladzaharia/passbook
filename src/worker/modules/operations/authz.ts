@@ -85,13 +85,12 @@ export function starterFenceFor(
   auth: AuthContext,
   writer = false,
 ): Fence | null {
-  return auth.kind === 'session'
-    ? starterFence(
-        { userId: auth.userId, sessionId: auth.sessionId },
-        ctx.clock.now(),
-        writer || isOwnOnly(auth),
-      )
-    : null;
+  if (auth.kind !== 'session') return null;
+  const own = isOwnOnly(auth);
+  return starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), {
+    strong: writer && !own,
+    pinned: own,
+  });
 }
 
 /** The fence for reading `row`, by its audience; null when the caller may not. */

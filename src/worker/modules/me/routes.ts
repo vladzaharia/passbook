@@ -16,6 +16,7 @@ import {
   ProblemSchema,
   RefreshResponseSchema,
   RemovePassResponseSchema,
+  ResendResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, requireHolderSession } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -135,7 +136,15 @@ register(
     response: RefreshResponseSchema,
   },
   async (c) =>
-    c.json(await refreshMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
+    c.json(
+      await refreshMyPass(
+        serviceContext(c),
+        currentUserId(c),
+        sessionId(c),
+        c.req.valid('param').id,
+      ),
+      202,
+    ),
 );
 meRoutes.openapi(
   createRoute({
@@ -178,10 +187,18 @@ register(
     summary: 'Email my pass to me again',
     params: IdParamSchema,
     status: 202,
-    response: OkSchema,
+    response: ResendResponseSchema,
   },
   async (c) =>
-    c.json(await resendMyPass(serviceContext(c), currentUserId(c), c.req.valid('param').id), 202),
+    c.json(
+      await resendMyPass(
+        serviceContext(c),
+        currentUserId(c),
+        sessionId(c),
+        c.req.valid('param').id,
+      ),
+      202,
+    ),
 );
 register(
   meRoutes,
