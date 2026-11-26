@@ -1,0 +1,122 @@
+{
+  "polaris-groups.getPlatformIdpGroups": {
+    "response": {
+      "items": [
+        {
+          "key": "tier",
+          "kind": "role",
+          "name": "Beta testers",
+          "friendlyName": "Youth coaches",
+          "members": 10,
+          "claims": ["claim"],
+          "otherClients": 29,
+          "flags": ["vip"],
+          "rules": 24,
+          "manual": 13
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "polaris-groups.postPlatformIdpGroups": {
+    "request": {
+      "key": "tier",
+      "friendlyName": "Front desk staff",
+      "rules": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgRoles": ["org_admin"]
+        }
+      ]
+    },
+    "response": {
+      "key": "tier",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsEnsure": {
+    "request": {
+      "role": "console"
+    },
+    "response": {
+      "key": "tier",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.patchPlatformIdpGroupsByKey": {
+    "request": {
+      "friendlyName": "Front desk staff"
+    },
+    "response": {
+      "key": "tier",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKey": {
+    "response": {
+      "key": "tier",
+      "dryRun": false
+    }
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyRules": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-c4706c1c9fbf",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgRoles": ["org_admin"],
+          "createdAt": 1794362400000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyRules": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgRoles": ["org_admin"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-b680a38c0c3c",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgRoles": ["org_admin"],
+      "createdAt": 1794362400000
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyRulesById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyMembers": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-ebeb96ea8fe8",
+          "subject": "Your Northwind Climbing pass",
+          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "source": "manual",
+          "createdAt": 1794362400000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyMembers": {
+    "request": {
+      "userId": "0193a1b2-7c00-7000-8000-000000000011"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-65291c0c71bf",
+      "subject": "Your Northwind Climbing pass",
+      "userId": "0193a1b2-7c00-7000-8000-000000000011",
+      "source": "manual",
+      "createdAt": 1794362400000
+    }
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyMembersById": {
+    "response": {
+      "ok": true
+    }
+  }
+}
