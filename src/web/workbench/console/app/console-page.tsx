@@ -118,12 +118,8 @@ export function ConsolePage() {
         return;
       }
       centered.current = true;
+      row?.scrollIntoView({ block: 'center' });
       window.scrollTo({ top: pageTop.current });
-      if (row && pane)
-        pane.scrollTop +=
-          row.getBoundingClientRect().top -
-          pane.getBoundingClientRect().top -
-          (pane.clientHeight - row.clientHeight) / 2;
     };
     frame = requestAnimationFrame(settle);
     return () => cancelAnimationFrame(frame);
