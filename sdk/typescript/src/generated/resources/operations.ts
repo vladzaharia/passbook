@@ -23,7 +23,7 @@ export class OperationsResource {
     return this.core.request({ method: 'GET', path: `/api/v1/operations/${encodeURIComponent(id)}` }, options);
   }
 
-  /** Retry a failed operation under the same id with the next attempt. Answers 202 with the operation. `POST /api/v1/operations/{id}/retry` */
+  /** Retry a failed operation under the same id with the next attempt `POST /api/v1/operations/{id}/retry` */
   retry(id: string, options?: RequestOptions): Promise<OperationsRetryResult> {
     return this.core.request({ method: 'POST', path: `/api/v1/operations/${encodeURIComponent(id)}/retry`, idempotent: true }, options);
   }

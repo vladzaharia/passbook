@@ -88,11 +88,11 @@ export function createFetchClient({
     },
     async cancel(id) {
       const { body } = await send('POST', `/${encodeURIComponent(id)}/cancel`);
-      return (body as { operation: Operation }).operation;
+      return body as Operation;
     },
     async retry(id) {
       const { body } = await send('POST', `/${encodeURIComponent(id)}/retry`);
-      return (body as { operation: Operation }).operation;
+      return body as Operation;
     },
   };
 }

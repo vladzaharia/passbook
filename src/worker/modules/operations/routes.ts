@@ -4,7 +4,6 @@ import {
   OperationListSchema,
   OperationParamsSchema,
   OperationSchema,
-  StartedOperationSchema,
 } from '../../../shared/contracts/operations.ts';
 import { OrgCapabilitySchema } from '../../../shared/contracts/org-membership.ts';
 import { isPlatformScope, scopeExercises } from '../../platform/api-scopes.ts';
@@ -98,14 +97,11 @@ register(
     path: '/{id}/cancel',
     summary: 'Stop an operation: a queued one at once, a running one at its next safe point',
     params: OperationParamsSchema,
-    response: StartedOperationSchema,
+    response: OperationSchema,
     auth: { scope: WRITE_SCOPES, stepUp },
     codes: ['OPERATION_NOT_CANCELABLE'],
   },
-  async (c) =>
-    c.json({
-      operation: await cancelOperation(serviceContext(c), authOf(c), c.req.valid('param').id),
-    }),
+  async (c) => c.json(await cancelOperation(serviceContext(c), authOf(c), c.req.valid('param').id)),
 );
 
 register(
@@ -114,22 +110,19 @@ register(
   {
     method: 'post',
     path: '/{id}/retry',
-    summary:
-      'Retry a failed operation under the same id with the next attempt. Answers 202 with the operation.',
+    summary: 'Retry a failed operation under the same id with the next attempt',
     params: OperationParamsSchema,
-    status: 202,
-    response: StartedOperationSchema,
+    response: OperationSchema,
     auth: { scope: WRITE_SCOPES, stepUp },
     codes: ['OPERATION_NOT_RETRYABLE', 'OPERATION_RUNNING'],
   },
-  async (c) => {
-    const operation = await retryOperation(
-      serviceContext(c),
-      authOf(c),
-      c.req.valid('param').id,
-      idempotencyKeyHeader(c.req.header('idempotency-key')),
-    );
-    c.header('location', `/api/v1/operations/${operation.id}`);
-    return c.json({ operation }, 202);
-  },
+  async (c) =>
+    c.json(
+      await retryOperation(
+        serviceContext(c),
+        authOf(c),
+        c.req.valid('param').id,
+        idempotencyKeyHeader(c.req.header('idempotency-key')),
+      ),
+    ),
 );
