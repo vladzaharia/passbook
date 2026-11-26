@@ -135,7 +135,10 @@ describe('type selection', () => {
       'an expiry date',
     );
     const noArt = { ...(await view('starter-coupon')) };
-    noArt.images = { ...noArt.images, apple: { logo: noArt.images.apple.logo ?? [] } };
+    noArt.images = {
+      apple: { logo: noArt.images.apple.logo ?? [] },
+      overrides: { ...noArt.images.overrides, samsung: {} },
+    };
     expect(compile(noArt).items.find((i) => i.capability === 'type')?.message).toContain(
       'a main image',
     );
