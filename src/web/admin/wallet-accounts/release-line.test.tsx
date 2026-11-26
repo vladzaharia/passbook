@@ -63,4 +63,14 @@ describe('release line on the platform wallet tabs', () => {
     const cards = await screen.findByRole('list', { name: 'Samsung cards' });
     expect(within(cards).getByText("Samsung Wallet isn't released yet.")).toBeInTheDocument();
   });
+
+  it('tells the credential dialog that the wallet is dark', async () => {
+    const user = userEvent.setup();
+    await open(walletRelease(), 'google');
+    await user.click(await screen.findByRole('tab', { name: 'Google' }));
+    await screen.findByText('…4321');
+    await user.click((await screen.findAllByRole('button', { name: 'Rotate' }))[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText("Google Wallet isn't released yet.")).toBeInTheDocument();
+  });
 });

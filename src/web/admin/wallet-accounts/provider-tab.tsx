@@ -51,6 +51,7 @@ export function ProviderTab({ provider }: { provider: WalletProvider }) {
                       provider={provider}
                       canManage
                       credential={credential}
+                      issuance={credentials.data.release[provider][mode]}
                     />
                     {provider === 'samsung' && credential ? (
                       <SamsungCards

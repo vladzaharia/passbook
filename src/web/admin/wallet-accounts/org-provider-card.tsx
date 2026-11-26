@@ -141,6 +141,7 @@ export function OrgProviderCard({
             credential={own}
             canManage={canManage}
             fresh={e.source === 'org' ? e.prerequisites.check : undefined}
+            issuance={e.issuance}
           />
         </div>
         <div className="flex flex-col gap-3 border-t border-border pt-4">
