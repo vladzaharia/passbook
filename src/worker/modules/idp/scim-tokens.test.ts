@@ -199,7 +199,9 @@ describe('SCIM receiver: D1 tokens', () => {
       createdBy: 'other',
     });
     expect(await flipToActive(env.DB, id, s.r.f.clock.now(), 0)).toBe(true);
-    s.r.f.clock.advance(CACHE_MS - 1);
+    // The cap itself is pinned here, not taken from the code: a longer cache must turn this red.
+    expect(CACHE_MS).toBeLessThanOrEqual(5_000);
+    s.r.f.clock.advance(4_999);
     expect(await status(s, a.token)).toBe(200);
     s.r.f.clock.advance(1);
     expect(await status(s, a.token)).toBe(401);
