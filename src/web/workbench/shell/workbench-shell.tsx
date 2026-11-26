@@ -216,8 +216,8 @@ function Shell({
       </>
     ),
     tone,
-    // Signed out there is one Sign in per view: the stage state, or on Design and Quickstart the
-    // sidebar card from 1024 and this bar's button below it (the card sits in the closed sheet).
+    // Signed out there is one Sign in per view: the stage state, on Design the sidebar card from 1024
+    // and this bar's button below it (the card sits in the closed sheet), on Quickstart its step 1.
     account: signedOut ? (
       signedOutNext ? (
         <div className="lg:hidden">

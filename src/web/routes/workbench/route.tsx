@@ -62,13 +62,15 @@ function WorkbenchLayout() {
       : tool === 'quickstart'
         ? list.find((c) => c.kind === 'sandbox')
         : undefined) ?? null;
-  // Signed out, Design and Quickstart open; the sidebar's sign-in card shows there only, so a view
-  // never carries two buddies or two sign-in buttons.
+  // Signed out, Design and Quickstart open. Design carries the sidebar's sign-in card; Quickstart's step 1
+  // is its own, so a view never carries two buddies or two sign-in buttons.
   const signedOutPublic = Boolean(tool && PUBLIC_AREAS.has(tool) && !orgId);
+  // Quickstart words its own gate (step 1: Polaris ID, no developer access), so the shell states stand aside.
+  const ownGate = tool === 'quickstart';
   let body: ReactNode = <Outlet />;
   if (isPending) body = <SkeletonRows label="Loading" />;
   // An email link opens the holder's spaces only: the Workbench waits for Polaris ID.
-  else if (authed && authed.amr !== 'oidc')
+  else if (authed && authed.amr !== 'oidc' && !ownGate)
     body = <PolarisIdRequired space="The Workbench" next={href} />;
   else if (!authed) {
     if (!signedOutPublic) body = <SignInState next={href} />;
@@ -86,7 +88,7 @@ function WorkbenchLayout() {
         context={context}
         tool={tool}
         signedOut={!authed && !isPending}
-        signedOutNext={authed || isPending || !signedOutPublic ? null : href}
+        signedOutNext={authed || isPending || !signedOutPublic || ownGate ? null : href}
       >
         {stale ? (
           <Suspense fallback={null}>

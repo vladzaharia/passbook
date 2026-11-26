@@ -3014,7 +3014,7 @@
     "operationId": "workbench.getContexts",
     "op": "GET /api/v1/workbench/contexts",
     "change": "200.orgs[].timeZone: field added",
-    "note": ""
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
@@ -3022,7 +3022,7 @@
     "operationId": "workbench.getContexts",
     "op": "GET /api/v1/workbench/contexts",
     "change": "200.sandbox.timeZone: field added",
-    "note": ""
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "GET /api/v1/workbench/contexts new operation",
