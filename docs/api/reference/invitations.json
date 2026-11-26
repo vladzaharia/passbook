@@ -1,0 +1,58 @@
+{
+  "invitations.postInvitationsPreview": {
+    "request": {
+      "token": "demo-token-northwind-a0d51d4db3425b4c189b56"
+    },
+    "response": {
+      "kind": "member",
+      "orgName": "Northwind Climbing",
+      "roles": ["org_admin"],
+      "developer": false,
+      "email": "ada@example.com",
+      "expiresAt": 1798790399999,
+      "polaris": false
+    }
+  },
+  "invitations.postInvitationsSetup": {
+    "request": {
+      "token": "demo-token-northwind-ee84636ec59f7eff40bbc6",
+      "turnstileToken": "0.demo-turnstile-response-northwind"
+    },
+    "response": {
+      "setupUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "expiresAt": 1798790399999
+    }
+  },
+  "invitations.postInvitationsClaimExisting": {
+    "request": {
+      "token": "demo-token-northwind-585db9e4e87568b6f20320",
+      "turnstileToken": "0.demo-turnstile-response-northwind"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "invitations.postInvitationsAccept": {
+    "request": {
+      "token": "demo-token-northwind-1b36e8b0ca7bd2cd79a809"
+    },
+    "response": {
+      "outcome": "joined",
+      "kind": "member",
+      "orgName": "Northwind Climbing",
+      "membership": {
+        "id": "0193a1b2-7c00-7000-8000-910a5c50413c",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Sam Rivera",
+        "orgSlug": "northwind-climbing",
+        "personal": false,
+        "testOnly": false,
+        "userId": "0193a1b2-7c00-7000-8000-000000000011",
+        "roles": ["org_admin"],
+        "capabilities": ["org:read"],
+        "createdAt": 1794362400000,
+        "revokedAt": null
+      }
+    }
+  }
+}

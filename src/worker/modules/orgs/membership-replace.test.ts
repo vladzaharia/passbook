@@ -420,7 +420,7 @@ describe('resend invitation', () => {
     expect([fresh.email, fresh.roles]).toEqual([old.email, old.roles]);
     expect(sent).toHaveLength(1);
     expect(sent[0]?.to).toBe('new@example.test');
-    expect(sent[0]?.text).toMatch(/invitations\/accept#[A-Za-z0-9_-]{43}/);
+    expect(sent[0]?.text).toMatch(/\/invite#[A-Za-z0-9_-]{43}/);
     const rows = await all<{ id: string; revoked_at: number | null }>(
       t.env.DB,
       'SELECT id, revoked_at FROM org_invitations WHERE org_id = ? AND email = ? ORDER BY rowid',

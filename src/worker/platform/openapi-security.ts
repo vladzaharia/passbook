@@ -4,7 +4,7 @@ import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
-import { signInLevelOf, stepUpOf } from './sign-in-guard.ts';
+import { isOidcOnly, signInLevelOf, stepUpOf } from './sign-in-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
 export interface KeyAccess {
@@ -162,16 +162,21 @@ export function withSignIn(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
       const last = app.routes.findLastIndex(
         (r) => r.method.toLowerCase() === method && r.path === exact,
       );
-      const levels = app.routes
+      const guards = app.routes
         .filter(
           (r, i) =>
             (last < 0 || i < last) &&
             (r.method === 'ALL' || r.method.toLowerCase() === method) &&
             patternOf(r.path).test(sample),
         )
-        .map((r) => signInLevelOf(r.handler));
+        .map((r) => r.handler);
+      const levels = guards.map((g) => signInLevelOf(g));
       Object.assign(op as object, {
-        'x-sign-in': levels.some((l) => l !== 'any') || !levels.includes('any') ? 'idp' : 'any',
+        'x-sign-in': guards.some((g) => isOidcOnly(g))
+          ? 'oidc'
+          : levels.some((l) => l !== 'any') || !levels.includes('any')
+            ? 'idp'
+            : 'any',
       });
     }
   }

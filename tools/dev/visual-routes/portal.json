@@ -5,6 +5,11 @@
     "name": "portal-login"
   },
   {
+    "role": "anon",
+    "path": "/invite",
+    "name": "portal-invite-no-link"
+  },
+  {
     "role": "holder",
     "path": "/",
     "name": "portal-my-passes"

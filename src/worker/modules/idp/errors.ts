@@ -61,11 +61,19 @@ export function mapIdpError(error: unknown, log?: Logger): AppError {
       );
     case 'IDP_IN_USE':
       return new AppError('IDP_IN_USE', 409, 'This group still has members or apps.', cause);
+    case 'IDP_DRIFT':
+      log?.error('idp.unavailable', { code: 'IDP_DRIFT' });
+      return new AppError(
+        'IDP_DRIFT',
+        503,
+        'Polaris ID changed while saving. Check and try again.',
+        cause,
+      );
     case 'IDP_BREAKER':
       log?.error('idp.breaker', { code: 'IDP_BREAKER' });
       return new AppError('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE, cause);
     default:
-      // IDP_AUTH, IDP_UPSTREAM, IDP_UNSAFE_CONFIG, IDP_MISCONFIGURED, IDP_DRIFT and anything unknown.
+      // IDP_AUTH, IDP_UPSTREAM, IDP_UNSAFE_CONFIG, IDP_MISCONFIGURED and anything unknown.
       log?.error('idp.unavailable', { code: code ?? 'IDP_UNKNOWN' });
       return new AppError('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE, cause);
   }

@@ -123,7 +123,7 @@ export function claimsApi(s: Shared): ClaimsApi {
         )
           await call.guard(m, () => refuse('Claim key not allowed for this account.'));
       }
-      const bucket: Bucket = c.dryRun ? 'preview' : 'claims_write';
+      const bucket: Bucket = s.dry(c.dryRun) ? 'preview' : 'claims_write';
       return call.ledgered(bucket, m, (req) =>
         withLock(
           db,
@@ -138,7 +138,7 @@ export function claimsApi(s: Shared): ClaimsApi {
             if (o.kind === 'subject') assertClaimable(body, o.subject, registry, keySubject);
             const current = parseClaims(body);
             const { next, set, removed } = merge(current, ch, settings.claimKeys);
-            if (sameClaims(current, next)) return { set, removed, dryRun: false };
+            if (sameClaims(current, next)) return { set, removed, dryRun: s.dry(c.dryRun) };
             if (s.dry(c.dryRun)) {
               await noteCall(db, 'dry_run', m, deps.now(), 'dry_run');
               return { set, removed, dryRun: true };

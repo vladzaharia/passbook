@@ -1136,6 +1136,15 @@
       ]
     },
     {
+      "code": "DEVELOPER_LIMIT_REACHED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400
@@ -2125,6 +2134,15 @@
       ]
     },
     {
+      "code": "IDP_DRIFT",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
@@ -2152,7 +2170,25 @@
       ]
     },
     {
+      "code": "IDP_MULTIPLE_ACCOUNTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NO_ACCOUNT",
       "statuses": [
         409
       ],
@@ -2542,12 +2578,49 @@
       ]
     },
     {
+      "code": "INVITATION_CLAIM_CAPPED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "INVITATION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "INVITATION_EMAIL_MISMATCH",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "INVITATION_INVALID",
       "statuses": [
         400
       ],
       "modules": [
+        "idp",
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_NO_ACCOUNT",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2557,6 +2630,15 @@
       ],
       "modules": [
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_SETUP_CAPPED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -4996,6 +5078,24 @@
       ]
     },
     {
+      "code": "SCIM_AUTH_FAILED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "SCIM_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "SCREEN_ONLY",
       "statuses": [
         403
@@ -6166,7 +6266,8 @@
       ],
       "modules": [
         "auth",
-        "developer"
+        "developer",
+        "idp"
       ]
     },
     {

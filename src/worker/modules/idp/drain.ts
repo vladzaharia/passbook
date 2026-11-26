@@ -52,6 +52,9 @@ export async function drainSubject(env: RunEnv, row: DirtyRow): Promise<DrainOut
 }
 
 /** Returns how many targets it looked at. */
+const confirmedAfter = (at: number | undefined, observedAt: number | null | undefined) =>
+  at !== undefined && (observedAt == null || at > observedAt);
+
 async function plan(env: RunEnv, subject: string, touched: Touched): Promise<number> {
   const { ctx, rpc, runId, dry } = env;
   const db = ctx.env.DB;
@@ -67,6 +70,7 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
   const wantsNothing = desired.skip === 'disabled';
   const present = new Set(lookup.roles.filter(isManaged));
   const grants = new Set(lookup.grants);
+  const confirmedAt = new Map(lookup.confirmedGrants.map((g) => [g.target, g.confirmedAt]));
   const everyTarget = new Set<Target>([
     ...desired.targets.keys(),
     ...present,
@@ -99,7 +103,9 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
       grant: grants.has(target),
       wanted: !wantsNothing && desired.targets.has(target),
       held: s?.held_at != null,
-      seen: s?.observed === 1,
+      // A grant read back after PassBook last looked stands in for an observation. One confirmed before a
+      // later observed absence (a hold, then Restore) outlived the role and must not block the re-add.
+      seen: s?.observed === 1 || confirmedAfter(confirmedAt.get(target), s?.observed_at),
     };
     const presence = presenceOf(facts);
     switch (classify(facts)) {
@@ -126,8 +132,7 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<num
         else if (account === 'no')
           await noteDrift(ctx, runId, who, target, 'disabled_in_idp', open);
         else {
-          // A grant that was never seen present: its write may have been lost, so it goes in again. If the
-          // owner took it before the first drain, this undoes that; PB-R should have lookup() say which grants are confirmed.
+          // A pending grant (never read back, never observed) may have lost its write, so it goes in again.
           if (facts.grant)
             ctx.log.warn('idp.access_readded', { code: 'IDP_READDED', subject, target });
           adds.push(target);

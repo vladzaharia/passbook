@@ -58,8 +58,11 @@ export type RouteAuth =
       /** Needs developer access (the `developer` role, or a platform admin): else 403 DEVELOPER_ACCESS_REQUIRED. */
       developer?: true;
     }
-  /** A platform admin session. Keys never pass until a platform key kind exists. */
-  | { platform: PlatformScope; stepUp?: StepUp };
+  /**
+   * A platform admin session. Keys never pass until a platform key kind exists. `signIn: 'oidc'` admits only a
+   * Polaris ID session: break-glass and email links get 403 IDP_SIGN_IN_REQUIRED, and a step-up is a Polaris ID re-auth.
+   */
+  | { platform: PlatformScope; stepUp?: StepUp; signIn?: 'oidc' };
 
 /** Reads (GET, HEAD) need `read`, everything else `write`. */
 export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {

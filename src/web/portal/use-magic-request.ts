@@ -21,7 +21,7 @@ type Waiter = (token: string | null) => void;
  * Turnstile tokens for the sign-in request and resends. Tokens are single use: taking one resets
  * the widget for the next. An early submit waits for the token (up to 10 s) instead of failing.
  */
-function useChallenge() {
+export function useChallenge() {
   const token = useRef<string | null>(null);
   const waiters = useRef(new Set<Waiter>());
   const [resetKey, setResetKey] = useState(0);
