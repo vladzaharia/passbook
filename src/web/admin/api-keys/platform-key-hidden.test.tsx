@@ -1,8 +1,13 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { json, renderApp } from '@/web/lib/test-utils.tsx';
 import { next } from './wizard-test-utils.ts';
+
+vi.mock('@/shared/contracts/api-keys.ts', async (orig) => ({
+  ...(await orig<typeof import('@/shared/contracts/api-keys.ts')>()),
+  MINTABLE_PLATFORM_SCOPES: [],
+}));
 
 it('hides the Platform option while no platform scope is mintable', async () => {
   await renderApp('/admin/platform/api-keys', {
