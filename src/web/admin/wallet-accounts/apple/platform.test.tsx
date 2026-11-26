@@ -335,4 +335,42 @@ describe('platform identities', () => {
     await ui.click(within(confirm).getByRole('button', { name: 'Arm now' }));
     await waitFor(() => expect(armed).toBe(1));
   });
+
+  it('keeps Move passes from starting while the preview is refused', async () => {
+    let started = 0;
+    await renderApp(PATH, {
+      session: 'admin',
+      handlers: {
+        ...base,
+        '/api/v1/orgs': page([
+          {
+            id: 'o1',
+            name: 'Henrys',
+            slug: 'henrys',
+            status: 'active',
+            personal: false,
+            createdAt: 1,
+            counts: { passes: 30, templates: 1, connections: 0, apiKeys: 0 },
+            countsCapped: false,
+          },
+        ]),
+        '/api/v1/platform/apple/identities': () => json({ items: [legacy, row()], openRuns: [] }),
+        '/api/v1/platform/apple/identity-moves/preview': () =>
+          problem(409, 'IDENTITY_RETIRED', 'The new identity cannot issue passes.'),
+        '/api/v1/platform/apple/identity-moves': (_u, init) => {
+          if (init?.method === 'POST') started++;
+          return json({ items: [], nextCursor: null });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Move passes' }));
+    const dialog = await screen.findByRole('dialog');
+    within(dialog).getByRole('combobox').focus();
+    await ui.keyboard('{Enter}');
+    await ui.click(await screen.findByRole('option', { name: 'Henrys' }));
+    expect(await within(dialog).findByText(/cannot issue passes/)).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Move passes' }));
+    expect(started).toBe(0);
+  });
 });

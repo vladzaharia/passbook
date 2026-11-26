@@ -43,6 +43,7 @@ export function MovePassesDialog({
     ...(orgId ? {} : { org: 'Choose an organization.' }),
     ...(data && data.passes === 0 ? { org: 'Nothing to move.' } : {}),
     ...(orgId && !data && !preview.isError ? { org: 'Reading the passes.' } : {}),
+    ...(preview.isError ? { org: 'Preview refused.' } : {}),
   });
   const kept = Object.entries(data?.kept ?? {}).filter(([, n]) => n > 0);
   return (

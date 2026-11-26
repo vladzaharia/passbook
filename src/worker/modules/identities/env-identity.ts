@@ -30,6 +30,16 @@ export interface IdentityResolver {
   /** `byId` for a row the caller already read in a batch. */
   byRow?(row: IdentityRow): Promise<ResolvedIdentity>;
   platform(): Promise<ResolvedIdentity>;
+  /**
+   * `forOrg` and `byId` from the identity's metadata alone (status, purpose, certificate dates): the same
+   * refusals, but the signing key is never read. For a dry run that only counts.
+   */
+  peekForOrg?(
+    orgId: string,
+    identityId: string | null | undefined,
+    now: number,
+  ): Promise<{ id: string }>;
+  peekById?(identityId: string): Promise<{ id: string }>;
 }
 
 /** Intermediate for chain checks: SIGNER_PLATFORM_INTERMEDIATE override, else the bundled WWDR G4. */
