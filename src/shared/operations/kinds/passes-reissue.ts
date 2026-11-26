@@ -1,6 +1,7 @@
 import { defineOperationKind } from '../define.ts';
 
 const common = {
+  tokenActs: true,
   cancel: 'never',
   retry: true,
   stepUp: false,
