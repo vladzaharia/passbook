@@ -55,6 +55,7 @@ describe('the page never stores, shows or addresses the try token', () => {
   });
   it('the island does not read the URL beyond the operation id in the hash', () => {
     const uses = files.filter((f) => /location\.(search|href|pathname)/.test(text(f)));
-    expect(uses.map((f) => f.slice(dev.length + 1))).toEqual([]);
+    // The docs bar's companion link reads `from=workbench` alone (shell/workbench-link.ts).
+    expect(uses.map((f) => f.slice(dev.length + 1))).toEqual(['shell/workbench-link.ts']);
   });
 });

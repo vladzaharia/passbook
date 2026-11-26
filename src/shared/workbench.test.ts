@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { operatorSpaceOf } from './spaces.ts';
-import { isWorkbenchPath, safeReturn, WB_TOOLS, wbOrgOf, wbPath, wbToolOf } from './workbench.ts';
+import {
+  isWorkbenchPath,
+  safeReturn,
+  WB_TOOLS,
+  wbHref,
+  wbOrgOf,
+  wbPath,
+  wbToolOf,
+} from './workbench.ts';
 
 describe('wbPath', () => {
   it('puts the org in the path, filters in the query and the selection in the hash', () => {
@@ -20,6 +28,15 @@ describe('wbPath', () => {
     expect(wbPath('org_1', 'console', { query: { op: 'createPass', prefill: 'n1' } })).toBe(
       '/workbench/o/org_1/console?op=createPass&prefill=n1',
     );
+  });
+
+  it('wbHref names the area without a context and refuses a body the same way', () => {
+    expect(wbHref('home')).toBe('/workbench');
+    expect(wbHref('console', { query: { op: 'createPass', sample: 'create-pass' } })).toBe(
+      '/workbench/console?op=createPass&sample=create-pass',
+    );
+    expect(wbHref('logs', { query: { code: 'NOT_FOUND' } })).toBe('/workbench/logs?code=NOT_FOUND');
+    expect(() => wbHref('console', { query: { body: '{}' } })).toThrow(/never carries a body/);
   });
 
   it('lists the eleven areas in nav order', () => {

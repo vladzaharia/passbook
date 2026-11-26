@@ -17,13 +17,7 @@ const root = resolve(import.meta.dirname, '..');
 
 /** src/web/developers/render.tsx, loaded through Vite's runner (it is JSX, which Node does not run). */
 interface Renderer {
-  renderSite(
-    site: Site,
-    origin: string,
-    assets: string,
-    guides: GuideInputs,
-    previews: unknown,
-  ): OutFile[];
+  renderSite(site: Site, origin: string, assets: string, guides: GuideInputs): OutFile[];
   sitemap(origin: string, urls: string[]): string;
 }
 
@@ -95,13 +89,7 @@ export async function buildDevelopers(
   const previews = (
     await load<PreviewBuilder>('src/web/workbench/playground/build.tsx')
   ).blueprintPreviews(root, origin);
-  const rendered: OutFile[] = module.renderSite(
-    site,
-    origin,
-    options.head,
-    loadGuideInputs(root),
-    JSON.parse(previews.json),
-  );
+  const rendered: OutFile[] = module.renderSite(site, origin, options.head, loadGuideInputs(root));
   const urls = rendered.flatMap((f) => (f.url ? [f.url] : []));
   rendered.push({ file: PATHS.sitemap, body: module.sitemap(origin, urls) });
   rendered.push({ file: PATHS.previews, body: previews.json }, ...previews.files);

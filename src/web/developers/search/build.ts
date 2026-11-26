@@ -1,6 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { opPath, pagePath } from '../model/markdown.ts';
 import type { Site } from '../model/types.ts';
 import type { ActionDoc, GuideDoc, HintDoc, SearchIndex } from './types.ts';
@@ -27,7 +28,7 @@ const actions = (): ActionDoc[] => [
     line: 'Edit a pass, watch every wallet change',
     sandbox: false,
     words: 'edit preview pass wallet apple google',
-    href: PATHS.playground,
+    href: wbHref('design'),
   },
   {
     id: 'builder',
@@ -35,7 +36,7 @@ const actions = (): ActionDoc[] => [
     line: 'Run any operation against your sandbox',
     sandbox: true,
     words: 'console try run request send',
-    href: PATHS.console,
+    href: wbHref('console'),
   },
   {
     id: 'logs',
@@ -43,7 +44,7 @@ const actions = (): ActionDoc[] => [
     line: 'Your sandbox key’s calls',
     sandbox: true,
     words: 'requests history debug',
-    href: PATHS.logs,
+    href: wbHref('logs'),
   },
   {
     id: 'test-webhook',
@@ -51,7 +52,7 @@ const actions = (): ActionDoc[] => [
     line: 'Capture a signed delivery',
     sandbox: true,
     words: 'event capture tester endpoint signature',
-    href: PATHS.webhooks,
+    href: wbHref('events'),
   },
   {
     id: 'test-key',
@@ -59,7 +60,7 @@ const actions = (): ActionDoc[] => [
     line: 'A sandbox and its key',
     sandbox: true,
     words: 'sandbox api secret token start',
-    href: PATHS.quickstart,
+    href: wbHref('quickstart'),
   },
   {
     id: 'roll-key',
@@ -76,7 +77,7 @@ const PAGES: readonly { id: string; title: string; line: string; href: string }[
     id: 'quickstart',
     title: 'Quickstart',
     line: 'Sandbox, first request, your pass live',
-    href: PATHS.quickstart,
+    href: wbHref('quickstart'),
   },
   {
     id: 'reference',
@@ -88,15 +89,15 @@ const PAGES: readonly { id: string; title: string; line: string; href: string }[
     id: 'playground',
     title: 'Playground',
     line: 'Edit a pass and watch the wallets change',
-    href: PATHS.playground,
+    href: wbHref('design'),
   },
   {
     id: 'webhooks',
     title: 'Webhooks',
     line: 'Events, signatures, the tester',
-    href: PATHS.webhooks,
+    href: wbHref('events'),
   },
-  { id: 'logs', title: 'Request log', line: 'Your sandbox key’s calls', href: PATHS.logs },
+  { id: 'logs', title: 'Request log', line: 'Your sandbox key’s calls', href: wbHref('logs') },
   { id: 'errors', title: 'Errors', line: 'Every code and its fix', href: PATHS.errors },
   { id: 'changelog', title: 'Changelog', line: 'What changed, by date', href: PATHS.changelog },
   { id: 'status', title: 'Status', line: 'Components and incidents', href: PATHS.status },
@@ -178,7 +179,7 @@ export function buildSearchIndex(site: Site): SearchIndex {
     events: site.webhookEvents.map((e) => ({
       type: e.type,
       summary: e.summary,
-      href: `${PATHS.webhooks}?type=${e.type}`,
+      href: wbHref('events', { query: { type: e.type } }),
     })),
     actions: actions(),
     hints,

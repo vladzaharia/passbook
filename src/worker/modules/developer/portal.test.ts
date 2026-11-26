@@ -26,7 +26,6 @@ const MANIFEST = {
     asset: '/developers/reference/passes.md',
     type: 'text/markdown; charset=utf-8',
   },
-  '/developers/console': { asset: '/developers/console', type: 'text/html; charset=utf-8' },
   '/developers/run/passes.json': {
     asset: '/developers/run/passes.json',
     type: 'application/json; charset=utf-8',
@@ -41,11 +40,7 @@ function appEnv(fetched: string[] = [], manifest: object = MANIFEST): AppEnv {
       fetched.push(path);
       if (path === '/developers/manifest.json') return Response.json(manifest);
       if (path === '/developers/run/passes.json') return Response.json({ origin: ORIGIN, ops: [] });
-      if (
-        path === '/developers/' ||
-        path === '/developers/reference/passes' ||
-        path === '/developers/console'
-      )
+      if (path === '/developers/' || path === '/developers/reference/passes')
         return new Response(PAGE, { headers: { 'content-type': 'text/html', etag: '"v1"' } });
       if (path === '/developers/not-found')
         return new Response(NOT_FOUND, { headers: { 'content-type': 'text/html' } });
@@ -79,16 +74,11 @@ describe('developer portal route', () => {
     expect(csp).not.toMatch(/nonce|unsafe-inline|unsafe-eval/);
   });
 
-  it('admits the Turnstile widget on the console, quickstart and home pages alone, for Create sandbox and Reset', async () => {
-    const csp = (await call('/developers/console')).headers.get('content-security-policy') ?? '';
-    expect(csp).toContain("script-src 'self' https://challenges.cloudflare.com;");
-    expect(csp).toContain('frame-src https://challenges.cloudflare.com;');
-    expect(csp).toContain("require-trusted-types-for 'script'");
-    expect(csp).toContain('trusted-types passbook-turnstile;');
+  it('admits the Turnstile widget on the home page alone, for Create sandbox and Reset', async () => {
     const home = (await call('/developers')).headers.get('content-security-policy') ?? '';
     expect(home).toContain("script-src 'self' https://challenges.cloudflare.com;");
     expect(home).toContain('trusted-types passbook-turnstile;');
-    for (const path of ['/developers/reference/passes', '/developers/logs']) {
+    for (const path of ['/developers/reference/passes']) {
       const other = (await call(path)).headers.get('content-security-policy') ?? '';
       expect(other, path).not.toContain('cloudflare');
       expect(other, path).toContain("frame-src 'none'");
@@ -102,6 +92,25 @@ describe('developer portal route', () => {
     expect(res.headers.get('content-type')).toBe('application/json; charset=utf-8');
     expect(await res.json()).toEqual({ origin: ORIGIN, ops: [] });
     expect(res.headers.get('content-security-policy')).not.toContain('passbook-turnstile');
+  });
+
+  it('moves the tool pages into the Workbench with a 301 that keeps the query', async () => {
+    const moved: [string, string][] = [
+      ['/developers/console?op=createPass', '/workbench/console?op=createPass'],
+      ['/developers/webhooks', '/workbench/events'],
+      ['/developers/logs?code=NOT_FOUND', '/workbench/logs?code=NOT_FOUND'],
+      ['/developers/keys', '/workbench/keys'],
+      ['/developers/playground', '/workbench/design'],
+      ['/developers/quickstart', '/workbench/quickstart'],
+    ];
+    for (const [from, to] of moved) {
+      const res = await call(from);
+      expect(res.status, from).toBe(301);
+      expect(res.headers.get('location'), from).toBe(to);
+    }
+    // Only pages move: a markdown twin is not a page.
+    const twin = await call('/developers/console.md', { headers: { accept: 'text/html' } });
+    expect(twin.status).toBe(404);
   });
 
   it('serves the home page for /developers, and a markdown twin', async () => {

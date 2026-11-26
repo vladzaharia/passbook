@@ -2,6 +2,7 @@ import { ArrowRight, Check, Copy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref, wbPath } from '../../../shared/workbench.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { duration } from '../home/model.ts';
 import { copyToClipboard } from '../playground/copy.ts';
@@ -14,7 +15,7 @@ const D = QS_COPY.done;
 
 /** The finished quickstart: the pass, the time it took, the .env and where to go next. It replaces the steps. */
 export function Done({ q }: { q: Quickstart }) {
-  const { pass, template, templateId, secret, progress } = q;
+  const { pass, template, templateId, secret, progress, sandbox } = q;
   const source = useMemo(
     () => (pass && template ? sourceOf(template, pass.built, pass.input) : null),
     [pass, template],
@@ -42,7 +43,10 @@ export function Done({ q }: { q: Quickstart }) {
             {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
             {copied ? D.copied : D.env}
           </button>
-          <a className="btn outline" href={PATHS.workbench}>
+          <a
+            className="btn outline"
+            href={sandbox ? wbPath(sandbox.orgId, 'home') : wbHref('home')}
+          >
             {D.workbench}
             <ArrowRight aria-hidden="true" />
           </a>

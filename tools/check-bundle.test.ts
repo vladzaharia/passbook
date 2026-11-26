@@ -153,6 +153,18 @@ describe('check-bundle', () => {
     expect(toolAssets(read, all, new Set(), 'keys').errors[0]).toMatch(/no loader lists/);
   });
 
+  it('finds a loader that picks a renamed export, when another chunk imports the same one', () => {
+    const files: Record<string, string> = {
+      '/assets/main-A.js':
+        'x(()=>import(`./console-B.js`).then(e=>e.t),__vite__mapDeps([0,1]));const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/console-B.js","assets/rail-D.js"])))=>i',
+      '/assets/console-B.js': 'cn("wb-tool-console")',
+      '/assets/rail-D.js': 'rail',
+    };
+    const tool = toolAssets((url) => files[url] ?? '', Object.keys(files), new Set(), 'console');
+    expect(tool.errors).toEqual([]);
+    expect(tool.files).toEqual(['/assets/console-B.js', '/assets/rail-D.js']);
+  });
+
   it('holds the bench once and each tool route under its own line', () => {
     expect(WB_BENCH_BUDGET_BYTES).toBe(35_000);
     expect(WB_TOOL_BUDGET_BYTES).toBe(75_000);

@@ -1,5 +1,6 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { groupByStep } from '../guide/group.ts';
 import type { Guide } from '../guide/model.ts';
 import { operations } from './dates.ts';
@@ -146,14 +147,14 @@ export function llmsTxt(site: Site, guides: Guide[] = []): string {
   out.push(
     '## Guides',
     '',
-    `- [Quickstart](${site.baseUrl}${twin(PATHS.quickstart)}): your first pass in five steps`,
+    `- [Quickstart](${site.baseUrl}${wbHref('quickstart')}): your first pass in five steps, in the Workbench`,
     ...guides.map((g) => `- [${g.meta.title}](${site.baseUrl}${twin(g.url)}): ${g.meta.line}`),
     '',
     '## Optional',
     '',
     `- [Overview](${site.baseUrl}${twin(PATHS.home)})`,
     `- [Errors](${site.baseUrl}${twin(PATHS.errors)}): every error code, with its status and fix; each code has its own page, add \`.md\``,
-    `- [Webhooks](${site.baseUrl}${twin(PATHS.webhooks)})`,
+    `- [Webhook endpoints](${site.baseUrl}${twin(`${PATHS.reference}/webhook-endpoints`)})`,
     `- [Changelog](${site.baseUrl}${twin(PATHS.changelog)})`,
     `- [Protocols](${site.baseUrl}${twin(PATHS.protocols)})`,
   );

@@ -45,7 +45,7 @@ Newest first. Open one to read it. Nothing reaches the recipient.
 
 ## See your calls
 
-[Logs](/developers/logs) lists your key's calls for 7 days: method, path, status and `code`. Open one to see its redacted bodies for 24 hours.
+[Logs](/workbench/logs) lists your key's calls for 7 days: method, path, status and `code`. Open one to see its redacted bodies for 24 hours.
 
 ## Start over
 

@@ -50,22 +50,31 @@ export interface WbPathOptions {
   hash?: string;
 }
 
-/**
- * A Workbench URL: `/workbench/o/$orgId/<tool>?<filters>#<id>`. A body never rides in a URL, so a
- * `body` param throws; prefills travel by `sessionStorage` nonce.
- */
-export function wbPath(orgId: string, tool: WbTool, options: WbPathOptions = {}): string {
+function tail(options: WbPathOptions): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(options.query ?? {})) {
     if (key.toLowerCase() === 'body') throw new Error('A Workbench URL never carries a body.');
     if (value !== undefined && value !== '') params.set(key, String(value));
   }
+  const query = params.toString();
+  const hash = options.hash ? `#${encodeURIComponent(options.hash)}` : '';
+  return `${query ? `?${query}` : ''}${hash}`;
+}
+
+/**
+ * A Workbench URL: `/workbench/o/$orgId/<tool>?<filters>#<id>`. A body never rides in a URL, so a
+ * `body` param throws; prefills travel by `sessionStorage` nonce.
+ */
+export function wbPath(orgId: string, tool: WbTool, options: WbPathOptions = {}): string {
   const base = CONTEXT_FREE.has(tool)
     ? `${WB_HOME}/${tool}`
     : `${WB_HOME}/o/${encodeURIComponent(orgId)}${tool === 'home' ? '' : `/${tool}`}`;
-  const query = params.toString();
-  const hash = options.hash ? `#${encodeURIComponent(options.hash)}` : '';
-  return `${base}${query ? `?${query}` : ''}${hash}`;
+  return `${base}${tail(options)}`;
+}
+
+/** A link from outside the space (docs, redirects): no context, so the Workbench picks the remembered one. */
+export function wbHref(tool: WbTool, options: WbPathOptions = {}): string {
+  return `${WB_HOME}${tool === 'home' ? '' : `/${tool}`}${tail(options)}`;
 }
 
 /** The area a Workbench path shows, or null outside the Workbench. */
