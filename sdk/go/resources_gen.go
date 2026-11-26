@@ -570,10 +570,10 @@ func (r *ConnectionsResource) List(ctx context.Context, query *ConnectionsListQu
 	return newPager[ConnectionsListItem](r.c, call{method: "GET", path: "/api/v1/connections", query: queryValues(query)}, "cursor", opts)
 }
 
-// Preview Preview a sync `POST /api/v1/connections/{id}/preview`
-func (r *ConnectionsResource) Preview(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsPreviewResult, error) {
+// Preview Preview a sync, or what one received webhook made `POST /api/v1/connections/{id}/preview`
+func (r *ConnectionsResource) Preview(ctx context.Context, id string, body *ConnectionsPreviewBody, opts ...RequestOption) (*ConnectionsPreviewResult, error) {
 	var out ConnectionsPreviewResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/preview"}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/preview", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

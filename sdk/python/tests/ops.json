@@ -2022,6 +2022,7 @@
    }
   ],
   "query": [],
+  "body": {},
   "binary": false,
   "idempotent": false,
   "raw": false,

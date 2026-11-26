@@ -1,22 +1,11 @@
 import { z } from 'zod';
 import { CursorQuerySchema, IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { SETUP_TROUBLE_KEYS } from './connection-setup.ts';
 
 export const ArrivalOutcomeSchema = z.enum(['accepted', 'duplicate', 'ignored', 'rejected']);
-export const ArrivalReasonSchema = z.enum([
-  'signature_missing',
-  'signature_mismatch',
-  'signature_expired',
-  'payload',
-  'too_large',
-  'no_secret',
-  'unknown_type',
-  'thin_event',
-  'test_mode',
-  'unrecognized_shape',
-  'no_ref',
-  'ping',
-  'stale',
-]);
+// The ledger's reasons are the guides' troubleshooting keys, less `none` (no arrival at all).
+const [, ...ARRIVAL_REASONS] = SETUP_TROUBLE_KEYS;
+export const ArrivalReasonSchema = z.enum(ARRIVAL_REASONS);
 /** One inbound webhook delivery, or the deliveries of one minute with the same result. It holds no body. */
 export const ArrivalSchema = z.object({
   id: IdSchema,

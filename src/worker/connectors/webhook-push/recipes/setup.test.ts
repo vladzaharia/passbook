@@ -55,8 +55,7 @@ describe('recipe setup guides', () => {
 
   it.each(recipes)('$id: the secret origin matches the recipe', (r) => {
     expect(r.setup.secret.origin).toBe(r.secretOrigin);
-    // WooCommerce: PassBook makes the secret, but the service still asks for a paste until W3 changes it.
-    if (r.id !== 'woocommerce-orders') expect(r.pasteSecret).toBe(r.secretOrigin === 'provider');
+    expect(r.pasteSecret).toBe(r.secretOrigin === 'provider');
     expect(r.setup.secret.whereStep === null).toBe(r.secretOrigin === 'passbook');
   });
 

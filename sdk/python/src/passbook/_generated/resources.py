@@ -560,10 +560,11 @@ class ConnectionsResource:
     def preview(
         self,
         id: str,
+        body: m.ConnectionsPreviewBody | _Dict[str, _Any] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.ConnectionsPreviewResult:
-        """Preview a sync `POST /api/v1/connections/{id}/preview`"""
-        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
+        """Preview a sync, or what one received webhook made `POST /api/v1/connections/{id}/preview`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", body=body, result=m.ConnectionsPreviewResult, **opts)
 
     def probe(
         self,

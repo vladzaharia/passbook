@@ -43,7 +43,7 @@ export const woocommerceOrders: Recipe = {
   windowMs: 48 * HOUR_MS,
   tolerateNonJson: true,
   topics: TOPICS,
-  pasteSecret: true,
+  pasteSecret: false,
   secretOrigin: 'passbook',
   secretScope: 'connection',
   line: 'Order or line item to pass. Voids when cancelled or refunded.',

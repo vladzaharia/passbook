@@ -10,6 +10,7 @@ import { validateMapping } from './mapping.ts';
 import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
 import {
   assertSecretFree,
+  needsGeneratedSecret,
   pastesSecret,
   rethrowSecretReuse,
   secretFingerprint,
@@ -215,8 +216,7 @@ export async function update(
       { path: 'webhookSecret', message: 'Not supported.' },
     ]);
   }
-  const needsSecret =
-    (mode === 'webhook' || mode === 'hybrid') && conn.webhookCredentialId === null;
+  const needsSecret = needsGeneratedSecret(def, conn, mode);
   if (input.webhookSecret !== undefined || needsSecret) {
     const secret = input.webhookSecret ?? newWebhookSecret(sctx);
     webhookCredential = secret;
@@ -231,7 +231,7 @@ export async function update(
       input.webhookSecret !== undefined && pastesSecret(def, conn.config)
         ? await secretFingerprint(sctx, input.webhookSecret)
         : null;
-    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id);
+    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id, conn);
     changed.add('webhookSecret');
   }
 

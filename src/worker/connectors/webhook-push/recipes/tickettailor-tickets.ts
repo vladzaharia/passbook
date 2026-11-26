@@ -47,7 +47,8 @@ export const tickettailorTickets: Recipe = {
     const t = obj(o?.payload);
     if (!o || type === null || sent === null || !eventId || !t)
       return ignored('unrecognized_shape');
-    if (!TOPICS.includes(type)) return ignored('unknown_type');
+    // The help article lists lowercase names; the topic list is uppercase. Either spelling is the same event.
+    if (!TOPICS.includes(type.toUpperCase())) return ignored('unknown_type');
     const id = ref(t.id);
     if (!id) return ignored('no_ref');
     const status = str(t.status);

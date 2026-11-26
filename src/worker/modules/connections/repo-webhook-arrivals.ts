@@ -153,6 +153,22 @@ export async function listArrivals(
   }));
 }
 
+/** The kept-event id of an accepted arrival of this connection; null when it has none or is not there. */
+export async function retentionIdOfArrival(
+  db: D1Database,
+  orgId: string,
+  connectionId: string,
+  arrivalId: string,
+): Promise<{ found: boolean; retentionId: string | null }> {
+  const r = await first<{ retention_id: string | null }>(
+    db,
+    `SELECT retention_id FROM connection_webhook_arrivals
+     WHERE org_id = ? AND connection_id = ? AND id = ? AND outcome = 'accepted'`,
+    [orgId, connectionId, arrivalId],
+  );
+  return { found: r !== null, retentionId: r?.retention_id ?? null };
+}
+
 export interface ArrivalSummary {
   /** When the first correctly signed, non-stale delivery arrived. */
   firstVerifiedAt: number | null;
