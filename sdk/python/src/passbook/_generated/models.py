@@ -211,6 +211,8 @@ __all__ = [
     "ConnectionsListResponseItemsItemMappingValueTransform",
     "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
+    "ConnectionsPreviewBody",
+    "ConnectionsPreviewParams",
     "ConnectionsPreviewResult",
     "ConnectionsProbeBody",
     "ConnectionsProbeConfigBody",
@@ -3258,6 +3260,9 @@ class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsPreviewParams(_Model):
+    arrivalId: str | None = None
 
 class ConnectionsProbeConfigParams(_Model):
     orgId: str
@@ -14990,6 +14995,8 @@ ConnectionsFilesUploadResponse = ConnectionsFilesUploadResponse1 | ConnectionsFi
 ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 
 ConnectionsListResult = ConnectionsListResponse
+
+ConnectionsPreviewBody = ConnectionsPreviewParams
 
 ConnectionsPreviewResult = ConnectionPreview
 

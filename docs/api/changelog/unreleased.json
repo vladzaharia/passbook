@@ -3461,6 +3461,14 @@
     "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
+    "key": "POST /api/v1/connections behavior changed",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "behavior changed",
+    "note": "Shopify, Stripe and Ticket Tailor connections start with no secret when webhookSecret is omitted; PATCH sets it. Shopify store secrets may be shared in one org."
+  },
+  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -3490,7 +3498,7 @@
     "operationId": "connections.postConnectionsByIdPreview",
     "op": "POST /api/v1/connections/{id}/preview",
     "change": "new operation",
-    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
+    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Send arrivalId to preview a kept webhook arrival. Writes nothing."
   },
   {
     "key": "POST /api/v1/connections/{id}/probe new operation",

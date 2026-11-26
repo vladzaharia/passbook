@@ -137,6 +137,21 @@ export async function listArrivals(
   }));
 }
 
+/** The kept-event id of an accepted arrival of this connection; null when it has none or is not there. */
+export async function retentionIdOfArrival(
+  db: D1Database,
+  connectionId: string,
+  arrivalId: string,
+): Promise<{ found: boolean; retentionId: string | null }> {
+  const r = await first<{ retention_id: string | null }>(
+    db,
+    `SELECT retention_id FROM connection_webhook_arrivals
+     WHERE connection_id = ? AND id = ? AND outcome = 'accepted'`,
+    [connectionId, arrivalId],
+  );
+  return { found: r !== null, retentionId: r?.retention_id ?? null };
+}
+
 /** When the first signed delivery arrived, or null. Survives the purge because that row is kept. */
 export async function firstVerifiedArrivalAt(
   db: D1Database,

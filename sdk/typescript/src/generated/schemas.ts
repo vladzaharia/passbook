@@ -1046,6 +1046,10 @@ export type ConnectionsListResponse = {
   nextCursor: string | null;
 };
 
+export type ConnectionsPreviewParams = {
+  arrivalId?: string;
+};
+
 export type ConnectionsProbeConfigParams = {
   orgId: string;
   connectorType: "http-json";

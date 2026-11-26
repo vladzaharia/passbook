@@ -1497,6 +1497,12 @@ type ConnectionsListResponseItemsItemVoidWhenItem struct {
 	Values []any  `json:"values,omitempty"`
 }
 
+type ConnectionsPreviewBody = ConnectionsPreviewParams
+
+type ConnectionsPreviewParams struct {
+	ArrivalID *string `json:"arrivalId,omitempty"`
+}
+
 type ConnectionsPreviewResult = ConnectionPreview
 
 type ConnectionsProbeBody = ConnectionsProbeParams

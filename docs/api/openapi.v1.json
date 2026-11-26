@@ -50938,6 +50938,16 @@
           "items"
         ]
       },
+      "ConnectionsPreviewParams": {
+        "type": "object",
+        "properties": {
+          "arrivalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "ConnectionsWebhookFailuresListResponse": {
         "type": "object",
         "properties": {
@@ -122155,7 +122165,7 @@
     },
     "/api/v1/connections/{id}/preview": {
       "post": {
-        "summary": "Preview a sync",
+        "summary": "Preview a sync, or what one received webhook made",
         "tags": [
           "connections"
         ],
@@ -122171,6 +122181,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsPreviewParams"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success",
@@ -122291,7 +122311,8 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WEBHOOK_NOT_FOUND"
         ]
       }
     },

@@ -59,6 +59,7 @@
   "connections.getConnectionsByIdFiles",
   "connections.getConnectionsByIdRuns",
   "connections.getConnectionsByIdSetup",
+  "connections.getConnectionsByIdWebhookArrivals",
   "connections.getConnectionsByIdWebhookFailures",
   "connections.getConnectionsSummary",
   "connections.getConnectionsUploadsByFileId",

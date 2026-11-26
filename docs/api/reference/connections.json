@@ -56,6 +56,9 @@
         }
       ],
       "durationMs": 1650
+    },
+    "request": {
+      "arrivalId": "0193a1b2-7c00-7000-8000-f3168e33f525"
     }
   },
   "connections.getConnectionsByIdWebhookArrivals": {

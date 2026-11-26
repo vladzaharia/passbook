@@ -24,6 +24,7 @@ import { purgeConnectionWebhooks } from './repo-sync.ts';
 import { firstVerifiedArrivalAt, firstVerifiedArrivalsOf } from './repo-webhook-arrivals.ts';
 import {
   assertSecretFree,
+  awaitsProviderSecret,
   pastesSecret,
   rethrowSecretReuse,
   secretFingerprint,
@@ -151,8 +152,12 @@ export async function create(
 
   const id = sctx.ids.id();
   const wantsWebhook = mode === 'webhook' || mode === 'hybrid';
+  // A provider-issued secret (Stripe, Shopify) does not exist yet: it is pasted once the URL is registered.
+  const pending = !input.webhookSecret && awaitsProviderSecret(def, config);
   const webhookSecret =
-    wantsWebhook || input.webhookSecret ? (input.webhookSecret ?? newWebhookSecret(sctx)) : null;
+    wantsWebhook || input.webhookSecret
+      ? (input.webhookSecret ?? (pending ? null : newWebhookSecret(sctx)))
+      : null;
   const newCredentials: string[] = [];
 
   const row: ConnectionRow = {
@@ -223,7 +228,7 @@ export async function create(
     }
     if (input.webhookSecret && pastesSecret(def, row.config)) {
       row.webhookSecretFp = await secretFingerprint(sctx, input.webhookSecret);
-      await assertSecretFree(sctx, row.webhookSecretFp, null);
+      await assertSecretFree(sctx, row.webhookSecretFp, null, { orgId: input.orgId, config });
     }
     await insertConnection(sctx, row, { orgId: row.orgId, authority, issuing: issues }, bind);
   } catch (error) {
