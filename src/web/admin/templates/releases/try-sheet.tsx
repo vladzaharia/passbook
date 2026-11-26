@@ -94,7 +94,7 @@ function Body({
   const zone = useOrgTimeZone(orgId);
   const { phase, retry } = useTryFlow(input);
   const watch = useOnPhone(phase.step === 'waiting' ? phase.pass.id : undefined);
-  const operation = useTryOperation(phase, watch, zone);
+  const operation = useTryOperation(phase, watch, zone, label);
   const made = phase.step === 'waiting';
   const release = made ? nextAction(phase.result.state.next, label) : null;
   return (

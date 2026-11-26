@@ -136,6 +136,6 @@ it('names the step that failed and offers another try', async () => {
   const sheet = await screen.findByRole('dialog', { name: 'Try on my phone' });
   const steps = await within(sheet).findByRole('list', { name: 'Try on my phone' });
   await waitFor(() => expect(steps).toHaveTextContent('Make your pass (failed)'));
-  expect(steps).toHaveTextContent('Release to Test (done)');
+  expect(steps).toHaveTextContent('Release v2 to Test (done)');
   expect(within(sheet).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
 });

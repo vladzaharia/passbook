@@ -1,23 +1,26 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { type LocalOperationDef, useLocalOperation } from '../../../ui/operation/index.ts';
 import type { TryPhase } from './try-flow.ts';
 import type { Watch } from './try-stage.tsx';
 
-const DEF: LocalOperationDef = {
-  kind: 'try.phone',
+const def = (label: string): LocalOperationDef => ({
+  kind: `try.phone:${label}`,
   title: 'Try on my phone',
   doneTitle: 'On your phone',
   failTitle: 'Could not try on your phone',
   steps: [
-    { key: 'release', label: 'Release to Test', active: 'Releasing to Test' },
+    { key: 'release', label: `Release ${label} to Test`, active: 'Releasing to Test' },
     { key: 'make', label: 'Make your pass', active: 'Making your pass' },
     { key: 'phone', label: 'Add it to your phone', active: 'Waiting for your phone' },
   ],
-};
+});
 
 /** The try flow's phases and the phone watch, as the shared progress panel's operation. */
-export function useTryOperation(phase: TryPhase, watch: Watch, zone: string) {
-  const { operation, driver } = useLocalOperation(DEF, zone);
+export function useTryOperation(phase: TryPhase, watch: Watch, zone: string, label: string) {
+  const { operation, driver } = useLocalOperation(
+    useMemo(() => def(label), [label]),
+    zone,
+  );
   const seen = useRef('');
   const mark = phase.step === 'waiting' ? `waiting|${watch.on}|${watch.gaveUp}` : phase.step;
   useEffect(() => {
