@@ -61,7 +61,8 @@
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "response 200 removed",
-    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in."
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -3690,7 +3691,8 @@
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
     "change": "response 201 removed",
-    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in."
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
@@ -3738,7 +3740,8 @@
     "operationId": "developer.postSandboxRecreate",
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "response 201 removed",
-    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in."
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
@@ -3778,7 +3781,8 @@
     "operationId": "developer.postSandboxReset",
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "response 200 removed",
-    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in."
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
