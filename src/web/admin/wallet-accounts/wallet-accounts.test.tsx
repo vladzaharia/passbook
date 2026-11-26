@@ -53,6 +53,7 @@ describe('organization wallet accounts', () => {
     expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
     expect(within(samsung).getByText('Pick a source first.')).toBeInTheDocument();
+    expect(within(samsung).getByText("Samsung Wallet isn't released yet.")).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 

@@ -67,7 +67,10 @@ export function ProviderTab({ provider }: { provider: WalletProvider }) {
       </Card>
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-fg-strong">Organizations</h2>
-        <EnrolmentTable provider={provider} releaseState={credentials.data?.release[provider]} />
+        {credentials.data ? (
+          <ReleaseNote line={releaseSummary(provider, credentials.data.release[provider])} />
+        ) : null}
+        <EnrolmentTable provider={provider} />
       </section>
     </div>
   );

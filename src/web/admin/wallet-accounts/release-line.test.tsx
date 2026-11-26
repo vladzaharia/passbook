@@ -35,17 +35,17 @@ describe('release line on the platform wallet tabs', () => {
     const { container } = await open(walletRelease(), 'google');
     await user.click(await screen.findByRole('tab', { name: 'Google' }));
     await screen.findByText('…4321');
-    // One in the credentials card, one for each enrolment row.
-    expect(screen.getAllByText("Google Wallet isn't released yet.")).toHaveLength(3);
+    // One above the credentials, one above the organizations.
+    expect(screen.getAllByText("Google Wallet isn't released yet.")).toHaveLength(2);
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('says Test only when only Test is open, and marks just the Live enrolment', async () => {
+  it('says Test only when only Test is open', async () => {
     const user = userEvent.setup();
     await open(walletRelease(true), 'google');
     await user.click(await screen.findByRole('tab', { name: 'Google' }));
-    expect(await screen.findByText('Google Wallet is released in Test only.')).toBeInTheDocument();
-    expect(screen.getAllByText("Google Wallet isn't released yet.")).toHaveLength(1);
+    expect(await screen.findAllByText('Google Wallet is released in Test only.')).toHaveLength(2);
+    expect(screen.queryByText(/isn't released/)).toBeNull();
   });
 
   it('says nothing when both modes are released', async () => {

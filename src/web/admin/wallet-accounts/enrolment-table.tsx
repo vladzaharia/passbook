@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type {
   PlatformWalletEnrolment,
   WalletProvider,
-  WalletRelease,
 } from '@/shared/contracts/wallet-providers.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
@@ -15,7 +14,7 @@ import {
   StatusPill,
   toast,
 } from '@/web/ui/index.ts';
-import { COPY, releaseLine, safeError } from './copy.ts';
+import { COPY, safeError } from './copy.ts';
 import { HoldDialog } from './hold-dialog.tsx';
 import { usePlatformEnrolments, useWalletActions } from './queries.ts';
 
@@ -27,13 +26,7 @@ const STATE = {
 } as const;
 
 /** Every organization's enrolment of one wallet, Live and Test together, with hold and release. */
-export function EnrolmentTable({
-  provider,
-  releaseState,
-}: {
-  provider: WalletProvider;
-  releaseState?: WalletRelease[WalletProvider] | undefined;
-}) {
+export function EnrolmentTable({ provider }: { provider: WalletProvider }) {
   const list = usePlatformEnrolments(provider);
   const actions = useWalletActions();
   const [holding, setHolding] = useState<PlatformWalletEnrolment>();
@@ -82,13 +75,11 @@ export function EnrolmentTable({
       id: 'state',
       cell: ({ row }) => {
         const s = STATE[row.original.state];
-        const dark = releaseState ? releaseLine(provider, releaseState[row.original.mode]) : null;
         return (
           <div className="min-w-0">
             <StatusPill status={row.original.state} tone={s.tone}>
               {s.label}
             </StatusPill>
-            {dark ? <p className="mt-1 max-w-[40ch] text-xs text-fg-muted">{dark}</p> : null}
             {row.original.hold ? (
               <p className="mt-1 max-w-[40ch] break-words text-xs text-fg-muted">
                 {row.original.hold.reason}
