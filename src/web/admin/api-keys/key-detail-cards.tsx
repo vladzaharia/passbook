@@ -17,6 +17,7 @@ import {
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
 import type { ApiKeyActivity, ApiKeyDetail } from './detail-queries.ts';
 import { keyPrefix, STATE_TONE } from './key-columns.tsx';
+import { keyReach } from './key-kind-fields.ts';
 import { KeyNameLink } from './key-name-link.tsx';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 
@@ -44,7 +45,9 @@ export function AccessCard({
       ),
       mono: true,
     },
-    { label: 'Organization', value: k.orgId === null ? 'Platform' : orgName },
+    k.orgId === null
+      ? { label: 'Reaches', value: keyReach(k) }
+      : { label: 'Organization', value: orgName },
     { label: 'Mode', value: k.mode === 'test' ? 'Test' : 'Live' },
     {
       label: 'Permissions',
