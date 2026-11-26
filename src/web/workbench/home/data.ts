@@ -22,9 +22,6 @@ export const CALLS_POLL_MS = 5_000;
 export const EVENTS_POLL_MS = 5_000;
 const SUMMARY_POLL_MS = 15_000;
 const PASSES_POLL_MS = 15_000;
-/** The feed pages oldest first: the newest rows are at its end, so a first read walks to it. */
-const FEED_PAGE = 200;
-const FEED_PAGES_MAX = 8;
 
 export type Summary = z.infer<typeof WorkbenchSummarySchema>;
 export type CallRow = z.infer<typeof RequestLogPageSchema>['items'][number];
@@ -94,9 +91,8 @@ export interface RecentEvents {
 const newestFirst = (rows: readonly EventRow[]) => rows.slice(-EVENTS_LIMIT).reverse();
 
 /**
- * Recent events: the feed is a cursor over rows oldest first, so the first read walks to its end and
- * keeps the last few; then it asks only for what is after the cursor, every few seconds while the
- * tab is visible, and a hidden tab asks once when it returns.
+ * Recent events: one newest-first page, then only what is after the newest cursor, every few
+ * seconds while the tab is visible; a hidden tab asks once when it returns.
  */
 export function useRecentEvents(api: WorkbenchApi): RecentEvents {
   const [items, setItems] = useState<EventRow[]>([]);
@@ -115,21 +111,17 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
     setLoading(true);
     setError(null);
 
-    const read = async (limit: number) =>
+    const read = async (limit: number, order?: 'desc') =>
       api.get(P.events, EventFeedPageSchema, {
-        query: { orgId: api.orgId, limit, after: cursor.current },
+        query: { orgId: api.orgId, limit, order, after: order ? undefined : cursor.current },
         signal: ctl.signal,
       });
 
+    // One newest-first page, then only what comes after its newest cursor.
     const first = async () => {
-      let tail: EventRow[] = [];
-      for (let i = 0; i < FEED_PAGES_MAX; i++) {
-        const page = await read(FEED_PAGE);
-        cursor.current = page.nextCursor;
-        tail = [...tail, ...page.items].slice(-EVENTS_LIMIT);
-        if (!page.hasMore) break;
-      }
-      setItems(newestFirst(tail));
+      const page = await read(EVENTS_LIMIT, 'desc');
+      cursor.current = page.nextCursor;
+      setItems(page.items);
       setLoading(false);
     };
 

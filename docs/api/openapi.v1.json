@@ -92061,13 +92061,18 @@
                         },
                         "closed": {
                           "type": "boolean"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "description": "The sandbox org's IANA zone; every time shows in it."
                         }
                       },
                       "required": [
                         "orgId",
                         "name",
                         "slug",
-                        "closed"
+                        "closed",
+                        "timeZone"
                       ],
                       "description": "Your developer sandbox, or null before you make one."
                     },
@@ -92086,6 +92091,10 @@
                           },
                           "slug": {
                             "type": "string"
+                          },
+                          "timeZone": {
+                            "type": "string",
+                            "description": "The organization's IANA zone."
                           },
                           "tools": {
                             "type": "array",
@@ -92110,6 +92119,7 @@
                           "orgId",
                           "name",
                           "slug",
+                          "timeZone",
                           "tools"
                         ]
                       }
@@ -132617,6 +132627,21 @@
             },
             "required": false,
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc",
+              "description": "`desc` reads the newest events first, in one page, and refuses `after`. Its `nextCursor` is the newest event's: pass it as `after` to read what comes next."
+            },
+            "required": false,
+            "description": "`desc` reads the newest events first, in one page, and refuses `after`. Its `nextCursor` is the newest event's: pass it as `after` to read what comes next.",
+            "name": "order",
             "in": "query"
           },
           {

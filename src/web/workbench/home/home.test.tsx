@@ -4,7 +4,7 @@ import { json, renderApp } from '../../lib/test-utils.tsx';
 import type { WorkbenchApi } from '../host/api.ts';
 import { forgetTokens } from '../host/token.ts';
 import { setSingleKeys } from '../shell/prefs.ts';
-import { handlers } from '../shell/test-fixtures.ts';
+import { CONTEXTS, handlers } from '../shell/test-fixtures.ts';
 import { useFresh, useRecentEvents } from './data.ts';
 import { forgetMilestones, type Signals, useMilestone } from './milestones.ts';
 
@@ -73,13 +73,22 @@ const pass = (id: string) => ({
 });
 const CURSOR = 'ev2.AAAAAAAAAAAAAAAAAAAAAA';
 
-const homeHandlers = (summary: Record<string, unknown>, calls = [call('c1', 201)]) => ({
-  ...handlers({ quotas: null, ...summary }),
+const homeHandlers = (
+  summary: Record<string, unknown>,
+  calls = [call('c1', 201)],
+  timeZone?: string,
+) => ({
+  ...handlers({ quotas: null, ...summary }, timeZone ? withZone(timeZone) : undefined),
   '/api/v1/request-logs': () =>
     json({ items: calls, nextCursor: null, capped: null, bodiesRecorded: true }),
   '/api/v1/events': () => json({ items: [event('e1')], nextCursor: CURSOR, hasMore: false }),
   '/api/v1/passes': () => json({ items: [pass('p1')], nextCursor: null }),
   '/api/v1/passes/p1': () => json({ publicUrl: 'https://wallet.example/t/abc' }),
+});
+
+const withZone = (timeZone: string) => ({
+  sandbox: { ...CONTEXTS.sandbox, timeZone },
+  orgs: CONTEXTS.orgs,
 });
 
 const SANDBOX = {
@@ -193,18 +202,15 @@ describe('useMilestone', () => {
 });
 
 describe('useRecentEvents', () => {
-  it('walks the feed to its end, keeps the newest five, then asks only after the cursor', async () => {
+  it('reads one newest-first page, then asks only after its newest cursor', async () => {
     vi.useFakeTimers();
-    const rows = (from: number, n: number) =>
-      Array.from({ length: n }, (_, i) => event(`e${from + i}`));
     const pages = [
-      { items: rows(0, 200), nextCursor: 'ev2.BBBBBBBBBBBBBBBBBBBBBB', hasMore: true },
-      { items: rows(200, 3), nextCursor: CURSOR, hasMore: false },
-      { items: rows(203, 1), nextCursor: 'ev2.CCCCCCCCCCCCCCCCCCCCCC', hasMore: false },
+      { items: [event('e9'), event('e8'), event('e7')], nextCursor: CURSOR, hasMore: true },
+      { items: [event('e10')], nextCursor: 'ev2.CCCCCCCCCCCCCCCCCCCCCC', hasMore: false },
     ];
-    const afters: unknown[] = [];
+    const queries: Record<string, unknown>[] = [];
     const get = vi.fn(async (_p: string, schema: { parse: (v: unknown) => unknown }, opts) => {
-      afters.push(opts?.query?.after);
+      queries.push(opts?.query);
       return schema.parse(pages.shift());
     });
     const api = { orgId: 'sbx', get } as unknown as WorkbenchApi;
@@ -213,12 +219,25 @@ describe('useRecentEvents', () => {
       await vi.advanceTimersByTimeAsync(50);
     });
     expect(result.current.loading).toBe(false);
-    expect(result.current.items.map((e) => e.id)).toEqual(['e202', 'e201', 'e200', 'e199', 'e198']);
+    expect(result.current.items.map((e) => e.id)).toEqual(['e9', 'e8', 'e7']);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5_100);
     });
-    expect(afters).toEqual([undefined, 'ev2.BBBBBBBBBBBBBBBBBBBBBB', CURSOR]);
-    expect(result.current.items[0]?.id).toBe('e203');
-    expect(result.current.items).toHaveLength(5);
+    expect(queries).toEqual([
+      { orgId: 'sbx', limit: 5, order: 'desc', after: undefined },
+      { orgId: 'sbx', limit: 50, order: undefined, after: CURSOR },
+    ]);
+    expect(result.current.items.map((e) => e.id)).toEqual(['e10', 'e9', 'e8', 'e7']);
+  });
+});
+
+describe('Home time zone', () => {
+  it("shows times in the context's zone", async () => {
+    await renderApp('/workbench/o/sbx', {
+      session: 'developer',
+      handlers: homeHandlers(SANDBOX, [call('c1', 201)], 'Asia/Tokyo'),
+    });
+    const t = await screen.findAllByTitle(/Tokyo|JST|GMT\+9/);
+    expect(t.length).toBeGreaterThan(0);
   });
 });

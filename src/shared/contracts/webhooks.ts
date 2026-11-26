@@ -313,6 +313,12 @@ export const EventFeedQuerySchema = z.object({
     .optional()
     .describe('Only events a call with this `x-request-id` caused.'),
   limit: z.coerce.number().int().min(1).max(200).default(50),
+  order: z
+    .enum(['asc', 'desc'])
+    .default('asc')
+    .describe(
+      "`desc` reads the newest events first, in one page, and refuses `after`. Its `nextCursor` is the newest event's: pass it as `after` to read what comes next.",
+    ),
   apiVersion: WebhookApiVersionSchema.optional(),
 });
 export const EventFeedPageSchema = z.object({
