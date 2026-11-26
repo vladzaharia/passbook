@@ -27053,6 +27053,363 @@
         ],
         "additionalProperties": false
       },
+      "PlatformWalletReleaseRetrieveResponse": {
+        "type": "object",
+        "properties": {
+          "releases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "google",
+                    "samsung"
+                  ]
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "live",
+                    "test"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "dark",
+                    "draining",
+                    "released"
+                  ]
+                },
+                "credentials": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "platform",
+                          "org"
+                        ]
+                      },
+                      "orgId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "live",
+                          "test"
+                        ]
+                      },
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "google",
+                          "samsung"
+                        ]
+                      },
+                      "identityHint": {
+                        "type": "string"
+                      },
+                      "provenance": {
+                        "type": "string",
+                        "enum": [
+                          "platform",
+                          "managed",
+                          "own"
+                        ]
+                      },
+                      "revision": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "verifiedAt": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0
+                      },
+                      "revokedAt": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0
+                      },
+                      "createdAt": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "updatedAt": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "cardTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-z]{1,16}$"
+                        }
+                      },
+                      "lastCheck": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ok": {
+                                "type": "boolean",
+                                "enum": [
+                                  true
+                                ]
+                              },
+                              "code": {
+                                "type": "null"
+                              },
+                              "at": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "ok",
+                              "code",
+                              "at"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ok": {
+                                "type": "boolean",
+                                "enum": [
+                                  false
+                                ]
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "ok",
+                              "code",
+                              "at"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "scope",
+                      "orgId",
+                      "mode",
+                      "provider",
+                      "identityHint",
+                      "provenance",
+                      "revision",
+                      "verifiedAt",
+                      "revokedAt",
+                      "createdAt",
+                      "updatedAt",
+                      "cardTypes",
+                      "lastCheck"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "enrolments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "orgName": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "issuing",
+                          "ready",
+                          "blocked"
+                        ]
+                      },
+                      "blocks": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "plan",
+                            "source",
+                            "verified",
+                            "check",
+                            "round_trip",
+                            "hold",
+                            "revoked",
+                            "legacy",
+                            "channel_off",
+                            "org",
+                            "org_off",
+                            "hold_released"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "orgName",
+                      "status",
+                      "blocks"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "templates": {
+                  "type": "object",
+                  "properties": {
+                    "ready": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "withOmissions": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "awaitingReview": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "none": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "ready",
+                    "withOmissions",
+                    "awaitingReview",
+                    "none"
+                  ],
+                  "additionalProperties": false
+                },
+                "instances": {
+                  "type": "object",
+                  "properties": {
+                    "open": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "retired": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "open",
+                    "retired"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "provider",
+                "mode",
+                "state",
+                "credentials",
+                "enrolments",
+                "templates",
+                "instances"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "releases"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformWalletReleaseEnableReadyParams": {
+        "type": "object",
+        "properties": {
+          "apply": {
+            "type": "boolean",
+            "default": false
+          },
+          "orgIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlatformWalletReleaseEnableReadyResponse": {
+        "type": "object",
+        "properties": {
+          "applied": {
+            "type": "boolean"
+          },
+          "enrolments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "orgName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "orgId",
+                "orgName"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "applied",
+          "enrolments"
+        ],
+        "additionalProperties": false
+      },
       "PlatformWalletCredentialsListResponse": {
         "type": "object",
         "properties": {
@@ -96883,6 +97240,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -97025,6 +97383,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -97167,6 +97526,7 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RELEASE_READY_CHANGED",
           "WALLET_RUN_BUSY"
         ]
       }
@@ -98416,6 +98776,219 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT"
+        ]
+      }
+    },
+    "/api/v1/platform/wallet-release": {
+      "get": {
+        "summary": "Read what Google and Samsung would issue once released, per mode",
+        "tags": [
+          "wallet-platform"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformWalletReleaseRetrieveResponse"
+                },
+                "example": {
+                  "releases": [
+                    {
+                      "provider": "google",
+                      "mode": "live",
+                      "state": "dark",
+                      "credentials": [
+                        {
+                          "id": "0193a1b2-7c00-7000-8000-88ed9bfcff71",
+                          "scope": "platform",
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "mode": "live",
+                          "provider": "google",
+                          "identityHint": "Northwind signing identity",
+                          "provenance": "platform",
+                          "revision": 3,
+                          "verifiedAt": 1795570500000,
+                          "revokedAt": null,
+                          "createdAt": 1794362400000,
+                          "updatedAt": 1795399200000,
+                          "cardTypes": [
+                            "northwind"
+                          ],
+                          "lastCheck": {
+                            "ok": true,
+                            "code": null,
+                            "at": 1795570500000
+                          }
+                        }
+                      ],
+                      "enrolments": [
+                        {
+                          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                          "orgName": "Northwind Climbing",
+                          "status": "ready",
+                          "blocks": [
+                            "plan"
+                          ]
+                        }
+                      ],
+                      "templates": {
+                        "ready": 6,
+                        "withOmissions": 33,
+                        "awaitingReview": 35,
+                        "none": 20
+                      },
+                      "instances": {
+                        "open": 37,
+                        "retired": 31
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.getPlatformWalletRelease",
+        "x-sdk": {
+          "resource": "platform.walletRelease",
+          "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE"
+        ]
+      }
+    },
+    "/api/v1/platform/wallet-release/{provider}/{mode}/enable-ready": {
+      "post": {
+        "summary": "Turn on the reviewed ready enrollments of a released provider (dry run unless apply)",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "samsung"
+              ]
+            },
+            "required": true,
+            "name": "provider",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            },
+            "required": true,
+            "name": "mode",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletReleaseEnableReadyParams"
+              },
+              "example": {
+                "apply": false,
+                "orgIds": [
+                  "0193a1b2-7c00-7000-8000-0000000000a1"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformWalletReleaseEnableReadyResponse"
+                },
+                "example": {
+                  "applied": false,
+                  "enrolments": [
+                    {
+                      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                      "orgName": "Northwind Climbing"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
+        "x-sdk": {
+          "resource": "platform.walletRelease",
+          "method": "enableReady"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "CONFLICT",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_RELEASE_READY_CHANGED"
         ]
       }
     },

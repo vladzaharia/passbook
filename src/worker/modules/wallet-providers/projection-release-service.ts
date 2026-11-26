@@ -34,7 +34,7 @@ import { ensureSamsungCard } from './samsung-verification.ts';
  * A publish cuts art before it writes, and the release trigger reads the card-state row at the write: the row
  * must outlast that work, or the publish reads the card again.
  */
-const CARD_STATE_MARGIN_MS = 60_000;
+export const CARD_STATE_MARGIN_MS = 60_000;
 
 export async function publish(
   ctx: ServiceContext,

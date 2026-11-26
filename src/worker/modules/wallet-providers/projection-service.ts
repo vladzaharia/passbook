@@ -121,6 +121,8 @@ export async function approveProjectionCandidate(
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:review');
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await scopedCandidate(ctx, scope, candidateId, body.candidateHash);
+  // The version author is a genuine second party to a system candidate (its author is the platform), so their
+  // approval is `peer`, as for Google: only a person's own candidate or version counts as self-authored.
   const kind = await approvalKind(ctx, {
     orgId: scope.orgId,
     mode: scope.mode,

@@ -229,13 +229,14 @@ export function findSamsungIssuedRefs(
       r.ref_hash AS refHash
     FROM wallet_samsung_fetch_refs r JOIN wallet_provider_instances i ON i.id = r.instance_id
     JOIN wallet_provider_instance_operations o ON o.instance_id = i.id
-    JOIN wallet_provider_account_events e ON e.account_id = i.account_id AND e.org_id = i.org_id
+    LEFT JOIN wallet_provider_account_events e ON e.account_id = i.account_id AND e.org_id = i.org_id
       AND e.mode = i.mode AND e.provider = 'samsung' AND e.kind = 'configure'
       AND e.revision = o.account_revision
     WHERE r.ref_hash = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL
+      AND (e.id IS NOT NULL OR r.credential_version_id IS NOT NULL)
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND ${dead}
-    GROUP BY e.credential_id ORDER BY accountRevision DESC LIMIT 33`,
+    GROUP BY COALESCE(e.credential_id, r.credential_version_id) ORDER BY accountRevision DESC LIMIT 33`,
     [refHash],
   );
 }

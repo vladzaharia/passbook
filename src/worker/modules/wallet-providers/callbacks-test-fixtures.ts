@@ -2,11 +2,15 @@ import { CompactSign, importPKCS8 } from 'jose';
 import { createApp } from '../../app.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { createJobContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { getLatestRelease } from '../templates/repo-releases.ts';
 import { readWalletPassSnapshot } from './instance.ts';
 import { type OfferFixtureSource, setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
+import { runSystemProjection } from './projection-system.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import {
   findCallbackCredentialKeyset,
   findCallbackCredentialKeysetTrigger,
@@ -28,20 +32,31 @@ export async function setupSamsungCallbacks(
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
+    /** The account is a real enrolment, not a legacy envelope. */
+    enrolled?: boolean;
+    /** Every database guard stays: the release rows are opened and the instance and reference insert through them. */
+    guards?: boolean;
+    /** The Samsung release is the platform's own (system author and reviewer), not a person's. */
+    system?: boolean;
   } = {},
 ) {
   // Historical Samsung instances are only retired or refreshed while the provider is enabled.
   setWalletProvidersEnabledForTest(true);
   const fixture = await setupWalletOfferKit({
     google: 'absent',
-    samsung: 'published',
+    samsung: options.system ? 'configured' : 'published',
     holderEmail: options.holderEmail,
     source: options.source,
     db: options.db,
+    ...(options.enrolled ? { enrolled: true } : {}),
   });
-  const { kit, pass, samsung, samsungRelease } = fixture;
+  const { kit, pass, samsung } = fixture;
+  const samsungRelease = options.system
+    ? await systemSamsungRelease(fixture)
+    : fixture.samsungRelease;
   if (!samsungRelease?.candidateId || !pass.releaseId) throw new Error('Missing release fixture');
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
+  if (options.guards) await releaseRows(kit.env.DB);
   const mode = 'live' as const;
   const source = await readWalletPassSnapshot(kit.env.DB, {
     orgId: kit.org.id,
@@ -69,6 +84,7 @@ export async function setupSamsungCallbacks(
     accountId: approved.release.accountId,
     releaseId: approved.release.id,
     now: kit.clock.now(),
+    ...(options.guards ? { keepGuard: true } : {}),
     upsert: { requestHash: await sha256Hex(kit.ctx.ids.token(32)), state: 'pending' },
   });
   if (!operation) throw new Error('Missing historical instance fixture');
@@ -90,6 +106,7 @@ export async function setupSamsungCallbacks(
       initialExpiresAt: now + 300_000,
       promotedAt: options.promoted === false ? null : now,
       envelope,
+      ...(options.guards ? { keepGuard: true } : {}),
     });
   }
   if (options.reference !== false && options.promoted === false) {
@@ -188,4 +205,34 @@ export async function replaceCallbackKeysetForTest(
   const trigger = await findCallbackCredentialKeysetTrigger(db, triggerName);
   if (!trigger?.sql) throw new Error('Missing credential keyset guard');
   await replaceCallbackCredentialKeysetBatch(db, triggerName, commitment, !!existing, trigger);
+}
+
+/** The platform authors, approves and releases the Samsung candidate of an offer kit's Apple release. */
+async function systemSamsungRelease(f: Awaited<ReturnType<typeof setupWalletOfferKit>>) {
+  const { kit } = f;
+  const live = f.mockTemplateFetch(f.googleCertificate);
+  try {
+    await runSystemProjection(
+      createJobContext(kit.env, 'wallet.projection_system', { clock: kit.clock }),
+      {
+        kind: 'wallet.projection_system',
+        orgId: kit.org.id,
+        mode: 'live',
+        templateId: kit.template.id,
+        sourceReleaseId: f.apple.id,
+        version: kit.template.version,
+        provider: 'samsung',
+      },
+    );
+  } finally {
+    live.mockRestore();
+  }
+  const release = await getLatestRelease(kit.env.DB, {
+    templateId: kit.template.id,
+    orgId: kit.org.id,
+    mode: 'live',
+    provider: 'samsung',
+  });
+  if (!release) throw new Error('No Samsung system release.');
+  return release;
 }

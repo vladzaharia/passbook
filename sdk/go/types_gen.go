@@ -10101,6 +10101,83 @@ type PlatformWalletEnrollmentsListResponseItemsItem struct {
 	UpdatedAt int64          `json:"updatedAt"`
 }
 
+type PlatformWalletReleaseEnableReadyParams struct {
+	Apply  *bool    `json:"apply,omitempty"`
+	OrgIds []string `json:"orgIds,omitempty"`
+}
+
+type PlatformWalletReleaseEnableReadyResponse struct {
+	Applied    bool                                                     `json:"applied"`
+	Enrolments []PlatformWalletReleaseEnableReadyResponseEnrolmentsItem `json:"enrolments"`
+}
+
+type PlatformWalletReleaseEnableReadyResponseEnrolmentsItem struct {
+	OrgID   string `json:"orgId"`
+	OrgName string `json:"orgName"`
+}
+
+type PlatformWalletReleaseRetrieveResponse struct {
+	Releases []PlatformWalletReleaseRetrieveResponseReleasesItem `json:"releases"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItem struct {
+	Provider    string                                                             `json:"provider"`
+	Mode        string                                                             `json:"mode"`
+	State       string                                                             `json:"state"`
+	Credentials []PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItem `json:"credentials"`
+	Enrolments  []PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem  `json:"enrolments"`
+	Templates   PlatformWalletReleaseRetrieveResponseReleasesItemTemplates         `json:"templates"`
+	Instances   PlatformWalletReleaseRetrieveResponseReleasesItemInstances         `json:"instances"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItem struct {
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemCredentialsItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemEnrolmentsItem struct {
+	OrgID   string   `json:"orgId"`
+	OrgName string   `json:"orgName"`
+	Status  string   `json:"status"`
+	Blocks  []string `json:"blocks"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemInstances struct {
+	Open    int64 `json:"open"`
+	Retired int64 `json:"retired"`
+}
+
+type PlatformWalletReleaseRetrieveResponseReleasesItemTemplates struct {
+	Ready          int64 `json:"ready"`
+	WithOmissions  int64 `json:"withOmissions"`
+	AwaitingReview int64 `json:"awaitingReview"`
+	None           int64 `json:"none"`
+}
+
 type PrintJobsCreateBody = PrintJobsCreateParams
 
 type PrintJobsCreateParams struct {

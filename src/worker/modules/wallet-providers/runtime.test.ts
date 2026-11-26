@@ -1,10 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fixtures, makeOrg } from '../../../../test/helpers/index.ts';
 import { all } from '../../platform/db.ts';
-import {
-  configureWalletProviderAccount,
-  readConfiguredWalletProviderCredentials,
-} from './account-service.ts';
+import { readConfiguredWalletProviderCredentials } from './account-service.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import {
   assertWalletRuntimeAccount,
@@ -122,7 +120,7 @@ describe('wallet issuance prerequisites', () => {
       accountRevision: scope.accountRevision,
     });
     if (before?.provider !== 'google') throw new Error('Missing initial credential fixture');
-    const rotated = await configureWalletProviderAccount(f.ctx, f.auth, {
+    const rotated = await configureOn(f.ctx, f.auth, {
       ...accountScope,
       expectedRevision: scope.accountRevision,
       credentials: f.rotatedGoogle,

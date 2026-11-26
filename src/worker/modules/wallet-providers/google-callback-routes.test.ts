@@ -18,11 +18,7 @@ import {
 
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
-import {
-  configureWalletProviderAccount,
-  getWalletProviderReadiness,
-  readGoogleCallbackVerification,
-} from './account-service.ts';
+import { getWalletProviderReadiness, readGoogleCallbackVerification } from './account-service.ts';
 import { googleCallbackClassProjection, googleCallbackUrl } from './google-callback-binding.ts';
 import { clearGoogleCallbackKeyCache } from './google-callback-crypto.ts';
 import { handleGoogleCallback } from './google-callback-handler.ts';
@@ -33,6 +29,7 @@ import {
   signedGoogleEvent,
 } from './google-callback-test-kit.ts';
 import { googleObjectIds } from './google-ids.ts';
+import { configureOn } from './legacy-on-test-fixtures.ts';
 import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { providerIdentityHash } from './projection-contract.ts';
@@ -643,7 +640,7 @@ describe('Google Wallet callbacks', () => {
     const app = callbackApp(f.f);
     const body = await eventBody(f, rawEvent(f, 'nonce-race'));
     vi.stubGlobal('fetch', async () => {
-      await configureWalletProviderAccount(f.f.kit.ctx, f.f.auth, {
+      await configureOn(f.f.kit.ctx, f.f.auth, {
         orgId: f.f.pass.orgId,
         mode: 'live',
         provider: 'google',
