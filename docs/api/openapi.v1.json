@@ -90044,6 +90044,7 @@
           "resource": "requestLogs",
           "method": "list"
         },
+        "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. No header value is kept. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
@@ -90056,7 +90057,8 @@
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "VERSION_CONFLICT"
         ]
       }
     },
@@ -90154,6 +90156,7 @@
           "resource": "requestLogs",
           "method": "retrieve"
         },
+        "description": "Bodies are redacted JSON, kept 24 hours, and only where the organization records them: always in a sandbox, elsewhere by the Record request bodies in Test setting. `bodiesRecorded` says which. Metadata is kept 7 days. The id is a log id or a request id.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
