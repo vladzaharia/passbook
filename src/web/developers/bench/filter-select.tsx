@@ -24,6 +24,7 @@ export function FilterSelect({
   onChange,
   any = C.any,
   name,
+  className,
 }: {
   label: string;
   /** '' or undefined: off. */
@@ -34,10 +35,15 @@ export function FilterSelect({
   any?: string;
   /** The control's accessible name when the visible label is shorter ("Send as" for "Event type to send"). */
   name?: string;
+  /** A tool's hook for its own sizing (the phone toolbar). */
+  className?: string;
 }) {
   const shown = options.find((o) => o.value === value)?.label ?? any;
   return (
-    <label className="bench-fs" data-set={value ? '' : undefined}>
+    <label
+      className={className ? `bench-fs ${className}` : 'bench-fs'}
+      data-set={value ? '' : undefined}
+    >
       <span className="bench-fs-l">{label}</span>
       <span className="bench-fs-v">{shown}</span>
       <ChevronDown className="bench-fs-c" aria-hidden="true" />
