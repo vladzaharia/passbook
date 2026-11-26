@@ -312,7 +312,7 @@ CW12 status (2026-11-25):
 - **Open: typed types, Live, email, bundles, transfer and reissue e2e.** Only Day pass (Google) and loyalty
   (Samsung) are covered. The Google class rule passes every blueprint, so the spec no longer needs Day pass alone.
 - **Open: recorded fixtures.** Contract tests still use doc-shape fixtures until the owner records with
-  `tools/record-wallet-contract.ts` (`docs/operations.md`, "Recording wallet contract fixtures").
+  `tools/record-wallet-contract.ts` (`docs/runbooks/record-wallet-fixtures.md`).
 
 Parallel lanes: {CW9a, CW10a} start at once; CW1 -> CW2 -> {CW3, CW4, CW6} -> CW5 -> {CW7 -> CW8}; {CW9b, CW10b} after epochs land; CW11; CW12. The issuance gate stays closed throughout; lifting it is an owner action per account (Q2).
 

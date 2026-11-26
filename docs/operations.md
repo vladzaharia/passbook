@@ -823,16 +823,7 @@ Owner steps, App Store Connect:
 
 ## Recording wallet contract fixtures
 
-Owner only. Tests and CI never call Google or Samsung; they read `test/fixtures/wallets/{google,samsung}/`. Until you record, those hold doc-shape fixtures. Use the demo issuer and Samsung testing mode, never a live account.
-
-1. Put the key in `.secrets/` (never printed): `google-demo-service-account.json`, or `samsung-testing-partner.json` as `{"partnerId", "certificateId", "privateKeyPem"}`. Pass another path with `--key`.
-2. Dry run first. It prints every call and the fixture it would write, reads no key and sends nothing:
-   - `node tools/record-wallet-contract.ts google --issuer <issuer id> [--types generic,loyalty,giftCard,eventTicket,offer]`
-   - `node tools/record-wallet-contract.ts samsung --card <card id> --ref <ref id> [--cc2 US] [--types loyalty,ticket,coupon]`
-3. Add `--yes-real-provider` to send. Google: class insert and get, object insert, patch, get and `addMessage` per type. Samsung: Update Notification per state (generic and gift cards have none).
-4. Samsung's Get Card Data and Send Card State are Samsung calling the Worker. Save one request as JSON (`{method, path, headers, body}`) from the Add to Wallet test tool run and scrub it: `node tools/record-wallet-contract.ts scrub-capture <file> --name <fixture name>`.
-5. Messages (V1 to V6) have their own tool: `tools/record-google-messages.ts`.
-6. Every body is scrubbed (tokens, keys, emails, names, URLs, barcodes, long ids), then checked again. A fixture that still looks like it holds a secret is not written. Read the diff before you commit: `git diff test/fixtures/wallets`.
+See `docs/runbooks/record-wallet-fixtures.md` (owner only).
 
 ## SDK release checks
 
