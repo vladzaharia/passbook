@@ -12,7 +12,12 @@ import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
 import { carryEdits, messageKey, without } from './identity-move-carry.ts';
-import { ASK_AGAIN_MS, askGoogle, remindWalletCopy } from './identity-move-copies.ts';
+import {
+  ASK_AGAIN_MS,
+  askGoogle,
+  identityRetired,
+  remindWalletCopy,
+} from './identity-move-copies.ts';
 import { fingerprintOf, recarryState } from './identity-move-recarry.ts';
 import { moveVoidCommit } from './identity-move-repoint.ts';
 import { gone, revokeReplacement, SYSTEM } from './identity-move-revoke.ts';
@@ -41,7 +46,7 @@ import {
   voidedByMove,
   voidRef,
 } from './repo-identity-move-timers.ts';
-import { heldReason, identityRetired } from './repo-identity-move-wallet.ts';
+import { heldReason } from './repo-identity-move-wallet.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
 import { setPassStatus } from './service-status.ts';
@@ -228,7 +233,7 @@ export async function voidDue(
         await setWaitReason(db, row.id, held, now, now + DAY_MS);
         return 'waiting';
       }
-      if (await identityRetired(db, row)) {
+      if (await identityRetired(ctx, row)) {
         await setState(db, row.id, ['registered'], { state: 'kept_both', reason: held }, now);
         ctx.log.info('identity_move.kept_both', { moveId: row.id, reason: held });
         return 'kept';

@@ -2,6 +2,8 @@ import { IDENTITY_MOVE_COPY as COPY } from '../../../shared/copy/identity-move.t
 import { notice } from '../../email/org-closed.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { identityRetired as rowRetired } from '../identities/db-resolver.ts';
+import { getIdentityRow } from '../identities/repo.ts';
 import { googleCopyHasUsers } from '../wallet-providers/google-copy-users.ts';
 import { depsOf } from './deps.ts';
 import { linksOf } from './detail.ts';
@@ -79,4 +81,10 @@ export async function remindWalletCopy(
     await unclaimWalletReminder(db, row.id, ctx.clock.now());
     return 'retry';
   }
+}
+
+/** The identity the old pass is on can no longer sign or push it (PI-3's retirement): nothing is left to wait for. */
+export async function identityRetired(ctx: ServiceContext, row: MoveRow): Promise<boolean> {
+  const identity = await getIdentityRow(ctx.env.DB, row.from_identity_id);
+  return identity !== null && rowRetired(ctx.env, identity);
 }

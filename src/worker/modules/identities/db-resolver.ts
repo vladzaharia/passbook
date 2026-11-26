@@ -89,12 +89,26 @@ function noteEnvMismatch(identity: ResolvedIdentity, row: IdentityRow): void {
   });
 }
 
+/**
+ * The row can no longer sign or push its passes: the legacy platform row, after the default moved on (it issues no
+ * new passes) and its env material was removed. `issuing = 0` alone only stops new passes: the identity still
+ * updates the ones it has until this holds. Resolving such a row refuses with `IDENTITY_RETIRED`.
+ */
+export function identityRetired(env: AppEnv, row: IdentityRow): boolean {
+  return (
+    row.source === 'env' &&
+    row.id === PLATFORM_IDENTITY_ID &&
+    row.issuing === 0 &&
+    !envIdentityPresent(env)
+  );
+}
+
 export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<ResolvedIdentity> {
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
     // The default moved on and the env material was removed: a retired row says so, not "not configured".
-    if (row.issuing === 0 && !envIdentityPresent(env)) {
+    if (identityRetired(env, row)) {
       createLogger().warn('identity.platform_retired', {
         code: 'IDENTITY_RETIRED',
         identityId: row.id,

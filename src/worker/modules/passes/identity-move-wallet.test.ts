@@ -111,13 +111,26 @@ beforeEach(() => {
   google.answer = false;
   google.asked = 0;
 });
-/** The old identity stops issuing while `fn` runs: the one thing that ends a wait on a wallet copy. */
-async function whileRetired<T>(fn: () => Promise<T>): Promise<T> {
+/** PI-3's default switch: the old identity issues no new passes, but still updates the ones it has. */
+async function whileSwitched<T>(fn: () => Promise<T>): Promise<T> {
   await run(db(), "UPDATE signing_identities SET issuing = 0 WHERE id = 'platform'");
   try {
     return await fn();
   } finally {
     await run(db(), "UPDATE signing_identities SET issuing = 1 WHERE id = 'platform'");
+  }
+}
+/** The old identity is retired: switched, and its env material removed. The one thing that ends a wait. */
+async function whileRetired<T>(fn: () => Promise<T>): Promise<T> {
+  const env = kit.env as unknown as Record<string, string | undefined>;
+  const kept = [env.SIGNER_PLATFORM_CERTIFICATE, env.SIGNER_PLATFORM_PRIVATE_KEY];
+  delete env.SIGNER_PLATFORM_CERTIFICATE;
+  delete env.SIGNER_PLATFORM_PRIVATE_KEY;
+  try {
+    return await whileSwitched(fn);
+  } finally {
+    env.SIGNER_PLATFORM_CERTIFICATE = kept[0];
+    env.SIGNER_PLATFORM_PRIVATE_KEY = kept[1];
   }
 }
 const stateOf = async (oldId: string) => {
@@ -526,6 +539,24 @@ describe('the 30-day reminder of a move waiting on a wallet copy', () => {
       expect(sentTo(next.holderEmail)).toHaveLength(1);
     },
   );
+
+  it('keeps waiting when the default is switched and the old identity is not retired, then voids after a save', async () => {
+    const { old, next } = await moved(['samsung']);
+    await completeMove(next);
+    await whileSwitched(async () => {
+      kit.clock.advance(35 * DAY);
+      await sweep();
+      expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
+      kit.clock.advance(5 * DAY);
+      await sweep();
+      expect(await stateOf(old.id)).toEqual(['registered', 'wallet_copy:samsung']);
+      await save(next, 'samsung');
+      kit.clock.advance(DAY + HOUR);
+      await sweep();
+      expect(await stateOf(old.id)).toEqual(['voided', null]);
+    });
+    expect((await passOf(kit, next.id)).status).toBe('active');
+  });
 
   it('ends kept_both only when the old identity retires while the row waits', async () => {
     const { old, next } = await moved(['samsung']);
