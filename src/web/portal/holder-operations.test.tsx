@@ -230,6 +230,8 @@ describe('another tab', () => {
     await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => json({ items: [passFixture()], nextCursor: null }) },
     });
+    // The portal layout is lazy: wait until it has mounted and is listening.
+    await screen.findByRole('button', { name: 'More actions' });
     trackOperation(fixtureOperation(HOLDER_RESEND, { status: 'running', at: 'mail', id: 'op-a' }));
     expect(cachedOperation('op-a')).toBeDefined();
     announceSessionEnd();
