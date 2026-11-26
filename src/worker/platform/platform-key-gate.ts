@@ -17,7 +17,6 @@ import { isRead, type RouteAuth, type UnlessRule } from './route-auth-spec.ts';
 const isPlatformKey = (key: ApiKeyAuth): boolean =>
   key.keyKind === 'platform' && key.orgId === null;
 
-/** A key that holds a platform scope may reach `platform` routes only: never a tenant route, whatever else it holds. */
 /**
  * `key.unless`, given the raw JSON body (null when absent, malformed or not an object). Phrase it as "refuse unless
  * provably safe": a throw, or a body it cannot read, counts as needing a person.
@@ -38,6 +37,7 @@ async function needsPerson(c: Context<AppBindings>, unless: UnlessRule): Promise
   }
 }
 
+/** A key that holds a platform scope may reach `platform` routes only: never a tenant route, whatever else it holds. */
 export const holdsPlatformScope = (key: ApiKeyAuth): boolean =>
   key.scopes.some((scope) => scope.startsWith('platform:'));
 

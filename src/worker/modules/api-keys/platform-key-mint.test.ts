@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { keyState } from '../../../../test/helpers/admin-key.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
@@ -175,12 +176,18 @@ describe('the row refuses what the mint refuses', () => {
     kind: string,
     orgId: string | null,
     scopes: string[],
-    row: { mode?: string; createdBy?: string | null; amr?: string | null; days?: number } = {},
+    row: {
+      mode?: string;
+      createdBy?: string | null;
+      amr?: string | null;
+      days?: number;
+      revision?: number | null;
+    } = {},
   ) =>
     run(
       h.env.DB,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at, ip_allow, created_by, created_amr)
-       VALUES (?, ?, 'forged', ?, ?, ?, ?, 1, ?, ?, '["198.51.100.0/24"]', ?, ?)`,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at, ip_allow, created_by, created_amr, creator_access_revision)
+       VALUES (?, ?, 'forged', ?, ?, ?, ?, 1, ?, ?, '["198.51.100.0/24"]', ?, ?, ?)`,
       [
         crypto.randomUUID(),
         orgId,
@@ -192,6 +199,7 @@ describe('the row refuses what the mint refuses', () => {
         1 + (row.days ?? 30) * DAY,
         row.createdBy === undefined ? 'someone' : row.createdBy,
         row.amr === undefined ? 'oidc' : row.amr,
+        row.revision === undefined ? 1 : row.revision,
       ],
     );
   beforeEach(async () => {
@@ -234,6 +242,11 @@ describe('the row refuses what the mint refuses', () => {
     await expect(insert('platform', null, ['platform:users'], { days: 32 })).rejects.toThrow(
       broken,
     );
+    // The recorded revision is the creator's current one, not a later one that a future bump would make live.
+    for (const revision of [2, null])
+      await expect(insert('platform', null, ['platform:users'], { revision })).rejects.toThrow(
+        broken,
+      );
     await expect(insert('platform', null, ['platform:read'], { days: 90 })).resolves.toBeDefined();
     await expect(
       insert('platform', null, ['platform:read', 'platform:users'], { days: 90 }),
@@ -312,6 +325,42 @@ describe('a Platform key lives only while its creator is the admin who made it',
     expect(await resolve(key.secret)).toBeNull();
     await run(h.env.DB, `UPDATE users SET last_roles = '["admin"]' WHERE id = ?`, [other.id]);
     expect(await resolve(key.secret)).toBeNull();
+  });
+
+  it('is suspended while an admin_changed report on its creator is open, works again when it is resolved as kept, and ends when removal is confirmed', async () => {
+    const user = await admin();
+    await run(
+      h.env.DB,
+      "INSERT INTO auth_identities (provider, subject, user_id, created_at) VALUES ('pocketid', 'sub-r2', ?, 1)",
+      [user.id],
+    );
+    const key = await make(user.id);
+    const report = async (userId: string | null) =>
+      run(
+        h.env.DB,
+        `INSERT INTO idp_drift (id, run_id, user_id, subject, target, kind, found_at)
+         VALUES (?, 'run', ?, 'sub-r2', 'console', 'admin_changed', 1)`,
+        [crypto.randomUUID(), userId],
+      );
+    const resolveAll = (resolution: string) =>
+      run(
+        h.env.DB,
+        'UPDATE idp_drift SET resolved_at = 2, resolution = ? WHERE resolved_at IS NULL',
+        [resolution],
+      );
+    expect(await keyState(f(), key)).toEqual({ gate: true, grant: true });
+    // Reported by user id, then (no user id on the report) by one of their subjects.
+    for (const reported of [user.id, null]) {
+      await report(reported);
+      expect(await keyState(f(), key)).toEqual({ gate: false, grant: false });
+      await resolveAll('kept');
+      expect(await keyState(f(), key)).toEqual({ gate: true, grant: true });
+    }
+    // Confirmed as a removal: the revision moves, and the key stays dead when the report closes.
+    await report(user.id);
+    await endAdminAccess(h.env.DB, user.id);
+    await resolveAll('signed_in');
+    expect(await keyState(f(), key)).toEqual({ gate: false, grant: false });
   });
 
   it('is dead when its creator was never an admin, or is gone', async () => {

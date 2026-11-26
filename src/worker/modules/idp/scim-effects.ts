@@ -134,8 +134,9 @@ async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Step>
     ctx.log.error('idp.scim_breaker', { code: 'IDP_SCIM_BREAKER', limit: SCIM_BREAKER_LIMIT });
     return 'breaker';
   }
-  // A person Polaris ID no longer knows keeps no key made as an admin; a narrower revoke (`before`) leaves them.
-  if (r.before === null) await endAdminAccess(db, identity.user_id);
+  // Polaris ID confirmed the account is off: keys made as an admin end, whatever `before` leaves of the sessions
+  // (it only spares a session made after a re-enable, not a key made before the change).
+  await endAdminAccess(db, identity.user_id);
   const ended =
     r.before === null
       ? await revokeSessionsWithRole(db, identity.user_id, 'user', now)

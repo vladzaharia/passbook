@@ -15,10 +15,12 @@ function roleList(roles: readonly string[]): string {
 
 /**
  * The key's creator is still the admin who made it: an active user, at the `access_revision` the key recorded (a
- * disable and re-enable, or the removal of the admin role, moved it), whose last sign-in held the admin role.
+ * disable and re-enable, or the removal of the admin role, moved it), whose last sign-in held the admin role, and with no open `admin_changed` report (the owner's removal of the admin
+ * role was only reported: a dry run or a breaker). The key is suspended while it is open, and works again if the report
+ * is resolved as kept; a confirmed removal moves the revision.
  */
 export const creatorLiveSql = (k: string): string =>
-  `EXISTS(SELECT 1 FROM users c WHERE c.id=${k}.created_by AND c.status='active' AND c.access_revision IS ${k}.creator_access_revision AND json_valid(c.last_roles) AND EXISTS(SELECT 1 FROM json_each(c.last_roles) r WHERE r.value='admin'))`;
+  `EXISTS(SELECT 1 FROM users c WHERE c.id=${k}.created_by AND c.status='active' AND c.access_revision IS ${k}.creator_access_revision AND json_valid(c.last_roles) AND EXISTS(SELECT 1 FROM json_each(c.last_roles) r WHERE r.value='admin') AND NOT EXISTS(SELECT 1 FROM idp_drift d WHERE d.kind='admin_changed' AND d.resolved_at IS NULL AND (d.user_id=c.id OR d.subject IN(SELECT subject FROM auth_identities WHERE user_id=c.id))))`;
 
 /**
  * The key row `k` is in force at `now`: not revoked, not past `expires_at` or `retire_at`, and, for a personal key,

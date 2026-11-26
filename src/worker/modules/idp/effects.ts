@@ -77,8 +77,9 @@ export async function endSessions(
   why: string,
 ): Promise<number> {
   if (!who.userId) return 0;
-  // The admin role ends here, with sessions or without: the keys the person made as an admin end with it.
-  if (role === 'admin') await endAdminAccess(ctx.env.DB, who.userId);
+  // The admin role ends here, or every Polaris ID session does (the account is off): the keys the person made as an
+  // admin end with it, with sessions or without.
+  if (role === 'admin' || role === 'user') await endAdminAccess(ctx.env.DB, who.userId);
   const count = await revokeSessionsWithRole(ctx.env.DB, who.userId, role, ctx.clock.now());
   if (count > 0) {
     await auditEffect(ctx, 'idp.sessions_revoked', who, { role, reason: why, count });
