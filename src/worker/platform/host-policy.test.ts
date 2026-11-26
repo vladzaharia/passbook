@@ -31,8 +31,10 @@ describe('hostDecision', () => {
     '/p/abcdefghijklmnopqrstuv',
     '/p/abcdefghijklmnopqrstuv/pass.pkpass',
     '/p/abcdefghijklmnopqrstuv/assets/icon.png',
-    '/wallet/v1/devices/d/registrations/pass.im.plrs.wallet/s',
-    '/wallet/v1/passes/pass.im.plrs.wallet/s',
+    '/wallet/v10/passes/x',
+    '/wallet/v1x',
+    '/wallet/log',
+    '/x/wallet/v1/log',
     '/auth/oidc/client-metadata.json',
     '/auth/magic?token=abc',
     '/api/v1/passes?limit=5',
@@ -42,6 +44,14 @@ describe('hostDecision', () => {
       action: 'redirect',
       location: `${CANONICAL}${path}`,
     });
+  });
+
+  it.each([
+    '/wallet/v1/devices/d/registrations/pass.im.plrs.wallet/s?passesUpdatedSince=1',
+    '/wallet/v1/passes/pass.im.plrs.wallet/s',
+    '/wallet/v1/log',
+  ])('serves the Wallet web service %s on the legacy host', (path) => {
+    expect(decide(`${LEGACY}${path}`)).toEqual({ action: 'serve' });
   });
 
   it('refuses any other host, including the canonical name on another port', () => {
@@ -124,8 +134,8 @@ describe('host policy in the app', () => {
     for (const [method, path] of [
       ['GET', '/p/abcdefghijklmnopqrstuv?utm=mail'],
       ['GET', '/p/abcdefghijklmnopqrstuv/pass.pkpass'],
-      ['POST', '/wallet/v1/devices/d/registrations/pass.im.plrs.wallet/s'],
-      ['DELETE', '/wallet/v1/devices/d/registrations/pass.im.plrs.wallet/s'],
+      ['POST', '/wallet/v10/devices/d'],
+      ['DELETE', '/api/v1/passes/x'],
       ['GET', '/auth/oidc/client-metadata.json'],
       ['GET', '/login?next=%2Fpasses'],
       ['HEAD', '/'],
@@ -137,6 +147,17 @@ describe('host policy in the app', () => {
       expect(res.headers.get('cache-control')).toBe('no-store');
     }
     expect(fetched).toEqual([]);
+  });
+
+  it('serves /wallet/v1/* on the legacy host without a redirect', async () => {
+    const res = await call(`${LEGACY}/wallet/v1/log`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"logs":[]}',
+    });
+    expect(res.status).not.toBe(308);
+    expect(res.status).not.toBe(421);
+    expect(res.headers.get('location')).toBeNull();
   });
 
   it('refuses an unknown host with 421 problem+json', async () => {
