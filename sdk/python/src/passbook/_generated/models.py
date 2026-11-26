@@ -1146,6 +1146,12 @@ __all__ = [
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsUpdateParams",
     "PlatformGroupsClaimsUpdateResponse",
+    "PlatformInvitationsCreateParams",
+    "PlatformInvitationsCreateResponse",
+    "PlatformInvitationsListResponse",
+    "PlatformInvitationsListResponseItemsItem",
+    "PlatformInvitationsResendResponse",
+    "PlatformInvitationsRevokeResponse",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -9039,6 +9045,53 @@ class PlatformGroupsClaimsUpdateResponse(_Model):
     set: _List[str]
     removed: _List[str]
     dryRun: bool
+
+class PlatformInvitationsCreateParams(_Model):
+    email: str
+    groups: _List[str] | None = None
+    developer: bool | None = None
+
+class PlatformInvitationsCreateResponse(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+    link: str
+
+class PlatformInvitationsListResponse(_Model):
+    items: _List[PlatformInvitationsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformInvitationsListResponseItemsItem(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+
+class PlatformInvitationsResendResponse(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+    link: str
+
+class PlatformInvitationsRevokeResponse(_Model):
+    ok: _Literal[True]
 
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str

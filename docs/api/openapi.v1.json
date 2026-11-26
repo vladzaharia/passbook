@@ -62203,6 +62203,263 @@
           "dryRun"
         ]
       },
+      "PlatformInvitationsCreateParams": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,64}$"
+            },
+            "maxItems": 5,
+            "default": []
+          },
+          "developer": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformInvitationsCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "email": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developer": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "expired",
+              "revoked"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "acceptedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "link": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "groups",
+          "developer",
+          "state",
+          "createdAt",
+          "expiresAt",
+          "acceptedAt",
+          "revokedAt",
+          "link"
+        ]
+      },
+      "PlatformInvitationsListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "email": {
+                  "type": "string"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "developer": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "accepted",
+                    "expired",
+                    "revoked"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "expiresAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "acceptedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "revokedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "email",
+                "groups",
+                "developer",
+                "state",
+                "createdAt",
+                "expiresAt",
+                "acceptedAt",
+                "revokedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformInvitationsRevokeResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "PlatformInvitationsResendResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "email": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developer": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "expired",
+              "revoked"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiresAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "acceptedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "revokedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "link": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "groups",
+          "developer",
+          "state",
+          "createdAt",
+          "expiresAt",
+          "acceptedAt",
+          "revokedAt",
+          "link"
+        ]
+      },
       "PlatformUsersListResponse": {
         "type": "object",
         "properties": {
@@ -88452,6 +88709,9 @@
                 "example": {
                   "kind": "member",
                   "orgName": "Northwind Climbing",
+                  "groups": [
+                    "Access"
+                  ],
                   "roles": [
                     "org_admin"
                   ],
@@ -88950,6 +89210,9 @@
                   "token"
                 ],
                 "additionalProperties": false
+              },
+              "example": {
+                "token": "demo-token-northwind-1aaf046224da35de6f98a4"
               }
             }
           }
@@ -88972,6 +89235,9 @@
                   "required": [
                     "outcome"
                   ]
+                },
+                "example": {
+                  "outcome": "joined"
                 }
               }
             }
@@ -88988,6 +89254,12 @@
           }
         },
         "operationId": "invitations.postInvitationsConfirm",
+        "x-sdk": {
+          "resource": "invitationPage",
+          "method": "confirm",
+          "sdk": false,
+          "reason": "Invitee flow on the invitation page; the secret is the credential."
+        },
         "security": [],
         "x-public": true,
         "x-codes": [
@@ -129663,29 +129935,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "groups": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "pattern": "^[a-z0-9_]{1,64}$"
-                    },
-                    "maxItems": 5,
-                    "default": []
-                  },
-                  "developer": {
-                    "type": "boolean",
-                    "default": false
-                  }
-                },
-                "required": [
-                  "email"
+                "$ref": "#/components/schemas/PlatformInvitationsCreateParams"
+              },
+              "example": {
+                "email": "ada@example.com",
+                "groups": [
+                  "northwind"
                 ],
-                "additionalProperties": false
+                "developer": false
               }
             }
           }
@@ -129696,72 +129953,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "groups": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "developer": {
-                      "type": "boolean"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "accepted",
-                        "expired",
-                        "revoked"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "expiresAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "acceptedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "revokedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "link": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "email",
-                    "groups",
-                    "developer",
-                    "state",
-                    "createdAt",
-                    "expiresAt",
-                    "acceptedAt",
-                    "revokedAt",
-                    "link"
-                  ]
+                  "$ref": "#/components/schemas/PlatformInvitationsCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-3b86ce635676",
+                  "email": "ada@example.com",
+                  "groups": [
+                    "Access"
+                  ],
+                  "developer": false,
+                  "state": "accepted",
+                  "createdAt": 1794362400000,
+                  "expiresAt": 1798790399999,
+                  "acceptedAt": 1795570500000,
+                  "revokedAt": null,
+                  "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
               }
             }
@@ -129778,6 +129984,10 @@
           }
         },
         "operationId": "platform-invitations.postPlatformInvitations",
+        "x-sdk": {
+          "resource": "platform.invitations",
+          "method": "create"
+        },
         "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -129831,86 +130041,25 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "groups": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "developer": {
-                            "type": "boolean"
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "pending",
-                              "accepted",
-                              "expired",
-                              "revoked"
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "expiresAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "acceptedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "revokedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "email",
-                          "groups",
-                          "developer",
-                          "state",
-                          "createdAt",
-                          "expiresAt",
-                          "acceptedAt",
-                          "revokedAt"
-                        ]
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                  "$ref": "#/components/schemas/PlatformInvitationsListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-6497f7759aeb",
+                      "email": "ada@example.com",
+                      "groups": [
+                        "Access"
+                      ],
+                      "developer": false,
+                      "state": "accepted",
+                      "createdAt": 1794362400000,
+                      "expiresAt": 1798790399999,
+                      "acceptedAt": 1795570500000,
+                      "revokedAt": null
                     }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
+                  ],
+                  "nextCursor": "c1.4812"
                 }
               }
             }
@@ -129927,6 +130076,10 @@
           }
         },
         "operationId": "platform-invitations.getPlatformInvitations",
+        "x-sdk": {
+          "resource": "platform.invitations",
+          "method": "list"
+        },
         "x-sign-in": "oidc",
         "x-codes": [
           "FORBIDDEN",
@@ -129967,18 +130120,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "ok"
-                  ]
+                  "$ref": "#/components/schemas/PlatformInvitationsRevokeResponse"
+                },
+                "example": {
+                  "ok": true
                 }
               }
             }
@@ -129995,6 +130140,10 @@
           }
         },
         "operationId": "platform-invitations.deletePlatformInvitationsById",
+        "x-sdk": {
+          "resource": "platform.invitations",
+          "method": "revoke"
+        },
         "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -130047,72 +130196,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "groups": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "developer": {
-                      "type": "boolean"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "accepted",
-                        "expired",
-                        "revoked"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "expiresAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "acceptedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "revokedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "link": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "email",
-                    "groups",
-                    "developer",
-                    "state",
-                    "createdAt",
-                    "expiresAt",
-                    "acceptedAt",
-                    "revokedAt",
-                    "link"
-                  ]
+                  "$ref": "#/components/schemas/PlatformInvitationsResendResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-613edac7b152",
+                  "email": "ada@example.com",
+                  "groups": [
+                    "Access"
+                  ],
+                  "developer": false,
+                  "state": "accepted",
+                  "createdAt": 1794362400000,
+                  "expiresAt": 1798790399999,
+                  "acceptedAt": 1795570500000,
+                  "revokedAt": null,
+                  "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                 }
               }
             }
@@ -130129,6 +130227,10 @@
           }
         },
         "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+        "x-sdk": {
+          "resource": "platform.invitations",
+          "method": "resend"
+        },
         "x-sign-in": "oidc",
         "x-step-up": {
           "maxAgeSec": 600,
