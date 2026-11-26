@@ -295,6 +295,10 @@ body:has(.bench) > .foot {
   border-radius: var(--pk-radius-lg);
   background: var(--pk-surface-raised);
 }
+/* A pane with nothing to show (a list with no rows) keeps its column and draws nothing. */
+.bench-pane:empty {
+  visibility: hidden;
+}
 @media (min-width: 1180px) {
   .bench-split[data-layout="split"] {
     grid-template-columns: minmax(0, 1fr) var(--wb-inspector);

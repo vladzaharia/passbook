@@ -103,12 +103,8 @@ describe('kit lint', () => {
   // One status vocabulary on the Workbench: bench/status-chip.tsx (and bench/list.tsx's tick). A
   // tool draws no pill, no `*-code` or `*-status` class and no data-tone of its own.
   it('shows status on the Workbench tools only through the bench StatusChip', () => {
-    // Moving onto the bench in WB4 (webhooks): each removes its own.
-    const pending = new Set([
-      'developers/webhooks/deliveries.tsx',
-      'developers/webhooks/endpoints.tsx',
-      'developers/webhooks/url-events.tsx',
-    ]);
+    // Every tool is on the bench: a file that breaks the rule goes on this list only while it moves.
+    const pending = new Set<string>([]);
     const tools = /^developers\/(console|webhooks|logs|keys|workbench)\//;
     const classes = /\bclass(?:Name)?[=:]\s*\{?\s*[`'"][^`'"]*\b(?:pill|[a-z]+-(?:code|status))\b/;
     for (const { path, text } of files) {
