@@ -20,6 +20,8 @@ const MAP: [string, string, number, string][] = [
   ['IDP_REFUSED', 'IDP_REFUSED', 403, 'Polaris ID refused this change. Ask the PassBook owner.'],
   ['IDP_NOT_FOUND', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_CONFLICT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
+  ['IDP_CLIENT', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
+  ['IDP_SCIM_FOREIGN', 'IDP_CONFLICT', 409, 'Polaris ID changed. Try again.'],
   ['IDP_FROZEN', 'IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.'],
   ['IDP_NOT_MANAGED', 'IDP_NOT_MANAGED', 409, "PassBook doesn't manage this Polaris ID account."],
   ['IDP_IN_USE', 'IDP_IN_USE', 409, 'This group still has members or apps.'],

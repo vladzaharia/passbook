@@ -43,6 +43,8 @@ export function mapIdpError(error: unknown, log?: Logger): AppError {
         cause,
       );
     case 'IDP_NOT_FOUND':
+    case 'IDP_CLIENT':
+    case 'IDP_SCIM_FOREIGN':
     case 'IDP_CONFLICT':
       return new AppError('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.', cause);
     case 'IDP_FROZEN':
