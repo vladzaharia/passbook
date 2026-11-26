@@ -1,4 +1,5 @@
 import type { Resolved } from '../../../shared/contracts/workbench-read.ts';
+import { type WbTool, wbPath } from '../../../shared/workbench.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -35,8 +36,8 @@ export async function resolveId(
 ): Promise<Resolved> {
   const orgId = await contextOrg(ctx, auth, options.orgId);
   const portal = (options.style ?? 'workbench') === 'portal';
-  const tool = (name: string, hash?: string, query = '') =>
-    `/workbench/o/${orgId}/${name}${query}${hash === undefined ? '' : `#${encodeURIComponent(hash)}`}`;
+  const tool = (name: WbTool, hash?: string, query?: Record<string, string>) =>
+    wbPath(orgId, name, { ...(query && { query }), ...(hash !== undefined && { hash }) });
   const db = ctx.env.DB;
   const id = rawId.toLowerCase();
 
@@ -70,7 +71,9 @@ export async function resolveId(
     return {
       kind: 'template',
       id: template.id,
-      href: portal ? logsFor(`/templates/${template.id}`) : tool('design', template.id),
+      href: portal
+        ? logsFor(`/templates/${template.id}`)
+        : `${wbPath(orgId, 'design')}/${encodeURIComponent(template.id)}`,
       label: template.name,
     };
   const key = await keyInOrg(db, orgId, id);
@@ -88,7 +91,7 @@ export async function resolveId(
     return {
       kind: 'endpoint',
       id: endpoint.id,
-      href: tool('events', endpoint.id, '?tab=endpoints'),
+      href: tool('events', endpoint.id, { tab: 'endpoints' }),
       label: endpoint.target === 'capture' ? 'Capture endpoint' : 'Endpoint',
     };
   const capture = await captureInOrg(db, orgId, id);
@@ -96,7 +99,7 @@ export async function resolveId(
     return {
       kind: 'capture',
       id: capture.id,
-      href: tool('events', capture.event_id, `?capture=${encodeURIComponent(capture.id)}`),
+      href: tool('events', capture.event_id, { capture: capture.id }),
       label: `Capture of ${capture.event_type}`,
     };
   const attempt = await attemptInOrg(db, orgId, id);
@@ -104,11 +107,9 @@ export async function resolveId(
     return {
       kind: 'delivery',
       id: attempt.id,
-      href: tool(
-        'events',
-        attempt.event_id ?? attempt.endpoint_id,
-        `?endpoint=${attempt.endpoint_id}`,
-      ),
+      href: tool('events', attempt.event_id ?? attempt.endpoint_id, {
+        endpoint: attempt.endpoint_id,
+      }),
       label: `Delivery attempt ${attempt.attempt}`,
     };
   const operation = await operationInOrg(db, orgId, id);

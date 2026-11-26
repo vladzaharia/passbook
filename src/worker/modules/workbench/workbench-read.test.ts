@@ -65,6 +65,22 @@ describe('GET /workbench/contexts', () => {
     expect(author).not.toContain('passes');
     expect(author).not.toContain('events');
   });
+
+  it('leaves out an organization whose plan has no api level; the sandbox stays', async () => {
+    const s = await t.sandbox();
+    const off = await joinOrg(s.user.id, ['org_admin'], { name: 'No API' });
+    const on = await joinOrg(s.user.id, ['org_admin'], { name: 'API' });
+    await t.kit.env.DB.prepare(
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'api', '\"off\"', 1)",
+    )
+      .bind(off.id)
+      .run();
+    const ctxs = WorkbenchContextsSchema.parse(
+      (await get('/workbench/contexts', s.session.headers))[1],
+    );
+    expect(ctxs.sandbox).toMatchObject({ orgId: s.orgId });
+    expect(ctxs.orgs.map((o) => o.orgId)).toEqual([on.id]);
+  });
 });
 
 describe('GET /workbench/summary', () => {
@@ -117,22 +133,47 @@ describe('GET /resolve', () => {
     const kind = async (id: string) =>
       ResolvedSchema.parse((await resolve(id))[1]) as { kind: string; id: string; href: string };
 
-    expect(await kind(s.orgId)).toMatchObject({ kind: 'sandbox', id: s.orgId });
+    expect(await kind(s.orgId)).toMatchObject({
+      kind: 'sandbox',
+      id: s.orgId,
+      href: `/workbench/o/${s.orgId}`,
+    });
     expect(await kind('8a1b2c3d4e5f6a7b-SEA')).toMatchObject({ kind: 'request' });
     expect(await kind(passes[0] as string)).toMatchObject({
       kind: 'pass',
       href: `/workbench/o/${s.orgId}/passes#${passes[0]}`,
     });
-    expect(await kind(s.templateId)).toMatchObject({ kind: 'template' });
-    expect(await kind(endpointId)).toMatchObject({ kind: 'endpoint' });
+    expect(await kind(s.templateId)).toMatchObject({
+      kind: 'template',
+      href: `/workbench/o/${s.orgId}/design/${s.templateId}`,
+    });
+    expect(await kind(endpointId)).toMatchObject({
+      kind: 'endpoint',
+      href: `/workbench/o/${s.orgId}/events?tab=endpoints#${endpointId}`,
+    });
+    const keyRow = await t.kit.env.DB.prepare(
+      "SELECT id FROM api_keys WHERE org_id = ? AND mode = 'test' LIMIT 1",
+    )
+      .bind(s.orgId)
+      .first<{ id: string }>();
+    expect(await kind(keyRow?.id as string)).toMatchObject({
+      kind: 'key',
+      href: `/workbench/o/${s.orgId}/keys#${keyRow?.id}`,
+    });
     const feed = (await get('/events', s.key))[1];
-    expect(await kind(feed.items[0].id)).toMatchObject({ kind: 'event' });
+    expect(await kind(feed.items[0].id)).toMatchObject({
+      kind: 'event',
+      href: `/workbench/o/${s.orgId}/events#${feed.items[0].id}`,
+    });
     const rows = await t.kit.env.DB.prepare(
       'SELECT id FROM webhook_captures WHERE org_id = ? LIMIT 1',
     )
       .bind(s.orgId)
       .first<{ id: string }>();
     expect(await kind(rows?.id as string)).toMatchObject({ kind: 'capture' });
+    expect((await kind(rows?.id as string)).href).toMatch(
+      new RegExp(`^/workbench/o/${s.orgId}/events\\?capture=${rows?.id}#`),
+    );
     const attempt = await t.kit.env.DB.prepare(
       'SELECT id FROM webhook_attempts WHERE org_id = ? LIMIT 1',
     )
