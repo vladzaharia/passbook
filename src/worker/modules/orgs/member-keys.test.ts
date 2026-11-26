@@ -178,8 +178,13 @@ describe('who gets in', () => {
   it('refuses a Test key, another org, and a platform key', async () => {
     const test = await key(['members:write'], { mode: 'test' });
     expect((await invite(test.headers, ['read_only'])).status).toBe(403);
-    const elsewhere = await key(['members:write'], { orgId: kit.other.id });
-    expect((await invite(elsewhere.headers, ['read_only'])).status).toBe(403);
+    const elsewhere = await key(['members:read', 'members:write'], { orgId: kit.other.id });
+    expect((await invite(elsewhere.headers, ['read_only'])).status).toBe(404);
+    const target = await member('pass_operator');
+    expect((await revokeMember(elsewhere.headers, target.membershipId)).status).toBe(404);
+    expect((await h.call(`${base()}/memberships`, { headers: elsewhere.headers })).status).toBe(
+      404,
+    );
     const platform = await makeApiKey(f(), {
       orgId: null,
       scopes: ['platform:users'],
@@ -188,7 +193,11 @@ describe('who gets in', () => {
     });
     expect([401, 403]).toContain((await invite(platform.headers, ['read_only'])).status);
     expect(
-      await first(h.env.DB, 'SELECT 1 AS n FROM org_invitations WHERE org_id = ?', [org.id]),
+      await first(
+        h.env.DB,
+        'SELECT 1 AS n FROM org_invitations WHERE org_id = ? AND accepted_at IS NULL',
+        [org.id],
+      ),
     ).toBeNull();
   });
 

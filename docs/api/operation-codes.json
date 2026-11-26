@@ -1293,12 +1293,14 @@
     "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
     "FORBIDDEN",
     "LAST_ORG_ADMIN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "developer invitations get /{id}/developer-invitations": [
     "FORBIDDEN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1310,6 +1312,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -1326,6 +1329,7 @@
     "IDP_IN_USE",
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -3074,6 +3078,7 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -3083,6 +3088,7 @@
     "KEY_CANNOT_ADMINISTER",
     "LAST_ORG_ADMIN",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -3095,12 +3101,14 @@
   ],
   "organization memberships get /{id}/invitations": [
     "FORBIDDEN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
   ],
   "organization memberships get /{id}/memberships": [
     "FORBIDDEN",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "UNAUTHENTICATED"
@@ -3111,6 +3119,7 @@
     "LAST_ORG_ADMIN",
     "MEMBERSHIP_CONFLICT",
     "MEMBERSHIP_NOT_FOUND",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -3138,6 +3147,7 @@
     "FORBIDDEN",
     "INVITATION_PENDING",
     "KEY_CANNOT_ADMINISTER",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",
@@ -3149,6 +3159,7 @@
     "INVITATION_PENDING",
     "KEY_CANNOT_ADMINISTER",
     "MEMBERSHIP_CONFLICT",
+    "NOT_FOUND",
     "ORG_FORBIDDEN",
     "ORG_PERSONAL_SINGLE_MEMBER",
     "ORG_TEST_ONLY",

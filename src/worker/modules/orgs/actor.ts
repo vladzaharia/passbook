@@ -3,7 +3,7 @@ import type { Actor } from '../../platform/actor.ts';
 import { type AuthContext, proveCapability, type SessionAuth } from '../../platform/auth.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -70,6 +70,9 @@ export async function orgActorOf(
     };
   }
   if (auth.kind !== 'api_key') throw new UnauthenticatedError();
+  // Another org's key learns nothing about which orgs exist.
+  if (auth.orgId !== null && auth.orgId !== orgId)
+    throw new NotFoundError('Organization not found.');
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
   if (authority.kind !== 'api_key' || authority.mode !== 'live') throw new ForbiddenError();
   return {
