@@ -1,6 +1,14 @@
 import { ShieldPlus } from 'lucide-react';
 import { type CSSProperties, useState } from 'react';
-import { Button, Card, CardBody, CardHeader, ErrorState, Skeleton } from '@/web/ui/index.ts';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  EmptyState,
+  ErrorState,
+  Skeleton,
+} from '@/web/ui/index.ts';
 import { PlatformCard } from './platform-card.tsx';
 import { MakeDefaultDialog } from './platform-default.tsx';
 import { MovePassesDialog } from './platform-move.tsx';
@@ -43,6 +51,9 @@ export function PlatformSection() {
           </Button>
         ) : null}
       </div>
+      {rows.length === 0 && openRuns.length === 0 ? (
+        <EmptyState inline art="certificate" title="No platform identities" />
+      ) : null}
       <div className="wl-deal grid gap-6 @container md:grid-cols-2 xl:grid-cols-3">
         {rows.map((row, i) => (
           <PlatformCard

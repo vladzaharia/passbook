@@ -1,5 +1,6 @@
 import { ArrowRightLeft } from 'lucide-react';
 import { useState } from 'react';
+import { errorMessage } from '@/web/lib/errors.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import {
   FormDialog,
@@ -92,7 +93,7 @@ export function MovePassesDialog({
       {orgId && preview.isPending ? <Skeleton className="h-24 w-full" /> : null}
       {preview.isError ? (
         <p role="alert" className="text-sm text-danger">
-          Could not read the passes. Pick the organization again.
+          {errorMessage(preview.error)}
         </p>
       ) : null}
       {data ? (
