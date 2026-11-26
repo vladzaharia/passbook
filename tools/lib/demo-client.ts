@@ -118,6 +118,27 @@ export class Session {
   }
 
   /**
+   * Polaris ID sign-in through the local mock provider (npm run dev:oidc): `subject` picks the mock
+   * account with login_hint, like the e2e harness. The session is strong, so it may manage keys.
+   */
+  async oidc(subject: string) {
+    const start = await this.raw('GET', '/auth/oidc/start?next=%2F');
+    const toIdp = start.headers.get('location');
+    if (start.status !== 302 || !toIdp) throw new Error(`OIDC start failed (${start.status}).`);
+    const authorize = new URL(toIdp);
+    assertLocal(authorize.origin);
+    authorize.searchParams.set('login_hint', subject);
+    const idp = await fetchRetrying(authorize.toString(), { redirect: 'manual' });
+    const back = idp.headers.get('location');
+    if (idp.status !== 302 || !back)
+      throw new Error(`Mock OIDC refused ${subject} (${idp.status}). Is npm run dev:oidc running?`);
+    const target = new URL(back);
+    const done = await this.raw('GET', `${target.pathname}${target.search}`);
+    if (done.status !== 302) throw new Error(`OIDC sign-in failed (${done.status}).`);
+    this.csrf = (await this.get('/api/v1/session')).csrfToken;
+  }
+
+  /**
    * Magic-link sign-in for a holder address, reading the link from the local mail directory.
    * Cloudflare's always-pass Turnstile token works with the dev test secret.
    */

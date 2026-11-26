@@ -1,4 +1,5 @@
 // Dev only: seeds a demo dataset into a local dev server through the admin API.
+// Needs npm run dev:oidc (the owner signs in through the mock Polaris ID).
 //   SEED_BREAKGLASS_TOKEN=… node tools/seed-demo.ts [--url http://localhost:5173] [--token-file f]
 // Token defaults to .secrets/breakglass-token (npm run breakglass). Refuses non-localhost URLs.
 // Also makes a demo owner an org_admin in every org and pins uploaded templates to a release
@@ -52,7 +53,8 @@ const ORGS = [
 const orgs = await admin.all('/api/v1/orgs');
 for (const org of ORGS) {
   if (!orgs.some((o) => o.slug === org.slug))
-    orgs.push(await admin.send('POST', '/api/v1/orgs', { ...org, preset: 'legacy' }));
+    // addMe false: the break-glass account is not a member, so the demo owner stays each org's only reviewer.
+    orgs.push(await admin.send('POST', '/api/v1/orgs', { ...org, preset: 'legacy', addMe: false }));
 }
 const orgId = (slug: string) => orgs.find((o) => o.slug === slug).id as string;
 const henrys = orgId('henrys');
@@ -62,19 +64,14 @@ const harbor = orgId('harbor-lights');
 // A platform admin without membership is treated as a non-member (404), so the demo owner makes the
 // org templates: sign in once, then become org_admin in every org (re-run after uploads below).
 const owner = new Session(base);
-// Magic links go only to known addresses, so a first run invites the owner to an org.
-if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER)) {
-  try {
-    await admin.send('POST', `/api/v1/orgs/${northwind}/invitations`, {
-      email: DEMO_OWNER,
-      roles: ['org_admin'],
-    });
-  } catch (error) {
-    // A run that stopped before the sign-in left the invitation; it still admits the owner.
-    if ((error as { code?: string }).code !== 'INVITATION_PENDING') throw error;
-  }
-}
-await owner.magicLink(DEMO_OWNER, mailDir);
+// Admin and developer access is Polaris ID only, so the owner signs in through the local mock
+// provider (npm run dev:oidc). The mock verifies its emails; trusting them lets a first sign-in
+// create the account without a mail round trip, as in the e2e database.
+await admin.send('PUT', '/api/v1/settings', {
+  scope: 'platform',
+  values: { 'oidc.trustEmail': true },
+});
+await owner.oidc('demo-owner');
 const tenancy = tenancyCommand(DEMO_OWNER);
 const applyTenancy = () =>
   execFileSync(tenancy.file, tenancy.args, { cwd: root, stdio: 'inherit' });
@@ -305,7 +302,14 @@ const keys = (
 const KEYS = [
   { name: 'Henry’s CRM', orgId: henrys, scopes: ['passes:read', 'passes:write', 'holders:write'] },
   { name: 'Box office', orgId: harbor, scopes: ['passes:write'], expiresAt: Date.now() + 30 * DAY },
-  { name: 'Ops read-only', orgId: null, scopes: ['passes:read', 'templates:read'] },
+  {
+    // A platform key needs an expiry and an IP allowlist.
+    name: 'Ops read-only',
+    orgId: null,
+    scopes: ['passes:read', 'templates:read'],
+    expiresAt: Date.now() + 7 * DAY,
+    ipAllow: ['127.0.0.1/32', '::1/128'],
+  },
   { name: 'Old import script', orgId: northwind, scopes: ['passes:write'], revoke: true },
 ];
 for (const { revoke, ...key } of KEYS) {

@@ -3,13 +3,13 @@ tags: runbook, local, dev, demo
 ---
 # Local Demo Data and Visual Sweep
 
-Use to seed the local app with demo orgs and passes, then screenshot every route. Local only. Needs `npm run dev` running ([[Local Dev Setup]]).
+Use to seed the local app with demo orgs and passes, then screenshot every route. Local only. Needs `npm run dev` and `npm run dev:oidc` running ([[Local Dev Setup]]).
 
 ## Prerequisites
 
-- The dev server is up on `PORT` below.
+- The dev server is up on `PORT` below, and the mock Polaris ID (`npm run dev:oidc`, port 5174) too: the demo owner signs in through it, since email links open no console.
 - `.dev.vars` holds a valid signing identity. The fixture one lasts 2 to 3 days. On "Incorrect or expired WWDR intermediate", delete its `SIGNER_PLATFORM_*` lines, run `npm run dev:vars`, restart the dev server.
-- Sign-in mail is capped at 5 an hour per address, so rerun seeds an hour apart.
+- Sign-in mail (portal users) is capped at 5 an hour per address, so rerun seeds an hour apart.
 
 ## Parameters
 
@@ -19,7 +19,7 @@ export DEV_URL="${DEV_URL:-http://localhost:5173}"
 
 ## 1. Seed demo data
 
-Adds 3 orgs, about 45 passes, portal users, connections and API keys. It waits for the baked blueprints, then invites and signs in `demo.owner@example.com` (org_admin in every org; org work runs as them, since a platform admin without membership gets 404). It reads a token from `npm run breakglass`; pass `--url` for another port.
+Adds 3 orgs, about 45 passes, portal users, connections and API keys. It waits for the baked blueprints, then signs in `demo.owner@example.com` through the mock Polaris ID (org_admin in every org; org work runs as them, since a platform admin without membership gets 404). It reads a token from `npm run breakglass`; pass `--url` for another port.
 
 ```sh name=seed-demo confirm=no
 node tools/seed-demo.ts --url "$DEV_URL"

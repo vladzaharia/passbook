@@ -66,6 +66,8 @@ function siteOrigin(): Plugin {
 const VITE_DEV_PATHS = [
   '!/src/*',
   '!/node_modules/*',
+  // The dep optimizer's cache (cacheDir below) is served from the project root.
+  '!/.cache/*',
   '!/@fs/*',
   '!/@id/*',
   '!/@vite/*',
