@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import { Button } from '../button.tsx';
 import type { WizardModel } from './wizard-types.ts';
 
@@ -17,6 +17,7 @@ export function WizardButtons({
   working,
   formId,
   keepCancel,
+  extra,
   onCancel,
   onBack,
   onNext,
@@ -31,6 +32,8 @@ export function WizardButtons({
   /** The primary submits this form. */
   formId?: string | undefined;
   keepCancel?: boolean;
+  /** Beside the primary (a page's own action): full width above it on a phone. */
+  extra?: ReactNode;
   onCancel: () => void;
   onBack?: (() => void) | undefined;
   /** Without formId. */
@@ -55,6 +58,7 @@ export function WizardButtons({
           {why}
         </span>
       ) : null}
+      {extra}
       <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
         {first ? null : (
           <Button variant="outline" disabled={working} onClick={onBack}>

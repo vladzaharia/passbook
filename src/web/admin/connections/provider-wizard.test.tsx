@@ -7,6 +7,7 @@ import { inboundTrouble } from '../../ui/webhook-setup/index.ts';
 import { setViewport } from '../../ui/webhook-setup/test-support.test-support.tsx';
 import type { Arrival } from '../../ui/webhook-setup/types.ts';
 import { ORG } from '../passes/test-fixtures.ts';
+import { recordNoun } from './setup-api.ts';
 import { GUIDES, ledgerRow, RECIPE_IDS, setupHandlers, setupOf, URL_C9 } from './setup-fixtures.ts';
 import { holdSecret } from './setup-handoff.ts';
 
@@ -67,7 +68,7 @@ describe.each(RECIPE_IDS)('setup page: %s', (recipe) => {
   it('a sample counts as a pass and says nothing was issued', async () => {
     await open(recipe, { rows: [ledgerRow({ outcome: 'ignored', reason: 'stale', topic: null })] });
     expect(
-      await screen.findByText('Samples prove the setup. Real orders issue passes.'),
+      await screen.findByText(`Samples prove the setup. Real ${recordNoun(recipe)} issue passes.`),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Done' })).not.toHaveAttribute('aria-disabled');
   });
@@ -78,7 +79,8 @@ describe.each(RECIPE_IDS)('setup page: %s', (recipe) => {
       await screen.findByRole('heading', { name: 'Listening · nothing yet', level: 4 }),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Done' })).toHaveAttribute('aria-disabled', 'true');
-    expect(document.body.textContent).toContain(strip(guide.test.text));
+    // Led by the provider, where it says where; the sentence itself is the guide's.
+    expect(document.body.textContent).toContain(strip(guide.test.text).slice(1));
   });
 });
 
@@ -118,7 +120,7 @@ describe('setup page: where it resumes', () => {
     expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
     expect(screen.getAllByRole('button', { name: 'Copy endpoint URL' }).length).toBeGreaterThan(0);
     // The guide says when it was last checked: month and year, no weekday.
-    expect(screen.getByText('Checked Nov 2026')).toBeVisible();
+    expect(screen.getByText(/Checked Nov 2026/)).toBeVisible();
     expect(screen.getByRole('group', { name: 'In PassBook' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'In Shopify' })).toBeInTheDocument();
     expect(document.querySelectorAll('[data-locked]')).toHaveLength(5);
@@ -178,8 +180,10 @@ describe('setup page: where it resumes', () => {
     expect(await screen.findByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Copy signing secret' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    // One control: the checkbox gates the bar's Next, and the reveal has no Done of its own.
+    expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
     await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
-    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
     expect(document.body.textContent).not.toContain('f'.repeat(64));
   });
@@ -203,7 +207,7 @@ describe('setup page: the custom path', () => {
     const user = userEvent.setup();
     await open('custom', { detail: { config: { recordsPointer: '/items' } } });
     await user.click(await screen.findByRole('button', { name: 'Back' }));
-    expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Sign and send', level: 2 })).toBeVisible();
     const snippet = (await screen.findByText(/openssl dgst/)).textContent ?? '';
     expect(snippet).toContain(URL_C9);
     expect(snippet).toContain('x-passbook-signature');
@@ -259,8 +263,7 @@ describe('connection page: waiting for the first event', () => {
     expect(
       await screen.findByRole('heading', { name: 'Signed delivery seen', level: 4 }),
     ).toBeVisible();
-    const link = screen.getByRole('link', { name: 'Finish setup' });
-    expect(link).toHaveAttribute('href', expect.stringMatching(/\/connections\/c9\/setup/));
+    expect(screen.getByRole('button', { name: 'Finish setup' })).toBeVisible();
   });
 
   it('has no card once a signed delivery has been seen', async () => {
@@ -273,6 +276,75 @@ describe('connection page: waiting for the first event', () => {
       }),
     });
     expect(await screen.findByRole('heading', { name: 'Orders in' })).toBeVisible();
-    expect(screen.queryByRole('link', { name: 'Finish setup' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Finish setup' })).toBeNull();
+  });
+});
+
+describe('setup page: the pieces', () => {
+  it('Connect leaves the secret and test steps to their own pages, and says labels may differ once', async () => {
+    await open('shopify-orders', { values: { hasSecret: false } });
+    expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+    expect(screen.queryByText('Copy the signing secret')).toBeNull();
+    expect(screen.queryByText('Send a test')).toBeNull();
+    expect(screen.getAllByText(/Labels may differ\./)).toHaveLength(1);
+    // Over the guide and the panel, as well as the rail.
+    expect(screen.getAllByText('In Shopify', { selector: 'p' })).toHaveLength(2);
+    expect(screen.getAllByText('In PassBook', { selector: 'p' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeInTheDocument();
+  });
+
+  it('the Test step leads with the live check, led by the provider', async () => {
+    await open('shopify-orders');
+    expect(await screen.findByText(/In Shopify: row menu/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Skip for now' })).toBeVisible();
+  });
+
+  it('an accepted delivery whose work failed reads Accepted, not issued, with Open failures', async () => {
+    const row = ledgerRow({ topic: 'orders/create', eventRef: 'evt-9' });
+    const handlers = setupHandlers('shopify-orders', { rows: [row] });
+    await renderApp('/admin/connections/c9/setup', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: {
+        ...handlers,
+        '/api/v1/connections/c9/webhook-failures': () =>
+          json({
+            items: [
+              {
+                id: 'r1',
+                eventRef: 'evt-9',
+                generation: 1,
+                connectionMode: 'webhook',
+                state: 'failed',
+                errorCode: 'X',
+                uncertainItems: 0,
+                receivedAt: 1,
+                updatedAt: 1,
+              },
+            ],
+          }),
+      },
+    });
+    expect(await screen.findByRole('button', { name: 'Open failures' })).toBeVisible();
+    expect(screen.getAllByText('Accepted, not issued').length).toBeGreaterThan(0);
+  });
+
+  it('the waiting connection page offers the same fixes, and Go to Secret opens the Secret step', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderApp('/admin/connections/c9', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: setupHandlers('shopify-orders', { rows: [asRow('no_secret')] }),
+    });
+    expect(
+      await screen.findByText('No secret saved yet. Save it, then send another test.'),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Go to Secret' }));
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ step: 'secret' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Paste the secret', level: 2 }),
+    ).toBeVisible();
   });
 });

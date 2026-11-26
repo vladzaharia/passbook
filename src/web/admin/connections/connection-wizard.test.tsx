@@ -599,8 +599,8 @@ describe('create connection wizard', () => {
     expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(document.querySelectorAll('[data-locked]')).toHaveLength(5);
     await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
-    await user.click(screen.getByRole('button', { name: 'Done' }));
-    expect(await screen.findByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('heading', { name: 'Sign and send', level: 2 })).toBeVisible();
   });
 
   it('preselects a source from the link and starts at Setup', async () => {

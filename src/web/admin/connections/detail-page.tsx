@@ -11,11 +11,14 @@ export function ConnectionDetailPage({
   connectionId,
   search,
   setup,
+  setupStep,
 }: {
   connectionId: string;
   search: ConnectionDetailSearch;
   /** The provider's side of a webhook connection, in place of the detail. */
   setup?: boolean;
+  /** Opens the setup at its Secret step. */
+  setupStep?: 'secret' | undefined;
 }) {
   const { hasExplicitOrg, requestedOrgId } = useOrgScope();
   return (
@@ -24,6 +27,7 @@ export function ConnectionDetailPage({
       connectionId={connectionId}
       search={search}
       setup={setup}
+      setupStep={setupStep}
     />
   );
 }
@@ -32,10 +36,12 @@ function ConnectionDetailLoader({
   connectionId,
   search,
   setup,
+  setupStep,
 }: {
   connectionId: string;
   search: ConnectionDetailSearch;
   setup?: boolean | undefined;
+  setupStep?: 'secret' | undefined;
 }) {
   const scope = useOrgScope();
   const canFetch = Boolean(
@@ -92,7 +98,7 @@ function ConnectionDetailLoader({
     );
   }
   const canManage = Boolean(scope.membership?.capabilities.includes('integrations:manage'));
-  if (setup) return <SetupView key={connectionId} c={connection.data} />;
+  if (setup) return <SetupView key={connectionId} c={connection.data} step={setupStep} />;
   return (
     <ConnectionDetail
       key={JSON.stringify([scope.orgId, connectionId, canManage])}

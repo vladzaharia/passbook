@@ -229,8 +229,9 @@ const RetainedWebhooksSchema = z.object({
 export type RetainedWebhook = z.infer<typeof RetainedWebhooksSchema>['items'][number];
 
 /** Retained webhook work for a connection; Live only, so Test mode skips the request. */
-export function useWebhookFailures(id: string, enabled: boolean) {
+export function useWebhookFailures(id: string, enabled: boolean, pollMs?: number) {
   return useQuery({
+    ...(pollMs ? { refetchInterval: pollMs } : {}),
     queryKey: [...connectionKeys.detail(id), 'webhook-failures'],
     queryFn: ({ signal }) =>
       api.get(`/api/v1/connections/${id}/webhook-failures`, RetainedWebhooksSchema, { signal }),

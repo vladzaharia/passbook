@@ -18,6 +18,8 @@ async function serious(page: Page) {
 
 /** Axe at the two ends of the widths, in both themes; the shots helper takes the pictures. */
 async function check(page: Page, name: string) {
+  // Settled: the step's entrance has finished before the pictures.
+  await page.waitForTimeout(700);
   await shots(page, name);
   for (const [width, height] of [
     [1440, 900],
@@ -141,15 +143,15 @@ test('Custom: the payload shape and its example, then the secret and the send sn
   await expect(page.getByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
   await check(page, 'webhook-custom-secret');
   await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
-  await page.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+  await next(page);
+  await expect(page.getByRole('heading', { name: 'Sign and send', level: 2 })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'curl' })).toBeVisible();
   await check(page, 'webhook-custom-connect');
 
   // Leaving setup: the connection page leads with the same live check and a way back.
   await page.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('button', { name: 'Leave', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Finish setup' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finish setup' })).toBeVisible();
   await expect(page.getByText('Listening for your system').first()).toBeVisible();
   await check(page, 'webhook-awaiting');
 

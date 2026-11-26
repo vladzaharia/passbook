@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   SNIPPET_LABEL,
-  SNIPPET_LANGS,
   type SnippetLang,
   sendSnippet,
 } from '../../../shared/webhook-setup/snippets.ts';
 import { CodeBlock, Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/index.ts';
+
+const LANGS: SnippetLang[] = ['curl', 'node', 'python', 'go'];
 
 /**
  * A signed request to the connection, in four languages, with its URL, header names and body filled
@@ -37,18 +38,19 @@ export function SendSnippets({
       </p>
       <Tabs value={lang} onValueChange={(v) => setLang(v as SnippetLang)}>
         <TabsList aria-label="Language">
-          {SNIPPET_LANGS.map((l) => (
+          {LANGS.map((l) => (
             <TabsTrigger key={l} value={l}>
               {SNIPPET_LABEL[l]}
             </TabsTrigger>
           ))}
         </TabsList>
-        {SNIPPET_LANGS.map((l) => (
+        {LANGS.map((l) => (
           <TabsContent key={l} value={l}>
             <CodeBlock
               code={sendSnippet(l, options)}
               label={`${SNIPPET_LABEL[l]} send snippet`}
               maxHeight="max-h-72"
+              wrap
             />
           </TabsContent>
         ))}

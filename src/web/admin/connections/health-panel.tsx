@@ -116,14 +116,16 @@ export function HealthPanel({
         <CardHeader title="Health" />
         <CardBody className="flex flex-col gap-4">
           <div className="relative flex flex-wrap items-center justify-between gap-3">
-            <p className={cn('text-sm', failing ? 'text-fg-strong' : 'text-fg')}>
-              {waiting ? 'Waiting for the first webhook. ' : healthSentence(c, now, since)}{' '}
-              {waiting && onWebhookTab ? (
-                <Button variant="link" onClick={onWebhookTab}>
-                  Open webhook setup
-                </Button>
-              ) : null}
-            </p>
+            {awaiting ? null : (
+              <p className={cn('text-sm', failing ? 'text-fg-strong' : 'text-fg')}>
+                {waiting ? 'Waiting for the first webhook. ' : healthSentence(c, now, since)}{' '}
+                {waiting && onWebhookTab ? (
+                  <Button variant="link" onClick={onWebhookTab}>
+                    Open webhook setup
+                  </Button>
+                ) : null}
+              </p>
+            )}
             {failing && canSync ? (
               <Button
                 variant="outline"

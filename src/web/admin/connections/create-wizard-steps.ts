@@ -21,6 +21,7 @@ const HEADING: Record<SecretOrigin, Record<ProviderStepId, string>> = {
   provider: { connect: 'Add the webhook', secret: 'Paste the secret', test: 'Send a test' },
   passbook: { connect: 'Add the webhook', secret: 'Copy the secret', test: 'Send a test' },
 };
+const CUSTOM = 'Your system';
 const TITLE: Record<ProviderStepId, string> = {
   connect: 'Connect',
   secret: 'Secret',
@@ -28,7 +29,8 @@ const TITLE: Record<ProviderStepId, string> = {
 };
 
 /** "In Shopify"; the custom sender is "Your system". */
-const providerGroup = (name: string) => (name === 'Your system' ? 'In your system' : `In ${name}`);
+export const providerGroup = (name: string) =>
+  name === 'Your system' ? 'In your system' : `In ${name}`;
 
 /** The two-phase rail: PassBook's five steps, then the provider's three. */
 export function railSteps({
@@ -53,7 +55,7 @@ export function railSteps({
   const second: WizardStepDef[] = providerOrder(origin).map((id) => ({
     id,
     title: TITLE[id],
-    heading: HEADING[origin][id],
+    heading: id === 'connect' && provider === CUSTOM ? 'Sign and send' : HEADING[origin][id],
     group: providerGroup(provider),
   }));
   return [...first, ...second];

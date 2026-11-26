@@ -143,6 +143,7 @@ export function ConfigStep({
               code={exampleBody(draft.config, true)}
               label="Example body"
               maxHeight="max-h-56"
+              wrap
             />
           </div>
         ) : null}

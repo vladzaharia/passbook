@@ -54,6 +54,8 @@ export interface WizardProps {
   nextDisabled?: boolean;
   /** Why Next is off, in a few words; shown beside it while it is disabled. */
   nextHint?: string;
+  /** An action of the page beside Back and Next (Skip for now, Copy URL on a phone). */
+  barExtra?: ReactNode;
   busy?: boolean;
   children: ReactNode;
 }
@@ -72,6 +74,7 @@ export function WizardBar({
   nextTone,
   nextDisabled,
   nextHint,
+  barExtra,
   busy,
 }: Pick<
   WizardProps,
@@ -83,6 +86,7 @@ export function WizardBar({
   | 'nextTone'
   | 'nextDisabled'
   | 'nextHint'
+  | 'barExtra'
   | 'busy'
 > & { onBlocked?: () => void }) {
   return (
@@ -95,6 +99,7 @@ export function WizardBar({
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 max-sm:flex-wrap sm:[--wl-gutter:1.5rem]">
         <WizardButtons
           keepCancel
+          extra={barExtra}
           first={!onBack}
           label={nextLabel}
           tone={nextTone}

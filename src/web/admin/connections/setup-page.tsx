@@ -8,7 +8,7 @@ import { useConnectionSetup } from './setup-api.ts';
 type Detail = z.infer<typeof ConnectionDetailSchema>;
 
 /** `/connections/$id/setup`: the provider's side of a webhook connection, resumable from server state. */
-export function SetupView({ c }: { c: Detail }) {
+export function SetupView({ c, step }: { c: Detail; step?: 'secret' | undefined }) {
   const setup = useConnectionSetup(c.id);
   const connector = useConnector(c.connectorType, c.orgId);
   const recipe = connector.data?.recipes.find((r) => r.id === c.config.recipe);
@@ -34,7 +34,7 @@ export function SetupView({ c }: { c: Detail }) {
   return (
     <>
       {header}
-      <ProviderWizard connection={c} setup={setup.data} sourceLabel={recipe?.label} />
+      <ProviderWizard connection={c} setup={setup.data} sourceLabel={recipe?.label} openAt={step} />
     </>
   );
 }

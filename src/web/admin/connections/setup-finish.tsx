@@ -7,12 +7,15 @@ export function SetupFinish({
   provider,
   topics,
   seen,
+  issues,
   onOpen,
   onAnother,
 }: {
   provider: string;
   topics: readonly SetupTopic[];
   seen: readonly string[];
+  /** The template the connection makes passes from. */
+  issues?: string | undefined;
   onOpen: () => void;
   onAnother: () => void;
 }) {
@@ -27,6 +30,7 @@ export function SetupFinish({
             : `${progress.seen} of ${progress.of} seen · ${missing.join(', ')} not seen yet`,
         ]
       : []),
+    ...(issues ? [`Issues: ${issues}`] : []),
   ];
   return (
     <Card data-art-host="" className="wl-buddy-room relative max-w-2xl">

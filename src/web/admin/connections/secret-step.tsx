@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 import type { ConnectionSetup } from '@/shared/contracts/connection-setup.ts';
-import { Button, SecretReveal } from '../../ui/index.ts';
+import { Button, Callout, CheckboxField, CopyField } from '../../ui/index.ts';
 import {
   OVERLAP_CHOICES,
   RotateSecretForm,
@@ -26,7 +26,8 @@ export function SecretStep({
   onPaste,
   pasteError,
   rotate,
-  onCopied,
+  saved,
+  onSaved,
   onRotated,
 }: {
   setup: ConnectionSetup;
@@ -39,7 +40,9 @@ export function SecretStep({
   onPaste: (value: string) => void;
   pasteError: string | undefined;
   rotate: RotateSecretState;
-  onCopied: () => void;
+  /** The held secret was copied: the bar's Next waits on it. */
+  saved: boolean;
+  onSaved: (saved: boolean) => void;
   onRotated: () => void;
 }) {
   const { origin } = setup.secret;
@@ -82,10 +85,16 @@ export function SecretStep({
   }
   if (held)
     return (
-      <SecretReveal
-        fields={[{ label: 'Signing secret', value: held, copyLabel: 'Copy signing secret' }]}
-        onDone={onCopied}
-      />
+      <div className="flex max-w-xl min-w-0 flex-col gap-4">
+        <Callout tone="warning">Copy the secret now. It is not shown again.</Callout>
+        <CopyField label="Signing secret" value={held} copyLabel="Copy signing secret" />
+        <CheckboxField
+          label="I saved the secret"
+          checked={saved}
+          onCheckedChange={(v) => onSaved(v === true)}
+          className="w-fit"
+        />
+      </div>
     );
   return (
     <div className="flex max-w-md min-w-0 flex-col gap-4">

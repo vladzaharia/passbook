@@ -17,6 +17,8 @@ export interface InboundContext {
   origin: 'provider' | 'passbook';
   /** The guide's `troubleshooting`: ledger reason to a recipe-specific fix. `none` is the empty ledger. */
   recipeFix?: Readonly<Record<string, string>> | undefined;
+  /** Event refs of accepted deliveries whose work failed or is blocked: nothing was issued. */
+  notIssued?: ReadonlySet<string> | undefined;
 }
 
 export const NOTHING = 'none';
@@ -26,7 +28,10 @@ const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(
 
 /** What the ledger saw, in words, with the fix: recipe-specific from the guide, else the generic line. */
 function rawInboundTrouble(
-  arrival: Pick<Arrival, 'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious'> | null,
+  arrival: Pick<
+    Arrival,
+    'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious' | 'eventRef'
+  > | null,
   ctx: InboundContext,
 ): Trouble {
   const { provider, origin } = ctx;
@@ -50,7 +55,14 @@ function rawInboundTrouble(
             'Signed with the previous secret. Switch the sender to the new one.',
           ),
         }
-      : { tone: 'success', title: 'Signature OK', fix: 'Signed correctly.' };
+      : arrival.eventRef && ctx.notIssued?.has(arrival.eventRef)
+        ? {
+            tone: 'warning',
+            title: 'Accepted, not issued',
+            fix: 'Signed correctly, but no pass was made. See the failed webhooks.',
+            action: 'openFailures',
+          }
+        : { tone: 'success', title: 'Signature OK', fix: 'Signed correctly.' };
   }
   const reason: ArrivalReason | null = arrival.reason;
   const rejected: Partial<Record<ArrivalReason, Trouble>> = {
@@ -104,7 +116,7 @@ function rawInboundTrouble(
     no_secret: {
       tone: 'danger',
       title: 'No secret yet',
-      fix: fixFor('no_secret', 'Save the secret on the previous step first.'),
+      fix: fixFor('no_secret', 'No secret saved yet. Save it, then send another test.'),
       action: 'goToSecret',
     },
   };
