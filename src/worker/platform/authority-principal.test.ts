@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeApiKey } from '../../../test/helpers/index.ts';
 import { grant } from './authority.ts';
 import { codeOf, count, db, refusal } from './authority-ext-fixtures.ts';
+import { scopeOf } from './authority-granted.ts';
 import type { Principal } from './authority-principal.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { first, run } from './db.ts';
@@ -188,5 +189,22 @@ describe('users.access_revision and deferred membership principals', () => {
       codeOf(() => grant(route, { purpose: 'org_mode.test.ue', principal: session })),
     ).toBeNull();
     expect(await count('SELECT count(*) AS n FROM authority_grants')).toBe(0);
+  });
+});
+
+describe('platform principal with inactiveOk', () => {
+  const admin = {
+    kind: 'platform',
+    userId: 'u',
+    sessionIdHash: 's',
+    orgId: 'o',
+    inactiveOk: true,
+  } as const;
+
+  it('is for the membership revoke of an offboarding and no other purpose', () => {
+    expect(scopeOf({ purpose: 'org.member.revoke', principal: admin } as never)).toBe('org');
+    expect(() => scopeOf({ purpose: 'org.member.add', principal: admin } as never)).toThrow(
+      /allowlisted/,
+    );
   });
 });

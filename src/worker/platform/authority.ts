@@ -315,12 +315,6 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
   if (input.principal.kind === 'system')
     throw new AuthorityError('GRANT_NOT_JOB', 'System grants come from jobGrant().');
   const scope = scopeOf(input);
-  if (
-    input.principal.kind === 'platform' &&
-    input.principal.inactiveOk &&
-    input.purpose !== 'org.member.revoke'
-  )
-    throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
   assertDeferredContext(hasFullJobAuthority(ctx), input);
   const p = input.principal;
   const full = { ...input, ...(p.kind === 'holder' ? { target: p.passId } : {}), via: ctx.via };

@@ -167,6 +167,8 @@ export function scopeOf(input: GrantInput): GrantScope {
   if (!match) throw new AuthorityError('GRANT_BAD_PURPOSE', `Bad grant purpose: ${input.purpose}`);
   const scope = match[1] as GrantScope;
   const p = input.principal;
+  if (p.kind === 'platform' && p.inactiveOk && input.purpose !== 'org.member.revoke')
+    throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
   if (PLATFORM_ADMIN_PURPOSES.includes(input.purpose) && p.kind !== 'platform')
     throw new AuthorityError(
       'GRANT_BAD_PRINCIPAL',
