@@ -213,6 +213,16 @@ function Body({ q, state, onNext }: { q: Quickstart; state: StepState; onNext: (
             onOp={setOpId}
           />
         </>
+      ) : managing ? (
+        // The sandbox is gone (the delete's first half is done): the operation that removed it is what is left.
+        <SandboxManage
+          csrf={q.csrf}
+          siteKey={retryKey}
+          onMade={q.sandboxMade}
+          op={managing}
+          onOp={setOpId}
+          buttons={false}
+        />
       ) : (
         <>
           <p className="sm muted">{C.line}</p>

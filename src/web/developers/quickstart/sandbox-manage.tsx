@@ -49,12 +49,15 @@ export function SandboxManage({
   onMade,
   op,
   onOp,
+  buttons = true,
 }: {
   csrf: string;
   siteKey: string;
   onMade: (sandbox: Sandbox, secret: string | null) => void;
   op: string | null;
   onOp: (id: string | null) => void;
+  /** False once the sandbox is gone: only the operation that removed it is left to show. */
+  buttons?: boolean;
 }) {
   const [picked, setAct] = useState<Act | null>(null);
   // Only a reload needs the kind to be asked for: a confirm that started it knows its own.
@@ -166,26 +169,28 @@ export function SandboxManage({
   const copy = act ? COPY[act] : null;
   return (
     <div className="qs-manage">
-      <div className="row g2 wrap-row">
-        <button
-          type="button"
-          className="btn sm outline"
-          disabled={working || op !== null}
-          onClick={() => open('start-over')}
-        >
-          <RotateCcw aria-hidden="true" />
-          Start over
-        </button>
-        <button
-          type="button"
-          className="btn sm outline"
-          disabled={working || op !== null}
-          onClick={() => open('delete')}
-        >
-          <Trash2 aria-hidden="true" />
-          Delete sandbox
-        </button>
-      </div>
+      {buttons ? (
+        <div className="row g2 wrap-row">
+          <button
+            type="button"
+            className="btn sm outline"
+            disabled={working || op !== null}
+            onClick={() => open('start-over')}
+          >
+            <RotateCcw aria-hidden="true" />
+            Start over
+          </button>
+          <button
+            type="button"
+            className="btn sm outline"
+            disabled={working || op !== null}
+            onClick={() => open('delete')}
+          >
+            <Trash2 aria-hidden="true" />
+            Delete sandbox
+          </button>
+        </div>
+      ) : null}
       {copy && act ? (
         <section
           ref={panel}

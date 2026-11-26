@@ -8,7 +8,7 @@ afterEach(() => {
 
 const active = (...kinds: string[]) =>
   vi.fn(
-    async () =>
+    async (_url: string) =>
       new Response(JSON.stringify({ items: kinds.map((kind) => ({ kind })) }), { status: 200 }),
   );
 const chip = () => {
