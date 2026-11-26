@@ -444,6 +444,19 @@ Action icons (`src/web/lib/action-icons.ts`):
 - A delete navigates to the list with `replace`, so Back does not return to a missing page.
 - A list with no remaining items shows the truly-empty state.
 
+## Progress
+
+A long action the server or the browser runs shows what it is doing, live. One kit, `ui/operation/index.ts`, in admin, the holder portal and the developer site; nothing in it imports a space.
+
+- **Panel.** `OperationProgress operation framing='plain'|'card' zone onStop onRetry onClose onBackground next doneNote`. It shows the exact current step with its count (`Removing Test passes · 4 of 12`), elapsed time, the buddy and a `StepList`. In a dialog it is the body; in a card it takes the card. States: queued, running, waiting, done, failed (Retry first after the list, `Details` with code, id, attempt and start time in the org zone), stopped.
+- **Words.** The API says `succeeded` and `cancelled`; people read Done and Stopped (`OPERATION_STATUS`, `lib/status-operations.ts`). A button that closes a dialog is Close; Stop ends work and what was done stays done.
+- **Sources.** Server: `useOperation(id)` polls with backoff (1 s, 2 s, 5 s; a hidden tab 30 s; 304 on an unchanged revision); a start mutation calls `trackOperation(op)` with its 202 body. Browser-run flows: `useLocalOperation(def)` returns the same `Operation` and a driver (`step`, `progress`, `wait`, `fail`, `finish`, `retry`).
+- **Tray.** `OperationTray` goes in the top bar's `controls` slot. Hidden when nothing runs and nothing is unseen; a popover from 640 px, a bottom sheet below. An end the person did not watch becomes a toast (View, or Retry on a failure); none while that operation's panel is on screen.
+- **Live region.** One polite region per panel says a step starting, a wait and the end. Never a count or a tick.
+- **Steps.** `StepList` takes `meta` (`4 of 12`, `By Dec 2`), `group` headings and draws the tick of a step that finishes while it is on screen. `StepMarker` has `waiting`: a dashed clock with the word "waiting".
+- **Motion.** The buddy's `busy` scene loops while an operation runs and stops at its end; reduced motion holds the rest pose and the working spinner keeps turning. `RunBar` (the foil bar with the buddy riding it) is the kit's; `admin/passes/run-kit.tsx` re-exports it as `RunProgress`.
+- **Story page.** `npx vite --config tools/dev/operation-story/vite.config.ts`, then `/tools/dev/operation-story/?state=running` (states in `STORY_STATES`).
+
 ## Tabbed detail pages
 
 - The active tab lives in the URL as `?tab=<id>` (`passDetailSearchSchema` in
@@ -548,6 +561,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Notes | `Callout tone title items actions` |
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
+| Progress | `OperationProgress`, `OperationTray`, `OperationRow`, `OperationSheet`, `useOperation`, `useLocalOperation`, `trackOperation`, `RunBar` (`ui/operation/index.ts`); `StepList items[meta, group]` |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
 | Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; a control under 44 px grows to a real 44 px box under `pointer-coarse` (`size-11`, `min-h-11`): the box itself, not a `::before` hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
