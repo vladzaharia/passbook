@@ -37,5 +37,9 @@ export function handlers(summary: Record<string, unknown> = {}, contexts: unknow
         ...summary,
       }),
     '/api/v1/operations': () => json({ items: [] }),
+    // Logs reads these on arrival: an org with no calls and no keys.
+    '/api/v1/request-logs': () =>
+      json({ items: [], nextCursor: null, capped: null, bodiesRecorded: true }),
+    '/api/v1/api-keys': () => json({ items: [], nextCursor: null, revokedCount: 0 }),
   };
 }

@@ -13,8 +13,3 @@ export const loadRail = (): Promise<{ status: number; body: ApiRail | null }> =>
     .catch(() => ({ status: 0, body: null }));
   return pending;
 };
-
-/** For tests: the next loadRail reads again. */
-export const forgetRail = (): void => {
-  pending = undefined;
-};
