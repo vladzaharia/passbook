@@ -1,0 +1,199 @@
+/*
+ * The Workbench shell (design §1.2, §1.6, §5.2). Colours are tokens; durations are tokens, so
+ * reduced motion zeroes them. The only loops are state indicators: the live dot's ping.
+ */
+.wb-shell {
+  --wb-dot: color-mix(in oklab, var(--pk-border-strong) 38%, transparent);
+}
+
+/* Group headings: mono caps, quiet. */
+.wb-group-label {
+  display: flex;
+  align-items: center;
+  height: 1.375rem;
+  padding-inline: 0.625rem;
+  font-family: var(--pk-font-mono);
+  font-size: 0.65625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pk-text-subtle);
+}
+
+/* The selected item carries the accent rule at its left edge (the indicator slides with it). */
+.wb-nav .wl-indicator::before {
+  content: "";
+  position: absolute;
+  left: -0.5rem;
+  top: 0.4375rem;
+  bottom: 0.4375rem;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--pk-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wb-nav-link svg.wb-nav-icon {
+    transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);
+  }
+  .wb-nav-link:hover svg.wb-nav-icon {
+    transform: translateX(1px) rotate(-6deg) scale(1.08);
+  }
+}
+
+/* Attention meta. Text and shape carry the state, never colour alone. */
+.wb-meta {
+  position: relative;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--pk-font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--pk-text-muted);
+}
+.wb-meta[data-kind="danger"] {
+  min-width: 1.25rem;
+  justify-content: center;
+  padding-inline: 0.3125rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--pk-danger);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--pk-danger) 55%, transparent);
+}
+
+/* Arrive: one stamp and one ring when a count rises. A keyed node replays it once. */
+.wb-arrive {
+  animation: wb-stamp var(--wl-dur-card) var(--wl-ease-bounce) both;
+}
+.wb-arrive::after {
+  content: "";
+  position: absolute;
+  inset: -3px -2px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  opacity: 0;
+  pointer-events: none;
+  animation: wb-ring var(--wl-dur-card) var(--wl-ease-out) both;
+}
+@keyframes wb-stamp {
+  0% {
+    transform: scale(1.6) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.94) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes wb-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* The live dot: solid, with one ping per beat while listening (a state indicator). */
+.wb-live {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pk-success);
+}
+.wb-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--pk-success);
+  animation: wb-ping 2.4s var(--wl-ease-move) infinite;
+}
+@keyframes wb-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* The area button's attention dot: on the glyph tile's corner, ringed by the bar. */
+.wb-attn-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 50%;
+  background: var(--pk-danger);
+  box-shadow: 0 0 0 2px var(--pk-surface-page);
+}
+
+/* A tool head's sections rise in, 45 ms apart. */
+.wb-rise > * {
+  animation: wb-rise var(--wl-dur-enter) var(--wl-ease-out) both;
+  animation-delay: calc(var(--wb-i, 0) * 45ms);
+}
+.wb-rise > :nth-child(2) {
+  --wb-i: 1;
+}
+.wb-rise > :nth-child(3) {
+  --wb-i: 2;
+}
+.wb-rise > :nth-child(n + 4) {
+  --wb-i: 3;
+}
+@keyframes wb-rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+
+/* The chord hint: a key cap that waits for the second key. */
+.wb-chord {
+  animation: wb-chord var(--wl-dur-enter) var(--wl-ease-spring) both;
+}
+@keyframes wb-chord {
+  from {
+    transform: translateY(8px) scale(0.96);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-arrive,
+  .wb-arrive::after,
+  .wb-rise > *,
+  .wb-chord {
+    animation: none;
+  }
+  .wb-live::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .wb-attn-dot,
+  .wb-live {
+    background: CanvasText;
+    box-shadow: none;
+  }
+  .wb-meta[data-kind="danger"] {
+    box-shadow: inset 0 0 0 1.5px CanvasText;
+  }
+}
