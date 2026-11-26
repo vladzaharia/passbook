@@ -2584,5 +2584,17 @@
   "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady": {
     "resource": "platform.walletRelease",
     "method": "enableReady"
+  },
+  "workbench.deleteToken": {
+    "resource": "workbench.tokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
+  },
+  "workbench.postToken": {
+    "resource": "workbench.tokens",
+    "method": "create",
+    "sdk": false,
+    "reason": "Workbench: a signed-in person in a browser, not an integration."
   }
 }

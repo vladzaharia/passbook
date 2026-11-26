@@ -3373,7 +3373,8 @@
         "scan",
         "settings",
         "templates",
-        "wallet-providers"
+        "wallet-providers",
+        "workbench"
       ]
     },
     {
@@ -3453,15 +3454,6 @@
       ],
       "modules": [
         "orgs"
-      ]
-    },
-    {
-      "code": "ORG_TEST_ONLY",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "platform"
       ]
     },
     {
@@ -4253,7 +4245,8 @@
         409
       ],
       "modules": [
-        "developer"
+        "developer",
+        "workbench"
       ]
     },
     {
@@ -4317,6 +4310,15 @@
       ],
       "modules": [
         "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {
@@ -6976,6 +6978,15 @@
       ],
       "modules": [
         "connections"
+      ]
+    },
+    {
+      "code": "WORKBENCH_TEST_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {

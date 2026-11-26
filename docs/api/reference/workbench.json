@@ -1,0 +1,19 @@
+{
+  "workbench.postToken": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "token": "pbtry_northwind-demo-wb.4a3e68bb208016ffcab957",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "test",
+      "expiresAt": 1795572900000,
+      "subject": "member"
+    }
+  },
+  "workbench.deleteToken": {
+    "response": {
+      "ok": true
+    }
+  }
+}

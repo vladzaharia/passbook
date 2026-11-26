@@ -13,7 +13,7 @@
     "operationId": "brand.deleteBrandWebLogo",
     "op": "DELETE /api/v1/brand/web-logo",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "DELETE /api/v1/brand/web-logo 200.personal: field added",
@@ -117,7 +117,7 @@
     "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
     "op": "DELETE /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -230,6 +230,14 @@
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "DELETE /api/v1/workbench/token new operation",
+    "class": "additive",
+    "operationId": "workbench.deleteToken",
+    "op": "DELETE /api/v1/workbench/token",
+    "change": "new operation",
+    "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -1325,7 +1333,7 @@
     "operationId": "orgs.getOrgsByIdWorkspace",
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
@@ -2301,7 +2309,7 @@
     "operationId": "brand.patchBrand",
     "op": "PATCH /api/v1/brand",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "PATCH /api/v1/brand 200.personal: field added",
@@ -2516,7 +2524,7 @@
     "operationId": "orgs.patchOrgsById",
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
@@ -3834,7 +3842,7 @@
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
     "change": "201.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "POST /api/v1/orgs 201.personal: field added",
@@ -5221,12 +5229,20 @@
     "note": "The old signing secret may now stay valid for 1 hour or 7 days (168) as well as 0, 24 or 72 hours."
   },
   {
+    "key": "POST /api/v1/workbench/token new operation",
+    "class": "additive",
+    "operationId": "workbench.postToken",
+    "op": "POST /api/v1/workbench/token",
+    "change": "new operation",
+    "note": "A 15-minute Test-only token for one org, bound to your session: your sandbox key, or you on x-workbench: test operations. Live: 403 WORKBENCH_TEST_ONLY."
+  },
+  {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.putBrandWebLogo",
     "op": "PUT /api/v1/brand/web-logo",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
@@ -5290,7 +5306,7 @@
     "operationId": "orgs.putOrgsByIdBrandingBySlot",
     "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with SANDBOX_TEST_ONLY (409)."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",

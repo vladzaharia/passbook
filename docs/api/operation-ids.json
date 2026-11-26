@@ -576,5 +576,7 @@
   "webhooks.postWebhookEndpointsByIdReplay",
   "webhooks.postWebhookEndpointsByIdSecret",
   "webhooks.postWebhookEndpointsByIdTest",
-  "webhooks.postWebhookEndpointsCapture"
+  "webhooks.postWebhookEndpointsCapture",
+  "workbench.deleteToken",
+  "workbench.postToken"
 ]

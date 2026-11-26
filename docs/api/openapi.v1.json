@@ -80477,7 +80477,6 @@
           "NO_ACCESS",
           "NO_EMAIL",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -80485,6 +80484,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -80763,7 +80763,6 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -80771,6 +80770,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -83329,7 +83329,6 @@
           "NOT_FOUND",
           "NO_RECIPIENT",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_CREDENTIAL_FIXED",
           "PASS_INPUT_INVALID",
@@ -83339,6 +83338,7 @@
           "PASS_VOIDED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -86296,16 +86296,17 @@
           "KEY_TEST_ONLY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "SANDBOX_EXISTS",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -86344,7 +86345,8 @@
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -86945,17 +86947,18 @@
           "KEY_TEST_ONLY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "SANDBOX_EXISTS",
           "SANDBOX_NOT_FOUND",
           "SANDBOX_RESET_LIMIT",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -86995,7 +86998,8 @@
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -87264,17 +87268,18 @@
           "KEY_CREATOR_NOT_MEMBER",
           "KEY_TEST_ONLY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_NOT_FOUND",
           "SANDBOX_RESET_LIMIT",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_ABOVE_MAX",
           "STAMPS_QUERY",
           "STEP_UP_REQUIRED",
@@ -87306,7 +87311,8 @@
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -87504,18 +87510,20 @@
           "EXPIRY_PAST",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SANDBOX_CONFLICT",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
           "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -87652,6 +87660,207 @@
         ]
       }
     },
+    "/api/v1/workbench/token": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "A 15-minute Workbench token for one org, Test only, bound to this session",
+        "operationId": "workbench.postToken",
+        "tags": [
+          "workbench"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "orgId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "test"
+                      ]
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "subject": {
+                      "type": "string",
+                      "enum": [
+                        "sandbox_key",
+                        "member"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "orgId",
+                    "mode",
+                    "expiresAt",
+                    "subject"
+                  ]
+                },
+                "example": {
+                  "token": "pbtry_northwind-demo-wb.4a3e68bb208016ffcab957",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "mode": "test",
+                  "expiresAt": 1795572900000,
+                  "subject": "member"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "workbench.tokens",
+          "method": "create",
+          "sdk": false,
+          "reason": "Workbench: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONSOLE_ACCESS_REQUIRED",
+          "DEVELOPER_ACCESS_REQUIRED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "SANDBOX_KEY_MISSING",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "End this session's Workbench tokens for the org",
+        "operationId": "workbench.deleteToken",
+        "tags": [
+          "workbench"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "workbench.tokens",
+          "method": "revokeAll",
+          "sdk": false,
+          "reason": "Workbench: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONSOLE_ACCESS_REQUIRED",
+          "DEVELOPER_ACCESS_REQUIRED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/orgs/{id}/entitlements": {
       "get": {
         "security": [
@@ -87743,10 +87952,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -87848,10 +88058,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -87963,11 +88174,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL_SINGLE_MEMBER",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -88060,10 +88272,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -88151,10 +88364,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -88253,10 +88467,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -88344,11 +88559,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -89374,10 +89590,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -89918,15 +90135,16 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_SETUP_CHANGED",
           "PASS_SETUP_EMPTY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_ENROLMENT_HELD",
-          "WALLET_ENROLMENT_PREREQUISITE"
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -90027,10 +90245,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -91607,11 +91826,12 @@
           "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -91785,10 +92005,11 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92019,11 +92240,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -92134,11 +92356,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92217,10 +92440,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92329,12 +92553,13 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92420,12 +92645,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -92547,13 +92774,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92675,13 +92904,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -92798,13 +93029,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -92894,9 +93127,9 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -92906,7 +93139,8 @@
           "VALIDATION",
           "WALLET_ISSUER_EXISTS",
           "WALLET_MODE_MISMATCH",
-          "WALLET_PLATFORM_CREDENTIAL_MISSING"
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -92975,10 +93209,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93079,8 +93314,8 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
@@ -93089,7 +93324,8 @@
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_ISSUER_CLAIMED",
           "WALLET_ISSUER_EXISTS",
-          "WALLET_PLATFORM_CREDENTIAL_MISSING"
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -93150,10 +93386,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93261,10 +93498,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -93367,14 +93605,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_ENROLMENT_PREREQUISITE",
-          "WALLET_IDENTITY_IMMUTABLE"
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93480,12 +93719,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
-          "WALLET_ENROLMENT_PREREQUISITE"
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93559,11 +93799,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_ACCOUNT_CONFLICT"
+          "WALLET_ACCOUNT_CONFLICT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93649,10 +93890,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93744,10 +93986,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -93852,13 +94095,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_ENROLMENT_PREREQUISITE",
-          "WALLET_IDENTITY_IMMUTABLE"
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -94373,10 +94617,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -94452,11 +94697,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -94530,11 +94776,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_HOLD_PLATFORM",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -94631,10 +94878,11 @@
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -94723,11 +94971,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RECEIPT_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -94890,11 +95139,12 @@
           "ORG_HELD",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -96219,11 +96469,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_ACCOUNT_CONFLICT"
+          "WALLET_ACCOUNT_CONFLICT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -96299,10 +96550,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98073,14 +98325,16 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98160,13 +98414,15 @@
           "KEY_CREATOR_NOT_MEMBER",
           "KEY_TEST_ONLY",
           "NOT_A_ZIP",
+          "NOT_FOUND",
           "NO_FILE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -98267,13 +98523,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98373,11 +98631,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "UPLOAD_NOT_FOUND",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98574,14 +98833,15 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONFLICT",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_NOT_SHAREABLE",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98710,16 +98970,18 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -98872,14 +99134,16 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_MODE_MISMATCH",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -99082,12 +99346,13 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -99283,8 +99548,8 @@
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONFLICT",
           "TEMPLATE_EXISTS",
           "TEMPLATE_IN_USE",
@@ -99294,7 +99559,8 @@
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -99362,15 +99628,16 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_BAKED",
           "TEMPLATE_IN_TAG_TYPE",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONFLICT",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -99575,8 +99842,8 @@
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ASSET_CONFLICT",
           "TEMPLATE_BAKED",
           "TEMPLATE_BLUEPRINT_INACTIVE",
@@ -99590,7 +99857,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VERSION_INVALID"
+          "VERSION_INVALID",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -99808,8 +100076,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_REDRAW",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_BAKED",
@@ -99819,7 +100087,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -99977,13 +100246,14 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100145,12 +100415,13 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100228,12 +100499,13 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100431,13 +100703,14 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100571,14 +100844,15 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_ART_MISMATCH"
+          "WALLET_ART_MISMATCH",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100687,14 +100961,15 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -100991,11 +101266,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -101316,13 +101592,14 @@
           "NEW_CODE_UNSUPPORTED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CHANNELS_CHANGED",
           "TEMPLATE_CHANNELS_IMPACT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -101524,13 +101801,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -101546,7 +101823,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -101906,8 +102184,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_ASSET_CONFLICT",
           "TEMPLATE_BAKED",
@@ -101919,7 +102197,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VERSION_INVALID"
+          "VERSION_INVALID",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -102019,15 +102298,16 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_NONE",
           "STAMPS_QUERY",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -102240,8 +102520,8 @@
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ASSET_CONFLICT",
           "TEMPLATE_BAKED",
           "TEMPLATE_BLUEPRINT_INACTIVE",
@@ -102255,7 +102535,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VERSION_INVALID"
+          "VERSION_INVALID",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -102619,8 +102900,8 @@
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_BAKED",
           "TEMPLATE_BLUEPRINT_INACTIVE",
           "TEMPLATE_CONTENT_CHANGED",
@@ -102631,7 +102912,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VERSION_INVALID"
+          "VERSION_INVALID",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -102744,8 +103026,8 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_ROLE_INVALID",
@@ -102775,6 +103057,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
@@ -102963,15 +103246,16 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_BAKED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
           "TEMPLATE_VERSION_CONFLICT",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103155,15 +103439,16 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_BAKED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
           "TEMPLATE_VERSION_CONFLICT",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103239,14 +103524,15 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103399,8 +103685,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_MODE_MISMATCH",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
@@ -103408,7 +103694,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_ART_MISMATCH"
+          "WALLET_ART_MISMATCH",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -103518,8 +103805,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_BAKED",
           "TEMPLATE_CONTENT_CHANGED",
@@ -103537,7 +103824,8 @@
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103651,8 +103939,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_BAKED",
           "TEMPLATE_CONTENT_CHANGED",
@@ -103671,7 +103959,8 @@
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103781,8 +104070,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_BAKED",
           "TEMPLATE_CANDIDATE_NOT_FOUND",
@@ -103800,7 +104089,8 @@
           "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -103957,8 +104247,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_MODE_MISMATCH",
           "TEMPLATE_NOT_FOUND",
@@ -103966,7 +104256,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -104075,8 +104366,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_ABOVE_MAX",
           "STAMPS_QUERY",
           "TEMPLATE_ARCHIVED",
@@ -104096,7 +104387,8 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -104260,8 +104552,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_MODE_MISMATCH",
           "TEMPLATE_NOT_FOUND",
@@ -104270,7 +104562,8 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -104438,8 +104731,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_MODE_MISMATCH",
           "TEMPLATE_NOT_FOUND",
@@ -104447,7 +104740,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -104550,8 +104844,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_ABOVE_MAX",
           "STAMPS_QUERY",
           "TEMPLATE_ARCHIVED",
@@ -104572,7 +104866,8 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -104692,6 +104987,7 @@
           }
         },
         "operationId": "templates.postTemplatesByIdRelease",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates.releases",
           "method": "release"
@@ -105086,8 +105382,8 @@
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STAMPS_ABOVE_MAX",
           "STAMPS_QUERY",
           "TEMPLATE_ARCHIVED",
@@ -105113,7 +105409,8 @@
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -105226,14 +105523,16 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -105670,6 +105969,7 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -106326,6 +106626,7 @@
           }
         },
         "operationId": "passes.getPasses",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes",
           "method": "list"
@@ -106350,9 +106651,11 @@
           "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -106522,6 +106825,7 @@
           }
         },
         "operationId": "passes.postPasses",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes",
           "method": "create"
@@ -106582,11 +106886,11 @@
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "MODE_MISMATCH",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -106596,6 +106900,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -106612,7 +106917,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -106700,9 +107006,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -106807,13 +107115,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VIEWS_CHANGED"
+          "VIEWS_CHANGED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -106912,14 +107222,15 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SELECTION_CHANGED",
           "SELECTION_USE_RUN",
           "TELL_ALREADY_SENT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -107005,9 +107316,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -107108,6 +107421,7 @@
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -107208,10 +107522,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -107364,6 +107679,7 @@
           }
         },
         "operationId": "passes.getPassesById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes",
           "method": "retrieve"
@@ -107393,15 +107709,16 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -107491,13 +107808,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -107513,7 +107830,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -107680,6 +107998,7 @@
           }
         },
         "operationId": "passes.patchPassesById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes",
           "method": "update"
@@ -107726,7 +108045,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_INPUT_INVALID",
@@ -107735,6 +108053,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -107751,7 +108070,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -107950,7 +108270,6 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_NOT_FOUND",
@@ -107958,10 +108277,12 @@
           "PASS_REMOVED",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108030,6 +108351,7 @@
           }
         },
         "operationId": "passes.postPassesByIdVoid",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes",
           "method": "void"
@@ -108055,11 +108377,12 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108153,11 +108476,12 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108231,13 +108555,14 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108311,14 +108636,15 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108511,17 +108837,18 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_NOT_FOUND",
-          "VERSION_PURGED"
+          "VERSION_PURGED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108597,6 +108924,7 @@
           }
         },
         "operationId": "passes.getPassesByIdDiff",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes.versions",
           "method": "diff"
@@ -108621,15 +108949,16 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_NOT_FOUND",
-          "VERSION_PURGED"
+          "VERSION_PURGED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108721,7 +109050,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -108729,6 +109057,7 @@
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -108744,7 +109073,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108848,19 +109178,20 @@
           "NO_RECIPIENT",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PASS_REMOVED",
           "RATE_LIMITED",
           "RECIPIENT_NOT_HOLDER",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -108953,6 +109284,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -109063,13 +109395,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -109085,7 +109417,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -109184,13 +109517,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -109206,7 +109539,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -109289,6 +109623,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -109407,13 +109742,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -109429,7 +109764,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -109540,13 +109876,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -109562,7 +109898,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -109659,13 +109996,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -109681,7 +110018,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -109746,6 +110084,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -109832,12 +110171,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -109930,6 +110271,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -110037,15 +110379,16 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -110256,7 +110599,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -110264,6 +110606,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -110282,7 +110625,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -110490,7 +110834,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -110498,6 +110841,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -110516,7 +110860,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -110633,7 +110978,6 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
@@ -110644,6 +110988,7 @@
           "RATE_LIMITED",
           "RECIPIENT_NOT_HOLDER",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -110662,7 +111007,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -110738,9 +111084,10 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
@@ -110749,7 +111096,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -110877,13 +111225,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -110899,7 +111247,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111178,6 +111527,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -111499,13 +111849,13 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -111521,7 +111871,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111607,17 +111958,19 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_ACTIVE",
           "PASS_NOT_FOUND",
           "PRINTING_OFF",
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111704,11 +112057,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PRINT_JOB_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111781,11 +112135,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PRINT_JOB_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -111872,16 +112227,17 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_ACTIVE",
           "PASS_NOT_FOUND",
           "PRINTING_OFF",
           "PRINT_CODE_UNAVAILABLE",
           "PRINT_CONFLICT",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -111969,6 +112325,7 @@
           "ORG_FORBIDDEN",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -112062,13 +112419,14 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_ACTIVE",
           "PRINT_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112136,12 +112494,13 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112210,13 +112569,14 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112301,13 +112661,14 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112384,12 +112745,13 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112495,6 +112857,7 @@
           }
         },
         "operationId": "passes.getPassesByIdEvents",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes.activity",
           "method": "list"
@@ -112520,11 +112883,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112601,6 +112965,7 @@
           }
         },
         "operationId": "passes.getPassesByIdDevices",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "passes.devices",
           "method": "list"
@@ -112625,11 +112990,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112756,7 +113122,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -112764,6 +113129,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -112779,7 +113145,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -112892,7 +113259,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -112900,6 +113266,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -112915,7 +113282,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -113038,12 +113406,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -113206,12 +113576,14 @@
           "IMPORT_MAPPINGS_FULL",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -113300,12 +113672,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -113415,10 +113789,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -113745,10 +114120,11 @@
           "IMPORT_PLAN_INVALID",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_IS_BLUEPRINT",
           "TEMPLATE_NOT_FOUND",
@@ -113759,7 +114135,8 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -114030,12 +114407,14 @@
           "IMPORT_HEADER_TOO_LONG",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -114302,8 +114681,8 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_IS_BLUEPRINT",
           "TEMPLATE_NOT_FOUND",
@@ -114313,7 +114692,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -114398,10 +114778,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -114706,8 +115087,8 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_IS_BLUEPRINT",
           "TEMPLATE_NOT_FOUND",
@@ -114717,7 +115098,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115004,10 +115386,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115184,11 +115567,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115265,10 +115649,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115344,11 +115729,12 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115467,7 +115853,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -115475,6 +115860,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -115491,7 +115877,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115607,19 +115994,20 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PASS_REMOVED",
           "RATE_LIMITED",
           "RECIPIENT_NOT_HOLDER",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115746,13 +116134,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -115862,14 +116252,15 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "NO_RECIPIENT",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RECIPIENT_NOT_HOLDER",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -115877,7 +116268,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -115971,11 +116363,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -116047,10 +116440,11 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116154,11 +116548,11 @@
           "NO_RECIPIENT",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RECIPIENT_NOT_HOLDER",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -116166,7 +116560,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116261,11 +116656,12 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116529,8 +116925,8 @@
           "JOIN_NOT_READY",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_IS_BLUEPRINT",
           "TEMPLATE_NOT_FOUND",
@@ -116539,7 +116935,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116661,8 +117058,8 @@
           "JOIN_LINK_NOT_FOUND",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_IS_BLUEPRINT",
           "TEMPLATE_NOT_FOUND",
@@ -116671,7 +117068,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116753,6 +117151,7 @@
           }
         },
         "operationId": "sandbox.getTestInbox",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "testEmails",
           "method": "list"
@@ -116776,14 +117175,16 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SESSION_REQUIRED",
           "TEST_KEY_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116865,6 +117266,7 @@
           }
         },
         "operationId": "sandbox.getTestInboxById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "testEmails",
           "method": "retrieve"
@@ -116891,12 +117293,13 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SESSION_REQUIRED",
           "TEST_KEY_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -116957,6 +117360,7 @@
           }
         },
         "operationId": "sandbox.getTestInboxByIdHtml",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "testEmails",
           "method": "retrieveHtml",
@@ -116975,11 +117379,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SESSION_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -117046,6 +117451,7 @@
           }
         },
         "operationId": "sandbox.postTestInboxByIdSendToMe",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "testEmails",
           "method": "sendToMe",
@@ -117069,15 +117475,16 @@
           "NOT_FOUND",
           "NO_VERIFIED_EMAIL",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_FILE_MISSING",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SESSION_REQUIRED",
           "TEST_FORWARD_ALREADY_ATTEMPTED",
           "TEST_FORWARD_CHANGED",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -117264,12 +117671,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -117407,12 +117816,13 @@
           "MATCH_TOO_BROAD",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SELECTION_CHANGED",
           "TELL_ALREADY_SENT",
           "TEMPLATE_CONTENT_CHANGED",
@@ -117421,7 +117831,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -117533,10 +117944,11 @@
           "INVALID_API_KEY",
           "MATCH_TOO_BROAD",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SELECTION_CHANGED",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
@@ -117544,7 +117956,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -117646,10 +118059,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -117792,9 +118206,9 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SELECTION_CHANGED",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
@@ -117802,7 +118216,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -117921,10 +118336,11 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -118028,10 +118444,11 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -118166,9 +118583,9 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SELECTION_CHANGED",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
@@ -118176,7 +118593,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -118291,10 +118709,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -118616,11 +119035,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -118739,22 +119160,24 @@
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_HOURS_NEED_DATETIME",
           "RULE_INPUT_MISMATCH",
           "RULE_INPUT_MISSING",
           "RULE_LIMIT",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -118855,11 +119278,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -118994,7 +119418,6 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_HOURS_NEED_DATETIME",
           "RULE_INPUT_MISMATCH",
@@ -119002,13 +119425,15 @@
           "RULE_LIMIT",
           "RULE_NOT_FOUND",
           "RULE_VERSION",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -119078,11 +119503,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119183,11 +119609,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119313,11 +119740,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119425,19 +119853,21 @@
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RULE_HOURS_NEED_DATETIME",
           "RULE_INPUT_MISMATCH",
           "RULE_INPUT_MISSING",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119557,20 +119987,21 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "RULE_HOURS_NEED_DATETIME",
           "RULE_INPUT_MISMATCH",
           "RULE_INPUT_MISSING",
           "RULE_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119695,12 +120126,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119780,11 +120213,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -119887,7 +120321,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -119895,6 +120328,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -119909,7 +120343,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120036,7 +120471,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -120044,6 +120478,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -120058,7 +120493,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120160,7 +120596,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -120168,6 +120603,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -120182,7 +120618,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120283,7 +120720,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -120291,6 +120727,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -120305,7 +120742,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120399,7 +120837,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -120407,6 +120844,7 @@
           "PASS_TRANSFER_NOT_FOUND",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -120421,7 +120859,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120535,7 +120974,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
@@ -120545,6 +120983,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -120560,7 +120999,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120651,13 +121091,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120790,8 +121232,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -120799,7 +121241,8 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120894,10 +121337,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -120987,9 +121431,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -121008,7 +121452,8 @@
           "WEBHOOK_NOT_FOUND",
           "WEBHOOK_REFERENCE_MODE_CHANGED",
           "WEBHOOK_SNAPSHOT_UNAVAILABLE",
-          "WEBHOOK_STALE_CONTEXT"
+          "WEBHOOK_STALE_CONTEXT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -121099,9 +121544,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -121114,7 +121559,8 @@
           "WEBHOOK_NOTHING_TO_RESOLVE",
           "WEBHOOK_NOT_FOUND",
           "WEBHOOK_RESOLVE_CONFLICT",
-          "WEBHOOK_STILL_PENDING"
+          "WEBHOOK_STILL_PENDING",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -121278,11 +121724,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -121432,12 +121880,13 @@
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -121448,7 +121897,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -121523,11 +121973,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -121695,18 +122147,20 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -121851,10 +122305,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -122018,16 +122473,17 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -122105,16 +122561,17 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -122267,16 +122724,17 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -122406,10 +122864,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -122541,16 +123000,17 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -122642,16 +123102,17 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -122890,13 +123351,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -123127,12 +123590,13 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -123273,10 +123737,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -123417,9 +123882,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -123430,7 +123895,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -123508,16 +123974,17 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -123687,10 +124154,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -123698,7 +124166,8 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -123788,9 +124257,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -123798,7 +124267,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -123881,16 +124351,17 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_INACTIVE",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124001,10 +124472,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124146,9 +124618,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -124156,7 +124628,8 @@
           "STEP_UP_REQUIRED",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124280,16 +124753,17 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124411,12 +124885,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124536,10 +125012,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124625,6 +125102,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpoints",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "list"
@@ -124647,11 +125125,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -124745,6 +125225,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpoints",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "create"
@@ -124776,11 +125257,12 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -124792,7 +125274,8 @@
           "UNSAFE_URL",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -124863,6 +125346,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "retrieve"
@@ -124887,11 +125371,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -124978,6 +125463,7 @@
           }
         },
         "operationId": "webhooks.patchWebhookEndpointsById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "update"
@@ -125013,9 +125499,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125027,7 +125513,8 @@
           "UNSAFE_URL",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -125073,6 +125560,7 @@
           }
         },
         "operationId": "webhooks.deleteWebhookEndpointsById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "delete"
@@ -125103,9 +125591,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125114,7 +125602,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125175,6 +125664,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdSecret",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "rotateSecret"
@@ -125209,9 +125699,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125221,7 +125711,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125286,6 +125777,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdTest",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "sendTest"
@@ -125320,10 +125812,10 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "SAMPLE_EVENT_LIVE",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125333,7 +125825,8 @@
           "UNSAFE_URL",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125409,6 +125902,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsCapture",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "ensureCapture"
@@ -125437,11 +125931,12 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125450,7 +125945,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125585,6 +126081,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "list"
@@ -125610,11 +126107,12 @@
           "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125687,6 +126185,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "retrieve"
@@ -125712,12 +126211,13 @@
           "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_CAPTURE_NOT_FOUND",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125790,6 +126290,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "replay"
@@ -125824,9 +126325,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125837,7 +126338,8 @@
           "VALIDATION",
           "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -125885,6 +126387,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdCapturesSecret",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "revealSecret"
@@ -125921,9 +126424,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -125934,7 +126437,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126079,6 +126583,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.deliveries",
           "method": "list"
@@ -126104,11 +126609,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126166,6 +126672,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdTests",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.tests",
           "method": "list"
@@ -126190,11 +126697,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126290,6 +126798,7 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.deliveries",
           "method": "retrieve"
@@ -126314,11 +126823,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126376,6 +126886,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.deliveries",
           "method": "replay"
@@ -126407,9 +126918,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -126418,7 +126929,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126482,6 +126994,7 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdReplay",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "webhookEndpoints.deliveries",
           "method": "bulkReplay"
@@ -126512,10 +127025,10 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "REPLAY_TOO_LARGE",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -126524,7 +127037,8 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
-          "WEBHOOK_ENDPOINT_NOT_FOUND"
+          "WEBHOOK_ENDPOINT_NOT_FOUND",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126644,6 +127158,7 @@
           }
         },
         "operationId": "events.getEvents",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "events",
           "method": "list"
@@ -126667,11 +127182,13 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126756,6 +127273,7 @@
           }
         },
         "operationId": "events.getEventsById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "events",
           "method": "retrieve"
@@ -126781,10 +127299,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -126900,11 +127419,13 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -127823,10 +128344,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128040,13 +128562,15 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128124,10 +128648,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128216,16 +128741,17 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128448,13 +128974,15 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128566,9 +129094,9 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -128576,7 +129104,8 @@
           "STEP_UP_REQUIRED",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128723,13 +129252,15 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_NOT_FOUND",
-          "WALLET_PROJECTION_SCHEMA_RETIRED"
+          "WALLET_PROJECTION_SCHEMA_RETIRED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128826,12 +129357,14 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_MODE_MISMATCH"
+          "WALLET_MODE_MISMATCH",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -128913,16 +129446,18 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_ACCOUNT_MOVED",
           "WALLET_CREDENTIALS_INVALID",
           "WALLET_IDENTITY_IMMUTABLE",
-          "WALLET_MODE_MISMATCH"
+          "WALLET_MODE_MISMATCH",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -128998,15 +129533,17 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_ACCOUNT_CONFLICT",
           "WALLET_ACCOUNT_INSTANCES_ACTIVE",
           "WALLET_ACCOUNT_MOVED",
-          "WALLET_MODE_MISMATCH"
+          "WALLET_MODE_MISMATCH",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -129102,11 +129639,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -129180,12 +129718,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -130617,11 +131157,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
-          "UNAUTHENTICATED"
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -130762,12 +131304,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -130883,6 +131427,7 @@
           }
         },
         "operationId": "api-keys.postApiKeysByIdRotate",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "rotate"
@@ -130922,11 +131467,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131023,6 +131569,7 @@
           }
         },
         "operationId": "api-keys.getApiKeysById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "retrieve"
@@ -131049,10 +131596,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -131119,6 +131667,7 @@
           }
         },
         "operationId": "api-keys.deleteApiKeysById",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "revoke"
@@ -131145,10 +131694,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131273,6 +131823,7 @@
           }
         },
         "operationId": "api-keys.getApiKeysByIdActivity",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys.activity",
           "method": "list"
@@ -131299,10 +131850,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131433,6 +131985,7 @@
           }
         },
         "operationId": "api-keys.getApiKeys",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "list"
@@ -131456,12 +132009,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -131541,6 +132096,7 @@
           }
         },
         "operationId": "api-keys.postApiKeys",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "create"
@@ -131583,13 +132139,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131651,6 +132209,7 @@
           }
         },
         "operationId": "api-keys.postApiKeysByIdRetire",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "apiKeys",
           "method": "retire"
@@ -131677,10 +132236,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131772,12 +132332,14 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "put": {
@@ -131871,14 +132433,16 @@
           "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SETTINGS_CHANGED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -131990,11 +132554,13 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -132061,13 +132627,15 @@
           "IDENTITY_NOT_FOUND",
           "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "REPLY_TO_NOTHING_PENDING",
           "REPLY_TO_RESEND_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -132131,12 +132699,14 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "REPLY_TO_LINK_INVALID",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -132339,12 +132909,14 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -132693,12 +133265,14 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -137229,7 +137803,6 @@
           "NOT_INSIDE",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -137240,6 +137813,7 @@
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
           "ROLL_CALL_NO_SESSION",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -137580,7 +138154,6 @@
           "NOT_INSIDE",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -137593,6 +138166,7 @@
           "ROLL_CALL_NO_PLACES",
           "ROLL_CALL_NO_SESSION",
           "ROLL_CALL_TOO_LARGE",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -137951,7 +138525,6 @@
           "NOT_INSIDE",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -137962,6 +138535,7 @@
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
           "ROLL_CALL_NO_SESSION",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -138426,7 +139000,6 @@
           "NOT_INSIDE",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -138438,6 +139011,7 @@
           "ROLL_CALL_ENDED",
           "ROLL_CALL_NOT_FOUND",
           "ROLL_CALL_NO_SESSION",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -138796,7 +139370,6 @@
           "NOT_INSIDE",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -138807,6 +139380,7 @@
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
           "ROLL_CALL_NO_SESSION",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -139666,7 +140240,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -139676,6 +140249,7 @@
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -141186,12 +141760,12 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -141467,11 +142041,11 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "PIN_INVALID",
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCANNING_HOLD_RANGE",
@@ -142454,7 +143028,6 @@
           "OFFLINE_OFF",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -142464,6 +143037,7 @@
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -142703,7 +143277,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -142712,6 +143285,7 @@
           "PHOTO_ROLE",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -144793,7 +145367,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -144803,6 +145376,7 @@
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -145825,7 +146399,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -145834,6 +146407,7 @@
           "PIN_MANAGER_REQUIRED",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCANNER_UNAUTHENTICATED",
           "SCAN_CONFIG_CHANGED",
@@ -145997,8 +146571,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_CHANGED",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
@@ -146020,6 +146594,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -146136,14 +146711,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -146269,14 +146845,15 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -146416,8 +146993,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_SETUP_EXISTS",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
@@ -146428,7 +147005,8 @@
           "SCAN_MODE_MISMATCH",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -146570,10 +147148,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -146595,6 +147174,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -146767,16 +147347,18 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -146865,8 +147447,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
           "SCANNER_NOT_PAIRABLE",
@@ -146875,7 +147457,8 @@
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "get": {
@@ -146949,12 +147532,13 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -147042,8 +147626,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
           "SCANNER_NOT_TERMINAL",
@@ -147052,7 +147636,8 @@
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -147181,8 +147766,8 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
           "SCANNER_NOT_PAIRABLE",
@@ -147191,7 +147776,8 @@
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -147278,7 +147864,6 @@
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -147289,6 +147874,7 @@
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "SAMPLE_TEST_ONLY",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNER_REPAIR",
           "SCANNER_UNASSIGNED",
@@ -147308,7 +147894,8 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -147506,16 +148093,18 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -147659,10 +148248,11 @@
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -147684,6 +148274,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -147803,10 +148394,11 @@
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -147824,7 +148416,8 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -147966,14 +148559,15 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -148124,8 +148718,8 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_CHANGED",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
@@ -148147,6 +148741,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -148318,10 +148913,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -148351,6 +148947,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
@@ -148511,16 +149108,18 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -148781,10 +149380,11 @@
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -148806,6 +149406,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -149056,14 +149657,15 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -149325,8 +149927,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_CHANGED",
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
@@ -149348,6 +149950,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
@@ -149616,8 +150219,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_HOLD_RANGE",
           "SCANNING_HOURS_NONE",
@@ -149631,7 +150234,8 @@
           "SCAN_STAFF_CHANGED",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -149838,8 +150442,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
@@ -149852,7 +150456,8 @@
           "SCAN_SURFACE_UNSUPPORTED",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -150066,8 +150671,8 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -150090,7 +150695,8 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -150206,10 +150812,11 @@
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_ADMIN_ROLE",
           "SCANNER_ADMIN_USER",
           "SCANNER_NAME_TAKEN",
@@ -150232,7 +150839,8 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -150423,15 +151031,16 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "SCAN_SUMMARY_SESSION_FORBIDDEN",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -152677,14 +153286,16 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -152786,10 +153397,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_EVENT_CHANGED",
           "SCAN_MODE_LIVE_ONLY",
@@ -152798,7 +153410,8 @@
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -152889,12 +153502,13 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -153001,8 +153615,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_EVENT_CHANGED",
           "SCAN_MODE_LIVE_ONLY",
@@ -153011,7 +153625,8 @@
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -153104,14 +153719,15 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_CHANGED",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -153222,8 +153838,8 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_CANNOT_SCAN",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_CONFIG_REQUIRED",
@@ -153235,7 +153851,8 @@
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -153928,15 +154545,17 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -154023,10 +154642,11 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_CHANGED",
@@ -154035,7 +154655,8 @@
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_TAKEN",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -154147,8 +154768,8 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_CHANGED",
@@ -154157,7 +154778,8 @@
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_TAKEN",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -154246,13 +154868,14 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_NOT_FOUND",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -154339,13 +154962,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -154407,14 +155031,16 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -154552,12 +155178,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -154656,14 +155284,16 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
           "ZONE_KEY_TAKEN",
@@ -154784,12 +155414,13 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
           "ZONE_KEY_TAKEN",
@@ -154897,12 +155528,13 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
           "ZONE_KEY_TAKEN",
@@ -155010,12 +155642,13 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WORKBENCH_TEST_ONLY",
           "ZONE_CYCLE",
           "ZONE_DEPTH",
           "ZONE_KEY_TAKEN",
@@ -155094,13 +155727,14 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -155976,15 +156610,17 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -156192,16 +156828,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_EXPORT_RANGE",
           "SCAN_EXPORT_TOO_LARGE",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -156300,13 +156938,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_NOT_FOUND",
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -156638,13 +157277,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_MODE_MISMATCH",
           "SCAN_NOT_FOUND",
           "SCAN_UNDO_EXPIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -156792,7 +157432,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -156802,6 +157441,7 @@
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_IN_PROGRESS",
@@ -156825,7 +157465,8 @@
           "UNDO_SUPERSEDED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -156966,7 +157607,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -156978,6 +157618,7 @@
           "ROLL_CALL_NOT_FOUND",
           "ROLL_CALL_NO_PLACES",
           "ROLL_CALL_TOO_LARGE",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_IN_PROGRESS",
@@ -157001,7 +157642,8 @@
           "UNDO_SUPERSEDED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -157157,7 +157799,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -157167,6 +157808,7 @@
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_IN_PROGRESS",
@@ -157190,7 +157832,8 @@
           "UNDO_SUPERSEDED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -157373,7 +158016,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -157384,6 +158026,7 @@
           "RETENTION_CHANGED",
           "ROLL_CALL_ENDED",
           "ROLL_CALL_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_IN_PROGRESS",
@@ -157407,7 +158050,8 @@
           "UNDO_SUPERSEDED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -157563,7 +158207,6 @@
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -157573,6 +158216,7 @@
           "RATE_LIMITED",
           "RETENTION_CHANGED",
           "ROLL_CALL_NOT_FOUND",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_IN_PROGRESS",
@@ -157596,7 +158240,8 @@
           "UNDO_SUPERSEDED",
           "VALIDATION",
           "VERSION_CONFLICT",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -157706,9 +158351,10 @@
           "CSRF_ORIGIN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCAN_CONFIG_CHANGED",
           "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
           "SCAN_STAFF_CHANGED",
@@ -157717,7 +158363,8 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "WALLET_PROJECTION_UNSUPPORTED"
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -157836,11 +158483,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -157955,9 +158603,9 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAGS_OFF",
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
@@ -157977,7 +158625,8 @@
           "TAG_UNDO_EXPIRED",
           "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158083,14 +158732,15 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_KEY_LIMITED",
           "TAG_NOT_FOUND",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -158205,9 +158855,9 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAGS_OFF",
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
@@ -158226,7 +158876,8 @@
           "TAG_TYPE_SYSTEM",
           "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158400,15 +159051,17 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_KEY_LIMITED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158513,11 +159166,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "patch": {
@@ -158628,14 +159282,15 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_NOT_FOUND",
           "TAG_POOL_UNSUPPORTED",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158734,13 +159389,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_NOT_FOUND",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158846,9 +159502,9 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAGS_OFF",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
@@ -158866,7 +159522,8 @@
           "TAG_TYPE_SYSTEM",
           "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -158972,9 +159629,9 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAGS_OFF",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
@@ -158992,7 +159649,8 @@
           "TAG_TYPE_SYSTEM",
           "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159076,12 +159734,14 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159193,9 +159853,9 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_NOT_FOUND",
           "SCANNER_NO_TAGS",
           "SCANNER_OFFLINE",
@@ -159206,7 +159866,8 @@
           "TAG_REQUEST_BUSY",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159309,11 +159970,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "delete": {
@@ -159415,12 +160077,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_TYPE_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159546,9 +160209,9 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAGS_OFF",
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
@@ -159569,7 +160232,8 @@
           "TAG_TYPE_SYSTEM",
           "TAG_USE_MISMATCH",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159675,11 +160339,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "TAG_NOT_FOUND",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159805,10 +160470,11 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -159921,11 +160587,13 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -160031,11 +160699,12 @@
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -160050,7 +160719,8 @@
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "VALIDATION",
-          "VERSION_CONFLICT"
+          "VERSION_CONFLICT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160158,9 +160828,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -160175,7 +160845,8 @@
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "VALIDATION",
-          "VERSION_CONFLICT"
+          "VERSION_CONFLICT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160282,9 +160953,9 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -160297,7 +160968,8 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION",
-          "VERSION_CONFLICT"
+          "VERSION_CONFLICT",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160400,12 +161072,14 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       },
       "post": {
@@ -160524,12 +161198,14 @@
           "KEYSET_KEY_WEAK",
           "KEYSET_NOT_FOUND",
           "MISSING_SCOPE",
+          "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160655,11 +161331,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160761,10 +161438,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160866,10 +161544,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -160977,10 +161656,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -161087,11 +161767,12 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -161182,10 +161863,11 @@
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
         ]
       }
     },
@@ -161767,7 +162449,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -161777,6 +162458,7 @@
           "PERSONALIZATION_UNAVAILABLE",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -163157,7 +163839,6 @@
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
           "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
           "PASS_CONFLICT",
           "PASS_INPUT_INVALID",
           "PASS_INVALID",
@@ -163167,6 +163848,7 @@
           "PASS_TRANSFER_PENDING",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",
@@ -163329,9 +164011,9 @@
           "LINEAGE_CHANGED",
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
-          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
           "SCANNER_REPAIR",
           "SCAN_CONFIG_CHANGED",
           "SCAN_STAFF_CHANGED",

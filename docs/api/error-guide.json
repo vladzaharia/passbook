@@ -1607,12 +1607,6 @@
     "fix": "Send the status change in its own request, then the other edits.",
     "retryable": false
   },
-  "ORG_TEST_ONLY": {
-    "title": "Organization is test-only",
-    "when": "A Live request named a developer sandbox organization, which never holds Live.",
-    "fix": "Send the request in Test mode, or use an organization with live access.",
-    "retryable": false
-  },
   "PAIRING_INVALID": {
     "title": "Pairing code invalid",
     "when": "The pairing code is wrong, used or expired.",
@@ -3879,6 +3873,18 @@
     "title": "Admin roles need the console",
     "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
     "fix": "Do it from the console with a recent sign-in.",
+    "retryable": false
+  },
+  "SANDBOX_TEST_ONLY": {
+    "title": "Sandbox is Test only",
+    "when": "A request asked for Live in a developer sandbox, which never holds Live: a session or key that sent X-PassBook-Mode: live.",
+    "fix": "Send the request in Test mode, or use an organization with Live access.",
+    "retryable": false
+  },
+  "WORKBENCH_TEST_ONLY": {
+    "title": "Workbench is Test only",
+    "when": "A Workbench token asked for Live (a mode header, Live in modes, a Live key), or called an operation not marked x-workbench: test.",
+    "fix": "Stay in Test, or do it in admin or from your server with a key.",
     "retryable": false
   }
 }
