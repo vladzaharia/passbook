@@ -310,8 +310,6 @@ describe('step-up route inventory', () => {
         "POST /api/v1/platform/idp/scim-breaker/clear",
         "POST /api/v1/platform/invitations",
         "POST /api/v1/platform/invitations/:id/resend",
-        "POST /api/v1/platform/invitations",
-        "POST /api/v1/platform/invitations/:id/resend",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
         "POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready",
         "POST /api/v1/users/:id/emails",

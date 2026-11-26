@@ -266,7 +266,7 @@ describe('Group detail', () => {
     await user.click(within(dialog).getByRole('combobox', { name: /Type/ }));
     await user.click(await screen.findByRole('option', { name: 'Number' }));
     await user.type(within(dialog).getByLabelText(/^Value/), '12');
-    await user.click(within(dialog).getByRole('button', { name: 'Add claim' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save claim' }));
     await waitFor(() =>
       expect(bodies).toEqual([{ set: { passbook_seats: { type: 'number', value: 12 } } }]),
     );

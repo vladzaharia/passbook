@@ -3461,6 +3461,7 @@ type MembershipsListResponseItemsItem struct {
 	RevokedAt    *int64   `json:"revokedAt"`
 	UserName     *string  `json:"userName"`
 	UserEmail    *string  `json:"userEmail"`
+	AccessPaused *bool    `json:"accessPaused,omitempty"`
 }
 
 type MembershipsRevokeResponse struct {
@@ -3485,6 +3486,7 @@ type MembershipsUpdateRolesResponse struct {
 	RevokedAt    *int64   `json:"revokedAt"`
 	UserName     *string  `json:"userName"`
 	UserEmail    *string  `json:"userEmail"`
+	AccessPaused *bool    `json:"accessPaused,omitempty"`
 }
 
 type MessageRulesCountDueBody = MessageRulesCountDueParams
@@ -8833,6 +8835,59 @@ type PlatformIdpScimBreakerClearResponseOperationStepsItem struct {
 	Group         *string `json:"group"`
 	StartedAt     *int64  `json:"startedAt"`
 	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformInvitationsCreateParams struct {
+	Email     string   `json:"email"`
+	Groups    []string `json:"groups,omitempty"`
+	Developer *bool    `json:"developer,omitempty"`
+}
+
+type PlatformInvitationsCreateResponse struct {
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	Link       string   `json:"link"`
+}
+
+type PlatformInvitationsListResponse struct {
+	Items      []PlatformInvitationsListResponseItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformInvitationsListResponseItemsItem struct {
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+}
+
+type PlatformInvitationsResendResponse struct {
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Groups     []string `json:"groups"`
+	Developer  bool     `json:"developer"`
+	State      string   `json:"state"`
+	CreatedAt  int64    `json:"createdAt"`
+	ExpiresAt  int64    `json:"expiresAt"`
+	AcceptedAt *int64   `json:"acceptedAt"`
+	RevokedAt  *int64   `json:"revokedAt"`
+	Link       string   `json:"link"`
+}
+
+type PlatformInvitationsRevokeResponse struct {
+	Ok bool `json:"ok"`
 }
 
 type PlatformMetricsRetrieveOverviewResponse struct {

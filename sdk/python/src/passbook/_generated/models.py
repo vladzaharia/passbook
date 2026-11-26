@@ -1185,6 +1185,12 @@ __all__ = [
     "PlatformIdpScimBreakerClearResponseOperation",
     "PlatformIdpScimBreakerClearResponseOperationStartedBy",
     "PlatformIdpScimBreakerClearResponseOperationStepsItem",
+    "PlatformInvitationsCreateParams",
+    "PlatformInvitationsCreateResponse",
+    "PlatformInvitationsListResponse",
+    "PlatformInvitationsListResponseItemsItem",
+    "PlatformInvitationsResendResponse",
+    "PlatformInvitationsRevokeResponse",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -4922,6 +4928,7 @@ class MembershipsListResponseItemsItem(_Model):
     revokedAt: int | None
     userName: str | None
     userEmail: str | None
+    accessPaused: bool | None = None
 
 class MembershipsRevokeResponse(_Model):
     ok: _Literal[True]
@@ -4943,6 +4950,7 @@ class MembershipsUpdateRolesResponse(_Model):
     revokedAt: int | None
     userName: str | None
     userEmail: str | None
+    accessPaused: bool | None = None
 
 class MessageRulesCountDueParams(_Model):
     orgId: str
@@ -9349,6 +9357,53 @@ class PlatformIdpScimBreakerClearResponseOperationStepsItem(_Model):
     group: str | None
     startedAt: int | None
     finishedAt: int | None
+
+class PlatformInvitationsCreateParams(_Model):
+    email: str
+    groups: _List[str] | None = None
+    developer: bool | None = None
+
+class PlatformInvitationsCreateResponse(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+    link: str
+
+class PlatformInvitationsListResponse(_Model):
+    items: _List[PlatformInvitationsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformInvitationsListResponseItemsItem(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+
+class PlatformInvitationsResendResponse(_Model):
+    id: str
+    email: str
+    groups: _List[str]
+    developer: bool
+    state: _Literal["pending", "accepted", "expired", "revoked"] | str
+    createdAt: int
+    expiresAt: int
+    acceptedAt: int | None
+    revokedAt: int | None
+    link: str
+
+class PlatformInvitationsRevokeResponse(_Model):
+    ok: _Literal[True]
 
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str

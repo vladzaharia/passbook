@@ -2916,6 +2916,7 @@ export type MembershipsListResponse = {
     revokedAt: number | null;
     userName: string | null;
     userEmail: string | null;
+    accessPaused?: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -2942,6 +2943,7 @@ export type MembershipsUpdateRolesResponse = {
   revokedAt: number | null;
   userName: string | null;
   userEmail: string | null;
+  accessPaused?: boolean;
 };
 
 export type MessageRulesCountDueParams = {
@@ -7679,6 +7681,57 @@ export type PlatformIdpScimBreakerClearResponse = {
     revision: number;
     pollAfterMs: number;
   };
+};
+
+export type PlatformInvitationsCreateParams = {
+  email: string;
+  groups?: Array<string>;
+  developer?: boolean;
+};
+
+export type PlatformInvitationsCreateResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link: string;
+};
+
+export type PlatformInvitationsListResponse = {
+  items: Array<{
+    id: string;
+    email: string;
+    groups: Array<string>;
+    developer: boolean;
+    state: "pending" | "accepted" | "expired" | "revoked";
+    createdAt: number;
+    expiresAt: number;
+    acceptedAt: number | null;
+    revokedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformInvitationsResendResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  link: string;
+};
+
+export type PlatformInvitationsRevokeResponse = {
+  ok: true;
 };
 
 export type PlatformMetricsRetrieveOverviewResponse = {

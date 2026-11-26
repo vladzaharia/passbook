@@ -3,7 +3,6 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Group } from '@/shared/contracts/idp-access.ts';
 import { IDP_COPY } from '@/shared/copy/idp.ts';
-import { GROUP_COPY } from '@/shared/copy/idp-platform.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import {
   Button,
