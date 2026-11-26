@@ -165,9 +165,16 @@ describe('Keys in the Workbench', () => {
     expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
   });
 
-  it('a sandbox has no keys here: the server refuses its token', async () => {
-    await renderApp('/workbench/o/sbx/keys', { session: 'developer', handlers: keysApi() });
-    expect(await screen.findByText('Keys are not available in a sandbox')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
+  it('a sandbox lists and makes keys like an org: its person is its admin', async () => {
+    await renderApp('/workbench/o/sbx/keys', {
+      session: 'developer',
+      handlers: {
+        ...keysApi(),
+        '/api/v1/api-keys': () =>
+          json({ items: [key({ orgId: 'sbx' })], nextCursor: null, revokedCount: 0 }),
+      },
+    });
+    expect(await screen.findByText('CI key')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
   });
 });

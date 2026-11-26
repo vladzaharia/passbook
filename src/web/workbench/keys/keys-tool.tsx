@@ -1,11 +1,10 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { lazy, type ReactNode, Suspense, useCallback, useMemo, useState } from 'react';
+import { OrgCapabilitySchema } from '@/shared/contracts/org-membership.ts';
 import { WORKBENCH_KEY_MAX_MS, WORKBENCH_KEY_SCOPES } from '@/shared/contracts/workbench.ts';
-import { WB_KEYS_COPY } from '@/shared/copy/workbench-keys.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { type KeysHost, KeysHostProvider } from '../../admin/api-keys/keys-host.tsx';
 import { useMemberships, useSession } from '../../lib/session.ts';
-import { NoAccessState } from '../../ui/no-access-state.tsx';
 import { RowLink } from '../../ui/row-link.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
@@ -32,14 +31,6 @@ const KeyDetailView = lazy(() =>
  * A key opens at `#<keyId>` in place of the list.
  */
 export function KeysTool() {
-  const host = useToolHost();
-  // A sandbox token holds no key scopes: the server refuses its list, create and rotate (key-access.test.ts).
-  if (host.context.kind === 'sandbox')
-    return (
-      <ToolPage tool="keys">
-        <NoAccessState title={WB_KEYS_COPY.sandbox} />
-      </ToolPage>
-    );
   return <OrgKeys />;
 }
 
@@ -51,16 +42,20 @@ function OrgKeys() {
   const hash = useLocation({ select: (l) => l.hash });
   const search = useLocation({ select: (l) => l.searchStr });
   const [asked, setAsked] = useState(false);
-  const { orgId, name } = host.context;
+  const { orgId, name, kind } = host.context;
   const principal = session.authed?.user.id ?? '';
   const listPath = wbPath(orgId, 'keys');
   const keyId = hash ? decodeURIComponent(hash) : undefined;
 
+  // A sandbox's person is the admin of their own sandbox: the token manages its keys as they do
+  // (key-access.test.ts). An org's member holds what their roles grant.
   const caps = useMemo(
     () =>
-      grants.data?.items.find((m) => m.userId === principal && m.orgId === orgId)?.capabilities ??
-      [],
-    [grants.data, principal, orgId],
+      kind === 'sandbox'
+        ? OrgCapabilitySchema.options
+        : (grants.data?.items.find((m) => m.userId === principal && m.orgId === orgId)
+            ?.capabilities ?? []),
+    [kind, grants.data, principal, orgId],
   );
   const bound = useMemo<KeysHost>(
     () => ({
@@ -98,7 +93,7 @@ function OrgKeys() {
     router.history.replace(`${listPath}${rest ? `?${rest}` : ''}${hash ? `#${hash}` : ''}`);
   }, [search, router, listPath, hash]);
 
-  if (grants.isPending)
+  if (kind !== 'sandbox' && grants.isPending)
     return (
       <ToolPage tool="keys">
         <SkeletonRows label="Loading access" />

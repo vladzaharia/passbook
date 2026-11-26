@@ -30,6 +30,7 @@ async function matrix(token: string, orgId: string) {
     list: list.status,
     create: create.status,
     rotate: rotate?.status ?? null,
+    why: create.status === 201 ? '' : await create.clone().text(),
   };
 }
 
@@ -39,14 +40,44 @@ async function matrix(token: string, orgId: string) {
  * `integrations:*` capabilities, inside S1's cap (Test, Test-data scopes, 30 days).
  */
 describe('Keys access by Workbench token', () => {
-  it('a sandbox token cannot list, make or rotate keys', async () => {
+  it('a sandbox token lists, makes a capped key and rotates it', async () => {
     const d = await t.developer();
     const { token } = await t.wbMint(d.browser, d.made.orgId);
-    expect(await matrix(token, d.made.orgId)).toMatchObject({
-      list: 403,
-      create: 403,
-      rotate: null,
-    });
+    const m = await matrix(token, d.made.orgId);
+    expect(m, JSON.stringify(m)).toMatchObject({ list: 200, create: 201, rotate: 201 });
+  });
+
+  it('a sandbox token holds the cap, revokes capped keys, and never reaches its own key', async () => {
+    const d = await t.developer();
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    const orgId = d.made.orgId;
+    const client = t.asClient(token);
+    const now = t.kit.clock.now();
+    const body = { orgId, name: 'X', kind: 'service', scopes: ['passes:read'] };
+    const make = (extra: object) => t.call('POST', '/api-keys', client, { ...body, ...extra });
+    const made = await make({ expiresAt: now + day });
+    expect(made.status, await made.clone().text()).toBe(201);
+    const { id } = (await made.json()) as { id: string };
+    // Uncapped: wider scope, role preset, no or long expiry, Live.
+    for (const extra of [
+      { scopes: ['passes:read', 'brand:manage'], expiresAt: now + day },
+      { scopes: [], roles: ['org_admin'], expiresAt: now + day },
+      { expiresAt: null },
+      { expiresAt: now + WORKBENCH_KEY_MAX_MS + day },
+      { mode: 'live', expiresAt: now + day },
+    ])
+      expect((await make(extra)).status, JSON.stringify(extra)).toBe(403);
+    // Revoke a capped key; the token's own key is not found for revoke and rotate.
+    expect((await t.call('DELETE', `/api-keys/${id}?orgId=${orgId}`, client)).status).toBe(200);
+    const ownId = d.key.id;
+    expect((await t.call('DELETE', `/api-keys/${ownId}?orgId=${orgId}`, client)).status).toBe(404);
+    expect(
+      (await t.call('POST', `/api-keys/${ownId}/rotate`, client, { orgId, overlapHours: 1 }))
+        .status,
+    ).toBe(404);
+    expect((await t.call('POST', '/api-keys/me/rotate', client, { overlapHours: 1 })).status).toBe(
+      404,
+    );
   });
 
   it('an org admin token lists, makes a capped Test key and rotates it', async () => {
