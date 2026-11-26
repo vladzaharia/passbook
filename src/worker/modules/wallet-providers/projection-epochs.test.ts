@@ -115,7 +115,9 @@ describe('projection approvals and the account epoch', () => {
 });
 
 describe('0141 exemption scope', () => {
-  it('limits the version-author exemption to Google in the approval and release triggers', async () => {
+  // 0141 limited the system author's version-author exemption to Google. 0230 (Samsung system release) extends it to
+  // the platform's own Samsung candidates and to no other provider or author.
+  it('limits the version-author exemption to the platform author and Google or Samsung in the approval and release triggers', async () => {
     for (const name of [
       'template_provider_approvals_insert',
       'template_approvals_insert',
@@ -127,8 +129,12 @@ describe('0141 exemption scope', () => {
         [name],
       );
       expect(row?.sql, name).toContain(
+        "c.author_id = 'system:wallet-projection' AND c.provider IN ('google', 'samsung')",
+      );
+      expect(row?.sql, name).not.toContain(
         "c.author_id = 'system:wallet-projection' AND c.provider = 'google'",
       );
+      expect(row?.sql, name).not.toMatch(/system:wallet-projection'\s+OR/);
     }
   });
 });
