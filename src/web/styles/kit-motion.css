@@ -107,7 +107,12 @@
   }
 }
 
-/* Popovers, menus, selects: grow from the trigger side. */
+/* Popovers, menus, selects: grow from the trigger side. Their edge is the strong border (3:1 on the
+   page, WCAG 1.4.11): the overlay fill is only 1.1:1 on the dark page, so a hairline lets the panel
+   blend into the labels it covers. */
+.wl-pop {
+  border-color: var(--pk-border-strong);
+}
 .wl-pop:is([data-state="open"], [data-state="delayed-open"], [data-state="instant-open"]) {
   animation: wl-pop-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
 }
