@@ -197,7 +197,7 @@ export function SettingRow({
       className={cn(
         'flex min-w-0 flex-col gap-1',
         // An inherited default reads as a value, not a disabled field.
-        placeholder && '[&_input::placeholder]:text-fg',
+        placeholder && placeholder !== field.hint && '[&_input::placeholder]:text-fg',
         !flat && (field.kind === 'int' ? 'items-end' : 'md:items-end'),
       )}
     >

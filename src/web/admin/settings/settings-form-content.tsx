@@ -126,7 +126,7 @@ export function SettingsFormContent({
             placeholder={
               !platform && field.kind !== 'boolean' && entry?.default != null
                 ? String(entry.default)
-                : undefined
+                : field.hint
             }
             disabled={entry?.blockedByPlatform || entry?.blockedByPlan}
             onReset={canReset ? () => reset(field) : undefined}
