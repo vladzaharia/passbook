@@ -34,3 +34,14 @@ export function authorityUnproven(auth: object | undefined): boolean {
   const state = auth ? capabilityState.get(auth) : undefined;
   return state !== undefined && !state.proven;
 }
+
+/**
+ * A session without console access: the handler may show it only what it started. Fail-safe: a session
+ * that never passed `requireCaller`'s console check (no `consoleAccess`) counts as own-only.
+ */
+export const isOwnOnly = (auth: { kind: string } | undefined): boolean =>
+  auth?.kind === 'session' && (auth as { consoleAccess?: boolean }).consoleAccess !== true;
+
+/** A session `requireCaller` admitted without console access (explicit, so other guards' sessions are not refused). */
+export const isMarkedOwnOnly = (auth: { kind: string }): boolean =>
+  auth.kind === 'session' && (auth as { consoleAccess?: boolean }).consoleAccess === false;

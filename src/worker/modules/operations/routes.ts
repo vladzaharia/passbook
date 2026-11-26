@@ -62,7 +62,7 @@ register(
       'Read an operation. An unchanged revision answers 304 when If-None-Match carries its ETag',
     params: OperationParamsSchema,
     response: OperationSchema,
-    auth: { scope: READ_SCOPES },
+    auth: { scope: READ_SCOPES, signIn: 'any' },
   },
   async (c) => {
     const op = await getOperation(serviceContext(c), authOf(c), c.req.valid('param').id);
@@ -84,7 +84,7 @@ register(
       'List operations: started by you, in an organization you read, or platform-wide for admins',
     query: OperationListQuerySchema,
     response: OperationListSchema,
-    auth: { scope: READ_SCOPES },
+    auth: { scope: READ_SCOPES, signIn: 'any' },
   },
   async (c) => c.json(await listOperations(serviceContext(c), authOf(c), c.req.valid('query'))),
 );

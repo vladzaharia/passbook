@@ -22,6 +22,11 @@ export interface SessionAuth {
   /** When the sign-in was last proven (ms); null for an email link or a provider that sent no `auth_time`. */
   authTime?: number | null;
   /**
+   * Set by `requireCaller`: whether the session passed the console checks. A routes that admits sessions
+   * without them (`signIn: 'any'` on a scope route) serves a session where this is not `true` its own only.
+   */
+  consoleAccess?: boolean;
+  /**
    * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
    * never read it (holders see all their passes).
    */
