@@ -198,7 +198,7 @@
     "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
     "op": "DELETE /api/v1/platform/idp/groups/{key}",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "DELETE /api/v1/platform/idp/groups/{key}/members/{id} new operation",
@@ -206,7 +206,7 @@
     "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
     "op": "DELETE /api/v1/platform/idp/groups/{key}/members/{id}",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id} new operation",
@@ -214,7 +214,7 @@
     "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
     "op": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id}",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "DELETE /api/v1/platform/invitations/{id} new operation",
@@ -222,7 +222,7 @@
     "operationId": "platform-invitations.deletePlatformInvitationsById",
     "op": "DELETE /api/v1/platform/invitations/{id}",
     "change": "new operation",
-    "note": ""
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "DELETE /api/v1/scan/draft new operation",
@@ -318,7 +318,7 @@
     "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
     "op": "DELETE /api/v1/users/{id}/holds/{role}",
     "change": "new operation",
-    "note": ""
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
@@ -334,7 +334,7 @@
     "operationId": "api-keys.getApiKeys",
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
@@ -350,7 +350,7 @@
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -374,7 +374,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -806,7 +806,7 @@
     "operationId": "developer.getAccess",
     "op": "GET /api/v1/developer/access",
     "change": "200.invitedBy: field added",
-    "note": ""
+    "note": "Who invited the developer, when the invitation names them."
   },
   {
     "key": "GET /api/v1/developer/access new operation",
@@ -846,7 +846,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -878,7 +878,7 @@
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -1582,7 +1582,7 @@
     "operationId": "organization-memberships.getOrgsByIdMemberships",
     "op": "GET /api/v1/orgs/{id}/memberships",
     "change": "200.items[].accessPaused: field added",
-    "note": ""
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
   },
   {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
@@ -1806,7 +1806,7 @@
     "operationId": "polaris-platform.getPlatformIdp",
     "op": "GET /api/v1/platform/idp",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "GET /api/v1/platform/idp/calls new operation",
@@ -1814,7 +1814,7 @@
     "operationId": "polaris-platform.getPlatformIdpCalls",
     "op": "GET /api/v1/platform/idp/calls",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "GET /api/v1/platform/idp/drift new operation",
@@ -1822,7 +1822,7 @@
     "operationId": "polaris-platform.getPlatformIdpDrift",
     "op": "GET /api/v1/platform/idp/drift",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "GET /api/v1/platform/idp/groups new operation",
@@ -1830,7 +1830,7 @@
     "operationId": "polaris-groups.getPlatformIdpGroups",
     "op": "GET /api/v1/platform/idp/groups",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -1846,7 +1846,7 @@
     "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
     "op": "GET /api/v1/platform/idp/groups/{key}/members",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "GET /api/v1/platform/idp/groups/{key}/rules new operation",
@@ -1854,7 +1854,7 @@
     "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
     "op": "GET /api/v1/platform/idp/groups/{key}/rules",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "GET /api/v1/platform/invitations new operation",
@@ -1862,7 +1862,7 @@
     "operationId": "platform-invitations.getPlatformInvitations",
     "op": "GET /api/v1/platform/invitations",
     "change": "new operation",
-    "note": ""
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -2398,7 +2398,7 @@
     "operationId": "polaris-access.getUsersByIdAccess",
     "op": "GET /api/v1/users/{id}/access",
     "change": "new operation",
-    "note": ""
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "GET /api/v1/users/{id}/claims new operation",
@@ -2925,7 +2925,7 @@
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
     "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
     "change": "200.accessPaused: field added",
-    "note": ""
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
   },
   {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
@@ -2949,7 +2949,7 @@
     "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
     "op": "PATCH /api/v1/platform/idp/groups/{key}",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -3165,7 +3165,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
@@ -3269,7 +3269,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3285,7 +3285,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3301,7 +3301,7 @@
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -3317,7 +3317,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -3333,7 +3333,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
@@ -3349,7 +3349,7 @@
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
-    "note": ""
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -4206,7 +4206,7 @@
     "operationId": "invitations.postInvitationsAccept",
     "op": "POST /api/v1/invitations/accept",
     "change": "200.kind: enum value \"platform\" added",
-    "note": ""
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
   },
   {
     "key": "POST /api/v1/invitations/accept new operation",
@@ -4230,7 +4230,7 @@
     "operationId": "invitations.postInvitationsConfirm",
     "op": "POST /api/v1/invitations/confirm",
     "change": "new operation",
-    "note": ""
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "POST /api/v1/invitations/preview 200.groups: field added",
@@ -4238,7 +4238,7 @@
     "operationId": "invitations.postInvitationsPreview",
     "op": "POST /api/v1/invitations/preview",
     "change": "200.groups: field added",
-    "note": ""
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
   },
   {
     "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
@@ -4246,7 +4246,7 @@
     "operationId": "invitations.postInvitationsPreview",
     "op": "POST /api/v1/invitations/preview",
     "change": "200.kind: enum value \"platform\" added",
-    "note": ""
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
   },
   {
     "key": "POST /api/v1/invitations/preview new operation",
@@ -4822,7 +4822,7 @@
     "operationId": "polaris-platform.postPlatformIdpFreeze",
     "op": "POST /api/v1/platform/idp/freeze",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "POST /api/v1/platform/idp/groups new operation",
@@ -4830,7 +4830,7 @@
     "operationId": "polaris-groups.postPlatformIdpGroups",
     "op": "POST /api/v1/platform/idp/groups",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "POST /api/v1/platform/idp/groups/{key}/members new operation",
@@ -4838,7 +4838,7 @@
     "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
     "op": "POST /api/v1/platform/idp/groups/{key}/members",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "POST /api/v1/platform/idp/groups/{key}/rules new operation",
@@ -4846,7 +4846,7 @@
     "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
     "op": "POST /api/v1/platform/idp/groups/{key}/rules",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "POST /api/v1/platform/idp/groups/ensure new operation",
@@ -4854,7 +4854,7 @@
     "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
     "op": "POST /api/v1/platform/idp/groups/ensure",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "POST /api/v1/platform/idp/reconcile new operation",
@@ -4862,7 +4862,7 @@
     "operationId": "polaris-operations.postPlatformIdpReconcile",
     "op": "POST /api/v1/platform/idp/reconcile",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
@@ -4870,7 +4870,7 @@
     "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
     "op": "POST /api/v1/platform/idp/scim-breaker/clear",
     "change": "new operation",
-    "note": ""
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
   },
   {
     "key": "POST /api/v1/platform/invitations new operation",
@@ -4878,7 +4878,7 @@
     "operationId": "platform-invitations.postPlatformInvitations",
     "op": "POST /api/v1/platform/invitations",
     "change": "new operation",
-    "note": ""
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
@@ -4886,7 +4886,7 @@
     "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
     "op": "POST /api/v1/platform/invitations/{id}/resend",
     "change": "new operation",
-    "note": ""
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -5974,7 +5974,7 @@
     "operationId": "polaris-access.postUsersByIdOffboard",
     "op": "POST /api/v1/users/{id}/offboard",
     "change": "new operation",
-    "note": ""
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "POST /api/v1/users/{id}/roles new operation",
@@ -5982,7 +5982,7 @@
     "operationId": "polaris-access.postUsersByIdRoles",
     "op": "POST /api/v1/users/{id}/roles",
     "change": "new operation",
-    "note": ""
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
@@ -5990,7 +5990,7 @@
     "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
     "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
     "change": "new operation",
-    "note": ""
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
   },
   {
     "key": "POST /api/v1/visitors operation removed",
