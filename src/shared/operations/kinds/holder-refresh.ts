@@ -4,7 +4,7 @@ import { holderCommon, holderDedupe, holderErrors } from '../holder.ts';
 export const holderRefresh = defineOperationKind({
   ...holderCommon,
   kind: 'holder.refresh',
-  dedupe: holderDedupe,
+  dedupe: holderDedupe('holder.refresh'),
   errors: holderErrors,
   title: 'Refresh pass',
   doneTitle: 'Pass updated',

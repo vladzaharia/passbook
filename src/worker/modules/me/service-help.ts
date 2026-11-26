@@ -76,7 +76,6 @@ export async function lostMyPhone(
 ) {
   const { row } = await ownedActive(ctx, userId, passId);
   const who = { userId, sessionId };
-  await assertNoActiveHolderOperation(ctx, who, 'holder.lost_phone', passId);
   if (
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${userId}`)) ||
     !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${passId}`))

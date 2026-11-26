@@ -15,8 +15,11 @@ export const holderCommon = {
   stallMs: 5 * 60_000,
 } as const satisfies Partial<OperationKindDef>;
 
-/** One active operation per kind and pass. */
-export const holderDedupe = (s: Record<string, string>) => `pass:${s.passId}`;
+/**
+ * One active refresh or resend per pass; a refresh does not block a resend. A lost phone and a removal have none:
+ * a transfer already in flight refuses the second (HOLDER_TRANSFER_PENDING), as it did before operations.
+ */
+export const holderDedupe = (kind: string) => (s: Record<string, string>) => `${kind}:${s.passId}`;
 
 /** Sentences for the codes a holder action can end with: no name, address or code in any of them. */
 export const holderErrors = {

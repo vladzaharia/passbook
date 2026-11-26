@@ -1,10 +1,9 @@
 import { defineOperationKind } from '../define.ts';
-import { holderCommon, holderDedupe, holderErrors } from '../holder.ts';
+import { holderCommon, holderErrors } from '../holder.ts';
 
 export const holderLostPhone = defineOperationKind({
   ...holderCommon,
   kind: 'holder.lost_phone',
-  dedupe: holderDedupe,
   errors: holderErrors,
   title: 'Lost phone',
   doneTitle: 'New pass sent',

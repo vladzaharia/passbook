@@ -4,7 +4,7 @@ import { holderCommon, holderDedupe, holderErrors } from '../holder.ts';
 export const holderResend = defineOperationKind({
   ...holderCommon,
   kind: 'holder.resend',
-  dedupe: holderDedupe,
+  dedupe: holderDedupe('holder.resend'),
   errors: holderErrors,
   title: 'Email my pass',
   doneTitle: 'Email on its way',

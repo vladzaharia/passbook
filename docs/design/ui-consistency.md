@@ -455,6 +455,7 @@ A long action the server or the browser runs shows what it is doing, live. One k
 - **Live region.** One polite region per panel says a step starting, a wait and the end. Never a count or a tick.
 - **Steps.** `StepList` takes `meta` (`4 of 12`, `By Dec 2`), `group` headings and draws the tick of a step that finishes while it is on screen. `StepMarker` has `waiting`: a dashed clock with the word "waiting".
 - **Motion.** The buddy's `busy` scene loops while an operation runs and stops at its end; reduced motion holds the rest pose and the working spinner keeps turning. `RunBar` (the foil bar with the buddy riding it) is the kit's; `admin/passes/run-kit.tsx` re-exports it as `RunProgress`.
+- **Holder portal.** Refresh, Send it again, I lost my phone and Remove start `holder.*` operations (starter audience: read only by the session that started them, never by an org member or a key). `HolderOperationsProvider` (in `PortalLayout`) follows each start and draws the sheet; a refresh opens it only on a failure. A holder reaches no stop or retry route, so the sheet's Retry starts the action again. Signing in on another device reads none of them.
 - **Story page.** `npx vite --config tools/dev/operation-story/vite.config.ts`, then `/tools/dev/operation-story/?state=running` (states in `STORY_STATES`).
 
 ## Tabbed detail pages

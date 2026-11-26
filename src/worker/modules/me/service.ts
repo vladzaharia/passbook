@@ -17,11 +17,7 @@ import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { bundleSnapshot } from './bundle.ts';
 import { FIRST_CHECK_S, sendRemovalCheck } from './operations.ts';
-import {
-  activeHolderOperation,
-  assertNoActiveHolderOperation,
-  startHolderOperation,
-} from './operations-start.ts';
+import { activeHolderOperation, startHolderOperation } from './operations-start.ts';
 import { sameSnapshot } from './pass-snapshot.ts';
 import * as repo from './repo.ts';
 import { tagsByPass } from './repo-tags.ts';
@@ -325,7 +321,6 @@ export async function removeMyPass(
   const row = await repo.getPassForRemoval(ctx.env.DB, userId, passId);
   if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const who = { userId, sessionId };
-  await assertNoActiveHolderOperation(ctx, who, 'holder.remove', passId);
   const result = await deps.removePassFromUser(
     ctx,
     passId,

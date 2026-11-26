@@ -381,6 +381,7 @@ describe('passes', () => {
       expect(await removeMyPass(ctx, user.id, 'session', mine.id, deps)).toEqual({
         transferId: 'transfer-1',
         state: 'completed',
+        operationId: expect.any(String),
       });
       expect(calls).toEqual([
         [

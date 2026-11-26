@@ -1,10 +1,9 @@
 import { defineOperationKind } from '../define.ts';
-import { holderCommon, holderDedupe, holderErrors } from '../holder.ts';
+import { holderCommon, holderErrors } from '../holder.ts';
 
 export const holderRemove = defineOperationKind({
   ...holderCommon,
   kind: 'holder.remove',
-  dedupe: holderDedupe,
   errors: holderErrors,
   title: 'Remove pass',
   doneTitle: 'Pass removed',
