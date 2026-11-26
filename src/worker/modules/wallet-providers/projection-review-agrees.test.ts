@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { TemplateCandidate } from '../../../shared/contracts/template-releases.ts';
 import { walletReview } from '../../../web/admin/templates/releases/wallet-review.ts';
 import { offersPaused } from './projection-pause.ts';
-import { getApprovedProjection } from './projection-service.ts';
 import { currentReview } from './projection-review-current.ts';
+import { getApprovedProjection } from './projection-service.ts';
 import {
   addsSharingLoss,
   candidateOf,

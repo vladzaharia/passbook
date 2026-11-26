@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import AxeBuilder from '@axe-core/playwright';
 import { type Browser, devices, expect, type Page, test } from '@playwright/test';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { type Api, apiAs, requireActiveTemplateRelease, uid } from './helpers/api.ts';
@@ -9,10 +10,10 @@ import {
   enrolledOrg,
   googleCredential,
   MOCK,
-  releaseSystem,
   requireE2eRelease,
   syncUntil,
   TEST,
+  testPass,
 } from './helpers/wallets.ts';
 
 // E2E-A: the authoring journey for cross-wallet templates, from the designer to the holder's badges.
@@ -37,6 +38,7 @@ let admin: Api;
 let org: { id: string; name: string };
 let templateId = '';
 let firstPass = '';
+let importUrl = '';
 const name = `Authoring ${uid('a')}`;
 
 const design = (query = '') =>
@@ -54,6 +56,15 @@ async function active(provider: 'google' | 'samsung') {
     TEST,
   );
   return active;
+}
+async function systemCandidates(provider: 'google' | 'samsung') {
+  const { items } = await admin.send<{ items: { version: string; authorId: string }[] }>(
+    'GET',
+    `${path()}/candidates?${new URLSearchParams({ orgId: org.id, mode: 'test', provider })}`,
+    undefined,
+    TEST,
+  );
+  return items.filter((c) => c.authorId.startsWith('system:'));
 }
 const rail = (page: Page) => page.getByRole('radiogroup', { name: 'Wallet' });
 /** Opens an inspector section; one that is already open (the choice carries across wallets) stays. */
@@ -208,9 +219,8 @@ test('a package with wallets art imports with both wallet reports', async ({ pag
   const uploads = await admin.get<{ items: { uploadId: string }[] }>(
     `/api/v1/templates/uploads?orgId=${org.id}&limit=5`,
   );
-  await page.goto(
-    `/admin/o/${encodeURIComponent(org.id)}/templates/upload?upload=${uploads.items[0]?.uploadId}`,
-  );
+  importUrl = `/admin/o/${encodeURIComponent(org.id)}/templates/upload?upload=${uploads.items[0]?.uploadId}`;
+  await page.goto(importUrl);
   const wallets = page.getByRole('region', { name: 'Wallet reports' });
   await expect(wallets.getByTestId('google-report')).toBeVisible();
   await expect(wallets.getByTestId('samsung-report')).toBeVisible();
@@ -325,20 +335,21 @@ test('a template change that adds an omission reads Review needed and pauses off
   await expect(report(page, 'Google')).toContainText('Ready with omissions (1)');
   await page.getByRole('button', { name: 'Save version' }).click();
   await expect(page.getByText(/^Saved v/)).toBeVisible();
-  await publishTemplateVersion(admin, org.id, templateId, await latestVersion(), 'test');
+  const version = await latestVersion();
+  await publishTemplateVersion(admin, org.id, templateId, version, 'test');
+  // The platform authors its candidate for the new release; it waits for the one approval.
+  await syncUntil(
+    async () => (await systemCandidates('google')).some((c) => c.version === version),
+    'the platform Google candidate',
+  );
 
-  // The row and the runtime agree. The row asks for review of the new omission; at runtime the
-  // passes move to the new Apple release, which has no approved Google projection, so offers wait.
+  // The row and the runtime agree. The row asks for review of the new omission; at runtime the new
+  // Apple release has no approved Google projection, so a pass on it gets no Google offer.
   await releasesTab(page);
   await expect(walletRow(page, 'Google')).toContainText('Review needed: new omission');
   await expect(walletRow(page, 'Google')).not.toContainText('Released');
   const second = await issue();
-  for (const pass of [firstPass, second])
-    await expect
-      .poll(async () => (await badges(browser, pass)).google, {
-        message: `no Google offer for ${pass}`,
-      })
-      .toBe(0);
+  expect((await badges(browser, second)).google).toBe(0);
   await shots(page, 'authoring-new-omission');
 
   // One approval opens the new release's offers.
@@ -349,10 +360,119 @@ test('a template change that adds an omission reads Review needed and pauses off
   await dialog.getByRole('button', { name: 'Approve and release' }).click();
   await expect(page.getByText('Released to Google Wallet')).toBeVisible();
   await expect(walletRow(page, 'Google')).toContainText('Released');
-  for (const pass of [firstPass, second])
-    await expect
-      .poll(async () => (await badges(browser, pass)).google, {
-        message: `a Google offer for ${pass}`,
-      })
-      .toBe(1);
+  expect((await badges(browser, second)).google).toBe(1);
+});
+
+test('a one-person organization approves its own omission with the alone rule', async ({
+  page,
+  browser,
+}) => {
+  const sole = await enrolledOrg(admin, 'sole', [googleCredential()]);
+  const made = await admin.send<{ id: string; versions: { version: string }[] }>(
+    'POST',
+    `/api/v1/templates/${encodeURIComponent('baked:starter-day-pass')}/use`,
+    { orgId: sole.id, name: `Sole ${uid('s')}` },
+  );
+  // Alone, the author's own Apple approval in Test says so (`alone`), and no reviewer ever joins.
+  const base = `/api/v1/templates/${encodeURIComponent(made.id)}`;
+  const scope = { orgId: sole.id, mode: 'test', provider: 'apple' };
+  const candidate = await admin.send<{ id: string; candidateHash: string }>(
+    'POST',
+    `${base}/candidates`,
+    { ...scope, version: made.versions[0]?.version },
+    TEST,
+  );
+  const approval = await admin.send<{ id: string }>(
+    'POST',
+    `${base}/candidates/${encodeURIComponent(candidate.id)}/approve`,
+    { ...scope, candidateHash: candidate.candidateHash, alone: true },
+    TEST,
+  );
+  await admin.send(
+    'POST',
+    `${base}/releases`,
+    {
+      ...scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    },
+    TEST,
+  );
+  const apple = await requireActiveTemplateRelease(admin, sole.id, made.id, 'test');
+  const system = () =>
+    admin.send<{ items: { authorId: string }[] }>(
+      'GET',
+      `${base}/candidates?${new URLSearchParams({ orgId: sole.id, mode: 'test', provider: 'google' })}`,
+      undefined,
+      TEST,
+    );
+  await syncUntil(
+    async () => (await system()).items.some((c) => c.authorId.startsWith('system:')),
+    'the platform Google candidate',
+  );
+
+  await page.goto(
+    `/admin/o/${encodeURIComponent(sole.id)}/templates/${encodeURIComponent(made.id)}`,
+  );
+  await page.getByRole('tab', { name: 'Releases' }).click();
+  await expect(walletRow(page, 'Google')).toContainText('Ready with omissions (1)');
+  await walletRow(page, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Review Google Wallet' });
+  await expect(
+    dialog.getByText('You are the only reviewer. This approves your own work.'),
+  ).toBeVisible();
+  await dialog.getByRole('checkbox').check();
+  await shots(page, 'authoring-alone-dialog');
+  await dialog.getByRole('button', { name: 'Approve and release' }).click();
+  await expect(page.getByText('Released to Google Wallet')).toBeVisible();
+  await expect(walletRow(page, 'Google')).toContainText('Released');
+
+  const pass = await testPass(admin, { org: sole, apple });
+  expect((await badges(browser, pass.path)).google).toBe(1);
+});
+
+/** Serious and critical findings at 1440 and 834, light and dark. */
+async function expectNoSerious(page: Page, what: string) {
+  for (const [width, height] of [
+    [1440, 900],
+    [834, 1112],
+  ] as const)
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.waitForTimeout(400);
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+        .analyze();
+      const serious = results.violations
+        .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+        .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
+      expect(serious, `${what} at ${width} ${scheme}`).toEqual([]);
+    }
+}
+
+test('axe finds nothing serious on the tab, the release rows, the review and the import report', async ({
+  page,
+}) => {
+  await page.goto(design('?mode=wallets&wallet=samsung'));
+  await expect(report(page, 'Samsung')).toBeVisible();
+  await page.waitForFunction(() => [...document.images].every((img) => img.complete));
+  await expectNoSerious(page, 'the Wallets tab');
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await releasesTab(page);
+  await expect(walletRow(page, 'Google')).toContainText('Released');
+  await expectNoSerious(page, 'the release rows');
+  await walletRow(page, 'Samsung').getByRole('button', { name: 'Review Samsung Wallet' }).click();
+  await expect(page.getByRole('dialog', { name: 'Review Samsung Wallet' })).toBeVisible();
+  await page.waitForTimeout(800);
+  await expectNoSerious(page, 'the review dialog');
+  await page.keyboard.press('Escape');
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(importUrl);
+  await expect(page.getByTestId('google-report')).toBeVisible();
+  await expectNoSerious(page, 'the import report');
 });
