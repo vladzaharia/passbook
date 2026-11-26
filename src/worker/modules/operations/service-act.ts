@@ -1,7 +1,9 @@
 import type { OperationDto, OperationStep } from '../../../shared/contracts/operations.ts';
 import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { workbenchTestOnly } from '../../platform/errors-denial.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -32,6 +34,12 @@ const notCancelable = () =>
   new AppError('OPERATION_NOT_CANCELABLE', 409, 'This cannot be stopped. Wait for it to finish.');
 const notRetryable = () => new AppError('OPERATION_NOT_RETRYABLE', 409, 'This cannot be retried.');
 
+/** A Workbench token acts only on a kind that declares `tokenActs`: its retry never writes state Live uses. */
+function assertTokenMayAct(auth: AuthContext, kind: string): void {
+  if (workbenchPinOf(auth) && !kindOf(kind)?.tokenActs)
+    throw workbenchTestOnly('A Workbench token cannot stop or retry this. Use the admin console.');
+}
+
 /**
  * Stops it. Every write is one guarded UPDATE: a queued stop only takes a row still `queued`, a running stop
  * only a kind whose policy allows it and only the attempt we read. Nothing changed means no audit row and no
@@ -44,6 +52,7 @@ export async function cancelOperation(
 ): Promise<OperationDto> {
   if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
+  assertTokenMayAct(auth, row.kind);
   const dto = toDto(row);
   const policy = kindOf(row.kind)?.cancel ?? 'never';
   if (policy === 'never') throw notCancelable();
@@ -117,6 +126,7 @@ export async function retryOperation(
 ): Promise<OperationDto> {
   if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
+  assertTokenMayAct(auth, row.kind);
   // The key is kept as a hash on the row, per principal.
   const retryKey =
     idempotencyKey === undefined ? null : await sha256Hex(`${principalOf(auth)}:${idempotencyKey}`);

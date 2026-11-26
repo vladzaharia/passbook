@@ -36,6 +36,8 @@ const SESSION_PATHS = new Set([
   '/api/v1/workbench/token',
   '/api/v1/orgs/memberships/me',
   '/api/v1/orgs',
+  // The person's own addresses (the inbox's Send to me check): account data, not a tenant call.
+  '/api/v1/me/emails',
 ]);
 /**
  * W2 moved these sandbox-only tools in with their calls still on the cookie session. The server holds a
@@ -73,7 +75,7 @@ describe('the Workbench tray (R4 H1)', () => {
   });
 
   it("lists only this context's Test operations, and counts only those", async () => {
-    const { fetchMock } = await renderApp('/workbench/o/nw/activity', {
+    const { fetchMock } = await renderApp('/workbench/o/nw/logs', {
       session: 'developer',
       handlers: withOps(),
     });
@@ -220,7 +222,7 @@ describe('more of the boundary (R4 N3)', () => {
       posts.push(`${id}:${String(init?.method)}`);
       return json({ operation: { ...live, id } });
     };
-    const { fetchMock } = await renderApp('/workbench/o/nw/activity', {
+    const { fetchMock } = await renderApp('/workbench/o/nw/logs', {
       session: 'developer',
       handlers: {
         ...handlers(),
