@@ -92,7 +92,7 @@ describe('cancel', () => {
     const op = await start();
     await progressOf(kit.ctx, op.id, 1).step('a').done();
     const res = await post(`/${op.id}/cancel`, auth.admin());
-    expect(await res.json()).toMatchObject({
+    expect(((await res.json()) as { operation: unknown }).operation).toMatchObject({
       status: 'running',
       cancelRequested: true,
       cancelable: false,

@@ -266,7 +266,7 @@ describe('retry replay (L3)', () => {
       post(`/${op.id}/retry`, headers),
       post(`/${op.id}/retry`, headers),
     ]);
-    expect([one.status, two.status]).toEqual([200, 200]);
+    expect([one.status, two.status]).toEqual([202, 202]);
     expect(((await two.json()) as OperationDto).attempt).toBe(2);
   });
 });
