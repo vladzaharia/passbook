@@ -12,13 +12,22 @@ export interface WorkflowHandle {
 
 /** The hooks a module gives one kind. All are idempotent: "complete what is missing". */
 export interface OperationRunner {
-  /** Does the work, reporting through `progressOf(ctx, op.id, op.attempt)`. Queue and in-request runs call it. */
-  run?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;
   /**
-   * A retry's own start checks (authority, entitlements, rate limit), then the relaunch: a new Workflow
-   * instance `<opId>-r<attempt>` or an `operation.run` job. A throw ends the retry as a failure.
+   * Does the work, reporting through `progressOf(ctx, op.id, op.attempt, lease)`. `lease` is the token
+   * `operation.run` claimed; pass it on so a twin runner cannot extend the lease.
    */
-  retry?: (ctx: ServiceContext, op: OperationDto, caller: AuthContext) => Promise<void>;
+  run?: (ctx: ServiceContext, op: OperationDto, lease: string) => Promise<void>;
+  /**
+   * The start's own checks for a retry: authority, entitlements, rate limit, step-up. Required when the kind
+   * retries. It runs before the row is touched, so a refusal burns no attempt; a throw answers the caller.
+   */
+  authorizeRetry?: (ctx: ServiceContext, op: OperationDto, caller: AuthContext) => Promise<void>;
+  /**
+   * Relaunches after the row went back to `queued` with the next attempt: a new Workflow instance
+   * `<opId>-r<attempt>` (refuse while the old instance is not errored, terminated or complete) or an
+   * `operation.run` job, which is the default.
+   */
+  relaunch?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;
   /** Tells the work to stop (a stop flag on its own run row). The operation row is already marked. */
   cancel?: (ctx: ServiceContext, op: OperationDto) => Promise<void>;
   /** The kind runs as a Workflow: how to find its instance. */

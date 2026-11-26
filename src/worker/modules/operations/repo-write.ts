@@ -1,3 +1,7 @@
+import {
+  type OperationResult,
+  OperationResultSchema,
+} from '../../../shared/contracts/operations.ts';
 import { first, run, stmt } from '../../platform/db.ts';
 
 const ACTIVE = `status IN ('queued', 'running', 'waiting')`;
@@ -22,6 +26,8 @@ export function writeStep(
     stepKey: string;
     status: 'running' | 'waiting';
     leaseUntil: number;
+    /** The lease token of the runner; a claimed lease refuses any other writer. */
+    lease: string | null;
   },
 ): Promise<Written | null> {
   // The index is an integer from the code's own step list, never a request value.
@@ -31,24 +37,36 @@ export function writeStep(
     `UPDATE operations SET steps = json_set(steps, ?, json(?)), step_key = ?, status = ?,
        revision = revision + 1, started_at = COALESCE(started_at, ?), updated_at = ?, heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE}
+     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
      RETURNING status, cancel_requested`,
-    [at, w.stepJson, w.stepKey, w.status, w.now, w.now, w.now, w.leaseUntil, w.id, w.attempt],
+    [
+      at,
+      w.stepJson,
+      w.stepKey,
+      w.status,
+      w.now,
+      w.now,
+      w.now,
+      w.leaseUntil,
+      w.id,
+      w.attempt,
+      w.lease ?? '',
+    ],
   );
 }
 
 /** Only the heartbeat and the lease: no revision bump, so an unchanged poll still gets its 304. */
 export async function writeHeartbeat(
   db: D1Database,
-  w: { id: string; attempt: number; now: number; leaseUntil: number },
+  w: { id: string; attempt: number; now: number; leaseUntil: number; lease: string | null },
 ): Promise<Written | null> {
   return first<Written>(
     db,
     `UPDATE operations SET heartbeat_at = ?,
        lease_until = CASE WHEN lease_until > 0 THEN ? ELSE lease_until END
-     WHERE id = ? AND attempt = ? AND ${ACTIVE}
+     WHERE id = ? AND attempt = ? AND ${ACTIVE} AND (lease_owner IS NULL OR lease_owner = ?)
      RETURNING status, cancel_requested`,
-    [w.now, w.leaseUntil, w.id, w.attempt],
+    [w.now, w.leaseUntil, w.id, w.attempt, w.lease ?? ''],
   );
 }
 
@@ -68,8 +86,10 @@ export interface Finish {
   steps: string;
   stepKey: string | null;
   error: { code: string; step: string | null; retryable: boolean } | null;
-  result: string | null;
+  result: OperationResult | null;
   expiresAt: number | null;
+  /** The stop of an operation that has not started: refuses a row the runner already claimed. */
+  onlyQueued?: true;
 }
 
 /** The terminal write. A statement, so a domain batch can commit its own end state with it. */
@@ -79,7 +99,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
     `UPDATE operations SET status = ?, steps = ?, step_key = ?, error_code = ?, error_step = ?,
        error_retryable = ?, result = ?, revision = revision + 1, started_at = COALESCE(started_at, ?),
        updated_at = ?, finished_at = ?, expires_at = ${f.expiresAt === null ? 'expires_at' : '?'}, lease_until = NULL
-     WHERE id = ? AND attempt = ? AND ${ACTIVE}`,
+     WHERE id = ? AND attempt = ? AND ${f.onlyQueued ? "status = 'queued'" : ACTIVE}`,
     [
       f.status,
       f.steps,
@@ -87,7 +107,7 @@ export function finishStmt(db: D1Database, f: Finish): D1PreparedStatement {
       f.error?.code ?? null,
       f.error?.step ?? null,
       f.error === null ? null : f.error.retryable ? 1 : 0,
-      f.result,
+      f.result === null ? null : JSON.stringify(OperationResultSchema.parse(f.result)),
       f.now,
       f.now,
       f.now,
@@ -106,13 +126,14 @@ export async function finish(db: D1Database, f: Finish): Promise<boolean> {
 export async function markCancel(
   db: D1Database,
   id: string,
+  attempt: number,
   now: number,
 ): Promise<{ changes: number }> {
   return run(
     db,
     `UPDATE operations SET cancel_requested = 1, revision = revision + 1, updated_at = ?
-     WHERE id = ? AND status IN ('running', 'waiting') AND cancel_requested = 0`,
-    [now, id],
+     WHERE id = ? AND attempt = ? AND status IN ('running', 'waiting') AND cancel_requested = 0`,
+    [now, id, attempt],
   );
 }
 
@@ -126,16 +147,19 @@ export async function resetForRetry(
     steps: string;
     stepKey: string | null;
     retryKey: string | null;
+    /** A starter operation keeps its 7 days from the retry; others get an expiry when they end. */
+    expiresAt: number | null;
   },
 ): Promise<boolean> {
   const { changes } = await run(
     db,
     `UPDATE operations SET status = 'queued', attempt = attempt + 1, steps = ?, step_key = ?,
        error_code = NULL, error_step = NULL, error_retryable = NULL, result = NULL, finished_at = NULL,
-       expires_at = NULL, cancel_requested = 0, lease_until = NULL, heartbeat_at = ?, retry_key = ?,
+       expires_at = ?, cancel_requested = 0, lease_until = NULL, lease_owner = NULL, resends = 0,
+       heartbeat_at = ?, retry_key = ?,
        revision = revision + 1, updated_at = ?
      WHERE id = ? AND attempt = ? AND status = 'failed' AND error_retryable = 1`,
-    [r.steps, r.stepKey, r.now, r.retryKey, r.now, r.id, r.attempt],
+    [r.steps, r.stepKey, r.expiresAt, r.now, r.retryKey, r.now, r.id, r.attempt],
   );
   return changes === 1;
 }

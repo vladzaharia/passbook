@@ -1,7 +1,7 @@
 import { all, run, stmt } from '../../platform/db.ts';
 import { COLUMNS, type OperationRow } from './repo.ts';
 
-/** Running rows whose last heartbeat is older than `before`: candidates for a stall check. */
+/** Queued and running rows silent since `before` (a queued row's silence runs from its creation): candidates for a stall check. */
 export function runningSilentSince(
   db: D1Database,
   before: number,
@@ -9,32 +9,38 @@ export function runningSilentSince(
 ): Promise<OperationRow[]> {
   return all<OperationRow>(
     db,
-    `SELECT ${COLUMNS} FROM operations WHERE status = 'running' AND heartbeat_at < ?
-     ORDER BY heartbeat_at LIMIT ?`,
+    `SELECT ${COLUMNS} FROM operations
+     WHERE status IN ('queued', 'running') AND COALESCE(heartbeat_at, created_at) < ?
+     ORDER BY COALESCE(heartbeat_at, created_at) LIMIT ?`,
     [before, limit],
   );
 }
 
 /** A live runner or Workflow: push the heartbeat out. */
 export async function bumpHeartbeat(db: D1Database, id: string, now: number): Promise<void> {
-  await run(db, `UPDATE operations SET heartbeat_at = ? WHERE id = ? AND status = 'running'`, [
-    now,
-    id,
-  ]);
+  await run(
+    db,
+    `UPDATE operations SET heartbeat_at = ? WHERE id = ? AND status IN ('queued', 'running')`,
+    [now, id],
+  );
 }
 
-/** The one resend: the lease becomes 0, so a second stall with it still 0 fails the row. */
+/**
+ * The one resend: frees the lease and counts it. `seen` is the count the sweep read, so two overlapping sweeps
+ * cannot both resend, and a second stall (`resends` already 1) is failed by the caller instead.
+ */
 export async function markResent(
   db: D1Database,
   id: string,
   attempt: number,
+  seen: number,
   now: number,
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE operations SET lease_until = 0, heartbeat_at = ?
-     WHERE id = ? AND attempt = ? AND status = 'running'`,
-    [now, id, attempt],
+    `UPDATE operations SET resends = resends + 1, lease_until = NULL, lease_owner = NULL, heartbeat_at = ?
+     WHERE id = ? AND attempt = ? AND resends = ? AND status IN ('queued', 'running')`,
+    [now, id, attempt, seen],
   );
   return changes === 1;
 }

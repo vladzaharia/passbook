@@ -76,7 +76,9 @@ export const STEP_UP_KIND = defineOperationKind({
 });
 
 /** Declares every test kind; the runner applies to all. Returns what undoes it. */
-export function registerTestKinds(runner: OperationRunner = {}): () => void {
+export function registerTestKinds(
+  runner: OperationRunner = { authorizeRetry: async () => {} },
+): () => void {
   const undo = [
     ORG_KIND,
     QUEUED_ONLY_KIND,

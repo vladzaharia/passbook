@@ -50,10 +50,11 @@ export async function handleOperationRun(
     return;
   }
   const now = ctx.clock.now();
-  if (!(await claimLease(ctx.env.DB, row.id, row.attempt, now, now + LEASE_MS))) return;
+  const lease = ctx.ids.id();
+  if (!(await claimLease(ctx.env.DB, row.id, row.attempt, now, now + LEASE_MS, lease))) return;
   try {
-    await run(ctx, toDto(row));
+    await run(ctx, toDto(row), lease);
   } catch (error) {
-    await progressOf(ctx, row.id, row.attempt).fail(error);
+    await progressOf(ctx, row.id, row.attempt, lease).fail(error);
   }
 }

@@ -2,24 +2,17 @@ import type { z } from 'zod';
 import type {
   OperationDto,
   OperationListQuerySchema,
-  OperationStep,
 } from '../../../shared/contracts/operations.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { classifyD1Error } from '../../platform/db.ts';
-import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
-import { principalOf } from '../../platform/idempotency.ts';
-import { sha256Hex } from '../../platform/ids.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordAudit } from '../audit/service.ts';
 import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
-import { parseSteps, toDto } from './dto.ts';
-import { sendOperationRun } from './jobs.ts';
-import { progressOf } from './progress.ts';
-import { kindOf, orgKinds, runnerOf } from './registry.ts';
-import { activeByDedupe, type OperationRow, rowById } from './repo.ts';
+import { toDto } from './dto.ts';
+import { orgKinds } from './registry.ts';
+import type { OperationRow } from './repo.ts';
+import { rowById } from './repo.ts';
 import type { Fence } from './repo-fence.ts';
 import { getFenced, listFenced } from './repo-read.ts';
-import { finish, markCancel, resetForRetry } from './repo-write.ts';
 
 type Query = z.infer<typeof OperationListQuerySchema>;
 
@@ -34,7 +27,7 @@ export async function getOperation(
   return toDto((await readable(ctx, auth, id)).row);
 }
 
-async function readable(
+export async function readable(
   ctx: ServiceContext,
   auth: AuthContext,
   id: string,
@@ -125,148 +118,4 @@ export async function listOperations(
     items: page.map(toDto),
     nextCursor: rows.length > query.limit && last ? `${last.created_at}.${last.id}` : null,
   };
-}
-
-function auditActor(auth: AuthContext) {
-  if (auth.kind === 'session') return { actorType: 'user', actorId: auth.userId } as const;
-  if (auth.kind === 'api_key') return { actorType: 'api_key', actorId: auth.keyId } as const;
-  return { actorType: 'system', actorId: null } as const;
-}
-
-/** Stops it: a queued operation at once, a running one at the runner's next safe boundary. */
-export async function cancelOperation(
-  ctx: ServiceContext,
-  auth: AuthContext,
-  id: string,
-): Promise<OperationDto> {
-  const { row } = await readable(ctx, auth, id, 'write');
-  const dto = toDto(row);
-  if (!dto.cancelable) {
-    // A second request while the stop is pending answers the same operation.
-    if (dto.cancelRequested) return dto;
-    throw new AppError(
-      'OPERATION_NOT_CANCELABLE',
-      409,
-      'This cannot be stopped. Wait for it to finish.',
-    );
-  }
-  const now = ctx.clock.now();
-  const stopped =
-    row.status === 'queued' &&
-    (await finish(ctx.env.DB, {
-      id,
-      attempt: row.attempt,
-      now,
-      status: 'cancelled',
-      steps: JSON.stringify(
-        dto.steps.map(
-          (s): OperationStep => (s.state === 'pending' ? { ...s, state: 'skipped' } : s),
-        ),
-      ),
-      stepKey: row.step_key,
-      error: null,
-      result: null,
-      expiresAt: row.audience === 'starter' ? null : now + 7 * 86_400_000,
-    }));
-  if (!stopped) await markCancel(ctx.env.DB, id, now);
-  const fresh = toDto((await rowById(ctx.env.DB, id)) ?? row);
-  await runnerOf(row.kind)?.cancel?.(ctx, fresh);
-  await recordAudit(ctx, {
-    orgId: row.org_id,
-    ...auditActor(auth),
-    action: 'operation.cancelled',
-    targetType: 'operation',
-    targetId: id,
-    detail: { kind: row.kind },
-  });
-  return fresh;
-}
-
-/** Steps that are done stay done; the failed step goes back to pending. */
-function stepsForRetry(steps: OperationStep[]): OperationStep[] {
-  return steps.map((s) =>
-    s.state === 'failed'
-      ? {
-          ...s,
-          state: 'pending',
-          startedAt: null,
-          finishedAt: null,
-          detail: null,
-          until: null,
-          waitingReason: null,
-        }
-      : s,
-  );
-}
-
-const notRetryable = () => new AppError('OPERATION_NOT_RETRYABLE', 409, 'This cannot be retried.');
-
-/**
- * Retries a failed operation under the same id with the next attempt. The kind's own hook reruns the start's
- * checks, so a retry is never an authorization shortcut. A repeat with the same `Idempotency-Key` answers the
- * operation the first one retried instead of failing.
- */
-export async function retryOperation(
-  ctx: ServiceContext,
-  auth: AuthContext,
-  id: string,
-  idempotencyKey?: string,
-): Promise<OperationDto> {
-  const { row } = await readable(ctx, auth, id, 'write');
-  // The key is kept as a hash on the row, per principal: a repeat of the retry it started answers the operation.
-  const retryKey =
-    idempotencyKey === undefined ? null : await sha256Hex(`${principalOf(auth)}:${idempotencyKey}`);
-  if (retryKey !== null && row.retry_key === retryKey) return toDto(row);
-  const def = kindOf(row.kind);
-  const runner = runnerOf(row.kind);
-  if (
-    row.status !== 'failed' ||
-    row.error_retryable !== 1 ||
-    !def?.retry ||
-    !(runner?.retry || runner?.run)
-  )
-    throw notRetryable();
-  const now = ctx.clock.now();
-  let reset: boolean;
-  try {
-    reset = await resetForRetry(ctx.env.DB, {
-      id,
-      attempt: row.attempt,
-      now,
-      steps: JSON.stringify(stepsForRetry(parseSteps(row.steps))),
-      stepKey: null,
-      retryKey,
-    });
-  } catch (error) {
-    if (classifyD1Error(error)?.kind !== 'unique') throw error;
-    const active = row.dedupe_key ? await activeByDedupe(ctx.env.DB, row.dedupe_key) : null;
-    throw new AppError('OPERATION_RUNNING', 409, 'This is already running.', {
-      operationId: active?.id ?? id,
-    });
-  }
-  if (!reset) throw notRetryable();
-  const next = row.attempt + 1;
-  const fresh = toDto((await rowById(ctx.env.DB, id)) as OperationRow);
-  try {
-    if (runner.retry) await runner.retry(ctx, fresh, auth);
-    else await sendOperationRun(ctx, id, next);
-  } catch (error) {
-    await progressOf(ctx, id, next).fail(error);
-    throw error;
-  }
-  await recordAudit(ctx, {
-    orgId: row.org_id,
-    ...auditActor(auth),
-    action: 'operation.retried',
-    targetType: 'operation',
-    targetId: id,
-    detail: { kind: row.kind, attempt: next },
-  });
-  return toDto((await rowById(ctx.env.DB, id)) as OperationRow);
-}
-
-/** Whether stopping or retrying this operation needs a recent sign-in. Unknown ids need none: the route 404s. */
-export async function needsStepUp(ctx: ServiceContext, id: string): Promise<boolean> {
-  const row = await rowById(ctx.env.DB, id);
-  return row ? (kindOf(row.kind)?.stepUp ?? false) : false;
 }

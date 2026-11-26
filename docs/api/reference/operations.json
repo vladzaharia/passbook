@@ -41,9 +41,9 @@
       "finishedAt": 1795570500000,
       "error": null,
       "result": {
-        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "href": "/admin/passes",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,
@@ -95,9 +95,9 @@
           "finishedAt": 1795570500000,
           "error": null,
           "result": {
-            "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+            "href": "/admin/passes",
             "ids": {
-              "tier": "Day pass"
+              "tier": "northwind"
             }
           },
           "revision": 3,
@@ -150,9 +150,9 @@
       "finishedAt": 1795570500000,
       "error": null,
       "result": {
-        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "href": "/admin/passes",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,
@@ -202,9 +202,9 @@
       "finishedAt": 1795570500000,
       "error": null,
       "result": {
-        "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+        "href": "/admin/passes",
         "ids": {
-          "tier": "Day pass"
+          "tier": "northwind"
         }
       },
       "revision": 3,

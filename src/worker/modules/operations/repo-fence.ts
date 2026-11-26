@@ -21,7 +21,8 @@ export function orgFence(principal: Principal, checks: Check[], now: number): Fe
     ctes,
     ctesParams: params,
     where: `o.audience = 'org' AND EXISTS (SELECT 1 FROM actor_ok)
-      AND o.org_id = (SELECT org_id FROM actor_ok) AND o.mode = (SELECT mode FROM actor_ok)`,
+      AND o.org_id = (SELECT org_id FROM actor_ok) AND o.mode = (SELECT mode FROM actor_ok)
+      AND (SELECT limit_key FROM actor_ok) IS NULL`,
     whereParams: [],
   };
 }
@@ -41,13 +42,25 @@ export function platformFence(
 }
 
 /** Rows a person started, for the live session that started them. A key never reads these. */
-export function starterFence(session: { userId: string; sessionId: string }, now: number): Fence {
+export function starterFence(
+  session: { userId: string; sessionId: string },
+  now: number,
+  /** Stopping or retrying: only the session that started it, not the person's other sessions. */
+  writer = false,
+): Fence {
   return {
     ctes: '',
     ctesParams: [],
-    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?
+    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${writer ? ' AND o.actor_session = ?' : ''}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
         AND s.expires_at > ? AND s.idle_expires_at > ?)`,
-    whereParams: [session.userId, session.sessionId, session.userId, now, now],
+    whereParams: [
+      session.userId,
+      ...(writer ? [session.sessionId] : []),
+      session.sessionId,
+      session.userId,
+      now,
+      now,
+    ],
   };
 }

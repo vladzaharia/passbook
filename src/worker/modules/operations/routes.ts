@@ -14,13 +14,8 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { etagOf } from './dto.ts';
-import {
-  cancelOperation,
-  getOperation,
-  listOperations,
-  needsStepUp,
-  retryOperation,
-} from './service.ts';
+import { getOperation, listOperations } from './service.ts';
+import { cancelOperation, mayAct, retryOperation } from './service-act.ts';
 
 const authOf = (c: { var: { auth?: AuthContext } }): AuthContext => {
   if (!c.var.auth) throw new UnauthenticatedError();
@@ -48,7 +43,7 @@ export const operationsRoutes = createRouter();
 const stepUp = {
   maxAgeSec: STEP_UP_SECONDS,
   when: (c: Parameters<typeof serviceContext>[0]) =>
-    needsStepUp(serviceContext(c), c.req.param('id') ?? ''),
+    mayAct(serviceContext(c), authOf(c), c.req.param('id') ?? ''),
 };
 
 const unchanged = (header: string | undefined, etag: string) =>

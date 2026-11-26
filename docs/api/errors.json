@@ -1836,6 +1836,7 @@
       ],
       "modules": [
         "delivery",
+        "operations",
         "passes",
         "platform",
         "scan"
