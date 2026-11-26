@@ -195,7 +195,7 @@
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-2b09c2384426",
-        "kind": "kind",
+        "kind": "sandbox.delete",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",
@@ -234,7 +234,7 @@
         "finishedAt": 1795570500000,
         "error": null,
         "result": {
-          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "href": "/developers/quickstart",
           "ids": {
             "tier": "northwind"
           }
@@ -262,7 +262,7 @@
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-6a8053955efd",
-        "kind": "kind",
+        "kind": "sandbox.delete",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",
@@ -301,7 +301,7 @@
         "finishedAt": 1795570500000,
         "error": null,
         "result": {
-          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "href": "/developers/quickstart",
           "ids": {
             "tier": "northwind"
           }
@@ -318,7 +318,7 @@
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-4574298dee81",
-        "kind": "kind",
+        "kind": "sandbox.delete",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",
@@ -357,7 +357,7 @@
         "finishedAt": 1795570500000,
         "error": null,
         "result": {
-          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "href": "/developers/quickstart",
           "ids": {
             "tier": "northwind"
           }
@@ -419,7 +419,7 @@
     "response": {
       "operation": {
         "id": "0193a1b2-7c00-7000-8000-e5d024f6c11c",
-        "kind": "kind",
+        "kind": "sandbox.delete",
         "status": "succeeded",
         "title": "Delete sandbox",
         "text": "Removing Test passes · 4 of 12",
@@ -458,7 +458,7 @@
         "finishedAt": 1795570500000,
         "error": null,
         "result": {
-          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "href": "/developers/quickstart",
           "ids": {
             "tier": "northwind"
           }
