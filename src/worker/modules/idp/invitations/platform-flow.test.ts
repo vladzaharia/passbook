@@ -148,10 +148,8 @@ describe('POST /invitations/confirm', () => {
     expect((await accepted(invite.id))?.accepted_at).toBeNull();
     expect(await members(invite.id)).toEqual([]);
     // After verifying, trying again works.
-    r.idp.accounts.set('sub-unverified', {
-      ...(r.idp.accounts.get('sub-unverified') as never),
-      emailVerified: true,
-    });
+    const account = r.idp.accounts.get('sub-unverified');
+    if (account) account.emailVerified = true;
     expect((await confirm(invite.secret)).status).toBe(200);
   });
 
