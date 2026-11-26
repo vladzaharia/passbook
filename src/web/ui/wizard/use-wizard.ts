@@ -5,8 +5,12 @@ import { useWizardNav } from './wizard-nav.ts';
 import { mapServerError } from './wizard-server.ts';
 import type { WizardModel, WizardOptions, WizardStepState } from './wizard-types.ts';
 
-const has = (found: Partial<Record<string, string>> | undefined) =>
-  Boolean(found && Object.values(found).some(Boolean));
+/** `wait` is a load in flight: it holds Next on its own step, and marks no other step invalid. */
+const WAIT = 'wait';
+const has = (found: Partial<Record<string, string>> | undefined, waiting = true) =>
+  Boolean(
+    found && Object.entries(found).some(([key, value]) => value && (waiting || key !== WAIT)),
+  );
 
 /**
  * The step model of a wizard: where it is, what is done, what blocks Next, and where a server's
@@ -31,7 +35,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
   const server = useServerFields();
 
   const current = steps[index] ?? steps[firstIndex];
-  const bad = (id: Id) => has(errors[id]);
+  const bad = (id: Id) => has(errors[id], id === current?.id);
   const serverSteps = new Set<string>();
   for (const field of Object.keys(server.fields)) {
     const at = fieldStep[field];
@@ -70,7 +74,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
     views.slice(index + 1, reviewIndex).every((s) => s.skip || s.state === 'done');
   const primary: WizardModel<Id>['primary'] = last
     ? 'finish'
-    : reviewIndex > index && reached >= reviewIndex && !blocked && laterDone
+    : reviewIndex > index && reached >= reviewIndex && !blocked && laterDone && firstBad < 0
       ? 'review'
       : 'next';
 
@@ -94,6 +98,18 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       if (current && bad(current.id)) return refuse();
       if (stateOf(at) !== 'done' && stateOf(at) !== 'invalid') return;
     }
+    move(at);
+  }
+
+  function jump(to: number | Id) {
+    const at = typeof to === 'number' ? to : steps.findIndex((s) => s.id === to);
+    const target = steps[at];
+    if (!target || target.skip || at === index) return;
+    setPassed((p) => {
+      const next = new Set(p);
+      for (const s of steps.slice(0, at)) if (!s.skip) next.add(s.id);
+      return next;
+    });
     move(at);
   }
 
@@ -133,7 +149,15 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
   function onValid() {
     if (last) return finish();
     pass();
-    move(primary === 'review' ? reviewIndex : hop(index, 1));
+    const to = primary === 'review' ? reviewIndex : hop(index, 1);
+    // Review is not reachable past a step that has gone invalid: land on that step, errors shown.
+    const badStep = steps[firstBad];
+    if (to === reviewIndex && badStep && firstBad !== index) {
+      setShown((shown) => new Set(shown).add(badStep.id));
+      move(firstBad);
+      return undefined;
+    }
+    move(to);
     return undefined;
   }
 
@@ -179,6 +203,7 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
     first: index <= firstIndex,
     last,
     go,
+    jump,
     next() {
       const form = typeof document === 'undefined' ? null : document.getElementById(formId);
       if (form instanceof HTMLFormElement) form.requestSubmit();
@@ -216,6 +241,13 @@ export function useWizard<Id extends string>(options: WizardOptions<Id>): Wizard
       nextDisabled: blocked,
       nextHint: hint,
       busy: finishing,
+      states: views.map((s) => s.state),
+      formError,
+      onBlocked() {
+        const form = typeof document === 'undefined' ? null : document.getElementById(formId);
+        if (form instanceof HTMLFormElement) form.requestSubmit();
+        else refuse();
+      },
     },
     motion,
     reset,

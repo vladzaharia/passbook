@@ -6,6 +6,7 @@ import type { ConnectionSummarySchema } from '@/shared/contracts/connections.ts'
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { connectorIcon } from '../../lib/entities.ts';
 import { formatDateTime } from '../../lib/format.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
@@ -28,7 +29,7 @@ import { useConnectionPages, useConnectorNames } from './api.ts';
 import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, sourceLine } from './labels.ts';
-import { showLive, TestModeNote } from './test-mode-note.tsx';
+import { LiveOnlyState } from './live-only.tsx';
 import { useWebhookEndpoints } from './webhooks/api.ts';
 import { AddEndpointButton, WebhooksTab } from './webhooks/webhooks-tab.tsx';
 
@@ -60,7 +61,9 @@ export function ConnectionsListPage({
     const t = setTimeout(() => onSearch({ q: trimmed || undefined }), 300);
     return () => clearTimeout(t);
   }, [text, search.q, onSearch]);
-  const list = useConnectionPages({ orgId, health: search.health, q: search.q });
+  // Stored connections have no Test environment; webhook endpoints do, so only Sources gives way.
+  const live = useMode() === 'live';
+  const list = useConnectionPages({ orgId, health: search.health, q: search.q }, live);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const filtered = Boolean(search.q || search.health);
   const orgNames = useMemo(
@@ -136,7 +139,6 @@ export function ConnectionsListPage({
             count={row.original.passCount}
             to="/admin/passes"
             search={{ connectionId: row.original.id }}
-            onClick={showLive}
             aria-label={`${row.original.passCount} ${row.original.passCount === 1 ? 'pass' : 'passes'} from ${row.original.name}`}
           />
         ),
@@ -175,7 +177,7 @@ export function ConnectionsListPage({
               noEndpoints ? null : (
                 <AddEndpointButton />
               )
-            ) : empty ? null : (
+            ) : empty || !live ? null : (
               create('primary')
             )
           ) : undefined
@@ -193,8 +195,9 @@ export function ConnectionsListPage({
           <WebhooksTab />
         </TabsContent>
         <TabsContent value="sources">
-          <TestModeNote className="mb-4" />
-          {list.isError && rows.length === 0 ? (
+          {!live ? (
+            <LiveOnlyState />
+          ) : list.isError && rows.length === 0 ? (
             <ErrorState error={list.error} onRetry={() => void list.refetch()} />
           ) : (
             <DataTable

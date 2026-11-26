@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Dialog, DialogContent } from '../dialog.tsx';
 import { useOnClose } from '../dialog-close.ts';
 import { Form } from '../form.tsx';
+import { useFinishBeat } from './use-finish-beat.ts';
 import { WizardActions } from './wizard-actions.tsx';
 import { ResultDialogContent, type ResultSpec } from './wizard-result.tsx';
 import { WizardStep } from './wizard-step.tsx';
@@ -26,7 +27,8 @@ export interface WizardDialogProps<Id extends string> {
   /** Runs each time the dialog closes, however it closed. */
   onClose?: () => void;
   /**
-   * What the finish handed back. The dialog narrows to md, takes the result's title, drops the X,
+   * What the finish handed back. The last marker ticks, then 320 ms later (at once under reduced
+   * motion) the dialog narrows to md, takes the result's title, drops the X,
    * and ignores Esc and outside clicks until the body's own Done.
    */
   result?: ResultSpec | undefined;
@@ -52,12 +54,13 @@ export function WizardDialog<Id extends string>({
   result,
   children,
 }: WizardDialogProps<Id>) {
-  const working = Boolean(busy) || wizard.finishing;
+  const beat = useFinishBeat(result);
+  const working = Boolean(busy) || wizard.finishing || beat.holding;
   const afterClose = useOnClose(open, onClose);
-  if (result) {
+  if (beat.result) {
     return (
       <Dialog open={open} onOpenChange={() => undefined}>
-        <ResultDialogContent result={result} onCloseAutoFocus={afterClose} />
+        <ResultDialogContent result={beat.result} onCloseAutoFocus={afterClose} />
       </Dialog>
     );
   }
@@ -77,7 +80,7 @@ export function WizardDialog<Id extends string>({
             wizard={wizard}
             finishLabel={finishLabel}
             {...(finishTone ? { finishTone } : {})}
-            busy={Boolean(busy)}
+            busy={working}
             onCancel={close}
           />
         }
@@ -85,7 +88,7 @@ export function WizardDialog<Id extends string>({
         <div className="@container">
           <div className="flex flex-col gap-5 @[43.5rem]:flex-row @[43.5rem]:gap-8">
             <div className="@[43.5rem]:sticky @[43.5rem]:top-0 @[43.5rem]:self-start">
-              <WizardStepper wizard={wizard} />
+              <WizardStepper wizard={wizard} finished={beat.holding} />
             </div>
             {/* Enter in a field presses the footer's Next: it is the form's default button. */}
             <Form {...wizard.form} className="@container min-w-0 flex-1 @[43.5rem]:min-h-[24rem]">

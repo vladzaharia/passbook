@@ -41,7 +41,6 @@ export function useChangeWizard(
       ),
     [loadedKey],
   );
-  const [step, setStep] = useState(0);
   const [kind, setKind] = useState<ChangeKind>(initial);
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [notify, setNotify] = useState(tell && initial === 'design');
@@ -122,8 +121,6 @@ export function useChangeWizard(
     timeZone: orgZone,
     details,
     fields,
-    step,
-    setStep,
     kind,
     chooseKind,
     rows,

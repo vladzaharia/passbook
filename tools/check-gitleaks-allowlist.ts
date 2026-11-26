@@ -53,6 +53,25 @@ const cases: {
     reported: false,
   },
   { name: 'demo-key-prefix', value: 'pb_test_k3Qx9Zt2', reported: false },
+  // A fragment boundary can cut the demo value short; any leading part of its exact shape stays silent.
+  {
+    name: 'demo-key-cut-name',
+    value: 'pb_test_p7Wm4Hn8_northwi',
+    reported: false,
+  },
+  {
+    name: 'demo-key-cut-hex',
+    value: `pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-${hex(5)}`,
+    reported: false,
+  },
+  { name: 'demo-key-cut-after-underscore', value: 'pb_test_p7Wm4Hn8_', reported: false },
+  // ...but a real tail, a stray tail on the cut, or a long hex run is still reported.
+  { name: 'demo-key-cut-real-tail', value: `pb_test_p7Wm4Hn8_northwi${rand(30)}`, reported: true },
+  {
+    name: 'demo-key-hex-one-too-long',
+    value: `pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-${hex(13)}`,
+    reported: true,
+  },
   { name: 'demo-webhook', value: `whsec_demo_northwind_${hex(6)}`, reported: false },
   { name: 'demo-token', value: `demo-token-northwind-${hex(22)}`, reported: false },
   { name: 'demo-hex-1', value: '00112233445566778899aabbccddeeff', reported: false },

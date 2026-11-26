@@ -185,12 +185,13 @@ export function connectionIs(c: ConnectionIs): Check {
   return exactlyOne('connections', where, undefined, 'config');
 }
 
-/** The workflow tracking row of this sync instance exists for the connection (not a guarded table). */
+/** The workflow tracking row of this sync instance exists for the connection and was not superseded (not a guarded table). */
 export function workflowTracked(instanceId: string, connectionId: string, keyset: string): Check {
   return rawCheck(
     'lineage',
     `EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = ? AND w.kind = 'connection_sync'
-      AND w.target_id = ? AND w.credential_keyset_commitment = ?)`,
+      AND w.target_id = ? AND w.credential_keyset_commitment = ?
+      AND (w.status <> 'errored' OR COALESCE(w.error_code, '') <> 'SUPERSEDED'))`,
     [instanceId, connectionId, keyset],
   );
 }

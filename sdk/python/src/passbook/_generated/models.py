@@ -212,6 +212,14 @@ __all__ = [
     "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
     "ConnectionsPreviewResult",
+    "ConnectionsProbeBody",
+    "ConnectionsProbeConfigBody",
+    "ConnectionsProbeConfigParams",
+    "ConnectionsProbeConfigResponse",
+    "ConnectionsProbeConfigResult",
+    "ConnectionsProbeParams",
+    "ConnectionsProbeResponse",
+    "ConnectionsProbeResult",
     "ConnectionsRetrieveResponse",
     "ConnectionsRetrieveResponseMappingValue",
     "ConnectionsRetrieveResponseMappingValueTransform",
@@ -1226,6 +1234,8 @@ __all__ = [
     "PlatformUsersEmailsMakePrimaryResponseSessionsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersPassesListResponse",
+    "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
     "PlatformUsersRetrieveResponseEmailsItem",
     "PlatformUsersRetrieveResponseIdentitiesItem",
@@ -3141,6 +3151,46 @@ class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
+
+class ConnectionsProbeConfigParams(_Model):
+    orgId: str
+    connectorType: _Literal["http-json"] | str
+    config: _Dict[str, _Any]
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeConfigResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
+
+class ConnectionsProbeParams(_Model):
+    config: _Dict[str, _Any] | None = None
+    secrets: _Dict[str, str] | None = None
+    target: _Literal["list", "record"] | str
+    ref: str | None = None
+    next: str | None = None
+
+class ConnectionsProbeResponse(_Model):
+    ok: bool
+    errorCode: _Literal["AUTH", "FORBIDDEN", "NOT_FOUND", "RATE_LIMITED", "TIMEOUT", "UPSTREAM", "UNSAFE_URL", "REDIRECT_BLOCKED", "NOT_JSON", "TOO_LARGE", "NO_RECORDS", "OFF_ORIGIN", "CONFIG"] | str | None = None
+    retryAfterMs: int | None = None
+    durationMs: int
+    request: _Dict[str, _Any] | None
+    headers: _Dict[str, str]
+    body: _Any | None = None
+    pruned: _Dict[str, _Any] | None
+    detections: _Dict[str, _Any] | None
+    page: _Dict[str, _Any] | None
 
 class ConnectionsRetrieveResponse(_Model):
     id: str
@@ -9419,7 +9469,7 @@ class PlatformUsersEmailsCreateResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsCreateResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9474,7 +9524,7 @@ class PlatformUsersEmailsDeleteResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsDeleteResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9529,7 +9579,7 @@ class PlatformUsersEmailsMakePrimaryResponseIdentitiesItem(_Model):
 
 class PlatformUsersEmailsMakePrimaryResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -9568,6 +9618,23 @@ class PlatformUsersListResponseItemsItem(_Model):
     passCount: int | None = None
     signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
 
+class PlatformUsersPassesListResponse(_Model):
+    items: _List[PlatformUsersPassesListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformUsersPassesListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgStatus: _Literal["active", "suspended"] | str
+    timeZone: str
+    templateName: str
+    status: _Literal["active", "voided"] | str
+    holding: _Literal["owned", "waiting"] | str
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
+    issuedAt: int
+    updatedAt: int
+
 class PlatformUsersRetrieveResponse(_Model):
     id: str
     name: str | None
@@ -9599,7 +9666,7 @@ class PlatformUsersRetrieveResponseIdentitiesItem(_Model):
 
 class PlatformUsersRetrieveResponsePassesItem(_Model):
     id: str
-    title: str
+    title: str | None = None
     templateName: str
     orgName: str
     status: _Literal["active", "voided"] | str
@@ -14276,6 +14343,14 @@ ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 ConnectionsListResult = ConnectionsListResponse
 
 ConnectionsPreviewResult = ConnectionPreview
+
+ConnectionsProbeBody = ConnectionsProbeParams
+
+ConnectionsProbeConfigBody = ConnectionsProbeConfigParams
+
+ConnectionsProbeConfigResult = ConnectionsProbeConfigResponse
+
+ConnectionsProbeResult = ConnectionsProbeResponse
 
 ConnectionsRetrieveResult = ConnectionsRetrieveResponse
 

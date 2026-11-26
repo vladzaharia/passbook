@@ -1,5 +1,5 @@
 import type { Actor } from '../../platform/context.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
@@ -16,11 +16,13 @@ import {
   secretFingerprint,
 } from './secret-fingerprint.ts';
 import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
+import { startRelist } from './service-relist.ts';
 import {
   auditActor,
   type Created,
   FENCED,
   requireConnection,
+  sameJson,
   secretsFor,
   type UpdateInput,
 } from './service-shared.ts';
@@ -57,7 +59,7 @@ function assertFixedConfig(
   }
 }
 
-const storedConfig = (def: ReturnType<typeof requireConnector>, conn: ConnectionRow) =>
+export const storedConfig = (def: ReturnType<typeof requireConnector>, conn: ConnectionRow) =>
   def.configSchema.parse(
     conn.connectorVersion !== def.version && def.migrate
       ? def.migrate(conn.connectorVersion, conn.config)
@@ -67,7 +69,7 @@ const storedConfig = (def: ReturnType<typeof requireConnector>, conn: Connection
 const originsOf = (urls: string[]) => new Set(urls.map((u) => new URL(u).origin));
 
 /** A stored credential is bound to the origins it was entered for; a new origin needs a new credential. */
-function assertCredentialOrigin(
+export function assertCredentialOrigin(
   def: ReturnType<typeof requireConnector>,
   conn: ConnectionRow,
   next: Record<string, unknown>,
@@ -122,6 +124,11 @@ export async function update(
     changed.add(key);
   };
 
+  /** What a record means changed: list the source again so every pass is re-applied. */
+  const relist = () => {
+    patch.cursor = null;
+  };
+
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
     const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
@@ -133,34 +140,47 @@ export async function update(
     await assertOriginMoveEntitled(sctx, def, conn, config as Record<string, unknown>);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
     assertCredentialOrigin(def, conn, config, input.secrets);
-    patch.config = config;
-    patch.connectorVersion = def.version;
-    patch.cursor = null;
-    changed.add('config');
+    const moved = !sameJson(config, storedConfig(def, conn));
+    if (moved || conn.connectorVersion !== def.version) {
+      patch.config = config;
+      patch.connectorVersion = def.version;
+    }
+    if (moved) relist();
+    if (moved) changed.add('config');
   }
   if (input.secrets !== undefined) {
     const json = secretsFor(def, input.secrets);
     if (json === '{}') patch.credentialId = null;
     else connectorCredential = json;
     staleCredentials.push(conn.credentialId);
-    patch.cursor = null;
+    relist();
     changed.add('secrets');
   }
+  // A save sends these back unchanged: only a different value re-lists, bumps the generation and fences runs.
   if (input.mapping !== undefined) {
     validateMapping(input.mapping);
-    patch.mapping = input.mapping;
-    changed.add('mapping');
+    if (!sameJson(input.mapping, conn.mapping)) {
+      patch.mapping = input.mapping;
+      relist();
+      changed.add('mapping');
+    }
   }
   if (input.holderEmailField !== undefined) {
     assertPointer(input.holderEmailField, 'holderEmailField');
-    patch.holderEmailField = input.holderEmailField;
-    changed.add('holderEmailField');
+    if (input.holderEmailField !== conn.holderEmailField) {
+      patch.holderEmailField = input.holderEmailField;
+      relist();
+      changed.add('holderEmailField');
+    }
   }
   const templateId = input.defaultTemplateId ?? conn.defaultTemplateId;
   if (input.defaultTemplateId !== undefined) {
     await assertTemplateUsable(sctx, conn.orgId, input.defaultTemplateId);
-    patch.defaultTemplateId = input.defaultTemplateId;
-    changed.add('defaultTemplateId');
+    if (input.defaultTemplateId !== conn.defaultTemplateId) {
+      patch.defaultTemplateId = input.defaultTemplateId;
+      relist();
+      changed.add('defaultTemplateId');
+    }
   }
   const autoCreate = input.autoCreate ?? conn.autoCreate;
   if (autoCreate && !templateId) {
@@ -168,11 +188,16 @@ export async function update(
       { path: 'defaultTemplateId', message: 'Required with autoCreate.' },
     ]);
   }
-  if (input.autoCreate !== undefined) set('autoCreate', input.autoCreate);
+  if (input.autoCreate !== undefined) {
+    // Switching it on must reach rows a finished listing already passed.
+    if (input.autoCreate && !conn.autoCreate) relist();
+    set('autoCreate', input.autoCreate);
+  }
   if (input.autoEmail !== undefined) set('autoEmail', input.autoEmail);
   if (input.onMissing !== undefined) set('onMissing', input.onMissing);
   if (input.voidWhen !== undefined) {
     validateVoidWhen(input.voidWhen);
+    if (!sameJson(input.voidWhen, conn.voidWhen)) relist();
     set('voidWhen', input.voidWhen);
   }
   for (const key of ['intervalSeconds', 'maxConcurrency', 'requestsPerMinute'] as const) {
@@ -279,7 +304,7 @@ export async function update(
     targetId: id,
     detail: {
       changed: [...changed],
-      ...(input.config !== undefined && def.urls
+      ...(patch.config !== undefined && def.urls
         ? {
             from: [...originsOf(def.urls(storedConfig(def, conn) as never))],
             to: [...originsOf(def.urls(patch.config as never))],
@@ -288,5 +313,18 @@ export async function update(
     },
   });
   const fresh = await requireConnection(sctx, id);
+  // A file connection has no schedule: nothing re-applies until someone starts a sync.
+  if (patch.cursor === null && def.capabilities.upload && fresh.enabled) {
+    try {
+      await startRelist(sctx, actor, fresh, authority);
+    } catch (error) {
+      // The edit is saved; the next Sync now lists from the start.
+      sctx.log.error('connection.relist_failed', {
+        orgId: conn.orgId,
+        connectionId: id,
+        code: error instanceof AppError ? error.code : 'RELIST_FAILED',
+      });
+    }
+  }
   return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };
 }

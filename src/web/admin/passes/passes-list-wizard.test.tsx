@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import {
   type FetchHandler,
   json,
@@ -482,7 +483,7 @@ describe('new pass wizard', () => {
     const stage = screen.getByRole('complementary', { name: 'Preview' });
     await user.click(screen.getByRole('radio', { name: 'Generic' }));
     expect(within(stage).getByText('Generic')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Template', level: 2 })).toHaveClass('sr-only');
+    expect(screen.getByRole('heading', { name: 'Pick a template', level: 2 })).toBeVisible();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -490,9 +491,11 @@ describe('new pass wizard', () => {
   async function toDetails(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled'),
+      expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).not.toHaveAttribute(
+        'aria-disabled',
+      ),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await screen.findByLabelText(/Member name/);
   }
 
@@ -507,30 +510,33 @@ describe('new pass wizard', () => {
     const entries = router.history.length;
     // Without a template Next is disabled: nothing to advance with.
     await screen.findByRole('radio', { name: /Copper card/ });
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^(Next|Review)$/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('heading', { name: 'Pick a template' })).toBeInTheDocument();
     await toDetails(user);
     // Details with a required field empty: focus moves to it.
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(/Member name/)));
     await user.type(screen.getByLabelText(/Member name/), 'Sam Jones');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.type(screen.getByLabelText('Holder email'), 'sam@example.com');
     // A valid address checks the box by itself.
     expect(
       screen.getByRole('checkbox', { name: 'Email the pass to sam@example.com' }),
     ).toBeChecked();
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(screen.getByText('Mode', { selector: 'dt' }).parentElement).toHaveTextContent('Live');
     expect(screen.queryByText('a1b2c3d4e5f6a7b8')).toBeNull();
     expect(screen.getByText('Requested for sam@example.com')).toBeInTheDocument();
     expect(screen.queryByText(/this review does not lock it/i)).toBeNull();
     // Review: rows are a valid dl; an Edit link per row keeps the state.
     expect((await axe(container)).violations).toEqual([]);
-    await user.click(screen.getByRole('button', { name: 'Edit member name' }));
+    await user.click(screen.getByRole('button', { name: 'Edit details' }));
     expect(screen.getByLabelText(/Member name/)).toHaveValue('Sam Jones');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    // Every later step is still done: the primary goes straight back to Review.
+    await user.click(screen.getByRole('button', { name: 'Review' }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
     await waitFor(() =>
@@ -576,7 +582,7 @@ describe('new pass wizard', () => {
       handlers: wizardHandlers(() => json({}), []),
     });
     await toDetails(user);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(await screen.findByText('Required.')).toBeInTheDocument();
     expect(screen.getByLabelText(/Member name/)).toBeInTheDocument();
   });
@@ -595,10 +601,10 @@ describe('new pass wizard', () => {
     });
     await toDetails(user);
     await user.type(screen.getByLabelText(/Member name/), 'Sam Jones');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.click(screen.getByRole('button', { name: 'Create pass' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('down');
+    expect(await screen.findByRole('alert')).toHaveTextContent(STATE_COPY.error);
     await user.click(screen.getByRole('button', { name: 'Create pass' }));
     await waitFor(() => expect(posts).toHaveLength(2));
     const keys = posts.map((p) => (p.headers as Record<string, string>)['idempotency-key']);
@@ -616,15 +622,14 @@ describe('new pass wizard', () => {
     });
     await toDetails(user);
     await user.type(screen.getByLabelText(/Member name/), 'Sam');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.click(screen.getByRole('button', { name: 'Create pass' }));
     await screen.findByRole('alert');
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await user.type(screen.getByLabelText(/Member name/), ' Jones');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Review' }));
     await user.click(screen.getByRole('button', { name: 'Create pass' }));
     await waitFor(() => expect(posts).toHaveLength(2));
     const keys = posts.map((p) => (p.headers as Record<string, string>)['idempotency-key']);
@@ -640,21 +645,21 @@ describe('new pass wizard', () => {
     });
     await toDetails(user);
     await user.type(screen.getByLabelText(/Member name/), 'Sam');
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     await user.type(screen.getByLabelText('Holder email'), 'nope');
     expect(screen.getByRole('checkbox', { name: 'Email the pass' })).toBeDisabled();
     // Nothing while typing: the error waits for Next.
     expect(screen.queryByText('Enter a valid email address.')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Holder' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Who gets it' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Holder email')).toHaveFocus());
     // Fixed, it clears at once and Next goes on to Review.
     await user.clear(screen.getByLabelText('Holder email'));
     await user.type(screen.getByLabelText('Holder email'), 'sam@example.com');
     expect(screen.queryByText('Enter a valid email address.')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(await screen.findByRole('heading', { name: 'Check and create' })).toBeInTheDocument();
   });
 
   it('opens a deep link with an org and template on Details', async () => {
@@ -663,7 +668,7 @@ describe('new pass wizard', () => {
       ...orgScope,
       handlers: wizardHandlers(() => json({}), []),
     });
-    expect(await screen.findByRole('heading', { name: 'Details' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Fill in the pass' })).toBeInTheDocument();
     expect(await screen.findByLabelText(/Member name/)).toBeInTheDocument();
   });
 
@@ -680,10 +685,9 @@ describe('new pass wizard', () => {
         input={{ one: '1', two: '2', three: '3', four: '4', five: 'fifth value' }}
         email=""
         send={false}
-        steps={{ template: 0, details: 1, holder: 2 }}
+        orgEditable={false}
         onEdit={() => {}}
         warnings={[]}
-        error={null}
       />,
     );
     expect(screen.getByText('fifth value')).toBeInTheDocument();
@@ -713,10 +717,9 @@ describe('new pass wizard', () => {
         input={{ plan: 'member', until: '2030-01-01T00:00:00Z' }}
         email=""
         send={false}
-        steps={{ template: 0, details: 1, holder: 2 }}
+        orgEditable={false}
         onEdit={() => {}}
         warnings={[]}
-        error={null}
       />,
     );
     expect(screen.getByText('Monthly')).toBeInTheDocument();

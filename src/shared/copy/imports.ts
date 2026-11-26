@@ -36,7 +36,6 @@ export const IMPORT_COPY = {
   chooseOrg: 'Choose an organization to import passes',
   forbidden: 'You can import passes with the operator or admin role.',
   match: {
-    title: 'Match columns',
     holderEmail: 'Holder email',
     externalId: 'External ID',
     column: 'Column',

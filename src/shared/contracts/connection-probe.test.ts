@@ -9,6 +9,7 @@ describe('RestPaginationSchema', () => {
     { style: 'link-header' },
     { style: 'page', param: 'page[number]', start: 1, sizeParam: 'per_page', size: 100 },
     { style: 'offset', param: '$skip', sizeParam: '$top', size: 50, totalPointer: '/total' },
+    { style: 'page', param: 'page', start: 1, totalPagesHeader: 'X-WP-TotalPages' },
   ])('accepts $style', (p) => {
     expect(RestPaginationSchema.parse(p)).toMatchObject(p);
   });
@@ -26,6 +27,7 @@ describe('RestPaginationSchema', () => {
     { style: 'offset', param: 'offset', sizeParam: 'limit', size: 1001 },
     { style: 'cursor', param: 'a b', cursorPointer: '/next' },
     { style: 'next-link', nextPointer: 'next' },
+    { style: 'page', param: 'page', start: 1, totalPagesHeader: 'bad header' },
   ])('refuses %j', (p) => {
     expect(RestPaginationSchema.safeParse(p).success).toBe(false);
   });

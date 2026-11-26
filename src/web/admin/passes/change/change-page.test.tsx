@@ -208,9 +208,10 @@ describe('Change wizard', () => {
     await fillFirstStep(user);
     await user.click(await screen.findByRole('switch', { name: 'Notify holders' }));
     expect(await screen.findByText('Estimated from the 200 newest passes.')).toBeInTheDocument();
-    expect(screen.queryByText('Write the message or turn Notify off.')).not.toBeInTheDocument();
+    // Next says why it is off; the field's own error waits for the press.
+    expect(screen.getAllByText('Write the message or turn Notify off.')).toHaveLength(1);
     await user.click(next());
-    expect(screen.getByText('Write the message or turn Notify off.')).toBeInTheDocument();
+    expect(screen.getAllByText('Write the message or turn Notify off.')).toHaveLength(2);
   });
 
   it('shows the new count when the selection moved and sends it after a confirm', async () => {

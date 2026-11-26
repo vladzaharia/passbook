@@ -74,14 +74,14 @@ describe('webhook sender picker', () => {
     const user = userEvent.setup();
     const posts: Record<string, unknown>[] = [];
     await setup(posts);
+    // A sender is a tile in the picker; the plain webhook tile is Custom.
     await user.click(await screen.findByRole('radio', { name: /Webhook push/ }));
-    await next(user);
-    expect(await screen.findByRole('radio', { name: /Custom/ })).toBeChecked();
-    expect(screen.getByLabelText('Records')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/^Name/), 'Gym billing');
     await user.click(screen.getByRole('radio', { name: /Stripe subscriptions/ }));
-    // The custom pointers belong to Custom only.
+    await next(user);
+    await user.type(await screen.findByLabelText(/^Name/), 'Gym billing');
+    // The custom pointers belong to Custom only, and Configuration has no sender picker.
     expect(screen.queryByLabelText('Records')).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Sender' })).toBeNull();
     await next(user);
     expect(await screen.findByText('Paste the signing secret.')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/Signing secret/), 'secret-without-prefix');
@@ -117,10 +117,9 @@ describe('webhook sender picker', () => {
     const user = userEvent.setup();
     const posts: Record<string, unknown>[] = [];
     await setup(posts);
-    await user.click(await screen.findByRole('radio', { name: /Webhook push/ }));
+    await user.click(await screen.findByRole('radio', { name: /Cal.com bookings/ }));
     await next(user);
     await user.type(await screen.findByLabelText(/^Name/), 'Bookings');
-    await user.click(screen.getByRole('radio', { name: /Cal.com bookings/ }));
     expect(screen.queryByLabelText(/Signing secret/)).toBeNull();
     await next(user);
     await next(user);
@@ -133,16 +132,14 @@ describe('webhook sender picker', () => {
   });
 
   it('hides the senders a plan leaves out, Custom included', async () => {
-    const user = userEvent.setup();
+    const _user = userEvent.setup();
     await setup([], {
       ...WEBHOOK,
       entitled: false,
       recipes: [STRIPE, { ...CAL, entitled: false }],
     });
-    await user.click(await screen.findByRole('radio', { name: /Webhook push/ }));
-    await next(user);
-    expect(await screen.findByRole('radio', { name: /Stripe subscriptions/ })).toBeChecked();
-    expect(screen.queryByRole('radio', { name: /Custom/ })).toBeNull();
+    expect(await screen.findByRole('radio', { name: /Stripe subscriptions/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Webhook push/ })).toBeNull();
     expect(screen.queryByRole('radio', { name: /Cal.com/ })).toBeNull();
   });
 });

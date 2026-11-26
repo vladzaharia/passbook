@@ -23,11 +23,11 @@ import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { RelTime, useNow } from '../../ui/rel-time.tsx';
 import {
   type ScanStaff,
-  StaffFormDialog,
   StaffPinDialog,
   StaffResetDialog,
   StaffStatusDialog,
 } from './staff-dialogs.tsx';
+import { StaffFormDialog } from './staff-form-dialog.tsx';
 import {
   type PinToolDialog,
   StaffPinCell,
