@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ScanZoneListSchema } from '@/shared/contracts/scan-access.ts';
-import { api } from '@/web/lib/api.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import { useToolApi, useToolScope } from '@/web/lib/tool-api.tsx';
 
 export const zoneKeys = {
   /** Every zone query; the console's full lists (zones/zones-api.ts) sit under it. */
@@ -15,13 +15,18 @@ export const zoneKeys = {
  */
 export function useZones(enabled = true) {
   const scope = useOrgScope();
-  const orgId =
-    enabled &&
-    !scope.isLoading &&
-    !scope.isError &&
-    scope.membership?.capabilities.includes('scanning:read')
-      ? scope.orgId
-      : undefined;
+  const pinned = useToolScope();
+  const api = useToolApi();
+  // A host that pins an organization (the Workbench) answers for its own access.
+  const orgId = !enabled
+    ? undefined
+    : pinned
+      ? pinned.orgId
+      : !scope.isLoading &&
+          !scope.isError &&
+          scope.membership?.capabilities.includes('scanning:read')
+        ? scope.orgId
+        : undefined;
   return useQuery({
     queryKey: zoneKeys.list(orgId),
     enabled: orgId !== undefined,

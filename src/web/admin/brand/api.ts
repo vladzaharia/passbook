@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/wallet-providers.ts';
 import { api } from '@/web/lib/api.ts';
 import { isApiError } from '@/web/lib/errors.ts';
-import { useMode } from '@/web/lib/mode.ts';
+import { useToolApi, useToolMode } from '@/web/lib/tool-api.tsx';
 import { orgKeys } from '../orgs/queries.ts';
 
 const base = (orgId: string) => `/api/v1/orgs/${encodeURIComponent(orgId)}`;
@@ -39,11 +39,13 @@ export const stageBrandAsset = (orgId: string, body: z.input<typeof StageBrandAs
   api.post(`${base(orgId)}/brand-assets`, StagedBrandAssetSchema, body);
 
 export function usePassSetup(orgId: string, enabled = true) {
-  const mode = useMode();
+  const client = useToolApi();
+  const mode = useToolMode();
   return useQuery({
     enabled,
     queryKey: passSetupKey(orgId, mode),
-    queryFn: ({ signal }) => getPassSetup(orgId, signal),
+    queryFn: ({ signal }) =>
+      client.get(`${base(orgId)}/pass-setup`, PassSetupSchema, signal ? { signal } : {}),
   });
 }
 
@@ -81,11 +83,12 @@ export function useWebLogoUrl(orgId: string, enabled: boolean) {
 
 /** The mark holders see for the org (its choice, fitted to its plan); full until it loads. */
 export function useBrandMark(orgId: string | undefined) {
+  const client = useToolApi();
   return (
     useQuery({
       queryKey: ['admin', 'brand', orgId],
       queryFn: ({ signal }) =>
-        api.get('/api/v1/brand', BrandKitSchema, { query: { orgId }, signal }),
+        client.get('/api/v1/brand', BrandKitSchema, { query: { orgId }, signal }),
       enabled: Boolean(orgId),
       // A 403 (no org access) draws the full footer rather than retrying.
       retry: false,
