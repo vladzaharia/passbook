@@ -3,10 +3,10 @@ import {
   OperationResultSchema,
   type OperationStep,
 } from '../../../shared/contracts/operations.ts';
-import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseSteps } from './dto.ts';
 import { kindOf } from './kinds.ts';
+import { codeOf, settleSteps, tickStep } from './progress-code.ts';
 import {
   NOOP,
   OperationCancelled,
@@ -17,7 +17,6 @@ import {
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,
-  incrementStep,
   readCancelRequested,
   type Written,
   writeHeartbeat,
@@ -29,7 +28,6 @@ const COUNT_EVERY_MS = 1000;
 const HEARTBEAT_EVERY_MS = 30_000;
 /** A waiting reason is a short sentence: no digit, `@`, `/` or `:`, so no email, token or URL fits. */
 const REASON = /^[A-Za-z][A-Za-z ,.'-]{0,79}$/;
-const STABLE_CODE = /^[A-Z][A-Z0-9_]{1,79}$/;
 
 interface State {
   row: OperationRow;
@@ -161,19 +159,9 @@ class Reporter implements Progress {
     await this.enqueue(async (s) => {
       const step = this.stepOf(s, key);
       if (!step || this.ignored.has(key)) return;
-      out = await incrementStep(this.ctx.env.DB, {
-        id: this.id,
-        attempt: s.row.attempt,
-        now: this.ctx.clock.now(),
-        index: s.steps.indexOf(step),
-        lease: this.lease,
-      });
+      out = await tickStep(this.ctx, s.row.id, s.row.attempt, s.steps.indexOf(step), this.lease);
       if (!out) this.dead = true;
-      else {
-        // Later writes of this step carry the database's count, not the one this runner loaded.
-        step.done = out.done;
-        step.total = out.total;
-      }
+      else Object.assign(step, out);
     });
     return out;
   }
@@ -255,18 +243,7 @@ class Reporter implements Progress {
           operationId: this.id,
         });
       const now = this.ctx.clock.now();
-      for (const step of s.steps) {
-        const tail = kindOf(s.row.kind)?.steps.find((d) => d.key === step.key)?.tail === true;
-        if (tail && step.state !== 'done') {
-          step.state = 'waiting';
-          step.waitingReason = 'due';
-        } else if (step.state === 'running' || step.state === 'waiting') {
-          step.state = 'done';
-          step.waitingReason = null;
-        } else if (step.state === 'pending') step.state = 'skipped';
-        else continue;
-        if (step.state !== 'waiting') step.finishedAt = now;
-      }
+      settleSteps(s.steps, s.row.kind, now);
       await this.close(s, 'succeeded', null, checked?.success ? checked.data : null);
     });
   }
@@ -283,7 +260,7 @@ class Reporter implements Progress {
         await this.close(s, 'cancelled', null, null);
         return;
       }
-      const code = this.codeOf(error);
+      const code = codeOf(this.ctx, this.id, error);
       // The step that was running; a tail that waits after Done (the erase) is not what failed.
       const tail = (key: string) =>
         kindOf(s.row.kind)?.steps.find((d) => d.key === key)?.tail === true;
@@ -302,17 +279,6 @@ class Reporter implements Progress {
         null,
       );
     });
-  }
-
-  /** An AppError keeps its code; anything else is OPERATION_FAILED and logged as an error. */
-  private codeOf(error: unknown): string {
-    if (error instanceof AppError && STABLE_CODE.test(error.code)) return error.code;
-    this.ctx.log.error('operation.failed', {
-      code: 'OPERATION_FAILED',
-      operationId: this.id,
-      cause: error instanceof Error ? error.name : 'unknown',
-    });
-    return 'OPERATION_FAILED';
   }
 
   private async close(
