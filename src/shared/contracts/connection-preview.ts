@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { IdSchema, JsonSchema, TimestampSchema } from './common.ts';
 import { MappingSchema, TestConnectionResponseSchema, VoidWhenSchema } from './connections.ts';
 
+/** `arrivalId`: preview the kept event of that accepted webhook arrival instead of reading the source. */
+export const ConnectionPreviewRequestSchema = z.object({ arrivalId: IdSchema.optional() });
+
 /** What a first sync would do with the source's records. Nothing is written. */
 export const ConnectionPreviewSchema = z.object({
   ok: z.boolean(),

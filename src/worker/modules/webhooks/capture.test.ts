@@ -15,6 +15,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { makeSandbox, startAndSettle } from '../developer/sandbox-test-fixtures.ts';
 import { createFakeQueue } from '../passes/pass-test-fixtures.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { runLane } from './deliver.ts';
@@ -88,10 +89,15 @@ const call = async (
 async function sandbox() {
   const user = await makeUser(kit.f);
   const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-  const res = await send('POST', '/developer/sandbox', session.headers, { turnstileToken: 'ok' });
-  expect(res.status, await res.clone().text()).toBe(201);
-  const made = (await res.json()) as { orgId: string; templateId: string; key: { secret: string } };
-  return { ...made, session, key: { authorization: `Bearer ${made.key.secret}` } };
+  const made = await makeSandbox(send, session.headers);
+  if (!made.key || !made.templateId) throw new Error('A new sandbox has a key and a ticket.');
+  const key = made.key;
+  return {
+    ...made,
+    templateId: made.templateId,
+    session,
+    key: { authorization: `Bearer ${key.secret}` },
+  };
 }
 
 /** The sandbox's capture endpoint and its secret. */
@@ -116,10 +122,10 @@ describe('provisioning', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ target: 'capture', mode: 'test' });
-    const again = await send('POST', '/developer/sandbox', s.session.headers, {
+    const again = await startAndSettle(send, s.session.headers, 'POST', '/developer/sandbox', {
       turnstileToken: 'ok',
     });
-    expect(again.status).toBe(201);
+    expect(again.status).toBe('succeeded');
     expect(
       (
         await first<{ n: number }>(

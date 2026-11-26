@@ -61,6 +61,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('connection_webhook_retention'),
   inOrg('connection_webhook_legacy_sources'),
   inOrg('connection_webhook_replays'),
+  inOrg('connection_webhook_arrivals'),
   // Files first: connection_files has no cascade to the connection.
   inOrg('connection_files'),
   inOrg('connections'),

@@ -1,7 +1,8 @@
 import { MonitorPlay, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
-import { clock, flavour } from '../logs/format.ts';
+import { StatusChip } from '../bench/status-chip.tsx';
+import { BenchTime } from '../bench/time.tsx';
 import { SOURCES, type Source } from './model.ts';
 
 const methodClass = (m: string) => `method ${m === 'DELETE' ? 'del' : m.toLowerCase()}`;
@@ -9,18 +10,18 @@ const methodClass = (m: string) => `method ${m === 'DELETE' ? 'del' : m.toLowerC
 function CallRow({ call, now, logs }: { call: RequestLogEntry; now: number; logs: string }) {
   const fromKey = call.via === null;
   return (
-    <a className="lrow wb-call" href={`${logs}#${call.id}`}>
+    <a className="lrow wb-call" href={`${logs}?source=all#${call.id}`}>
       <span className={methodClass(call.method)}>{call.method}</span>
       <code className="wb-call-path">{call.route ?? call.path}</code>
-      <span className="pill mono wb-status" data-tone={flavour(call.status)}>
-        {call.status}
-      </span>
+      <StatusChip status={call.status} />
       <span className="xs muted mono wb-call-ms">{call.durationMs} ms</span>
       <span className="wb-src" title={fromKey ? 'Your key' : 'Run here'}>
         {fromKey ? <Terminal aria-hidden /> : <MonitorPlay aria-hidden />}
         <span className="sr">{fromKey ? 'Your key' : 'Run here'}</span>
       </span>
-      <span className="xs muted mono wb-call-at">{clock(call.at, now)}</span>
+      <span className="xs muted mono wb-call-at">
+        <BenchTime at={call.at} now={now} />
+      </span>
     </a>
   );
 }

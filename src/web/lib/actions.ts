@@ -39,21 +39,18 @@ import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { MEMBER_ACTIONS } from './actions-members.ts';
-import { OPERATION_ACTIONS } from './actions-operations.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { USER_PASSES_ACTIONS } from './actions-user-passes.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
-
 export interface ActionEntry {
   label: string;
   icon: LucideIcon;
   /** success: created or working; info: changed; warning: paused or taken away; danger: lost. */
   tone: Tone;
 }
-
 const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
 const I = ACTION_ICON;
 /** Audit and activity vocabulary: a label, a glyph and a tone per action code. */
@@ -268,7 +265,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   ...DEVELOPER_ACTIONS,
-  ...OPERATION_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),
@@ -310,10 +306,11 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'wallet_provider.migration_resolve': a('Wallet account migration resolved', I.edit, 'info'),
 };
 
-export const humanize = (code: string) => {
-  const s = code.replace(/[._]+/g, ' ').trim();
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
+export const humanize = (code: string) =>
+  code
+    .replace(/[._]+/g, ' ')
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
 
 /** Sentence for an audit action code; unknown codes are humanized. */
 export function actionLabel(action: string): string {

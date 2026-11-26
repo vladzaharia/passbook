@@ -32,6 +32,30 @@
     "note": "Discard a pending revision and its stored file."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsUploadsByFileId",
@@ -40,20 +64,21 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "behavior changed",
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
+  },
+  {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -190,6 +215,14 @@
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
@@ -392,6 +425,54 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "GET /api/v1/connections 200.items[].firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
+    "key": "GET /api/v1/connections param query:health: enum value \"awaiting\" added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "param query:health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsById",
@@ -414,6 +495,14 @@
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "GET /api/v1/connections/{id}/files new operation",
@@ -446,6 +535,30 @@
     "op": "GET /api/v1/connections/{id}/runs",
     "change": "200.items[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/setup new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdSetup",
+    "op": "GET /api/v1/connections/{id}/setup",
+    "change": "new operation",
+    "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "new operation",
+    "note": "List what the webhook ingress saw for a connection: outcome and reason, never the body."
+  },
+  {
+    "key": "GET /api/v1/connections/summary 200.attention[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsSummary",
+    "op": "GET /api/v1/connections/summary",
+    "change": "200.attention[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
     "key": "GET /api/v1/connections/uploads/{fileId} new operation",
@@ -504,6 +617,30 @@
     "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -550,6 +687,38 @@
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.recipes[].entitled: field added",
     "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
+    "key": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup new operation",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+    "op": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+    "change": "new operation",
+    "note": "A sender's webhook setup guide as data: steps, topics, secret origin and fix lines. Steps with verified: false may differ at the sender."
   },
   {
     "key": "GET /api/v1/developer/access new operation",
@@ -1688,6 +1857,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "GET /api/v1/scan/visitors operation removed",
     "class": "breaking",
     "operationId": "scan.getScanVisitors",
@@ -1734,6 +1911,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -2272,6 +2457,14 @@
     "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/setup new operation",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsSetup",
+    "op": "GET /api/v1/webhook-endpoints/setup",
+    "change": "new operation",
+    "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
+  },
+  {
     "key": "GET /b/{token}/{passId} new operation",
     "class": "additive",
     "operationId": "public.getBByTokenByPassId",
@@ -2437,6 +2630,30 @@
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.version: optional input field added",
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
@@ -2623,6 +2840,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -2661,6 +2886,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -3285,6 +3518,38 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections 201.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "POST /api/v1/connections 201.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
+    "key": "POST /api/v1/connections behavior changed",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "behavior changed",
+    "note": "Shopify, Stripe and Ticket Tailor connections start with no secret when webhookSecret is omitted; PATCH sets it. Shopify store secrets may be shared in one org."
+  },
+  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -3314,7 +3579,7 @@
     "operationId": "connections.postConnectionsByIdPreview",
     "op": "POST /api/v1/connections/{id}/preview",
     "change": "new operation",
-    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
+    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Send arrivalId to preview a kept webhook arrival. Writes nothing."
   },
   {
     "key": "POST /api/v1/connections/{id}/probe new operation",
@@ -3323,6 +3588,30 @@
     "op": "POST /api/v1/connections/{id}/probe",
     "change": "new operation",
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
@@ -3437,12 +3726,13 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
+    "class": "breaking",
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
@@ -3461,12 +3751,12 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "key": "POST /api/v1/developer/sandbox/key new operation",
     "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "operationId": "developer.postSandboxKey",
+    "op": "POST /api/v1/developer/sandbox/key",
+    "change": "new operation",
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -3475,6 +3765,15 @@
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "new operation",
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
@@ -3507,6 +3806,15 @@
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "new operation",
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -4333,6 +4641,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/device body.capabilities.draftFailures: optional input field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -4389,6 +4705,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
     "class": "additive",
     "operationId": "scan.postScanPairPreview",
@@ -4427,6 +4751,14 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
@@ -4493,12 +4825,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.capabilities.draftFailures: field added",
     "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -4621,6 +4969,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -4651,6 +5007,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -4691,6 +5055,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",

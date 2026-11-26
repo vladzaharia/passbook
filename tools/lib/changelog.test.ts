@@ -5,6 +5,7 @@ import {
   hasNewVersion,
   mergePending,
   type Pending,
+  sessionOnly,
   stamp,
   versionedBreaks,
   versionFailures,
@@ -227,6 +228,53 @@ describe('versions', () => {
         pending,
       ),
     ).toEqual(['POST /a body.u: field removed', 'GET /b 200.x: field removed']);
+  });
+});
+
+describe('versionedBreaks for a session-only status', () => {
+  const pending = [
+    {
+      key: 'POST /a response 201 removed',
+      op: 'POST /a',
+      change: 'response 201 removed',
+      unversioned: true,
+    },
+    { key: 'POST /b response 201 removed', op: 'POST /b', change: 'response 201 removed' },
+    {
+      key: 'POST /c response 201 removed',
+      op: 'POST /c',
+      change: 'response 201 removed',
+      unversioned: true,
+    },
+  ] as Pending[];
+  const broken = [
+    'POST /a: response 201 removed',
+    'POST /b: response 201 removed',
+    'POST /c: response 201 removed',
+  ];
+  const browserDoc = (security: object[][]): Doc => ({
+    paths: Object.fromEntries(
+      ['a', 'b', 'c'].map((p, i) => [`/${p}`, { post: { security: security[i] } }]),
+    ),
+  });
+
+  it('lets an unversioned status removal through only for an operation a browser session alone reaches', () => {
+    const doc = browserDoc([
+      [{ session: [] }],
+      [{ session: [] }],
+      [{ apiKey: ['x'] }, { session: [] }],
+    ]);
+    expect(versionedBreaks(broken, pending, (op) => sessionOnly(doc, op))).toEqual([
+      'POST /b: response 201 removed',
+      'POST /c: response 201 removed',
+    ]);
+  });
+
+  it('refuses it by default, and when the operation has no security at all', () => {
+    expect(versionedBreaks(broken, pending)).toEqual(broken);
+    expect(sessionOnly({ paths: { '/a': { post: {} } } }, 'POST /a')).toBe(false);
+    // An empty requirement is anonymous access, not the session.
+    expect(sessionOnly({ paths: { '/a': { post: { security: [{}] } } } }, 'POST /a')).toBe(false);
   });
 });
 

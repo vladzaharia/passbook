@@ -42,7 +42,7 @@ export function Done({ q }: { q: Quickstart }) {
             {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
             {copied ? D.copied : D.env}
           </button>
-          <a className="btn outline" href={PATHS.home}>
+          <a className="btn outline" href={PATHS.workbench}>
             {D.workbench}
             <ArrowRight aria-hidden="true" />
           </a>

@@ -24,6 +24,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   connection_inbox: BOOKKEEPING,
   connection_ref_versions: BOOKKEEPING,
   connection_runs: 'sync run log of a connection',
+  connection_webhook_arrivals: 'what the webhook ingress saw: closed values only, kept 7 days',
   connection_webhook_items: BOOKKEEPING,
   connection_webhook_legacy_sources: SEALED,
   connection_webhook_replays: BOOKKEEPING,

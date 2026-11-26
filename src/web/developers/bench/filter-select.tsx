@@ -23,6 +23,7 @@ export function FilterSelect({
   options,
   onChange,
   any = C.any,
+  className,
 }: {
   label: string;
   /** '' or undefined: off. */
@@ -31,10 +32,15 @@ export function FilterSelect({
   onChange: (value: string | null) => void;
   /** The off choice's words. */
   any?: string;
+  /** A tool's hook for its own sizing (the phone toolbar). */
+  className?: string;
 }) {
   const shown = options.find((o) => o.value === value)?.label ?? any;
   return (
-    <label className="bench-fs" data-set={value ? '' : undefined}>
+    <label
+      className={className ? `bench-fs ${className}` : 'bench-fs'}
+      data-set={value ? '' : undefined}
+    >
       <span className="bench-fs-l">{label}</span>
       <span className="bench-fs-v">{shown}</span>
       <ChevronDown className="bench-fs-c" aria-hidden="true" />

@@ -1,16 +1,13 @@
-import type {
-  CreatedDeveloperSandbox,
-  DeveloperSandbox,
-} from '../../../shared/contracts/developer.ts';
-import { SANDBOX_TEMPLATE_NAME } from '../../../shared/copy/developer.ts';
+import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgDay } from '../org-lifecycle/org-day.ts';
-import { quickstartTemplateOf, sandboxOfUser } from './repo.ts';
+import type { OrgPurgeParams } from '../../workflows/org-purge.ts';
+import type { Progress } from '../operations/progress-types.ts';
+import { type SandboxRow, sandboxOfUser } from './repo.ts';
 import { deletesSince } from './repo-grants-delete.ts';
 import { DELETES_PER_DAY, deleteSandbox } from './repo-grants-reset.ts';
-import { createSandbox, dto } from './service.ts';
+import { liveKeyCount } from './repo-sandbox-op.ts';
 
 const DAY_MS = 86_400_000;
 
@@ -27,50 +24,75 @@ function limited(times: number[], now: number): AppError {
   );
 }
 
-/**
- * Deletes the caller's sandbox, open or closed. The org closes with its purge due now, and the org purge (the
- * one org deletion uses) voids and pushes its passes and removes every row. The person's record goes with it, so
- * they can make a new one. If starting the purge fails, the daily sweep finds the org: it is due. Answers with the
- * sandbox as it was, closed.
- */
-export async function deleteOwnSandbox(
-  ctx: ServiceContext,
-  session: SessionAuth,
-): Promise<DeveloperSandbox> {
+/** What a delete needs before it starts: a sandbox, open or closed, and a slot left today. */
+export async function checkDelete(ctx: ServiceContext, session: SessionAuth): Promise<SandboxRow> {
   const row = await sandboxOfUser(ctx.env.DB, session.userId);
   if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
   const now = ctx.clock.now();
   const recent = await deletesSince(ctx.env.DB, session.userId, now - DAY_MS);
   if (recent.length >= DELETES_PER_DAY) throw limited(recent, now);
-  await deleteSandbox(
-    ctx,
-    { id: row.id, orgId: row.org_id },
-    { userId: session.userId, sessionIdHash: session.sessionId },
-  );
-  ctx.log.info('developer.sandbox_deleted', { orgId: row.org_id });
-  const templateId = await quickstartTemplateOf(ctx.env.DB, row.org_id, SANDBOX_TEMPLATE_NAME);
-  const gone = dto({ ...row, closed_at: row.closed_at ?? now }, templateId);
-  try {
-    await ctx.env.ORG_PURGE?.create({
-      id: `org-purge-${row.org_id}-${await orgDay(ctx, row.org_id, now)}`,
-      params: { orgId: row.org_id },
-    });
-  } catch (error) {
-    ctx.log.warn('developer.sandbox_purge_deferred', {
-      orgId: row.org_id,
-      code: 'ORG_PURGE_START',
-      error,
-    });
-  }
-  return gone;
+  return row;
 }
 
-/** Delete, then make a new sandbox: a new org and slug, and a new key shown once. */
-export async function recreateSandbox(
+/**
+ * Closes the person's sandbox, open or closed, and revokes its keys, in one batch: the org closes with its purge
+ * due now, and the person's record goes, so they can make a new one. Reported as `close` and `keys`. A sandbox
+ * already gone (an earlier attempt did this) is a no-op. Null, or the org the purge takes from here.
+ */
+export async function deleteHalf(
   ctx: ServiceContext,
-  session: SessionAuth,
-  options: { viewedAt?: number } = {},
-): Promise<CreatedDeveloperSandbox> {
-  if (await sandboxOfUser(ctx.env.DB, session.userId)) await deleteOwnSandbox(ctx, session);
-  return createSandbox(ctx, session, {}, options);
+  by: { userId: string; sessionIdHash: string },
+  progress: Progress,
+  /** The org this operation is about. The person's current sandbox may be a newer one: it is not ours to delete. */
+  orgId: string,
+): Promise<string | null> {
+  const row = await sandboxOfUser(ctx.env.DB, by.userId);
+  if (!row || row.org_id !== orgId) return null;
+  const close = progress.step('close');
+  const keyCount = await liveKeyCount(ctx.env.DB, row.org_id);
+  await deleteSandbox(ctx, { id: row.id, orgId: row.org_id }, by);
+  ctx.log.info('developer.sandbox_deleted', { orgId: row.org_id });
+  await close.done();
+  const keys = progress.step('keys');
+  keys.total(keyCount);
+  await keys.count(keyCount);
+  await keys.done();
+  return row.org_id;
+}
+
+/**
+ * Starts the org purge for the operation: it reports `passes` and the `erase` wait, and with `finish` it also
+ * ends the operation. False when this Worker has no purge Workflow (a test, a script): the caller skips the step.
+ * A start that fails is thrown: the operation stops on `passes` and Retry starts it again.
+ */
+export async function startPurge(
+  ctx: ServiceContext,
+  op: Pick<OperationDto, 'id' | 'attempt'>,
+  orgId: string,
+  instanceId: string,
+  finish: boolean,
+): Promise<boolean> {
+  const binding = ctx.env.ORG_PURGE;
+  if (!binding) return false;
+  const params: OrgPurgeParams = {
+    orgId,
+    operationId: op.id,
+    attempt: op.attempt,
+    finish,
+  };
+  try {
+    await binding.create({ id: instanceId, params });
+  } catch (error) {
+    // The same instance already runs (a resumed run, or the day's sweep): it is the purge.
+    const running =
+      typeof binding.get === 'function' ? await binding.get(instanceId).catch(() => null) : null;
+    if (running) return true;
+    ctx.log.warn('developer.sandbox_purge_deferred', {
+      orgId,
+      code: 'ORG_PURGE_START',
+      cause: error instanceof Error ? error.name : 'unknown',
+    });
+    throw new AppError('SANDBOX_PURGE_START', 500, 'The cleanup did not start.');
+  }
+  return true;
 }

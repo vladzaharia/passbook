@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runOp } from '../run-spec.ts';
 import type { RunIndex, RunIndexItem } from '../types.ts';
-import { safeStart } from './run-app.tsx';
+import { safeStart } from './console-page.tsx';
 
 const item = (id: string, method: RunIndexItem['method']): RunIndexItem => ({
   id,
@@ -10,6 +10,7 @@ const item = (id: string, method: RunIndexItem['method']): RunIndexItem => ({
   method,
   path: `/api/v1/${id}`,
   title: id,
+  destructive: method !== 'get',
 });
 
 describe('the console start', () => {

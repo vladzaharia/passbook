@@ -4,8 +4,9 @@ import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.t
 import {
   CreatedDeveloperSandboxSchema,
   RequestLogPageSchema,
-  SandboxResetSchema,
+  SandboxKeyResponseSchema,
 } from '../../../shared/contracts/index.ts';
+import { OperationSchema } from '../../../shared/contracts/operations.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { deleteSlice, RESET_TABLES, type ResetTable } from './repo-reset.ts';
 import { logKit } from './request-log-test-fixtures.ts';
@@ -74,6 +75,39 @@ const reset = async (d: Dev, body: unknown = { turnstileToken: 'ok' }) => {
   return t.call('/developer/sandbox/reset', json({ ...s.headers, ...BROWSER }, 'POST', body));
 };
 
+/** A reset the page's way: the operation, waited for, and then the new key minted once. */
+async function resetDone(d: Dev) {
+  const s = await makeSession(t.kit.f, { userId: d.user.id, roles: ['user', 'developer'] });
+  const headers = { ...s.headers, ...BROWSER };
+  const res = await t.call(
+    '/developer/sandbox/reset',
+    json(headers, 'POST', { turnstileToken: 'ok' }),
+  );
+  expect(res.status, await res.clone().text()).toBe(202);
+  expect(res.headers.get('cache-control')).toBe('no-store');
+  const started = OperationSchema.parse(((await res.json()) as { operation: unknown }).operation);
+  await t.settle();
+  const op = OperationSchema.parse(
+    await (await t.call(`/operations/${started.id}`, { headers })).json(),
+  );
+  expect(op.status, JSON.stringify(op.error)).toBe('succeeded');
+  const ids = op.result?.ids ?? {};
+  const keyed = await t.call('/developer/sandbox/key', { method: 'POST', headers });
+  expect(keyed.status, await keyed.clone().text()).toBe(201);
+  const { key } = SandboxKeyResponseSchema.parse(await keyed.json());
+  return {
+    op,
+    key,
+    deleted: {
+      passes: Number(ids.passes),
+      captures: Number(ids.captures),
+      calls: Number(ids.calls),
+    },
+    kept: Number(ids.kept),
+    resetsLeft: Number(ids.resetsLeft),
+  };
+}
+
 const count = async (table: string, orgId: string) =>
   (await first<{ n: number }>(db(), `SELECT count(*) AS n FROM ${table} WHERE org_id = ?`, [orgId]))
     ?.n ?? 0;
@@ -103,17 +137,14 @@ describe('POST /developer/sandbox/reset', () => {
     expect(await count('request_log', orgId)).toBeGreaterThan(0);
     const before = await kept(orgId);
     t.kit.clock.advance(60_000);
-    const res = await reset(d);
-    expect(res.status, await res.clone().text()).toBe(200);
-    expect(res.headers.get('cache-control')).toBe('no-store');
-    const body = SandboxResetSchema.parse(await res.json());
+    const body = await resetDone(d);
     expect(body.deleted.passes).toBe(2);
     expect(body.deleted.captures).toBeGreaterThan(0);
     expect(body.deleted.calls).toBeGreaterThan(0);
     expect(body.kept).toBe(0);
     expect(body.resetsLeft).toBe(2);
-    expect(body.key?.secret).toMatch(/^pbp_test_/);
-    expect(body.key?.id).not.toBe(d.key.id);
+    expect(body.key.secret).toMatch(/^pbp_test_/);
+    expect(body.key.id).not.toBe(d.key.id);
     expect(await count('passes', orgId)).toBe(0);
     expect(await count('webhook_captures', orgId)).toBe(0);
     expect(await count('request_log', orgId)).toBe(0);
@@ -125,7 +156,7 @@ describe('POST /developer/sandbox/reset', () => {
       401,
       'INVALID_API_KEY',
     );
-    expect((await t.call('/passes', { headers: bearer(body.key?.secret ?? '') })).status).toBe(200);
+    expect((await t.call('/passes', { headers: bearer(body.key.secret) })).status).toBe(200);
     // The track restarts, the funnel's first values stay.
     const home = (await (await t.call('/developer/home', { headers: d.browser })).json()) as {
       progress: { next: string; passAt: number | null; restartedAt: number | null };
@@ -143,9 +174,9 @@ describe('POST /developer/sandbox/reset', () => {
   it('is idempotent: a second reset finds nothing and leaves the same state', async () => {
     const d = await t.developer();
     await makePass(d);
-    expect((await reset(d)).status).toBe(200);
+    await resetDone(d);
     const after = await kept(d.made.orgId);
-    const again = SandboxResetSchema.parse(await (await reset(d)).json());
+    const again = await resetDone(d);
     expect(again.deleted).toMatchObject({ passes: 0, captures: 0 });
     expect(again.resetsLeft).toBe(1);
     expect(await kept(d.made.orgId)).toEqual(after);
@@ -174,7 +205,7 @@ describe('POST /developer/sandbox/reset', () => {
       real: await count('idempotency_keys', real.id),
     });
     const before = await snapshot();
-    expect((await reset(a)).status).toBe(200);
+    await resetDone(a);
     expect(await snapshot()).toEqual(before);
     expect(await count('passes', a.made.orgId)).toBe(0);
   });
@@ -207,7 +238,7 @@ describe('POST /developer/sandbox/reset', () => {
     expect(await count('idempotency_keys', real.id)).toBe(1);
     // After a real claim, a different person or an older stamp still deletes nothing.
     t.kit.clock.advance(1000);
-    expect((await reset(d)).status).toBe(200);
+    await resetDone(d);
     const claimed = (
       await first<{ t: number }>(
         db(),
@@ -225,9 +256,7 @@ describe('POST /developer/sandbox/reset', () => {
     let key = d.key.secret;
     for (let i = 0; i < 3; i++) {
       t.kit.clock.advance(1000);
-      const res = await reset(d);
-      expect(res.status, await res.clone().text()).toBe(200);
-      key = SandboxResetSchema.parse(await res.json()).key?.secret ?? '';
+      key = (await resetDone(d)).key.secret;
     }
     const freshKey = async () => key;
     await makePass(d, await freshKey());
@@ -238,7 +267,7 @@ describe('POST /developer/sandbox/reset', () => {
     await expectProblem(fourth, 429, 'SANDBOX_RESET_LIMIT');
     expect(await count('passes', d.made.orgId)).toBe(left);
     t.kit.clock.advance(DAY);
-    const next = SandboxResetSchema.parse(await (await reset(d)).json());
+    const next = await resetDone(d);
     expect(next.deleted.passes).toBe(1);
     expect(next.resetsLeft).toBe(2);
   });

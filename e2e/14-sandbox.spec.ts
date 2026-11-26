@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
+import { runMinuteCron } from './helpers/cron.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -54,12 +55,14 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   await expect(bar).toBeVisible();
 
   // The outbox dispatch starts under waitUntil when the pass is created, and a loaded server (CI) can leave it to the
-  // next scheduled tick: allow for that instead of a fixed 30 s.
+  // next scheduled tick: allow for that instead of a fixed 30 s, and run the minute cron (delivery sweep) on each poll
+  // so the outbox drains even when waitUntil was cut short.
   await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
   const mail = page.getByRole('listitem').filter({ hasText: `To ${to}` });
   await expect
     .poll(
       async () => {
+        await runMinuteCron();
         await page.reload();
         await page.getByRole('heading', { name: 'Test inbox' }).waitFor();
         return mail.count();

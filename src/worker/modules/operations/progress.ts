@@ -254,8 +254,12 @@ class Reporter implements Progress {
         return;
       }
       const code = this.codeOf(error);
+      // The step that was running; a tail that waits after Done (the erase) is not what failed.
+      const tail = (key: string) =>
+        kindOf(s.row.kind)?.steps.find((d) => d.key === key)?.tail === true;
       const failing =
-        s.steps.find((x) => x.state === 'running' || x.state === 'waiting') ??
+        s.steps.find((x) => x.state === 'running') ??
+        s.steps.find((x) => x.state === 'waiting' && !tail(x.key)) ??
         s.steps.find((x) => x.state === 'pending');
       if (failing) {
         failing.state = 'failed';

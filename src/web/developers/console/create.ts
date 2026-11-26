@@ -1,16 +1,20 @@
+import type { Operation } from '../../ui/operation/index.ts';
 import { readViewedAt } from '../quickstart/viewed.ts';
-import type { Sandbox } from './session.ts';
 
-export interface Created {
-  sandbox: Sandbox;
-  /** Shown once; null when the sandbox existed and its key was made earlier. */
-  secret: string | null;
+export class CreateError extends Error {
+  /** OPERATION_RUNNING: the sandbox operation already under way, which the page follows. */
+  readonly operationId: string | undefined;
+  constructor(message: string, operationId?: string) {
+    super(message);
+    this.operationId = operationId;
+  }
 }
 
-export class CreateError extends Error {}
-
-/** POST /developer/sandbox. The Turnstile token is the one the widget just gave. */
-export async function createSandbox(csrf: string, turnstileToken: string): Promise<Created> {
+/**
+ * POST /developer/sandbox. The Turnstile token is the one the widget just gave. Answers the operation the page
+ * follows (`OperationProgress`); the key is minted once when it ends (`mintKey`).
+ */
+export async function startSandbox(csrf: string, turnstileToken: string): Promise<Operation> {
   const res = await fetch('/api/v1/developer/sandbox', {
     method: 'POST',
     headers: {
@@ -26,16 +30,10 @@ export async function createSandbox(csrf: string, turnstileToken: string): Promi
       typeof body.detail === 'string'
         ? body.detail
         : 'Could not create the sandbox. Reload and try again.',
+      body.code === 'OPERATION_RUNNING' && typeof body.operationId === 'string'
+        ? body.operationId
+        : undefined,
     );
   }
-  const key = body.key as { secret?: unknown } | null | undefined;
-  return {
-    sandbox: {
-      id: String(body.id),
-      orgId: String(body.orgId),
-      orgSlug: String(body.orgSlug),
-      templateId: typeof body.templateId === 'string' ? body.templateId : null,
-    },
-    secret: typeof key?.secret === 'string' ? key.secret : null,
-  };
+  return body.operation as Operation;
 }

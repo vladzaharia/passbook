@@ -7,7 +7,7 @@ import { type OperationsClient, OperationsHttpError, OperationsProvider } from '
 import { fixtureOperation, NOW, SANDBOX_CREATE, STATE_FIXTURES } from './fixtures.test-support.ts';
 import { OperationProgress } from './operation-progress.tsx';
 import { OperationTray } from './operation-tray.tsx';
-import { resetOperationCache, trackOperation } from './store.ts';
+import { resetOperationCache, trackOperation, useClaimOperation } from './store.ts';
 
 const toasts = vi.hoisted(() => ({ action: vi.fn(), error: vi.fn() }));
 vi.mock('../toaster.tsx', () => ({ toast: toasts, Toaster: () => null }));
@@ -176,6 +176,33 @@ describe('OperationTray', () => {
       await user.click(within(sheet).getByRole('button', { name: 'Close' }));
       expect(window.location.search).toBe('?tab=x');
       expect(window.location.hash).toBe('#top');
+    });
+
+    it('opens no sheet for an id a panel on the page claimed, and opens it for an unclaimed one', async () => {
+      const running = STATE_FIXTURES.running();
+      const Panel = ({ id }: { id: string }) => {
+        useClaimOperation(id);
+        return <p>inline panel</p>;
+      };
+      window.history.replaceState(null, '', `/admin?op=${running.id}`);
+      const get = vi.fn(async () => ({ operation: running, etag: null }));
+      const claimed = mount(
+        client({ get }),
+        <>
+          <OperationTray />
+          <Panel id={running.id} />
+        </>,
+      );
+      act(() => trackOperation(running));
+      await settle();
+      // The tray still lists the row; no sheet opens over the panel.
+      expect(claimed.container.querySelector('[data-operation-tray]')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText('inline panel')).toBeInTheDocument();
+      claimed.unmount();
+      mount(client({ get }));
+      await settle();
+      expect(await screen.findByRole('dialog', { name: 'Delete sandbox' })).toBeInTheDocument();
     });
 
     it('drops an unknown or foreign id (404) without showing an empty sheet', async () => {

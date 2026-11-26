@@ -16,7 +16,10 @@ const DEMO = 'pb_test_demo_demo_demo_demo';
 vi.mock('./nav.ts', () => ({ goTo: vi.fn(), openTab: vi.fn() }));
 // The sandbox's count is read only with a sandbox: signed out (the default here) nothing is asked.
 let session: Session = { kind: 'out' };
-vi.mock('../console/session.ts', () => ({ loadSession: async () => session }));
+vi.mock('../console/session.ts', () => ({
+  loadSession: async () => session,
+  onSession: () => () => undefined,
+}));
 
 const root = resolve(import.meta.dirname, '../../../..');
 const INDEX = buildSearchIndex(buildSite(loadInputs(root)));

@@ -55,7 +55,7 @@ export function fillMenuSheet(
     const c = DEV_COPY.sheet;
     sandbox.replaceChildren(
       heading(`${c.sandbox} ${opts.sandbox}`),
-      link(`${PATHS.home}#workbench`, c.workbench),
+      link(PATHS.workbench, c.workbench),
       link(PATHS.keys, c.keys),
     );
     sandbox.hidden = false;
