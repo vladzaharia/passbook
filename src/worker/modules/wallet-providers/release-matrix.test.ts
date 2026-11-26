@@ -1,12 +1,12 @@
 // TURN-0: each provider and mode opens alone, in code (RELEASE) and in the database (wallet_provider_releases), and
-// draining keeps every issuance path shut while revokes run. The 0226 guards are exercised with their real bodies.
+// draining keeps every issuance path shut while revokes run. The 0229 guards are exercised with their real bodies.
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, makePass, makeTemplate, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
 import { savePlatformCredential } from './credential-service.ts';
 import { enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
+import { seedLegacyAccount } from './legacy-on-test-fixtures.ts';
 import {
   setWalletReleaseForTest,
   walletProviderDisabledReason,
@@ -190,7 +190,7 @@ describe('the database guards open one pair at a time', () => {
           ),
         ),
       ).toContain('provider offer is unavailable');
-      // A placeholder never reached a wallet, so it does not hold the release open (0226 M4).
+      // A placeholder never reached a wallet, so it does not hold the release open (0229 M4).
       expect(await refusal(release(provider, mode, 'dark'))).toBeNull();
     }
   });
@@ -221,7 +221,7 @@ describe('the database guards open one pair at a time', () => {
 });
 
 describe('the org layer behind one released pair', () => {
-  it('issues only for an org On in that pair; the plan and developer orgs stay shut', async () => {
+  it('issues only for an org On in that pair; the plan, developer orgs and legacy rows stay shut', async () => {
     const admin = await k.admin('test');
     const saved = await savePlatformCredential(k.ctx, admin.auth, {
       mode: 'test',
@@ -260,16 +260,14 @@ describe('the org layer behind one released pair', () => {
     expect(await reason(developer.id, 'google', 'test')).toBe('not_included');
     const legacy = await k.org();
     const lm = await k.member(legacy.id, 'test');
-    await configureWalletProviderAccount(k.ctx, lm.auth, {
+    await seedLegacyAccount(k.ctx, lm.auth, {
       orgId: legacy.id,
       mode: 'test',
       provider: 'google',
       expectedRevision: 0,
       credentials: k.google('777000667'),
     });
-    // A legacy envelope still issues with no enrolment (its removal waits on REV-1); the readiness report names it
-    // `legacy` and a flip's deploy refuses while one exists (wallet-migration-gate).
-    expect(await reason(legacy.id, 'google', 'test')).toBeNull();
+    expect(await reason(legacy.id, 'google', 'test')).toBe('not_enrolled');
     // Draining shuts the open org too.
     await release('google', 'test', 'draining');
     expect(await reason(open.id, 'google', 'test')).toBe('not_released');

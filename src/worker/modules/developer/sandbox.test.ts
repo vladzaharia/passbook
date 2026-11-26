@@ -381,7 +381,8 @@ describe('a developer org never holds Live', () => {
     expect(tables.length).toBeGreaterThan(50);
     // SQLite fires the newest trigger first, so a table whose later migration adds its own insert checks may refuse
     // with that message; its guard trigger must still exist and the row must still be refused.
-    const othersFirst = new Set(['wallet_samsung_tombstones']);
+    // 0229 recreated the instance insert guard, so it now fires before the developer one.
+    const othersFirst = new Set(['wallet_samsung_tombstones', 'wallet_provider_instances']);
     for (const { name } of tables) {
       const guard = await all<{ name: string }>(
         kit.env.DB,

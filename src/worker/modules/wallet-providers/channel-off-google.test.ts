@@ -47,19 +47,21 @@ beforeAll(async () => {
 beforeEach(() => clearGoogleCallbackKeyCache());
 afterEach(() => vi.unstubAllGlobals());
 
-async function setup() {
+async function setup(enrolled = false) {
   const f = await setupWalletOfferKit({
     google: 'configured',
     samsung: 'absent',
     db: (await testEnv()).DB,
+    ...(enrolled ? { enrolled: true } : {}),
   });
   const db = f.kit.env.DB;
   const credentialKeysetCommitment = await requireCredentialRefKeyset(db, f.kit.env);
-  // Successors (channel_epoch > 1) need the provider released in the database too (0226).
+  // Successors (channel_epoch > 1) need the provider released in the database too (0229).
   await releaseRows(db);
   const account = await first<{ id: string; revision: number }>(
     db,
-    "SELECT id, revision FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'",
+    `SELECT id, CASE WHEN credential_id IS NULL THEN enrolment_revision ELSE revision END AS revision
+     FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'`,
     [f.pass.orgId],
   );
   if (!account) throw new Error('Missing Google fixture account.');
@@ -224,10 +226,13 @@ async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
       `INSERT INTO wallet_provider_instance_operations
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, lifecycle_generation,
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision,
-         adapter_revision, policy_revision, credential_keyset_commitment, created_at, pass_row_version, account_epoch)
+         adapter_revision, policy_revision, credential_keyset_commitment, created_at, pass_row_version, account_epoch,
+         credential_version_id)
       VALUES (?, ?, 1, 'upsert', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         (SELECT row_version FROM passes WHERE id = ?),
-        (SELECT authority_epoch FROM wallet_provider_accounts WHERE id = ?))`,
+        (SELECT authority_epoch FROM wallet_provider_accounts WHERE id = ?),
+        (SELECT sc.current_version_id FROM wallet_provider_accounts sa
+          JOIN wallet_credentials sc ON sc.id = sa.credential_source_id WHERE sa.id = ?))`,
       [
         successor.operationId,
         successor.instanceId,
@@ -245,6 +250,7 @@ async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
         successor.now,
         t.proof.passId,
         t.proof.accountId,
+        t.proof.accountId,
       ],
     ),
   ]);
@@ -259,9 +265,14 @@ function callbackApp(t: Awaited<ReturnType<typeof setup>>) {
   return app;
 }
 
-describe('Google channel_off retirement and successor', () => {
+// The successor trigger (0229) pins the account epoch, which both models carry; the enrolment account has no
+// `revision` of its own, only `enrolment_revision`.
+describe.each([
+  ['a legacy envelope', false],
+  ['an enrolment', true],
+] as const)('Google channel_off retirement and successor on %s', (_model, enrolled) => {
   it('derives epoch 1 ids as before and gives each epoch its own object', async () => {
-    const t = await setup();
+    const t = await setup(enrolled);
     const [one, again, two, three] = await Promise.all([t.ids(1), t.ids(1), t.ids(2), t.ids(3)]);
     expect(again).toEqual(one);
     expect(new Set([one.objectId, two.objectId, three.objectId]).size).toBe(3);
@@ -270,7 +281,7 @@ describe('Google channel_off retirement and successor', () => {
   });
 
   it('frees the slot at revoked, keeps the predecessor, and reads the successor as the slot', async () => {
-    const t = await setup();
+    const t = await setup(enrolled);
     const successor = await retireAndSucceed(t);
     expect(await t.instance(t.first1.instanceId)).toMatchObject({
       lifecycle: 'revoked',
@@ -291,7 +302,7 @@ describe('Google channel_off retirement and successor', () => {
   });
 
   it('routes a callback on the epoch 1 object to the predecessor and epoch 2 to the successor', async () => {
-    const t = await setup();
+    const t = await setup(enrolled);
     const successor = await retireAndSucceed(t);
     await t.bind(successor.instanceId, 2);
     const hashes = async (epoch: number) => {
@@ -350,7 +361,7 @@ describe('Google channel_off retirement and successor', () => {
   });
 
   it('re-derives with the bound instance epoch, so a lookup row on the wrong instance is refused', async () => {
-    const t = await setup();
+    const t = await setup(enrolled);
     await retireAndSucceed(t);
     // The predecessor's lookup row is corrupted to the epoch 2 object: re-deriving with epoch 1 disagrees.
     const two = await t.ids(2);

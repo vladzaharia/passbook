@@ -28,6 +28,8 @@ export async function setupSamsungCallbacks(
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
+    /** The account is a real enrolment, not a legacy envelope. */
+    enrolled?: boolean;
   } = {},
 ) {
   // Historical Samsung instances are only retired or refreshed while the provider is enabled.
@@ -38,6 +40,7 @@ export async function setupSamsungCallbacks(
     holderEmail: options.holderEmail,
     source: options.source,
     db: options.db,
+    ...(options.enrolled ? { enrolled: true } : {}),
   });
   const { kit, pass, samsung, samsungRelease } = fixture;
   if (!samsungRelease?.candidateId || !pass.releaseId) throw new Error('Missing release fixture');

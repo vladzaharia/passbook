@@ -2,10 +2,10 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first } from '../../platform/db.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
 import { savePlatformCredential } from './credential-service.ts';
 import { holdEnrolment } from './enrolment-hold.ts';
 import { disableEnrolment, enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
+import { seedLegacyAccount } from './legacy-on-test-fixtures.ts';
 import {
   setWalletProvidersEnabledForTest,
   walletEnrolmentIssuesSql,
@@ -132,18 +132,19 @@ describe('the org layer', () => {
       undo();
     });
 
-    it('leaves a legacy envelope row as it was', async () => {
+    // 0229: the legacy branch is gone. An envelope with no enrolment On never issues.
+    it('refuses a legacy envelope row with no enrolment', async () => {
       const org = await k.org();
       const m = await k.member(org.id, 'live');
-      await configureWalletProviderAccount(k.ctx, m.auth, {
+      await seedLegacyAccount(k.ctx, m.auth, {
         orgId: org.id,
         mode: 'live',
         provider: 'google',
         expectedRevision: 0,
         credentials: k.google('888000001'),
       });
-      expect(await reason(org.id, 'live')).toBeNull();
-      expect((await sqlOpen(org.id, 'live'))?.ok).toBe(1);
+      expect(await reason(org.id, 'live')).toBe('not_enrolled');
+      expect((await sqlOpen(org.id, 'live'))?.ok).toBe(0);
     });
   });
 

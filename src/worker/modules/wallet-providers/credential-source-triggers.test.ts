@@ -142,7 +142,7 @@ describe('credential presence in the projection and binding triggers', () => {
     expect((await activate('legacy')).changes).toBeGreaterThan(0);
   });
 
-  // With the binding guard in place (0226): a ready placeholder waits while its provider and mode are not
+  // With the binding guard in place (0229): a ready placeholder waits while its provider and mode are not
   // released, and activates once they are.
   it('a new-model-only account does too, once released', async () => {
     const update = await prepare('new-model');

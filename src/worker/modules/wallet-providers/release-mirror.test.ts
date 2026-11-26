@@ -1,4 +1,4 @@
-// The release table every migration leaves (0226) equals RELEASE, its rows are fixed, and a release goes back to dark
+// The release table every migration leaves (0229) equals RELEASE, its rows are fixed, and a release goes back to dark
 // only once every copy of that provider and mode is retired.
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';

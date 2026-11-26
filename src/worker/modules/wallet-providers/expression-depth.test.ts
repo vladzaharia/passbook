@@ -58,9 +58,9 @@ const bindingSql = projectionReleaseBindingPredicateSql({
   credentialKeysetCommitmentSql: 'op.credential_keyset_commitment',
 });
 
-const CHECK_DEPTH = 32;
-const CHECK_TERMS = 51;
-const CTE_DEPTH = 26;
+const CHECK_DEPTH = 33;
+const CHECK_TERMS = 53;
+const CTE_DEPTH = 27;
 
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
@@ -70,12 +70,14 @@ describe('expression depth of the largest wallet-provider predicates', () => {
   // 0222 (sole approval for wallet classes) put `approval.kind = 'sole' OR` in front of each independence
   // predicate: revoke depth 26 -> 27 and terms 56 -> 58; the three triggers below grew the same way.
   // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
+  // 0229: the revoke identity check also accepts a Samsung enrolment (repo-instance-current.ts), one more `OR`
+  // group on the epoch checks: 25 -> 26 and 32 -> 34 terms, 27 -> 28 and 50 -> 52, check 32 -> 33 and 51 -> 53, CTE 26 -> 27.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
     ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 27, 58],
     ['release binding', bindingSql, 49, 162],
-    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 25, 32],
-    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 27, 50],
+    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 26, 34],
+    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 28, 52],
   ])(
     '%s prepares on D1 within its measured depth and terms',
     async (_name, predicate, depth, n) => {
@@ -120,8 +122,9 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
       // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
       template_provider_releases_insert: [51, 106],
-      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
-      wallet_samsung_tombstones_approved_insert: [37, 33],
+      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`. 0229: an enrolment account's tombstone is
+      // proved by its pinned credential version instead of a configure event (37 -> 45, 33 -> 41).
+      wallet_samsung_tombstones_approved_insert: [45, 41],
       wallet_samsung_tombstone_keyset_insert: [39, 37],
     };
     for (const t of triggers) {

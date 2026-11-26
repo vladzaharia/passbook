@@ -47,8 +47,8 @@ import { getVersion } from '../templates/repo.ts';
 import { getApproval } from '../templates/repo-releases.ts';
 import { generatedSource, syncBakedTemplates } from '../templates/sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf } from '../templates/testing.ts';
-import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { replaceCallbackKeysetForTest } from './callbacks-test-fixtures.ts';
+import { configureOn, revokeOff } from './legacy-on-test-fixtures.ts';
 import {
   GOOGLE_PROJECTION_POLICY,
   NativeProjectionSchema,
@@ -254,7 +254,7 @@ async function setup(
     expectedGeneration: 0,
   });
   const scope = { orgId: org.id, mode: 'live' as const, provider: 'samsung' as const };
-  await configureWalletProviderAccount(ctx, author, { ...scope, expectedRevision: 0, credentials });
+  await configureOn(ctx, author, { ...scope, expectedRevision: 0, credentials });
   const proof = {
     credentialKeysetCommitment: await requireCredentialRefKeyset(testEnv.DB, testEnv),
   };
@@ -433,7 +433,7 @@ describe('native projection approval', () => {
     expect(await nativePublish(test, candidate, approval)).toMatchObject({ provider: 'samsung' });
 
     const google = { ...test.scope, provider: 'google' as const };
-    await configureWalletProviderAccount(test.ctx, test.author, {
+    await configureOn(test.ctx, test.author, {
       ...google,
       expectedRevision: 0,
       credentials: googleCredentials,
@@ -567,11 +567,11 @@ describe('native projection approval', () => {
     ).toBe(true);
     // A rotation under the same identity keeps the candidate (projection-epochs.test.ts); a revoke
     // and a new configure moves the account epoch and voids it.
-    await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+    await revokeOff(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
       expectedRevision: 1,
     });
-    await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+    await configureOn(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
       expectedRevision: 2,
       credentials,
@@ -589,7 +589,7 @@ describe('native projection approval', () => {
         revokedCandidate.candidateHash,
       ),
     ).toBe(true);
-    await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+    await revokeOff(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
       expectedRevision: 3,
     });
@@ -802,7 +802,7 @@ describe('native projection approval', () => {
     const current = await nativeCandidate(second);
     const currentApproval = await nativeApproval(second, current);
     await nativePublish(second, current, currentApproval);
-    await revokeWalletProviderAccount(second.ctx, second.author, {
+    await revokeOff(second.ctx, second.author, {
       ...second.scope,
       expectedRevision: 1,
     });

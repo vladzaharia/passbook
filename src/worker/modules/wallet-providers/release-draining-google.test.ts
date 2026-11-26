@@ -9,6 +9,7 @@ import { updatePass, voidPass } from '../passes/service.ts';
 import { fixture, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { setWalletReleaseForTest } from './provider-policy.ts';
+import { releaseRows } from './release-test-fixtures.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 afterEach(() => {
@@ -64,7 +65,7 @@ describe('Google draining in Live', () => {
     expect(object()).toMatchObject({ state: 'INACTIVE' });
   });
 
-  // The database refuses to go dark while this copy can still be in a wallet (0226).
+  // The database refuses to go dark while this copy can still be in a wallet (0229).
   it('cannot go back to dark while the copy is open', async () => {
     const { f } = await draining();
     await run(
@@ -89,5 +90,42 @@ describe('Google draining in Live', () => {
     await voidPass(jobCtx, system, f.pass.id, scope);
     await drainWalletProviderSync(jobCtx);
     expect(google()).toHaveLength(before);
+  });
+});
+
+// The cases above run on a database with four guards dropped (google-runtime-test-fixtures). This one keeps every
+// guard, so the table's own draining rules run beside the code's, on both account models.
+describe.each([
+  ['a legacy envelope', false],
+  ['an enrolment', true],
+] as const)('Google draining with every database guard in place, on %s', (_model, enrolled) => {
+  it('issues while released, then refuses an edit and a new link and still sends a void', async () => {
+    const { f } = await fixture(undefined, { enrolled, guards: true });
+    const token = await tokenOf(f);
+    await issueWalletOffer(f.kit.ctx, token, 'google');
+    expect(object()).toMatchObject({ state: 'ACTIVE' });
+    restore.push(setWalletReleaseForTest('draining', { provider: 'google', mode: 'live' }));
+    await releaseRows(f.kit.env.DB, 'draining');
+    const jobCtx = jobCtxOf(f.kit);
+    const scope = { orgId: f.kit.org.id, mode: 'live', principal: 'session' } as const;
+    const sent = () =>
+      mock.requests.filter((r) => r.path.includes('walletobjects')).map((r) => r.method);
+    const before = sent().length;
+    await updatePass(
+      jobCtx,
+      system,
+      f.pass.id,
+      { input: { memberName: 'Edited' } },
+      { scope: null },
+    );
+    await drainWalletProviderSync(jobCtx);
+    expect(sent()).toHaveLength(before);
+    expect(await listWalletOffers(f.kit.ctx, f.pass.id)).toEqual([]);
+    await expect(issueWalletOffer(f.kit.ctx, token, 'google')).rejects.toThrow();
+    await voidPass(jobCtx, system, f.pass.id, scope);
+    await drainWalletProviderSync(jobCtx);
+    expect(sent().slice(before)).toContain('PUT');
+    expect(sent().slice(before)).not.toContain('PATCH');
+    expect(object()).toMatchObject({ state: 'INACTIVE' });
   });
 });

@@ -25,8 +25,8 @@ afterEach(() => {
 const system = { type: 'system', id: null } as const;
 
 /** A tapped, promoted Samsung card in the GB market (released), then Samsung Live set to draining. */
-async function drainingCard() {
-  const t = await setupSamsungCallbacks();
+async function drainingCard(enrolled: boolean) {
+  const t = await setupSamsungCallbacks({ enrolled });
   const mock = createMockWallets();
   const calls: string[] = [];
   vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -54,9 +54,14 @@ async function drainingCard() {
   return { t, ctx, scope, sent, updates };
 }
 
-describe('Samsung draining in Live', () => {
+// An enrolment has no configure event or envelope: its card is verified, refreshed and retired through the version
+// its reference pins (0229), so every case runs on both models.
+describe.each([
+  ['a legacy envelope', false],
+  ['an enrolment', true],
+] as const)('Samsung draining in Live on %s', (_model, enrolled) => {
   it('refuses an edit and every new offer, then still sends a void', async () => {
-    const { t, ctx, scope, sent, updates } = await drainingCard();
+    const { t, ctx, scope, sent, updates } = await drainingCard(enrolled);
     const before = updates();
     await updatePass(ctx, system, t.pass.id, { input: { memberName: 'Edited' } }, { scope: null });
     await drainWalletProviderSync(ctx);
@@ -68,7 +73,7 @@ describe('Samsung draining in Live', () => {
   });
 
   it('sends DELETED for a delete and retires the card with its tombstone', async () => {
-    const { t, ctx, sent } = await drainingCard();
+    const { t, ctx, sent } = await drainingCard(enrolled);
     await deletePass(ctx, system, t.pass.id, null);
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
@@ -77,7 +82,7 @@ describe('Samsung draining in Live', () => {
   });
 
   it('sends DELETED for the old holder copy of a transfer', async () => {
-    const { t, ctx, sent } = await drainingCard();
+    const { t, ctx, sent } = await drainingCard(enrolled);
     const holder = await getHolderPass(t.kit.env.DB, t.pass.id, null);
     if (!holder) throw new Error('Missing holder snapshot');
     await startCredentialTransfer(
@@ -94,7 +99,7 @@ describe('Samsung draining in Live', () => {
   });
 
   it('answers Get Card Data without card data, and records a holder DELETED without promoting', async () => {
-    const { t } = await drainingCard();
+    const { t } = await drainingCard(enrolled);
     expect((await t.call({ token: await t.token() })).status).toBe(204);
     const deleted = await t.call({
       method: 'POST',
@@ -112,7 +117,7 @@ describe('Samsung draining in Live', () => {
   });
 
   it('calls Samsung for nothing once dark', async () => {
-    const { t, ctx, scope, updates } = await drainingCard();
+    const { t, ctx, scope, updates } = await drainingCard(enrolled);
     restore.push(setWalletReleaseForTest('dark', { provider: 'samsung', mode: 'live' }));
     const before = updates();
     await voidPass(ctx, system, t.pass.id, scope);
