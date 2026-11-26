@@ -5,6 +5,8 @@ export const MANAGED_PREFIX = 'pass.mobile.passbook.';
 export const PLATFORM_IDENTIFIERS = new Set(['pass.im.plrs.wallet', `${MANAGED_PREFIX}wallet`]);
 export const PLATFORM_ROOT = 'pass.mobile.passbook';
 export const DEVTEST = `${MANAGED_PREFIX}devtest`;
+/** Certificate revokes for these are the owner's: PLATFORM_IDENTIFIERS plus the root and devtest. */
+export const OWNER_REVOKE = new Set([...PLATFORM_IDENTIFIERS, PLATFORM_ROOT, DEVTEST]);
 /** The only platform pass types `createPlatformPassType` orders: slot to exact identifier and name. */
 export const PLATFORM_SLOTS = {
   root: { identifier: PLATFORM_ROOT, name: 'PassBook' },
@@ -66,4 +68,6 @@ export function assertOrderable(identifier: string): void {
   assertManagedIdentifier(identifier);
   if (PLATFORM_IDENTIFIERS.has(identifier))
     refuse('Platform pass type certificates are ordered by the owner only.');
+  const handle = identifier.slice(MANAGED_PREFIX.length);
+  if (identifier !== DEVTEST && RESERVED.has(handle)) refuse('Reserved handle.');
 }

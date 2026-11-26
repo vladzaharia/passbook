@@ -1,4 +1,4 @@
-import { type AscResponse, ascRequest, type Deps, failure } from './asc-http.ts';
+import { ASC_BASE, type AscResponse, ascRequest, type Deps, failure } from './asc-http.ts';
 import {
   certificate,
   ID,
@@ -31,7 +31,7 @@ import {
   assertPassTypeName,
   assertRevokeReason,
   managedIdentifier,
-  PLATFORM_IDENTIFIERS,
+  OWNER_REVOKE,
   platformPassType,
   refuse,
 } from './policy.ts';
@@ -42,6 +42,20 @@ import {
   type PassTypeRef,
   type ProvisionerEnv,
 } from './types.ts';
+
+const MAX_PAGES = 50;
+
+/** The next page's path from Apple's `links.next`, only when it stays on the ASC host. */
+function nextPath(res: AscResponse): string | null {
+  const next = (res.body as { links?: { next?: unknown } } | null)?.links?.next;
+  if (typeof next !== 'string') return null;
+  try {
+    const url = new URL(next);
+    return url.origin === ASC_BASE ? `${url.pathname}${url.search}` : null;
+  } catch {
+    return null;
+  }
+}
 
 type Req = (
   method: 'GET' | 'POST' | 'DELETE',
@@ -127,15 +141,18 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
     (await allowedByAscId(db, ascId)) ?? refuse('Pass type is not in the allowlist.');
 
   async function lookup(req: Req, identifier: string): Promise<PassTypeRef | null> {
-    const res = await req(
-      'GET',
-      `/v1/passTypeIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=10`,
-    );
-    return (
-      many(res)
+    let path: string | null =
+      `/v1/passTypeIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=200`;
+    // Apple may filter by prefix: read every page, since the exact match can be on any of them.
+    for (let page = 0; path && page < MAX_PAGES; page++) {
+      const res = await req('GET', path);
+      const found = many(res)
         .map(passType)
-        .find((p) => p.identifier === identifier) ?? null
-    );
+        .find((p) => p.identifier === identifier);
+      if (found) return found;
+      path = nextPath(res);
+    }
+    return null;
   }
 
   /** The allowlisted pass type a certificate belongs to, read from Apple. */
@@ -154,7 +171,6 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
 
   /** Creates the pass type, or adopts it when Apple already has it; the same ledger and budget for every caller. */
   async function orderPassType(
-    method: string,
     identifier: string,
     name: string,
     runId: string | undefined,
@@ -162,7 +178,8 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
     const known = await allowedByIdentifier(db, identifier);
     if (known?.ascId)
       return { ascId: known.ascId, identifier, name: known.name, outcome: 'existing' };
-    return ledgered(method, identifier, runId, async (req) => {
+    // One budget bucket for every caller that orders a pass type.
+    return ledgered('createPassType', identifier, runId, async (req) => {
       const res = await req('POST', '/v1/passTypeIds', {
         data: { type: 'passTypeIds', attributes: { identifier, name } },
       });
@@ -170,6 +187,7 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
       const adopted = res.status === 409;
       const created = adopted ? await lookup(req, identifier) : passType(one(res));
       if (!created) throw failure(res);
+      if (created.identifier !== identifier) refuse('Apple returned a different pass type.');
       await rememberPassType(
         db,
         identifier,
@@ -188,14 +206,14 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
         assertPassTypeName(name);
         return managedIdentifier(handle);
       });
-      return orderPassType('createPassType', identifier, name, runId);
+      return orderPassType(identifier, name, runId);
     },
 
     async createPlatformPassType(slot, runId) {
       const { identifier, name } = await guard('createPlatformPassType', null, runId, async () =>
         platformPassType(slot),
       );
-      return orderPassType('createPlatformPassType', identifier, name, runId);
+      return orderPassType(identifier, name, runId);
     },
 
     async createCertificate(passTypeAscId, csrDer, nfc, runId) {
@@ -256,7 +274,7 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
       // The owner lookup is its own ledgered call, so a refused lookup never uses the hourly revoke slot.
       const owner = await ledgered('revokeCertificate.read', certAscId, runId, async (req) => {
         const found = await certificateOwner(req, certAscId);
-        if (PLATFORM_IDENTIFIERS.has(found.identifier))
+        if (OWNER_REVOKE.has(found.identifier))
           refuse('Platform pass type certificates are revoked by the owner only.');
         // Installed passes depend on the newest certificate: only a superseded one may go.
         const mine = certificate(found.cert);
