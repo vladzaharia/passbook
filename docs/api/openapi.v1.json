@@ -95103,12 +95103,8 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-<<<<<<< HEAD
           "WALLET_REISSUE_KEYSET",
-||||||| 1832257b6
-=======
           "WALLET_RELEASE_READY_CHANGED",
->>>>>>> origin/main
           "WALLET_RUN_BUSY"
         ]
       }
@@ -95252,12 +95248,8 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-<<<<<<< HEAD
           "WALLET_REISSUE_KEYSET",
-||||||| 1832257b6
-=======
           "WALLET_RELEASE_READY_CHANGED",
->>>>>>> origin/main
           "WALLET_RUN_BUSY"
         ]
       }
@@ -95401,12 +95393,8 @@
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_SCHEMA_RETIRED",
           "WALLET_PROJECTION_UNSUPPORTED",
-<<<<<<< HEAD
           "WALLET_REISSUE_KEYSET",
-||||||| 1832257b6
-=======
           "WALLET_RELEASE_READY_CHANGED",
->>>>>>> origin/main
           "WALLET_RUN_BUSY"
         ]
       }

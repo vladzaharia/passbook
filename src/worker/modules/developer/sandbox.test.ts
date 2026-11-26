@@ -1,20 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
-<<<<<<< HEAD
-import { DeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
-||||||| 1832257b6
-import {
-  CreatedDeveloperSandboxSchema,
-  DeveloperSandboxSchema,
-} from '../../../shared/contracts/developer.ts';
-=======
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
-import {
-  CreatedDeveloperSandboxSchema,
-  DeveloperSandboxSchema,
-} from '../../../shared/contracts/developer.ts';
->>>>>>> origin/main
+import { DeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
 import { ENTITLEMENT_PRESETS, presetValues } from '../../../shared/contracts/entitlements.ts';
 import { PassDetailSchema, RotateLinkResponseSchema } from '../../../shared/contracts/passes.ts';
 import {
