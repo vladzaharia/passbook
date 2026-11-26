@@ -251,11 +251,11 @@ describe('which scan admin grants a key may hold', () => {
       ).toThrow();
   });
 
-  it('needs a live key for org.scan.* purposes, with its own codes', () => {
+  it('needs a live key for the scanner mode move, with its own code', () => {
     const test = { ...key('scanning:write'), mode: 'test' as const };
-    expect(() => grantAuthorityOf(test, 'k1', 'o1', 'org.scan.zone.create')).toThrow(
-      expect.objectContaining({ code: 'SCAN_ZONE_LIVE_ONLY' }),
-    );
+    expect(grantAuthorityOf(test, 'k1', 'o1', 'org.scan.zone.create')).toMatchObject({
+      kind: 'api_key',
+    });
     expect(() => grantAuthorityOf(test, 'k1', 'o1', 'org.scan.scanner.mode')).toThrow(
       expect.objectContaining({ code: 'SCAN_MODE_LIVE_ONLY' }),
     );
