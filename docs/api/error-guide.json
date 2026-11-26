@@ -3853,7 +3853,7 @@
   },
   "IDP_REFUSED": {
     "title": "Polaris ID refused the change",
-    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID.",
+    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID. Answers 409 when a role or adopted group is deleted, or an account cannot be added to a group here; 403 when Polaris ID itself refuses.",
     "fix": "Ask the PassBook owner.",
     "retryable": false
   },
