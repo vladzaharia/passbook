@@ -114,6 +114,16 @@ export function testRow(t: TestAttemptDto, endpointId: string): Row {
 /** Newest first. */
 export const byNewest = (rows: readonly Row[]): Row[] => [...rows].sort((a, b) => b.at - a.at);
 
+const STATE_WORD: Record<DeliveryDto['state'], string> = {
+  delivered: 'Delivered',
+  failed: 'Failed',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+};
+
+/** What a row with no HTTP answer says instead of a number. */
+export const stateWord = (r: Row): string => STATE_WORD[r.state];
+
 export const toneOfRow = (r: Row): StatusTone =>
   r.status ? toneOfStatus(r.status) : toneOfState(r.state);
 

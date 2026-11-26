@@ -11,7 +11,7 @@ import { BenchTime } from '../bench/time.tsx';
 import { Trace, type TraceNode } from '../bench/trace.tsx';
 import type { DeliveryDetailDto, TesterApi } from './client.ts';
 import { curlOf } from './format.ts';
-import { type Row, toneOfRow } from './model.ts';
+import { type Row, stateWord, toneOfRow } from './model.ts';
 import { VERIFY_SAMPLES } from './samples.ts';
 import { Samples } from './samples-tabs.tsx';
 import { VerifyPanel } from './verify.tsx';
@@ -64,7 +64,7 @@ function Attempts({ row, detail }: { row: Row; detail: DeliveryDetailDto | null 
       <div className="wh-pane">
         <span className="wh-line">
           <StatusChip status={row.status} tone={toneOfRow(row)}>
-            {row.status ?? undefined}
+            {row.status ?? stateWord(row)}
           </StatusChip>{' '}
           {row.meta}
         </span>
@@ -143,7 +143,7 @@ export function WebhookInspector({
       itemKey={key}
       status={
         <StatusChip status={row.status} tone={toneOfRow(row)}>
-          {row.status ?? row.state}
+          {row.status ?? stateWord(row)}
         </StatusChip>
       }
       id={row.eventId ? <IdChip id={row.eventId} kind="event" /> : undefined}
@@ -184,7 +184,7 @@ export function WebhookInspector({
       onTab={(id) => setTab(id as TabId)}
       onPrev={onPrev}
       onNext={onNext}
-      trace={<Trace nodes={nodes} />}
+      trace={requestId ? <Trace nodes={nodes} /> : undefined}
     >
       {shown === 'headers' && capture ? (
         <BenchCode

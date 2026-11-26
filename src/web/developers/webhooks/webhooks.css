@@ -9,6 +9,11 @@
   background: var(--pk-danger-subtle);
 }
 
+/* The Test tag sits a word's space from the type it tags. */
+.bench-row-tt .bench-sc {
+  margin-inline-start: 8px;
+}
+
 /* ---------- Inspector panes ---------- */
 .wh-pane {
   display: grid;
@@ -145,6 +150,28 @@
   outline-offset: 1px;
 }
 
+/* The toolbar keeps one row on a phone: the endpoint drops its word, Manage keeps only its icon. */
+@media (max-width: 719.98px) {
+  .wh-endpoint .bench-fs-l {
+    display: none;
+  }
+  .wh-endpoint {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .wh-endpoint .bench-fs-v {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wh-manage {
+    flex: none;
+    padding-inline: 8px;
+  }
+  .wh-manage-t {
+    display: none;
+  }
+}
 @media (max-width: 720px) {
   .wh-hide-s {
     display: none;

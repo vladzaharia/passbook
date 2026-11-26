@@ -1,4 +1,4 @@
-import { Send } from 'lucide-react';
+import { Link2, Send } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
@@ -27,7 +27,15 @@ import { ManageSheet } from './endpoints.tsx';
 import { useFeed } from './feed.ts';
 import { curlOf } from './format.ts';
 import { WebhookInspector } from './inspector.tsx';
-import { captureRow, deliveryRow, endpointLabel, narrow, type Row, toneOfRow } from './model.ts';
+import {
+  captureRow,
+  deliveryRow,
+  endpointLabel,
+  narrow,
+  type Row,
+  stateWord,
+  toneOfRow,
+} from './model.ts';
 
 const C = BENCH_WEBHOOKS_COPY;
 const F = C.filters;
@@ -95,6 +103,7 @@ function Toolbars({
       }
     >
       <FilterSelect
+        className="wh-endpoint"
         label={F.endpoint}
         value={endpoint.target === 'capture' ? undefined : endpoint.id}
         any={C.capture.name}
@@ -123,8 +132,14 @@ function Toolbars({
         {scoped('request', F.request)}
         {scoped('pass', F.pass)}
       </FilterBar>
-      <button type="button" className="btn ghost sm" onClick={onManage}>
-        {F.manage}
+      <button
+        type="button"
+        className="btn ghost sm wh-manage"
+        aria-label={F.manage}
+        onClick={onManage}
+      >
+        <Link2 aria-hidden="true" />
+        <span className="wh-manage-t">{F.manage}</span>
       </button>
     </Toolbar>
   );
@@ -348,7 +363,7 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
                 meta: r.meta,
                 trail: (
                   <StatusChip status={r.status} tone={toneOfRow(r)}>
-                    {r.status ?? r.state}
+                    {r.status ?? stateWord(r)}
                   </StatusChip>
                 ),
               })}

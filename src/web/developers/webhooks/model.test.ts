@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
-import { byNewest, captureRow, factsOfBody, findRow, narrow, toneOfRow } from './model.ts';
+import {
+  byNewest,
+  captureRow,
+  factsOfBody,
+  findRow,
+  narrow,
+  stateWord,
+  testRow,
+  toneOfRow,
+} from './model.ts';
 
 const capture = (over: Partial<WebhookCaptureDto> = {}): WebhookCaptureDto => ({
   id: 'c1',
@@ -52,5 +61,23 @@ describe('webhook rows', () => {
     expect(findRow(rows, 'c1')?.id).toBe('c1');
     expect(findRow(rows, 'e1')?.id).toBe('c1');
     expect(findRow(rows, 'nope')).toBeUndefined();
+  });
+
+  it('says Failed, not a bare state, for a test send nothing answered', () => {
+    const row = testRow(
+      {
+        id: 't1',
+        type: 'webhook.test',
+        ok: false,
+        status: null,
+        errorCode: 'UPSTREAM',
+        durationMs: 3,
+        at: 5,
+      },
+      'ep2',
+    );
+    expect(stateWord(row)).toBe('Failed');
+    expect(row.meta).toBe('Failed · UPSTREAM · 3 ms');
+    expect(toneOfRow(row)).toBe('danger');
   });
 });
