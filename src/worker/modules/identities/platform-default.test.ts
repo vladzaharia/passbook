@@ -4,8 +4,9 @@ import { all, first, run } from '../../platform/db.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { resolveDefaultPlatform } from './db-resolver.ts';
 import { setPlatformDefault } from './platform-default.ts';
+import { getIdentityRow } from './repo.ts';
 import { ensurePlatformIdentity } from './repo-platform.ts';
-import { defaultPlatformPassIdentity } from './repo-platform-default.ts';
+import { defaultPlatformPassIdentity, switchDefault } from './repo-platform-default.ts';
 import { createIdentityResolver } from './resolver.ts';
 
 const actor: Actor = { type: 'system', id: null };
@@ -157,10 +158,8 @@ describe('setPlatformDefault', () => {
   it('the atomic batch re-checks: a certificate that expired after the read changes nothing', async () => {
     const id = await slotRow();
     await deviceTest(id);
-    const { switchDefault } = await import('./repo-platform-default.ts');
-    const row = await first<never>(kit.env.DB, 'SELECT * FROM signing_identities WHERE id = ?', [
-      id,
-    ]);
+    const row = await getIdentityRow(kit.env.DB, id);
+    if (!row) throw new Error('missing row');
     const moved = await switchDefault(
       kit.env.DB,
       kit.ctx,
