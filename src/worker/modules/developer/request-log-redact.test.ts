@@ -18,8 +18,8 @@ describe('redactBody keeps only what is known to be safe', () => {
         version: 2,
         createdAt: 1700000000000,
         scopes: ['passes:read'],
-        nested: { passId: 'p2', unknown: 'visible?' },
-        list: [{ id: 'a', label: 'visible?' }],
+        key: { passId: 'p2', unknown: 'visible?' },
+        items: [{ id: 'a', label: 'visible?' }],
         flag: true,
       }),
     );
@@ -32,8 +32,8 @@ describe('redactBody keeps only what is known to be safe', () => {
       createdAt: 1700000000000,
       scopes: ['passes:read'],
     });
-    expect(out.nested).toEqual({ passId: 'p2', unknown: '[redacted]' });
-    expect(out.list).toEqual([{ id: 'a', label: '[redacted]' }]);
+    expect(out.key).toEqual({ passId: 'p2', unknown: '[redacted]' });
+    expect(out.items).toEqual([{ id: 'a', label: '[redacted]' }]);
     expect(out.flag).toBe('[redacted]');
   });
 
@@ -151,6 +151,25 @@ describe('free-form maps are blanked whole', () => {
     expect(out).not.toContain(S);
     expect(out).not.toContain('998877');
     expect(JSON.parse(out)).toMatchObject({ id: 'p1', input: '[redacted]', config: '[redacted]' });
+  });
+
+  it('keeps no value under a key that is not on the list, at any depth', () => {
+    const out = redacted({
+      customerId: `${S}-c`,
+      studentId: `${S}-s`,
+      dobAt: 315532800000,
+      ticketVersion: 7,
+      Input: { id: `${S}-i`, memberId: `${S}-m` },
+      inputs: [{ passId: `${S}-p`, createdAt: 9 }],
+      overrides: { templateId: `${S}-t`, status: `${S}-st` },
+      scope: { orgId: `${S}-o`, name: `${S}-n` },
+      meta: { holderId: `${S}-h`, 'Ada Lovelace': 1 },
+      id: 'ok',
+    });
+    expect(out).not.toContain(S);
+    expect(out).not.toContain('Ada');
+    expect(out).not.toContain('315532800000');
+    expect(JSON.parse(out)).toMatchObject({ id: 'ok', Input: '[redacted]', scope: '[redacted]' });
   });
 
   it('keeps the platform’s own top-level ids and times', () => {

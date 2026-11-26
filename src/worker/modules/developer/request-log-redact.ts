@@ -6,7 +6,7 @@ export const BODY_MAX_BYTES = 8192;
 export const BODY_READ_MAX_BYTES = 16 * 1024;
 
 /**
- * An allowlist: a scalar is stored only under a field known to hold no secret or personal data (ids, states,
+ * An allowlist: a scalar is stored only under an exact key known to hold no secret or personal data (ids, states,
  * kinds, codes, versions, times, counts). Every other scalar, whatever its key (`name`, `pin`, `code` of a
  * pairing, `message`, `notes`, an input field), is `[redacted]`. Objects and arrays keep their shape, so a bad
  * field is still readable. This replaces a list of what to hide: a field nobody thought of is hidden by default.
@@ -35,13 +35,67 @@ const SAFE_EXACT = new Set([
   'sort',
   'order',
 ]);
-/** `passId`, `templateId`, `createdAt`, `usedCount`: names that end like an id, a time or a count. */
-const SAFE_SUFFIX = /^[a-z][A-Za-z]*(?:Id|Ids|At|Count|Version)$/;
-/** An id of a person or a device is not safe: it names someone. */
-const NOT_SAFE = /(external|device|holder|member|serial|barcode|email|user|push|token|secret)/i;
+/** The platform's own ids, times, counts and versions, matched exactly: a key that is not listed keeps no value. */
+const SAFE_NAMED = [
+  'passId',
+  'templateId',
+  'keyId',
+  'orgId',
+  'connectionId',
+  'endpointId',
+  'eventId',
+  'bundleId',
+  'scannerId',
+  'viewId',
+  'importId',
+  'identityId',
+  'batchId',
+  'resourceId',
+  'createdAt',
+  'updatedAt',
+  'expiresAt',
+  'revokedAt',
+  'closedAt',
+  'usedAt',
+  'startedAt',
+  'endedAt',
+  'deliveredAt',
+  'lastUsedAt',
+  'usedCount',
+  'passCount',
+  'failedCount',
+  'templateVersion',
+  'apiVersion',
+  'schemaVersion',
+];
+for (const key of SAFE_NAMED) SAFE_EXACT.add(key);
 
-const isSafe = (key: string) =>
-  (SAFE_EXACT.has(key) || SAFE_SUFFIX.test(key)) && !NOT_SAFE.test(key);
+const isSafe = (key: string) => SAFE_EXACT.has(key);
+/** The platform's own nested objects and lists; anything else holding an object is caller-shaped and blanked whole. */
+const CONTAINERS = new Set([
+  'items',
+  'errors',
+  'key',
+  'keys',
+  'previous',
+  'org',
+  'pass',
+  'passes',
+  'template',
+  'templates',
+  'sandbox',
+  'limits',
+  'flags',
+  'counts',
+  'links',
+  'channels',
+  'events',
+  'calls',
+  'results',
+  'deliveries',
+  'memberships',
+  'capabilities',
+]);
 /** A problem+json answer (`status` and `title`): its `code`, `title` and `detail` are the platform's own words. */
 const PROBLEM_KEYS = new Set(['code', 'title', 'detail']);
 
@@ -100,7 +154,9 @@ function walk(value: unknown, safe: boolean, depth: number): unknown {
       .slice(0, 100)
       .map(([k, v]) => [
         scrubString(k).slice(0, 64),
-        OPAQUE.has(k) ? BLANK : walk(v, isSafe(k) || (problem && PROBLEM_KEYS.has(k)), depth + 1),
+        OPAQUE.has(k) || (v !== null && typeof v === 'object' && !isSafe(k) && !CONTAINERS.has(k))
+          ? BLANK
+          : walk(v, isSafe(k) || (problem && PROBLEM_KEYS.has(k)), depth + 1),
       ]),
   );
 }

@@ -241,3 +241,50 @@ describe('what a real org keeps', () => {
     expect(row).toMatchObject({ has_bodies: 0, request_body: null });
   });
 });
+
+describe('a call that lands after bodies are turned off', () => {
+  it('stores no body, because the insert itself reads the stored setting', async () => {
+    const org = await makeOrg(t.kit.f);
+    const write = async (id: string) => {
+      const base = {
+        id,
+        orgId: org.id,
+        keyId: 'k',
+        via: null,
+        mode: 'test' as const,
+        requestId: id,
+        method: 'GET',
+        route: null,
+        path: '/x',
+        query: null,
+        status: 200,
+        code: null,
+        durationMs: 1,
+        at: t.kit.clock.now(),
+        requestBody: '{"a":1}',
+        responseBody: '{"b":2}',
+      };
+      const { insertLog } = await import('./repo-request-log.ts');
+      expect(await insertLog(t.kit.env.DB, base)).toBe(true);
+    };
+    const bodies = async (id: string) =>
+      (await t.rows(org.id)).find((r) => r.id === id)?.has_bodies;
+    await run(
+      t.kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'requestLog.bodies', 'true', 1)",
+      [`org:${org.id}`],
+    );
+    await write('late-on');
+    expect(await bodies('late-on')).toBe(1);
+    await run(
+      t.kit.env.DB,
+      "UPDATE settings SET value = 'false' WHERE scope = ? AND key = 'requestLog.bodies'",
+      [`org:${org.id}`],
+    );
+    await write('late-off');
+    expect(await bodies('late-off')).toBe(0);
+    const row = (await t.rows(org.id)).find((r) => r.id === 'late-off');
+    expect(row?.request_body).toBeNull();
+    expect(row?.response_body).toBeNull();
+  });
+});

@@ -31,15 +31,15 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
   ],
   'src/worker/modules/developer/repo-request-log.ts': [
     {
-      text: "CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,",
+      text: "CASE WHEN ?5 = 'test' AND o.rec = 1 AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,",
       reason: 'a SET or VALUES expression on a bound value, not a filter',
     },
     {
-      text: "CASE WHEN ?5 = 'test' THEN ?15 END,",
+      text: "CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?15 END,",
       reason: 'a SET or VALUES expression on a bound value, not a filter',
     },
     {
-      text: "CASE WHEN ?5 = 'test' THEN ?16 END, ?17",
+      text: "CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?16 END, ?17",
       reason: 'a SET or VALUES expression on a bound value, not a filter',
     },
   ],
