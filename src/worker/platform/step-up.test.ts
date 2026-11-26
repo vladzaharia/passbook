@@ -295,6 +295,8 @@ describe('step-up route inventory', () => {
         "POST /api/v1/orgs/:orgId/exports/:exportId/link",
         "POST /api/v1/orgs/:orgId/identities/apple",
         "POST /api/v1/orgs/:orgId/reopen",
+        "POST /api/v1/platform/apple/identities",
+        "POST /api/v1/platform/apple/identities/:id/default",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
         "POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready",
         "POST /api/v1/users/:id/emails",

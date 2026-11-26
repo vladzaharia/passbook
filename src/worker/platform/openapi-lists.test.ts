@@ -37,6 +37,7 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/scan/devices',
   '/api/v1/identities/{id}/certificates',
   '/api/v1/platform/apple-calls',
+  '/api/v1/platform/apple/identities',
   // Found once the filter read named schemas: each is a capped list, not a collection to page.
   '/api/v1/passes/views',
   '/api/v1/webhook-endpoints/{id}/tests',

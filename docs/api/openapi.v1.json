@@ -132563,7 +132563,8 @@
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
-          "UNAUTHENTICATED"
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       },
       "post": {
@@ -132639,6 +132640,12 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_RUN_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -132709,6 +132716,13 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
