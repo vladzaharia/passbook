@@ -1,4 +1,5 @@
 /** Images and colours. Only template art with a public URL is sent; personal images never are (Q18). */
+import { sizeReason } from '../art-size.ts';
 import { fits } from '../text.ts';
 import type { CapabilityId, SamsungImageSlot, ViewImageFile, WalletPassView } from '../types.ts';
 import { isChosen, note, type Run } from './context.ts';
@@ -66,9 +67,10 @@ export function reportImages(run: Run, used: ReadonlySet<string>): void {
     const capability = SLOT_CAPABILITY[slot];
     const shared = files.filter((f) => !f.personal && f.locale === undefined);
     if (!capability || shared.length === 0) continue;
-    if (!shared.some(usable))
-      note(run, capability, slot, 'omitted', 'The image has no public address.');
-    else if (slot === 'thumbnail' || (slot !== 'logo' && !used.has(slot)))
+    if (!shared.some(usable)) {
+      const sized = shared.map((f) => sizeReason('samsung', slot, f)).find(Boolean);
+      note(run, capability, slot, 'omitted', sized ?? 'The image has no public address.');
+    } else if (slot === 'thumbnail' || (slot !== 'logo' && !used.has(slot)))
       note(run, capability, slot, 'omitted', 'Samsung has no place for this image.');
   }
 }

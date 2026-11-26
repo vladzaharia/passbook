@@ -256,7 +256,7 @@ test('the two Samsung omissions are approved item by item and Samsung is release
   await dialog.getByRole('checkbox', { name: /Samsung sharing is not restricted/ }).check();
   await expect(release).toBeDisabled();
   // Production has it too: Samsung's background needs 888 x 555 and the strip is 1125 x 432, so Samsung cannot use it.
-  await dialog.getByRole('checkbox', { name: /The image has no public address/ }).check();
+  await dialog.getByRole('checkbox', { name: /Samsung needs 888 x 555/ }).check();
   await expect(release).toBeEnabled();
   await shots(page, 'authoring-review-dialog');
   await release.click();
