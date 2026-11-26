@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { RowLink } from '@/web/ui/index.ts';
+import { useKeysHost } from './keys-host.tsx';
 
 /** A key's name, linking to its page in its organization's console or the platform's. */
 export function KeyNameLink({
@@ -11,6 +12,8 @@ export function KeyNameLink({
   id: string;
   children: ReactNode;
 }) {
+  const host = useKeysHost();
+  if (host) return host.keyLink(orgId, id, children);
   return orgId === null ? (
     <RowLink to="/admin/platform/api-keys/$keyId" params={{ keyId: id }}>
       {children}

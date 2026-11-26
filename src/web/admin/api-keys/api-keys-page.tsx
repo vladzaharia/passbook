@@ -10,7 +10,6 @@ import {
   EmptyState,
   ErrorState,
   LoadMore,
-  PageHeader,
   SkeletonRows,
   toast,
 } from '@/web/ui/index.ts';
@@ -18,22 +17,26 @@ import './api-keys.css';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { CreateKeyDialog } from './create-key-dialog.tsx';
 import { keyColumns } from './key-columns.tsx';
+import { KeysHeader, useKeysHost } from './keys-host.tsx';
 import { type ApiKey, SCOPE_LABEL, useApiKeyPages, useRevokeKey } from './queries.ts';
-import { useKeyAccess } from './use-key-access.ts';
+import type { KeyAccess } from './use-key-access.ts';
 
 export { keyState } from './queries.ts';
 
 const flat = (q: { data?: { pages: { items: ApiKey[] }[] } | undefined }) =>
   q.data?.pages.flatMap((p) => p.items) ?? [];
 
-export function ApiKeysPage({
-  createRequested,
-  onCreateRequestHandled,
-}: {
+export interface ApiKeysViewProps {
   createRequested: boolean;
   onCreateRequestHandled: () => void;
-}) {
-  const access = useKeyAccess();
+}
+
+/** The list and its dialogs for a known access; the Workbench renders it with its own. */
+export function ApiKeysView({
+  access,
+  createRequested,
+  onCreateRequestHandled,
+}: ApiKeysViewProps & { access: KeyAccess }) {
   const canManage = access.state === 'ready' && access.canManage;
   useEffect(() => {
     if (createRequested && access.state !== 'loading' && access.state !== 'org-error' && !canManage)
@@ -82,6 +85,7 @@ function ScopedApiKeys({
   createRequested: boolean;
   onCreateRequestHandled: () => void;
 }) {
+  const host = useKeysHost();
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey>();
   const [showRevoked, setShowRevoked] = useState(false);
@@ -114,8 +118,9 @@ function ScopedApiKeys({
         now,
         canRevoke: canManage,
         onRevoke: setRevoking,
+        creatorLink: !host,
       }),
-    [orgId, justRevoked, now, canManage],
+    [orgId, justRevoked, now, canManage, host],
   );
 
   const create = (variant: 'primary' | 'outline') =>
@@ -127,7 +132,7 @@ function ScopedApiKeys({
 
   return (
     <>
-      <PageHeader title="API keys" actions={empty ? undefined : create('primary')} />
+      <KeysHeader title="API keys" actions={empty ? undefined : create('primary')} />
       {live.isError && liveRows.length === 0 ? (
         <ErrorState error={live.error} onRetry={() => live.refetch()} />
       ) : (

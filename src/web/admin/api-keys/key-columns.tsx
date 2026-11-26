@@ -27,6 +27,8 @@ export interface KeyColumnsOptions {
   now: number;
   canRevoke: boolean;
   onRevoke: (key: ApiKey) => void;
+  /** The creator's name links to their admin page; a host without one shows the name. */
+  creatorLink?: boolean;
 }
 
 /** What the list shows of a key: the start of its secret (`pb_live_`, `pbp_`, `pbo_`, or `wlt_` for an older key) and its prefix. */
@@ -41,6 +43,7 @@ export function keyColumns({
   now,
   canRevoke,
   onRevoke,
+  creatorLink = true,
 }: KeyColumnsOptions): DataColumnDef<ApiKey, never>[] {
   return [
     {
@@ -116,7 +119,11 @@ export function keyColumns({
         return (
           <span className="flex min-w-0 flex-col items-start">
             <span>{formatDay(createdAt)}</span>
-            {createdBy ? (
+            {createdBy && !creatorLink ? (
+              <span className="max-w-full truncate text-xs text-fg-muted">
+                {entityLabel(createdByName, 'User')}
+              </span>
+            ) : createdBy ? (
               <MetaLink
                 to="/admin/users/$userId"
                 params={{ userId: createdBy }}

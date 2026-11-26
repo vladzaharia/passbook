@@ -15,12 +15,18 @@ import {
 import { MODE_HEADER, pageOf } from '@/shared/contracts/common.ts';
 import { ScannerKindSchema, ScannerSchema } from '@/shared/contracts/scanners.ts';
 import { SCOPE_LABEL } from '@/shared/copy/api-key-scopes.ts';
-import { api } from '@/web/lib/api.ts';
+import { useToolApi, useToolKey, useToolScope } from '@/web/lib/tool-api.tsx';
 
 export type ApiKey = z.infer<typeof ApiKeySchema>;
 type Page = z.infer<typeof ApiKeyListSchema>;
 type KeyState = 'live' | 'revoked';
-const KEYS = ['api-keys', 'context'] as const;
+const BASE = ['api-keys', 'context'] as const;
+
+/** The cache root: the host's client and mode follow `context`, so two clients never share an entry. */
+export function useKeysRoot() {
+  const tool = useToolKey();
+  return [...BASE, ...tool] as const;
+}
 
 /** The explicit `null` query marker selects platform-wide keys, never all tenant keys. */
 export function useApiKeyPages(
@@ -29,8 +35,10 @@ export function useApiKeyPages(
   state: KeyState,
   enabled = true,
 ) {
+  const api = useToolApi();
+  const root = useKeysRoot();
   return useInfiniteQuery({
-    queryKey: [...KEYS, principal, orgId, state],
+    queryKey: [...root, principal, orgId, state],
     enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
@@ -48,6 +56,8 @@ export function useApiKeyPages(
  */
 export function useRevokeKey(principal: string) {
   const client = useQueryClient();
+  const api = useToolApi();
+  const root = useKeysRoot();
   return useMutation({
     mutationFn: ({ id, orgId }: Pick<ApiKey, 'id' | 'orgId'>) =>
       api.delete(`/api/v1/api-keys/${encodeURIComponent(id)}`, {
@@ -56,7 +66,7 @@ export function useRevokeKey(principal: string) {
     onSuccess: (_done, { id, orgId }) => {
       const at = Date.now();
       client.setQueryData<InfiniteData<Page>>(
-        [...KEYS, principal, orgId, 'live'],
+        [...root, principal, orgId, 'live'],
         (data) =>
           data && {
             ...data,
@@ -67,24 +77,28 @@ export function useRevokeKey(principal: string) {
           },
       );
       void client.invalidateQueries({
-        queryKey: [...KEYS, principal, orgId, 'revoked'],
+        queryKey: [...root, principal, orgId, 'revoked'],
         exact: true,
       });
       for (const part of ['detail', 'children', 'activity'])
-        void client.invalidateQueries({ queryKey: [...KEYS, principal, part] });
+        void client.invalidateQueries({ queryKey: [...root, principal, part] });
     },
   });
 }
 
 export function useCreateKey(principal: string) {
   const client = useQueryClient();
+  const api = useToolApi();
+  const root = useKeysRoot();
+  const hosted = useToolScope() !== null;
   return useMutation({
     mutationFn: (body: z.input<typeof CreateApiKeySchema> & { orgId: string | null }) =>
       api.post('/api/v1/api-keys', CreatedApiKeySchema, body, {
         // The server mints the key in the request's mode, so send the one chosen in the dialog.
-        headers: { [MODE_HEADER]: body.mode ?? 'live' },
+        // A Workbench token is Test and carries no mode header.
+        ...(hosted ? {} : { headers: { [MODE_HEADER]: body.mode ?? 'live' } }),
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...KEYS, principal] }),
+    onSuccess: () => client.invalidateQueries({ queryKey: [...root, principal] }),
   });
 }
 
@@ -106,8 +120,10 @@ const TerminalListSchema = pageOf(
 
 /** The org's terminals in service: the only devices a scan key can act as. */
 export function useTerminals(orgId: string | null, enabled: boolean) {
+  const api = useToolApi();
+  const root = useKeysRoot();
   return useQuery({
-    queryKey: [...KEYS, 'terminals', orgId],
+    queryKey: [...root, 'terminals', orgId],
     enabled: enabled && orgId !== null,
     queryFn: async ({ signal }) => {
       const page = await api.get('/api/v1/scanners', TerminalListSchema, {

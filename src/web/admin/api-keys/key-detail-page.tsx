@@ -9,7 +9,6 @@ import {
   detailError,
   EmptyState,
   ErrorState,
-  PageHeader,
   SkeletonDetail,
   SkeletonRows,
   StatusPill,
@@ -20,12 +19,13 @@ import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { useKeyActivity, useKeyChildren, useKeyDetail } from './detail-queries.ts';
 import { STATE_TONE } from './key-columns.tsx';
 import { AccessCard, ActivityCard, ChildrenCard } from './key-detail-cards.tsx';
+import { KeysHeader, useKeysHost } from './keys-host.tsx';
 import { keyState, useRevokeKey } from './queries.ts';
 import { RotateDialog } from './rotate-dialog.tsx';
-import { useKeyAccess } from './use-key-access.ts';
+import type { KeyAccess } from './use-key-access.ts';
 
-export function KeyDetailPage({ keyId }: { keyId: string }) {
-  const access = useKeyAccess();
+/** A key's page for a known access; the Workbench renders it with its own. */
+export function KeyDetailView({ access, keyId }: { access: KeyAccess; keyId: string }) {
   if (access.state === 'loading') return <SkeletonRows label="Loading organization access" />;
   if (access.state === 'session-error')
     return <ErrorState subject="session" error={access.error} onRetry={access.retry} />;
@@ -61,7 +61,9 @@ function KeyDetail({
   canManage: boolean;
   canAudit: boolean;
 }) {
-  const listPath = orgId === null ? platformPath('/api-keys') : orgPath(orgId, '/api-keys');
+  const host = useKeysHost();
+  const listPath =
+    host?.listPath ?? (orgId === null ? platformPath('/api-keys') : orgPath(orgId, '/api-keys'));
   const detail = useKeyDetail(principal, orgId, keyId);
   const children = useKeyChildren(principal, orgId, keyId);
   // The audit log is read with audit:read, or for a member's own personal key.
@@ -78,14 +80,14 @@ function KeyDetail({
     return detailError(detail, {
       entity: 'apiKey',
       to: listPath,
-      header: <PageHeader title="API key" breadcrumbs={[listCrumb, { label: 'API key' }]} />,
+      header: <KeysHeader title="API key" breadcrumbs={[listCrumb, { label: 'API key' }]} />,
     });
   const key = detail.data;
   const crumbs = [listCrumb, { label: key.name }];
   if (key.orgId !== orgId)
     return (
       <>
-        <PageHeader title="API key" breadcrumbs={crumbs} />
+        <KeysHeader title="API key" breadcrumbs={crumbs} />
         <DetailNotFound entity="apiKey" to={listPath} />
       </>
     );
@@ -98,7 +100,7 @@ function KeyDetail({
   const mints = key.kind === 'service' && key.parentKeyId === null && key.orgId !== null;
   return (
     <>
-      <PageHeader
+      <KeysHeader
         title={key.name}
         breadcrumbs={crumbs}
         meta={
@@ -150,6 +152,7 @@ function KeyDetail({
             onRetry={() => void activity.refetch()}
           />
         ) : null}
+        {host?.aside?.(key.id)}
         {mints ? (
           <div className="lg:col-span-2">
             <ChildrenCard

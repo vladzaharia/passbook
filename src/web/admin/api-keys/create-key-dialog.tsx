@@ -12,6 +12,12 @@ import { StepLimits } from './step-limits.tsx';
 import { FIELD_STEP, HINTS, keySummaries, STEPS, useKeyForm } from './use-key-form.ts';
 
 const DAY = 86_400_000;
+/** A capped key stays a minute inside the cap, so a clock a little ahead of the server's still passes. */
+const expiresAt = (days: string, cap?: number) => {
+  const now = Date.now();
+  const at = now + Number(days) * DAY;
+  return cap === undefined ? at : Math.min(at, now + cap * DAY - 60_000);
+};
 
 export interface CreateKeyDialogProps {
   open: boolean;
@@ -53,7 +59,7 @@ export function CreateKeyDialog({
           ...(form.ipAllow.length ? { ipAllow: form.ipAllow } : {}),
           ...(form.scansWrite ? { terminalIds: form.terminalIds } : {}),
           mode: form.keyMode,
-          expiresAt: form.expiry === 'never' ? null : Date.now() + Number(form.expiry) * DAY,
+          expiresAt: form.expiry === 'never' ? null : expiresAt(form.expiry, form.cap?.maxDays),
         }),
       ),
   });
