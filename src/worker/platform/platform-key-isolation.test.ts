@@ -13,6 +13,7 @@ import { type AppBindings, requestContext } from './context.ts';
 import type { AppEnv } from './env.ts';
 import { handleError } from './error-handler.ts';
 import { createRouter, register } from './openapi.ts';
+import { PLATFORM_WRITE_LIMIT } from './rate-limit.ts';
 import { peekBody, platformKeyOf } from './sign-in-guard.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -226,6 +227,19 @@ describe('a Platform key', () => {
       status: 200,
       actor: 'user',
     });
+  });
+});
+
+describe('a Platform key writes within its budget', () => {
+  it('is limited to 60 writes a minute per key (429 RATE_LIMITED), reads are free, and another key is unaffected', async () => {
+    const { fake, call } = fixture();
+    const key = fake.platformKey({ scopes: ['platform:claims'], keyId: 'budget-key' });
+    const other = fake.platformKey({ scopes: ['platform:claims'], keyId: 'budget-other' });
+    for (let i = 0; i < PLATFORM_WRITE_LIMIT; i++)
+      expect((await call('POST', '/claims', key)).status, `write ${i + 1}`).toBe(200);
+    expect(await call('POST', '/claims', key)).toMatchObject({ status: 429, code: 'RATE_LIMITED' });
+    expect((await call('GET', '/claims', key)).status).toBe(200);
+    expect((await call('POST', '/claims', other)).status).toBe(200);
   });
 });
 

@@ -16,6 +16,7 @@ import { orgIsActive } from '../orgs/repo.ts';
 import { orgIsDeveloper } from '../orgs/repo-entitlements.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
 import { attenuate } from './attenuate.ts';
+import { assertPlatformKey } from './platform-key.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
@@ -273,6 +274,7 @@ export async function createApiKey(
   await assertAuditScope(ctx.env.DB, orgId, held, mode);
   assertCredentialKey(held, kind, mode, input.expiresAt, now);
   assertOrgBoundScopes(held, kind);
+  assertPlatformKey(authority, kind, mode, held, input.expiresAt, now);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),

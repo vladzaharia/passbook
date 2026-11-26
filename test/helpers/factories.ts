@@ -465,6 +465,8 @@ export async function makeApiKey(
     /** Limits the key to these templates and pass styles (`api_key_resources`); either list makes it limited. */
     templateIds?: string[];
     passStyles?: string[];
+    /** A platform key lives only while its creator is an active user: default, a new one made for it. */
+    createdBy?: string;
   } = {},
 ): Promise<ApiKeyFixture> {
   const id = f.ids.id();
@@ -477,12 +479,20 @@ export async function makeApiKey(
   // A key with no org is a platform key. One made here without an expiry or IP list stands for a key
   // that existed before migration 0142 (backfilled, unbounded), so the insert rules do not apply to it.
   const legacyPlatform = (options.orgId ?? null) === null;
+  const platform = (options.kind ?? (legacyPlatform ? 'platform' : 'service')) === 'platform';
+  const createdBy = options.createdBy ?? (platform ? `creator-${id}` : null);
+  if (platform && options.createdBy === undefined)
+    await run(f.env.DB, 'INSERT INTO users (id, primary_email, created_at) VALUES (?, ?, ?)', [
+      `creator-${id}`,
+      `creator-${id}@key-creator.test`,
+      f.clock.now(),
+    ]);
   const insert = async () =>
     run(
       f.env.DB,
       `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at,
-       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         options.orgId ?? null,
@@ -500,6 +510,7 @@ export async function makeApiKey(
         options.ipAllow ? JSON.stringify(options.ipAllow) : null,
         options.rateTier ?? null,
         limits.length > 0 ? 1 : 0,
+        createdBy,
       ],
     );
   if (legacyPlatform) await withoutTrigger(f.env.DB, 'api_keys_kind_rules', insert);

@@ -230,7 +230,9 @@
     { "name": "RL_SESSION", "namespace_id": "1025", "simple": { "limit": 1200, "period": 60 } },
     // Request access form: per network, and across all networks (the inbox is the shared resource).
     { "name": "RL_ACCESS", "namespace_id": "1027", "simple": { "limit": 5, "period": 60 } },
-    { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } }
+    { "name": "RL_ACCESS_ALL", "namespace_id": "1028", "simple": { "limit": 30, "period": 60 } },
+    // Writes a Platform key makes on platform routes, per key (key:<id>); keep equal to PLATFORM_WRITE_LIMIT in rate-limit.ts.
+    { "name": "RL_PLATFORM_WRITE", "namespace_id": "1029", "simple": { "limit": 60, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

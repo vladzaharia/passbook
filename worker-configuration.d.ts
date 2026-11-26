@@ -37,6 +37,7 @@ interface __BaseEnv_Env {
 	RL_SESSION: RateLimit;
 	RL_ACCESS: RateLimit;
 	RL_ACCESS_ALL: RateLimit;
+	RL_PLATFORM_WRITE: RateLimit;
 	ANALYTICS_SQL: AnalyticsSQLBinding;
 	IMAGES: ImagesBinding;
 	CF_VERSION: WorkerVersionMetadata;

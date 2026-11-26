@@ -197,6 +197,8 @@ export async function keyAuthOf(
     const ends = parent ? [parent.expires_at, parent.retire_at].filter((t) => t !== null) : [];
     if (!parent || parent.revoked_at !== null || ends.some((t) => t <= now)) return null;
   }
+  // A platform key dies with its creator: disabled, deleted or never recorded.
+  if (row.kind === 'platform' && row.creator_active !== 1) return null;
   // A personal key dies with its membership or user; its reach is capped by the member's roles now.
   if (row.kind === 'personal' && row.member_roles === null) return null;
   // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
@@ -220,7 +222,12 @@ export async function keyAuthOf(
       'KEY_OWNER_NEEDS_IDP',
     );
   }
-  const tier = await enforceApiKeyRate(env, { keyId: row.id, orgId: row.org_id }, row.rate_tier);
+  // A platform scope never raises the tier: the control plane stays on the standard budget, whatever the default.
+  const tier = await enforceApiKeyRate(
+    env,
+    { keyId: row.id, orgId: row.org_id },
+    parseScopes(row.scopes).some((s) => s.startsWith('platform:')) ? 'standard' : row.rate_tier,
+  );
   // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
   // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
   if (row.restricted === 1 && options?.limited !== 'ok')

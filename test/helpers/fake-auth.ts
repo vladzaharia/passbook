@@ -67,9 +67,11 @@ export interface FakeAuth {
     mode?: Mode;
     /** Default: `platform` without an org, else `service`. A forged row may pair `platform` with an org. */
     keyKind?: NonNullable<ApiKeyAuth['keyKind']>;
+    /** Default: a sequential id. A test of a per-key limiter names one no other test of the file spends. */
+    keyId?: string;
   }): Record<string, string>;
   /** Headers for a Platform key (kind `platform`, no org) holding platform scopes. */
-  platformKey(options?: { scopes?: ApiScope[] }): Record<string, string>;
+  platformKey(options?: { scopes?: ApiScope[]; keyId?: string }): Record<string, string>;
 }
 
 interface FakeSession {
@@ -83,18 +85,29 @@ interface FakeApiKey {
   seeded: WeakMap<D1Database, Promise<void>>;
 }
 
+/** The active user a seeded platform key is made by. */
+export const FAKE_KEY_CREATOR = 'fake-key-creator';
+
 async function seedApiKey(
   db: D1Database,
   clock: Clock,
   raw: string,
   key: FakeApiKey,
 ): Promise<void> {
-  // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules.
+  // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules. A platform
+  // key lives only while its creator does, so it is made by an active user of its own.
+  const creator = key.auth.orgId === null ? FAKE_KEY_CREATOR : null;
+  if (creator)
+    await run(db, 'INSERT OR IGNORE INTO users (id, primary_email, created_at) VALUES (?, ?, ?)', [
+      creator,
+      `${creator}@fake-auth.test`,
+      clock.now(),
+    ]);
   const insert = async () =>
     run(
       db,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         crypto.randomUUID(),
         key.auth.orgId,
@@ -109,6 +122,7 @@ async function seedApiKey(
         key.auth.scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))
           ? clock.now() + 30 * 86_400_000
           : null,
+        creator,
       ],
     );
   await (key.auth.orgId === null ? withoutTrigger(db, 'api_keys_kind_rules', insert) : insert());
@@ -323,6 +337,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
       scopes = ['passes:read', 'passes:write', 'holders:write', 'templates:read'] as ApiScope[],
       mode = 'live' as Mode,
       keyKind = orgId === null ? 'platform' : 'service',
+      keyId,
     } = {}) {
       n++;
       const prefix = toBase64Url(randomBytes(6));
@@ -331,7 +346,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
         // Existing in-memory fixtures use sequential IDs; D1 keys need independent unique IDs.
         auth: {
           kind: 'api_key',
-          keyId: `key-${n}`,
+          keyId: keyId ?? `key-${n}`,
           orgId,
           scopes,
           mode,
@@ -342,8 +357,8 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
       });
       return { authorization: `Bearer ${raw}` };
     },
-    platformKey({ scopes = ['platform:read'] as ApiScope[] } = {}) {
-      return fake.apiKey({ orgId: null, scopes });
+    platformKey({ scopes = ['platform:read'] as ApiScope[], keyId } = {}) {
+      return fake.apiKey({ orgId: null, scopes, ...(keyId ? { keyId } : {}) });
     },
   };
   return fake;
