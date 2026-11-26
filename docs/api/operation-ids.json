@@ -306,6 +306,7 @@
   "public.getBByTokenByPassIdPassPkpass",
   "public.getBByTokenByPassIdWalletByProvider",
   "public.getBByTokenPassesPkpasses",
+  "public.getBByTokenWalletGoogle",
   "public.getBrandByOrgIdByFile",
   "public.getPByToken",
   "public.getPByTokenAssetsByName",
