@@ -9,11 +9,3 @@ export function curlOf(c: WebhookCaptureDto, target = 'http://localhost:3000/hoo
     .join(' \\\n  ');
   return `curl -X POST ${shellQuote(target)} \\\n  ${headers} \\\n  --data-raw ${shellQuote(c.body)}`;
 }
-
-export function prettyBody(body: string): string {
-  try {
-    return JSON.stringify(JSON.parse(body), null, 2);
-  } catch {
-    return body;
-  }
-}

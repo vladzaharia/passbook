@@ -127,8 +127,6 @@ export const stateWord = (r: Row): string => STATE_WORD[r.state];
 export const toneOfRow = (r: Row): StatusTone =>
   r.status ? toneOfStatus(r.status) : toneOfState(r.state);
 
-export type StatusFilter = 'ok' | 'failed' | 'pending';
-
 const matchesStatus = (r: Row, f: string | undefined) => {
   if (f === 'ok') return r.state === 'delivered';
   if (f === 'failed') return r.state === 'failed' || r.state === 'cancelled';
