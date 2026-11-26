@@ -159,6 +159,7 @@ describe('check-bundle', () => {
     expect(WB_TOOLS_MEASURED.logs).toBe(WB_TOOL_BUDGET_BYTES);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
       'console',
+      'design',
       'events',
       'home',
       'keys',

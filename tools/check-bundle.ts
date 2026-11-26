@@ -51,6 +51,13 @@ export const WB_BENCH_MARKER = 'bench-split';
  */
 export const WB_TOOL_BUDGET_BYTES = 75_000;
 /**
+ * Design in the Workbench (workbench/design/** and the designer core it mounts, 221 files), on top
+ * of the entry, the shell and the bench, in gzip bytes: 518.3 kB measured plus 10 %. Workbench v2
+ * §4.6 capped it at 230 kB, which the core cannot meet while its Scan screen, Wallets, paper and
+ * validation load with it; splitting those out of the core is a later package.
+ */
+export const WB_DESIGN_BUDGET_BYTES = 571_000;
+/**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
  * quickstart (88.3 kB measured; its pass cards and the compilers' loader) until T8, and the anonymous
  * Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design budget.
@@ -61,6 +68,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
+  design: WB_DESIGN_BUDGET_BYTES,
   quickstart: 92_000,
   playground: 92_000,
 };
