@@ -104,7 +104,8 @@ export function IdChip({
         type="button"
         className="bench-id-c"
         title={id}
-        aria-label={BENCH_COPY.id.copy(word, id)}
+        // The name starts with what is drawn (WCAG 2.5.3), then says what the button does.
+        aria-label={`${prefix ? `${prefix} ` : ''}${text ?? shortId(id)}, ${BENCH_COPY.id.copy(word, id)}`}
         onClick={() =>
           void copyWithFeedback(id, button.current).then((ok) => {
             if (!ok) return;

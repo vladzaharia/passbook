@@ -81,7 +81,9 @@ describe('the response on the bench', () => {
     await run();
     await screen.findByText('201 Created');
     // The header and the Trace each hold the chip.
-    expect(screen.getAllByRole('button', { name: `Copy request id ${RID}` })).toHaveLength(2);
+    expect(
+      screen.getAllByRole('button', { name: new RegExp(`, Copy request id ${RID}$`) }),
+    ).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'View in Logs' })).toHaveAttribute(
       'href',
       `/developers/logs?source=all#${RID}`,

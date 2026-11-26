@@ -39,7 +39,7 @@ describe('the id chip', () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     render(<IdChip id={REQ} kind="request" prefix="req" />);
-    const face = screen.getByRole('button', { name: `Copy request id ${REQ}` });
+    const face = screen.getByRole('button', { name: new RegExp(`, Copy request id ${REQ}$`) });
     expect(face.textContent).toBe('req01938a1b…4a5b');
     await act(async () => fireEvent.click(face));
     expect(writeText).toHaveBeenCalledWith(REQ);
