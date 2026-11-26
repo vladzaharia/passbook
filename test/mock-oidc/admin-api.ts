@@ -63,13 +63,15 @@ export function createMockPolaris(options: MockPolarisOptions) {
       case 'signup':
         return json(signUp(pocket, register, body as never));
       case 'account': {
-        // An account Polaris ID already had: the "I have a Polaris ID" paths.
+        // An account Polaris ID already had: the "I have a Polaris ID" paths. `groups` names the groups it holds.
         const sub = String(body.sub);
         pocket.addUser(sub, {
           email: String(body.email),
           displayName: String(body.name ?? sub),
           emailVerified: body.verified !== false,
-          groups: [],
+          groups: ((body.groups as string[] | undefined) ?? [])
+            .map((g) => pocket.idOfName(g))
+            .filter((id): id is string => id !== undefined),
         });
         register(sub);
         return json({ sub });

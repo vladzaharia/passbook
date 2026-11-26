@@ -391,6 +391,8 @@ test.describe('the SCIM breaker', () => {
         sub: `scim-${run}-${i}`,
         email: email(`scim${i}`),
         name: `Scim ${i}`,
+        // Signing in needs a PassBook group, as the PassBook client is restricted to them.
+        groups: ['passbook_console'],
       });
       await (await apiSignedInAs(sub)).dispose();
       subs.push(sub);
