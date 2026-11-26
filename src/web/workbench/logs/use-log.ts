@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
 import { useToolApi } from '../../lib/tool-api.tsx';
+import { refusingApi } from '../host/refusing.ts';
 import { type Cursor, type Page, readLog } from './api.ts';
 import { type LogFilters, queryOf } from './model.ts';
 
@@ -33,6 +34,9 @@ function useSettled<T>(value: T, ms: number): T {
  */
 export function useLog(filters: LogFilters) {
   const api = useToolApi();
+  // On a cold load the page can mount before the session's token host is ready: the refusing client would
+  // fail the first read for good, so the list stays loading until a real client arrives.
+  const live = (api as unknown) !== refusingApi;
   const query = JSON.stringify([queryOf(filters), filters.tab === 'errors']);
   const settled = useSettled(query, TYPE_MS);
   const [phase, setPhase] = useState<LogPhase>('loading');
@@ -62,6 +66,7 @@ export function useLog(filters: LogFilters) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `retries` is the Retry button's nudge.
   useEffect(() => {
+    if (!live) return;
     const mine = ++run.current;
     setBusy(true);
     readLog(apiRef.current, filtersRef.current).then(
@@ -86,7 +91,7 @@ export function useLog(filters: LogFilters) {
       },
     );
     // `settled` is the filters after their pause: the read follows it.
-  }, [settled, retries]);
+  }, [settled, retries, live]);
 
   const loadMore = useCallback(async () => {
     const { cursor: at } = latest.current;

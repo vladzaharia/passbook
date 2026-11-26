@@ -1,5 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolScopeProvider } from '../../lib/tool-api.tsx';
+import { refusingApi } from '../host/refusing.ts';
 import { LogsTool } from './logs-tool.tsx';
 
 const hosted = vi.hoisted(() => ({ kind: 'org' as 'org' | 'sandbox', admin: false }));
@@ -41,6 +43,21 @@ const rows = () => {
 };
 const logCalls = (calls: string[]) => calls.filter((c) => /\/api\/v1\/request-logs\?/.test(c));
 const param = (url: string, name: string) => new URL(url, 'http://x').searchParams.get(name);
+
+describe('Logs before the token host is ready', () => {
+  it('stays loading on the refusing client instead of failing the first read for good', async () => {
+    stubApi({ lists: [page([entry(1)])] });
+    render(
+      <ToolScopeProvider api={refusingApi as never} client="workbench:none" mode="test" orgId="nw">
+        <LogsTool />
+      </ToolScopeProvider>,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    expect(screen.queryByRole('region', { name: 'Did not load' })).toBeNull();
+  });
+});
 
 describe('Logs on the Workbench token', () => {
   it('lists the org requests in one listbox, with the count and the retention note', async () => {
