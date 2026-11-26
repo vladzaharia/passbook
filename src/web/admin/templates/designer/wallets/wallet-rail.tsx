@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { type KeyboardEvent, useRef } from 'react';
+import { statusLabel } from '@/passkit/wallets/fidelity.ts';
 import type { WalletTarget } from '@/passkit/wallets/types.ts';
 import { typeLabel, WALLETS_COPY } from '@/shared/copy/wallets.ts';
 import { cn } from '../../../../lib/cn.ts';
@@ -69,8 +70,9 @@ export function WalletRail({
         {wallets.map((w, i) => {
           const { out, block } = w.env;
           const set = targetBlock(block, w.target);
-          const type = typeLabel(w.target, out.compiled.type || String(set.type ?? ''));
-          const meta = `${type} · ${typeof set.type === 'string' && set.type !== 'off' ? C.setHere : C.automatic}`;
+          const chosen = typeof set.type === 'string' && set.type !== 'off' ? set.type : null;
+          const type = typeLabel(w.target, chosen ?? out.compiled.type);
+          const meta = `${type} · ${chosen ? C.setHere : C.automatic}`;
           const checked = value === w.target;
           const name = w.target === 'google' ? 'Google Wallet' : 'Samsung Wallet';
           return (
@@ -82,13 +84,7 @@ export function WalletRail({
               data-value={w.target}
               aria-checked={checked}
               aria-label={`${name}, ${type}, ${
-                out.report.status.kind === 'omissions'
-                  ? `Ready with omissions (${out.report.status.count})`
-                  : out.report.status.kind === 'blocked'
-                    ? 'Blocked'
-                    : out.report.status.kind === 'off'
-                      ? 'Off'
-                      : 'Ready'
+                out.report.status.kind === 'blocked' ? 'Blocked' : statusLabel(out.report.status)
               }`}
               tabIndex={checked ? 0 : -1}
               style={{ '--i': i } as React.CSSProperties}

@@ -2,6 +2,8 @@ import { Lock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import type { ViewField } from '@/passkit/wallets/types.ts';
 import { ROLE_LABEL, WALLETS_COPY } from '@/shared/copy/wallets.ts';
+import { cn } from '../../../../lib/cn.ts';
+import { useChangeCount } from '../../../../lib/motion.ts';
 import { Button, Input } from '../../../../ui/index.ts';
 import { morph } from './morph.ts';
 import { RoleSourceMenu } from './role-source-menu.tsx';
@@ -24,6 +26,7 @@ export function RoleRow({
 }) {
   const { edit, readOnly } = env;
   const [typing, setTyping] = useState<string | null>(null);
+  const lockChanges = useChangeCount(row.required);
   const p = row.proposal;
   const use = () =>
     p && morph(() => edit({ op: 'wallets-role', role: row.role, source: p.source }));
@@ -41,7 +44,11 @@ export function RoleRow({
         <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-fg-strong">
           <span className="truncate">{row.label}</span>
           {row.required ? (
-            <span className="text-fg-muted" title="Required on every wallet">
+            <span
+              key={lockChanges}
+              className={cn('text-fg-muted', lockChanges > 0 && 'wm-lock')}
+              title="Required on every wallet"
+            >
               <Lock aria-hidden className="size-3.5" />
               <span className="sr-only">Required on every wallet</span>
             </span>

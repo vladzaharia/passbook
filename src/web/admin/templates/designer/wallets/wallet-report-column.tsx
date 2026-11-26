@@ -80,7 +80,10 @@ export function WalletReportColumn({
   const set = targetBlock(block, target);
   const labels = Object.fromEntries(view.fields.map((f) => [f.path, f.label ?? f.key]));
   const fixes = readOnly ? [] : blockedFixes(env, report);
-  const type = typeLabel(target, report.type);
+  const type = typeLabel(
+    target,
+    typeof set.type === 'string' && set.type !== 'off' ? set.type : report.type,
+  );
   const required = requiredOf(block).includes('type') ? ` · ${capabilityLabel('type')}` : '';
   const off = report.status.kind === 'off';
   const mood =

@@ -79,18 +79,28 @@ export function sourceKind(source: WalletRoleSource | undefined): SourceKind {
   return 'field' in source ? 'field' : 'value';
 }
 
-/** Roles that read the same Apple field on this wallet, with the first of each pair named. */
+/**
+ * Roles that show the same thing on this wallet's card, with the first of each pair named: they
+ * read the same Apple field, or the title repeats another role's text (a balance, a member ID).
+ */
 function duplicatesOf(view: WalletPassView, target: WalletName, type: string) {
   const owner = new Map<string, WalletRole>();
   const twice = new Map<WalletRole, WalletRole>();
-  for (const role of WALLET_ROLES) {
-    const value = view.roles[role];
-    if (!value || supportOf(target, type, role) !== 'native') continue;
-    for (const path of value.fields) {
+  const own = WALLET_ROLES.filter(
+    (role) => view.roles[role] && supportOf(target, type, role) === 'native',
+  );
+  for (const role of own) {
+    for (const path of view.roles[role]?.fields ?? []) {
       const first = owner.get(path);
       if (first) twice.set(first, role);
       else owner.set(path, role);
     }
+  }
+  const title = view.roles.title;
+  const shown = title ? valueText(title) : '';
+  if (title && !twice.has('title') && shown !== '—') {
+    const same = own.find((role) => role !== 'title' && valueText(view.roles[role]) === shown);
+    if (same) twice.set('title', same);
   }
   return twice;
 }

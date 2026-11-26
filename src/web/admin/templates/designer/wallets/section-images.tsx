@@ -59,8 +59,9 @@ export function ImagesSection({ env }: { env: WalletEnv }) {
             target={`wallets-images:${target}:${s.slot}`}
             label={SLOT_NAME[s.slot] ?? s.slot}
             thumb={{ url: s.file?.url ?? null }}
-            detail={s.own || !s.note ? detail : `${detail} ${s.note}`}
-            needs={ruleLine(s.rule) ?? ''}
+            needs={[s.own || !s.note ? detail : `${detail} ${s.note}`, ruleLine(s.rule)]
+              .filter(Boolean)
+              .join(' · ')}
             error={problems[s.slot]}
             onFile={(f) => void take(s.slot, f)}
             disabled={readOnly}

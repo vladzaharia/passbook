@@ -1,5 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import type { FidelityReportDto } from '@/shared/contracts/wallet-fidelity.ts';
 import '../lib/test-utils.tsx';
 import { describeItem } from './describe.ts';
@@ -122,5 +122,26 @@ describe('WalletReport', () => {
     ).toBe('Back · Terms');
     expect(describeItem({ capability: 'colors.label', path: '' })).toBe('Label colour');
     expect(describeItem({ capability: 'nfc', path: '' })).toBe('NFC');
+  });
+
+  it('announces a status change politely, once edits settle', () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(<WalletReport report={report({})} host="author" />);
+      const live = screen.getByRole('status');
+      expect(live).toHaveAttribute('aria-live', 'polite');
+      rerender(
+        <WalletReport
+          report={report({ status: { kind: 'omissions', count: 1 }, items: [item({})] })}
+          host="author"
+        />,
+      );
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(live).toHaveTextContent('Samsung Wallet: Ready with omissions (1)');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

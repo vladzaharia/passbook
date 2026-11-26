@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { sampleDoc } from '../fixtures.ts';
 import type { DraftAsset } from '../model.ts';
-import { applyWalletsOp, normalizeWallets, readWallets } from './ops-wallets.ts';
+import { designerReducer, initialState } from '../reducer.ts';
+import { applyWalletsOp, normalizeWallets, readWallets, type WalletsOp } from './ops-wallets.ts';
 
 const art = (name = ''): DraftAsset => ({
   name,
@@ -109,5 +110,29 @@ describe('wallets ops', () => {
 
   it('normalizes a block with only a schema away', () => {
     expect(normalizeWallets({ schema: 1, google: {}, required: [] })).toBeUndefined();
+  });
+
+  it('replays every op through the designer history: undo and redo restore each step', () => {
+    const ops: WalletsOp[] = [
+      { op: 'wallets-role', role: 'tier', source: { field: 'tier' } },
+      { op: 'wallets-type', target: 'google', type: 'loyalty' },
+      { op: 'wallets-omit', target: 'samsung', entry: 'sharing', on: true },
+      { op: 'wallets-required', id: 'type', on: true },
+      { op: 'wallets-image', target: 'google', slot: 'logo', asset: art() },
+    ];
+    let state = initialState(sampleDoc());
+    const seen = [state.doc];
+    for (const op of ops) {
+      state = designerReducer(state, { type: 'edit', op, at: 0 });
+      seen.push(state.doc);
+    }
+    for (let i = ops.length - 1; i >= 0; i--) {
+      state = designerReducer(state, { type: 'undo' });
+      expect(state.doc).toBe(seen[i]);
+    }
+    for (let i = 1; i <= ops.length; i++) {
+      state = designerReducer(state, { type: 'redo' });
+      expect(state.doc).toBe(seen[i]);
+    }
   });
 });
