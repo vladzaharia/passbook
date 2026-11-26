@@ -164,12 +164,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Settings",
-              "Notifications",
-              "Webhooks",
-              "Create webhook"
-            ]
+            "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
           },
           {
             "t": "text",
@@ -305,12 +300,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Settings",
-              "Notifications",
-              "Webhooks",
-              "Create webhook"
-            ]
+            "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
           },
           {
             "t": "text",
@@ -452,11 +442,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Dashboard",
-              "Workbench",
-              "Webhooks"
-            ]
+            "items": ["Dashboard", "Workbench", "Webhooks"]
           },
           {
             "t": "text",
@@ -611,11 +597,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Dashboard",
-              "Workbench",
-              "Webhooks"
-            ]
+            "items": ["Dashboard", "Workbench", "Webhooks"]
           },
           {
             "t": "text",
@@ -790,12 +772,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Settings",
-              "Developer",
-              "Webhooks",
-              "New"
-            ]
+            "items": ["Settings", "Developer", "Webhooks", "New"]
           },
           {
             "t": "field",
@@ -1048,13 +1025,7 @@
         "parts": [
           {
             "t": "path",
-            "items": [
-              "Box office",
-              "Settings",
-              "API",
-              "Webhooks",
-              "Create new webhook"
-            ]
+            "items": ["Box office", "Settings", "API", "Webhooks", "Create new webhook"]
           },
           {
             "t": "field",
