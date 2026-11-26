@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PlatformWalletEnrolment } from '@/shared/contracts/wallet-providers.ts';
+import { holdConfirm } from '@/web/lib/confirms-wallet.ts';
 import { UserMessageError } from '@/web/lib/errors.ts';
 import { FormDialog, FormField, Textarea, toast, useFormErrors } from '@/web/ui/index.ts';
 import { PROVIDER_NAME, safeError } from './copy.ts';
@@ -17,16 +18,20 @@ export function HoldDialog({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const check = useFormErrors(reason.trim() ? {} : { reason: 'Required.' });
+  const copy = holdConfirm(
+    enrolment ? `${enrolment.orgName} · ${PROVIDER_NAME[enrolment.provider]}` : '',
+  );
 
   return (
     <FormDialog
       open={enrolment !== undefined}
       onOpenChange={(o) => (o ? undefined : onClose())}
-      title={`Hold ${enrolment ? `${enrolment.orgName} · ${PROVIDER_NAME[enrolment.provider]}` : ''}?`}
-      description="Turns it Off. The organization cannot turn it on until you release it."
+      title={copy.title}
+      description={copy.description}
       dirty={reason !== ''}
       check={check}
-      submitLabel="Hold"
+      submitLabel={copy.confirmLabel}
+      submitTone="danger"
       busy={busy}
       onSubmit={async () => {
         if (!enrolment) return;

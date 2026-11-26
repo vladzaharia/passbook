@@ -130,7 +130,7 @@ describe('entity identity', () => {
       </>,
     );
     expect(container.querySelector('[data-initials="AL"]')).not.toBeNull();
-    // An org tile shows one initial at every size, and ids give different tile colours.
+    // An org tile shows two initials at every size, and ids give different tile colours.
     const orgs = render(
       <>
         <EntityAvatar kind="org" id="o1" name="Harbor Lights" size={24} />
@@ -139,7 +139,7 @@ describe('entity identity', () => {
       </>,
     ).container;
     const tiles = [...orgs.querySelectorAll('[data-initials]')] as HTMLElement[];
-    expect(tiles.map((t) => t.dataset.initials)).toEqual(['H', 'H', 'H']);
+    expect(tiles.map((t) => t.dataset.initials)).toEqual(['HL', 'HL', 'HG']);
     expect(tiles[0]?.style.background).toBe(tiles[1]?.style.background);
     expect(tiles[1]?.style.background).not.toBe(tiles[2]?.style.background);
     expect(container.querySelector('.size-8 svg.size-4')).not.toBeNull();

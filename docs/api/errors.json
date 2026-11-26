@@ -264,6 +264,15 @@
       ]
     },
     {
+      "code": "APPLE_PROVISIONER_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "APPLE_UNAUTHORIZED",
       "statuses": [
         401
