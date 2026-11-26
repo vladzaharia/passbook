@@ -98,11 +98,16 @@ On your iPhone:
 1. In your personal org, issue a pass with `identityId` set to the new row.
 2. Add it to Wallet.
 3. Change a field. The update must arrive by push.
+4. Check that the old pass's void arms. The move assumes Wallet sends the same device id for a pass of each pass type, and Apple does not document it. Keep one pass on the legacy identity in your personal org, run Move passes on that org, add the replacement on the same iPhone, then run the check below. Expect `state=registered`, `armed=1` and a `void_at` a day ahead within a minute. `state=notified` with `reason=unarmed` after 7 days means the ids differ: use Arm now on that move row (session and step-up) after confirming the same phone holds both.
 
 Make default refuses with `IDENTITY_NOT_READY` until a device is registered on a pass this identity signed.
 
 ```sh name=o5-registrations confirm=no
 npx wrangler d1 execute "$D1_NAME" --remote --command "SELECT r.identity_id, COUNT(*) AS registrations FROM registrations r JOIN signing_identities s ON s.id = r.identity_id WHERE s.pass_type_identifier = 'pass.mobile.passbook' GROUP BY r.identity_id"
+```
+
+```sh name=o5-move-armed confirm=no
+npx wrangler d1 execute "$D1_NAME" --remote --command "SELECT state, reason, armed_device IS NOT NULL AS armed, void_at FROM pass_moves ORDER BY created_at DESC LIMIT 5"
 ```
 
 ## 6. Make default
