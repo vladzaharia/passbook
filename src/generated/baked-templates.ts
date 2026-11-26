@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "a61cae0315fb4efb5dd8b3f0c2ee77567bd42278";
+export const BAKED_BUILD_HASH = "101c4a7ea2ac05ee1a5ab202e1b10fd158bc31f8";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -13601,7 +13601,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-stamp-card",
     "slug": "starter-stamp-card",
-    "version": "fb6591c67fe6d0c1",
+    "version": "5413bb143d21b7a5",
     "name": "Stamp card",
     "description": "Stamps fill the strip; a full card earns a reward.",
     "org": null,
@@ -13979,7 +13979,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "schema": 1,
         "size": "cr80",
         "barcode": "qr",
-        "kind": "membership"
+        "kind": "membership",
+        "ink": "mono"
       }
     },
     "passJson": {
@@ -14085,7 +14086,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4183522916,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/en.lproj/pass.strings"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/en.lproj/pass.strings"
         }
       },
       {
@@ -14099,7 +14100,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/icon@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/icon@2x.png"
         }
       },
       {
@@ -14113,7 +14114,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/icon@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/icon@3x.png"
         }
       },
       {
@@ -14127,7 +14128,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/logo@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/logo@2x.png"
         }
       },
       {
@@ -14141,7 +14142,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/logo@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/logo@3x.png"
         }
       },
       {
@@ -14155,7 +14156,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/empty.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/empty.png"
         }
       },
       {
@@ -14169,7 +14170,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/filled.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/filled.png"
         }
       },
       {
@@ -14183,7 +14184,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/reward-earned.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/reward-earned.png"
         }
       },
       {
@@ -14197,7 +14198,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/reward.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/reward.png"
         }
       },
       {
@@ -14212,7 +14213,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/0/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/0/strip@2x.png"
         }
       },
       {
@@ -14227,7 +14228,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/0/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/0/strip@3x.png"
         }
       },
       {
@@ -14242,7 +14243,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/1/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/1/strip@2x.png"
         }
       },
       {
@@ -14257,7 +14258,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/1/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/1/strip@3x.png"
         }
       },
       {
@@ -14272,7 +14273,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/10/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/10/strip@2x.png"
         }
       },
       {
@@ -14287,7 +14288,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/10/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/10/strip@3x.png"
         }
       },
       {
@@ -14302,7 +14303,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/2/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/2/strip@2x.png"
         }
       },
       {
@@ -14317,7 +14318,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/2/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/2/strip@3x.png"
         }
       },
       {
@@ -14332,7 +14333,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/3/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/3/strip@2x.png"
         }
       },
       {
@@ -14347,7 +14348,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/3/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/3/strip@3x.png"
         }
       },
       {
@@ -14362,7 +14363,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/4/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/4/strip@2x.png"
         }
       },
       {
@@ -14377,7 +14378,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/4/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/4/strip@3x.png"
         }
       },
       {
@@ -14392,7 +14393,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/5/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/5/strip@2x.png"
         }
       },
       {
@@ -14407,7 +14408,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/5/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/5/strip@3x.png"
         }
       },
       {
@@ -14422,7 +14423,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/6/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/6/strip@2x.png"
         }
       },
       {
@@ -14437,7 +14438,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/6/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/6/strip@3x.png"
         }
       },
       {
@@ -14452,7 +14453,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/7/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/7/strip@2x.png"
         }
       },
       {
@@ -14467,7 +14468,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/7/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/7/strip@3x.png"
         }
       },
       {
@@ -14482,7 +14483,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/8/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/8/strip@2x.png"
         }
       },
       {
@@ -14497,7 +14498,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/8/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/8/strip@3x.png"
         }
       },
       {
@@ -14512,7 +14513,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/9/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/9/strip@2x.png"
         }
       },
       {
@@ -14527,7 +14528,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/stamps/strips/9/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/stamps/strips/9/strip@3x.png"
         }
       },
       {
@@ -14541,7 +14542,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/strip@2x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/strip@2x.png"
         }
       },
       {
@@ -14555,7 +14556,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/strip@3x.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/strip@3x.png"
         }
       },
       {
@@ -14569,21 +14570,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/fb6591c67fe6d0c1/wallets/google/logo.png"
+          "path": "/templates/starter-stamp-card/5413bb143d21b7a5/wallets/google/logo.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "PAPER_INK",
-          "message": "The pass colours are too light for black and white. Paper prints mono.",
-          "path": "paper.ink"
-        }
-      ]
+      "issues": []
     }
   },
   {
@@ -16562,7 +16556,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-visitor-pass",
     "slug": "starter-visitor-pass",
-    "version": "81cc9599282adf0f",
+    "version": "2ce30d9c0037f49b",
     "name": "Visitor pass",
     "description": "One day for a visitor, with their host. Ends at the time you set.",
     "org": null,
@@ -16965,7 +16959,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "size": "cr80p",
         "barcode": "qr",
         "kind": "badge",
-        "holder": false
+        "holder": false,
+        "ink": "mono"
       }
     },
     "passJson": {
@@ -17072,7 +17067,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 663697558,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/en.lproj/pass.strings"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/en.lproj/pass.strings"
         }
       },
       {
@@ -17086,7 +17081,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/icon@2x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/icon@2x.png"
         }
       },
       {
@@ -17100,7 +17095,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/icon@3x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/icon@3x.png"
         }
       },
       {
@@ -17114,7 +17109,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/logo@2x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/logo@2x.png"
         }
       },
       {
@@ -17128,7 +17123,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/logo@3x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/logo@3x.png"
         }
       },
       {
@@ -17142,7 +17137,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/thumbnail@2x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/thumbnail@2x.png"
         }
       },
       {
@@ -17156,7 +17151,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/thumbnail@3x.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/thumbnail@3x.png"
         }
       },
       {
@@ -17170,7 +17165,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/wallets/google/logo.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/wallets/google/logo.png"
         }
       },
       {
@@ -17184,21 +17179,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1860,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-visitor-pass/81cc9599282adf0f/wallets/google/thumbnail.png"
+          "path": "/templates/starter-visitor-pass/2ce30d9c0037f49b/wallets/google/thumbnail.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "PAPER_INK",
-          "message": "The pass colours are too light for black and white. Paper prints mono.",
-          "path": "paper.ink"
-        }
-      ]
+      "issues": []
     }
   }
 ];
