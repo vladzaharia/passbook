@@ -157,6 +157,10 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   },
   identities: {
     'hold.reason': ['Issuer account under review by Google.'],
+    // modules/passes/identity-move*: a move row's reason and the operation's current line.
+    'move.reason': ['A connection owns this pass.'],
+    'move.text': ['Issuing replacements · 40 of 120'],
+    'step.detail': ['Waiting for the connector'],
   },
   status: {
     note: [

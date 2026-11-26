@@ -77,6 +77,7 @@ const KEYED: [RegExp, RegExp, string][] = [
   [/^(scan|scans)$/, /^label$/, 'action'],
   [/^developer$/, /^label$/, 'key'],
   [/^(identities|wallet|identity)$/, /^label$/, 'identity'],
+  [/^(identities|wallet|identity)$/, /^title$/, 'operation'],
   [/^entitlements$/, /^label$/, 'feature'],
   [/^metrics$/, /^name$/, 'org'],
   [/^(users|me)$/, /^name$/, 'person'],
