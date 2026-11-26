@@ -178,7 +178,7 @@ export function buildSearchIndex(site: Site): SearchIndex {
     events: site.webhookEvents.map((e) => ({
       type: e.type,
       summary: e.summary,
-      href: `${PATHS.webhooks}#${e.type}`,
+      href: `${PATHS.webhooks}?type=${e.type}`,
     })),
     actions: actions(),
     hints,

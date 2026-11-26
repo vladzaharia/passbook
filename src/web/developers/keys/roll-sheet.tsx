@@ -57,7 +57,7 @@ export function ConfirmKeySheet({
           </button>
           <button
             type="button"
-            className={roll ? 'btn' : 'btn ks-danger'}
+            className={roll ? 'btn' : 'btn danger'}
             disabled={busy}
             aria-busy={busy}
             onClick={() => void go()}

@@ -196,7 +196,7 @@ export const RESET_KEY_ACTION = 'developer_sandbox.reset_key';
 const RESERVE_MS = 60_000;
 
 /**
- * `platform.job.developer_sandbox.reset_key`: reserves the right to mint the reset's key. One batch checks the
+ * `platform.job.developer_sandbox.reset_key`: reserves the right to mint the sandbox's key (once after it is made, and once after each reset). One batch checks the
  * person's live session, an open sandbox whose track still started at `stamp`, and that no reservation for this reset's stamp was made
  * in the last minute, then writes the reservation (an audit row). D1 batches run one at a time, so two racing
  * resumes cannot both pass: the loser throws `SANDBOX_CONFLICT`.
@@ -205,18 +205,19 @@ export async function reserveKey(
   ctx: ServiceContext,
   sandbox: { id: string; orgId: string },
   by: { userId: string; sessionIdHash: string },
-  stamp: number,
+  /** The sandbox's `track_started_at`: null until its first reset. */
+  stamp: number | null,
 ): Promise<void> {
   const now = ctx.clock.now();
   const claim = rawCheck(
     'config',
-    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at = ?)',
+    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at IS ?)',
     [sandbox.id, by.userId, stamp],
   );
   const free = rawCheck(
     'config',
     "NOT EXISTS (SELECT 1 FROM audit_log au WHERE au.target_type = 'org' AND au.target_id = ? AND au.action = ? AND au.at > ? AND json_extract(au.detail, '$.stamp') = ?)",
-    [sandbox.orgId, RESET_KEY_ACTION, now - RESERVE_MS, stamp],
+    [sandbox.orgId, RESET_KEY_ACTION, now - RESERVE_MS, stamp ?? 0],
   );
   const g = developerSandboxGrant(
     ctx,
@@ -231,7 +232,7 @@ export async function reserveKey(
     action: RESET_KEY_ACTION,
     targetType: 'org',
     targetId: sandbox.orgId,
-    detail: { stamp },
+    detail: { stamp: stamp ?? 0 },
   });
   await g.commit();
 }

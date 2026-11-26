@@ -38,7 +38,7 @@ describe('the index', () => {
     );
     for (const o of index.ops) expect(anchors.has(o.href), o.href).toBe(true);
     for (const e of index.errors) expect(e.href).toBe(`${PATHS.errors}/${e.code}`);
-    for (const e of index.events) expect(e.href).toBe(`${PATHS.webhooks}#${e.type}`);
+    for (const e of index.events) expect(e.href).toBe(`${PATHS.webhooks}?type=${e.type}`);
     for (const row of [...index.guides, ...index.actions])
       expect(row.href, row.id).toMatch(/^\/(developers|admin)\//);
   });

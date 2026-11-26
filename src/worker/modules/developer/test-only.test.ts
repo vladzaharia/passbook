@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { CreatedDeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
+import { makeSandbox } from './sandbox-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: BlueprintKit;
@@ -51,8 +51,7 @@ describe('ORG_TEST_ONLY', () => {
   it('refuses Live on a developer org in every console router family, and allows Test', async () => {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-    const res = await send('POST', '/developer/sandbox', session.headers, { turnstileToken: 'ok' });
-    const o = CreatedDeveloperSandboxSchema.parse(await res.json()).orgId;
+    const o = (await makeSandbox(send, session.headers)).orgId;
     const families: [string, string, string, unknown?][] = [
       ['templates', 'GET', `/templates?orgId=${o}`],
       ['connections', 'GET', `/connections?orgId=${o}`],
@@ -85,10 +84,7 @@ describe('the sandbox key ceiling (scope)', () => {
   it('holds for a key made or rolled in the portal: a a subset passes; key minting, a role bundle beyond it, and rolling an over-ceiling key do not', async () => {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-    const made = await send('POST', '/developer/sandbox', session.headers, {
-      turnstileToken: 'ok',
-    });
-    const o = CreatedDeveloperSandboxSchema.parse(await made.json()).orgId;
+    const o = (await makeSandbox(send, session.headers)).orgId;
     const h = { ...session.headers, 'x-passbook-mode': 'test' };
     const mint = (extra: Record<string, unknown>) =>
       send('POST', '/api-keys', h, {
@@ -118,10 +114,7 @@ describe('the sandbox key ceiling (scope)', () => {
   it('refuses a role bundle, an over-ceiling roll and /me/rotate, and the trigger holds beneath the service', async () => {
     const user = await makeUser(kit.f);
     const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
-    const made = await send('POST', '/developer/sandbox', session.headers, {
-      turnstileToken: 'ok',
-    });
-    const o = CreatedDeveloperSandboxSchema.parse(await made.json()).orgId;
+    const o = (await makeSandbox(send, session.headers)).orgId;
     const h = { ...session.headers, 'x-passbook-mode': 'test' };
     const role = await send('POST', '/api-keys', h, {
       orgId: o,

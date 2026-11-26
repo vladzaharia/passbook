@@ -4,7 +4,7 @@ import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { toDto } from './dto.ts';
-import { kindOf } from './registry.ts';
+import { kindOf } from './kinds.ts';
 import { activeByDedupe, insertOperationStmt, type OperationRow, rowById } from './repo.ts';
 
 /** A runner that holds the lease has this long before a stall check may resend it. */
@@ -31,6 +31,8 @@ export interface StartInput {
   workflowInstanceId?: string;
   /** An in-request run claims the runner lease now (`runInRequest`). */
   lease?: true;
+  /** The token the in-request run writes under: a backstop that takes the lease over fences it out. */
+  leaseOwner?: string;
 }
 
 /**
@@ -103,6 +105,7 @@ export function startOperationStmt(ctx: ServiceContext, input: StartInput) {
       dedupeKey: dedupeKeyOf(input),
       workflowInstanceId: input.workflowInstanceId ?? null,
       leaseUntil: input.lease ? now + LEASE_MS : null,
+      leaseOwner: input.lease ? (input.leaseOwner ?? null) : null,
       now,
       expiresAt: def.audience === 'starter' ? now + KEEP_MS.starter : null,
     }),
@@ -117,12 +120,20 @@ export async function startOperation(
   ctx: ServiceContext,
   input: StartInput,
 ): Promise<OperationDto> {
+  return (await startOperationOnce(ctx, input)).operation;
+}
+
+/** As `startOperation`, and says whether this call inserted the row: only the call that did runs the work. */
+export async function startOperationOnce(
+  ctx: ServiceContext,
+  input: StartInput,
+): Promise<{ operation: OperationDto; created: boolean }> {
   const db = ctx.env.DB;
   if (input.id) {
     const existing = await rowById(db, input.id);
     if (existing) {
       if (!sameRequest(existing, input)) throw reused();
-      return toDto(existing);
+      return { operation: toDto(existing), created: false };
     }
   }
   const { id, stmt } = startOperationStmt(ctx, input);
@@ -133,7 +144,7 @@ export async function startOperation(
     const same = input.id ? await rowById(db, id) : null;
     if (same) {
       if (!sameRequest(same, input)) throw reused();
-      return toDto(same);
+      return { operation: toDto(same), created: false };
     }
     const key = dedupeKeyOf(input);
     const active = key ? await activeByDedupe(db, key) : null;
@@ -146,5 +157,5 @@ export async function startOperation(
     });
   }
   const row = (await rowById(db, id)) as OperationRow;
-  return toDto(row);
+  return { operation: toDto(row), created: true };
 }

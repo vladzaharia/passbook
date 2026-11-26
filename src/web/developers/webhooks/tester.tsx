@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
+import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { Gate } from '../ui/gate.tsx';
+import { BenchSkeleton } from '../bench/skeleton.tsx';
+import { BenchGate, BenchState } from '../bench/state.tsx';
 import type { TesterAuth } from './client.ts';
-import { Notice, Workspace } from './workspace.tsx';
+import { Workspace } from './workspace.tsx';
 
 export function Tester({
   connect,
@@ -26,30 +27,16 @@ export function Tester({
     };
   }, [pending]);
 
-  if (auth === 'loading') return <Notice title="Opening your sandbox">One moment.</Notice>;
-  if (auth === 'error')
-    return (
-      <Notice title="Could not open the tester">
-        <button type="button" className="btn outline sm" onClick={() => setPending(connect())}>
-          Try again
-        </button>
-      </Notice>
-    );
-  if (auth.kind === 'signed-out')
-    return (
-      <Gate
-        title={GATE_COPY.lines.webhooks}
-        next={PATHS.webhooks}
-        docs={`${PATHS.reference}/webhook-endpoints`}
-      />
-    );
+  if (auth === 'loading') return <BenchSkeleton rows={5} />;
+  if (auth === 'error') return <BenchState scene="failed" onRetry={() => setPending(connect())} />;
+  if (auth.kind === 'signed-out') return <BenchGate tool="webhooks" />;
   if (auth.kind === 'no-sandbox')
     return (
-      <Notice title="Make your sandbox first">
-        <a className="btn" href="/developers/quickstart">
-          Open the quickstart
+      <BenchState scene="no-sandbox">
+        <a className="btn" href={`${PATHS.quickstart}#sandbox`}>
+          {BENCH_COPY.strip.create}
         </a>
-      </Notice>
+      </BenchState>
     );
   return <Workspace api={auth.api} types={types} />;
 }

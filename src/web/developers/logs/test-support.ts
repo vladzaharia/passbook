@@ -1,7 +1,12 @@
 import { vi } from 'vitest';
-import type { ApiRail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import type {
+  ApiRail,
+  RequestLogDetail,
+  RequestLogEntry,
+} from '../../../shared/contracts/developer.ts';
 import { forgetRail } from '../bench/rail.ts';
-import { mountLogs } from './island.ts';
+import { resetBenchZone } from '../bench/zone.ts';
+import { forgetDetails } from './use-detail.ts';
 
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -9,7 +14,7 @@ export const json = (body: unknown, status = 200) =>
 export const entry = (n: number, over: Partial<RequestLogEntry> = {}): RequestLogEntry => ({
   id: `log-${n}`,
   requestId: `req-${n}`,
-  at: Date.now() - n * 1000,
+  at: Date.UTC(2026, 10, 25, 22, 15, 53) - n * 1000,
   method: 'POST',
   route: '/api/v1/passes/:id',
   path: '/api/v1/passes/p1',
@@ -28,6 +33,14 @@ export const entry = (n: number, over: Partial<RequestLogEntry> = {}): RequestLo
   ...over,
 });
 
+export const detail = (n: number, over: Partial<RequestLogDetail> = {}): RequestLogDetail => ({
+  ...entry(n),
+  requestBody: '{"name":"Ada"}',
+  responseBody: '{"id":"p1","ok":true}',
+  bodiesExpireAt: Date.now() + 3_600_000,
+  ...over,
+});
+
 export const page = (items: unknown[], extra: Record<string, unknown> = {}) =>
   json({ items, nextCursor: null, capped: null, ...extra });
 
@@ -41,60 +54,55 @@ export const rail: ApiRail = {
   key: { id: 'key-12345678-xyz', name: 'Sandbox key', prefix: 'pb_test_ab12' },
 };
 
-interface Api {
-  calls: string[];
-  /** List answers, consumed in order; then an empty page. */
+/** A fetch that answers by path: the log lists in order, one row by id, the rail, the operation index. */
+export function stubApi(opts: {
   lists: Response[];
-}
-
-/**
- * A fetch that answers by path: the rail, a row's detail, the portal probe (`source=try&limit=1`) and the list,
- * whose answers are consumed in order.
- */
-function api(
-  lists: Response[],
-  o: { detail?: Response; rail?: Response; portal?: Response } = {},
-): Api {
+  rows?: Record<string, RequestLogDetail>;
+  status?: number;
+}) {
   const calls: string[] = [];
-  forgetRail();
+  const lists = [...opts.lists];
+  vi.stubGlobal('reportError', vi.fn());
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string) => {
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
       calls.push(url);
-      if (url.endsWith('/developer/rail')) return o.rail?.clone() ?? json(rail);
-      if (/logs\/log-/.test(url)) return o.detail?.clone() ?? json({}, 500);
-      if (url.includes('source=try&limit=1')) return o.portal?.clone() ?? page([]);
-      return lists.shift() ?? page([]);
+      if (url.includes('/developer/rail')) return json(rail);
+      if (url.includes('/webhook-endpoints?'))
+        return json({ items: [{ id: 'ep-1', target: 'capture' }] });
+      if (url.includes('/captures?requestId='))
+        return json({ items: [{ eventId: 'evt-1', type: 'pass.issued', status: 200 }] });
+      if (url.includes('/developer/session') || url.endsWith('/api/v1/session'))
+        return json({ authenticated: false });
+      if (url.includes('logs-ops')) return json({ 'POST /api/v1/passes/{id}': 'passes.update' });
+      const one = /\/developer\/logs\/([^?]+)/.exec(url);
+      if (one) {
+        const row = opts.rows?.[decodeURIComponent(one[1] as string)];
+        return row ? json(row) : json({ code: 'NOT_FOUND' }, 404);
+      }
+      if (url.includes('/developer/logs')) {
+        if (opts.status) return json({}, opts.status);
+        return (lists.length > 1 ? lists.shift() : lists[0])?.clone() ?? json({}, 500);
+      }
+      return json({}, 404);
     }),
   );
-  return { calls, lists };
+  return calls;
 }
 
-const opIndex = Promise.resolve({ 'POST /api/v1/passes/{id}': 'passes.postPassesById' });
-
-/** Mounts the log over `lists`, in a page with a slot for the listener's mark. */
-export async function open(lists: Response[], o: Parameters<typeof api>[1] = {}) {
-  const { calls } = api(lists, o);
-  const live = document.createElement('div');
-  const el = document.createElement('div');
-  el.textContent = 'prerendered';
-  document.body.append(live, el);
-  await mountLogs(el, opIndex, live);
-  return { el, live, calls };
+/** The page as a visitor in a wide window: the pane is beside the list, and a close is immediate. */
+export function wideWindow() {
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: q.includes('1180') || q.includes('720') || q.includes('reduce'),
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
 }
 
-export const rowsOf = (el: HTMLElement) => el.querySelectorAll<HTMLDetailsElement>('.logs-row');
-
-/** Opens a row the way a click does: `open`, then the toggle event (jsdom does not fire it). */
-export function expand(row: HTMLDetailsElement | null | undefined): void {
-  if (!row) return;
-  row.open = true;
-  row.dispatchEvent(new Event('toggle'));
-}
-
-export function choose(el: HTMLElement, name: string, value: string): void {
-  const select = el.querySelector<HTMLSelectElement>(`select[name="${name}"]`);
-  if (!select) throw new Error(`no ${name} select`);
-  select.value = value;
-  select.dispatchEvent(new Event('change'));
+export function reset() {
+  forgetRail();
+  forgetDetails();
+  resetBenchZone();
+  history.replaceState(null, '', '/developers/logs');
 }

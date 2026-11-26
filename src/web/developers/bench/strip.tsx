@@ -1,4 +1,5 @@
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
+import { PATHS } from '../../../shared/developers.ts';
 import { loadSession } from '../console/session.ts';
 import { loadRail } from './rail.ts';
 import { BudgetMeter, type SandboxActivity, SandboxChip } from './sandbox-chip.tsx';
@@ -15,7 +16,7 @@ export type StripModel =
       slug: string;
       orgId: string;
       mode: 'test' | 'live';
-      key: { name: string; prefix: string } | null;
+      key: { id: string; name: string; prefix: string } | null;
     };
 
 /** The session, and on every tool but the console (which runs on a try token, never a key) the key in use. */
@@ -29,7 +30,7 @@ export async function stripModel(tool: BenchTool): Promise<StripModel> {
     slug: session.sandbox.orgSlug,
     orgId: session.sandbox.orgId,
     mode: rail?.mode === 'live' ? 'live' : 'test',
-    key: rail?.key ? { name: rail.key.name, prefix: rail.key.prefix } : null,
+    key: rail?.key ? { id: rail.key.id, name: rail.key.name, prefix: rail.key.prefix } : null,
   };
 }
 
@@ -62,10 +63,14 @@ export function ContextStrip({
           {C.runHere}
         </span>
       ) : model.key ? (
-        <span className="bench-key" title={`${C.key}: ${model.key.name}`}>
+        <a
+          className="bench-key"
+          href={`${PATHS.logs}?key=${encodeURIComponent(model.key.id)}`}
+          title={C.keyCalls(model.key.name)}
+        >
           <span className="bench-key-n">{model.key.name}</span>
           <code className="mono">{model.key.prefix}…</code>
-        </span>
+        </a>
       ) : null}
       {tool === 'console' ? <BudgetMeter /> : null}
     </div>

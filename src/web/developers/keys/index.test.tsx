@@ -33,9 +33,12 @@ describe('the keys page without keys to list', () => {
     );
   });
 
-  it('says the keys stopped for a closed sandbox', async () => {
+  it('says the sandbox closed, with Start over', async () => {
     await open({ kind: 'closed', csrf: 'c', siteKey: '' });
-    expect(await screen.findByText(KEYS_COPY.closed)).toBeTruthy();
+    expect(await screen.findByText('Sandbox closed')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Start over' }).getAttribute('href')).toContain(
+      '#start-over',
+    );
   });
 
   it('shows an error with Retry, not an empty state, when the sandbox did not load', async () => {

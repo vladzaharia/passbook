@@ -5,6 +5,7 @@ import '../../ui/art/scenes/wave.css';
 import './workbench.css';
 import './workbench-cards.css';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
+import { PATHS } from '../../../shared/developers.ts';
 import { loadSession } from '../console/session.ts';
 import type { Island } from '../shell/islands.ts';
 import { fetchHome, HomeError } from './api.ts';
@@ -28,4 +29,24 @@ export const mount: Island['mount'] = async (el) => {
   // Committed before the slot is shown again (shell/islands.ts), so the static card never flashes back.
   const root = createRoot(el);
   flushSync(() => root.render(<WorkbenchIsland {...(home ? { initial: home } : {})} />));
+  landOnWorkbench(el);
+  addEventListener('hashchange', () => landOnWorkbench(el));
 };
+
+/**
+ * A link to `/developers#workbench` lands on the Workbench: it was drawn after the browser scrolled to the hash
+ * (the slot's height changed), so it scrolls once more, and focus goes to the region so a screen reader says where it is.
+ */
+function landOnWorkbench(el: HTMLElement): void {
+  if (location.hash !== PATHS.workbench.slice(PATHS.home.length)) return;
+  el.setAttribute('role', 'region');
+  el.setAttribute('aria-label', 'Workbench');
+  el.tabIndex = -1;
+  // The island shell shows the slot after `mount` returns: scroll and focus once it is shown.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'start' });
+      el.focus({ preventScroll: true });
+    }),
+  );
+}

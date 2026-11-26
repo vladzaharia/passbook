@@ -45,18 +45,31 @@ export type TesterAuth =
   | { kind: 'no-sandbox' }
   | { kind: 'ready'; api: TesterApi };
 
+/** What narrows a list: the event type, the API request that caused it, the pass it is about. */
+export interface FeedQuery {
+  type?: string;
+  requestId?: string;
+  passId?: string;
+}
+
+const queryOf = (limit: number, q: FeedQuery) => {
+  const p = new URLSearchParams({ limit: String(limit) });
+  for (const [k, v] of Object.entries(q)) if (v) p.set(k, v);
+  return p.toString();
+};
+
 export interface TesterApi {
   endpoints(): Promise<WebhookEndpointDto[]>;
   /** The sandbox's capture endpoint, made if it has none. */
   ensureCapture(): Promise<WebhookEndpointDto>;
-  captures(id: string, type?: string): Promise<WebhookCaptureDto[]>;
+  captures(id: string, q?: FeedQuery): Promise<WebhookCaptureDto[]>;
   sendTest(id: string, type: string): Promise<TestSent>;
   /** A URL endpoint, signed with a secret that shows once. */
   createEndpoint(
     url: string,
     eventTypes: string[],
   ): Promise<{ endpoint: WebhookEndpointDto; secret: string }>;
-  deliveries(id: string): Promise<DeliveryDto[]>;
+  deliveries(id: string, q?: FeedQuery): Promise<DeliveryDto[]>;
   delivery(id: string, eventId: string): Promise<DeliveryDetailDto>;
   tests(id: string): Promise<TestAttemptDto[]>;
   replayDelivery(id: string, eventId: string): Promise<void>;
@@ -153,11 +166,11 @@ export async function connect(
       ensureCapture: async () =>
         (await call<{ endpoint: WebhookEndpointDto }>('POST', '/webhook-endpoints/capture', {}))
           .endpoint,
-      captures: async (id, type) =>
+      captures: async (id, q = {}) =>
         (
           await call<{ items: WebhookCaptureDto[] }>(
             'GET',
-            `${base(id)}/captures?limit=50${type ? `&type=${encodeURIComponent(type)}` : ''}`,
+            `${base(id)}/captures?${queryOf(50, q)}`,
           )
         ).items,
       sendTest: (id, type) => call<TestSent>('POST', `${base(id)}/test`, { type }),
@@ -166,8 +179,13 @@ export async function connect(
           url,
           eventTypes,
         }),
-      deliveries: async (id) =>
-        (await call<{ items: DeliveryDto[] }>('GET', `${base(id)}/deliveries?limit=30`)).items,
+      deliveries: async (id, q = {}) =>
+        (
+          await call<{ items: DeliveryDto[] }>(
+            'GET',
+            `${base(id)}/deliveries?${queryOf(30, { requestId: q.requestId, passId: q.passId })}`,
+          )
+        ).items,
       delivery: (id, eventId) =>
         call<DeliveryDetailDto>('GET', `${base(id)}/deliveries/${encodeURIComponent(eventId)}`),
       replayDelivery: async (id, eventId) => {

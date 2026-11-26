@@ -42,12 +42,3 @@ export function StateCard({
     </section>
   );
 }
-
-/** Retry for an error: a fresh read of the page. */
-export function Retry({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" className="btn outline" onClick={onClick}>
-      Retry
-    </button>
-  );
-}
