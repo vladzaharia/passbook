@@ -27219,11 +27219,206 @@
               "string",
               "null"
             ]
+          },
+          "release": {
+            "type": "object",
+            "properties": {
+              "google": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "disabled"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "not_released"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "enabled"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "test": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "disabled"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "not_released"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "enabled"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test"
+                ],
+                "additionalProperties": false
+              },
+              "samsung": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "disabled"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "not_released"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "enabled"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "test": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "disabled"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "not_released"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "enabled"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "google",
+              "samsung"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "items",
-          "nextCursor"
+          "nextCursor",
+          "release"
         ]
       },
       "PlatformWalletCredentialsUpsertParams": {
@@ -94248,7 +94443,29 @@
                       }
                     }
                   ],
-                  "nextCursor": null
+                  "nextCursor": null,
+                  "release": {
+                    "google": {
+                      "live": {
+                        "state": "disabled",
+                        "reason": "not_released"
+                      },
+                      "test": {
+                        "state": "disabled",
+                        "reason": "not_released"
+                      }
+                    },
+                    "samsung": {
+                      "live": {
+                        "state": "disabled",
+                        "reason": "not_released"
+                      },
+                      "test": {
+                        "state": "disabled",
+                        "reason": "not_released"
+                      }
+                    }
+                  }
                 }
               }
             }

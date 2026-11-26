@@ -8237,6 +8237,36 @@ export type PlatformWalletCredentialsListResponse = {
     } | null;
   }>;
   nextCursor: string | null;
+  release: {
+    google: {
+      live: {
+        state: "disabled";
+        reason: "not_released";
+      } | {
+        state: "enabled";
+      };
+      test: {
+        state: "disabled";
+        reason: "not_released";
+      } | {
+        state: "enabled";
+      };
+    };
+    samsung: {
+      live: {
+        state: "disabled";
+        reason: "not_released";
+      } | {
+        state: "enabled";
+      };
+      test: {
+        state: "disabled";
+        reason: "not_released";
+      } | {
+        state: "enabled";
+      };
+    };
+  };
 };
 
 export type PlatformWalletCredentialsMigrateResponse = {

@@ -124,6 +124,13 @@ describe('Platform org Features: channels and Apple ID', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
+  it('says a stopped wallet is not released, and nothing on a released one', async () => {
+    await open(view());
+    const samsung = await row('samsung');
+    expect(within(samsung).getByText("Samsung Wallet isn't released yet.")).toBeInTheDocument();
+    expect(within(await row('google')).queryByText(/released yet/)).toBeNull();
+  });
+
   it('holds a released wallet with a reason, and releases a held one', async () => {
     const user = userEvent.setup();
     const calls: { path: string; body: unknown }[] = [];

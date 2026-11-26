@@ -1568,6 +1568,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/platform/wallet-credentials 200.release: field added",
+    "class": "additive",
+    "operationId": "",
+    "op": "GET /api/v1/platform/wallet-credentials",
+    "change": "200.release: field added",
+    "note": "Release state per provider and mode (issuance), so platform pages can say a wallet isn't released yet."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
