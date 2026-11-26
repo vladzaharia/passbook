@@ -15,6 +15,7 @@ import { actionIndexOf } from './scan/actions/issues.ts';
 import { readActions } from './scan/actions/model.ts';
 import { scanDisplayOf } from './scan/document.ts';
 import { scanIssueTarget } from './scan/scan-issue-target.ts';
+import { walletsIssueTarget } from './wallets/issue-target.ts';
 
 const COLORS = /^(backgroundColor|foregroundColor|labelColor|stripColor|footerBackgroundColor)\b/;
 const RELEVANCE = /^(locations|beacons|relevantDates?|expirationDate|maxDistance)\b/;
@@ -46,6 +47,8 @@ export function issueTarget(issue: ValidationIssue, doc: DesignDoc): Selection |
     const plan = at === null ? undefined : readAccess(doc)?.plans[at];
     return { section: 'access', ...(plan ? { key: plan.id } : {}) };
   }
+  const wallet = walletsIssueTarget(issue);
+  if (wallet) return wallet;
   if (issue.code === 'MISSING_ICON') return { section: 'images', key: 'icon' };
   const png = /^(?:[\w-]+\.lproj\/)?([A-Za-z]+)(?:@[23]x)?\.png$/.exec(path);
   if (png) return { section: 'images', key: png[1] };

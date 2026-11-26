@@ -19,7 +19,7 @@ export type { VerifiedSamsungRequest } from './samsung-token-inbound.ts';
 
 const encoder = new TextEncoder();
 
-/** States Get Card Data may return. MIGRATED exists only in Update Notification (needs atwLink and oldRefId). */
+/** States Get Card Data may return. A transfer is a DELETED plus a new ref, so MIGRATED is never sent. */
 export const SAMSUNG_CARD_DATA_STATES = [
   'ACTIVE',
   'UPDATED',
@@ -31,7 +31,7 @@ export const SAMSUNG_CARD_DATA_STATES = [
   'PENDING',
   'SUSPENDED',
 ] as const;
-export type SamsungCardState = (typeof SAMSUNG_CARD_DATA_STATES)[number] | 'MIGRATED';
+export type SamsungCardState = (typeof SAMSUNG_CARD_DATA_STATES)[number];
 
 interface SamsungCardItem {
   refId: string;

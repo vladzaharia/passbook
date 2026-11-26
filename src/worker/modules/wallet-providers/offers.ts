@@ -7,6 +7,7 @@ import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { passForToken } from '../public/service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
+import type { GoogleSaveOffer } from './google-offer.ts';
 import {
   consumeWalletOfferRef,
   createWalletInstanceAndOffer,
@@ -30,7 +31,11 @@ import {
 } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
-import { createSamsungRuntimeOffer, WalletRuntimeError } from './runtime.ts';
+import {
+  createSamsungRuntimeOffer,
+  WalletRuntimeError,
+  type WalletRuntimeScope,
+} from './runtime.ts';
 
 export interface WalletOffer {
   provider: 'google' | 'samsung';
@@ -93,6 +98,28 @@ export async function issueWalletOffer(
   token: string,
   provider: NativeProvider,
 ): Promise<string> {
+  return (await issueWalletOfferScoped(ctx, token, provider)).location;
+}
+
+/** What a bundle needs from one member's offer to sign several into one link. */
+export interface ScopedWalletOffer {
+  location: string;
+  scope: WalletRuntimeScope;
+  /** The Google object the link references; absent for Samsung. */
+  google?: Pick<GoogleSaveOffer, 'objectId' | 'type' | 'expiresAt'>;
+  /** The offer's own currency checks again, for a caller that signs later than the offer was issued. */
+  recheck(): Promise<void>;
+  /** Records the copy; with `deferCopy` the caller does it once the link is really delivered. */
+  recordCopy(): Promise<void>;
+}
+
+/** The offer, its account scope and Google object, so a bundle can combine several of them. */
+export async function issueWalletOfferScoped(
+  ctx: ServiceContext,
+  token: string,
+  provider: NativeProvider,
+  options: { deferCopy?: boolean } = {},
+): Promise<ScopedWalletOffer> {
   if (provider !== 'google' && provider !== 'samsung') throw notFound();
   assertWalletProviderEnabled(provider);
   ctx = captureOfferContext(ctx);
@@ -172,8 +199,9 @@ export async function issueWalletOffer(
       }
     };
     let location: string;
+    let google: ScopedWalletOffer['google'];
     if (provider === 'google' && eligible.approved.projection.provider === 'google') {
-      location = await googleSaveLocation(ctx, {
+      const signed = await googleSaveLocation(ctx, {
         pass,
         eligible,
         instance,
@@ -181,6 +209,8 @@ export async function issueWalletOffer(
         expiresAt,
         assertCurrent,
       });
+      location = signed.url;
+      google = signed;
     } else if (provider === 'samsung') {
       location = `/p/wallet/samsung/${ref}`;
     } else throw notFound();
@@ -191,8 +221,15 @@ export async function issueWalletOffer(
     )
       throw notFound();
     delivered = true;
-    await recordCopy(ctx, pass, provider);
-    return location;
+    const copy = () => recordCopy(ctx, pass, provider);
+    if (!options.deferCopy) await copy();
+    return {
+      location,
+      scope: eligible.runtimeScope,
+      ...(google ? { google } : {}),
+      recheck: assertCurrent,
+      recordCopy: copy,
+    };
   } catch (error) {
     if (fenceLost || (error instanceof WalletRuntimeError && error.code === 'account_unavailable'))
       throw notFound();

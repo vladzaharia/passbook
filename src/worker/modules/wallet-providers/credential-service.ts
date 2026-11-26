@@ -5,6 +5,7 @@ import {
   type WalletCredential,
   type WalletCredentialList,
 } from '../../../shared/contracts/wallet-providers.ts';
+import type { PlatformWalletCredentialList } from '../../../shared/contracts/wallet-release.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import {
@@ -20,6 +21,7 @@ import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
+import { walletReleaseByMode } from './provider-policy.ts';
 import { lastChecksOf } from './repo-credential-checks.ts';
 import {
   type CredentialRow,
@@ -280,11 +282,12 @@ export async function revokeOrgCredential(
 export async function listPlatformCredentials(
   ctx: ServiceContext,
   auth: SessionAuth,
-): Promise<WalletCredentialList> {
+): Promise<PlatformWalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
   return {
     items: await withLastChecks(ctx, null, await listCredentials(ctx.env.DB, { orgId: null })),
     nextCursor: null,
+    release: walletReleaseByMode(),
   };
 }
 

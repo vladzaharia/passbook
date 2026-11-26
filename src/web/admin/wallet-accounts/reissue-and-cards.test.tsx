@@ -5,7 +5,12 @@ import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
-import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
+import {
+  credential,
+  enrolment,
+  renderOrgAccounts,
+  walletRelease,
+} from './wallet-accounts-test-fixtures.ts';
 
 const MANAGE: OrgCapability[] = [
   'org:read',
@@ -115,7 +120,7 @@ describe('Samsung cards per type on the platform tab', () => {
   const handlers = (cardTypes: string[], saved: unknown[] = []) => ({
     '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials': () =>
-      json({ items: [platform(cardTypes)], nextCursor: null }),
+      json({ items: [platform(cardTypes)], nextCursor: null, release: walletRelease() }),
     '/api/v1/platform/wallet-enrolments': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials/c1/cards': (_u: URL, init?: RequestInit) => {
       saved.push(JSON.parse(String(init?.body)));
@@ -157,7 +162,8 @@ describe('Samsung cards per type on the platform tab', () => {
       session: 'admin',
       handlers: {
         ...handlers([]),
-        '/api/v1/platform/wallet-credentials': () => json({ items: [], nextCursor: null }),
+        '/api/v1/platform/wallet-credentials': () =>
+          json({ items: [], nextCursor: null, release: walletRelease() }),
       },
     });
     await user.click(await screen.findByRole('tab', { name: 'Samsung' }));

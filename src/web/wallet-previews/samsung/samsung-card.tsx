@@ -31,11 +31,13 @@ function Face({ m, testBand }: { m: SamsungModel; testBand?: boolean | undefined
           <Img src={m.logo} className="wp-s-logo" />
           <span className="wp-s-provider">{m.provider}</span>
         </div>
-        <p className="wp-s-title">{m.title}</p>
+        <p className="wp-s-title" data-wk="title">
+          {m.title}
+        </p>
         {m.amounts.length > 0 ? (
           <dl className="wp-s-amounts">
             {m.amounts.map((f) => (
-              <div key={f.label}>
+              <div key={f.label} data-wk={`amount:${f.label}`}>
                 <dt>{f.label}</dt>
                 <dd>{f.value}</dd>
               </div>
@@ -45,7 +47,7 @@ function Face({ m, testBand }: { m: SamsungModel; testBand?: boolean | undefined
         {m.facts.length > 0 ? (
           <dl className="wp-s-facts">
             {m.facts.map((f) => (
-              <div key={f.label}>
+              <div key={f.label} data-wk={`fact:${f.label}`}>
                 <dt>{f.label}</dt>
                 <dd>{f.value}</dd>
               </div>
@@ -76,7 +78,7 @@ export function SamsungCard({
       {face === 'front' ? null : (
         <section className="wp-s-detail" aria-label="Card details">
           {m.barcode ? (
-            <div className="wp-s-code">
+            <div className="wp-s-code" data-wk="code">
               <div className="wp-tile">
                 <WalletCode
                   bcid={m.barcode.bcid}
@@ -87,7 +89,7 @@ export function SamsungCard({
             </div>
           ) : null}
           {m.notice ? (
-            <div className="wp-s-block">
+            <div className="wp-s-block" data-wk="notice">
               <h4>Notice</h4>
               <p className="wp-s-notice">{m.notice}</p>
             </div>

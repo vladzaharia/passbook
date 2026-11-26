@@ -129,6 +129,9 @@ describe('a message whose transport is unknown', () => {
       'GET genericObject',
       'PATCH genericObject',
       'POST genericObject/addMessage',
+      // An upsert operation touches the class, so it refreshes Google's review of it after the write, off the run (waitUntil):
+      // one read per backoff window, and never once the class is APPROVED. The mock class is not, and the window has passed.
+      'GET genericClass',
     ]);
     expect(await t.ledger()).toMatchObject([{ state: 'notified' }, { state: 'notified' }]);
     expect(t.patchedMessages(mark)).toMatchObject([{ messageType: 'TEXT' }]);

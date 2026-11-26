@@ -151,6 +151,27 @@ function linkLines(run: Run, input: NoticeInput): Line[] {
   return lines;
 }
 
+/** A field's change text (`%@` is its value, `%%` a percent sign): Samsung has no notifying call, so the card carries it. */
+function messageLines(run: Run): Line[] {
+  const lines: Line[] = [];
+  for (const field of run.view.fields) {
+    if (typeof field.changeMessage !== 'string') continue;
+    const value = fieldValue(field, run);
+    const text = sanitizeText(
+      run
+        .tr(field.changeMessage)
+        .replace(/%([@%])/gu, (_m, c: string) => (c === '@' ? value : '%')),
+    );
+    if (text)
+      lines.push({ text, identity: false, capability: 'messaging.notify', path: field.path });
+  }
+  return lines;
+}
+
+/** The change text is a difference from Apple's alert, whatever else the line is. */
+const written = (line: Line): 'text' | 'difference' =>
+  line.capability === 'messaging.notify' ? 'difference' : 'text';
+
 /** Fits the lines in `noticeDesc`. Identity lines are kept whole; display lines yield in order. */
 function assemble(run: Run, lines: Line[]): string {
   const max = SAMSUNG_LIMITS.noticeDesc.max;
@@ -191,7 +212,7 @@ function assemble(run: Run, lines: Line[]): string {
         `Shortened to fit the ${max}-byte notice.`,
       );
     }
-    note(run, line.capability, line.path, 'text', 'Written in the notice.');
+    note(run, line.capability, line.path, written(line), 'Written in the notice.');
     kept.push(text);
     used += measure(text, 'bytes') + 1;
   }
@@ -210,13 +231,18 @@ function dedupe(run: Run, lines: Line[]): Line[] {
       continue;
     }
     seen.identity ||= line.identity;
-    note(run, line.capability, line.path, 'text', 'Same text as an earlier line.');
+    note(run, line.capability, line.path, written(line), 'Same text as an earlier line.');
   }
   return out;
 }
 
 /** The notice text, with an item for every line kept, shortened or dropped. */
 export function buildNotice(run: Run, input: NoticeInput): string {
-  const lines = [...roleLines(run, input), ...fieldLines(run, input), ...linkLines(run, input)];
+  const lines = [
+    ...roleLines(run, input),
+    ...fieldLines(run, input),
+    ...linkLines(run, input),
+    ...messageLines(run),
+  ];
   return assemble(run, dedupe(run, lines));
 }

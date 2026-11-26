@@ -33,3 +33,13 @@ export const FidelityReportSchema = z.object({
   items: z.array(ReportItemSchema),
 });
 export type FidelityReportDto = z.infer<typeof FidelityReportSchema>;
+
+/**
+ * One report per native target for a template version: the import report and the Wallets tab
+ * both read this shape.
+ */
+export const WalletReportsSchema = z.object({
+  google: FidelityReportSchema,
+  samsung: FidelityReportSchema,
+});
+export type WalletReportsDto = z.infer<typeof WalletReportsSchema>;

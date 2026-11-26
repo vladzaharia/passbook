@@ -1401,6 +1401,12 @@
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
+  "public.getBByTokenWalletGoogle": {
+    "resource": "public.bundles",
+    "method": "addToGoogleWallet",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
   "public.getBrandByOrgIdByFile": {
     "resource": "public.brand",
     "method": "downloadWebLogo",
@@ -2180,6 +2186,10 @@
   "templates.getTemplatesByIdVersionsByVersion": {
     "resource": "templates.versions",
     "method": "retrieve"
+  },
+  "templates.getTemplatesByIdVersionsByVersionWalletReports": {
+    "resource": "templates.versions",
+    "method": "retrieveWalletReports"
   },
   "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
     "resource": "templates.versions",

@@ -1,0 +1,101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`role suggestions > are the same for the same pass, over every baked template 1`] = `
+{
+  "henrys-blue": [
+    "tier:{"field":"status"}",
+    "memberId:{"field":"memberId"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "henrys-copper": [
+    "tier:{"field":"status"}",
+    "memberId:{"field":"memberId"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-access-card": [
+    "memberId:{"field":"member"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-boarding-pass": [
+    "gate:{"field":"gate"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-booking": [
+    "tier:{"field":"status"}",
+    "memberName:{"field":"holder"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-coupon": [],
+  "starter-credential": [
+    "tier:{"field":"status"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-day-pass": [
+    "memberId:{"field":"member"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-event-ticket": [
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-generic": [
+    "tier:{"field":"tier"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-guest-pass": [
+    "memberId:{"field":"member"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-hotel-stay": [
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-id-card": [
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-monthly-pass": [
+    "memberId:{"field":"member"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-multi-day-pass": [
+    "gate:{"field":"gate"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-pack": [],
+  "starter-permit": [
+    "tier:{"field":"status"}",
+    "memberName:{"field":"holder"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-pickup": [
+    "tier:{"field":"status"}",
+    "memberName:{"field":"holder"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-poster-generic": [
+    "tier:{"field":"tier"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-staff-badge": [
+    "memberId:{"field":"member"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-stamp-card": [
+    "memberName:{"field":"holder"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-store-card": [
+    "tier:{"field":"tier"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-timed-ticket": [
+    "gate:{"field":"entrance"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-transit-ticket": [
+    "tier:{"field":"status"}",
+    "finePrint:{"field":"terms"}",
+  ],
+  "starter-visitor-pass": [
+    "finePrint:{"field":"terms"}",
+  ],
+}
+`;
