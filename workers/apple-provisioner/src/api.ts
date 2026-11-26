@@ -144,7 +144,6 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
   async function lookup(req: Req, identifier: string): Promise<PassTypeRef | null> {
     let path: string | null =
       `/v1/passTypeIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=200`;
-    // Apple may filter by prefix, so the exact match can be on any page; each later page costs budget.
     for (let page = 0; path && page < MAX_PAGES; page++) {
       if (page > 0) await reservePage(db, 'createPassType', identifier, deps.now());
       const res = await req('GET', path);
