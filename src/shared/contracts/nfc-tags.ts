@@ -167,7 +167,7 @@ export const TagSchema = z.object({
 });
 export type Tag = z.infer<typeof TagSchema>;
 export const TagListQuerySchema = z.object({
-  orgId: IdSchema,
+  orgId: IdSchema.optional(),
   status: TagStateSchema.optional(),
   /** With `status=spare`: only the spares this pass's policy takes, assigned as `binding` (default `pass`). */
   passId: IdSchema.optional(),

@@ -307,8 +307,8 @@ describe('entity art', () => {
   // (16,417 B measured) for the scanner's beat API, the xl-scan tier, the card notch and the
   // scanner, stub and badge arts. Then to 16.5 kB (16,846 B measured) for the portal buddy kit
   // (BX1): the catch scene's envelope, the face's brows, look group and hop. The lazy scenes rose to 10.75 kB (10,602 B measured) for
-  // listen, catch and explain.
-  it('fits the 16.5 kB gzip budget; the lazy scenes fit 10.75 kB; the state parts 2.5 kB', () => {
+  // listen, catch and explain. Then to 16.75 kB (16,995 B measured) for the face's flat and sad moods (BX2, Status).
+  it('fits the 16.75 kB gzip budget; the lazy scenes fit 10.75 kB; the state parts 2.5 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
     const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
@@ -320,7 +320,7 @@ describe('entity art', () => {
     const kit = [...files, join(DIR, 'scenes/rest.css')];
     const gz = (paths: string[]) =>
       gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
-    expect(gz(kit)).toBeLessThanOrEqual(16.5 * 1024);
+    expect(gz(kit)).toBeLessThanOrEqual(16.75 * 1024);
     expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(2.5 * 1024);
     // Nothing in the kit's entry pulls them in.
     for (const f of ['index.ts', 'buddy.tsx', 'buddy-art.tsx', 'wallet.tsx'])
@@ -332,5 +332,14 @@ describe('entity art', () => {
     const registry = readFileSync(join(DIR, 'registry.ts'), 'utf8');
     for (const f of scenes) expect(registry).toContain(`import './scenes/${f}';`);
     expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(10.75 * 1024);
+  });
+});
+
+describe('BuddyFace status moods', () => {
+  it.each(['flat', 'sad'] as const)('%s draws its own mouth with open eyes', (mood) => {
+    const { container } = render(<BuddyFace mood={mood} />);
+    expect(container.querySelectorAll('.e').length).toBe(2);
+    expect(container.querySelector('[data-smile]')?.getAttribute('d')).toMatch(/^M4[45]/);
+    expect(container.querySelector('svg')?.getAttribute('data-mood')).toBe(mood);
   });
 });

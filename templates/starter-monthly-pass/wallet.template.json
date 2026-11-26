@@ -326,7 +326,8 @@
   },
   "paper": {
     "schema": 1,
-    "size": "a4",
+    "size": "cr80",
+    "sheet": "a4",
     "barcode": "qr",
     "kind": "membership"
   }

@@ -406,5 +406,12 @@
         "void": true
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half-letter",
+    "barcode": "qr",
+    "kind": "booking",
+    "ink": "mono"
   }
 }

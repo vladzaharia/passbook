@@ -37,3 +37,11 @@
 .pstate-a .start {
   padding: 0;
 }
+/* A page that is not there: the title is the page's h1, at 24 px. */
+.pstate[data-kind="lost"] .pstate-t {
+  font-size: 24px;
+  line-height: 32px;
+}
+.pstate[data-kind="lost"] {
+  margin-top: 64px;
+}

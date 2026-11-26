@@ -347,7 +347,9 @@ an org that already holds a candidate or release of it keeps seeing it. Baked te
 For an uploaded template, a `templates:author` session creates a candidate with
 `POST /templates/{id}/candidates` and `{orgId, mode, provider: "apple", version}`. A different
 `templates:review` session approves it at `/templates/{id}/candidates/{candidateId}/approve`
-with `{orgId, mode, provider, candidateHash}`. A `templates:publish` session posts to
+with `{orgId, mode, provider, candidateHash}`. The author may approve their own candidate with `alone: true` when
+they are the org's only review-capable member (Apple, Google and Samsung alike), or in Test on Apple; the approval is
+recorded as `sole` or `test` and a reviewer added before release voids a `sole` one. A `templates:publish` session posts to
 `/templates/{id}/releases` with `{orgId, mode, provider, candidateId, approvalId, candidateHash,
 expectedGeneration}`. Use generation `0` for the first release and the current scoped generation
 thereafter. `GET /templates/{id}/candidates` and `/templates/{id}/releases` accept the same scope
@@ -419,8 +421,8 @@ rather than deriving it from candidates and releases.
 - `review` covers the draft in Live: `open` is an unreleased candidate with no independent
   approval, `approved` has one.
 - `alone` is the sole-approval rule for the caller: they author, review and publish, are the org's
-  only review-capable member, and no reviewer was removed in the last 7 days. The database still
-  decides at commit.
+  only review-capable member (a personal, sandbox or one-member org). Nothing waits after a reviewer
+  leaves. The database still decides at commit.
 - `next` is the caller's step: `design`, `try` (no Live head and Test lacks the draft), `release`,
   `request_review`, `review`, `wait` (in review, or approved for someone else to publish), or
   `null` (nothing newer than Live, or no template capability).

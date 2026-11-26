@@ -77,22 +77,24 @@ export function Builder({
   };
   return (
     <>
-      <div className="code-h" role="tablist" aria-label="Request view" ref={list}>
-        {tabs.map((t, i) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            data-tab={t.id}
-            className="tab"
-            aria-selected={tab === t.id}
-            tabIndex={tab === t.id ? 0 : -1}
-            onClick={() => setTab(t.id)}
-            onKeyDown={(e) => move(e, i)}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="code-h">
+        <div className="tabs" role="tablist" aria-label="Request view" ref={list}>
+          {tabs.map((t, i) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              data-tab={t.id}
+              className="tab"
+              aria-selected={tab === t.id}
+              tabIndex={tab === t.id ? 0 : -1}
+              onClick={() => setTab(t.id)}
+              onKeyDown={(e) => move(e, i)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         {code ? (
           <button
             type="button"

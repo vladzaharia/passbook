@@ -2,6 +2,7 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ReleaseModePlan } from '@/shared/contracts/template-release-flow.ts';
+import { TEMPLATE_REVIEW_COPY } from '@/shared/copy/template-review.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import {
@@ -84,6 +85,10 @@ export default function ReleaseFlowDialog({
   const [error, setError] = useState<string>();
   const modes = MODES.filter((m) => plan.data?.modes[m]);
   const review = modes.some((m) => plan.data?.modes[m]?.outcome === 'review_required');
+  const sole = modes.some((m) => {
+    const approval = plan.data?.modes[m]?.approval;
+    return approval?.kind === 'sole' && approval.action === 'write';
+  });
   const busy = flow.isPending || done;
 
   useEffect(() => {
@@ -118,7 +123,7 @@ export default function ReleaseFlowDialog({
               disabled={!plan.data || busy}
               onClick={() => void submit()}
             >
-              {review ? 'Request review' : 'Release'}
+              {review ? 'Request review' : sole ? TEMPLATE_REVIEW_COPY.sole.action : 'Release'}
             </Button>
           </>
         }
@@ -148,6 +153,7 @@ export default function ReleaseFlowDialog({
             </ul>
             <FirstRelease templateId={templateId} orgId={orgId} version={version} enabled={first} />
             <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} diff={!first} />
+            {sole ? <Callout>{TEMPLATE_REVIEW_COPY.sole.note}</Callout> : null}
             {error ? <Callout tone="danger">{error}</Callout> : null}
           </div>
         )}

@@ -49,3 +49,11 @@ export const SYSTEM_AUTHORED_PROVIDERS: readonly string[] = ['google'];
  */
 export const versionAuthorIndependentSql = (candidate: string, reviewer: string): string =>
   `(${candidate}.version_author_id IS NULL OR (${candidate}.author_id = '${SYSTEM_AUTHOR}' AND ${candidate}.provider = 'google') OR ${reviewer} != ${candidate}.version_author_id)`;
+
+/**
+ * A stored approval that stands for this candidate: an independent reviewer's, or a `sole` one, which
+ * the approval trigger only writes for the org's only reviewer (the release trigger voids it if a
+ * reviewer joined since).
+ */
+export const approvalStandsSql = (approval: string, candidate: string): string =>
+  `(${approval}.kind = 'sole' OR (${approval}.reviewer_id != ${candidate}.author_id AND ${versionAuthorIndependentSql(candidate, `${approval}.reviewer_id`)}))`;

@@ -1,7 +1,7 @@
 import { Copy, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import { RUN_LIMIT, remaining as runsLeft } from '../console/budget.ts';
-import type { Sent } from '../console/copy-as.ts';
+import { COPY_LANGS, copyAs, type Sent } from '../console/copy-as.ts';
 import type { Outcome } from '../console/send.ts';
 import { copyToClipboard as copyText } from '../shell/copy.ts';
 import { CopyAsMenu } from './copy-as-menu.tsx';
@@ -57,7 +57,13 @@ export function Inspector({ outcome: o, sent, codes, onReplay }: Props) {
           </span>
         ) : null}
         <span className="push" />
-        <CopyAsMenu sent={sent} />
+        <CopyAsMenu
+          items={COPY_LANGS.map((l) => ({
+            key: l.lang,
+            label: l.label,
+            text: () => copyAs(l.lang, sent),
+          }))}
+        />
       </div>
       <p className="sr" role="status" aria-live="polite">
         {label} in {o.ms} milliseconds.

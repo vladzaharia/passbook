@@ -469,5 +469,11 @@
         "refused": "Send them to the ticket desk."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "stub",
+    "barcode": "qr",
+    "kind": "journey"
   }
 }
