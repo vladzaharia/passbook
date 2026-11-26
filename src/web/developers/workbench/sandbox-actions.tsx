@@ -77,7 +77,10 @@ export function ResetAction({
   const [opId, setOpId] = useOperationParam();
   // Claimed from the first paint, before the session reads: the tray opens no second sheet for this id.
   const seen = useCachedOperation(opId);
-  useClaimOperation(opId && (!seen || seen.kind === 'sandbox.reset') ? opId : null);
+  // The id stays claimed after the panel is done with it: the tray's own sheet reads the same address and would open.
+  const [spent, setSpent] = useState<string | null>(null);
+  const claimed = opId ?? spent;
+  useClaimOperation(claimed && (!seen || seen.kind === 'sandbox.reset') ? claimed : null);
   const [step, setStep] = useState<'idle' | 'confirm' | 'working'>(opId ? 'working' : 'idle');
   const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [showCheck, setShowCheck] = useState(false);
@@ -92,6 +95,7 @@ export function ResetAction({
     setStep('idle');
   };
   const leave = () => {
+    setSpent(op?.id ?? opId);
     setOp(null);
     setEnded(null);
     setOpId(null);

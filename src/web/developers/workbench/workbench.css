@@ -260,8 +260,8 @@ a.wb-stat:hover {
   border-color: var(--pk-warning-border);
 }
 /* The run in the confirm uses the card's width: its steps and counts need the room. */
-.wb-confirm:has(.op-panel, [data-operation]) {
-  max-width: none;
+.wb-confirm:has([data-operation]) {
+  max-width: 40rem;
 }
 .wb .check:not([data-shown="true"]) {
   height: 0;
