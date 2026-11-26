@@ -121,3 +121,16 @@ export async function setGroupBack(db: D1Database, key: string): Promise<void> {
     .bind(key)
     .run();
 }
+
+/** A group that already exists in Polaris ID, recorded once as a role group (a protected one, or an adopted writable one). Never changed after. */
+export async function recordRoleGroup(
+  db: D1Database,
+  row: { key: string; groupId: string; name: string; ref: string; at: number },
+): Promise<void> {
+  await db
+    .prepare(
+      "INSERT INTO idp_groups (key, kind, state, group_id, name, created_by_binding, ref, created_at) VALUES (?, 'role', 'live', ?, ?, 0, ?, ?)",
+    )
+    .bind(row.key, row.groupId, row.name, row.ref, row.at)
+    .run();
+}

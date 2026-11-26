@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { allowedRoutes, routes } from '../../workers/polaris-binding/src/routes.ts';
+import { CLIENT_ID } from './fake-pocket.ts';
 import { ctx, groupsJson, resetLedger, seedCreated, seedGrant, setup, userCtx } from './harness.ts';
 
 beforeEach(resetLedger);
@@ -90,7 +91,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
       r.group('g1'),
       r.config,
       r.apiKeys,
-      r.client('c1'),
+      r.client(CLIENT_ID),
       r.me,
       r.users('a@b.test', 1),
       r.user('u1'),
@@ -100,7 +101,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
       r.signupToken('t1'),
       r.auditLogs(1),
     ];
-    const table = allowedRoutes(layout);
+    const table = allowedRoutes(layout, CLIENT_ID);
     for (const path of built) {
       const pathname = path.replace(/[?].*$/, '');
       expect(
@@ -111,7 +112,7 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
   });
 
   it('allows no POST or DELETE on users, no group write and no write of config, clients or keys', () => {
-    const table = allowedRoutes(layout);
+    const table = allowedRoutes(layout, CLIENT_ID);
     const hits = (method: string, path: string) =>
       table.filter((t) => t.method === method && t.path.test(path));
     for (const [method, path] of [
@@ -120,11 +121,15 @@ describe.each(['v2', 'admin'] as const)('route table (%s layout)', (layout) => {
       ['PUT', `${base}/users/me`],
       ['POST', `${base}/users/u1/one-time-access-token`],
       ['PUT', `${base}/user-groups/g1/users`],
-      ['PUT', `${base}/oidc/clients/c1/allowed-user-groups`],
       ['GET', `${base}/custom-claims/suggestions`],
       ['PUT', `${base}/custom-claims/user/me`],
       ['POST', `${base}/oidc/clients`],
       ['PUT', `${base}/oidc/clients/c1`],
+      ['PUT', `${base}/oidc/clients/c1/allowed-user-groups`],
+      ['DELETE', `${base}/oidc/clients/${CLIENT_ID}`],
+      ['POST', `${base}/oidc/clients/${CLIENT_ID}/refresh`],
+      ['DELETE', `${base}/scim/service-provider/sp1`],
+      ['GET', `${base}/scim/service-provider`],
       ['PUT', `${base}/application-configuration`],
       ['POST', '/api/api-keys'],
       ['DELETE', '/api/api-keys/k1'],
@@ -150,7 +155,7 @@ describe('the allow-list is exactly the list of design 2 5.7', () => {
         : '/api/application-configuration/all';
     const audit = layout === 'admin' ? '/api/admin/audit-logs' : '/api/audit-logs/all';
     expect(
-      allowedRoutes(layout)
+      allowedRoutes(layout, CLIENT_ID)
         .map((r) => `${r.method} ${r.path.source}`)
         .sort(),
     ).toEqual(
@@ -165,7 +170,13 @@ describe('the allow-list is exactly the list of design 2 5.7', () => {
         ['PUT', `${base}/custom-claims/user-group/${id}`],
         ['GET', config],
         ['GET', '/api/api-keys'],
-        ['GET', `${base}/oidc/clients/${id}`],
+        ['GET', `${base}/oidc/clients/${CLIENT_ID}`],
+        ['PUT', `${base}/oidc/clients/${CLIENT_ID}`],
+        ['PUT', `${base}/oidc/clients/${CLIENT_ID}/allowed-user-groups`],
+        ['GET', `${base}/oidc/clients/${CLIENT_ID}/scim-service-provider`],
+        ['POST', `${base}/scim/service-provider`],
+        ['PUT', `${base}/scim/service-provider/${id}`],
+        ['POST', `${base}/scim/service-provider/${id}/sync`],
         ['GET', `${base}/users/me`],
         ['GET', `${base}/users`],
         ['GET', `${base}/users/${id}`],

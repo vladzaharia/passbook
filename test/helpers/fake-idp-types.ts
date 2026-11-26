@@ -6,6 +6,7 @@ import type {
   Target,
 } from '../../src/worker/modules/idp/types.ts';
 import type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
+import type { FakeSetup } from './fake-idp-setup.ts';
 
 export interface FakeIdp extends IdpRpc {
   /** The `IDP` binding for a test env. */
@@ -23,6 +24,8 @@ export interface FakeIdp extends IdpRpc {
    * role group (design-1 section 2.3). A custom group does not count.
    */
   canSignIn(subject: string): boolean;
+  /** PassBook's client and SCIM connection: seed it, then read what the setup methods changed. */
+  setup: FakeSetup;
   /** Method names called, in order. */
   log: string[];
   /** Writes the binding would have sent to Polaris ID. Dry runs and refusals add none. */

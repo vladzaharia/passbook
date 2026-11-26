@@ -1,4 +1,12 @@
-import { GROUP_KEY, ID, parseRegistry, type Registry, type Settings } from './registry.ts';
+import {
+  clientIdOk,
+  encodeClientId,
+  GROUP_KEY,
+  ID,
+  parseRegistry,
+  type Registry,
+  type Settings,
+} from './registry.ts';
 import {
   type Actor,
   type ApplyCtx,
@@ -12,6 +20,12 @@ import {
 } from './types.ts';
 
 export { ID };
+
+/** The configured client id as its path segment: plain as is, a CIMD URL as `~<base64url>`. */
+export function assertClientId(value: unknown): string {
+  if (!clientIdOk(value)) refuse('Invalid client id.');
+  return encodeClientId(value as string);
+}
 /** Writes read the config at most this often; an unsafe answer is re-read sooner. */
 export const HEALTH_TTL = 10 * 60_000;
 export const UNSAFE_TTL = 60_000;
@@ -35,6 +49,29 @@ export function assertSubject(value: unknown): string {
 export function assertTokenIds(value: unknown): string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 10) refuse('Invalid token ids.');
   return [...new Set((value as unknown[]).map((v) => assertId('token id', v)))];
+}
+
+/** At most two SHA-256 hex digests: the candidate SCIM tokens `setupStatus` compares with the live one. */
+export function assertTokenHashes(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (
+    !Array.isArray(value) ||
+    value.length > 2 ||
+    value.some((h) => typeof h !== 'string' || !/^[0-9a-f]{64}$/.test(h))
+  )
+    refuse('Invalid token hashes.');
+  return value as string[];
+}
+
+/** A SCIM token: base64url, 43 to 128 chars. The message never carries the value. */
+export function assertScimToken(value: unknown): string {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(value)) refuse('Invalid token.');
+  return value as string;
+}
+
+export async function sha256Hex(text: string): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 const REASON = /^[a-z][a-z0-9_]{0,39}$/;
@@ -180,7 +217,7 @@ export function envReasons(env: BindingEnv): {
   const out = [...reasons];
   if (env.POCKET_ID_API !== 'v2' && env.POCKET_ID_API !== 'admin') out.push('env_layout');
   if (!env.POCKET_ID_API_KEY) out.push('env_key');
-  if (!ID.test(env.PASSBOOK_CLIENT_ID ?? '')) out.push('env_client');
+  if (!clientIdOk(env.PASSBOOK_CLIENT_ID)) out.push('env_client');
   try {
     const url = new URL(env.POCKET_ID_ORIGIN);
     if (url.protocol !== 'https:' || url.origin !== env.POCKET_ID_ORIGIN || url.username)

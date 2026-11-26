@@ -2227,6 +2227,15 @@
       ]
     },
     {
+      "code": "IDP_CLIENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_CONFLICT",
       "statuses": [
         409
@@ -2429,6 +2438,24 @@
       "code": "IDP_RULE_ORG_REFUSED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_FOREIGN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_MISSING",
+      "statuses": [
+        404
       ],
       "modules": [
         "idp"

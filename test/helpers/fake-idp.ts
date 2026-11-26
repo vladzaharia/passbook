@@ -7,6 +7,7 @@ import type {
 } from '../../src/worker/modules/idp/types.ts';
 import { accountMethods } from './fake-idp-accounts.ts';
 import { type FakeAccount, groupMethods } from './fake-idp-groups.ts';
+import { newFakeSetup, setupMethods } from './fake-idp-setup.ts';
 import type { FakeIdp, FakeIdpOptions } from './fake-idp-types.ts';
 
 export type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
@@ -104,8 +105,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   const account = (subject: string): FakeAccount =>
     accounts.get(subject) ?? refuse('IDP_NOT_FOUND');
   /** A dry run computes and ledgers the write in the `preview` bucket; it sends nothing. */
-  const dry = (flag: boolean | undefined, bucket: string): boolean => {
-    const isDry = flag === true || idp.mode !== 'live';
+  const dry = (flag: boolean | undefined, bucket: string, ignoreMode = false): boolean => {
+    const isDry = flag === true || (!ignoreMode && idp.mode !== 'live');
     const charged = isDry ? 'preview' : bucket;
     const count = (spent.get(charged) ?? 0) + 1;
     spent.set(charged, count);
@@ -164,8 +165,19 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     isAdopted: (t) => groups.get(t.replace(/^g:/, ''))?.kind === 'adopted' && t.startsWith('g:'),
   });
 
+  const setup = newFakeSetup();
+  const setupApi = setupMethods({
+    setup,
+    groups,
+    now,
+    enter,
+    dry: (flag, bucket) => dry(flag, bucket, true),
+    write,
+  });
+
   const idp: FakeIdp = {
     binding: undefined as unknown as IdpRpc,
+    setup,
     signups,
     accounts,
     groupStore: groups,
@@ -199,6 +211,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     },
     ...groupsApi,
     ...accountsApi,
+    ...setupApi,
     addAccount: (subject, init = {}) => {
       const { roles = [], ...rest } = init;
       accounts.set(subject, {
@@ -227,6 +240,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
           users: 'passbook_users',
         },
         layout: 'v2',
+        transport: 'https',
         layoutSuspect: false,
         keyExpiresAt: null,
         checkedAt: now(),

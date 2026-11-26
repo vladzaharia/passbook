@@ -88,6 +88,7 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     /** Renames a group as Polaris ID reports it. */
     groupNames: {} as Record<string, string>,
     client: {
+      id: CLIENT_ID as string,
       restricted: true,
       allowed: Object.values(GROUPS)
         .filter((g) => g.id !== 'g-support')
@@ -106,6 +107,10 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     hook: undefined as ((method: string, path: string) => Promise<void>) | undefined,
     /** A body to answer a request with instead of the fake's own, or undefined. */
     override: undefined as ((method: string, path: string) => unknown) | undefined,
+    /** Answers client and SCIM routes (fake-setup.ts); returns undefined for any other request. */
+    extra: undefined as
+      | ((method: string, path: string, body: unknown) => Response | undefined)
+      | undefined,
     /** Group ids Polaris ID answers 404 for. */
     missing: new Set<string>(),
     seen: [] as Seen[],
@@ -148,6 +153,9 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
     if (forced !== undefined) return json(forced);
     if (s.failWith?.match.test(`${method} ${full}`))
       return json(s.failWith.body ?? { message: 'nope' }, s.failWith.status);
+
+    const handled = s.extra?.(method, path, body);
+    if (handled) return handled;
 
     const group = path.match(new RegExp(`^${base}/user-groups/([^/]+)$`));
     const dto = (gid: string) => {
@@ -227,16 +235,20 @@ export function fakePocket(layout: Layout, clock: { now: number }) {
       return json(paginated([apiKeyDto('k1', s.keyExpires)]));
     if (method === 'GET' && path === `${base}/users/me`) return json(user(KEY_USER));
     const client = path.match(new RegExp(`^${base}/oidc/clients/([^/]+)$`));
-    if (method === 'GET' && client)
-      return client[1] === CLIENT_ID
+    if (method === 'GET' && client) {
+      // Polaris ID decodes `~<base64url>` in every :id segment.
+      const raw = client[1] as string;
+      const id = raw.startsWith('~') ? Buffer.from(raw.slice(1), 'base64url').toString() : raw;
+      return id === s.client.id
         ? json(
             clientDto(
-              CLIENT_ID,
+              id,
               s.client.restricted,
               s.client.allowed.map((id) => ({ id, name: nameOf(id) })),
             ),
           )
         : json({ error: 'not found' }, 404);
+    }
 
     if (method === 'GET' && path === `${base}/users`) {
       const q = (url.searchParams.get('search') ?? '').toLowerCase();
