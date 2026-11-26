@@ -1473,6 +1473,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id}/deliveries 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "events.getEventsByIdDeliveries",
+    "op": "GET /api/v1/events/{id}/deliveries",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
     "key": "GET /api/v1/events/{id}/deliveries new operation",
     "class": "additive",
     "operationId": "events.getEventsByIdDeliveries",
