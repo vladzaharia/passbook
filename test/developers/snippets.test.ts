@@ -51,7 +51,7 @@ const reached = (c: Call) =>
 
 /** The org's brand, zones, tag types and saved mappings belong to it, not a mode: a test key may not write them, and the world's key is a test key. */
 const LIVE_ONLY = new Map([
-  ['scan-zones.postScanZones', 'SCAN_ZONE_LIVE_ONLY'],
+  ['scan-zones.postScanZones', 'MODE_LIVE_REQUIRED'],
   ['brand.patchBrand', 'MODE_LIVE_REQUIRED'],
   ['brand.putBrandWebLogo', 'MODE_LIVE_REQUIRED'],
   ['brand.deleteBrandWebLogo', 'MODE_LIVE_REQUIRED'],
