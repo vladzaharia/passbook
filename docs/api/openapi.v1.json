@@ -8926,6 +8926,9 @@
           "attached": {
             "type": "boolean"
           },
+          "failed": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -8940,6 +8943,7 @@
           "to",
           "subject",
           "attached",
+          "failed",
           "createdAt"
         ]
       },
@@ -8988,6 +8992,9 @@
           "attached": {
             "type": "boolean"
           },
+          "failed": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -9018,6 +9025,7 @@
           "to",
           "subject",
           "attached",
+          "failed",
           "createdAt",
           "html",
           "text",

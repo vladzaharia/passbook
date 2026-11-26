@@ -1,6 +1,7 @@
 import type { SimulatePassInput, SimulatePassResponse } from '../../../shared/contracts/events.ts';
 import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { failCapturedEmail } from '../delivery/repo-outbox-simulate.ts';
 import { recordPassEvent } from '../events/record.ts';
 import {
   eventStored,
@@ -11,6 +12,7 @@ import {
   simulatedDevicesOfPass,
 } from '../events/repo-simulated.ts';
 import { recordSimulatedScan } from '../scan/simulated.ts';
+import type { TenantPassWrite } from './http.ts';
 import type { Pass } from './repo-map.ts';
 import type { Actor } from './service.ts';
 
@@ -42,6 +44,7 @@ export async function simulatePass(
   actor: Actor,
   pass: Pass,
   input: SimulatePassInput,
+  authority: TenantPassWrite,
 ): Promise<SimulatePassResponse> {
   if (pass.mode !== 'test')
     throw new ConflictError('Simulate works on Test passes only.', 'SIMULATE_TEST_ONLY');
@@ -113,6 +116,11 @@ export async function simulatePass(
     case 'email_failed': {
       const outboxId = await latestCapturedOutbox(ctx.env.DB, pass.id, pass.orgId);
       if (!outboxId)
+        throw new ConflictError(
+          'The Test inbox has no message for this pass.',
+          'SIMULATE_NO_EMAIL',
+        );
+      if (!(await failCapturedEmail(ctx, authority, pass.id, outboxId, 'EMAIL_SIMULATED')))
         throw new ConflictError(
           'The Test inbox has no message for this pass.',
           'SIMULATE_NO_EMAIL',

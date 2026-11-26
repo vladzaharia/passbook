@@ -11937,6 +11937,7 @@
      "to": "x",
      "subject": "x",
      "attached": false,
+     "failed": false,
      "createdAt": 0
     }
    ],
@@ -11969,6 +11970,7 @@
    "to": "x",
    "subject": "x",
    "attached": false,
+   "failed": false,
    "createdAt": 0,
    "html": "x",
    "text": "x",

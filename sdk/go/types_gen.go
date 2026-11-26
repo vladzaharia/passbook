@@ -1061,6 +1061,7 @@ type CapturedEmail struct {
 	To        string  `json:"to"`
 	Subject   string  `json:"subject"`
 	Attached  bool    `json:"attached"`
+	Failed    bool    `json:"failed"`
 	CreatedAt int64   `json:"createdAt"`
 }
 
@@ -1073,6 +1074,7 @@ type CapturedEmailDetail struct {
 	To         string  `json:"to"`
 	Subject    string  `json:"subject"`
 	Attached   bool    `json:"attached"`
+	Failed     bool    `json:"failed"`
 	CreatedAt  int64   `json:"createdAt"`
 	HTML       string  `json:"html"`
 	Text       string  `json:"text"`

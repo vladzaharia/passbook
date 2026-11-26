@@ -735,6 +735,7 @@ export type CapturedEmail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
 };
 
@@ -747,6 +748,7 @@ export type CapturedEmailDetail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
   html: string;
   text: string;

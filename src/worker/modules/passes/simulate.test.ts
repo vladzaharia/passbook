@@ -8,7 +8,8 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { eventAuth, eventMember, eventStores } from '../events/test-auth-fixtures.ts';
+import { recordPassEvent } from '../events/record.ts';
+import { eventMember, eventStores } from '../events/test-auth-fixtures.ts';
 import { buildEnvelope } from '../webhooks/payload.ts';
 import {
   ALL_TYPES,
@@ -107,11 +108,17 @@ describe('simulate', () => {
   it('every event emits a Test webhook that carries the requestId (L7)', async () => {
     const pass = await kit.pass({ mode: 'test', holderEmail: 'holder@example.com' });
     await kit.settle();
+    await run(kit.env.DB, 'DELETE FROM captured_emails WHERE pass_id = ?', [pass.id]);
+    await run(
+      kit.env.DB,
+      `INSERT INTO outbox (id, org_id, kind, pass_id, state, error_code, created_at, finished_at)
+       VALUES ('out-' || ?1, ?2, 'email', ?1, 'sent', 'TEST_MODE', 1, 1)`,
+      [pass.id, kit.org.id],
+    );
     await run(
       kit.env.DB,
       `INSERT INTO captured_emails (id, org_id, pass_id, outbox_id, recipient, subject, html, text, created_at, intent)
-       SELECT 'cap-' || ?1, ?2, ?1, 'out-' || ?1, 'holder@example.com', 's', '', '', 1, '{}' WHERE NOT EXISTS
-       (SELECT 1 FROM captured_emails WHERE pass_id = ?1)`,
+       VALUES ('cap-' || ?1, ?2, ?1, 'out-' || ?1, 'holder@example.com', 's', '', '', 1, '{}')`,
       [pass.id, kit.org.id],
     );
     const endpoint = await seedEndpoint(kit.env.DB, {
@@ -169,6 +176,14 @@ describe('simulate', () => {
     expect(delivered.filter((d) => d.mode === 'test')).toHaveLength(6);
     const scan = feed.find((r) => r.type === 'pass.scanned');
     expect(JSON.parse(scan?.data ?? '{}')).toMatchObject({ gate: 'Workbench', simulated: true });
+    // The failed email shows in the Test inbox.
+    const inbox = await app.request(
+      `${ORIGIN}/api/v1/test-inbox?orgId=${kit.org.id}`,
+      { headers: { ...session, 'x-passbook-mode': 'test' } },
+      kit.env,
+    );
+    const items = ((await inbox.json()) as { items: { passId: string; failed: boolean }[] }).items;
+    expect(items.find((i) => i.passId === pass.id)?.failed).toBe(true);
     const scans = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM scans WHERE pass_id = ?',
@@ -213,4 +228,31 @@ describe('simulate', () => {
   });
 });
 
-void eventAuth;
+describe('device counts in webhooks', () => {
+  const counts = async (passId: string) =>
+    (await feedOf(kit.env.DB, passId))
+      .filter((r) => r.type === 'pass.installed' || r.type === 'pass.uninstalled')
+      .map((r) => r.device_count);
+
+  it('Test counts simulated devices, matching the devices view', async () => {
+    const pass = await kit.pass({ mode: 'test' });
+    const a = await send(pass.id, { event: 'installed' });
+    await send(pass.id, { event: 'installed' });
+    await send(pass.id, { event: 'uninstalled', deviceId: a.deviceId });
+    expect(await counts(pass.id)).toEqual([1, 2, 1]);
+    expect((await devices(pass.id)).filter((d) => d.registeredAt !== null)).toHaveLength(1);
+  });
+
+  it('Live counts real registrations only', async () => {
+    const pass = await kit.pass();
+    await kit.device(pass, 'live-device-1', 'token-1');
+    await recordPassEvent(kit.ctx, {
+      orgId: kit.org.id,
+      passId: pass.id,
+      mode: 'live',
+      kind: 'device.registered',
+      device: 'live-device-1',
+    });
+    expect(await counts(pass.id)).toEqual([1]);
+  });
+});

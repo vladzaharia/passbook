@@ -2179,14 +2179,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"testEmails.list", "GET", "/api/v1/test-inbox", false,
-		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"testEmails.retrieve", "GET", "/api/v1/test-inbox/id1", false,
-		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
+		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.Retrieve(ctx, "id1", nil)
 		},

@@ -2184,6 +2184,22 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/test-inbox 200.items[].failed: field added",
+    "class": "additive",
+    "operationId": "sandbox.getTestInbox",
+    "op": "GET /api/v1/test-inbox",
+    "change": "200.items[].failed: field added",
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+  },
+  {
+    "key": "GET /api/v1/test-inbox/{id} 200.failed: field added",
+    "class": "additive",
+    "operationId": "sandbox.getTestInboxById",
+    "op": "GET /api/v1/test-inbox/{id}",
+    "change": "200.failed: field added",
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+  },
+  {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.getUsers",

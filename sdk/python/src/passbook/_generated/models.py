@@ -2901,6 +2901,7 @@ class CapturedEmail(_Model):
     to: str
     subject: str
     attached: bool
+    failed: bool
     createdAt: int
 
 class CapturedEmailDetail(_Model):
@@ -2912,6 +2913,7 @@ class CapturedEmailDetail(_Model):
     to: str
     subject: str
     attached: bool
+    failed: bool
     createdAt: int
     html: str
     text: str

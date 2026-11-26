@@ -27,7 +27,7 @@ export function registerSimulateRoutes(passesRoutes: ReturnType<typeof createRou
     async (c) => {
       const ctx = svc(c);
       const id = c.req.valid('param').id;
-      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       if (!(await checkRateLimit(ctx.env, 'RL_SIMULATE', `org:${pass.orgId}`)))
         throw new AppError(
           'SIMULATE_RATE_LIMITED',
@@ -35,7 +35,10 @@ export function registerSimulateRoutes(passesRoutes: ReturnType<typeof createRou
           'Too many simulated events. Try again in a minute.',
           { headers: { 'retry-after': String(secondsToReset(ctx.clock.now())) } },
         );
-      return c.json(await simulatePass(ctx, actorFor(c), pass, c.req.valid('json')), 201);
+      return c.json(
+        await simulatePass(ctx, actorFor(c), pass, c.req.valid('json'), authority),
+        201,
+      );
     },
   );
 }
