@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { OrgRolesSchema } from './org-membership.ts';
 
 /** Mirrors the Polaris ID binding's limits (design 2 section 3.1); the binding enforces its own rules and key namespace. */
 export const CLAIM_VALUE_MAX_BYTES = 2048;
@@ -81,3 +83,90 @@ export type ClaimsResult = z.infer<typeof ClaimsResultSchema>;
 
 /** A role (`console`, `developer`, `support`) or a custom or adopted group key. */
 export const GroupKeyParamSchema = z.object({ key: z.string().regex(/^[a-z0-9_]{1,64}$/) });
+
+/** Custom groups: `passbook_g_<key>` in Polaris ID. The key never changes and is never reused. */
+export const GROUP_RESERVED_KEYS = ['console', 'developer', 'support', 'platform_admin', 'users'];
+export const GroupNewKeySchema = z
+  .string()
+  .regex(
+    /^[a-z][a-z0-9_]{1,39}$/,
+    'Use 2-40 lowercase letters, digits or _, starting with a letter.',
+  )
+  .refine((key) => !GROUP_RESERVED_KEYS.includes(key), 'This key is reserved.');
+export const GroupFriendlyNameSchema = z.string().trim().min(2).max(50);
+export const WritableRoleSchema = z.enum(['console', 'developer', 'support']);
+
+export const GroupKindSchema = z.enum(['role', 'custom', 'adopted']);
+export const GroupSchema = z.object({
+  key: z.string(),
+  kind: GroupKindSchema,
+  /** The name in every app's `groups` claim. */
+  name: z.string(),
+  friendlyName: z.string().nullable(),
+  /** Members in Polaris ID; null when it could not be read. */
+  members: z.number().int().min(0).nullable(),
+  /** Managed claim keys set on the group, no values. */
+  claims: z.array(z.string()),
+  /** Apps other than PassBook that allow the group. */
+  otherClients: z.number().int().min(0).nullable(),
+  /** Why writes to the group are blocked, such as `group_name_mismatch`. */
+  flags: z.array(z.string()),
+  /** Live PassBook sources: org rules and manual members. */
+  rules: z.number().int().min(0),
+  manual: z.number().int().min(0),
+});
+export type Group = z.infer<typeof GroupSchema>;
+export const GroupListSchema = pageOf(GroupSchema);
+
+export const GroupRuleInputSchema = z.strictObject({
+  orgId: IdSchema,
+  /** Only members with one of these org roles; any role when left out. */
+  orgRoles: OrgRolesSchema.optional(),
+});
+export type GroupRuleInput = z.infer<typeof GroupRuleInputSchema>;
+export const CreateGroupSchema = z.strictObject({
+  key: GroupNewKeySchema,
+  friendlyName: GroupFriendlyNameSchema,
+  rules: z.array(GroupRuleInputSchema).max(5).optional(),
+});
+export type CreateGroup = z.infer<typeof CreateGroupSchema>;
+export const EnsureGroupSchema = z.strictObject({ role: WritableRoleSchema });
+export const UpdateGroupSchema = z.strictObject({ friendlyName: GroupFriendlyNameSchema });
+
+export const GroupResultSchema = z.object({
+  key: z.string(),
+  /** True while Polaris ID changes are in dry run: nothing was sent. */
+  dryRun: z.boolean(),
+});
+export type GroupResult = z.infer<typeof GroupResultSchema>;
+
+export const GroupRuleSchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema,
+  orgRoles: OrgRolesSchema.nullable(),
+  createdAt: TimestampSchema,
+});
+export type GroupRule = z.infer<typeof GroupRuleSchema>;
+export const GroupRuleListSchema = pageOf(GroupRuleSchema);
+
+export const GroupMemberSchema = z.object({
+  id: IdSchema,
+  /** The Polaris ID subject. */
+  subject: z.string(),
+  userId: IdSchema.nullable(),
+  source: z.enum(['manual', 'invitation']),
+  createdAt: TimestampSchema,
+});
+export type GroupMember = z.infer<typeof GroupMemberSchema>;
+export const GroupMemberListSchema = pageOf(GroupMemberSchema);
+/** A PassBook user (their one Polaris ID account) or a Polaris ID subject. */
+export const CreateGroupMemberSchema = z.union([
+  z.strictObject({ userId: IdSchema }),
+  z.strictObject({ subject: z.string().trim().min(1).max(255) }),
+]);
+export type CreateGroupMember = z.infer<typeof CreateGroupMemberSchema>;
+
+export const GroupRuleParamSchema = z.object({
+  key: z.string().regex(/^[a-z0-9_]{1,64}$/),
+  id: IdSchema,
+});

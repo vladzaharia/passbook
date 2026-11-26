@@ -4835,6 +4835,89 @@
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
+  "polaris groups delete /idp/groups/{key}": [
+    "GROUP_NOT_FOUND",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups delete /idp/groups/{key}/members/{id}": [
+    "MEMBER_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups delete /idp/groups/{key}/rules/{id}": [
+    "RULE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups get /idp/groups": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED"
+  ],
+  "polaris groups get /idp/groups/{key}/members": [
+    "GROUP_NOT_FOUND"
+  ],
+  "polaris groups get /idp/groups/{key}/rules": [
+    "GROUP_NOT_FOUND"
+  ],
+  "polaris groups patch /idp/groups/{key}": [
+    "GROUP_NOT_FOUND",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups post /idp/groups": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_GROUP_LIMIT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "IDP_RULE_EXISTS",
+    "IDP_RULE_LIMIT",
+    "IDP_RULE_ORG_REFUSED",
+    "ORG_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups post /idp/groups/ensure": [
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_REFUSED",
+    "UNAUTHENTICATED"
+  ],
+  "polaris groups post /idp/groups/{key}/members": [
+    "GROUP_NOT_FOUND",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_MEMBER_EXISTS",
+    "IDP_MULTIPLE_ACCOUNTS",
+    "IDP_NOT_MANAGED",
+    "IDP_NO_ACCOUNT",
+    "IDP_REFUSED",
+    "MEMBER_NOT_FOUND",
+    "UNAUTHENTICATED",
+    "USER_NOT_FOUND"
+  ],
+  "polaris groups post /idp/groups/{key}/rules": [
+    "GROUP_NOT_FOUND",
+    "IDP_CONFLICT",
+    "IDP_RULE_EXISTS",
+    "IDP_RULE_LIMIT",
+    "IDP_RULE_ORG_REFUSED",
+    "ORG_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "public get /wallet/samsung/{offer}": [
     "IDENTITY_EXPIRED",
     "IDENTITY_NOT_CONFIGURED",

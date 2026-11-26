@@ -30,7 +30,7 @@ export type ApiKeyCurrent = {
   orgId: string | null;
   name: string;
   prefix: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdAt: number;
   lastUsedAt: number | null;
@@ -46,7 +46,7 @@ export type ApiKeyDetail = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -81,7 +81,7 @@ export type ApiKeyMinted = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -112,7 +112,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -136,7 +136,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -160,7 +160,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -201,7 +201,7 @@ export type ApiKeysListResponse = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -7412,6 +7412,114 @@ export type PlatformGroupsClaimsUpdateParams = {
 export type PlatformGroupsClaimsUpdateResponse = {
   set: Array<string>;
   removed: Array<string>;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsCreateParams = {
+  key: string;
+  friendlyName: string;
+  rules?: Array<{
+    orgId: string;
+    orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  }>;
+};
+
+export type PlatformGroupsCreateResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsDeleteResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsEnsureParams = {
+  role: "console" | "developer" | "support";
+};
+
+export type PlatformGroupsEnsureResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsListResponse = {
+  items: Array<{
+    key: string;
+    kind: "role" | "custom" | "adopted";
+    name: string;
+    friendlyName: string | null;
+    members: number | null;
+    claims: Array<string>;
+    otherClients: number | null;
+    flags: Array<string>;
+    rules: number;
+    manual: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsMembersCreateParams = {
+  userId: string;
+} | {
+  subject: string;
+};
+
+export type PlatformGroupsMembersCreateResponse = {
+  id: string;
+  subject: string;
+  userId: string | null;
+  source: "manual" | "invitation";
+  createdAt: number;
+};
+
+export type PlatformGroupsMembersDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsMembersListResponse = {
+  items: Array<{
+    id: string;
+    subject: string;
+    userId: string | null;
+    source: "manual" | "invitation";
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsRulesCreateParams = {
+  orgId: string;
+  orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type PlatformGroupsRulesCreateResponse = {
+  id: string;
+  orgId: string;
+  orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+  createdAt: number;
+};
+
+export type PlatformGroupsRulesDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsRulesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsUpdateParams = {
+  friendlyName: string;
+};
+
+export type PlatformGroupsUpdateResponse = {
+  key: string;
   dryRun: boolean;
 };
 

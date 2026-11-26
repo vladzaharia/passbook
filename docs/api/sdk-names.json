@@ -1353,6 +1353,50 @@
     "resource": "platform.users.claims",
     "method": "update"
   },
+  "polaris-groups.deletePlatformIdpGroupsByKey": {
+    "resource": "platform.groups",
+    "method": "delete"
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyMembersById": {
+    "resource": "platform.groups.members",
+    "method": "delete"
+  },
+  "polaris-groups.deletePlatformIdpGroupsByKeyRulesById": {
+    "resource": "platform.groups.rules",
+    "method": "delete"
+  },
+  "polaris-groups.getPlatformIdpGroups": {
+    "resource": "platform.groups",
+    "method": "list"
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyMembers": {
+    "resource": "platform.groups.members",
+    "method": "list"
+  },
+  "polaris-groups.getPlatformIdpGroupsByKeyRules": {
+    "resource": "platform.groups.rules",
+    "method": "list"
+  },
+  "polaris-groups.patchPlatformIdpGroupsByKey": {
+    "resource": "platform.groups",
+    "method": "update"
+  },
+  "polaris-groups.postPlatformIdpGroups": {
+    "resource": "platform.groups",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyMembers": {
+    "resource": "platform.groups.members",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsByKeyRules": {
+    "resource": "platform.groups.rules",
+    "method": "create"
+  },
+  "polaris-groups.postPlatformIdpGroupsEnsure": {
+    "resource": "platform.groups",
+    "method": "ensure"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",
