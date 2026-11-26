@@ -65,7 +65,7 @@ describe('the sandbox step', () => {
   });
 
   it('follows the create operation a reload names, in place of the key and the retry', () => {
-    window.history.replaceState(null, '', '/developers/quickstart?op=op-create');
+    window.history.replaceState(null, '', '/developers/quickstart?sandbox-op=op-create');
     try {
       render(
         <SandboxStep

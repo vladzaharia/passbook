@@ -60,7 +60,7 @@ export function MakeSandbox({
   siteKey: string;
   label: string;
   onMade: (sandbox: Sandbox, secret: string | null) => void;
-  /** The operation under way (`?op=`), if any: it replaces the button. */
+  /** The operation under way (`?sandbox-op=`), if any: it replaces the button. */
   op: string | null;
   onOp: (id: string | null) => void;
   autoFocus?: boolean;

@@ -38,7 +38,7 @@ const resumed = (): Act | null => {
 
 /**
  * Start over and Delete sandbox, each behind a consequence confirm. Once confirmed, the confirm shows the operation
- * live (every step with its count, Retry on the one that failed; `op` is the one `?op=` names, so a reload brings it
+ * live (every step with its count, Retry on the one that failed; `op` is the one `?sandbox-op=` names, so a reload brings it
  * back). Start over makes a new sandbox and hands its key to the page (minted once, shown in the key step); Delete ends
  * on "Create sandbox", which returns to the quickstart's first step. The chip menu links here with `#start-over` or
  * `#delete-sandbox`, which opens the confirm.

@@ -143,9 +143,10 @@ function ShowKey({ q }: { q: Quickstart }) {
 
 function Body({ q, state, onNext }: { q: Quickstart; state: StepState; onNext: () => void }) {
   const { session, sandbox, secret, templateId, home } = q;
-  const [opId, setOpId] = useOperationParam();
+  // Its own param, not the tray's `op`: a reload would open the same operation in the tray's sheet over this panel.
+  const [opId, setOpId] = useOperationParam('sandbox-op');
   const { operation } = useOperation(opId);
-  // The operation `?op=` names: a create shows here, a delete or start over in the confirm below.
+  // The operation `?sandbox-op=` names: a create shows here, a delete or start over in the confirm below.
   const making = opId && (!operation || operation.kind === 'sandbox.create') ? opId : null;
   const managing =
     opId && operation && operation.kind !== 'sandbox.create' && operation.kind !== 'sandbox.reset'

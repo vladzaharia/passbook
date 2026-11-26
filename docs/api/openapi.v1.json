@@ -83793,21 +83793,55 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                  "orgSlug": "northwind-sandbox",
-                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": null,
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
-                    "name": "Sandbox key",
-                    "secret": "pb_test_s4Ndb0xK_northwind-demo-key-do-not-use-4949b36517b4",
-                    "mode": "test",
-                    "expiresAt": 1796954400000
-                  },
-                  "previousKey": null
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-2b09c2384426",
+                    "kind": "kind",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-7713593a699e"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -83832,26 +83866,15 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
-          "EXPIRY_PAST",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -83862,6 +83885,7 @@
           "KEY_TEST_ONLY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -84246,13 +84270,55 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                  "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                  "orgSlug": "northwind-sandbox",
-                  "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": 1795572000000
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-6a8053955efd",
+                    "kind": "kind",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-eacf4232eb2b"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -84281,7 +84347,10 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "OPERATION_RUNNING",
           "RATE_LIMITED",
           "SANDBOX_NOT_FOUND",
           "SANDBOX_RESET_LIMIT",
@@ -84472,6 +84541,15 @@
                   "required": [
                     "key"
                   ]
+                },
+                "example": {
+                  "key": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
+                    "name": "Server integration",
+                    "secret": "whsec_demo_northwind_f6888a",
+                    "mode": "test",
+                    "expiresAt": 1798790399999
+                  }
                 }
               }
             }
@@ -84487,27 +84565,39 @@
             }
           }
         },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "mintKey",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_CHILD_CANNOT_MINT",
+          "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_PARENT_RETIRING",
+          "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCAN_ORG_REQUIRED",
+          "API_KEY_SCOPE_EXCEEDS_CREATOR",
+          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+          "API_KEY_TERMINALS_REQUIRED",
+          "API_KEY_TERMINALS_UNUSED",
+          "EXPIRY_PAST",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "ORG_HELD",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
-          "REQUEST_LOG_NOT_FOUND",
-          "RESOLVE_NOT_FOUND",
           "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
-          "SANDBOX_EXISTS",
-          "SANDBOX_KEY_MISSING",
-          "SANDBOX_NOT_CLOSED",
+          "SANDBOX_KEY_SHOWN",
           "SANDBOX_NOT_FOUND",
-          "SANDBOX_REOPEN_ADMIN",
-          "SANDBOX_REOPEN_WINDOW",
-          "SANDBOX_RESET_LIMIT",
-          "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
-          "USER_NOT_FOUND"
+          "VALIDATION"
         ]
       }
     },
@@ -84873,21 +84963,55 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
-                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "orgSlug": "northwind-climbing",
-                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-                  "previewOnly": true,
-                  "createdAt": 1794362400000,
-                  "closedAt": null,
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-000000000021",
-                    "name": "Server integration",
-                    "secret": "whsec_demo_northwind_53ec29",
-                    "mode": "test",
-                    "expiresAt": 1798790399999
-                  },
-                  "previousKey": null
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-e5d024f6c11c",
+                    "kind": "kind",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-4cf677d96a71"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
+                    "createdAt": 1794362400000,
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -84916,26 +85040,15 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
-          "EXPIRY_PAST",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -84946,6 +85059,7 @@
           "KEY_TEST_ONLY",
           "LINEAGE_CHANGED",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_ACCESS_CHANGED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -85357,31 +85471,55 @@
                   ]
                 },
                 "example": {
-                  "sandbox": {
-                    "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-                    "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-                    "orgSlug": "northwind-sandbox",
-                    "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-                    "previewOnly": true,
+                  "operation": {
+                    "id": "0193a1b2-7c00-7000-8000-4574298dee81",
+                    "kind": "kind",
+                    "status": "succeeded",
+                    "title": "Delete sandbox",
+                    "text": "Removing Test passes · 4 of 12",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "live",
+                    "target": {
+                      "type": "generic",
+                      "id": "0193a1b2-7c00-7000-8000-189853ce8561"
+                    },
+                    "step": "mapping",
+                    "steps": [
+                      {
+                        "key": "tier",
+                        "label": "Remove Test passes",
+                        "state": "done",
+                        "done": 39,
+                        "total": 128,
+                        "detail": "Waiting for Apple",
+                        "until": 1795572600000,
+                        "waitingReason": "due",
+                        "group": "Access",
+                        "startedAt": 1794362400000,
+                        "finishedAt": 1795570500000
+                      }
+                    ],
+                    "attempt": 1,
+                    "cancelable": true,
+                    "cancelRequested": true,
+                    "startedBy": {
+                      "type": "user",
+                      "id": "0193a1b2-7c00-7000-8000-000000000011"
+                    },
                     "createdAt": 1794362400000,
-                    "closedAt": null
-                  },
-                  "key": {
-                    "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
-                    "name": "Sandbox key",
-                    "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
-                    "mode": "test",
-                    "expiresAt": 1796954400000
-                  },
-                  "deleted": {
-                    "passes": 9,
-                    "captures": 6,
-                    "calls": 38,
-                    "other": 2
-                  },
-                  "kept": 0,
-                  "more": false,
-                  "resetsLeft": 2
+                    "startedAt": 1794362400000,
+                    "updatedAt": 1795399200000,
+                    "finishedAt": 1795570500000,
+                    "error": null,
+                    "result": {
+                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "ids": {
+                        "tier": "northwind"
+                      }
+                    },
+                    "revision": 3,
+                    "pollAfterMs": 1471
+                  }
                 }
               }
             }
@@ -85409,22 +85547,11 @@
           "conditional": false
         },
         "x-codes": [
-          "API_KEY_CHILD_CANNOT_MINT",
-          "API_KEY_CHILD_WIDER",
-          "API_KEY_CREDENTIAL_LIVE_ORG",
-          "API_KEY_EXPIRY_REQUIRED",
-          "API_KEY_EXPIRY_TOO_LONG",
-          "API_KEY_PARENT_RETIRING",
-          "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCAN_ORG_REQUIRED",
-          "API_KEY_SCOPE_EXCEEDS_CREATOR",
-          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
-          "API_KEY_TERMINALS_REQUIRED",
-          "API_KEY_TERMINALS_UNUSED",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
-          "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -85434,6 +85561,7 @@
           "KEY_CREATOR_NOT_MEMBER",
           "KEY_TEST_ONLY",
           "MISSING_SCOPE",
+          "OPERATION_RUNNING",
           "ORG_FORBIDDEN",
           "ORG_HELD",
           "ORG_NOT_FOUND",

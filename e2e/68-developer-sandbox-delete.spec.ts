@@ -59,7 +59,7 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
   await expect(steps.nth(1)).toContainText('Revoke keys');
   await expect(steps.nth(2)).toContainText('Remove Test passes');
   await expect(steps.nth(3)).toContainText('Erase sandbox data');
-  await expect(page).toHaveURL(new RegExp(`[?&]op=${operation.id}`));
+  await expect(page).toHaveURL(new RegExp(`[?&]sandbox-op=${operation.id}`));
   await shots(page, 'sandbox-delete-3-steps');
 
   // A reload brings the same panel back, whatever stage the delete has reached.
@@ -68,7 +68,7 @@ test('Delete sandbox from the chip menu while on the quickstart opens the confir
   await expect(again.getByRole('list').getByRole('listitem')).toHaveCount(4);
 
   // It ends: Done, with when the data is erased, and the way back to the first step.
-  await expect(again.getByText('Sandbox deleted')).toBeVisible({ timeout: 60_000 });
+  await expect(again.locator('[data-headline]')).toHaveText('Sandbox deleted', { timeout: 60_000 });
   await expect(again.getByText(/Data is erased by/)).toBeVisible();
   await expect(again.getByRole('list').getByRole('listitem').nth(3)).toContainText('By ');
   await shots(page, 'sandbox-delete-4-done');
