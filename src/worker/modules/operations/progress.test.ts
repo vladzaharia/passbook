@@ -243,3 +243,34 @@ describe('tracked', () => {
     expect((await read(op.id)).revision).toBe(afterFirst.revision);
   });
 });
+
+describe('tick (work spread over jobs)', () => {
+  it('counts in the database, caps at the total, and leaves state and status alone', async () => {
+    const op = await start();
+    const first = progressOf(kit.ctx, op.id, 1);
+    const b = first.step('b');
+    b.total(2);
+    await b.count(0);
+    // Two jobs, each with its own reporter and its own view of the row.
+    const [one, two, three] = [1, 2, 3].map(() => progressOf(kit.ctx, op.id, 1).step('b'));
+    expect(await one?.tick()).toEqual({ done: 1, total: 2 });
+    expect(await two?.tick()).toEqual({ done: 2, total: 2 });
+    expect(await three?.tick()).toEqual({ done: 2, total: 2 });
+    expect(await read(op.id)).toMatchObject({ status: 'running' });
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'running', done: 2, total: 2 });
+  });
+
+  it('writes nothing once the operation ended, and a later step write keeps the counted value', async () => {
+    const op = await start();
+    const a = progressOf(kit.ctx, op.id, 1);
+    const b = a.step('b');
+    b.total(3);
+    await b.count(0);
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    // This runner loaded the row before the tick: its done must not overwrite the count.
+    await b.done();
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'done' });
+    await a.succeed();
+    expect(await progressOf(kit.ctx, op.id, 1).step('b').tick()).toBeNull();
+  });
+});

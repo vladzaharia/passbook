@@ -17,6 +17,7 @@ import {
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,
+  incrementStep,
   readCancelRequested,
   type Written,
   writeHeartbeat,
@@ -151,7 +152,30 @@ class Reporter implements Progress {
       count: (done) => this.enqueue((s) => this.count(s, key, done)),
       done: () => this.enqueue((s) => this.end(s, key, 'done')),
       skip: () => this.enqueue((s) => this.end(s, key, 'skipped')),
+      tick: () => this.tick(key),
     };
+  }
+
+  private async tick(key: string): Promise<{ done: number; total: number | null } | null> {
+    let out: { done: number; total: number | null } | null = null;
+    await this.enqueue(async (s) => {
+      const step = this.stepOf(s, key);
+      if (!step || this.ignored.has(key)) return;
+      out = await incrementStep(this.ctx.env.DB, {
+        id: this.id,
+        attempt: s.row.attempt,
+        now: this.ctx.clock.now(),
+        index: s.steps.indexOf(step),
+        lease: this.lease,
+      });
+      if (!out) this.dead = true;
+      else {
+        // Later writes of this step carry the database's count, not the one this runner loaded.
+        step.done = out.done;
+        step.total = out.total;
+      }
+    });
+    return out;
   }
 
   private async count(s: State, key: string, done: number) {

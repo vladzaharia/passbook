@@ -62,6 +62,27 @@ export function writeStep(
   );
 }
 
+/**
+ * One more done on a step, added by the database (capped at the step's total), with no change to its state or the
+ * row's status: jobs that run side by side cannot know each other's count. Null: nothing written.
+ */
+export function incrementStep(
+  db: D1Database,
+  w: { id: string; attempt: number; now: number; index: number; lease: Writer | null },
+): Promise<{ done: number; total: number | null } | null> {
+  const at = `$[${Math.trunc(w.index)}]`;
+  return first<{ done: number; total: number | null }>(
+    db,
+    `UPDATE operations SET steps = json_set(steps, '${at}.done',
+         MIN(COALESCE(json_extract(steps, '${at}.total'), 9007199254740991),
+             COALESCE(json_extract(steps, '${at}.done'), 0) + 1)),
+       revision = revision + 1, updated_at = ?, heartbeat_at = ?
+     WHERE id = ? AND attempt = ? AND ${ACTIVE}${fence(w.lease).sql}
+     RETURNING json_extract(steps, '${at}.done') AS done, json_extract(steps, '${at}.total') AS total`,
+    [w.now, w.now, w.id, w.attempt, ...fence(w.lease).params],
+  );
+}
+
 /** Only the heartbeat and the lease: no revision bump, so an unchanged poll still gets its 304. */
 export async function writeHeartbeat(
   db: D1Database,

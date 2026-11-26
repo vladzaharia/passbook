@@ -1,6 +1,7 @@
 import { anyDigitalOn, DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { progressOf } from '../operations/progress.ts';
 import { assertNewCodeAllowed, countNewCode } from '../passes/new-code.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
@@ -44,14 +45,37 @@ export async function handleReplaceCode(
   job: JobOf<'channel.replace_code'>,
   ctx: ServiceContext,
 ): Promise<void> {
+  const progress = progressOf(ctx, job.operationId, job.attempt ?? 1);
+  const codes = progress.step('codes');
+  const outcome = await replaceOne(job, ctx);
+  if (outcome !== 'done') {
+    // It sent itself again for when its window closes: the operation waits on that, and is not stalled.
+    await progress.waiting('codes', {
+      until: ctx.clock.now() + outcome.waitSeconds * 1000,
+      reason: 'Waiting for a scan window',
+    });
+    return;
+  }
+  // This pass is finished, whatever it came to: the last one ends the operation.
+  const counted = await codes.tick();
+  if (counted && counted.total !== null && counted.done >= counted.total) {
+    await codes.done();
+    await progress.succeed({ href: null, ids: { replaced: String(counted.done) } });
+  }
+}
+
+async function replaceOne(
+  job: JobOf<'channel.replace_code'>,
+  ctx: ServiceContext,
+): Promise<'done' | { waitSeconds: number }> {
   const pass = await getPass(ctx.env.DB, job.passId);
-  if (!pass || pass.removedAt !== null || pass.status !== 'active') return;
+  if (!pass || pass.removedAt !== null || pass.status !== 'active') return 'done';
   const { inputs, rows } = await loadPass(ctx, pass);
   const effective = effectiveChannels(inputs);
   const owed =
     anyDigitalOn(effective) &&
     DIGITAL_CHANNELS.some((c) => !effective[c].on && rows.copies.includes(c));
-  if (!owed) return;
+  if (!owed) return 'done';
   const now = ctx.clock.now();
   const open = blockingWindow(
     await openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now, 1),
@@ -59,8 +83,9 @@ export async function handleReplaceCode(
   if (open) {
     const wait = open.closesAt === null ? HOUR_S : Math.ceil((open.closesAt - now) / 1000);
     ctx.log.info('channels.replace.window_wait', { passId: pass.id });
-    await ctx.env.JOBS.send(job, { delaySeconds: Math.min(Math.max(wait, 60), MAX_DELAY_S) });
-    return;
+    const delaySeconds = Math.min(Math.max(wait, 60), MAX_DELAY_S);
+    await ctx.env.JOBS.send(job, { delaySeconds });
+    return { waitSeconds: delaySeconds };
   }
   const digitalOff = DIGITAL_CHANNELS.filter((c) => !effective[c].on && rows.copies.includes(c));
   const result = (await rotationOwed(ctx.env.DB, pass.orgId, pass.id, rows.retired, digitalOff))
@@ -70,6 +95,7 @@ export async function handleReplaceCode(
   if (result === 'rotated' || result === 'already') await noticeHolder(ctx, pass.id);
   else if (result === 'unsupported')
     ctx.log.info('channels.replace.unsupported', { passId: pass.id, orgId: pass.orgId });
+  return 'done';
 }
 
 /** A bulk rotation counts against the pass's New code limit (the job retries when it is spent). */

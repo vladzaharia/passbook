@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { makeScanEvent } from '../../../../test/helpers/index.ts';
+import { runJob } from '../../jobs/registry.ts';
 import { all } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { toDto } from '../operations/dto.ts';
+import { rowById } from '../operations/repo.ts';
 import { type ApplyKit, applyKit } from './apply-test-fixtures.ts';
 import { insertCopy } from './repo.ts';
 
@@ -239,5 +243,63 @@ describe('replace codes: bulk', () => {
     });
     const { preview } = (await res.json()) as { preview: { impact: unknown[] } };
     expect(preview.impact).toEqual([{ channel: 'apple', passes: 3, rotated: 3 }]);
+  });
+});
+
+describe('replace codes: operation', () => {
+  const bulk = (t: ApplyKit, body: Record<string, unknown> = {}) =>
+    t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: [t.ids[0]],
+      action: 'off',
+      channels: ['apple'],
+      replaceCodes: true,
+      ...body,
+    });
+  const opOf = async (t: ApplyKit, id: string) => toDto((await rowById(t.kit.env.DB, id)) as never);
+
+  it('answers operationId only when a code is to be replaced, and counts each pass to Done', async () => {
+    const t = await passKit();
+    const plain = (await (await bulk(t, { replaceCodes: false })).json()) as {
+      operationId: string | null;
+    };
+    expect(plain.operationId).toBeNull();
+    const body = (await (await bulk(t)).json()) as { done: number; operationId: string };
+    expect(body.operationId).toBeTruthy();
+    const queued = await opOf(t, body.operationId);
+    expect(queued).toMatchObject({
+      kind: 'channels.replace_codes',
+      status: 'running',
+      orgId: t.orgId,
+    });
+    expect(queued.steps.map((x) => [x.state, x.done, x.total])).toEqual([
+      ['done', 1, 1],
+      ['running', 0, 1],
+    ]);
+    const job = jobs(t, 'channel.replace_code')[0];
+    expect(job).toMatchObject({ operationId: body.operationId, attempt: 1 });
+    await runJob(job as never, jobCtxOf(t.kit));
+    expect(await opOf(t, body.operationId)).toMatchObject({
+      status: 'succeeded',
+      text: 'Codes replaced',
+      result: { ids: { replaced: '1' } },
+    });
+  });
+
+  it('a pass waiting for a scan window shows the operation as waiting, with no count', async () => {
+    const t = await passKit();
+    const now = t.kit.clock.now();
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: now - 60_000,
+      closesAt: now + 3_600_000,
+    });
+    const body = (await (await bulk(t)).json()) as { operationId: string };
+    const job = jobs(t, 'channel.replace_code')[0];
+    await runJob(job as never, jobCtxOf(t.kit));
+    const waiting = await opOf(t, body.operationId);
+    expect(waiting).toMatchObject({ status: 'waiting', text: 'Waiting for a scan window' });
+    expect(waiting.steps[1]?.done).toBe(0);
   });
 });

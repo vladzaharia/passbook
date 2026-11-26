@@ -15,6 +15,11 @@ export interface StepHandle {
   count(done: number): Promise<void>;
   done(): Promise<void>;
   skip(): Promise<void>;
+  /**
+   * One more finished, counted by the database: for work spread over jobs that cannot know each other's count.
+   * Answers the count after it, capped at the total; null when nothing was written (the operation ended).
+   */
+  tick(): Promise<{ done: number; total: number | null } | null>;
 }
 
 export interface Progress {
@@ -36,6 +41,7 @@ const NOOP_STEP: StepHandle = {
   count: async () => {},
   done: async () => {},
   skip: async () => {},
+  tick: async () => null,
 };
 export const NOOP: Progress = {
   step: () => NOOP_STEP,

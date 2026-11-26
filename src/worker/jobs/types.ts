@@ -185,6 +185,9 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string().min(1),
     /** The idempotency key and rotation actor id: `channel_bulk:{requestId}`. */
     key: z.string().min(1),
+    /** The operation that shows this replacement, and its attempt. */
+    operationId: z.string().min(1).max(64).optional(),
+    attempt: z.number().int().positive().optional(),
   }),
   /** One combined PDF of staff prints (bulk Print). The prints already exist; the job only renders. */
   z.object({

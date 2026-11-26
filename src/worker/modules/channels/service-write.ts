@@ -19,6 +19,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import { activePrint } from '../prints/repo.ts';
 import { adminWriter, writeVoid } from '../prints/repo-write.ts';
+import { queueCodeReplacements } from './code-operation.ts';
 import { planPass, previewBulk } from './plan.ts';
 import {
   assertNoOpenWindow,
@@ -192,31 +193,37 @@ export async function bulkPassChannels(
   authority: TenantPassWrite,
   passes: Pass[],
   body: Bulk,
+  /** Who asks, for the operation that shows the code replacements. */
+  starter?: { type: 'user' | 'api_key' | 'system'; id: string | null },
 ): Promise<BulkResponse> {
   const value: PassChannelState | null = body.action === 'reset' ? null : body.action;
   const channels = Object.fromEntries(body.channels.map((c) => [c, value]));
   if (body.dryRun) return previewBulk(ctx, passes, body, channels);
-  const out: BulkResponse = { done: 0, skipped: [] };
+  const out: BulkResponse = { done: 0, skipped: [], operationId: null };
   const bulkKey = ctx.requestId ?? ctx.ids.id();
-  for (const pass of passes) {
-    try {
-      await putPassChannels(ctx, actor, authority, pass, {
-        channels,
-        notify: body.notify,
-        replaceCodes: false,
-      });
-      // The overrides are in; the new code waits for its windows in one job per pass.
-      if (body.replaceCodes && value === 'off')
-        await ctx.env.JOBS.send({
-          kind: 'channel.replace_code',
-          passId: pass.id,
-          key: `channel_bulk:${bulkKey}`,
+  const replaced: string[] = [];
+  try {
+    for (const pass of passes) {
+      try {
+        await putPassChannels(ctx, actor, authority, pass, {
+          channels,
+          notify: body.notify,
+          replaceCodes: false,
         });
-      out.done += 1;
-    } catch (error) {
-      if (!(error instanceof RateLimitedError)) throw error;
-      out.skipped.push({ id: pass.id, code: 'RATE_LIMITED' });
+        // The overrides are in; the new code waits for its windows in one job per pass.
+        if (body.replaceCodes && value === 'off') replaced.push(pass.id);
+        out.done += 1;
+      } catch (error) {
+        if (!(error instanceof RateLimitedError)) throw error;
+        out.skipped.push({ id: pass.id, code: 'RATE_LIMITED' });
+      }
     }
+  } finally {
+    out.operationId = await queueCodeReplacements(ctx, authority, starter, {
+      passIds: replaced,
+      key: `channel_bulk:${bulkKey}`,
+      updated: out.done,
+    });
   }
   return out;
 }
