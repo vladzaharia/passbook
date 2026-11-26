@@ -31,11 +31,15 @@ export class LocalOperation {
   private op: Operation;
   private subs = new Set<() => void>();
   private readonly active: ReadonlyMap<string, string | undefined>;
+  private readonly doneTitle: string;
+  private readonly failTitle: string;
   private readonly now: () => number;
   private readonly zone: string | undefined;
   constructor(def: LocalOperationDef, now: () => number = Date.now, zone?: string) {
     this.now = now;
     this.zone = zone;
+    this.doneTitle = def.doneTitle ?? def.title;
+    this.failTitle = def.failTitle ?? `Could not ${def.title.toLowerCase()}`;
     this.active = new Map(def.steps.map((s) => [s.key, s.active]));
     const t = this.now();
     this.op = {
@@ -43,10 +47,9 @@ export class LocalOperation {
       kind: def.kind,
       status: 'queued',
       title: def.title,
-      doneTitle: def.doneTitle,
-      failTitle: def.failTitle,
       text: 'Starting',
       orgId: null,
+      mode: null,
       target: null,
       step: null,
       steps: def.steps.map(
@@ -58,6 +61,7 @@ export class LocalOperation {
           total: null,
           detail: null,
           until: null,
+          waitingReason: null,
           group: s.group ?? null,
           startedAt: null,
           finishedAt: null,
@@ -66,6 +70,7 @@ export class LocalOperation {
       attempt: 1,
       cancelable: def.cancelable ?? false,
       cancelRequested: false,
+      startedBy: { type: 'user', id: null },
       createdAt: t,
       startedAt: null,
       updatedAt: t,
@@ -102,6 +107,7 @@ export class LocalOperation {
     const t = this.now();
     const patch: Partial<OperationStep> = {
       state: 'running',
+      waitingReason: null,
       startedAt: t,
       done: total === undefined ? null : 0,
       total: total ?? null,
@@ -131,7 +137,15 @@ export class LocalOperation {
   wait(key: string, text: string, until: number | null = null): void {
     this.set(
       { status: 'waiting', step: key, text },
-      { key, patch: { state: 'waiting', until, startedAt: this.now() } },
+      {
+        key,
+        patch: {
+          state: 'waiting',
+          until,
+          waitingReason: 'blocked',
+          startedAt: this.now(),
+        },
+      },
     );
   }
 
@@ -141,7 +155,7 @@ export class LocalOperation {
         status: 'failed',
         step: key,
         finishedAt: this.now(),
-        text: message,
+        text: this.failTitle,
         error: { code, message, step: key, retryable },
       },
       { key, patch: { state: 'failed', finishedAt: this.now() } },
@@ -153,7 +167,7 @@ export class LocalOperation {
       status: 'succeeded',
       step: null,
       finishedAt: this.now(),
-      text: this.op.doneTitle ?? this.op.title,
+      text: this.doneTitle,
       result,
     });
   }

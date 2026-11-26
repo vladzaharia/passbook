@@ -131,6 +131,7 @@ describe('islands', () => {
       'keys',
       'logs',
       'moved',
+      'operations',
       'org-chip',
       'playground',
       'quickstart',

@@ -1,11 +1,12 @@
 import { Check, Loader2 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { IconButton } from '../icon-button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover.tsx';
 import { useNow } from '../rel-time.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
+import { useOperationParam } from './op-param.ts';
 import { OperationRow } from './operation-row.tsx';
 import { OperationSheet } from './operation-sheet.tsx';
 import type { Operation } from './types.ts';
@@ -41,9 +42,7 @@ function TrayList({
 function endedLine(recent: readonly Operation[]): string {
   const last = recent[0];
   if (!last) return '';
-  if (last.status === 'succeeded') return last.doneTitle ?? last.title;
-  if (last.status === 'failed') return last.failTitle ?? 'Could not finish';
-  return 'Stopped';
+  return last.status === 'cancelled' ? 'Stopped' : last.text;
 }
 
 /**
@@ -67,7 +66,8 @@ export function OperationTray({
 }) {
   const phone = useMediaQuery(PHONE);
   const [open, setOpen] = useState(false);
-  const [detail, setDetail] = useState<string | null>(null);
+  const [detail, setDetail] = useOperationParam();
+  const closeDetail = useCallback(() => setDetail(null), [setDetail]);
   const openOp = (op: Operation) => {
     setOpen(false);
     if (op.status === 'succeeded' && op.result?.href) onNavigate(op.result.href);
@@ -124,10 +124,10 @@ export function OperationTray({
           </span>
         </span>
       ) : null}
-      <p role="status" aria-live="polite" className="sr-only">
+      <p role="status" aria-label="Activity" aria-live="polite" className="sr-only">
         {endedLine(recent)}
       </p>
-      <OperationSheet id={detail} onClose={() => setDetail(null)} zone={zone} />
+      <OperationSheet id={detail} onClose={closeDetail} zone={zone} />
     </>
   );
 }

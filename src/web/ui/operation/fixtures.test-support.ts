@@ -113,6 +113,7 @@ export function fixtureOperation(def: LocalOperationDef, o: FixtureOptions): Ope
       total: null,
       detail: null,
       until: null,
+      waitingReason: null,
       group: 'group' in s ? (s.group ?? null) : null,
       startedAt: null,
       finishedAt: null,
@@ -120,10 +121,11 @@ export function fixtureOperation(def: LocalOperationDef, o: FixtureOptions): Ope
     const last = i === def.steps.length - 1;
     if (ended)
       return o.tail && last
-        ? { ...base, state: 'waiting', until: DEC_2 }
+        ? { ...base, state: 'waiting', until: DEC_2, waitingReason: 'due' }
         : { ...base, state: 'done', startedAt: started, finishedAt: NOW };
     if (o.status === 'queued') return { ...base, state: 'pending' };
-    if (o.tails?.includes(s.key)) return { ...base, state: 'waiting', until: DEC_2 };
+    if (o.tails?.includes(s.key))
+      return { ...base, state: 'waiting', until: DEC_2, waitingReason: 'due' };
     if (o.status === 'cancelled' && i >= index)
       return { ...base, state: 'skipped', ...(i === index ? (o.counts ?? {}) : {}) };
     if (i < index) return { ...base, state: 'done', startedAt: started, finishedAt: NOW };
@@ -135,6 +137,7 @@ export function fixtureOperation(def: LocalOperationDef, o: FixtureOptions): Ope
         state: o.status === 'cancelled' ? 'done' : state,
         startedAt: started,
         until: o.status === 'waiting' ? (o.until ?? NOW + 6 * 3_600_000) : null,
+        waitingReason: o.status === 'waiting' ? 'blocked' : null,
         ...(o.counts ?? {}),
       };
     }
@@ -146,28 +149,32 @@ export function fixtureOperation(def: LocalOperationDef, o: FixtureOptions): Ope
   const text =
     o.status === 'queued'
       ? 'Starting'
-      : o.status === 'waiting'
-        ? 'Waiting for Apple'
-        : o.status === 'cancelled'
-          ? 'Stopped'
-          : cur
-            ? stepText(cur, active)
-            : def.title;
+      : o.status === 'succeeded'
+        ? (def.doneTitle ?? def.title)
+        : o.status === 'failed'
+          ? (def.failTitle ?? `Could not ${def.title.toLowerCase()}`)
+          : o.status === 'waiting'
+            ? 'Waiting for Apple'
+            : o.status === 'cancelled'
+              ? 'Stopped'
+              : cur
+                ? stepText(cur, active)
+                : def.title;
   return {
     id: o.id ?? `op-${def.kind}-${o.status}`,
     kind: def.kind,
     status: o.status,
     title: def.title,
-    doneTitle: def.doneTitle,
-    failTitle: def.failTitle,
     text,
     orgId: null,
+    mode: null,
     target: { type: 'sandbox', id: 'org-1' },
     step: ended || o.status === 'queued' ? null : (at ?? null),
     steps,
     attempt: 1,
     cancelable: o.cancelable ?? o.status === 'running',
     cancelRequested: false,
+    startedBy: { type: 'user', id: null },
     createdAt: started,
     startedAt: o.status === 'queued' ? null : started,
     updatedAt: NOW,

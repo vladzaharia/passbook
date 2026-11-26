@@ -58,8 +58,13 @@ export function TopBar({ active }: { active?: NavKey }) {
           aria-keyshortcuts="Meta+K Control+K"
         />
       }
-      // The sandbox chip (island) when there is one; nothing otherwise.
-      controls={<span data-island="org-chip" />}
+      // The activity tray (OperationTray, `operations` island), then the sandbox chip (island) when there is one.
+      controls={
+        <>
+          <span data-island="operations" />
+          <span data-island="org-chip" />
+        </>
+      }
       account={
         <span data-island="account">
           <SignInButton>

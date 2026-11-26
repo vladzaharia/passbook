@@ -46,6 +46,36 @@ export const MENUBAR_KIT_SOURCES = [
   'node_modules/@polaris-key/brand/css/theme.css',
 ] as const;
 
+/**
+ * The activity tray on the developer site (the `operations` island): the shared tray, its sheet and
+ * the progress panel with the buddy, and the overlays they sit in. Its own sheet, loaded with the island.
+ */
+export const OPERATIONS_KIT_SOURCES = [
+  'src/web/ui/operation/operation-tray.tsx',
+  'src/web/ui/operation/operation-row.tsx',
+  'src/web/ui/operation/operation-sheet.tsx',
+  'src/web/ui/operation/operation-progress.tsx',
+  'src/web/ui/operation/panel-actions.tsx',
+  'src/web/ui/operation/run-bar.tsx',
+  'src/web/ui/art/buddy.tsx',
+  'src/web/ui/art/base.tsx',
+  'src/web/ui/art/buddy-art.tsx',
+  'src/web/ui/art/face.tsx',
+  'src/web/ui/popover.tsx',
+  'src/web/ui/sheet.tsx',
+  'src/web/ui/overlay.tsx',
+  'src/web/ui/icon-button.tsx',
+  'src/web/ui/button.tsx',
+  'src/web/ui/step-marker.tsx',
+  'src/web/ui/progress-bar.tsx',
+  'src/web/ui/key-value.tsx',
+  'src/web/ui/copy-button.tsx',
+  'src/web/ui/spinner.tsx',
+  'src/web/ui/toaster-impl.tsx',
+  'src/web/styles/utilities.css',
+  'node_modules/@polaris-key/brand/css/theme.css',
+] as const;
+
 const words = (root: string, sources: readonly string[]): string[] => {
   const out = new Set<string>();
   for (const file of sources.filter((f) => f.endsWith('.tsx')))
@@ -97,7 +127,7 @@ ${kit}
           (all, name) => tokens.get(name) ?? all,
         )
         .replace(
-          /(?<![\\.\w])(-?\d*\.?\d+)rem/g,
+          /(?<![\\.\w[])(-?\d*\.?\d+)rem/g,
           (_, n) => `${Number((Number.parseFloat(n) * 16).toFixed(3))}px`,
         )
     : built;
@@ -108,3 +138,5 @@ export const playgroundKitCss = (root: string) =>
   kitCss(root, PLAYGROUND_KIT_SOURCES, "playground's");
 export const searchKitCss = (root: string) => kitCss(root, SEARCH_KIT_SOURCES, "search palette's");
 export const menubarKitCss = (root: string) => kitCss(root, MENUBAR_KIT_SOURCES, "menubar's", true);
+export const operationsKitCss = (root: string) =>
+  kitCss(root, OPERATIONS_KIT_SOURCES, "activity tray's", true);
