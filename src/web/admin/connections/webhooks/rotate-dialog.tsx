@@ -11,7 +11,7 @@ import {
 } from '../../../ui/index.ts';
 import { useSecretCalls } from './api.ts';
 import { FocusOnMount } from './focus-on-mount.tsx';
-import { OVERLAP_OPTIONS } from './labels.ts';
+import { OVERLAP_OPTIONS } from '../../../ui/webhooks/labels.ts';
 
 /**
  * Rotate the signing secret. The old one keeps signing for the chosen time (each request carries a

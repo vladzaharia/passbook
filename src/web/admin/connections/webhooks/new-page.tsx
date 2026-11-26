@@ -16,13 +16,14 @@ import {
   toast,
   useFormErrors,
 } from '../../../ui/index.ts';
-import { useSecretCalls, validateEndpoint } from './api.ts';
+import { useAdminTemplateChoices } from './admin-templates.ts';
+import { useSecretCalls, useValidateEndpoint } from './api.ts';
 import { EndpointFields } from './endpoint-fields.tsx';
 import { FocusOnMount } from './focus-on-mount.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
 import { TestSend } from './test-send.tsx';
-import { VerifyGuide } from './verify-guide.tsx';
+import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
 
 const crumbs = [
   { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
@@ -39,11 +40,13 @@ export function NewWebhookPage() {
   const navigate = useNavigate();
   const { orgId, membership } = useOrgScope();
   const { create } = useSecretCalls();
+  const validateEndpoint = useValidateEndpoint();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [serverUrl, setServerUrl] = useState<string>();
   const [checking, setChecking] = useState(false);
   const [created, setCreated] = useState<Created>();
+  const templates = useAdminTemplateChoices(orgId, form.templateMode === 'selected');
   const found = checkForm(form);
   const check = useFormErrors(found);
   const canManage = Boolean(membership?.capabilities.includes('integrations:manage'));
@@ -140,7 +143,7 @@ export function NewWebhookPage() {
               onChange={patch}
               errors={{ ...check.errors, ...(serverUrl ? { url: serverUrl } : {}) }}
               disabled={!canManage}
-              orgId={orgId}
+              templates={templates}
               urlHelp="https only. A signing secret is shown once after you add this."
               checking={checking}
               onUrlBlur={() => void dryRun()}

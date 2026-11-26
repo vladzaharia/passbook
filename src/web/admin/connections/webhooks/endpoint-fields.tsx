@@ -3,16 +3,22 @@ import {
   WEBHOOK_MAX_TEMPLATES,
   type WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Button, CheckboxField, FormField, Input, RadioGroup } from '../../../ui/index.ts';
-import { useTemplates } from '../../templates/api.ts';
 import { EVENT_SETS, setOf } from './event-sets.ts';
 import type { FormErrors, FormState, SubscribableEventType } from './form-state.ts';
-import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from './labels.ts';
+import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
+
+/** The templates an endpoint can be limited to: each host reads them through its own client. */
+export interface TemplateChoices {
+  /** The caller may list templates; otherwise only the count of a saved selection shows. */
+  canList: boolean;
+  items: readonly { id: string; name: string }[];
+  loading: boolean;
+}
 
 /**
- * URL, description, events and templates: the create page and the detail page's settings card
- * share it. A reader sees the same card disabled, with the masked URL.
+ * URL, description, events and templates: the create page, the detail page's settings card and the
+ * mounted wizard share it. A reader sees the same card disabled, with the masked URL.
  */
 export function EndpointFields({
   value,
@@ -23,7 +29,7 @@ export function EndpointFields({
   onUrlBlur,
   urlHelp,
   checking,
-  orgId,
+  templates,
 }: {
   value: FormState;
   onChange: (patch: Partial<FormState>) => void;
@@ -34,7 +40,7 @@ export function EndpointFields({
   onUrlBlur?: () => void;
   urlHelp?: string;
   checking?: boolean;
-  orgId: string | undefined;
+  templates: TemplateChoices;
 }) {
   const toggle = (type: SubscribableEventType, on: boolean) =>
     onChange({
@@ -133,7 +139,7 @@ export function EndpointFields({
         onChange={onChange}
         errors={errors}
         disabled={disabled}
-        orgId={orgId}
+        templates={templates}
       />
     </div>
   );
@@ -144,21 +150,15 @@ function TemplateFilter({
   onChange,
   errors,
   disabled,
-  orgId,
+  templates,
 }: {
   value: FormState;
   onChange: (patch: Partial<FormState>) => void;
   errors: FormErrors;
   disabled?: boolean | undefined;
-  orgId: string | undefined;
+  templates: TemplateChoices;
 }) {
-  const scope = useOrgScope();
-  const canList = Boolean(scope.membership?.capabilities.includes('templates:read'));
-  const templates = useTemplates(
-    { orgId },
-    Boolean(orgId) && canList && value.templateMode === 'selected',
-  );
-  const items = templates.data?.items ?? [];
+  const { canList, items } = templates;
   const full = value.templateIds.length >= WEBHOOK_MAX_TEMPLATES;
   return (
     <div className="flex flex-col gap-2">
@@ -182,7 +182,7 @@ function TemplateFilter({
             <p className="text-sm text-fg-muted">
               {value.templateIds.length} selected. Template access is needed to change them.
             </p>
-          ) : templates.isPending ? (
+          ) : templates.loading ? (
             <p role="status" className="text-sm text-fg-muted">
               Loading templates…
             </p>

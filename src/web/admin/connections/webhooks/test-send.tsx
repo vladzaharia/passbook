@@ -6,7 +6,7 @@ import { cn } from '../../../lib/cn.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { Buddy, Button, StatusPill, toast } from '../../../ui/index.ts';
 import { useEndpointActions } from './api.ts';
-import { responseLabel } from './labels.ts';
+import { responseLabel } from '../../../ui/webhooks/labels.ts';
 import './webhooks.css';
 
 type Result = z.infer<typeof WebhookTestResultSchema>;

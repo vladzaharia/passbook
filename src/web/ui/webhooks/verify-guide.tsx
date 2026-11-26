@@ -1,4 +1,4 @@
-import { CodeBlock } from '../../../ui/index.ts';
+import { CodeBlock } from '../code-block.tsx';
 import { VERIFY_SNIPPET } from './snippet.ts';
 
 /** How a receiver checks a request: the scheme in four lines, then the code. */

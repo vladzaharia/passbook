@@ -21,7 +21,7 @@ import {
 import { useWebhookEndpoints } from './api.ts';
 import { EndpointStatus } from './endpoint-status.tsx';
 import { lastDelivery } from './health.ts';
-import { EVENT_LABEL } from './labels.ts';
+import { EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 
 export function AddEndpointButton({ variant = 'primary' }: { variant?: 'primary' | 'outline' }) {
   return (
