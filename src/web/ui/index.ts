@@ -40,6 +40,7 @@ export * from './label.tsx';
 export * from './list-row.tsx';
 export * from './loading-rail.tsx';
 export * from './more-menu.tsx';
+export * from './no-access-state.tsx';
 export * from './number-field.tsx';
 export * from './offline-banner.tsx';
 export * from './option-tile.tsx';

@@ -1,9 +1,11 @@
 // Runs after `vite build`: the initial load (entry plus modulepreloads) stays under budget and
 // carries no admin-only library, and the Worker carries no e2e provider release.
-import { readFileSync } from 'node:fs';
+
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { e2eReleaseProblems } from './lib/e2e-release.ts';
+import { markedAssets } from './lib/marked-assets.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
@@ -42,6 +44,14 @@ export const DEV_SEARCH_BUDGET_BYTES = 135_000;
  * WB4 and WB5 bring them under it as they swap their own pieces for the primitives.
  */
 export const BENCH_BUDGET_BYTES = 125_000;
+/**
+ * The Workbench's shell (workbench/shell/**: its chrome, nav, switcher, palette sources and keys),
+ * on top of the SPA entry, in gzip bytes: the lazy chunk carrying its `wb-shell` class, the chunks
+ * it imports that the entry does not, and its stylesheet. Workbench v2 §4.6.
+ */
+export const WB_SHELL_BUDGET_BYTES = 45_000;
+/** The class only the Workbench shell renders: it marks the shell's chunk and keeps it out of entries. */
+export const WB_SHELL_MARKER = 'wb-shell';
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -49,6 +59,7 @@ export const FORBIDDEN = [
   'measureElement',
   'scan-display:render',
   'SCAN_DISPLAY_DENSITY',
+  WB_SHELL_MARKER,
 ] as const;
 /** The scan entry also never pulls the SPA router tree or the e2e hook. */
 export const SCAN_FORBIDDEN = [...FORBIDDEN, 'routeTree', '__passbookScan'] as const;
@@ -248,6 +259,20 @@ if (import.meta.main) {
       );
       failed = true;
     }
+  }
+  const assets = readdirSync(join(dist, 'assets')).map((f) => `/assets/${f}`);
+  const entry = initialAssets(readFileSync(join(dist, 'index.html'), 'utf8'), true);
+  const shell = markedAssets(read, assets, entry, WB_SHELL_MARKER);
+  const shellTotal = shell.files.reduce((sum, url) => sum + gzipSync(read(url)).length, 0);
+  process.stdout.write(`workbench shell gzip: ${shellTotal} B (${shell.files.length} files)\n`);
+  const shellErrors = [...shell.errors];
+  if (shellTotal > WB_SHELL_BUDGET_BYTES)
+    shellErrors.push(
+      `workbench shell gzip ${shellTotal} B exceeds budget ${WB_SHELL_BUDGET_BYTES} B`,
+    );
+  if (shellErrors.length > 0) {
+    process.stderr.write(`${shellErrors.join('\n')}\n`);
+    failed = true;
   }
   // Google and Samsung stay dark in every deployable Worker (docs/design/wallet-providers/e2e-release.md).
   const release = e2eReleaseProblems(join(root, 'dist/wallet'));

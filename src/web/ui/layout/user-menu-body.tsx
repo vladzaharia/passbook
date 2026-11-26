@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { RefreshCw } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { canUseSpace, needsPocketId, SPACE_HOME, SPACES, type Space } from '@/shared/spaces.ts';
 import { personLabel } from '../../lib/format.ts';
 import { isAdminPath } from '../../lib/guards.ts';
@@ -12,6 +13,7 @@ import { AccountMenu, type LinkProps, type SpaceEntry } from './account-menu.tsx
 /** Which space the page belongs to. */
 function spaceOf(pathname: string): Space {
   if (isActivePath(pathname, accountPath(pathname))) return 'account';
+  if (isActivePath(pathname, SPACE_HOME.workbench)) return 'workbench';
   return isAdminPath(pathname) ? 'admin' : 'passes';
 }
 
@@ -24,9 +26,11 @@ function SpaLink({ href, space, ...props }: LinkProps) {
 export function SignedInUserMenu({
   authed,
   defaultOpen,
+  extra,
 }: {
   authed: AuthedSession;
   defaultOpen: boolean;
+  extra?: ReactNode;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const scope = useOrgScope();
@@ -60,12 +64,15 @@ export function SignedInUserMenu({
       defaultOpen={defaultOpen}
       onSignOut={() => void signOut(authed.csrfToken)}
       extra={
-        scope.isError ? (
-          <DropdownMenuItem onSelect={() => void scope.refetch()}>
-            <RefreshCw aria-hidden />
-            Retry organization access
-          </DropdownMenuItem>
-        ) : null
+        <>
+          {scope.isError ? (
+            <DropdownMenuItem onSelect={() => void scope.refetch()}>
+              <RefreshCw aria-hidden />
+              Retry organization access
+            </DropdownMenuItem>
+          ) : null}
+          {extra}
+        </>
       }
     />
   );

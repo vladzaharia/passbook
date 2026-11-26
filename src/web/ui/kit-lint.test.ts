@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, normalize, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const WEB = join(process.cwd(), 'src/web');
@@ -140,5 +140,61 @@ describe('kit lint', () => {
       if (!gates.has(path)) expect(text, path).not.toMatch(/\bsearch:[^\n]*\borgId\b/);
       expect(text, path).not.toMatch(/Platform-wide/);
     }
+  });
+
+  // L12 (Workbench v2 §2.3): Workbench pages reach tenant data only through the token client
+  // (`useToolApi()`), never the admin session client or its Live/Test mode. The one exemption is
+  // the tool scope, `lib/tool-api.tsx`, which the Workbench's host always pins. The check walks the
+  // import graph (static and dynamic) from `workbench/**` and `routes/workbench/**`; the runtime
+  // test in `workbench/shell/boundary.test.tsx` is the real guard.
+  it('keeps the admin client and mode out of the Workbench', () => {
+    const byPath = new Map(files.map((f) => [f.path, f.text]));
+    const banned = new Set(['lib/api.ts', 'lib/mode.ts', 'lib/operations-client.ts']);
+    // Modules that may touch the session on purpose: its own read (`useSession`), the account menu,
+    // and the tray body, whose session client is the admin default the Workbench replaces.
+    const stop = new Set([
+      'lib/tool-api.tsx',
+      'lib/session.ts',
+      'ui/layout/user-menu.tsx',
+      'ui/layout/activity-tray-body.tsx',
+    ]);
+    const resolve = (from: string, spec: string): string | undefined => {
+      const base = normalize(join(dirname(from), spec));
+      return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find(
+        (c) => byPath.has(c),
+      );
+    };
+    const importsOf = (path: string): string[] =>
+      [...(byPath.get(path) ?? '').matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]*)['"]/g)].flatMap(
+        (m) => resolve(path, m[1] as string) ?? [],
+      );
+    const reached = (starts: string[]): string[] => {
+      const seen = new Set(starts);
+      const hits: string[] = [];
+      const queue = [...starts];
+      while (queue.length > 0) {
+        const path = queue.shift() as string;
+        for (const dep of importsOf(path)) {
+          if (stop.has(dep)) continue;
+          if (banned.has(dep)) hits.push(`${path} -> ${dep}`);
+          else if (!seen.has(dep)) {
+            seen.add(dep);
+            queue.push(dep);
+          }
+        }
+      }
+      return hits;
+    };
+    const workbench = files
+      .map((f) => f.path)
+      .filter((p) => /^(workbench|routes\/workbench)\//.test(p) && !p.includes('test-fixtures'));
+    expect(workbench.length).toBeGreaterThan(0);
+    expect(reached(workbench)).toEqual([]);
+    // The walk itself: the tray's session default and a direct import are both seen when not stopped.
+    expect(reached(['ui/layout/activity-tray.tsx'])).toEqual([]);
+    stop.delete('ui/layout/activity-tray-body.tsx');
+    expect(reached(['ui/layout/activity-tray.tsx'])).toContain(
+      'ui/layout/activity-tray-body.tsx -> lib/operations-client.ts',
+    );
   });
 });
