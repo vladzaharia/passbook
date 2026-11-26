@@ -31,38 +31,26 @@ export const onboardingSignin: Journey = {
         const platform = await env.api('platform');
         const orgs: Json = await platform.get('/api/v1/orgs?limit=100');
         let org = orgs.items.find((o: Json) => o.slug === ORG_SLUG);
-        // An empty org, so the first-run checklist shows.
+        // An empty org, so the first-pass guide shows.
         org ??= await platform.post('/api/v1/orgs', { slug: ORG_SLUG, name: 'Journey Onboarding' });
         env.vars.orgId = org.id;
         env.vars.since = String(Date.now() - 1_000);
-        // The mock Polaris ID account `journey-admin` has this address: admins sign in through it.
-        env.vars.email = 'journey.admin@example.com';
-        try {
-          await platform.post(`/api/v1/orgs/${org.id}/invitations`, {
-            email: env.vars.email,
-            roles: ['org_admin'],
-          });
-        } catch (error) {
-          // A rerun: a pending invitation is sent again; a joined admin gets no new link.
-          if (!(error as Error).message.includes('INVITATION_PENDING'))
-            console.warn(`invitation skipped: ${(error as Error).message.slice(0, 160)}`);
-          else {
-            const list: Json = await platform.get(`/api/v1/orgs/${org.id}/invitations?limit=100`);
-            const pending = list.items.find((i: Json) => i.email === env.vars.email);
-            if (pending)
-              await platform.post(`/api/v1/orgs/${org.id}/invitations/${pending.id}/resend`);
-          }
-        }
+        // A fresh invitee per run keeps the mail caps clear of earlier runs; the mock Polaris ID serves
+        // `journey-admin+<stamp>` with this address (test/mock-oidc/server.ts).
+        env.vars.email = `journey.admin+${env.stamp}@example.com`;
+        await platform.post(`/api/v1/orgs/${org.id}/invitations`, {
+          email: env.vars.email,
+          roles: ['org_admin'],
+        });
         return page('platform', `/admin/orgs/${org.id}`);
       },
     },
     {
       title: 'Invitation email',
       async run(env) {
-        const mail = await env.mail(Number(env.vars.since), (m) =>
-          m.text.includes('/auth/magic?t='),
-        );
-        env.vars.token = /\/auth\/magic\?t=([A-Za-z0-9_-]+)/.exec(mail?.text ?? '')?.[1] ?? '';
+        // The mailed link is /invite#<token>; the page keeps the token in the fragment.
+        const mail = await env.mail(Number(env.vars.since), (m) => m.text.includes('/invite#m_'));
+        env.vars.token = /\/invite#(m_[A-Za-z0-9_-]+)/.exec(mail?.text ?? '')?.[1] ?? '';
         return mailOrSkip(mail, 'invitation');
       },
     },
@@ -70,28 +58,31 @@ export const onboardingSignin: Journey = {
       title: 'Confirm the invitation',
       async run(env) {
         if (!env.vars.token) return { skip: 'no invitation link' };
-        return page('anon', `/auth/magic?t=${env.vars.token}`);
+        return page('anon', `/invite#${env.vars.token}`);
       },
     },
     {
       title: 'First org admin landing',
       async run(env) {
         if (!env.vars.token) return { skip: 'no invitation link' };
-        // The link accepts the invitation; the console itself needs Polaris ID.
-        await env.consume(env.vars.token, `onboard-link-${env.stamp}`);
-        const { storage } = await env.signInOidc('journey-admin', `onboard-${env.stamp}`);
+        // Admins sign in through Polaris ID, then accept the invitation with its token.
+        const { storage, api } = await env.signInOidc(
+          `journey-admin+${env.stamp}`,
+          `onboard-${env.stamp}`,
+        );
+        await api.post('/api/v1/orgs/invitations/accept', { token: env.vars.token });
         env.vars.storage = storage;
         return page('org', '/admin', { storage, orgId: env.vars.orgId as string });
       },
     },
     {
-      title: 'Get started checklist',
+      title: 'First pass guide',
       async run(env) {
         if (!env.vars.storage) return { skip: 'the admin never signed in' };
         return page('org', '/admin', {
           storage: env.vars.storage,
           orgId: env.vars.orgId as string,
-          waitFor: 'text=Get started',
+          waitFor: 'text=First pass',
         });
       },
     },
@@ -105,10 +96,10 @@ export const onboardingSignin: Journey = {
         }),
     },
     {
-      title: 'Sign-in link already used',
+      title: 'Invitation already used',
       async run(env) {
         if (!env.vars.token) return { skip: 'no used link to show' };
-        return page('anon', `/auth/magic?t=${env.vars.token}`);
+        return page('anon', `/invite#${env.vars.token}`);
       },
     },
     {

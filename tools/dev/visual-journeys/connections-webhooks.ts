@@ -138,6 +138,14 @@ export const connectionsWebhooks: Journey = {
     {
       title: 'Replay dialog',
       async run(env) {
+        // The endpoint's Replay shows only once a delivery was attempted (a paused endpoint sends
+        // none, and a pending delivery cannot be replayed), so the dialog has nothing to open here.
+        const owner = await env.api('org');
+        const endpoint: Json = await owner.get(
+          `/api/v1/webhook-endpoints/${env.vars.endpointId}?orgId=${env.orgId}`,
+        );
+        if (endpoint.lastSuccessAt == null && endpoint.lastFailureAt == null)
+          return { skip: 'no delivery was attempted, so the endpoint has nothing to replay' };
         // The endpoint's own Replay opens the dialog; nothing is queued until it is confirmed.
         return page(
           'org',

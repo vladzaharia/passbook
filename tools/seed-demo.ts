@@ -6,7 +6,7 @@
 // (tools/bootstrap-tenancy.ts --apply, local D1). Rerunnable: existing orgs, templates, passes (by external id), connections and keys are skipped.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { zipSync } from 'fflate';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
@@ -101,10 +101,12 @@ await fromBlueprint('generic', northwind, 'Northwind Member');
 function variantZip(name: string, joinable = false): Uint8Array {
   const dir = resolve(root, 'templates/starter-generic');
   const files: Record<string, Uint8Array> = {};
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  // Nested files (wallets/google/logo.png) belong to the package: an upload without them is invalid.
+  for (const entry of readdirSync(dir, { withFileTypes: true, recursive: true })) {
     if (!entry.isFile()) continue;
-    let bytes: Uint8Array = readFileSync(join(dir, entry.name));
-    if (entry.name === 'wallet.template.json') {
+    const rel = relative(dir, join(entry.parentPath, entry.name));
+    let bytes: Uint8Array = readFileSync(join(dir, rel));
+    if (rel === 'wallet.template.json') {
       const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
       manifest.name = name;
       // An uploaded package is never a blueprint.
@@ -122,7 +124,7 @@ function variantZip(name: string, joinable = false): Uint8Array {
           if (b.to.barcode === '*' && b.to.prop === 'altText') b.value = 'Member code';
       bytes = Buffer.from(JSON.stringify(manifest, null, 2));
     }
-    files[entry.name] = bytes;
+    files[rel] = bytes;
   }
   return zipSync(files);
 }
@@ -139,7 +141,12 @@ if (!byName('Harbor Crew Badge')) {
     zipSync({ 'wallet.template.json': Buffer.from('{') }),
   );
 }
-templates = await listTemplates();
+// An upload imports asynchronously; its template appears when the build is done.
+for (let attempt = 0; attempt < 60; attempt++) {
+  templates = await listTemplates();
+  if (byName('Harbor Join Badge') && byName('Harbor Crew Badge')) break;
+  await new Promise((done) => setTimeout(done, 1000));
+}
 const member = byName('Northwind Member')?.id as string;
 
 // Tenancy: the demo owner is org_admin everywhere. Passes issue only from a live release, so the
