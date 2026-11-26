@@ -21,7 +21,7 @@ export function WalletChannel({
   notes = true,
   face,
   onFace,
-  fit,
+  fit = true,
   action,
 }: {
   target: 'google' | 'samsung';
