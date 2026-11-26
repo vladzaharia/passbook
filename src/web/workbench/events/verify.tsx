@@ -109,7 +109,6 @@ export function VerifyPanel({
               {shown ? 'Hide' : 'Reveal'}
             </button>
           ) : null}
-          <span className="xs muted push wh-hide-s">Checked here, in your browser</span>
         </div>
         {stepUp !== null ? <StepUp signInUrl={stepUp} next={next} /> : null}
         <details className="wh-try">

@@ -176,7 +176,12 @@ export function OutboundWizard({
                     onOpenChange(false);
                   }}
                 >
-                  <VerifyGuide />
+                  <details className="text-sm">
+                    <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
+                      How to verify the signature
+                    </summary>
+                    <VerifyGuide className="pt-3" />
+                  </details>
                   <TestSend
                     endpointId={created.endpoint.id}
                     host={endpointHost(created.endpoint)}

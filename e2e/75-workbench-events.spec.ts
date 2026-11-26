@@ -253,7 +253,7 @@ test('Events: the feed, an event with its deliveries, and a stored request (shot
   await expect(list.getByRole('option')).toHaveCount(2);
   // Newest first; the selected event shows where it went.
   await expect(list.getByRole('option').first()).toContainText('pass.scanned');
-  const table = page.getByRole('table', { name: 'Deliveries of this event' });
+  const table = page.getByLabel('Deliveries of this event');
   await expect(table.getByText('Capture endpoint')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open in Console' })).toHaveAttribute(
     'href',
