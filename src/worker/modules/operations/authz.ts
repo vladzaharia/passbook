@@ -86,15 +86,23 @@ export function platformFenceFor(ctx: ServiceContext, auth: AuthContext): Fence 
 
 /**
  * Starter rows: the person who started them; an own-only session only what its own session started. Never a
- * key. A member token: only those in its org's Test mode.
+ * key, but a sandbox Workbench token: its owner's sandbox rows for its org, in Test, read only. A member
+ * token: only those in its org's Test mode.
  */
 export function starterFenceFor(
   ctx: ServiceContext,
   auth: AuthContext,
   writer = false,
 ): Fence | null {
+  const now = ctx.clock.now();
+  if (auth.kind === 'api_key') {
+    const pin = auth.workbench;
+    return pin?.subject === 'sandbox_key' && auth.mode === 'test' && !writer
+      ? starterFence(null, now, { pinnedSandbox: pin.orgId })
+      : null;
+  }
   return auth.kind === 'session'
-    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, ctx.clock.now(), {
+    ? starterFence({ userId: auth.userId, sessionId: auth.sessionId }, now, {
         writer,
         ownSession: isOwnOnly(auth),
         pinnedOrg: auth.workbench?.orgId,
