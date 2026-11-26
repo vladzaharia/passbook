@@ -6,8 +6,8 @@ const DAY_MS = 86_400_000;
 /** A Platform key with a write scope lives at most 30 days; a day of slack covers a client clock that runs ahead. */
 export const MAX_PLATFORM_WRITE_LIFETIME_MS = 31 * DAY_MS;
 
-const refuse = (message: string, code: string, path = 'scopes') =>
-  new ValidationError(message, [{ path, message }], code);
+/** The one issue a platform-key refusal carries. The code stays a literal at each `new ValidationError`, where the error catalog reads it. */
+const issue = (message: string, path = 'scopes') => [{ path, message }];
 
 /**
  * Only a person in a Polaris ID session makes or rotates a Platform key: a break-glass session is an incident tool
@@ -35,19 +35,32 @@ export function assertPlatformKey(
   const platform = held.filter((s) => s.startsWith('platform:'));
   if (platform.length === 0) return;
   if (kind !== 'platform')
-    throw refuse('Platform scopes are for platform keys.', 'API_KEY_PLATFORM_SCOPE_KIND');
+    throw new ValidationError(
+      'Platform scopes are for platform keys.',
+      issue('Platform scopes are for platform keys.'),
+      'API_KEY_PLATFORM_SCOPE_KIND',
+    );
   if (platform.length !== held.length)
-    throw refuse(
+    throw new ValidationError(
       'A key holds platform scopes or organization scopes, not both. Make two keys.',
+      issue('A key holds platform scopes or organization scopes, not both. Make two keys.'),
       'API_KEY_PLATFORM_SCOPES_ALONE',
     );
   if (mode !== 'live')
-    throw refuse('A platform key is Live only.', 'API_KEY_PLATFORM_LIVE', 'mode');
+    throw new ValidationError(
+      'A platform key is Live only.',
+      issue('A platform key is Live only.', 'mode'),
+      'API_KEY_PLATFORM_LIVE',
+    );
   assertPlatformMintSession(authority);
   if (
     platform.some((s) => s !== 'platform:read') &&
     expiresAt != null &&
     expiresAt > now + MAX_PLATFORM_WRITE_LIFETIME_MS
   )
-    throw refuse('A platform key lives at most 30 days.', 'API_KEY_EXPIRY_TOO_LONG', 'expiresAt');
+    throw new ValidationError(
+      'A platform key lives at most 30 days.',
+      issue('A platform key lives at most 30 days.', 'expiresAt'),
+      'API_KEY_EXPIRY_TOO_LONG',
+    );
 }

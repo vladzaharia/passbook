@@ -163,6 +163,15 @@ export function buildErrorCatalog(): ErrorCatalog {
         name === 'AppError' ? Number(/,\s*(\d{3})\b/.exec(args)?.[1]) || status : status;
       for (const c of args.matchAll(CODE)) add(c[1] ?? '', explicit, mod);
     }
+    // Class constructors that pass a literal code up: `super('message', 'X')`, as errors-denial.ts does.
+    for (const m of src.matchAll(/class (\w+) extends \w+[^{]*\{([\s\S]*?)\n\}/g)) {
+      const status = statuses.get(m[1] ?? '');
+      const body = m[2] ?? '';
+      const at = body.indexOf('super(');
+      if (!status || at < 0) continue;
+      for (const c of body.slice(at, closeOf(body, at + 5)).matchAll(CODE))
+        add(c[1] ?? '', status, mod);
+    }
     // Class constructors with a default code: `code = 'X'`.
     for (const m of src.matchAll(/class (\w+) extends \w+[^{]*\{([\s\S]*?)\n\}/g)) {
       const code = /code = '([A-Z_]+)'/.exec(m[2] ?? '')?.[1];

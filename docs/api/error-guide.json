@@ -3892,5 +3892,35 @@
     "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
     "fix": "Do it from the console with a recent sign-in.",
     "retryable": false
+  },
+  "API_KEY_PLATFORM_LIVE": {
+    "title": "Platform key is Live only",
+    "when": "A platform key was requested in Test mode.",
+    "fix": "Make the platform key in Live mode.",
+    "retryable": false
+  },
+  "API_KEY_PLATFORM_SCOPES_ALONE": {
+    "title": "Platform and organization scopes mixed",
+    "when": "A key was asked to hold platform scopes and organization scopes together.",
+    "fix": "Make two keys: one with platform scopes, one with organization scopes.",
+    "retryable": false
+  },
+  "API_KEY_PLATFORM_SCOPE_KIND": {
+    "title": "Platform scope on another kind of key",
+    "when": "A platform scope was requested for a key that is not a platform key.",
+    "fix": "Make a platform key (no organization) for platform scopes, or drop the platform scopes.",
+    "retryable": false
+  },
+  "PERSON_REQUIRED": {
+    "title": "A person is required",
+    "when": "An API key called a platform route, or made a request, that only a person signed in with Polaris ID may make.",
+    "fix": "Do it in the console as a platform admin signed in with Polaris ID.",
+    "retryable": false
+  },
+  "PLATFORM_KEY_REQUIRED": {
+    "title": "Platform key required",
+    "when": "A platform route was called with an API key that is not a platform key.",
+    "fix": "Call it with a platform key that holds the route's scope.",
+    "retryable": false
   }
 }

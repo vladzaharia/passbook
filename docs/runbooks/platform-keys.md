@@ -29,6 +29,12 @@ A Platform key is `kind = platform`, has no organization and starts `pbo_`. It h
 
 Seeds the demo organizations and a Platform key named "Ops status" with `platform:read`, `platform:settings` and `platform:wallet`, 30 days, range `203.0.113.0/24`. It signs in through the mock Polaris ID, so the 10-minute step-up that minting needs is fresh. It prints the file the key is in, never the key. Safe to rerun: an existing key is kept. If the secret file is gone, revoke the key in the console and rerun.
 
+The mock Polaris ID verifies its emails, and with `oidc.trustEmail` off a first sign-in needs a mail round trip. Turn it on in the local database first (the dev server keeps its state in `.wrangler/state`):
+
+```sh name=trust-mock-email confirm="Set oidc.trustEmail in the local dev database?"
+npx wrangler d1 execute wallet-platform --local --persist-to .wrangler/state --command "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)"
+```
+
 ```sh name=seed-key confirm="Seed demo data and the Ops status key into the local dev database?"
 node tools/seed-demo.ts --url "$BASE_URL" --state .wrangler/state
 ```

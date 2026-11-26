@@ -156,6 +156,33 @@
       ]
     },
     {
+      "code": "API_KEY_PLATFORM_LIVE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_PLATFORM_SCOPES_ALONE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_PLATFORM_SCOPE_KIND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_REQUIRED",
       "statuses": [
         401
@@ -2150,6 +2177,7 @@
         403
       ],
       "modules": [
+        "platform",
         "sign-in"
       ]
     },
@@ -3509,6 +3537,7 @@
         403
       ],
       "modules": [
+        "platform",
         "sign-in"
       ]
     },
@@ -3752,6 +3781,15 @@
       ]
     },
     {
+      "code": "PERSON_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "PHOTO_PASS_INACTIVE",
       "statuses": [
         409
@@ -3803,6 +3841,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "PLATFORM_KEY_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {
@@ -4319,6 +4366,7 @@
         409
       ],
       "modules": [
+        "developer",
         "sandbox"
       ]
     },
@@ -4337,6 +4385,7 @@
         403
       ],
       "modules": [
+        "platform",
         "sandbox"
       ]
     },
@@ -5191,6 +5240,15 @@
       ]
     },
     {
+      "code": "SCAN_UNCONFIRMED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_UNDO_EXPIRED",
       "statuses": [
         403
@@ -6032,6 +6090,7 @@
         409
       ],
       "modules": [
+        "connections",
         "templates"
       ]
     },
@@ -6791,6 +6850,15 @@
       "code": "WALLET_PROJECTION_UNSUPPORTED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROVIDER_DISABLED",
+      "statuses": [
+        403
       ],
       "modules": [
         "wallet-providers"
