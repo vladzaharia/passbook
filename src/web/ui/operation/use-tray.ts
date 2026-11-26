@@ -119,16 +119,12 @@ export function useTray({
       told.current.add(op.id);
       if (!notify || isOperationOnScreen(op.id)) continue;
       if (op.status === 'succeeded')
-        toast.action(op.doneTitle ?? op.title, { label: 'View', onClick: () => onOpen?.(op) });
+        toast.action(op.text, { label: 'View', onClick: () => onOpen?.(op) });
       else if (op.status === 'failed')
-        toast.error(
-          op.error?.message ?? 'Something went wrong.',
-          op.failTitle ?? 'Could not finish',
-          {
-            label: 'Retry',
-            onClick: () => void retry(op),
-          },
-        );
+        toast.error(op.error?.message ?? 'Something went wrong.', op.text, {
+          label: 'Retry',
+          onClick: () => void retry(op),
+        });
     }
   }, [all, notify, onOpen, retry]);
 

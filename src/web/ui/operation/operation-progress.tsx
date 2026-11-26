@@ -87,8 +87,8 @@ export function OperationProgress({
     queued: 'Starting',
     running: op.text,
     waiting: op.text,
-    succeeded: op.doneTitle ?? op.title,
-    failed: op.failTitle ?? 'Could not finish',
+    succeeded: op.text,
+    failed: op.text,
     cancelled: 'Stopped',
   }[op.status];
   const sub =

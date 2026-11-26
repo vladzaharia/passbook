@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { playgroundKitCss, searchKitCss } from './lib/playground-kit.ts';
+import { operationsKitCss, playgroundKitCss, searchKitCss } from './lib/playground-kit.ts';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -32,5 +32,20 @@ describe('generated search kit CSS', () => {
     expect(search).toContain('cmdk-group-heading');
     expect(search).toContain('.max-w-\\[880px\\]');
     expect(playground).not.toContain('cmdk-');
+  });
+});
+
+describe('generated operations kit CSS (the developer site activity tray)', () => {
+  it('is what the generator makes from the tray sources today (run `npm run gen`)', async () => {
+    const generated = readFileSync(resolve(root, 'src/generated/operations-kit.css'), 'utf8');
+    expect(generated).toBe(await operationsKitCss(root));
+  });
+
+  it('carries the tray, popover and sheet classes in px (the site root is 14 px), without preflight', () => {
+    const css = readFileSync(resolve(root, 'src/generated/operations-kit.css'), 'utf8');
+    for (const cls of ['.w-\\[22rem\\]', '.min-w-4', '.ring-2', '.font-mono'])
+      expect(css, cls).toContain(cls);
+    expect(css).not.toMatch(/(^|\})(html|body|\*),?(:before|:after|::backdrop)?\{/);
+    expect(css).not.toContain('22rem}');
   });
 });

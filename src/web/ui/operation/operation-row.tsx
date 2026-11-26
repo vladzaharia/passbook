@@ -31,14 +31,7 @@ export function OperationRow({
   const Icon = entry.icon;
   const step = op.steps.find((s) => s.key === op.step);
   const share = step?.total ? Math.min(1, (step.done ?? 0) / step.total) : null;
-  const line =
-    op.status === 'succeeded'
-      ? (op.doneTitle ?? op.title)
-      : op.status === 'failed'
-        ? (op.failTitle ?? 'Could not finish')
-        : op.status === 'cancelled'
-          ? 'Stopped'
-          : op.text;
+  const line = op.status === 'cancelled' ? 'Stopped' : op.text;
   const body = (
     <>
       <Icon

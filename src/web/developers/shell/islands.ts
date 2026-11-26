@@ -23,6 +23,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
     const { mountAccount } = await import('./account.ts');
     return { mount: async (el) => void (await mountAccount(el)) };
   },
+  operations: async () => (await import('./operations.ts')).operationsIsland,
   'org-chip': async () => {
     const { mountOrgChip } = await import('../console/org-chip.ts');
     return { mount: mountOrgChip };
