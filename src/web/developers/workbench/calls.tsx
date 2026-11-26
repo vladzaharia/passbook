@@ -10,7 +10,7 @@ const methodClass = (m: string) => `method ${m === 'DELETE' ? 'del' : m.toLowerC
 function CallRow({ call, now, logs }: { call: RequestLogEntry; now: number; logs: string }) {
   const fromKey = call.via === null;
   return (
-    <a className="lrow wb-call" href={`${logs}#${call.id}`}>
+    <a className="lrow wb-call" href={`${logs}?source=all#${call.id}`}>
       <span className={methodClass(call.method)}>{call.method}</span>
       <code className="wb-call-path">{call.route ?? call.path}</code>
       <StatusChip status={call.status} />

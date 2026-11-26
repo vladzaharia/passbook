@@ -81,7 +81,7 @@ test('the Console: opens on a read, runs with Cmd+Enter, and its request id open
 
   // The request id opens that request in Logs.
   await page.getByRole('link', { name: 'View in Logs' }).click();
-  await page.waitForURL(/\/developers\/logs#/);
+  await page.waitForURL(/\/developers\/logs\?source=all#/);
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(rid);
 });
 

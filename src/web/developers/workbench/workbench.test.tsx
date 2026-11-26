@@ -102,7 +102,7 @@ describe('Workbench', () => {
     const first = homeDone.calls[0];
     const key = homeDone.keys[0];
     const hook = homeDone.endpoints[0];
-    expect(hrefs).toContain(`/developers/logs#${first?.id}`);
+    expect(hrefs).toContain(`/developers/logs?source=all#${first?.id}`);
     expect(hrefs).toContain(`/developers/keys#${key?.id}`);
     expect(hrefs).toContain(`/developers/webhooks?endpoint=${hook?.id}`);
   });

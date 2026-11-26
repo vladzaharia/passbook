@@ -29,6 +29,73 @@ describe('POST /developer/try-token', () => {
     expect((await send('GET', '/passes', fromPage(d.browser, token))).status).toBe(200);
   });
 
+  it('is made from the sandbox key, not from a newer key with fewer scopes', async () => {
+    const d = await developer();
+    const res = await t.app.request(
+      `${ORIGIN}/api/v1/api-keys`,
+      {
+        method: 'POST',
+        headers: {
+          ...d.browser,
+          'content-type': 'application/json',
+          'x-passbook-mode': 'test',
+          'idempotency-key': crypto.randomUUID(),
+        },
+        body: JSON.stringify({
+          orgId: d.made.orgId,
+          name: 'Narrow',
+          scopes: ['passes:read', 'passes:write', 'templates:read'],
+          expiresAt: t.kit.clock.now() + 20 * 86_400_000,
+          kind: 'personal',
+          mode: 'test',
+        }),
+      },
+      t.kit.env,
+    );
+    expect(res.status, await res.clone().text()).toBe(201);
+    const { token } = await mint(d.browser);
+    // The token acts as the sandbox key: Webhooks and Logs still work, which the narrow key could not do.
+    const me = await send('GET', '/api-keys/me', fromPage(d.browser, token));
+    expect(await me.json()).toMatchObject({ id: d.key.id });
+    expect((await send('GET', '/webhook-endpoints', fromPage(d.browser, token))).status).toBe(200);
+    expect((await send('GET', '/passes', fromPage(d.browser, token))).status).toBe(200);
+  });
+
+  it('refuses when the only key left is a narrow one', async () => {
+    const d = await developer();
+    await run(t.kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+      t.kit.clock.now(),
+      d.key.id,
+    ]);
+    const made = await t.app.request(
+      `${ORIGIN}/api/v1/api-keys`,
+      {
+        method: 'POST',
+        headers: {
+          ...d.browser,
+          'content-type': 'application/json',
+          'x-passbook-mode': 'test',
+          'idempotency-key': crypto.randomUUID(),
+        },
+        body: JSON.stringify({
+          orgId: d.made.orgId,
+          name: 'Narrow',
+          scopes: ['passes:read'],
+          expiresAt: t.kit.clock.now() + 20 * 86_400_000,
+          kind: 'personal',
+          mode: 'test',
+        }),
+      },
+      t.kit.env,
+    );
+    expect(made.status, await made.clone().text()).toBe(201);
+    await expectProblem(
+      await send('POST', '/developer/try-token', d.browser),
+      409,
+      'SANDBOX_KEY_MISSING',
+    );
+  });
+
   it('needs a signed-in person and the CSRF check', async () => {
     const d = await developer();
     expect((await send('POST', '/developer/try-token', BROWSER)).status).toBe(401);

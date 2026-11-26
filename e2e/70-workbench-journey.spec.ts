@@ -109,10 +109,15 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
 
   // 2. Logs: the request id from the response opens that request, selected.
   await page.getByRole('link', { name: 'View in Logs' }).click();
-  await page.waitForURL(/\/developers\/logs#/);
+  await page.waitForURL(/\/developers\/logs\?source=all#/);
   expect(decodeURIComponent(new URL(page.url()).hash.slice(1))).toBe(requestId);
   const trace = page.getByRole('navigation', { name: 'Trace' });
   await expect(trace).toBeVisible();
+  // The link sets the source that holds a Console run: the row is in its list, not pinned over an empty one.
+  await expect(page.getByRole('listbox', { name: 'Requests' }).getByRole('option')).not.toHaveCount(
+    0,
+  );
+  await expect(page.getByText('Not in this view')).toHaveCount(0);
   await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
   // The key that called, the request, and the event it caused, as one strip.
   await expect(trace.locator('[data-kind="key"]')).toHaveCount(1);
@@ -144,7 +149,7 @@ test('the journey: a Console run opens its Logs row, its events in Webhooks, and
       .getByRole('button', { name: 'Open request' }),
   );
   await page.getByRole('menuitem', { name: 'Logs', exact: true }).click();
-  await page.waitForURL(/\/developers\/logs#/);
+  await page.waitForURL(/\/developers\/logs\?source=all#/);
   await openMenu(
     page,
     page

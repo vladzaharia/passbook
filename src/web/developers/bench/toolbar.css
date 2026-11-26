@@ -189,3 +189,19 @@
     height: 44px;
   }
 }
+
+/* What the tool keeps, and for how long: in the toolbar from 1180 px, under the list below it. */
+.bench-note {
+  margin: 12px 0 0;
+  color: var(--pk-text-subtle);
+  font-size: 12.5px;
+}
+.bench-note a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (min-width: 1180px) {
+  .bench-note {
+    display: none;
+  }
+}

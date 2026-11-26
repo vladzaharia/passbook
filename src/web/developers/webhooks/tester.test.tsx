@@ -123,6 +123,29 @@ async function addUrl(url: string) {
 const TYPES = ['pass.issued', 'pass.updated', 'webhook.test'];
 
 describe('Tester', () => {
+  it('keeps the tab the person picked when the list reads again', async () => {
+    let reads = 0;
+    const base = api([]);
+    const a: TesterApi = {
+      ...base,
+      // Every read answers with fresh objects, as a poll does.
+      captures: async () => {
+        reads += 1;
+        return [capture({ id: 'c1' })];
+      },
+    };
+    render(<Tester connect={ready(a)} types={TYPES} />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('tab', { name: 'Body' }));
+    expect(screen.getByRole('tab', { name: 'Body' })).toHaveAttribute('aria-selected', 'true');
+    const before = reads;
+    document.dispatchEvent(new Event('visibilitychange'));
+    await waitFor(() => expect(reads).toBeGreaterThan(before));
+    // Let the read land and the Verify check resolve.
+    await new Promise((r) => setTimeout(r, 100));
+    expect(screen.getByRole('tab', { name: 'Body' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('asks a signed-out visitor to sign in, and one without a sandbox to make it', async () => {
     const { unmount } = render(
       <Tester connect={async () => ({ kind: 'signed-out' })} types={TYPES} />,

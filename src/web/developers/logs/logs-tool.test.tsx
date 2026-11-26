@@ -39,7 +39,8 @@ describe('Logs on the bench', () => {
     expect(screen.getByRole('listbox', { name: 'Requests' })).toBeInTheDocument();
     expect(screen.getAllByText('2 requests')).toHaveLength(2);
     expect(within(rows()[1] as HTMLElement).getByText('NOT_FOUND')).toBeInTheDocument();
-    expect(screen.getByText(/Kept 7 days/)).toBeInTheDocument();
+    // In the toolbar from 1180 px, and again under the list below it (CSS shows one).
+    expect(screen.getAllByText(/Kept 7 days/)).toHaveLength(2);
     // Time is the org's zone (Pacific by default), not UTC: 22:15:52 UTC is 14:15:52 PST.
     expect(within(rows()[0] as HTMLElement).getByText('14:15:52')).toBeInTheDocument();
   });

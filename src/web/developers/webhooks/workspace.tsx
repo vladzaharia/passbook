@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
 import { BENCH_WEBHOOKS_COPY } from '../../../shared/copy/developers-bench-webhooks.ts';
 import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
+import { PATHS } from '../../../shared/developers.ts';
 import { pluralize } from '../../lib/format.ts';
 import { useMediaQuery } from '../../lib/media.ts';
 import { useBenchKeys } from '../bench/keys.ts';
@@ -232,6 +233,9 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
           ) : null
         }
       />
+      <p className="bench-note">
+        {C.note.kept} · <a href={`${PATHS.guides}/react-to-events`}>{C.note.types}</a>
+      </p>
       {managing ? (
         <ManageSheet
           endpoints={endpoints}

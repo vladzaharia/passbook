@@ -4,7 +4,7 @@ export const CONSOLE_COPY = {
   index: 'Operations',
   find: 'Find an operation',
   trigger: 'Operation',
-  noMatch: 'No operations match.',
+  noMatch: (query: string) => `No operations match “${query}”.`,
   clear: 'Clear search',
   reference: 'Reference',
   loadFailed: 'Could not load this operation',

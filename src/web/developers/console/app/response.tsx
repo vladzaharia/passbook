@@ -96,7 +96,10 @@ export function ResponseView({
         {o.requestId ? <IdChip id={o.requestId} kind="request" prefix="req" /> : null}
         <span className="push" />
         {o.requestId ? (
-          <a className="btn outline sm" href={`${PATHS.logs}#${encodeURIComponent(o.requestId)}`}>
+          <a
+            className="btn outline sm"
+            href={`${PATHS.logs}?source=all#${encodeURIComponent(o.requestId)}`}
+          >
             {C.viewInLogs}
           </a>
         ) : null}

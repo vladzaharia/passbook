@@ -83,7 +83,7 @@ describe('the response on the bench', () => {
     expect(screen.getAllByRole('button', { name: `Copy request id ${RID}` })).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'View in Logs' })).toHaveAttribute(
       'href',
-      `/developers/logs#${RID}`,
+      `/developers/logs?source=all#${RID}`,
     );
     // The Trace ends it: the request, as a chip that opens in Logs.
     expect(screen.getByRole('navigation', { name: 'Trace' })).toHaveTextContent('POST /passes 201');

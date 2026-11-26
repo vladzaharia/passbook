@@ -178,7 +178,7 @@ export function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string 
         open={indexOpen}
         onClose={() => setIndexOpen(false)}
         main={stage}
-        pane={<OpIndex items={shown} selection={pick} onClear={clear} />}
+        pane={<OpIndex items={shown} selection={pick} query={query} onClear={clear} />}
       />
     </>
   );

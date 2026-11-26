@@ -21,9 +21,12 @@ const groupOfOp = (op: IndexOp): string => op.group;
 export function OpIndex({
   items,
   selection,
+  query,
   onClear,
 }: {
   items: readonly IndexOp[];
+  /** What the search holds: the empty state names it. */
+  query: string;
   selection: BenchSelection<IndexOp>;
   onClear: () => void;
 }) {
@@ -47,7 +50,11 @@ export function OpIndex({
           ) : undefined,
         })}
         empty={
-          <LazyState scene="no-match" heading="p">
+          <LazyState
+            scene="no-match"
+            heading="p"
+            {...(query.trim() ? { title: CONSOLE_COPY.noMatch(query.trim()) } : {})}
+          >
             <button type="button" className="btn outline" onClick={onClear}>
               {CONSOLE_COPY.clear}
             </button>
