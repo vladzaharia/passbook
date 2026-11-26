@@ -161,9 +161,6 @@
     "description": "Stops an operation. A queued one stops at once; a running one stops at its next safe point and keeps the work already done. 409 when its kind cannot be stopped."
   },
   "operations.postOperationsByIdRetry": {
-    "request": {
-      "attempt": 1
-    },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-b0ad56dbc5b4",
       "kind": "bulk.run",

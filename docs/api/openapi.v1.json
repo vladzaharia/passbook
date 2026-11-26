@@ -101224,6 +101224,7 @@
           "resource": "operations",
           "method": "retrieve"
         },
+        "description": "Reads one long-running action: its status, steps with counts, the current line and any error. Send If-None-Match with the ETag to get 304 while nothing changed. An operation you cannot read answers 404.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
@@ -101478,6 +101479,7 @@
           "resource": "operations",
           "method": "list"
         },
+        "description": "Lists long-running actions. Without orgId it returns those you started and, for platform admins, platform operations; with orgId it adds that organization's operations your role or key scope can read. Newest first.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
@@ -101682,6 +101684,7 @@
           "resource": "operations",
           "method": "cancel"
         },
+        "description": "Stops an operation. A queued one stops at once; a running one stops at its next safe point and keeps the work already done. 409 when its kind cannot be stopped.",
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -101896,6 +101899,7 @@
           "resource": "operations",
           "method": "retry"
         },
+        "description": "Retries a failed operation under the same id with the next attempt. Steps already done stay done. Send an Idempotency-Key so a repeat answers the same operation.",
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
