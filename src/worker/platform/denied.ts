@@ -14,6 +14,7 @@ export interface DeniedEvent {
     | 'IDP_SIGN_IN_REQUIRED'
     | 'PLATFORM_KEY_REQUIRED'
     | 'PERSON_REQUIRED'
+    | 'KEY_CANNOT_ADMINISTER'
     | 'RATE_LIMITED';
   actorType: 'user' | 'api_key' | 'scanner';
   actorId: string;

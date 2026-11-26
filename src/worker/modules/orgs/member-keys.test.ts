@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
+import { createApp } from '../../app.ts';
+import { all, first, run } from '../../platform/db.ts';
+import { createAuthStores } from '../../stores.ts';
 import * as kit from '../api-keys/test-kit.ts';
 import { f, h, member, org } from '../api-keys/test-kit.ts';
 import * as repo from './repo-members.ts';
@@ -71,6 +74,36 @@ describe('invitations by key', () => {
     expect(
       await first(h.env.DB, 'SELECT 1 AS n FROM org_invitations WHERE org_id = ?', [org.id]),
     ).toBeNull();
+  });
+
+  it('audits a refused administering role as the key, in the org log, ids only', async () => {
+    const k = await writer();
+    const app = createApp({ stores: createAuthStores(h.env, h.clock), clock: h.clock });
+    const pending: Promise<unknown>[] = [];
+    const ctx = {
+      waitUntil: (p: Promise<unknown>) => pending.push(p),
+      passThroughOnException() {},
+    };
+    const res = await app.request(
+      `https://wallet.test${base()}/invitations`,
+      {
+        method: 'POST',
+        headers: { ...k.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'x@a.test', roles: ['org_admin'] }),
+      },
+      h.env,
+      ctx as never,
+    );
+    await Promise.allSettled(pending);
+    await expectProblem(res, 403, 'KEY_CANNOT_ADMINISTER');
+    const rows = await all<{ actor_id: string; detail: string }>(
+      h.env.DB,
+      "SELECT actor_id, detail FROM audit_log WHERE action = 'auth.denied' AND org_id = ? AND actor_type = 'api_key'",
+      [org.id],
+    );
+    expect(rows.map((r) => r.actor_id)).toEqual([k.id]);
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toMatchObject({ code: 'KEY_CANNOT_ADMINISTER' });
+    expect(rows[0]?.detail).not.toContain('x@a.test');
   });
 
   it('resends an operator invitation and refuses an admin one', async () => {
@@ -199,6 +232,27 @@ describe('who gets in', () => {
         [org.id],
       ),
     ).toBeNull();
+  });
+
+  it('refuses a key of no org, and the platform-key trigger refuses members scopes', async () => {
+    await expect(
+      makeApiKey(f(), {
+        orgId: null,
+        scopes: ['members:read'],
+        expiresAt: h.clock.now() + 30 * DAY,
+      }),
+    ).rejects.toThrow(/member scope on a platform key/);
+    // A forged row that skipped the trigger still reads nobody's members.
+    const forged = await withoutTrigger(h.env.DB, 'api_keys_platform_no_members', () =>
+      makeApiKey(f(), {
+        orgId: null,
+        scopes: ['members:read'],
+        expiresAt: h.clock.now() + 30 * DAY,
+      }),
+    );
+    await member('pass_operator');
+    for (const tail of ['memberships', 'invitations'])
+      expect((await h.call(`${base()}/${tail}`, { headers: forged.headers })).status).toBe(404);
   });
 
   it('never reaches the invitee and own-account routes', async () => {

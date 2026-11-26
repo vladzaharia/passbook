@@ -22,7 +22,8 @@ import {
   type SessionAuth,
 } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
+import { reportDenied } from '../../platform/denied.ts';
+import { AppError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
@@ -60,6 +61,18 @@ membershipRoutes.use('/invitations/accept', (c, next) =>
 );
 // The caller's own list is read by the account menu and the setup banner; an email link may read it.
 membershipRoutes.use('/memberships/me', requireHolderSession);
+
+// A key reaching for an administering role is an escalation attempt: audited as the key, in its org's log.
+membershipRoutes.use('/:id/*', async (c, next) => {
+  await next();
+  const auth = c.var.auth;
+  if (
+    auth?.kind === 'api_key' &&
+    c.error instanceof AppError &&
+    c.error.code === 'KEY_CANNOT_ADMINISTER'
+  )
+    reportDenied(c, 'KEY_CANNOT_ADMINISTER', auth);
+});
 
 const TAG = 'organization memberships';
 /** An administering role hands over the org's credentials: a session steps up, a key is refused in the service. */

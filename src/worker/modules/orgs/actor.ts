@@ -46,8 +46,8 @@ export async function managerOf(
 
 /**
  * An org route's caller. A session manages the org (`managerOf`: `members:manage`, or a platform admin acting on
- * it) and proves the route's `capability`. A key must be Live, in this org, and hold the scope behind `capability`,
- * checked here and again in the grant. Test keys and platform keys never get here.
+ * it) and proves the route's `capability`. A key must be Live, of this org, and hold the scope behind `capability`,
+ * checked here and again in the grant. Keys of no org and Test keys never get here.
  */
 export async function orgActorOf(
   ctx: ServiceContext,
@@ -70,9 +70,9 @@ export async function orgActorOf(
     };
   }
   if (auth.kind !== 'api_key') throw new UnauthenticatedError();
-  // Another org's key learns nothing about which orgs exist.
-  if (auth.orgId !== null && auth.orgId !== orgId)
-    throw new NotFoundError('Organization not found.');
+  // A key of no org (All organizations, or a platform key) is nobody's member list; another org's key learns nothing
+  // about which orgs exist.
+  if (auth.orgId !== orgId) throw new NotFoundError('Organization not found.');
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
   if (authority.kind !== 'api_key' || authority.mode !== 'live') throw new ForbiddenError();
   return {
