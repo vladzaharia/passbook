@@ -303,7 +303,12 @@ export default defineConfig(({ command }) => ({
           ? {
               // Appends to the file's services: the main Worker's IDP binding, to the aux Worker above (the plugin names it for the environment).
               services: [
-                { binding: 'IDP', service: 'polaris-binding-e2e', entrypoint: 'PolarisBinding' },
+                {
+                  binding: 'IDP',
+                  // The aux config's name (test/idp-e2e/wrangler.jsonc) plus the `-e2e` the plugin adds for the environment.
+                  service: 'polaris-binding-e2e-e2e',
+                  entrypoint: 'PolarisBinding',
+                },
               ],
               vars: {
                 ...c.vars,
