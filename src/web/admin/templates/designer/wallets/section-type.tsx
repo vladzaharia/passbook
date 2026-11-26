@@ -88,22 +88,36 @@ export function TypeSection({ env }: { env: WalletEnv }) {
                 )
               }
               description={
-                t === AUTO ? (
-                  `${typeLabel(target, auto)} for a ${style}`
-                ) : unmet.length > 0 ? (
-                  <span className="text-warning">
-                    {C.needs.replace('{needs}', unmet.map(needLabel).join(', '))}
-                  </span>
-                ) : asLoyalty ? (
-                  C.asLoyalty
-                ) : (
-                  <span className="inline-flex items-center gap-1">
-                    <Check aria-hidden className="size-3.5 shrink-0 text-success" />
-                    {slots.length > 0
-                      ? C.fits.replace('{slots}', slots.join(', '))
-                      : typeLabel(target, t)}
-                  </span>
-                )
+                <span className="flex flex-col gap-0.5">
+                  {t === AUTO ? (
+                    <span className="inline-flex items-center gap-1">
+                      {chosen === AUTO ? (
+                        <Check aria-hidden className="size-3.5 shrink-0 text-success" />
+                      ) : null}
+                      {`${typeLabel(target, auto)} for a ${style}`}
+                    </span>
+                  ) : unmet.length > 0 ? (
+                    <span className="text-warning">
+                      {C.needs.replace('{needs}', unmet.map(needLabel).join(', '))}
+                    </span>
+                  ) : asLoyalty ? (
+                    C.asLoyalty
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      {chosen === t ? (
+                        <Check aria-hidden className="size-3.5 shrink-0 text-success" />
+                      ) : null}
+                      {slots.length > 0
+                        ? C.fits.replace('{slots}', slots.join(', '))
+                        : typeLabel(target, t)}
+                    </span>
+                  )}
+                  {t !== AUTO && chosen === AUTO && t === auto ? (
+                    <span className="text-fg-subtle" data-auto-pick="">
+                      {C.autoPicks}
+                    </span>
+                  ) : null}
+                </span>
               }
               onSelect={(value) =>
                 edit({ op: 'wallets-type', target, type: value === AUTO ? null : value })

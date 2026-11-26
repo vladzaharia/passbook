@@ -41,7 +41,7 @@ export function WalletTileBody({ target, color, meta, status, off, source }: Wal
     <>
       <MiniCard target={target} color={color} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-        <span className="truncate text-sm font-medium text-fg-strong">
+        <span className="text-sm font-medium text-fg-strong [overflow-wrap:anywhere]">
           {target === 'apple' ? 'Apple Wallet' : walletName(target)}
         </span>
         <span className="truncate text-xs text-fg-muted">

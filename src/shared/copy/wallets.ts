@@ -161,6 +161,7 @@ export const WALLETS_COPY = {
   type: {
     fits: 'Own slots: {slots}',
     needs: 'Needs {needs}',
+    autoPicks: 'Automatic picks this',
     asLoyalty: 'Shown as loyalty for now.',
     googleClass: 'Google class',
     classOne: 'One for the template',

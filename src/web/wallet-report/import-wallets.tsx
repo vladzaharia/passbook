@@ -29,7 +29,7 @@ export function ImportWallets({
           />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-2 items-start">
         {TARGETS.map((target) => (
           <WalletReport
             key={target}

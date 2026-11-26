@@ -165,4 +165,22 @@ describe('the Wallets tab', () => {
     await screen.findByRole('radiogroup', { name: 'Wallet' }, SLOW);
     expect(screen.queryByRole('button', { name: /^Accept/ })).toBeNull();
   });
+
+  it('selects once in the type grid: Automatic is checked, Loyalty only says Automatic picks it', async () => {
+    const user = userEvent.setup();
+    renderTags(<Harness doc={storeCard()} />);
+    await user.click(await screen.findByRole('button', { name: /Samsung type/ }, SLOW));
+    const tiles = await screen.findByRole('radiogroup', { name: 'Samsung type' });
+    const radios = within(tiles).getAllByRole('radio') as HTMLInputElement[];
+    const checked = radios.filter((r) => r.checked);
+    expect(checked).toHaveLength(1);
+    expect(checked[0]?.closest('label')).toHaveTextContent('Automatic');
+    expect(checked[0]?.closest('label')?.querySelector('svg')).not.toBeNull();
+    const picked = radios
+      .map((r) => r.closest('label') as HTMLElement)
+      .filter((l) => l.querySelector('[data-auto-pick]'));
+    expect(picked).toHaveLength(1);
+    expect(picked[0]).toHaveTextContent('Automatic picks this');
+    expect(picked[0]?.querySelector('svg')).toBeNull();
+  });
 });
