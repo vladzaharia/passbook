@@ -1,4 +1,5 @@
 import { HOUR_MS, ignored, isoMs, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { woocommerceOrdersSetup } from './woocommerce-orders.setup.ts';
 
 // Order payload and statuses: https://woocommerce.github.io/woocommerce-rest-api-docs/#order-properties
 // Webhook topics, headers and the signature: https://woocommerce.com/document/webhooks/
@@ -43,6 +44,10 @@ export const woocommerceOrders: Recipe = {
   tolerateNonJson: true,
   topics: TOPICS,
   pasteSecret: true,
+  secretOrigin: 'passbook',
+  secretScope: 'connection',
+  line: 'Order or line item to pass. Voids when cancelled or refunded.',
+  setup: woocommerceOrdersSetup,
   outputFields: {
     orderId: { type: 'string' },
     orderNumber: { type: 'string' },

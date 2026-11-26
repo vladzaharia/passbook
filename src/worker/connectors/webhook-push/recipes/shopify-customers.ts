@@ -1,4 +1,5 @@
 import { HOUR_MS, ignored, isoMs, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { shopifyCustomersSetup } from './shopify-customers.setup.ts';
 
 const TOPICS = ['customers/create', 'customers/update'];
 
@@ -12,6 +13,10 @@ export const shopifyCustomers: Recipe = {
   windowMs: 48 * HOUR_MS,
   topics: TOPICS,
   pasteSecret: true,
+  secretOrigin: 'provider',
+  secretScope: 'account',
+  line: 'Customer to card.',
+  setup: shopifyCustomersSetup,
   outputFields: {
     email: { type: 'string' },
     firstName: { type: 'string' },

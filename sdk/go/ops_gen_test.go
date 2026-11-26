@@ -446,6 +446,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.setup.retrieve", "GET", "/api/v1/connections/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{},"values":{"endpointUrl":"x","signatureHeader":"x","timestampHeader":"x","hasSecret":false}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Setup.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"connections.sync", "POST", "/api/v1/connections/id1/sync", false,
 		"", `{"runId":"x","workflowInstanceId":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -499,6 +506,13 @@ var generatedOps = []opCase{
 		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"connectors.recipeSetup.retrieve", "GET", "/api/v1/connectors/webhook-push/recipes/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connectors.RecipeSetup.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -2200,6 +2214,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.WebhookEndpoints.EnsureCapture(ctx, &b)
+		},
+	},
+	{
+		"webhookEndpoints.setup.retrieve", "GET", "/api/v1/webhook-endpoints/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WebhookEndpoints.Setup.Retrieve(ctx)
 		},
 	},
 	{

@@ -1,8 +1,10 @@
+import type { SetupGuide } from '../../../../shared/contracts/connection-setup.ts';
 import type { RecipeId, RecipeInfo } from '../../../../shared/contracts/connections.ts';
 import { decodeJsonStrict } from '../../lib/decode.ts';
 import { BODY_FUTURE_SKEW_MS, VERIFIERS, webhookSecretsOf, withinWindow } from '../../lib/hmac.ts';
 import { type ConnectorContext, ConnectorError, type WebhookDelivery } from '../../types.ts';
 import { calcomBookings } from './calcom-bookings.ts';
+import { customSetup } from './custom.setup.ts';
 import type { Recipe, RecipeConfig } from './shared.ts';
 import { shopifyCustomers } from './shopify-customers.ts';
 import { shopifyOrders } from './shopify-orders.ts';
@@ -21,13 +23,40 @@ export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
   'tickettailor-tickets': tickettailorTickets,
 };
 
+/** Every sender's setup guide, `custom` included. */
+export const SETUP_GUIDES: Readonly<Record<RecipeId, SetupGuide>> = {
+  custom: customSetup,
+  'shopify-orders': shopifyOrders.setup,
+  'shopify-customers': shopifyCustomers.setup,
+  'stripe-subscriptions': stripeSubscriptions.setup,
+  'stripe-payments': stripePayments.setup,
+  'calcom-bookings': calcomBookings.setup,
+  'woocommerce-orders': woocommerceOrders.setup,
+  'tickettailor-tickets': tickettailorTickets.setup,
+};
+
 /** What the console lists: everything but the executable parts. */
 export const RECIPE_INFOS: readonly Omit<RecipeInfo, 'entitled'>[] = Object.values(RECIPES).map(
-  ({ id, label, category, pasteSecret, outputFields, mapping, holderEmailField, voidWhen }) => ({
+  ({
     id,
     label,
     category,
     pasteSecret,
+    line,
+    secretOrigin,
+    setup,
+    outputFields,
+    mapping,
+    holderEmailField,
+    voidWhen,
+  }) => ({
+    id,
+    label,
+    category,
+    pasteSecret,
+    line,
+    secretOrigin,
+    setupVersion: setup.version,
     outputFields,
     mapping,
     holderEmailField,

@@ -1799,6 +1799,113 @@ type ConnectionsRunsListResponseItemsItem struct {
 	DurationMs    *int64  `json:"durationMs"`
 }
 
+type ConnectionsSetupRetrieveResponse struct {
+	Direction       string                                        `json:"direction"`
+	Recipe          string                                        `json:"recipe"`
+	Version         string                                        `json:"version"`
+	CheckedAt       string                                        `json:"checkedAt"`
+	Provider        ConnectionsSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          ConnectionsSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   ConnectionsSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []ConnectionsSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            ConnectionsSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                             `json:"troubleshooting"`
+	Values          ConnectionsSetupRetrieveResponseValues        `json:"values"`
+}
+
+type ConnectionsSetupRetrieveResponseProvider struct {
+	Name       string                                             `json:"name"`
+	ConsoleURL *string                                            `json:"consoleUrl"`
+	Docs       []ConnectionsSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type ConnectionsSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type ConnectionsSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectionsSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                    `json:"perWebhook"`
+	Topics     []ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type ConnectionsSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type ConnectionsSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type ConnectionsSetupRetrieveResponseValues struct {
+	EndpointURL     *string `json:"endpointUrl"`
+	SignatureHeader *string `json:"signatureHeader"`
+	TimestampHeader *string `json:"timestampHeader"`
+	HasSecret       bool    `json:"hasSecret"`
+}
+
+type ConnectionsSetupRetrieveResult = ConnectionsSetupRetrieveResponse
+
 type ConnectionsSyncResponse struct {
 	RunID              string `json:"runId"`
 	WorkflowInstanceID string `json:"workflowInstanceId"`
@@ -2217,6 +2324,9 @@ type ConnectorsListItemRecipesItem struct {
 	Label            string                                                    `json:"label"`
 	Category         *string                                                   `json:"category,omitempty"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
+	Line             *string                                                   `json:"line,omitempty"`
+	SecretOrigin     *string                                                   `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                   `json:"setupVersion,omitempty"`
 	Entitled         bool                                                      `json:"entitled"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
@@ -2296,6 +2406,9 @@ type ConnectorsListResponseItemsItemRecipesItem struct {
 	Label            string                                                                 `json:"label"`
 	Category         *string                                                                `json:"category,omitempty"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
+	Line             *string                                                                `json:"line,omitempty"`
+	SecretOrigin     *string                                                                `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                                `json:"setupVersion,omitempty"`
 	Entitled         bool                                                                   `json:"entitled"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
@@ -2323,6 +2436,105 @@ type ConnectorsListResponseItemsItemRecipesItemVoidWhenItem struct {
 	Op     string `json:"op"`
 	Values []any  `json:"values,omitempty"`
 }
+
+type ConnectorsRecipeSetupRetrieveResponse struct {
+	Direction       string                                             `json:"direction"`
+	Recipe          string                                             `json:"recipe"`
+	Version         string                                             `json:"version"`
+	CheckedAt       string                                             `json:"checkedAt"`
+	Provider        ConnectorsRecipeSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          ConnectorsRecipeSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   ConnectorsRecipeSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []ConnectorsRecipeSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            ConnectorsRecipeSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                                  `json:"troubleshooting"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseProvider struct {
+	Name       string                                                  `json:"name"`
+	ConsoleURL *string                                                 `json:"consoleUrl"`
+	Docs       []ConnectorsRecipeSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                         `json:"perWebhook"`
+	Topics     []ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type ConnectorsRecipeSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type ConnectorsRecipeSetupRetrieveResult = ConnectorsRecipeSetupRetrieveResponse
 
 type ConnectorsRetrieveResponse struct {
 	Type         string                                                 `json:"type"`
@@ -2366,6 +2578,9 @@ type ConnectorsRetrieveResponseRecipesItem struct {
 	Label            string                                                            `json:"label"`
 	Category         *string                                                           `json:"category,omitempty"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
+	Line             *string                                                           `json:"line,omitempty"`
+	SecretOrigin     *string                                                           `json:"secretOrigin,omitempty"`
+	SetupVersion     *string                                                           `json:"setupVersion,omitempty"`
 	Entitled         bool                                                              `json:"entitled"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
@@ -15153,6 +15368,105 @@ type WebhookEndpointsSendTestParams struct {
 }
 
 type WebhookEndpointsSendTestResult = WebhookTestResult
+
+type WebhookEndpointsSetupRetrieveResponse struct {
+	Direction       string                                             `json:"direction"`
+	Recipe          string                                             `json:"recipe"`
+	Version         string                                             `json:"version"`
+	CheckedAt       string                                             `json:"checkedAt"`
+	Provider        WebhookEndpointsSetupRetrieveResponseProvider      `json:"provider"`
+	Secret          WebhookEndpointsSetupRetrieveResponseSecret        `json:"secret"`
+	Subscriptions   WebhookEndpointsSetupRetrieveResponseSubscriptions `json:"subscriptions"`
+	Steps           []WebhookEndpointsSetupRetrieveResponseStepsItem   `json:"steps"`
+	Test            WebhookEndpointsSetupRetrieveResponseTest          `json:"test"`
+	Troubleshooting map[string]string                                  `json:"troubleshooting"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseProvider struct {
+	Name       string                                                  `json:"name"`
+	ConsoleURL *string                                                 `json:"consoleUrl"`
+	Docs       []WebhookEndpointsSetupRetrieveResponseProviderDocsItem `json:"docs"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseProviderDocsItem struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSecret struct {
+	Origin     string  `json:"origin"`
+	AllowPaste bool    `json:"allowPaste"`
+	Prefix     *string `json:"prefix"`
+	MinLength  int64   `json:"minLength"`
+	WhereStep  *string `json:"whereStep"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItem struct {
+	ID       string `json:"id"`
+	Side     string `json:"side"`
+	Title    string `json:"title"`
+	Parts    []any  `json:"parts"`
+	Verified *bool  `json:"verified,omitempty"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem1 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem2 struct {
+	T     string   `json:"t"`
+	Items []string `json:"items"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem3 struct {
+	T      string  `json:"t"`
+	Label  string  `json:"label"`
+	Value  *string `json:"value,omitempty"`
+	Copy   *string `json:"copy,omitempty"`
+	Choose *bool   `json:"choose,omitempty"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem4 struct {
+	T string `json:"t"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem5 struct {
+	T    string `json:"t"`
+	Lang string `json:"lang"`
+	Code string `json:"code"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem6 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseStepsItemPartsItem7 struct {
+	T    string `json:"t"`
+	Text string `json:"text"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSubscriptions struct {
+	PerWebhook string                                                         `json:"perWebhook"`
+	Topics     []WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem `json:"topics"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseSubscriptionsTopicsItem struct {
+	ID       string  `json:"id"`
+	Label    *string `json:"label"`
+	Required bool    `json:"required"`
+	Verified bool    `json:"verified"`
+}
+
+type WebhookEndpointsSetupRetrieveResponseTest struct {
+	Kind    string  `json:"kind"`
+	Text    string  `json:"text"`
+	Command *string `json:"command"`
+	Issues  bool    `json:"issues"`
+}
+
+type WebhookEndpointsSetupRetrieveResult = WebhookEndpointsSetupRetrieveResponse
 
 type WebhookEndpointsTestsListResult = WebhookTestAttemptPage
 

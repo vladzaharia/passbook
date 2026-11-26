@@ -448,6 +448,14 @@
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
+    "key": "GET /api/v1/connections/{id}/setup new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdSetup",
+    "op": "GET /api/v1/connections/{id}/setup",
+    "change": "new operation",
+    "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
+  },
+  {
     "key": "GET /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.getConnectionsUploadsByFileId",
@@ -504,6 +512,30 @@
     "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -550,6 +582,38 @@
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.recipes[].entitled: field added",
     "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
+    "key": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup new operation",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+    "op": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+    "change": "new operation",
+    "note": "A sender's webhook setup guide as data: steps, topics, secret origin and fix lines. Steps with verified: false may differ at the sender."
   },
   {
     "key": "GET /api/v1/developer/access new operation",
@@ -2270,6 +2334,14 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/tests",
     "change": "new operation",
     "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/setup new operation",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsSetup",
+    "op": "GET /api/v1/webhook-endpoints/setup",
+    "change": "new operation",
+    "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
   },
   {
     "key": "GET /b/{token}/{passId} new operation",

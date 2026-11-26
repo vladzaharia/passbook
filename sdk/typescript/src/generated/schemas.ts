@@ -1465,6 +1465,81 @@ export type ConnectionsRunsListResponse = {
   nextCursor: string | null;
 };
 
+export type ConnectionsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
+  values: {
+    endpointUrl: string | null;
+    signatureHeader: string | null;
+    timestampHeader: string | null;
+    hasSecret: boolean;
+  };
+};
+
 export type ConnectionsSyncResponse = {
   runId: string;
   workflowInstanceId: string;
@@ -1780,6 +1855,9 @@ export type ConnectorsListResponse = {
       label: string;
       category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
+      line?: string;
+      secretOrigin?: "provider" | "passbook";
+      setupVersion?: string;
       entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
@@ -1802,6 +1880,75 @@ export type ConnectorsListResponse = {
     entitled: boolean;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectorsRecipeSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type ConnectorsRetrieveResponse = {
@@ -1836,6 +1983,9 @@ export type ConnectorsRetrieveResponse = {
     label: string;
     category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
+    line?: string;
+    secretOrigin?: "provider" | "passbook";
+    setupVersion?: string;
     entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
@@ -13499,6 +13649,75 @@ export type WebhookEndpointsRotateSecretResponse = {
 
 export type WebhookEndpointsSendTestParams = {
   type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+};
+
+export type WebhookEndpointsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type WebhookEndpointsUpdateParams = {

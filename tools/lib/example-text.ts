@@ -120,8 +120,19 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   connections: {
     // connectors/csv-url: what a test read.
     detail: ['3 rows. Columns: Booking ID, Name, Email, Plan, Valid until'],
+    // connectors/webhook-push/recipes: a setup guide's step and test lines.
+    text: [
+      'Shopify signs every webhook made in admin with one secret for the store.',
+      'Row menu, **Send test**. The sample may not be a real record, so no pass is issued.',
+    ],
   },
-  webhooks: {},
+  webhooks: {
+    // webhooks/setup-guide.ts: the receiving server's steps and test line.
+    text: [
+      'Use the raw bytes, not re-serialized JSON.',
+      'Send a test from PassBook. Done after one 2xx.',
+    ],
+  },
   messages: {
     'broadcast.message': [
       'The gym closes at 18:00 on 24 December.',
