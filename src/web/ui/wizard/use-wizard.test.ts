@@ -368,3 +368,45 @@ describe('useWizard', () => {
     expect(result.current.blocked).toBe(true);
   });
 });
+
+describe('useWizard locked steps', () => {
+  const locked = () =>
+    setup({ lockedBefore: 'c', lockedReason: 'Fixed.' }, { a: true, b: true, c: true });
+
+  it('opens at the first open step, marks earlier ones done and locked, and never goes back into them', () => {
+    const { result } = locked();
+    expect(result.current.id).toBe('c');
+    expect(result.current.first).toBe(true);
+    expect(result.current.steps.map((s) => [s.state, Boolean(s.locked)])).toEqual([
+      ['done', true],
+      ['done', true],
+      ['current', false],
+      ['todo', false],
+    ]);
+    expect(result.current.lockedReason).toBe('Fixed.');
+    act(() => result.current.back());
+    expect(result.current.id).toBe('c');
+    act(() => result.current.go('a'));
+    act(() => result.current.jump('b'));
+    expect(result.current.id).toBe('c');
+  });
+
+  it('ignores errors on a locked step, so they never block or mark it invalid', () => {
+    const { result } = setup({ lockedBefore: 'c' }, { c: true });
+    expect(result.current.blocked).toBe(false);
+    expect(result.current.steps[0]?.state).toBe('done');
+    expect(result.current.frame.steps.map((s) => Boolean(s.locked))).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  it('can be jumped into from a step that was open before it locked', () => {
+    const { result } = setup({}, { a: true, b: true, c: true });
+    expect(result.current.id).toBe('a');
+    act(() => result.current.jump('review'));
+    expect(result.current.id).toBe('review');
+  });
+});

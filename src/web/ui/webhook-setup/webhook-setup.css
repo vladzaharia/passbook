@@ -1,0 +1,48 @@
+/*
+ * The live check's motion. An arrival row slides in; the send lane carries a pulse from the buddy to
+ * the endpoint, then pops it (delivered) or shakes it (failed). Transform and opacity only, and
+ * nothing moves without the preference: the words and the ticks carry every state.
+ */
+@keyframes ws-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes ws-travel {
+  0% {
+    opacity: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  15%,
+  80% {
+    opacity: 1;
+    transform: translateX(calc((100cqw - 0.75rem) * 0.15)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(100cqw - 0.75rem)) scale(0.8);
+  }
+}
+@keyframes ws-land {
+  40% {
+    transform: scale(1.06);
+  }
+}
+.ws-lane {
+  container-type: inline-size;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ws-row-in {
+    animation: ws-row-in var(--wl-dur-enter) var(--wl-ease-move);
+  }
+  .ws-dot[data-state="sending"] {
+    animation: ws-travel 900ms var(--wl-ease-move) infinite;
+  }
+  .ws-chip[data-state="ok"] {
+    animation: ws-land 360ms var(--wl-ease-bounce);
+  }
+  .ws-chip[data-state="fail"] {
+    animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+  }
+}

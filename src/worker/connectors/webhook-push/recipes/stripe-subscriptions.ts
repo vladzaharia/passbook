@@ -1,5 +1,6 @@
 import { first, ignored, num, obj, type Recipe, record, str } from './shared.ts';
 import { idOf, isEvent, one, stripeEvent } from './stripe-shared.ts';
+import { stripeSubscriptionsSetup } from './stripe-subscriptions.setup.ts';
 
 const TYPES = [
   'customer.subscription.created',
@@ -19,6 +20,10 @@ export const stripeSubscriptions: Recipe = {
   windowMs: 0,
   topics: ['checkout.session.completed', ...TYPES.slice(1, 3)],
   pasteSecret: true,
+  secretOrigin: 'provider',
+  secretScope: 'connection',
+  line: 'Subscription to membership. Voids when cancelled.',
+  setup: stripeSubscriptionsSetup,
   outputFields: {
     status: { type: 'string' },
     currentPeriodEnd: { type: 'number', description: 'Epoch seconds.' },

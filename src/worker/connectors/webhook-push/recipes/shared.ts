@@ -1,4 +1,5 @@
 import type { Json } from '../../../../shared/contracts/common.ts';
+import type { SetupGuide } from '../../../../shared/contracts/connection-setup.ts';
 import type { RecipeId, RecipeInfo } from '../../../../shared/contracts/connections.ts';
 import type { UpstreamRecord, WebhookIgnoreKind } from '../../types.ts';
 
@@ -34,8 +35,20 @@ export interface RecipeOutcome {
   ignored?: WebhookIgnoreKind;
 }
 
-export interface Recipe extends Omit<RecipeInfo, 'id' | 'entitled'> {
+export interface Recipe
+  extends Omit<RecipeInfo, 'id' | 'entitled' | 'line' | 'secretOrigin' | 'setupVersion'> {
   id: Exclude<RecipeId, 'custom'>;
+  /** One line for the picker. */
+  line: string;
+  /** Who makes the signing secret. `pasteSecret` is what the service acts on today. */
+  secretOrigin: 'provider' | 'passbook';
+  /**
+   * `account`: the sender signs every webhook of one account with one key (Shopify), so connections of the
+   * same verifier family in one org may share a secret. Enforced by the secret-reuse guard.
+   */
+  secretScope: 'connection' | 'account';
+  /** The sender's side of the setup, served by `GET /connectors/webhook-push/recipes/{recipe}/setup`. */
+  setup: SetupGuide;
   verifier: 'shopify' | 'stripe' | 'calcom' | 'woocommerce' | 'tickettailor';
   /** The signed body may be something other than JSON (WooCommerce pings with a form body): adapt gets undefined. */
   tolerateNonJson?: boolean;
