@@ -64,14 +64,6 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
@@ -3966,14 +3958,6 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandbox",
-    "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "POST /api/v1/developer/sandbox response 201 removed",
     "class": "breaking",
     "operationId": "developer.postSandbox",
@@ -4005,14 +3989,6 @@
     "op": "POST /api/v1/developer/sandbox/key",
     "change": "new operation",
     "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
