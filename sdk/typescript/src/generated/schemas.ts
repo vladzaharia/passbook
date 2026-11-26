@@ -2916,6 +2916,7 @@ export type MembershipsListResponse = {
     revokedAt: number | null;
     userName: string | null;
     userEmail: string | null;
+    accessPaused?: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -2942,6 +2943,7 @@ export type MembershipsUpdateRolesResponse = {
   revokedAt: number | null;
   userName: string | null;
   userEmail: string | null;
+  accessPaused?: boolean;
 };
 
 export type MessageRulesCountDueParams = {

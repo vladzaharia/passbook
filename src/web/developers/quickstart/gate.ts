@@ -28,7 +28,10 @@ export function applyGate(el: HTMLElement, gate: Gate): void {
   title.textContent = copy.title;
   const line = document.createElement('p');
   line.className = 'sm muted';
-  line.textContent = copy.line;
+  line.textContent =
+    gate.reason === 'noaccess' && gate.invitedBy?.length
+      ? G.noaccess.invited(gate.invitedBy)
+      : copy.line;
   const actions = document.createElement('p');
   actions.className = 'row g2';
   if (gate.reason === 'email') {

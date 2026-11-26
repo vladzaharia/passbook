@@ -4928,6 +4928,7 @@ class MembershipsListResponseItemsItem(_Model):
     revokedAt: int | None
     userName: str | None
     userEmail: str | None
+    accessPaused: bool | None = None
 
 class MembershipsRevokeResponse(_Model):
     ok: _Literal[True]
@@ -4949,6 +4950,7 @@ class MembershipsUpdateRolesResponse(_Model):
     revokedAt: int | None
     userName: str | None
     userEmail: str | None
+    accessPaused: bool | None = None
 
 class MessageRulesCountDueParams(_Model):
     orgId: str

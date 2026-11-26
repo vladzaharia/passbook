@@ -1,7 +1,7 @@
 import { z } from 'zod';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 import { IdpRoleSchema } from './idp-ops.ts';
 import { OperationSchema } from './operations.ts';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 import { OrgRolesSchema } from './org-membership.ts';
 
 /** Mirrors the Polaris ID binding's limits (design 2 section 3.1); the binding enforces its own rules and key namespace. */

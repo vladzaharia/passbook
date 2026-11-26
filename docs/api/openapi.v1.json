@@ -23332,6 +23332,9 @@
                     "string",
                     "null"
                   ]
+                },
+                "accessPaused": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -23692,6 +23695,9 @@
               "string",
               "null"
             ]
+          },
+          "accessPaused": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -90334,6 +90340,12 @@
                     },
                     "signInUrl": {
                       "type": "string"
+                    },
+                    "invitedBy": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -90342,7 +90354,10 @@
                 },
                 "example": {
                   "access": "yes",
-                  "signInUrl": "https://passbook.mobile/login"
+                  "signInUrl": "https://passbook.mobile/login",
+                  "invitedBy": [
+                    "Northwind Climbing"
+                  ]
                 }
               }
             }
@@ -92802,6 +92817,7 @@
           "IDP_NOT_MANAGED",
           "IDP_REFUSED",
           "INVITATION_CLAIM_CAPPED",
+          "INVITATION_CONFLICT",
           "INVITATION_INVALID",
           "INVITATION_NO_ACCOUNT",
           "RATE_LIMITED",
@@ -93120,6 +93136,17 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVITATION_CONFLICT",
+          "INVITATION_EMAIL_MISMATCH",
+          "INVITATION_EMAIL_UNVERIFIED",
+          "INVITATION_INVALID",
+          "INVITATION_NOT_STARTED",
           "RATE_LIMITED",
           "VALIDATION"
         ]
@@ -95264,7 +95291,8 @@
                   "createdAt": 1794362400000,
                   "revokedAt": null,
                   "userName": "Sam Rivera",
-                  "userEmail": "sam@example.com"
+                  "userEmail": "sam@example.com",
+                  "accessPaused": false
                 }
               }
             }
@@ -135986,7 +136014,18 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_DRY_RUN",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "PLATFORM_INVITE_PENDING",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -136131,8 +136170,14 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "PLATFORM_INVITE_CONFLICT",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
@@ -136212,8 +136257,18 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_BUDGET",
+          "IDP_CONFLICT",
+          "IDP_DRY_RUN",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_REFUSED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "PLATFORM_INVITE_CONFLICT",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",

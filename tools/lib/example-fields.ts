@@ -93,6 +93,7 @@ const RULES: Rule[] = [
     'done',
   ],
   [/^developer\./, /^\.signInUrl$/, 'https://passbook.mobile/login'],
+  [/^developer\./, /^\.invitedBy$/, ['Northwind Climbing']],
   [/^developer\./, /^\.href$/, 'https://passbook.mobile/developers/logs'],
   [/^wallet-platform\..*Release$/, /^\.status$/, 'released'],
   // A print that is not voided has no void cause.

@@ -41,7 +41,10 @@ describe('login for Developers and Admin', () => {
 
   it.each([
     ['stepup', 'Sign in again to confirm it is you.'],
-    ['noaccess', 'This account has no access. Ask an administrator, or use another Polaris ID.'],
+    [
+      'noaccess',
+      'This account has no access. Ask an organization admin to invite you, or use another Polaris ID.',
+    ],
     ['ended', 'That pass has ended. Sign in to see your current passes.'],
   ])('says why for ?reason=%s', async (reason, line) => {
     await renderApp(`/login?reason=${reason}`, { session: 'anon' });

@@ -3461,6 +3461,7 @@ type MembershipsListResponseItemsItem struct {
 	RevokedAt    *int64   `json:"revokedAt"`
 	UserName     *string  `json:"userName"`
 	UserEmail    *string  `json:"userEmail"`
+	AccessPaused *bool    `json:"accessPaused,omitempty"`
 }
 
 type MembershipsRevokeResponse struct {
@@ -3485,6 +3486,7 @@ type MembershipsUpdateRolesResponse struct {
 	RevokedAt    *int64   `json:"revokedAt"`
 	UserName     *string  `json:"userName"`
 	UserEmail    *string  `json:"userEmail"`
+	AccessPaused *bool    `json:"accessPaused,omitempty"`
 }
 
 type MessageRulesCountDueBody = MessageRulesCountDueParams
