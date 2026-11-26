@@ -621,6 +621,12 @@
     "sdk": false,
     "reason": "Invitee flow on the invitation page; the secret and the invited person's own session are the credential."
   },
+  "invitations.postInvitationsConfirm": {
+    "resource": "invitationPage",
+    "method": "confirm",
+    "sdk": false,
+    "reason": "Invitee flow on the invitation page; the secret is the credential."
+  },
   "invitations.postInvitationsPreview": {
     "resource": "invitationPage",
     "method": "preview",

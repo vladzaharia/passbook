@@ -267,13 +267,7 @@ describe('step-up route inventory', () => {
         "DELETE /api/v1/platform/idp/groups/:key",
         "DELETE /api/v1/platform/idp/groups/:key/members/:id",
         "DELETE /api/v1/platform/idp/groups/:key/rules/:id",
-<<<<<<< HEAD
-||||||| merged common ancestors
-||||||||| ba53a6d4b
-=========
-=======
         "DELETE /api/v1/platform/invitations/:id",
->>>>>>> origin/feat/idp-ui-people
         "DELETE /api/v1/users/:id/holds/:role",
         "GET /api/v1/platform/idp/groups/:key/claims",
         "GET /api/v1/users/:id/claims",
@@ -314,13 +308,10 @@ describe('step-up route inventory', () => {
         "POST /api/v1/platform/idp/groups/ensure",
         "POST /api/v1/platform/idp/reconcile",
         "POST /api/v1/platform/idp/scim-breaker/clear",
-<<<<<<< HEAD
-||||||| merged common ancestors
->>>>>>>>> Temporary merge branch 2
-=======
         "POST /api/v1/platform/invitations",
         "POST /api/v1/platform/invitations/:id/resend",
->>>>>>> origin/feat/idp-ui-people
+        "POST /api/v1/platform/invitations",
+        "POST /api/v1/platform/invitations/:id/resend",
         "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
         "POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready",
         "POST /api/v1/users/:id/emails",

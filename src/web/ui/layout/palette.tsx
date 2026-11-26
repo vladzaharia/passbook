@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Globe, RefreshCw, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useIdpConnected } from '@/web/admin/idp/status-queries.ts';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { api } from '../../lib/api.ts';
@@ -93,7 +94,8 @@ export function AdminPalette({
     enabled: searching && platformReady && term.length >= 2,
     staleTime: 15_000,
   });
-  const nav = adminNavGroups(adminScope, platformReady, membership).flat();
+  const polaris = useIdpConnected();
+  const nav = adminNavGroups(adminScope, platformReady, membership, { polaris }).flat();
   const orgName = new Map(memberships.map((item) => [item.orgId, item.orgName]));
   const go = (to: string, search?: Record<string, string>) => () => void navigate({ to, search });
   const here = (rest: string) => (orgId ? orgPath(orgId, rest) : rest);
