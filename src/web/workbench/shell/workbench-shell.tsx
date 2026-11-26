@@ -210,8 +210,15 @@ function Shell({
       </>
     ),
     tone,
-    // Signed out, the one Sign in is the sidebar card or the stage state, never a second in the bar.
-    account: signedOut ? null : (
+    // Signed out there is one Sign in per view: the stage state, or on Design and Quickstart the
+    // sidebar card from 1024 and this bar's button below it (the card sits in the closed sheet).
+    account: signedOut ? (
+      signedOutNext ? (
+        <div className="lg:hidden">
+          <UserMenu />
+        </div>
+      ) : null
+    ) : (
       <UserMenu
         extra={
           <Suspense fallback={null}>

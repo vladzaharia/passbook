@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WB_TOOLS } from '@/shared/workbench.ts';
 import { json, renderApp } from '../../lib/test-utils.tsx';
@@ -150,5 +151,84 @@ describe('the runtime boundary (R4 M7, L14)', () => {
     await waitFor(() => expect(apiCalls(fetchMock).length).toBeGreaterThan(0));
     for (const { path: p, init } of apiCalls(fetchMock))
       expect(headerOf(init).authorization, p).toBe(`Bearer pbtry_${CONTEXTS.sandbox.orgId}`);
+  });
+});
+
+describe('more of the boundary (R4 N3)', () => {
+  it('Quickstart in the sandbox: every tenant call carries the token', async () => {
+    const { fetchMock } = await renderApp('/workbench/quickstart', {
+      session: 'developer',
+      handlers: handlers(),
+    });
+    await waitFor(() => expect(screen.getByRole('main')).toHaveTextContent('Quickstart'));
+    await waitFor(() => expect(apiCalls(fetchMock).length).toBeGreaterThan(0));
+    for (const { path: p, init } of allCalls(fetchMock)) {
+      expect(
+        Object.keys(headerOf(init)).filter((h) => /mode/i.test(h)),
+        p,
+      ).toEqual([]);
+      if (!SESSION_PATHS.has(p)) expect(headerOf(init).authorization, p).toBe('Bearer pbtry_sbx');
+    }
+  });
+
+  it('signed-out Design makes no call but the session read', async () => {
+    const { fetchMock } = await renderApp('/workbench/design', {
+      session: 'anon',
+      handlers: handlers(),
+    });
+    await screen.findByRole('heading', { name: 'Design', level: 1 });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(allCalls(fetchMock).map(({ path: p }) => p)).toEqual(['/api/v1/session']);
+  });
+
+  it("the tray's Retry and Cancel go through the token", async () => {
+    const failed = {
+      ...running('op_failed', 'NW failed job', 'nw', 'test'),
+      status: 'failed' as const,
+      cancelable: false,
+      error: { code: 'internal', message: 'It broke.', retryable: true },
+      finishedAt: Date.now(),
+      updatedAt: Date.now(),
+    } as Operation;
+    const live = running('op_run', 'NW running job', 'nw', 'test');
+    const posts: string[] = [];
+    const post = (id: string) => (_u: URL, init?: RequestInit) => {
+      posts.push(`${id}:${String(init?.method)}`);
+      return json({ operation: { ...live, id } });
+    };
+    const { fetchMock } = await renderApp('/workbench/o/nw/activity', {
+      session: 'developer',
+      handlers: {
+        ...handlers(),
+        '/api/v1/operations': () => json({ items: [live, failed] }),
+        '/api/v1/operations/op_run': () => json(live),
+        '/api/v1/operations/op_failed': () => json(failed),
+        '/api/v1/operations/op_run/cancel': post('op_run'),
+        '/api/v1/operations/op_failed/retry': post('op_failed'),
+      },
+    });
+    const tray = await screen.findByRole('button', { name: /^Activity, 1 running/ });
+    await userEvent.click(tray);
+    await userEvent.click(await screen.findByText(/NW running job/));
+    await userEvent.click(await screen.findByRole('button', { name: 'Stop' }));
+    await waitFor(() => expect(posts).toContain('op_run:POST'));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(await screen.findByRole('button', { name: /^Activity, / }));
+    await waitFor(() =>
+      expect(document.querySelector('[data-radix-popper-content-wrapper]')).not.toBeNull(),
+    );
+    const popover = document.querySelector('[data-radix-popper-content-wrapper]') as HTMLElement;
+    await userEvent.click((await within(popover).findAllByText(/NW failed job/))[0] as HTMLElement);
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(posts).toContain('op_failed:POST'));
+    for (const { path: p, init } of apiCalls(fetchMock).filter(
+      ({ init: i }) => i.method === 'POST',
+    )) {
+      expect(headerOf(init).authorization, p).toBe('Bearer pbtry_nw');
+      expect(
+        Object.keys(headerOf(init)).some((h) => /mode|csrf/i.test(h)),
+        p,
+      ).toBe(false);
+    }
   });
 });

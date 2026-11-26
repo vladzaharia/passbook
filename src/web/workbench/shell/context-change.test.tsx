@@ -162,6 +162,12 @@ describe('the nav and the bar', () => {
     expect(screen.getAllByRole('link', { name: /^Sign in/ })).toHaveLength(1);
   });
 
+  it('N1: signed out on Design, a visible Sign in stays in the bar below 1024', async () => {
+    await renderApp('/workbench/design', { session: 'anon', handlers: handlers() });
+    const signIn = await screen.findByRole('link', { name: 'Sign in' });
+    expect(signIn.closest('.lg\\:hidden')).not.toBeNull();
+  });
+
   it('L2: Mark seen waits for the server time', async () => {
     await renderApp('/workbench/o/sbx/logs', {
       session: 'developer',
