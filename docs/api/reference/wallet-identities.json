@@ -80,7 +80,17 @@
           "managed": "connector",
           "registrationCount": 8,
           "openRunId": "0193a1b2-7c00-7000-8000-000000000023",
-          "dormant": false
+          "dormant": false,
+          "readiness": {
+            "eligible": false,
+            "certificate": false,
+            "issuing": true,
+            "pushHealthy": false,
+            "pushProbeAt": 1795570500000,
+            "pushProbeFresh": false,
+            "deviceTest": false,
+            "ready": false
+          }
         }
       ],
       "openRuns": [
