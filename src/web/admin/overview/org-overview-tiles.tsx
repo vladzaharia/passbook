@@ -74,7 +74,7 @@ export function OrgTiles({
     <ul
       aria-label="Totals"
       className={cn(
-        'grid grid-cols-2 gap-3 md:grid-cols-6 xl:grid-cols-5 md:[&>li]:col-span-2 md:[&>li:nth-child(4)]:col-start-2 xl:[&>li]:col-span-1 xl:[&>li:nth-child(4)]:col-start-auto',
+        'grid grid-cols-2 gap-3 max-md:[&>li:last-child:nth-child(odd)]:col-span-2 md:grid-cols-6 xl:grid-cols-5 md:[&>li]:col-span-2 md:[&>li:nth-child(n+4)]:col-span-3 xl:[&>li]:col-span-1 xl:[&>li:nth-child(n+4)]:col-span-1',
         enter && 'wl-stagger',
       )}
     >
