@@ -2367,7 +2367,6 @@
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
   "me post /passes/{id}/lost-phone/confirmation": [
-    "EMAIL_RATE_LIMITED",
     "NO_RECIPIENT",
     "PASS_NOT_FOUND",
     "PASS_VOIDED",
