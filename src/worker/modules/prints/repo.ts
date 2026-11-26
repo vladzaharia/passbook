@@ -43,6 +43,23 @@ export async function listPrints(
   return rows.map((r) => toPrint(r, hash));
 }
 
+/**
+ * The pass id a print's code was made for: the print's own pass unless a move re-pointed it to a replacement,
+ * which keeps the code on paper valid.
+ */
+export async function codePassIdOf(
+  db: D1Database,
+  printId: string,
+  passId: string,
+): Promise<string> {
+  const row = await first<{ code_pass_id: string | null }>(
+    db,
+    'SELECT code_pass_id FROM pass_prints WHERE id = ?',
+    [printId],
+  );
+  return row?.code_pass_id ?? passId;
+}
+
 export async function activePrint(
   db: D1Database,
   passId: string,

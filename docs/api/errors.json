@@ -1990,6 +1990,42 @@
       ]
     },
     {
+      "code": "IDENTITY_MOVE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARAMS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARTIAL",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_SAME",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_NOT_CONFIGURED",
       "statuses": [
         404
@@ -3649,6 +3685,15 @@
     },
     {
       "code": "PASS_REMOVED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_REPLACED",
       "statuses": [
         409
       ],

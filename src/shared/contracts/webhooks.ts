@@ -10,6 +10,7 @@ export const WEBHOOK_EVENT_TYPES = [
   'pass.unvoided',
   'pass.removed',
   'pass.restored',
+  'pass.replaced',
   'pass.installed',
   'pass.uninstalled',
   'pass.scanned',
@@ -121,6 +122,8 @@ export const WEBHOOK_DATA_SCHEMAS = {
     voided: Version.optional(),
   }),
   'pass.print_voided': z.object({ printId: Str, cause: Str.nullable().optional() }),
+  /** The pass was replaced by another on a new signing identity; `replacedBy` is its id. */
+  'pass.replaced': z.object({ replacedBy: Str }),
   'push.failed': z.object({
     version: Version.optional(),
     status: z.number().int().optional(),
@@ -170,6 +173,7 @@ export const WebhookEventSchema = z.discriminatedUnion('type', [
   envelope('pass.channels_changed', P),
   envelope('pass.printed', P),
   envelope('pass.print_voided', P),
+  envelope('pass.replaced', P),
   envelope('push.failed', P),
   envelope('email.failed', P),
   envelope('webhook.test', z.null()),

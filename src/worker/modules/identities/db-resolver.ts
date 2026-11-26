@@ -186,12 +186,15 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
       }
       const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
       if (orgDefault) {
-        const identity = await scoped(orgDefault);
-        const refused = await refusal(env, identity.id, now);
-        if (!refused) return identity;
+        // The refusal comes before the material: a retired legacy row whose env material is gone cannot resolve.
+        const refused = await refusal(env, orgDefault, now);
+        if (!refused) return scoped(orgDefault);
         // Only a retired default hands over to the next one: a pass never changes identity, so an
         // expired one must refuse instead of quietly issuing under another pass type.
-        if (refused.code !== 'IDENTITY_RETIRED') throw refused;
+        if (refused.code !== 'IDENTITY_RETIRED') {
+          await scoped(orgDefault);
+          throw refused;
+        }
       }
       const fallback = await getDefaultRow(env.DB);
       if (fallback && fallback.purpose !== 'passes') throw notFound();

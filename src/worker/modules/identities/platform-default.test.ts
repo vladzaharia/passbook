@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { makeOrg, makePass, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
 import type { Actor } from '../../platform/context.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
+import { checkIdentityRow } from './check.ts';
 import { resolveDefaultPlatform } from './db-resolver.ts';
 import { setPlatformDefault } from './platform-default.ts';
 import { getIdentityRow } from './repo.ts';
@@ -55,19 +57,43 @@ async function slotRow(
   return id;
 }
 
-/** The owner's device test: a pass signed by the identity that a device registered. */
-async function deviceTest(identityId: string) {
-  const pass = await kit.pass();
+/** A platform admin's personal org, which holds the passes of the owner's device test. */
+async function personalOrg(): Promise<string> {
+  const user = await makeUser(kit.fx);
+  return (await makeOrg(kit.fx, { personalUserId: user.id })).id;
+}
+
+/** A push probe the daily job recorded for the identity, `ago` ms back. */
+const probed = (identityId: string, ago = 0) =>
+  run(
+    kit.env.DB,
+    `INSERT INTO audit_log (org_id, actor_type, action, target_type, target_id, at)
+     VALUES (NULL, 'system', 'identity.apns_probe', 'identity', ?, ?)`,
+    [identityId, kit.clock.now() - ago],
+  );
+
+/** A pass in `orgId` that `deviceId` registered under `identityId`, the way Wallet records it. */
+async function registerOn(identityId: string, deviceId: string, orgId = kit.org.id) {
+  const pass = await makePass(kit.fx, { orgId, template: makeTemplate().resolved });
   await run(
     kit.env.DB,
     'INSERT INTO devices (device_id, identity_id, push_token, updated_at) VALUES (?, ?, ?, ?)',
-    ['dev-1', identityId, 't', kit.clock.now()],
+    [deviceId, identityId, 't', kit.clock.now()],
   );
   await run(
     kit.env.DB,
     'INSERT INTO registrations (device_id, identity_id, pass_id, created_at) VALUES (?, ?, ?, ?)',
-    ['dev-1', identityId, pass.id, kit.clock.now()],
+    [deviceId, identityId, pass.id, kit.clock.now()],
   );
+}
+
+/**
+ * The owner's device test: a pass signed by the identity, in a personal org, that a device registered, and a
+ * push probe within the day.
+ */
+async function deviceTest(identityId: string, over: { orgId?: string; probe?: boolean } = {}) {
+  if (over.probe !== false) await probed(identityId);
+  await registerOn(identityId, 'dev-1', over.orgId ?? (await personalOrg()));
 }
 
 const flags = (id: string) =>
@@ -82,6 +108,7 @@ beforeEach(async () => {
   kit = await setupKit();
   await run(kit.env.DB, 'DELETE FROM registrations');
   await run(kit.env.DB, 'DELETE FROM devices');
+  await run(kit.env.DB, "DELETE FROM audit_log WHERE action = 'identity.apns_probe'");
   await run(kit.env.DB, "DELETE FROM signing_identities WHERE id LIKE 'slot-%'");
   await run(kit.env.DB, "DELETE FROM credentials WHERE id LIKE 'cred-slot-%'");
   await run(
@@ -125,6 +152,34 @@ describe('setPlatformDefault', () => {
       await expect(setPlatformDefault(kit.ctx, actor, id)).rejects.toMatchObject(notReady);
     }
     expect(await flags('platform')).toEqual({ is_default: 1, issuing: 1 });
+  });
+
+  it("refuses a device test made in an ordinary org, not a platform admin's personal one (L6)", async () => {
+    const id = await slotRow();
+    await deviceTest(id, { orgId: kit.org.id });
+    await expect(setPlatformDefault(kit.ctx, actor, id)).rejects.toMatchObject(notReady);
+    expect(await flags('platform')).toEqual({ is_default: 1, issuing: 1 });
+  });
+
+  it('refuses a push probe older than a day, or none, and the batch re-checks it (L6)', async () => {
+    const id = await slotRow();
+    const stale = { ...notReady, message: expect.stringContaining('Push was not checked') };
+    await deviceTest(id, { probe: false });
+    await expect(setPlatformDefault(kit.ctx, actor, id)).rejects.toMatchObject(stale);
+    await probed(id, 25 * 3_600_000);
+    await expect(setPlatformDefault(kit.ctx, actor, id)).rejects.toMatchObject(stale);
+    // The probe goes stale between the read and the write: the batch changes nothing.
+    await probed(id, 23 * 3_600_000);
+    const row = await getIdentityRow(kit.env.DB, id);
+    if (!row) throw new Error('missing row');
+    const later = kit.clock.now() + 2 * 3_600_000;
+    expect(
+      await switchDefault(kit.env.DB, kit.ctx, row, later, {
+        actorType: 'system',
+        action: 'identity.platform_default_changed',
+      }),
+    ).toBe(false);
+    expect(await setPlatformDefault(kit.ctx, actor, id)).toEqual({ changed: true });
   });
 
   it('refuses without the device test (no registered device)', async () => {
@@ -241,6 +296,39 @@ describe('after the flip', () => {
     });
     // New passes resolve through the default row, never the removed env material.
     await expect(resolveDefaultPlatform(env)).rejects.not.toMatchObject({
+      code: 'IDENTITY_RETIRED',
+    });
+  });
+
+  it('an org pinned to the retired platform row issues under the new default (M4)', async () => {
+    const id = await slotRow();
+    await deviceTest(id);
+    await setPlatformDefault(kit.ctx, actor, id);
+    await run(kit.env.DB, "UPDATE orgs SET default_identity_id = 'platform' WHERE id = ?", [
+      kit.org.id,
+    ]);
+    const env = stripEnv();
+    // It falls through to the new default's row (whose test key cannot decrypt), not to IDENTITY_RETIRED.
+    await expect(
+      createIdentityResolver(env).forOrg(kit.org.id, undefined, kit.clock.now()),
+    ).rejects.toMatchObject({ code: 'IDENTITY_KEY_UNREADABLE' });
+    // A named identity still refuses: the caller asked for the retired row.
+    await expect(
+      createIdentityResolver(env).forOrg(kit.org.id, 'platform', kit.clock.now()),
+    ).rejects.toMatchObject({ code: 'IDENTITY_RETIRED' });
+  });
+
+  it('the daily check keeps a retired row failing while a device still holds a pass on it (L7)', async () => {
+    const id = await slotRow();
+    await deviceTest(id);
+    await setPlatformDefault(kit.ctx, actor, id);
+    const ctx = { ...kit.ctx, env: stripEnv() };
+    const retired = await getIdentityRow(kit.env.DB, 'platform');
+    if (!retired) throw new Error('missing row');
+    expect(await checkIdentityRow(ctx, retired)).toMatchObject({ ok: true });
+    await registerOn('platform', 'dev-legacy');
+    expect(await checkIdentityRow(ctx, retired)).toMatchObject({
+      ok: false,
       code: 'IDENTITY_RETIRED',
     });
   });

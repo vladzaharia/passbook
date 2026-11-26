@@ -46,6 +46,7 @@ const DATA: Record<string, object> = {
   'pass.channels_changed': { channel: 'apple', from: 'on', to: 'off', source: 'template' },
   'pass.printed': { printId: 'pr1', generation: 2, voided: 1 },
   'pass.print_voided': { printId: 'pr1', cause: 'holder_change' },
+  'pass.replaced': { replacedBy: 'p2' },
   'push.failed': { version: 2, status: 410, reason: 'Unregistered', code: 'X' },
   'email.failed': { code: 'EMAIL_OUTCOME_UNKNOWN' },
   'webhook.test': {},

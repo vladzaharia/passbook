@@ -4,6 +4,7 @@ import { PassStampsActionSchema } from '../../../shared/contracts/stamps.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { actorFor, authOf, passScopeOf, svc } from './http.ts';
 import { tenantPassForWrite } from './pass-access.ts';
+import { forwardedId } from './pass-replaced.ts';
 import { stampPass } from './stamps.ts';
 
 export function registerStampsRoutes(router: ReturnType<typeof createRouter>) {
@@ -20,7 +21,7 @@ export function registerStampsRoutes(router: ReturnType<typeof createRouter>) {
     },
     async (c) => {
       const ctx = svc(c);
-      const id = c.req.valid('param').id;
+      const id = await forwardedId(ctx.env.DB, c.req.valid('param').id);
       const { scope, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       const detail = await stampPass(ctx, actorFor(c), id, c.req.valid('json'), {
         scope,

@@ -12,17 +12,37 @@ function readySql(legacy: boolean): string {
   if (legacy) return `id = '${PLATFORM_IDENTITY_ID}' AND source = 'env' AND ${live}`;
   return `id <> '${PLATFORM_IDENTITY_ID}' AND org_id IS NULL AND purpose = 'passes' AND issuing = 1
     AND apns_health = 'healthy' AND ${live}
-    AND EXISTS (SELECT 1 FROM registrations r WHERE r.identity_id = signing_identities.id)`;
+    AND EXISTS (SELECT 1 FROM audit_log a WHERE a.target_type = 'identity' AND a.target_id = signing_identities.id
+      AND a.action = 'identity.apns_probe' AND a.at >= ?)
+    AND ${DEVICE_TEST}`;
 }
 
-/** Devices that registered a pass signed by this identity: the owner's device test (O5). */
-export async function registeredDeviceCount(db: D1Database, identityId: string): Promise<number> {
-  const row = await first<{ n: number }>(
+/** The owner's device test: a registration of a pass in a platform admin's personal org, signed by the row. */
+const DEVICE_TEST = `EXISTS (SELECT 1 FROM registrations r JOIN passes p ON p.id = r.pass_id
+    JOIN orgs o ON o.id = p.org_id
+    WHERE r.identity_id = signing_identities.id AND o.personal_user_id IS NOT NULL)`;
+
+/** True while any device still registers a pass signed by this identity. */
+export async function hasRegistrations(db: D1Database, identityId: string): Promise<boolean> {
+  const row = await first<{ ok: number }>(
     db,
-    'SELECT count(*) AS n FROM (SELECT 1 FROM registrations WHERE identity_id = ? LIMIT 1)',
+    'SELECT 1 AS ok FROM registrations WHERE identity_id = ? LIMIT 1',
     [identityId],
   );
-  return row?.n ?? 0;
+  return row !== null;
+}
+
+/** A push probe must be this fresh for a flip. */
+export const PROBE_FRESH_MS = 86_400_000;
+
+/** True when the owner's device test (O5) passed: a platform admin's own device registered a pass of the row. */
+export async function deviceTestPassed(db: D1Database, identityId: string): Promise<boolean> {
+  const row = await first<{ ok: number }>(
+    db,
+    `SELECT 1 AS ok FROM signing_identities WHERE id = ? AND ${DEVICE_TEST}`,
+    [identityId],
+  );
+  return row !== null;
 }
 
 /**
@@ -40,20 +60,22 @@ export async function switchDefault(
 ): Promise<boolean> {
   const legacy = target.id === PLATFORM_IDENTITY_ID;
   const ready = readySql(legacy);
+  // The legacy row's checks take the time once; a new default's also take the cut-off for its push probe.
+  const readyArgs = legacy ? [now] : [now, now - PROBE_FRESH_MS];
   const isDefault = 'EXISTS (SELECT 1 FROM signing_identities WHERE id = ? AND is_default = 1)';
   const results = await batch(db, [
     stmt(
       db,
       `UPDATE signing_identities SET is_default = 0
        WHERE is_default = 1 AND EXISTS (SELECT 1 FROM signing_identities WHERE id = ? AND ${ready})`,
-      [target.id, now],
+      [target.id, ...readyArgs],
     ),
     stmt(
       db,
       `UPDATE signing_identities SET is_default = 1, issuing = 1
        WHERE id = ? AND is_default = 0 AND ${ready}
          AND NOT EXISTS (SELECT 1 FROM signing_identities WHERE is_default = 1)`,
-      [target.id, now],
+      [target.id, ...readyArgs],
     ),
     ...(legacy
       ? []

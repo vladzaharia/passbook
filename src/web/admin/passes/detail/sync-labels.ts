@@ -9,6 +9,7 @@ export const SINGLE_TITLE: Record<string, string> = {
   'pass.channels_changed': 'Channels changed',
   'pass.printed': 'Printed',
   'pass.print_voided': 'Print voided',
+  'pass.replaced': 'Replaced by a new pass',
   'email.queued': 'Email queued',
   'email.sent': 'Email sent',
   'email.failed': 'Email failed',
