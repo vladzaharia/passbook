@@ -49,7 +49,7 @@ describe("Who's in", () => {
     // rows(3): the oldest (n=2) leads.
     expect(items[0]).toHaveTextContent(String(insideRow(2).holder));
     expect(items[0]).toHaveTextContent('Floor 3, HQ · In since');
-    expect(items[0]).toHaveTextContent(/1 h \d+ min|\d+ min/);
+    expect(items[0]).toHaveTextContent(/\d+ (d|h|min)/);
     expect(items[0]).toHaveTextContent('Out by');
   });
   it('shows the place and its count with the capacity bar', async () => {

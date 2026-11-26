@@ -240,3 +240,10 @@
     height: 46px;
   }
 }
+
+/* A disabled button stays readable on the card: muted text on the gray fill, not a dimmed primary. */
+.scan-boot-card button:disabled {
+  background: var(--sd-fill-gray);
+  color: var(--sd-muted);
+  opacity: 1;
+}

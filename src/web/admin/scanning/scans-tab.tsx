@@ -144,6 +144,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
         columns={columns}
         loading={query.isPending}
         getRowId={(row) => row.id}
+        onRowClick={setSelected}
         empty={
           <EmptyState
             art="activity"

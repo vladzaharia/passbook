@@ -64,21 +64,23 @@ export function InsidePanel({
         value={state.place}
         onPick={inside.setPlace}
       />
-      <div className="scan-in-search">
-        <Search aria-hidden size={18} />
-        <ScanTextField
-          type="search"
-          aria-label={ACCESS_COPY.inside.search}
-          placeholder={ACCESS_COPY.inside.search}
-          value={state.q}
-          onChange={(e) => inside.setQuery(e.target.value)}
-          onValueRestore={inside.setQuery}
-          autoComplete="off"
-          spellCheck={false}
-          maxLength={INSIDE_Q_MAX}
-          data-scan-code
-        />
-      </div>
+      {searching || state.rows.length > 0 ? (
+        <div className="scan-in-search">
+          <Search aria-hidden size={18} />
+          <ScanTextField
+            type="search"
+            aria-label={ACCESS_COPY.inside.search}
+            placeholder={ACCESS_COPY.inside.search}
+            value={state.q}
+            onChange={(e) => inside.setQuery(e.target.value)}
+            onValueRestore={inside.setQuery}
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={INSIDE_Q_MAX}
+            data-scan-code
+          />
+        </div>
+      ) : null}
       {stale && state.asOf !== null ? (
         <p className="scan-chip scan-in-asof" data-tone="slate" role="status">
           <CloudOff aria-hidden size={14} />

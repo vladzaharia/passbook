@@ -72,12 +72,12 @@ export function HoursBanner({
     ? `Held open until ${w.closesAt ? at(w.closesAt) : 'further notice'}. Then the hours resume.`
     : w.by === 'hold'
       ? `Closed by hand${w.opensAt ? ` until ${at(w.opensAt)}` : ''}. Then the hours resume.`
-      : 'Closed outside its hours. Scanning starts by itself when they do.';
+      : null;
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-sunken p-4">
-      <p className="text-sm">{text}</p>
+      {text ? <p className="text-sm">{text}</p> : null}
       {canManage ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           {w.open ? (
             <Button variant="outline" onClick={() => onDialog('hold-close')}>
               Close now

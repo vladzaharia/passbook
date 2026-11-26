@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import type { DesignDoc } from '../model.ts';
 import { ScanStage } from './scan-stage.tsx';
+import { forgetStageMemory } from './scan-stage-memory.ts';
 import { fixture, frame, frameReady, Stage } from './scan-stage-test-fixtures.ts';
+
+beforeEach(forgetStageMemory);
 
 afterEach(() => vi.unstubAllGlobals());
 

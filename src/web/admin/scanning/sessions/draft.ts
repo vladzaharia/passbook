@@ -130,7 +130,7 @@ export const sessionRuleLabel = (s: ScanningSession) =>
         unlimited: 'Unlimited scans',
         in_out: 'In / out',
       }[s.settings.checkIn.mode]
-    : 'Pass or template rules';
+    : 'Pass rules';
 
 /** Direction Both or Out and an event's re-entry only act while the session tracks in / out. */
 export function trackingGap(

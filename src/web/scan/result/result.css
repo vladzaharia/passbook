@@ -66,7 +66,7 @@
   font-weight: 650;
   letter-spacing: -0.025em;
   text-wrap: balance;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .scan-result-band[data-layout="stack"] h1 {
   margin-top: 14px;
@@ -78,6 +78,7 @@
 }
 .scan-result-band p {
   margin: 6px 0 0;
+  text-wrap: pretty;
   font-size: 17px;
   line-height: 22px;
   font-weight: 500;
@@ -183,10 +184,14 @@
     display: block;
     padding: 32px;
   }
+  /* The word sizes to the band, so a long one ("redeemed") is never cut mid-word. */
+  .scan-result-band {
+    container-type: inline-size;
+  }
   .scan-result-band h1,
   .scan-result-band[data-layout="custom"] h1 {
-    font-size: 52px;
-    line-height: 56px;
+    font-size: min(52px, 17cqi);
+    line-height: 1.08;
     margin-top: 20px;
   }
   .scan-result-band p {

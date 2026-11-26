@@ -207,11 +207,11 @@
 .scan-assign-forms {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 .scan-assign-form {
-  min-height: 32px;
-  padding-inline: 12px;
+  min-height: 44px;
+  padding-inline: 16px;
   border: 0;
   border-radius: 16px;
   background: var(--sd-fill-gray);
@@ -312,4 +312,9 @@
 }
 .scan-assign-field input::placeholder {
   font-weight: 400;
+}
+
+/* A long primary label ("Turn on tag reading") gets the wider half of the dock row. */
+.scan-dock-btn.scan-dock-wide {
+  flex: 1.7 1 0;
 }
