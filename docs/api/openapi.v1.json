@@ -12382,6 +12382,10 @@
                 "type": "integer",
                 "minimum": 0
               },
+              "configRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
               "signIn": {
                 "type": "string",
                 "enum": [
@@ -12411,6 +12415,7 @@
               "revoked",
               "lastSeenAt",
               "updatedAt",
+              "configRevision",
               "signIn",
               "adminName"
             ]
@@ -21550,6 +21555,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21579,6 +21588,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName"
         ]
@@ -21696,6 +21706,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "configRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "signIn": {
             "type": "string",
             "enum": [
@@ -21748,6 +21762,7 @@
           "revoked",
           "lastSeenAt",
           "updatedAt",
+          "configRevision",
           "signIn",
           "adminName",
           "pairing"

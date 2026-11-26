@@ -258,6 +258,8 @@ export const ScanningDeviceSchema = z.object({
   revoked: z.boolean(),
   lastSeenAt: TimestampSchema.nullable(),
   updatedAt: TimestampSchema,
+  /** Digest of the editable settings; send it back as `revision` on an update. */
+  configRevision: z.number().int().nonnegative(),
   signIn: z.enum(['paired', 'admin']),
   adminName: z.string().nullable(),
 });
@@ -303,7 +305,8 @@ export const UpdateScanningDeviceSchema = z.strictObject({
   name: PlainLineSchema(40).optional(),
   surface: ScanSurfaceChoiceSchema.optional(),
   overrides: ScanDeviceOverridesSchema.optional(),
-  revision: TimestampSchema.optional(),
+  /** The device's `configRevision`: a stale one is a 409. */
+  revision: z.number().int().nonnegative().optional(),
 });
 export const DevicePairingSchema = z.object({
   code: z.string(),

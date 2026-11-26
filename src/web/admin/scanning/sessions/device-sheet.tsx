@@ -41,10 +41,10 @@ export function DeviceSheet({
   const [name, setName] = useState(device.name);
   const [surface, setSurface] = useState(device.surface);
   const [overrides, setOverrides] = useState(device.overrides);
-  const [revision, setRevision] = useState(device.updatedAt);
+  const [revision, setRevision] = useState(device.configRevision);
   const [error, setError] = useState('');
   const save = useUpdateSessionDevice(session.id, device.id);
-  const changed = device.updatedAt !== revision;
+  const changed = device.configRevision !== revision;
   const dirty =
     name !== device.name ||
     surface !== device.surface ||
@@ -170,7 +170,7 @@ export function DeviceSheet({
                     setName(device.name);
                     setSurface(device.surface);
                     setOverrides(device.overrides);
-                    setRevision(device.updatedAt);
+                    setRevision(device.configRevision);
                     setError('');
                   }}
                 >

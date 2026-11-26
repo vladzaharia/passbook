@@ -37,6 +37,7 @@ import {
 import { readScannerScope } from './repo-scope.ts';
 import {
   conflictsWithAllScope,
+  deviceConfigRevision,
   deviceDto,
   effectiveSessionSettings,
   projectedDeviceSettings,
@@ -115,13 +116,13 @@ export async function updateScanningDevice(
   const device = await scanningDeviceRow(ctx.env.DB, parent.org_id, id);
   if (!device || device.session_id !== sessionId || device.revoked_at !== null)
     throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');
-  if (input.revision !== undefined && input.revision !== device.updated_at)
+  if (input.revision !== undefined && input.revision !== deviceConfigRevision(device))
     throw new ConflictError(
       'This device changed. Reload its settings and try again.',
       'SCANNING_DEVICE_CHANGED',
     );
   const scanner = await getConsoleScanner(ctx.env.DB, id);
-  if (!scanner || scanner.updatedAt !== device.updated_at || scanner.mode !== parent.mode)
+  if (!scanner || scanner.mode !== parent.mode)
     throw new ConflictError(
       'This device changed. Reload its settings and try again.',
       'SCANNING_DEVICE_CHANGED',
@@ -189,7 +190,7 @@ export async function updateScanningDevice(
       sessionEpoch(parent.id, parent.config_epoch),
       ...(input.revision === undefined
         ? []
-        : [rowIs('scanners', id, { updated_at: input.revision }, 'stale')]),
+        : [rowIs('scanners', id, { name: device.name }, 'stale')]),
     ],
     DEVICE_CODES,
     id,

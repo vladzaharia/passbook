@@ -2446,6 +2446,7 @@ type CreatedScanningDevice struct {
 	Revoked          bool                           `json:"revoked"`
 	LastSeenAt       *int64                         `json:"lastSeenAt"`
 	UpdatedAt        int64                          `json:"updatedAt"`
+	ConfigRevision   int64                          `json:"configRevision"`
 	SignIn           string                         `json:"signIn"`
 	AdminName        *string                        `json:"adminName"`
 	Pairing          map[string]any                 `json:"pairing"`
@@ -12034,6 +12035,7 @@ type ScanningDevice struct {
 	Revoked          bool                    `json:"revoked"`
 	LastSeenAt       *int64                  `json:"lastSeenAt"`
 	UpdatedAt        int64                   `json:"updatedAt"`
+	ConfigRevision   int64                   `json:"configRevision"`
 	SignIn           string                  `json:"signIn"`
 	AdminName        *string                 `json:"adminName"`
 }

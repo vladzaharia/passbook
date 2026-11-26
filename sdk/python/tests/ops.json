@@ -10045,6 +10045,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
@@ -10138,6 +10139,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
@@ -10198,6 +10200,7 @@
    "revoked": false,
    "lastSeenAt": 0,
    "updatedAt": 0,
+   "configRevision": 0,
    "signIn": "paired",
    "adminName": "x",
    "pairing": {
@@ -10266,6 +10269,7 @@
    "revoked": false,
    "lastSeenAt": 0,
    "updatedAt": 0,
+   "configRevision": 0,
    "signIn": "paired",
    "adminName": "x"
   }
@@ -10359,6 +10363,7 @@
      "revoked": false,
      "lastSeenAt": 0,
      "updatedAt": 0,
+     "configRevision": 0,
      "signIn": "paired",
      "adminName": "x"
     }
