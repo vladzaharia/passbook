@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { legacyHref, PREFILL_KEY } from './legacy-hash.ts';
+import { legacyHref } from './legacy-hash.ts';
+import { readPrefill } from './prefill.ts';
 
 afterEach(() => sessionStorage.clear());
 
@@ -9,10 +10,13 @@ describe('legacyHref', () => {
     const href = legacyHref('console', hash, () => 'n1');
     expect(href).toBe('/workbench/console?op=passes.postPasses&prefill=n1');
     expect(href).not.toContain('input');
-    expect(JSON.parse(sessionStorage.getItem(`${PREFILL_KEY}n1`) ?? '')).toEqual({
+    expect(readPrefill('n1')).toEqual({
+      op: 'passes.postPasses',
       body: { input: { a: 1 } },
       query: { dry: '1' },
     });
+    // Read once: the second read finds nothing.
+    expect(readPrefill('n1')).toBeNull();
   });
 
   it('keeps a plain operation as `?op=` and drops a body that is not JSON', () => {

@@ -94,7 +94,7 @@ export async function buildDevelopers(
   rendered.push({ file: PATHS.sitemap, body: module.sitemap(origin, urls) });
   rendered.push({ file: PATHS.previews, body: previews.json }, ...previews.files);
   // The ⌘K index: one file, fetched on the first search; the build fails past its 150 kB gzip budget.
-  rendered.push(searchIndexFile(site));
+  rendered.push(searchIndexFile(site, loadGuideInputs(root).examples));
 
   const manifest: Manifest = {};
   for (const f of rendered) {

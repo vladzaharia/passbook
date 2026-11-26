@@ -3,7 +3,7 @@ import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { wbHref } from '../../../shared/workbench.ts';
 import { opPath, pagePath } from '../model/markdown.ts';
-import type { Site } from '../model/types.ts';
+import type { Example, Site } from '../model/types.ts';
 import type { ActionDoc, GuideDoc, HintDoc, SearchIndex } from './types.ts';
 
 /** The index is fetched on the first ⌘K; this is what it may weigh on the wire. */
@@ -123,7 +123,12 @@ const HINTS: readonly { terms: string[]; text: string; links: { label: string; t
     },
   ];
 
-export function buildSearchIndex(site: Site): SearchIndex {
+/**
+ * `samples` lists the guide snippets that are one curl request on one operation, by snippet id: the
+ * file stem under docs/developers/snippets/guides (`create-order-pass`). The Console resolves
+ * `?op=<operationId>&sample=<id>` through it and refuses an id whose `op` differs from `?op=`.
+ */
+export function buildSearchIndex(site: Site, examples: readonly Example[] = []): SearchIndex {
   const ops = site.pages.flatMap((page) =>
     page.ops.map((o) => ({
       id: o.operationId,
@@ -181,6 +186,9 @@ export function buildSearchIndex(site: Site): SearchIndex {
       summary: e.summary,
       href: wbHref('events', { query: { type: e.type } }),
     })),
+    samples: examples.flatMap((e) =>
+      e.curl && e.ops.length === 1 && e.ops[0] ? [{ id: e.id, op: e.ops[0], guide: e.guide }] : [],
+    ),
     actions: actions(),
     hints,
     secretHelp: ['ref:api-keys', 'roll-key'],
@@ -188,8 +196,11 @@ export function buildSearchIndex(site: Site): SearchIndex {
 }
 
 /** The index as a file, and its size on the wire; the build fails when it outgrows its budget. */
-export function searchIndexFile(site: Site): { file: string; body: string; gzip: number } {
-  const body = JSON.stringify(buildSearchIndex(site));
+export function searchIndexFile(
+  site: Site,
+  examples: readonly Example[] = [],
+): { file: string; body: string; gzip: number } {
+  const body = JSON.stringify(buildSearchIndex(site, examples));
   const gzip = gzipSync(body).length;
   if (gzip > INDEX_BUDGET_GZIP)
     throw new Error(`search index is ${gzip} bytes gzip; the budget is ${INDEX_BUDGET_GZIP}`);

@@ -1,8 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 import { type WbTool, wbHref } from '@/shared/workbench.ts';
-
-/** `sessionStorage` key of a prefill handed over by nonce; the Console reads it once and deletes it. */
-export const PREFILL_KEY = 'wb-prefill:';
+import { writePrefill } from './prefill.ts';
 
 /** The Quickstart hashes of the old docs page: the sandbox's own area now. */
 const SANDBOX_HASHES: ReadonlySet<string> = new Set(['sandbox', 'start-over', 'delete-sandbox']);
@@ -42,13 +40,8 @@ export function legacyHref(
   }
   if (body === undefined && Object.keys(query).length === 0)
     return wbHref('console', { query: { op } });
-  const id = nonce();
-  try {
-    sessionStorage.setItem(`${PREFILL_KEY}${id}`, JSON.stringify({ body, query }));
-  } catch {
-    // Storage is blocked: the operation opens on its own sample.
-    return wbHref('console', { query: { op } });
-  }
+  const id = writePrefill({ op, query, body }, nonce());
+  if (!id) return wbHref('console', { query: { op } });
   return wbHref('console', { query: { op, prefill: id } });
 }
 

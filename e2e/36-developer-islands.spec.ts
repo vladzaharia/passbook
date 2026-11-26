@@ -1,29 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { sandboxOrgId } from './helpers/sandbox.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 const SHOTS = process.env.ISLAND_SHOTS;
 const shot = async (page: import('@playwright/test').Page, name: string) => {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` });
-};
-
-/** Every width and theme, for the visual check. */
-const shots = async (page: import('@playwright/test').Page, name: string) => {
-  if (!SHOTS) return;
-  const before = page.viewportSize();
-  for (const [w, h] of [
-    [1440, 900],
-    [820, 1100],
-    [390, 844],
-  ] as const) {
-    for (const scheme of ['light', 'dark'] as const) {
-      await page.setViewportSize({ width: w, height: h });
-      await page.emulateMedia({ colorScheme: scheme });
-      await page.waitForTimeout(250);
-      await page.screenshot({ path: `${SHOTS}/${name}-${w}-${scheme}.png`, fullPage: true });
-    }
-  }
-  if (before) await page.setViewportSize(before);
 };
 
 /** Runs after 35, which makes the builder's sandbox; this one signs in as the same person and uses it. */
@@ -52,35 +32,31 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     if (m.type() === 'error' && /TrustedHTML|Trusted Types/.test(m.text())) errors.push(m.text());
   });
 
-  // Signed out: no authenticated call on any page, no section current under Console, a sign-in action.
-  for (const path of [
-    '/developers/reference/passes',
-    '/developers/logs',
-    '/developers/console',
-    '/developers/playground',
-  ]) {
+  // Signed out: no authenticated call on a docs page, and the moved tool pages redirect into the Workbench.
+  for (const path of ['/developers/reference/passes', '/developers']) {
     await page.goto(path);
     await page.waitForTimeout(800);
   }
   expect(failures).toEqual([]);
   await page.goto('/developers/console');
+  await page.waitForURL((u) => u.pathname === '/workbench/console');
   await expect(
-    page.getByRole('navigation', { name: 'Sections' }).locator('[aria-current]'),
-  ).toHaveText('Workbench');
-  await expect(page.locator('main').getByRole('link', { name: 'Sign in' })).toBeVisible();
+    page.getByRole('heading', { level: 1, name: 'Sign in to use the Workbench' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }),
+  ).toBeVisible();
   await shot(page, 'console-signed-out');
+  // The playground is the Workbench's Design area, public signed out.
   await page.goto('/developers/playground');
-  await shot(page, 'playground-signed-out');
-
-  // The prerendered playground has a sample and its fields before script runs.
-  const html = await (await page.request.get('/developers/playground')).text();
-  expect(html).toContain('sample pass');
-  expect(html).toContain('pg-fields');
+  await page.waitForURL((u) => u.pathname === '/workbench/design');
+  await shot(page, 'design-signed-out');
 
   // Sign in and make sure there is a sandbox.
-  await page.goto('/developers/quickstart');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/workbench/quickstart');
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
   // Polaris ID lands straight on the page, so wait for the island to pick a state.
   await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
@@ -88,99 +64,21 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
   }
-  await page.getByRole('radio', { name: 'Run here' }).click();
-  const requestId = await (async () => {
-    const run = page.waitForResponse(
-      (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
-    );
-    await page
-      .getByRole('button', { name: 'Run', exact: true })
-      .click()
-      .catch(() => undefined);
-    return (await run.catch(() => null))?.headers()['x-request-id'] ?? null;
-  })();
-
-  // D10: Try it on an operation page is bound to the sandbox, and runs there.
+  // An operation page runs in the Workbench: Run in Workbench opens the Console on that operation, no body in the URL.
   await page.goto('/developers/reference/passes/create');
-  await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
-  const tryRun = page.locator('.try').getByRole('button', { name: 'Run', exact: true });
-  await expect(tryRun).toBeVisible();
-  // R1: the example fits the sandbox's Quickstart ticket, so the first Run creates a pass.
-  await expect(page.locator('.try')).toContainText('Body shape valid');
-  const created = page.waitForResponse(
-    (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
-  );
-  await tryRun.click();
-  expect((await created).status()).toBe(201);
-  // The Run read the template; now `input` is checked against its schema.
-  await expect(page.locator('.try')).toContainText('Valid against the schema');
+  const runLink = page.getByRole('main').getByRole('link', { name: 'Run in Workbench' }).first();
+  await expect(runLink).toHaveAttribute('href', '/workbench/console?op=passes.postPasses');
+  await runLink.click();
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/console\?op=passes\.postPasses/);
+  expect(page.url()).not.toMatch(/body=/);
 
-  // D1: the webhook tester renders on the bench, with no Trusted Types error: a test send lands in the list
-  // and opens on Verify.
-  await page.goto('/developers/webhooks');
-  const send = page.getByRole('button', { name: 'Send test event' }).first();
-  await expect(send).toBeVisible();
-  await send.click();
-  await expect(page.getByRole('tab', { name: 'Python' })).toBeVisible();
-  await page.waitForTimeout(500);
-  await shot(page, 'webhooks-signed-in');
+  // The webhook tester, URL endpoints and their Admin rows are the Events tool's (T3 rebuilds it and
+  // owns its spec); this one keeps to the docs islands.
   expect(errors).toEqual([]);
 
-  // D8: a URL endpoint is added for real (the e2e server pins hooks.example.com, see WEBHOOK_TEST_DNS), its secret
-  // shows once, a test send is listed tagged Test, and the secret can be rotated.
-  const manage = async () => {
-    await page.getByRole('button', { name: 'Manage' }).click();
-    return page.getByRole('dialog', { name: 'Endpoints' });
-  };
-  let sheet = await manage();
-  await sheet.getByRole('button', { name: 'Add endpoint' }).click();
-  await sheet.getByLabel('URL').fill('https://nowhere.example.net/passbook');
-  await sheet.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(sheet.getByRole('alert')).toContainText('does not resolve');
-  await shots(page, 'webhooks-add-refused');
-  await sheet.getByLabel('URL').fill('https://hooks.example.com/passbook');
-  await sheet.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.getByText('Shown once')).toBeVisible();
-  await shots(page, 'webhooks-secret');
-  await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByText('Shown once')).toHaveCount(0);
-  const endpoints = page.getByRole('combobox', { name: 'Endpoint' }).locator('option');
-  await expect(endpoints).toHaveCount(2);
-  await page.getByRole('button', { name: 'Send test event' }).first().click();
-  await expect(
-    page.getByRole('listbox', { name: 'Deliveries' }).getByText('Test', { exact: true }).first(),
-  ).toBeVisible({ timeout: 30_000 });
-  await shots(page, 'webhooks-url-test');
-  sheet = await manage();
-  await sheet.getByRole('button', { name: 'Rotate' }).click();
-  await expect(sheet.getByText(/The old one keeps signing for 24 hours/)).toBeVisible();
-  await shots(page, 'webhooks-rotate-confirm');
-  await sheet.getByRole('button', { name: 'Rotate' }).click();
-  await expect(page.getByText('Shown once')).toBeVisible();
-  await shots(page, 'webhooks-rotated');
-  await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByText('Shown once')).toHaveCount(0);
-  expect(errors).toEqual([]);
-
-  // The same test send is listed in Admin, tagged the same way.
-  await page.goto(`/admin/o/${await sandboxOrgId(page)}/connections`);
-  await page.getByRole('tab', { name: 'Webhook endpoints' }).click();
-  await page
-    .getByRole('link', { name: /hooks\.example\.com/ })
-    .first()
-    .click();
-  // The list page can match the text before the endpoint opens: wait for its URL, then read the table row.
-  await page.waitForURL(/\/connections\/.*[0-9a-f]{8}-[0-9a-f]{4}-/);
-  await expect(
-    page.getByRole('main').getByRole('row').filter({ hasText: 'Test' }).first(),
-  ).toBeVisible();
-  await shots(page, 'admin-webhook-deliveries');
-
-  // D10: the playground offers the sandbox instead of asking to sign in.
-  await page.goto('/developers/playground');
-  await expect(page.getByText(/Previews show each blueprint/)).toBeVisible();
-  await expect(page.getByText('Sign in to edit them live')).toHaveCount(0);
-  await shot(page, 'playground-signed-in');
+  // The companion link: signed in it opens the Workbench.
+  await page.goto('/developers');
+  await expect(page.locator('[data-menubar] [data-wb-link]')).toHaveAttribute('href', '/workbench');
 
   // D12 and D6: ⌘K returns focus to the Search button; a pasted request id opens its own row.
   await page.goto('/developers');
@@ -191,16 +89,5 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await expect
     .poll(() => page.evaluate(() => document.activeElement?.hasAttribute('data-search')))
     .toBe(true);
-  if (requestId) {
-    await page.keyboard.press('Control+k');
-    await page.keyboard.type(requestId);
-    const found = page.getByRole('option').filter({ hasText: 'POST /passes' });
-    await expect(found).toBeVisible();
-    await shot(page, 'search-request-id');
-    await page.keyboard.press('Enter');
-    await page.waitForURL((u) => u.pathname === '/developers/logs');
-    expect(page.url().toLowerCase()).toContain(requestId.toLowerCase());
-    await expect(page.locator('[role="option"][aria-selected="true"]')).toBeVisible();
-    await shot(page, 'logs-request-id');
-  }
+  // A pasted request id opening its Logs row is the Logs tool's (T2 owns its spec).
 });

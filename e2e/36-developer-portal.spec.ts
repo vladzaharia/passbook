@@ -38,13 +38,27 @@ test.describe('portal routes', () => {
     }
   });
 
+  test('the moved tool pages redirect into the Workbench, query kept', async ({ request }) => {
+    for (const [from, to] of [
+      ['/developers/console?op=passes.postPasses', '/workbench/console?op=passes.postPasses'],
+      ['/developers/webhooks', '/workbench/events'],
+      ['/developers/logs?code=NOT_FOUND', '/workbench/logs?code=NOT_FOUND'],
+      ['/developers/keys', '/workbench/keys'],
+      ['/developers/playground', '/workbench/design'],
+      ['/developers/quickstart', '/workbench/quickstart'],
+    ] as const) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(301);
+      const location = new URL(res.headers().location ?? '', 'http://x');
+      expect(location.pathname + location.search, from).toBe(to);
+    }
+  });
+
   test('every page has a markdown twin', async ({ request }) => {
     for (const path of [
       '/developers/index.md',
-      '/developers/quickstart.md',
       '/developers/errors.md',
       '/developers/errors/INVALID_INPUT.md',
-      '/developers/webhooks.md',
       '/developers/changelog.md',
       '/developers/reference/protocols.md',
       '/developers/guides.md',
