@@ -42,19 +42,30 @@ export function platformFence(
   };
 }
 
-/** Rows a person started, for the live session that started them. A key never reads these. */
+/**
+ * Rows a person started, for the live session that asks. A key never reads these.
+ * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).
+ * `ownSession`: an own-only session (an email link) sees only what its own session started.
+ */
 export function starterFence(
   session: { userId: string; sessionId: string },
   now: number,
-  /** Stopping or retrying: the person's own live, strong session (a step-up replaces the one that started it). */
-  writer = false,
+  options: { writer?: boolean; ownSession?: boolean } = {},
 ): Fence {
+  const { writer = false, ownSession = false } = options;
   return {
     ctes: '',
     ctesParams: [],
-    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?
+    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${ownSession ? ' AND o.actor_session = ?' : ''}
       AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
         AND s.expires_at > ? AND s.idle_expires_at > ?${writer ? ` AND s.amr IN ${STRONG_AMR_SQL}` : ''})`,
-    whereParams: [session.userId, session.sessionId, session.userId, now, now],
+    whereParams: [
+      session.userId,
+      ...(ownSession ? [session.sessionId] : []),
+      session.sessionId,
+      session.userId,
+      now,
+      now,
+    ],
   };
 }
