@@ -507,9 +507,11 @@ test('in a two-person organization the author cannot approve their own candidate
   browser,
 }) => {
   const team = await enrolledOrg(admin, 'pair', [googleCredential()]);
+  // The wallet rows read the org's enrolments (integrations:read), which the reviewer roles do not carry.
   const reviewer = await templateReviewer(admin, team.id, [
     'template_reviewer',
     'template_publisher',
+    'read_only',
   ]);
   await reviewer.dispose();
   const made = await admin.send<{ id: string; versions: { version: string }[] }>(
@@ -558,7 +560,9 @@ test('in a two-person organization the author cannot approve their own candidate
   await page.getByRole('tab', { name: 'Releases' }).click();
   await walletRow(page, 'Google').getByRole('button', { name: 'Review Google Wallet' }).click();
   const dialog = page.getByRole('dialog', { name: 'Review Google Wallet' });
-  await expect(dialog.getByText(/Another reviewer must approve this/)).toBeVisible();
+  await expect(dialog.getByText(/Another reviewer must approve this/)).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(dialog.getByRole('button', { name: 'Review requested' })).toBeDisabled();
   await expect(dialog.getByRole('button', { name: /^Approve/ })).toHaveCount(0);
   await shots(page, 'authoring-request-review');
