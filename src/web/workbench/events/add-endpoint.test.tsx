@@ -11,7 +11,7 @@ import {
   HOOK,
   type World,
   wideWindow,
-} from './test-support.ts';
+} from './test-fixtures.ts';
 
 beforeEach(() => wideWindow());
 afterEach(() => {

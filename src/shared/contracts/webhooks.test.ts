@@ -169,6 +169,7 @@ describe('API key scopes', () => {
       'members:read',
       'members:write',
       'audit:read',
+      'logs:read',
       'platform:orgs',
       'platform:users',
       'platform:identities',

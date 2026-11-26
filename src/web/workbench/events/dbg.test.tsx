@@ -1,6 +1,6 @@
 import { it } from 'vitest';
 import { WebhookDeliveryListSchema } from '@/shared/contracts/webhooks.ts';
-import { delivery } from './test-support.ts';
+import { delivery } from './test-fixtures.ts';
 
 it('dbg', () => {
   const r = WebhookDeliveryListSchema.safeParse({
