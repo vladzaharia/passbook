@@ -1,9 +1,11 @@
 import type { GroupRule, GroupRuleInput } from '../../../shared/contracts/idp-access.ts';
+import type { Actor as PlatformActor } from '../../platform/actor.ts';
 import { batch, classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { requireOrg } from '../orgs/service.ts';
+import { auditActorOf, byUserOf } from './actor.ts';
 import { toRule } from './dto-groups.ts';
 import { endRuleStmt, insertRuleStmt, liveRulesOfGroup, ruleById } from './repo-group-rules.ts';
 import { groupByKey } from './repo-groups.ts';
@@ -33,7 +35,7 @@ export async function assertRuleOrg(ctx: ServiceContext, orgId: string): Promise
 /** The statements for a rule, checked first so a refusal is a clear 4xx and not a trigger abort. */
 export async function ruleStatements(
   ctx: ServiceContext,
-  actorId: string,
+  actor: PlatformActor,
   groupKey: string,
   inputs: readonly GroupRuleInput[],
 ): Promise<D1PreparedStatement[]> {
@@ -43,6 +45,7 @@ export async function ruleStatements(
   if (live.length + inputs.length > 5)
     throw new ConflictError('A group takes at most 5 org rules.', 'IDP_RULE_LIMIT');
   const out: D1PreparedStatement[] = [];
+  const by = await byUserOf(db, actor);
   for (const input of inputs) {
     if (seen.has(input.orgId))
       throw new ConflictError('This org already has a rule on the group.', 'IDP_RULE_EXISTS');
@@ -55,12 +58,11 @@ export async function ruleStatements(
         groupKey,
         orgId: input.orgId,
         orgRoles: input.orgRoles ?? null,
-        createdBy: actorId,
+        createdBy: by,
         now: ctx.clock.now(),
       }),
       auditStmt(db, ctx, {
-        actorType: 'user',
-        actorId,
+        ...auditActorOf(actor),
         action: 'idp.group_rule',
         targetType: 'idp_group',
         targetId: groupKey,
@@ -93,13 +95,13 @@ export async function listRules(ctx: ServiceContext, key: string): Promise<Group
 
 export async function addRule(
   ctx: ServiceContext,
-  actorId: string,
+  actor: PlatformActor,
   key: string,
   input: GroupRuleInput,
 ): Promise<GroupRule> {
   const db = ctx.env.DB;
   await requireLiveGroup(db, key);
-  await writeBatch(db, await ruleStatements(ctx, actorId, key, [input]));
+  await writeBatch(db, await ruleStatements(ctx, actor, key, [input]));
   const rule = (await liveRulesOfGroup(db, key)).find((r) => r.org_id === input.orgId);
   if (!rule)
     throw new ConflictError('This was just changed. Reload and try again.', 'IDP_CONFLICT');
@@ -109,7 +111,7 @@ export async function addRule(
 
 export async function endRule(
   ctx: ServiceContext,
-  actorId: string,
+  actor: PlatformActor,
   key: string,
   ruleId: string,
 ): Promise<void> {
@@ -118,10 +120,9 @@ export async function endRule(
   if (!rule || rule.group_key !== key || rule.ended_at !== null)
     throw new NotFoundError('Rule not found.', 'RULE_NOT_FOUND');
   await batch(db, [
-    endRuleStmt(db, ruleId, actorId, ctx.clock.now()),
+    endRuleStmt(db, ruleId, await byUserOf(db, actor), ctx.clock.now()),
     auditStmt(db, ctx, {
-      actorType: 'user',
-      actorId,
+      ...auditActorOf(actor),
       action: 'idp.group_rule',
       targetType: 'idp_group',
       targetId: key,

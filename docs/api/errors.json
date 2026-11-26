@@ -1731,6 +1731,7 @@
         403
       ],
       "modules": [
+        "idp",
         "platform",
         "scan"
       ]

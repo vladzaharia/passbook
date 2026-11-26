@@ -372,27 +372,10 @@ function platformKeyRoutes(): {
  * to `auth: { platform, key? }` and lists it here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
-  'GET /api/v1/platform/settings',
-  'GET /api/v1/platform/wallet-release',
-];
-const PLATFORM_KEY_CONDITIONAL: string[] = [
-  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
-  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
-  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
-  'PUT /api/v1/platform/settings',
-];
-/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
-const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'DELETE /api/v1/platform/idp/groups/:key',
   'DELETE /api/v1/platform/idp/groups/:key/members/:id',
   'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
   'DELETE /api/v1/platform/invitations/:id',
-  'DELETE /api/v1/users/:id/holds/:role',
-  'GET /api/v1/audit/platform',
-  'GET /api/v1/audit/platform/export',
-  'GET /api/v1/metrics/platform/developer',
-  'GET /api/v1/platform/apple-calls',
-  'GET /api/v1/platform/entitlement-presets',
   'GET /api/v1/platform/idp',
   'GET /api/v1/platform/idp/calls',
   'GET /api/v1/platform/idp/drift',
@@ -401,28 +384,50 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/platform/idp/groups/:key/members',
   'GET /api/v1/platform/idp/groups/:key/rules',
   'GET /api/v1/platform/invitations',
-  'GET /api/v1/platform/orgs/:id/entitlements',
-  'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/platform/settings',
+  'GET /api/v1/platform/wallet-release',
   'GET /api/v1/users/:id/access',
   'GET /api/v1/users/:id/claims',
   'PATCH /api/v1/platform/idp/groups/:key',
   'PATCH /api/v1/platform/idp/groups/:key/claims',
   'PATCH /api/v1/users/:id/claims',
-  // P3: irreversible, every pass the certificate signed stops updating.
-  'POST /api/v1/identities/:id/revoke-certificate',
-  'POST /api/v1/platform/idp/freeze',
   'POST /api/v1/platform/idp/groups',
   'POST /api/v1/platform/idp/groups/:key/members',
   'POST /api/v1/platform/idp/groups/:key/rules',
   'POST /api/v1/platform/idp/groups/ensure',
   'POST /api/v1/platform/idp/reconcile',
-  'POST /api/v1/platform/idp/scim-breaker/clear',
   'POST /api/v1/platform/invitations',
   'POST /api/v1/platform/invitations/:id/resend',
+  'POST /api/v1/users/:id/roles',
+];
+const PLATFORM_KEY_CONDITIONAL: string[] = [
+  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
+  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
+  // Refused to a key unless it is a dry run (P3: ends memberships, sponsorships, keys and sessions; a loop is a mass lockout).
+  'POST /api/v1/users/:id/offboard',
+  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
+  'PUT /api/v1/platform/settings',
+];
+/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
+const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  // P2: restores a role the Polaris ID owner paused.
+  'DELETE /api/v1/users/:id/holds/:role',
+  'GET /api/v1/audit/platform',
+  'GET /api/v1/audit/platform/export',
+  'GET /api/v1/metrics/platform/developer',
+  'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/entitlement-presets',
+  'GET /api/v1/platform/orgs/:id/entitlements',
+  'GET /api/v1/platform/personal-org-labels',
+  // P3: irreversible, every pass the certificate signed stops updating.
+  'POST /api/v1/identities/:id/revoke-certificate',
+  // P1: the emergency stop for every Polaris ID change, lifted only in Polaris ID.
+  'POST /api/v1/platform/idp/freeze',
+  // P1: the breaker stops a deprovisioning storm; clearing it is a judgment about what tripped it.
+  'POST /api/v1/platform/idp/scim-breaker/clear',
   // P3: releasing a legal hold lets a purge run.
   'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
-  'POST /api/v1/users/:id/offboard',
-  'POST /api/v1/users/:id/roles',
+  // P2: removes a role the Polaris ID owner added in Polaris ID.
   'POST /api/v1/users/:id/roles/:role/remove-external',
   'PUT /api/v1/platform/entitlement-presets',
   'PUT /api/v1/platform/orgs/:id/entitlements',

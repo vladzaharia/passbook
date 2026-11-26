@@ -6,12 +6,12 @@ import {
   IdpCallsQuerySchema,
   IdpStatusSchema,
 } from '../../../shared/contracts/idp-access.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { idpIdempotent } from './idempotent.ts';
 import { freezeIdp, idpCalls, idpDrift, idpStatus } from './service-platform.ts';
-import { actorOf } from './service-roles.ts';
 
 const TAG = 'polaris platform';
 
@@ -32,9 +32,12 @@ register(
       'Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences.',
     operationId: 'polaris-platform.getPlatformIdp',
     response: IdpStatusSchema,
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
   },
-  async (c) => c.json(await idpStatus(serviceContext(c))),
+  async (c) => {
+    platformActorOf(c);
+    return c.json(await idpStatus(serviceContext(c)));
+  },
 );
 
 register(
@@ -46,9 +49,12 @@ register(
     summary: 'Open differences between Polaris ID and PassBook.',
     operationId: 'polaris-platform.getPlatformIdpDrift',
     response: DriftListSchema,
-    auth: { platform: 'platform:users' },
+    auth: { platform: 'platform:users', key: true },
   },
-  async (c) => c.json(await idpDrift(serviceContext(c))),
+  async (c) => {
+    platformActorOf(c);
+    return c.json(await idpDrift(serviceContext(c)));
+  },
 );
 
 register(
@@ -71,7 +77,7 @@ register(
   (c) => {
     const body = c.req.valid('json');
     return idpIdempotent(c, body, 200, async (ctx) => ({
-      result: await freezeIdp(ctx, actorOf(c), body.reason),
+      result: await freezeIdp(ctx, platformActorOf(c), body.reason),
     }));
   },
 );
@@ -86,9 +92,10 @@ register(
     operationId: 'polaris-platform.getPlatformIdpCalls',
     query: IdpCallsQuerySchema,
     response: IdpCallListSchema,
-    auth: { platform: 'platform:audit' },
+    auth: { platform: 'platform:audit', key: true },
   },
   async (c) => {
+    platformActorOf(c);
     const { since, cursor } = c.req.valid('query');
     return c.json(await idpCalls(serviceContext(c), since, cursor));
   },

@@ -20,15 +20,16 @@ installOpsRig();
 describe('access', () => {
   it('is for platform admins signed in with Polaris ID', async () => {
     const p = await paused();
-    const routes: [string, string][] = [
-      ['POST', '/api/v1/platform/idp/reconcile'],
-      ['POST', '/api/v1/platform/idp/scim-breaker/clear'],
-      ['DELETE', `/api/v1/users/${p.user.id}/holds/console`],
+    // A key without the scope is refused by the route that takes keys, and by a person-only one outright.
+    const routes: [string, string, string][] = [
+      ['POST', '/api/v1/platform/idp/reconcile', 'MISSING_SCOPE'],
+      ['POST', '/api/v1/platform/idp/scim-breaker/clear', 'PERSON_REQUIRED'],
+      ['DELETE', `/api/v1/users/${p.user.id}/holds/console`, 'PERSON_REQUIRED'],
     ];
     const key = await makeApiKey(f());
-    for (const [method, path] of routes) {
+    for (const [method, path, keyCode] of routes) {
       expect((await start(path, method, {})).status).toBe(401);
-      await expectProblem(await start(path, method, key.headers), 403, 'PERSON_REQUIRED');
+      await expectProblem(await start(path, method, key.headers), 403, keyCode);
       await expectProblem(
         await start(path, method, (await admin(['user'])).headers),
         403,

@@ -218,7 +218,7 @@ A Platform key (`kind = platform`, no organization, `pbo_`) acts on the control 
 
 Declared per route: a platform route without `key` is person-only, and `route-inventory.test.ts` fails until each platform route is on one list. A key never makes, promotes, demotes or removes an administrator, on platform routes or on organization member routes (403 `KEY_CANNOT_ADMINISTER`, checked in the service and in the grant). `PATCH /api/v1/users/{id}` by a key refuses a platform admin target (409 `IDP_PLATFORM_ADMIN`), and `POST /api/v1/orgs` by a key refuses `addMe`.
 
-The Polaris ID platform routes (groups, claims, users, status, invitations) take keys only once their conversion lands; until then every one of them is person-only.
+The Polaris ID platform routes (groups, claims, users, status, invitations) take keys, except freeze, the SCIM breaker clear, hold restore and remove-external, which are person-only, and offboard, which a key may only dry run. A key's writes audit as the key; the `*_by` columns of group, rule, member and role-grant rows name the key's creator, who must be active. A key never reads or writes a platform admin's claims, and never grants a role to one (409 `IDP_PLATFORM_ADMIN`). `PATCH /api/v1/users/{id}` is still session-only until the users routes convert.
 
 Platform operations stay out of the public developer portal; the SDKs carry them as `pb.platform.*`.
 
