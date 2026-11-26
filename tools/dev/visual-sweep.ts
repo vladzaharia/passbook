@@ -6,6 +6,7 @@ import type { APIRequestContext } from '@playwright/test';
 import { assertLocal } from '../lib/demo-client.ts';
 import { contextFor } from './lib/auth.ts';
 import { capture } from './lib/capture.ts';
+import { writeContactSheets } from './lib/contact-sheet.ts';
 import { captureEmails } from './lib/emails.ts';
 import { pickJourneys } from './lib/journey.ts';
 import { makeEnv } from './lib/journey-env.ts';
@@ -136,12 +137,13 @@ async function main() {
       })),
     );
   writeFileSync(resolve(out, 'index.json'), `${JSON.stringify(shots, null, 2)}\n`);
+  const sheets = await writeContactSheets(out, shots);
 
   const written = shots.filter((s) => s.file).length;
   const noisy = shots.filter((s) => s.consoleErrors.length || s.failedRequests.length).length;
   const skipped = shots.filter((s) => !s.file).length;
   console.log(
-    `${written} screenshots, ${noisy} with console/request errors, ${skipped} skipped -> ${out}`,
+    `${written} screenshots, ${sheets} contact sheets, ${noisy} with console/request errors, ${skipped} skipped -> ${out}`,
   );
   for (const c of contexts.values()) await (await c).dispose();
 }

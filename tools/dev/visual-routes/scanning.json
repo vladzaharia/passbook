@@ -205,7 +205,7 @@
     "name": "scan-gallery-customer-accepted",
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
-    "waitFor": "[data-testid=\"scan-live\"]"
+    "waitFor": "[data-testid=\"duo-customer-display\"][data-status=\"accepted\"]"
   },
   {
     "role": "anon",
@@ -213,7 +213,7 @@
     "name": "scan-gallery-customer-refused",
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
-    "waitFor": "[data-testid=\"scan-live\"]"
+    "waitFor": "[data-testid=\"duo-customer-display\"][data-status=\"rejected\"]"
   },
   {
     "role": "anon",
@@ -695,7 +695,7 @@
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-state-guest-in",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:has-text(\"Checked in\")"]
+    "click": ["text=Scan screen", "tab:Guest in"]
   },
   {
     "role": "org",
@@ -716,7 +716,7 @@
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-pass-tab",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "[role=tab]:text-is(\"Pass\")"]
+    "click": ["text=Scan screen", "button:text-is(\"Pass\"), [role=radio]:text-is(\"Pass\")"]
   },
   {
     "role": "org",
@@ -727,10 +727,10 @@
   },
   {
     "role": "org",
-    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "path": "/admin/scanning/sessions/{eveningSessionId}",
     "name": "scan-admin-session-dates",
     "filterOrg": "northwindId",
-    "click": ["button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
+    "click": ["section[aria-label=\"When\"] button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
   },
   {
     "role": "org",
@@ -765,27 +765,27 @@
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scans-status-dropdown",
     "filterOrg": "northwindId",
-    "click": "[aria-haspopup]:has-text(\"Status\"), button:has-text(\"Status\")"
+    "click": "button:has-text(\"All results\")"
   },
   {
     "role": "org",
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-row-detail",
     "filterOrg": "northwindId",
-    "click": "tbody tr a, tbody tr"
+    "click": "[data-row-id]"
   },
   {
     "role": "org",
     "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-customer-row",
     "filterOrg": "northwindId",
-    "click": "tbody tr:has-text(\"accepted\"), tbody tr"
+    "click": "[data-row-id]"
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}",
     "name": "scan-admin-template-channels",
     "filterOrg": "northwindId",
-    "click": "[role=tab]:text-is(\"Channels\")"
+    "click": "tab:Channels and brand"
   }
 ]

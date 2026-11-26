@@ -311,7 +311,7 @@
   },
   {
     "role": "org",
-    "path": "/admin/connections/webhooks/{endpointId}",
+    "path": "/admin/connections/webhooks/{endpointId}?orgId={northwindId}",
     "name": "legacy-webhook-detail"
   },
   {
@@ -488,18 +488,18 @@
     "role": "platform",
     "path": "/admin/platform/wallet-accounts",
     "name": "admin-wallet-accounts-migration",
-    "click": "[role=tab]:text-is(\"Migration\")"
+    "click": "tab:Migration"
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/passes/{passId}",
+    "path": "/admin/o/{northwindId}/passes/{paperPassId}?tab=holder",
     "name": "admin-pass-print-card",
-    "click": "text=Print"
+    "waitFor": "button:has-text(\"Print\")"
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/passes",
+    "path": "/admin/o/{northwindId}/passes",
     "name": "admin-passes-bulk-print",
-    "click": "input[aria-label^=\"Select \"]"
+    "click": "[role=checkbox][aria-label^=\"Select \"]:not([aria-label^=\"Select all\"])"
   }
 ]
