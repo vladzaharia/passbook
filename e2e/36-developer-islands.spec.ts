@@ -115,42 +115,51 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   // The Run read the template; now `input` is checked against its schema.
   await expect(page.locator('.try')).toContainText('Valid against the schema');
 
-  // D1: the webhook tester renders, with no Trusted Types error.
+  // D1: the webhook tester renders on the bench, with no Trusted Types error: a test send lands in the list
+  // and opens on Verify.
   await page.goto('/developers/webhooks');
+  const send = page.getByRole('button', { name: 'Send test event' }).first();
+  await expect(send).toBeVisible();
+  await send.click();
   await expect(page.getByRole('tab', { name: 'Python' })).toBeVisible();
-  await expect(
-    page.locator('[data-island="webhook-tester"]').getByRole('button').first(),
-  ).toBeVisible();
   await page.waitForTimeout(500);
   await shot(page, 'webhooks-signed-in');
   expect(errors).toEqual([]);
 
   // D8: a URL endpoint is added for real (the e2e server pins hooks.example.com, see WEBHOOK_TEST_DNS), its secret
   // shows once, a test send is listed tagged Test, and the secret can be rotated.
-  const tester = page.locator('[data-island="webhook-tester"]');
-  await tester.getByRole('button', { name: 'Add endpoint' }).click();
-  await tester.getByLabel('URL').fill('https://nowhere.example.net/passbook');
-  await tester.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(tester.getByRole('alert')).toContainText('does not resolve');
+  const manage = async () => {
+    await page.getByRole('button', { name: 'Manage' }).click();
+    return page.getByRole('dialog', { name: 'Endpoints' });
+  };
+  let sheet = await manage();
+  await sheet.getByRole('button', { name: 'Add endpoint' }).click();
+  await sheet.getByLabel('URL').fill('https://nowhere.example.net/passbook');
+  await sheet.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(sheet.getByRole('alert')).toContainText('does not resolve');
   await shots(page, 'webhooks-add-refused');
-  await tester.getByLabel('URL').fill('https://hooks.example.com/passbook');
-  await tester.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(tester.getByText('Shown once')).toBeVisible();
+  await sheet.getByLabel('URL').fill('https://hooks.example.com/passbook');
+  await sheet.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByText('Shown once')).toBeVisible();
   await shots(page, 'webhooks-secret');
-  await tester.getByRole('button', { name: 'Done' }).click();
-  await expect(tester.getByText('Shown once')).toHaveCount(0);
-  await expect(tester.locator('.wh-ep')).toHaveCount(2);
-  await tester.getByRole('button', { name: 'Send test event' }).click();
-  await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByText('Shown once')).toHaveCount(0);
+  const endpoints = page.getByRole('combobox', { name: 'Endpoint' }).locator('option');
+  await expect(endpoints).toHaveCount(2);
+  await page.getByRole('button', { name: 'Send test event' }).first().click();
+  await expect(
+    page.getByRole('listbox', { name: 'Deliveries' }).getByText('Test', { exact: true }).first(),
+  ).toBeVisible({ timeout: 30_000 });
   await shots(page, 'webhooks-url-test');
-  await tester.getByRole('button', { name: 'Rotate' }).click();
-  await expect(tester.getByText(/The old one keeps signing for 24 hours/)).toBeVisible();
+  sheet = await manage();
+  await sheet.getByRole('button', { name: 'Rotate' }).click();
+  await expect(sheet.getByText(/The old one keeps signing for 24 hours/)).toBeVisible();
   await shots(page, 'webhooks-rotate-confirm');
-  await tester.getByRole('button', { name: 'Rotate' }).click();
-  await expect(tester.getByText('Shown once')).toBeVisible();
+  await sheet.getByRole('button', { name: 'Rotate' }).click();
+  await expect(page.getByText('Shown once')).toBeVisible();
   await shots(page, 'webhooks-rotated');
-  await tester.getByRole('button', { name: 'Done' }).click();
-  await expect(tester.getByText('Shown once')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByText('Shown once')).toHaveCount(0);
   expect(errors).toEqual([]);
 
   // The same test send is listed in Admin, tagged the same way.

@@ -7,7 +7,6 @@ import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { pluralize } from '../../lib/format.ts';
 import { useMediaQuery } from '../../lib/media.ts';
-import { BenchCode } from '../bench/code-block.tsx';
 import { FilterBar, FilterSelect } from '../bench/filter-select.tsx';
 import { shortId } from '../bench/id-chip.tsx';
 import { useBenchKeys } from '../bench/keys.ts';
@@ -368,9 +367,7 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
               onPrev={at > 0 ? () => step(-1) : undefined}
               onNext={at >= 0 && at < order.length - 1 ? () => step(1) : undefined}
             />
-          ) : (
-            <BenchCode label={C.list} body={null} empty={C.empty.pick} />
-          )
+          ) : null
         }
       />
       {managing ? (

@@ -1,6 +1,11 @@
 /* The Verify tab: the steps, and the form that checks what your receiver saw. */
 .wh-steps {
+  /* The inspector body pads 16 px: the rows run edge to edge and keep that text edge. */
+  margin-inline: -16px;
   border-top: 1px solid var(--pk-border-subtle);
+}
+.wh-step > * {
+  min-width: 0;
 }
 .wh-step {
   position: relative;

@@ -13,7 +13,7 @@
 .wh-pane {
   display: grid;
   gap: 12px;
-  padding: 16px;
+  min-width: 0;
 }
 .wh-line {
   display: flex;
@@ -38,7 +38,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 0;
   border-top: 1px solid var(--pk-border-subtle);
 }
 .wh-attempts li:first-child {

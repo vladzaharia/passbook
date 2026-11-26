@@ -191,7 +191,6 @@ describe('Tester', () => {
     render(<Tester connect={ready(api([]))} types={TYPES} />);
     expect(await screen.findByText('Listening for events')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Send test event' })).toHaveLength(2);
-    expect(within(document.body).getByText('Select a delivery')).toBeInTheDocument();
   });
 
   it('offers a retry when the sandbox cannot be reached', async () => {

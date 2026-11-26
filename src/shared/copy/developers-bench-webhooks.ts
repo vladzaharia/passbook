@@ -20,10 +20,6 @@ export const BENCH_WEBHOOKS_COPY = {
   },
   note: { kept: 'Kept 7 days', types: 'Event types' },
   capture: { name: 'Capture endpoint', sub: 'Built in. Signed, never sent' },
-  empty: {
-    pick: 'Select a delivery',
-    nothing: 'Send a test event, or issue a pass in your sandbox.',
-  },
   tabs: { headers: 'Headers', body: 'Body', attempts: 'Attempts', verify: 'Verify' },
   inspector: {
     label: (type: string) => `Delivery ${type}`,
