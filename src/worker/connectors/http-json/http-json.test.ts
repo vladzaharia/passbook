@@ -1,55 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { UpstreamError, ValidationError } from '../../platform/errors.ts';
-import type { SafeFetch, SafeResponse } from '../../platform/safe-fetch.ts';
 import { signWebhook } from '../lib/hmac.ts';
-import { type ConnectorContext, ConnectorError } from '../types.ts';
+import { ConnectorError } from '../types.ts';
+import { decodeCursor } from './cursor.ts';
+import { harness, NOW, type Sec } from './harness.ts';
 import connector from './index.ts';
-
-type Cfg = ReturnType<typeof connector.configSchema.parse>;
-type Sec = NonNullable<ReturnType<NonNullable<typeof connector.secretSchema>['parse']>>;
-
-interface Reply {
-  status?: number;
-  body?: unknown;
-  headers?: Record<string, string>;
-  throws?: Error;
-}
-
-const NOW = Date.UTC(2026, 0, 1);
-
-function harness(
-  config: Record<string, unknown>,
-  secrets: Sec = {},
-  reply: (url: URL, init: RequestInit) => Reply = () => ({ body: {} }),
-  webhookSecret?: string,
-) {
-  const calls: { url: string; headers: Record<string, string> }[] = [];
-  const fetch: SafeFetch = async (url, init) => {
-    const r = reply(new URL(url), init ?? {});
-    calls.push({ url, headers: (init?.headers ?? {}) as Record<string, string> });
-    if (r.throws) throw r.throws;
-    const text = JSON.stringify(r.body ?? {});
-    const bytes = new TextEncoder().encode(typeof r.body === 'string' ? r.body : text);
-    return {
-      status: r.status ?? 200,
-      headers: new Headers(r.headers),
-      body: bytes,
-      text: () => new TextDecoder().decode(bytes),
-      json: <T>() => JSON.parse(new TextDecoder().decode(bytes)) as T,
-    } satisfies SafeResponse;
-  };
-  const parsed = connector.configSchema.parse(config) as Cfg;
-  const ctx: ConnectorContext<Cfg, Sec> = {
-    connection: { id: 'c1', orgId: 'o1', generation: 1, config: parsed },
-    secrets,
-    ...(webhookSecret ? { webhookSecret } : {}),
-    now: () => NOW,
-    fetch,
-    signal: new AbortController().signal,
-    log: () => {},
-  };
-  return { ctx, calls };
-}
 
 const base = { baseUrl: 'https://api.example.com/v1' };
 
@@ -71,6 +26,27 @@ describe('http-json config', () => {
     const c = connector.configSchema.parse(base);
     expect(c.recordPath).toBe('/{ref}');
     expect(c.auth.type).toBe('none');
+    expect(connector.version).toBe(2);
+    expect(connector.displayName).toBe('REST API');
+  });
+
+  it('has no per-record path of its own when a list is configured', () => {
+    expect(connector.configSchema.parse({ ...base, list: { path: '/l' } }).recordPath).toBe(
+      undefined,
+    );
+  });
+
+  it.each([
+    [{ ...base, headers: [{ name: 'Authorization', value: 'x' }] }],
+    [{ ...base, headers: [{ name: 'X-Api-Key', value: 'x' }] }],
+    [{ ...base, headers: [{ name: 'X-Auth-Token', value: 'x' }] }],
+    [{ ...base, headers: [{ name: 'Cookie', value: 'x' }] }],
+    [{ ...base, headers: [{ name: 'Notion-Version', value: 'a\r\nb' }] }],
+    [{ ...base, headers: Array.from({ length: 6 }, (_, i) => ({ name: `X-H${i}`, value: 'v' })) }],
+    [{ ...base, list: { path: '/l', listing: 'feed', incremental: { param: 's', field: '/u' } } }],
+    [{ ...base, list: { path: '/l', maxPages: 1001 } }],
+  ])('rejects %j', (config) => {
+    expect(connector.configSchema.safeParse(config).success).toBe(false);
   });
 });
 
@@ -211,7 +187,7 @@ describe('http-json auth', () => {
     });
     expect(
       await header({ auth: { type: 'header', headerName: 'X-Api-Key' } }, { headerValue: 'k' }),
-    ).toMatchObject({ 'X-Api-Key': 'k' });
+    ).toMatchObject({ 'x-api-key': 'k' });
     expect(await header({}, {})).not.toHaveProperty('authorization');
   });
 
@@ -222,44 +198,60 @@ describe('http-json auth', () => {
   });
 });
 
-describe('http-json listChanges', () => {
+describe('http-json listChanges (v1 configs through migrate)', () => {
+  // A stored v1 config as the old schema parsed it, migrated the way the runtime does.
+  const v1 = (list: Record<string, unknown>) =>
+    connector.migrate?.(1, {
+      ...base,
+      recordPath: '/{ref}',
+      list: {
+        cursorParam: 'cursor',
+        cursorPointer: '/cursor',
+        itemsPointer: '/items',
+        refPointer: '/id',
+        recordPointer: '',
+        ...list,
+      },
+    }) as Record<string, unknown>;
   const list = { path: '/members/changes', deletedPointer: '/deleted', recordPointer: '/data' };
   const page1 = {
     items: [{ id: 'a', data: { memberName: 'A' } }, { id: 'b', deleted: true }, { id: 7 }],
     cursor: 'c2',
   };
+  const stateOf = (cursor: string | undefined) => decodeCursor(cursor ?? null).state;
 
-  it('pages with the cursor, embeds records and flags deletions', async () => {
-    const { ctx, calls } = harness({ ...base, list }, {}, (url) =>
+  it('resumes a v1 raw cursor, embeds records and flags deletions', async () => {
+    const { ctx, calls } = harness(v1(list), {}, (url) =>
       url.searchParams.get('cursor') === 'c1'
         ? { body: page1 }
         : { body: { items: [], cursor: '' } },
     );
     const res = await connector.listChanges?.(ctx, 'c1');
     expect(calls[0]?.url).toBe('https://api.example.com/v1/members/changes?cursor=c1');
-    expect(res).toEqual({
-      changes: [
-        { ref: 'a', record: { memberName: 'A' } },
-        { ref: 'b', deleted: true },
-        { ref: '7' },
-      ],
-      cursor: 'c2',
-      hasMore: true,
-    });
+    expect(res?.changes).toEqual([
+      { ref: 'a', record: { memberName: 'A' } },
+      { ref: 'b', deleted: true },
+      { ref: '7' },
+    ]);
+    expect(res?.hasMore).toBe(true);
+    expect(stateOf(res?.cursor)).toMatchObject({ p: { c: 'c2', k: 1 } });
   });
 
-  it('stops when the cursor does not advance', async () => {
-    const { ctx } = harness({ ...base, list }, {}, () => ({ body: { items: [], cursor: 'c1' } }));
+  it('stops when the cursor does not advance and keeps it for the next run', async () => {
+    const { ctx } = harness(v1(list), {}, () => ({ body: { items: [], cursor: 'c1' } }));
     const res = await connector.listChanges?.(ctx, 'c1');
-    expect(res).toMatchObject({ cursor: 'c1', hasMore: false });
+    expect(res?.hasMore).toBe(false);
+    expect(stateOf(res?.cursor)).toEqual({ p: { c: 'c1' } });
   });
 
   it('honors hasMorePointer and rejects a malformed page', async () => {
-    const more = harness({ ...base, list: { ...list, hasMorePointer: '/more' } }, {}, () => ({
-      body: { items: [], cursor: 'n', more: false },
+    const more = harness(v1({ ...list, hasMorePointer: '/more' }), {}, () => ({
+      body: { items: [{ id: 'a' }], cursor: 'n', more: false },
     }));
-    expect(await connector.listChanges?.(more.ctx, null)).toMatchObject({ hasMore: false });
-    const bad = harness({ ...base, list }, {}, () => ({ body: { nope: 1 } }));
+    const res = await connector.listChanges?.(more.ctx, null);
+    expect(res?.hasMore).toBe(false);
+    expect(stateOf(res?.cursor)).toEqual({ p: { c: 'n' } });
+    const bad = harness(v1(list), {}, () => ({ body: { nope: 1 } }));
     await expect(connector.listChanges?.(bad.ctx, null)).rejects.toMatchObject({
       code: 'INVALID_PAYLOAD',
     });

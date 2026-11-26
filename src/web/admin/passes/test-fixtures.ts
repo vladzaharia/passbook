@@ -269,7 +269,7 @@ export function connectionDetail(over: Record<string, unknown> = {}) {
 export const CONNECTOR = {
   type: 'http-json',
   version: 1,
-  displayName: 'HTTP JSON',
+  displayName: 'REST API',
   capabilities: { poll: true, delta: false, webhook: true, import: false, snapshot: false },
   configSchema: {
     type: 'object',

@@ -29,6 +29,11 @@ export const RestPaginationSchema = z.discriminatedUnion('style', [
     sizeParam: ParamSchema.optional(),
     size: SizeSchema.optional(),
     totalPagesPointer: JsonPointerSchema.optional(),
+    /** A response header with the page count (WooCommerce `X-WP-TotalPages`). */
+    totalPagesHeader: z
+      .string()
+      .regex(/^[A-Za-z][A-Za-z0-9-]{0,63}$/, 'Not a header name.')
+      .optional(),
   }),
   z.object({
     style: z.literal('offset'),

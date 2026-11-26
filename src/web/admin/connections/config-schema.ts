@@ -92,7 +92,7 @@ export const WIZARD_HIDDEN = (flat: Obj | undefined, authType: string): Set<stri
   const props = flat && isObj(flat.properties) ? flat.properties : {};
   for (const [key, raw] of Object.entries(props)) {
     // Webhook headers and list pointers keep their defaults; the Configuration tab edits them.
-    if (key.startsWith('webhook.') || key === 'auth.type') hidden.add(key);
+    if (key.startsWith('webhook.') || key === 'auth.type' || OPAQUE.includes(key)) hidden.add(key);
     if (key.startsWith('list.') && key !== 'list.path') hidden.add(key);
     const tags = isObj(raw) && Array.isArray(raw['x-auth']) ? (raw['x-auth'] as string[]) : null;
     if (tags && !tags.includes(authType)) hidden.add(key);
@@ -106,4 +106,62 @@ export function prefixed(fields: Record<string, string>, prefix: string) {
   for (const [k, v] of Object.entries(fields))
     if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Nested or list-valued config the generic form cannot edit; the REST explorer owns them. */
+const OPAQUE = ['headers', 'list.query', 'list.pagination', 'list.incremental'];
+
+/** The schema without the opaque keys, so the form neither shows nor validates them. */
+export function withoutOpaque(flat: Obj | undefined): Obj | undefined {
+  if (!flat || !isObj(flat.properties)) return flat;
+  const properties = Object.fromEntries(
+    Object.entries(flat.properties).filter(([key]) => !OPAQUE.includes(key)),
+  );
+  const required = Array.isArray(flat.required)
+    ? (flat.required as string[]).filter((key) => !OPAQUE.includes(key))
+    : [];
+  return { ...flat, properties, required };
+}
+
+const STYLES: Record<string, string> = {
+  none: 'none',
+  cursor: 'cursor',
+  'next-link': 'next link',
+  'link-header': 'Link header',
+  page: 'page number',
+  offset: 'offset',
+};
+
+/** One short line per opaque setting that is present, shown read-only. */
+export function opaqueSummary(config: Obj): string[] {
+  const out: string[] = [];
+  const list = isObj(config.list) ? config.list : undefined;
+  if (list && isObj(list.pagination)) {
+    out.push(
+      `Pagination: ${STYLES[String(list.pagination.style)] ?? String(list.pagination.style)}`,
+    );
+  }
+  if (list && Array.isArray(list.query) && list.query.length > 0) {
+    out.push(`List parameters: ${list.query.length}`);
+  }
+  if (list && isObj(list.incremental)) out.push(`Updated since: ${String(list.incremental.param)}`);
+  if (Array.isArray(config.headers) && config.headers.length > 0) {
+    out.push(`Headers: ${config.headers.length}`);
+  }
+  return out;
+}
+
+/** Puts the opaque values the form never saw back into a saved config. */
+export function keepOpaque(stored: Obj, edited: Obj): Obj {
+  const out: Obj = { ...edited };
+  if (stored.headers !== undefined) out.headers = stored.headers;
+  const list = isObj(stored.list) ? stored.list : undefined;
+  if (list && isObj(out.list)) {
+    const kept: Obj = { ...out.list };
+    for (const key of ['query', 'pagination', 'incremental']) {
+      if (list[key] !== undefined) kept[key] = list[key];
+    }
+    out.list = kept;
+  }
+  return out;
 }

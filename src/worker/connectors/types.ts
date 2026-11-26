@@ -193,7 +193,7 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
 }
 
 /** A finer cause inside a code, for the probe and logs. A closed list: upstream text never reaches it. */
-export type ConnectorErrorReason = 'OFF_ORIGIN';
+export type ConnectorErrorReason = 'OFF_ORIGIN' | 'CURSOR_TOO_LONG' | 'PAGE_TOO_LARGE';
 
 export type ConnectorErrorCode =
   | 'AUTH'
