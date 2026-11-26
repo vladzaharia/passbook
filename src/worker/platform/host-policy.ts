@@ -1,7 +1,8 @@
 /**
  * Which hosts answer. PUBLIC_BASE_URL's origin serves the app. A REDIRECT_HOSTS host (comma list)
  * answers every request, any path or method, with a 308 to the same path and query on the
- * canonical origin. A DEVELOPERS_HOSTS host does the same into /developers (its root is the portal's
+ * canonical origin, except /wallet/v1/*: Wallet may not follow a redirect, and passes issued under
+ * the old webServiceURL must keep updating, so the app serves it. A DEVELOPERS_HOSTS host does the same into /developers (its root is the portal's
  * home, so developers.passbook.mobile/reference/passes lands on /developers/reference/passes). Any
  * other host is refused. index.ts turns this on; tests build the app
  * without it because they use several hosts.
@@ -53,7 +54,8 @@ export function hostDecision(env: HostEnv, url: URL): HostDecision {
       location: `${canonical.origin}${portalPath(url.pathname)}${url.search}`,
     };
   }
-  return redirectHosts(env).includes(url.host) ? moved : { action: 'refuse' };
+  if (!redirectHosts(env).includes(url.host)) return { action: 'refuse' };
+  return /^\/wallet\/v1(\/|$)/.test(url.pathname) ? { action: 'serve' } : moved;
 }
 
 export const hostPolicy = createMiddleware<AppBindings>(async (c, next) => {

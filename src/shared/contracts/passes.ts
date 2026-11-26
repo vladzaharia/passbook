@@ -24,6 +24,7 @@ export const PassSourceSchema = z.enum([
   'remove',
   'restore',
   'designer',
+  'move',
 ]);
 export type PassSource = z.infer<typeof PassSourceSchema>;
 export const PassCauseSchema = z.enum([

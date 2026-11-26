@@ -10,6 +10,9 @@ export class AppleProvisioner extends WorkerEntrypoint<ProvisionerEnv> implement
   createPassType(...a: Parameters<AppleRpc['createPassType']>) {
     return api(this.env).createPassType(...a);
   }
+  createPlatformPassType(...a: Parameters<AppleRpc['createPlatformPassType']>) {
+    return api(this.env).createPlatformPassType(...a);
+  }
   createCertificate(...a: Parameters<AppleRpc['createCertificate']>) {
     return api(this.env).createCertificate(...a);
   }

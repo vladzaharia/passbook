@@ -18,6 +18,8 @@ export const PushKeyInfoSchema = z.object({
   dependentCount: z.number().int().nonnegative(),
 });
 
+/** The platform's own identity slots: pass.mobile.passbook and the device-test pass type. */
+export const PlatformSlotSchema = z.enum(['root', 'devtest']);
 export const IdentityKindSchema = z.enum(['platform', 'managed', 'own']);
 export const IdentityStatusSchema = z.enum([
   'provisioning',
@@ -130,6 +132,49 @@ export const RotateIdentitySchema = z.object({
 export const PushKeyInputSchema = z.object({
   keyId: z.string().min(1).max(20),
   p8: z.string().min(1).max(4_000),
+});
+
+/**
+ * What making an identity the default checks (`setPlatformDefault`), as facts. `null`: the row is not
+ * held to it (the legacy row needs only its certificate). `deviceTest` is a registration from a platform
+ * admin's personal org.
+ */
+export const PlatformReadinessSchema = z.object({
+  eligible: z.boolean(),
+  certificate: z.boolean(),
+  issuing: z.boolean().nullable(),
+  pushHealthy: z.boolean().nullable(),
+  pushProbeAt: TimestampSchema.nullable(),
+  pushProbeFresh: z.boolean().nullable(),
+  deviceTest: z.boolean().nullable(),
+  ready: z.boolean(),
+});
+export type PlatformReadiness = z.infer<typeof PlatformReadinessSchema>;
+
+/** A platform identity row: the identity plus what the platform view needs (design 8). */
+export const PlatformIdentitySchema = IdentitySchema.extend({
+  /** `null` for the legacy deployment identity. */
+  slot: PlatformSlotSchema.nullable(),
+  purpose: z.enum(['passes', 'device_test']),
+  managed: z.enum(['connector', 'deployment']),
+  /** Devices that registered a pass signed by this identity. */
+  registrationCount: z.number().int().nonnegative(),
+  openRunId: IdSchema.nullable(),
+  /** The legacy identity once it signs nothing and is not the default. */
+  dormant: z.boolean(),
+  readiness: PlatformReadinessSchema,
+});
+export type PlatformIdentityDto = z.infer<typeof PlatformIdentitySchema>;
+export const PlatformIdentityListSchema = z.object({
+  items: z.array(PlatformIdentitySchema),
+  /** The open setup run of each slot that has one. */
+  openRuns: z.array(z.object({ slot: PlatformSlotSchema, runId: IdSchema })),
+});
+export const StartPlatformIdentitySchema = z.object({ slot: PlatformSlotSchema });
+export const PlatformDefaultResultSchema = z.object({
+  identityId: IdSchema,
+  /** False when it already was the default. */
+  changed: z.boolean(),
 });
 
 export const IdentityRunKindSchema = z.enum(['provision', 'rotate', 'revoke']);

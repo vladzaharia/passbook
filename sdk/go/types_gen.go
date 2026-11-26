@@ -7118,6 +7118,23 @@ type PassRemovedEventData struct {
 	RunID   *string `json:"runId,omitempty"`
 }
 
+type PassReplacedEvent struct {
+	ID         string                `json:"id"`
+	Type       string                `json:"type"`
+	APIVersion string                `json:"apiVersion"`
+	CreatedAt  int64                 `json:"createdAt"`
+	OrgID      string                `json:"orgId"`
+	Mode       string                `json:"mode"`
+	Pass       WebhookPassRef        `json:"pass"`
+	Data       PassReplacedEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
+	Sample     *bool                 `json:"sample,omitempty"`
+}
+
+type PassReplacedEventData struct {
+	ReplacedBy string `json:"replacedBy"`
+}
+
 type PassRestoredEvent struct {
 	ID         string                `json:"id"`
 	Type       string                `json:"type"`
@@ -8856,6 +8873,190 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	Status     *string `json:"status"`
 	DurationMs *int64  `json:"durationMs"`
 	At         int64   `json:"at"`
+}
+
+type PlatformAppleIdentitiesCreateParams struct {
+	Slot string `json:"slot"`
+}
+
+type PlatformAppleIdentitiesCreateResponse struct {
+	ID         string  `json:"id"`
+	OrgID      *string `json:"orgId"`
+	Kind       string  `json:"kind"`
+	TargetType string  `json:"targetType"`
+	TargetID   string  `json:"targetId"`
+	State      string  `json:"state"`
+	Step       *string `json:"step"`
+	Attempt    int64   `json:"attempt"`
+	WaitingFor *string `json:"waitingFor"`
+	ErrorCode  *string `json:"errorCode"`
+	CreatedAt  int64   `json:"createdAt"`
+	UpdatedAt  int64   `json:"updatedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+}
+
+type PlatformAppleIdentitiesListResponse struct {
+	Items    []PlatformAppleIdentitiesListResponseItemsItem    `json:"items"`
+	OpenRuns []PlatformAppleIdentitiesListResponseOpenRunsItem `json:"openRuns"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItem struct {
+	ID                 string                                                    `json:"id"`
+	OrgID              *string                                                   `json:"orgId"`
+	Label              string                                                    `json:"label"`
+	PassTypeIdentifier string                                                    `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                                    `json:"teamIdentifier"`
+	Source             string                                                    `json:"source"`
+	CertSha256         *string                                                   `json:"certSha256"`
+	CertSubject        *string                                                   `json:"certSubject"`
+	CertSerial         *string                                                   `json:"certSerial"`
+	NotBefore          *int64                                                    `json:"notBefore"`
+	NotAfter           *int64                                                    `json:"notAfter"`
+	DaysRemaining      *int64                                                    `json:"daysRemaining"`
+	ApnsBinding        *string                                                   `json:"apnsBinding"`
+	ApnsAvailable      bool                                                      `json:"apnsAvailable"`
+	PushMethod         *string                                                   `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                            `json:"pushKey,omitempty"`
+	ApnsHealth         string                                                    `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                                    `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                                   `json:"apnsReason,omitempty"`
+	PassCount          *int64                                                    `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                      `json:"nfcEnabled"`
+	NFCKeys            []PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                      `json:"isDefault"`
+	CreatedAt          int64                                                     `json:"createdAt"`
+	Kind               *string                                                   `json:"kind,omitempty"`
+	Status             *string                                                   `json:"status,omitempty"`
+	Rotation           *string                                                   `json:"rotation,omitempty"`
+	Issuing            *bool                                                     `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                                    `json:"nextRotationAt,omitempty"`
+	Handle             *string                                                   `json:"handle,omitempty"`
+	Slot               *string                                                   `json:"slot"`
+	Purpose            string                                                    `json:"purpose"`
+	Managed            string                                                    `json:"managed"`
+	RegistrationCount  int64                                                     `json:"registrationCount"`
+	OpenRunID          *string                                                   `json:"openRunId"`
+	Dormant            bool                                                      `json:"dormant"`
+	Readiness          PlatformAppleIdentitiesListResponseItemsItemReadiness     `json:"readiness"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformAppleIdentitiesListResponseItemsItemReadiness struct {
+	Eligible       bool   `json:"eligible"`
+	Certificate    bool   `json:"certificate"`
+	Issuing        *bool  `json:"issuing"`
+	PushHealthy    *bool  `json:"pushHealthy"`
+	PushProbeAt    *int64 `json:"pushProbeAt"`
+	PushProbeFresh *bool  `json:"pushProbeFresh"`
+	DeviceTest     *bool  `json:"deviceTest"`
+	Ready          bool   `json:"ready"`
+}
+
+type PlatformAppleIdentitiesListResponseOpenRunsItem struct {
+	Slot  string `json:"slot"`
+	RunID string `json:"runId"`
+}
+
+type PlatformAppleIdentitiesMakeDefaultResponse struct {
+	IdentityID string `json:"identityId"`
+	Changed    bool   `json:"changed"`
+}
+
+type PlatformAppleIdentityMovesListResponse struct {
+	Items      []PlatformAppleIdentityMovesListResponseItemsItem `json:"items"`
+	NextCursor *string                                           `json:"nextCursor"`
+}
+
+type PlatformAppleIdentityMovesListResponseItemsItem struct {
+	ID             string  `json:"id"`
+	OperationID    string  `json:"operationId"`
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   string  `json:"toIdentityId"`
+	OldPassID      string  `json:"oldPassId"`
+	NewPassID      string  `json:"newPassId"`
+	State          string  `json:"state"`
+	Reason         *string `json:"reason"`
+	ConflictCount  int64   `json:"conflictCount"`
+	RegisteredAt   *int64  `json:"registeredAt"`
+	VoidAt         *int64  `json:"voidAt"`
+	VoidedAt       *int64  `json:"voidedAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+}
+
+type PlatformAppleIdentityMovesPreviewResponse struct {
+	ToIdentityID string           `json:"toIdentityId"`
+	Passes       int64            `json:"passes"`
+	Registered   int64            `json:"registered"`
+	Holders      int64            `json:"holders"`
+	Kept         map[string]int64 `json:"kept"`
+}
+
+type PlatformAppleIdentityMovesStartParams struct {
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   *string `json:"toIdentityId,omitempty"`
+}
+
+type PlatformAppleIdentityMovesStartResponse struct {
+	ID              string                                             `json:"id"`
+	Kind            string                                             `json:"kind"`
+	Status          string                                             `json:"status"`
+	Title           string                                             `json:"title"`
+	Text            string                                             `json:"text"`
+	OrgID           *string                                            `json:"orgId"`
+	Mode            *string                                            `json:"mode"`
+	Target          map[string]any                                     `json:"target"`
+	Step            *string                                            `json:"step"`
+	Steps           []PlatformAppleIdentityMovesStartResponseStepsItem `json:"steps"`
+	Attempt         int64                                              `json:"attempt"`
+	Cancelable      bool                                               `json:"cancelable"`
+	CancelRequested bool                                               `json:"cancelRequested"`
+	StartedBy       PlatformAppleIdentityMovesStartResponseStartedBy   `json:"startedBy"`
+	CreatedAt       int64                                              `json:"createdAt"`
+	StartedAt       *int64                                             `json:"startedAt"`
+	UpdatedAt       int64                                              `json:"updatedAt"`
+	FinishedAt      *int64                                             `json:"finishedAt"`
+	Error           map[string]any                                     `json:"error"`
+	Result          map[string]any                                     `json:"result"`
+	Revision        int64                                              `json:"revision"`
+	PollAfterMs     int64                                              `json:"pollAfterMs"`
+}
+
+type PlatformAppleIdentityMovesStartResponseStartedBy struct {
+	Type string  `json:"type"`
+	ID   *string `json:"id"`
+}
+
+type PlatformAppleIdentityMovesStartResponseStepsItem struct {
+	Key           string  `json:"key"`
+	Label         string  `json:"label"`
+	State         string  `json:"state"`
+	Done          *int64  `json:"done"`
+	Total         *int64  `json:"total"`
+	Detail        *string `json:"detail"`
+	Until         *int64  `json:"until"`
+	WaitingReason *string `json:"waitingReason"`
+	Group         *string `json:"group"`
+	StartedAt     *int64  `json:"startedAt"`
+	FinishedAt    *int64  `json:"finishedAt"`
+}
+
+type PlatformAppleIdentityMovesStartTimerResponse struct {
+	MoveID string `json:"moveId"`
+	Armed  bool   `json:"armed"`
 }
 
 type PlatformAuditEntriesListResponse struct {

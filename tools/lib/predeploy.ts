@@ -23,6 +23,9 @@ export interface PredeployOptions {
   allowNoOidc?: boolean;
 }
 
+/** The env platform pass type never changes: the managed default is a database row, not this var. */
+const LEGACY_PLATFORM_PASS_TYPE = 'pass.im.plrs.wallet';
+
 /** Problems that make a production deploy wrong. Empty means the config is ready. */
 export function predeployProblems(
   config: WranglerConfig,
@@ -43,6 +46,10 @@ export function predeployProblems(
     if (key === 'TURNSTILE_SITE_KEY' && TURNSTILE_TEST_KEY.test(value))
       problems.push('vars.TURNSTILE_SITE_KEY is a Cloudflare test key.');
   }
+  if (config.vars?.PLATFORM_PASS_TYPE_ID !== LEGACY_PLATFORM_PASS_TYPE)
+    problems.push(
+      `vars.PLATFORM_PASS_TYPE_ID must stay ${LEGACY_PLATFORM_PASS_TYPE}: the legacy platform row signs the passes already issued, and a changed value stops all of them.`,
+    );
   problems.push(
     ...cimdProblems(config.vars ?? {}),
     ...domainProblems(config),

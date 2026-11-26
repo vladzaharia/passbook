@@ -22,6 +22,7 @@ const READ_ONLY = /^src\/worker\/modules\/identities\/asc-ledger(\.test)?\.ts$/;
 /** Provisioner methods the read-only file must never name. */
 const WRITE_METHODS = new Set([
   'createPassType',
+  'createPlatformPassType',
   'createCertificate',
   'listCertificates',
   'revokeCertificate',

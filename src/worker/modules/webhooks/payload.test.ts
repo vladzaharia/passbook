@@ -72,6 +72,7 @@ const CASES: [string, Partial<FeedRow>, Record<string, unknown>][] = [
     { version: 2, status: 410, reason: 'Unregistered', code: 'X', outcome: 'gone' },
   ],
   ['email.failed', {}, { code: 'EMAIL_OUTCOME_UNKNOWN' }],
+  ['pass.replaced', {}, { replacedBy: 'p2' }],
 ];
 
 const KIND: Record<string, string> = {
