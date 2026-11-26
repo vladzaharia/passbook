@@ -96,7 +96,6 @@ export const EnableReadyResultSchema = z.strictObject({
   enrolments: z.array(z.strictObject({ orgId: IdSchema, orgName: z.string() })),
 });
 export type EnableReadyResult = z.infer<typeof EnableReadyResultSchema>;
-||||||| 8955c9c48
 
 const ReleaseByModeSchema = z.strictObject({
   live: WalletProviderIssuanceSchema,
