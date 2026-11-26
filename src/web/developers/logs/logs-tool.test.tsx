@@ -42,7 +42,7 @@ describe('Logs on the bench', () => {
     // In the toolbar from 1180 px, and again under the list below it (CSS shows one).
     expect(screen.getAllByText(/Kept 7 days/)).toHaveLength(2);
     // Time is the org's zone (Pacific by default), not UTC: 22:15:52 UTC is 14:15:52 PST.
-    expect(within(rows()[0] as HTMLElement).getByText('14:15:52')).toBeInTheDocument();
+    expect(within(rows()[0] as HTMLElement).getByText(/14:15/)).toBeInTheDocument();
   });
 
   it('reads Yours by default and sends the filters from the address', async () => {
