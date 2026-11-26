@@ -1,7 +1,7 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { parseSteps } from './dto.ts';
 import { sendOperationRun } from './jobs.ts';
+import { kinds } from './kinds.ts';
 import { progressOf } from './progress.ts';
 import { kindOf, runnerOf } from './registry.ts';
 import type { OperationRow } from './repo.ts';
@@ -73,18 +73,14 @@ async function check(ctx: ServiceContext, row: OperationRow, now: number): Promi
     await sendOperationRun(ctx, row.id, row.attempt);
 }
 
-/** A waiting row with steps still to do, and nobody holding it: a wake-up was lost. Tail steps wait by design. */
-function lostWakeUp(row: OperationRow, now: number): boolean {
-  if (row.lease_until !== null && row.lease_until > now) return false;
-  const tails = new Set(
-    kindOf(row.kind)
-      ?.steps.filter((s) => s.tail)
-      .map((s) => s.key),
-  );
-  const steps = parseSteps(row.steps);
-  // A step blocked until a time (Apple, a rate window) is a wait the operation is meant to sit in.
-  if (steps.some((s) => s.state === 'waiting' && s.waitingReason === 'blocked')) return false;
-  return steps.some((s) => s.state === 'pending' && !tails.has(s.key));
+/** Each kind's tail step keys: they wait after Done by design. */
+function tailKeys(): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const k of kinds.values()) {
+    const keys = k.steps.filter((s) => s.tail).map((s) => s.key);
+    if (keys.length) out.set(k.kind, keys);
+  }
+  return out;
 }
 
 /**
@@ -95,9 +91,12 @@ export async function sweepStalledOperations(ctx: ServiceContext): Promise<void>
   const now = ctx.clock.now();
   const silent = [
     ...(await runningSilentSince(ctx.env.DB, now - MIN_STALL_MS, BATCH)),
-    ...(await waitingSilentSince(ctx.env.DB, now - MIN_STALL_MS, BATCH)).filter((r) =>
-      lostWakeUp(r, now),
-    ),
+    ...(await waitingSilentSince(ctx.env.DB, {
+      before: now - MIN_STALL_MS,
+      now,
+      limit: BATCH,
+      tails: tailKeys(),
+    })),
   ];
   for (const row of silent) {
     const limit = kindOf(row.kind)?.stallMs ?? DEFAULT_STALL_MS;

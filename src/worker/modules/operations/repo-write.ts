@@ -3,12 +3,12 @@ import {
   OperationResultSchema,
 } from '../../../shared/contracts/operations.ts';
 import { first, run, stmt } from '../../platform/db.ts';
-import { WORKFLOW_WRITER } from './progress-types.ts';
+import { WORKFLOW_WRITER, type Writer } from './progress-types.ts';
 
 const ACTIVE = `status IN ('queued', 'running', 'waiting')`;
 
 /** The lease condition of a write: a claimed lease refuses any other writer; a Workflow writer is fenced by attempt only. */
-function fence(lease: string | null | undefined): { sql: string; params: string[] } {
+function fence(lease: Writer | null | undefined): { sql: string; params: string[] } {
   if (lease === WORKFLOW_WRITER) return { sql: '', params: [] };
   return { sql: ' AND (lease_owner IS NULL OR lease_owner = ?)', params: [lease ?? ''] };
 }
@@ -34,7 +34,7 @@ export function writeStep(
     status: 'running' | 'waiting';
     leaseUntil: number;
     /** The lease token of the runner; a claimed lease refuses any other writer. */
-    lease: string | null;
+    lease: Writer | null;
   },
 ): Promise<Written | null> {
   // The index is an integer from the code's own step list, never a request value.
@@ -65,7 +65,7 @@ export function writeStep(
 /** Only the heartbeat and the lease: no revision bump, so an unchanged poll still gets its 304. */
 export async function writeHeartbeat(
   db: D1Database,
-  w: { id: string; attempt: number; now: number; leaseUntil: number; lease: string | null },
+  w: { id: string; attempt: number; now: number; leaseUntil: number; lease: Writer | null },
 ): Promise<Written | null> {
   return first<Written>(
     db,
@@ -98,7 +98,7 @@ export interface Finish {
   /** The stop of an operation that has not started: refuses a row a runner already claimed (status or live lease). */
   onlyQueued?: true;
   /** A runner's lease token: a claimed lease refuses any other end write. Omit for the sweep and a stop. */
-  lease?: string;
+  lease?: Writer;
 }
 
 /** The terminal write. A statement, so a domain batch can commit its own end state with it. */

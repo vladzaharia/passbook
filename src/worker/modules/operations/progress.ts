@@ -7,7 +7,13 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { parseSteps } from './dto.ts';
 import { kindOf } from './kinds.ts';
-import { NOOP, OperationCancelled, type Progress, type StepHandle } from './progress-types.ts';
+import {
+  NOOP,
+  OperationCancelled,
+  type Progress,
+  type StepHandle,
+  type Writer,
+} from './progress-types.ts';
 import { type OperationRow, rowById } from './repo.ts';
 import {
   finish,
@@ -43,9 +49,9 @@ class Reporter implements Progress {
   private readonly ctx: ServiceContext;
   private readonly id: string;
   private readonly wanted: number;
-  private readonly lease: string | null;
+  private readonly lease: Writer | null;
 
-  constructor(ctx: ServiceContext, id: string, wanted: number, lease: string | null) {
+  constructor(ctx: ServiceContext, id: string, wanted: number, lease: Writer | null) {
     this.ctx = ctx;
     this.id = id;
     this.wanted = wanted;
@@ -323,7 +329,7 @@ export function progressOf(
   ctx: ServiceContext,
   opId: string | undefined,
   attempt: number,
-  lease?: string,
+  lease?: Writer,
 ): Progress {
   return opId ? new Reporter(ctx, opId, attempt, lease ?? null) : NOOP;
 }
