@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import { WalletReissueResponseSchema } from '@/shared/contracts/wallet-provider-actions.ts';
 import {
-  PlatformWalletCredentialListSchema,
   PlatformWalletEnrolmentListSchema,
   type ResolveWalletMigration,
   type SaveWalletCredential,
@@ -21,6 +20,7 @@ import {
   WalletMigrationResolvedSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
+import { PlatformWalletCredentialListSchema } from '@/shared/contracts/wallet-release.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 

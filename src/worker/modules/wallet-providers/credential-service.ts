@@ -1,11 +1,11 @@
 import {
-  type PlatformWalletCredentialList,
   type RevokeWalletCredential,
   type SaveWalletCredential,
   SaveWalletCredentialSchema,
   type WalletCredential,
   type WalletCredentialList,
 } from '../../../shared/contracts/wallet-providers.ts';
+import type { PlatformWalletCredentialList } from '../../../shared/contracts/wallet-release.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import {

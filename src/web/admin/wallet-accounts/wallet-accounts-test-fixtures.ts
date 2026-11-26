@@ -4,8 +4,8 @@ import type {
   PlatformWalletEnrolment,
   WalletCredential,
   WalletEnrolment,
-  WalletRelease,
 } from '@/shared/contracts/wallet-providers.ts';
+import type { WalletRelease } from '@/shared/contracts/wallet-release.ts';
 import { channelOf, enrolmentOf, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, type RenderAppOptions, renderApp } from '@/web/lib/test-utils.tsx';
 

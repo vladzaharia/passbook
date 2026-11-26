@@ -4,7 +4,6 @@ import { SetSamsungCardSchema } from '../../../shared/contracts/wallet-provider-
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
-  PlatformWalletCredentialListSchema,
   PlatformWalletEnrolmentListSchema,
   PlatformWalletEnrolmentParamsSchema,
   PlatformWalletEnrolmentQuerySchema,
@@ -20,6 +19,7 @@ import {
   WalletMigrationReportSchema,
   WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
+import { PlatformWalletCredentialListSchema } from '../../../shared/contracts/wallet-release.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';

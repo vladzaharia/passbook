@@ -1,7 +1,5 @@
-import type {
-  WalletProviderIssuance,
-  WalletRelease,
-} from '../../../shared/contracts/wallet-providers.ts';
+import type { WalletProviderIssuance } from '../../../shared/contracts/wallet-providers.ts';
+import type { WalletRelease } from '../../../shared/contracts/wallet-release.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { WalletProvider } from './instance-types.ts';
 import {
