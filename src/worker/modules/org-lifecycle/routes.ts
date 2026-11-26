@@ -227,12 +227,12 @@ register(
 
 /** Mount at /api/v1/platform: the closed organizations, soonest purge first. */
 export const orgClosedRoutes = createRouter();
-orgClosedRoutes.use('*', requireAdmin);
 register(
   orgClosedRoutes,
   'org-lifecycle',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/closed-orgs',
     summary: 'List closed organizations',
     query: CursorQuerySchema,

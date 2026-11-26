@@ -3,7 +3,6 @@ import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
-import { REQUIRE_ADMIN_ROUTER_ROUTES } from '../../../test/helpers/platform-routes.ts';
 import { PLATFORM_KEY_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { OrgCapabilitySchema } from '../../shared/contracts/org-membership.ts';
 import { createApp } from '../app.ts';
@@ -284,7 +283,7 @@ describe('a Platform key writes within its budget', () => {
 });
 
 describe('every person-only route of the app refuses a key', () => {
-  it('answers a Platform key holding every platform scope with PERSON_REQUIRED, or 401 only behind a named requireAdmin router', async () => {
+  it('answers a Platform key holding every platform scope with PERSON_REQUIRED', async () => {
     const fake = fakeAuth(ORIGIN);
     const app = createApp({ stores: fake.stores });
     const person = app.routes.filter((r) => platformKeyOf(r.handler)?.mode === 'person');
@@ -292,7 +291,6 @@ describe('every person-only route of the app refuses a key', () => {
     const headers = fake.platformKey({ scopes: [...PLATFORM_KEY_SCOPES] });
     const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
     const wrong: string[] = [];
-    const unauthorised: string[] = [];
     for (const r of person) {
       const url = `${ORIGIN}${r.path.replace(/:[A-Za-z0-9_]+/g, 'x')}`;
       const init: RequestInit = {
@@ -302,11 +300,9 @@ describe('every person-only route of the app refuses a key', () => {
       if (!['GET', 'HEAD', 'DELETE'].includes(r.method)) init.body = '{}';
       const res = await app.fetch(new Request(url, init), env as AppEnv, ctx);
       const body = (await res.json().catch(() => ({}))) as { code?: string };
-      if (res.status === 401) unauthorised.push(`${r.method} ${r.path}`);
-      else if (!(res.status === 403 && body.code === 'PERSON_REQUIRED'))
+      if (!(res.status === 403 && body.code === 'PERSON_REQUIRED'))
         wrong.push(`${r.method} ${r.path}: ${res.status} ${body.code}`);
     }
     expect(wrong).toEqual([]);
-    expect(unauthorised.sort()).toEqual([...REQUIRE_ADMIN_ROUTER_ROUTES].sort());
   }, 120_000);
 });

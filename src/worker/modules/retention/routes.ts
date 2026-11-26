@@ -10,7 +10,6 @@ import {
   ReceiptListQuerySchema,
   ReceiptListSchema,
 } from '../../../shared/contracts/retention.ts';
-import { requireAdmin } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -152,7 +151,6 @@ register(
 
 /** Mount at /api/v1/platform: a platform administrator places holds an org cannot release. */
 export const retentionPlatformRoutes = createRouter();
-retentionPlatformRoutes.use('*', requireAdmin);
 retentionPlatformRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
@@ -163,6 +161,7 @@ register(
   'retention',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/orgs/{orgId}/retention/holds',
     summary: 'List the legal holds of an organization',
     params: HoldParamsSchema,
@@ -181,6 +180,7 @@ register(
   'retention',
   {
     method: 'post',
+    auth: { platform: 'platform:orgs' },
     path: '/orgs/{orgId}/retention/holds',
     summary: 'Place a platform legal hold; only a platform administrator releases it',
     params: HoldParamsSchema,
@@ -204,6 +204,7 @@ register(
   'retention',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/orgs/{orgId}/retention/receipts',
     summary: 'List the retention receipts of an organization',
     params: HoldParamsSchema,
@@ -221,6 +222,7 @@ register(
   'retention',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/orgs/{orgId}/retention/receipts/{receiptId}/download',
     summary: 'Download one retention receipt of an organization',
     params: ReceiptIdParamsSchema,
@@ -239,6 +241,7 @@ register(
   'retention',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/retention/receipts',
     summary: 'List retention receipts of platform-scope deletions',
     query: ReceiptListQuerySchema,
@@ -252,6 +255,7 @@ register(
   'retention',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs' },
     path: '/retention/receipts/{receiptId}/download',
     summary: 'Download one platform-scope retention receipt',
     params: PlatformReceiptParamsSchema,

@@ -37,6 +37,7 @@ import { marketingPageRoutes } from './modules/marketing/routes-pages.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
+import { metricsPlatformRoutes } from './modules/metrics/routes-platform.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
 import { operationsRoutes } from './modules/operations/routes.ts';
@@ -252,6 +253,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/settings', settingsRoutes);
   app.route('/api/v1/audit', auditRoutes);
   app.route('/api/v1/status', statusRoutes);
+  app.route('/api/v1/metrics', metricsPlatformRoutes);
   app.route('/api/v1/metrics', metricsRoutes);
   app.route('/api/v1/scan', scanPairRoutes);
   app.route('/api/v1/scan', scanRoutes);

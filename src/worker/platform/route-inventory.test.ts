@@ -171,20 +171,10 @@ const SCANNER = [
 const OWN_GUARD = [
   // A signed link: the signature is the credential (modules/org-lifecycle).
   'GET /api/v1/org-exports/:exportId/download',
-  'DELETE /api/v1/identities/:id',
-  'DELETE /api/v1/identities/:id/push-key',
   'GET /api/v1/identities',
-  'GET /api/v1/identities/:id',
-  'GET /api/v1/identities/:id/certificates',
   'GET /api/v1/orgs/invitations/accept',
-  'PATCH /api/v1/identities/:id',
-  'POST /api/v1/identities',
-  'POST /api/v1/identities/:id/apns-check',
-  'POST /api/v1/identities/:id/renew',
-  'POST /api/v1/identities/:id/rotate',
   'POST /api/v1/orgs/invitations/accept',
   'POST /api/v1/orgs/invitations/preview',
-  'PUT /api/v1/identities/:id/push-key',
 ];
 
 const toRegex = (path: string) =>
@@ -367,9 +357,8 @@ function platformKeyRoutes(): {
 /**
  * Every `platform` route has a written decision about keys: here it takes a Platform key, takes one unless the
  * request needs a person (`key: { unless }`), or is person-only (403 PERSON_REQUIRED). The lists are exact, so a new
- * `platform` route fails until it is put on one. Router-level `requireAdmin` routes are not `platform` declarations
- * yet, so they are not here and a Bearer key gets 401 on them (`REQUIRE_ADMIN_ROUTER_ROUTES`): PK-6 converts each
- * to `auth: { platform, key? }` and lists it here.
+ * `platform` route fails until it is put on one. No router-level `requireAdmin` guards a platform route any more: a
+ * route that needs one writes `auth: { platform, key? }` and is listed here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
   'GET /api/v1/platform/settings',
@@ -383,15 +372,25 @@ const PLATFORM_KEY_CONDITIONAL: string[] = [
 ];
 /** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
 const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  'DELETE /api/v1/identities/:id',
+  'DELETE /api/v1/identities/:id/push-key',
+  'DELETE /api/v1/orgs/:id',
   'DELETE /api/v1/platform/idp/groups/:key',
   'DELETE /api/v1/platform/idp/groups/:key/members/:id',
   'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
   'DELETE /api/v1/platform/invitations/:id',
+  'DELETE /api/v1/users/:id/emails/:email',
   'DELETE /api/v1/users/:id/holds/:role',
+  'DELETE /api/v1/users/:id/sessions/:sessionId',
   'GET /api/v1/audit/platform',
   'GET /api/v1/audit/platform/export',
+  'GET /api/v1/identities/:id',
   'GET /api/v1/metrics/platform/developer',
+  'GET /api/v1/metrics/platform/overview',
+  'GET /api/v1/orgs',
+  'GET /api/v1/orgs/:id',
   'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/closed-orgs',
   'GET /api/v1/platform/entitlement-presets',
   'GET /api/v1/platform/idp',
   'GET /api/v1/platform/idp/calls',
@@ -402,14 +401,37 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/platform/idp/groups/:key/rules',
   'GET /api/v1/platform/invitations',
   'GET /api/v1/platform/orgs/:id/entitlements',
+  'GET /api/v1/platform/orgs/:orgId/retention/holds',
+  'GET /api/v1/platform/orgs/:orgId/retention/receipts',
+  'GET /api/v1/platform/orgs/:orgId/retention/receipts/:receiptId/download',
   'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/platform/retention/receipts',
+  'GET /api/v1/platform/retention/receipts/:receiptId/download',
+  'GET /api/v1/platform/wallet-credentials',
+  'GET /api/v1/platform/wallet-credentials/:id/checks/:checkId',
+  'GET /api/v1/platform/wallet-credentials/migrate',
+  'GET /api/v1/platform/wallet-enrolments',
+  'GET /api/v1/status',
+  'GET /api/v1/status/incidents',
+  'GET /api/v1/status/workflows',
+  'GET /api/v1/users',
+  'GET /api/v1/users/:id',
   'GET /api/v1/users/:id/access',
   'GET /api/v1/users/:id/claims',
+  'GET /api/v1/users/:id/passes',
+  'PATCH /api/v1/identities/:id',
   'PATCH /api/v1/platform/idp/groups/:key',
   'PATCH /api/v1/platform/idp/groups/:key/claims',
+  'PATCH /api/v1/users/:id',
   'PATCH /api/v1/users/:id/claims',
+  'POST /api/v1/identities',
+  'POST /api/v1/identities/:id/apns-check',
+  'POST /api/v1/identities/:id/renew',
   // P3: irreversible, every pass the certificate signed stops updating.
   'POST /api/v1/identities/:id/revoke-certificate',
+  'POST /api/v1/identities/:id/rotate',
+  'POST /api/v1/orgs',
+  'POST /api/v1/orgs/:id/status',
   'POST /api/v1/platform/idp/freeze',
   'POST /api/v1/platform/idp/groups',
   'POST /api/v1/platform/idp/groups/:key/members',
@@ -419,13 +441,32 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'POST /api/v1/platform/idp/scim-breaker/clear',
   'POST /api/v1/platform/invitations',
   'POST /api/v1/platform/invitations/:id/resend',
+  'POST /api/v1/platform/orgs/:orgId/retention/holds',
   // P3: releasing a legal hold lets a purge run.
   'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
+  'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed',
+  'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed/complete',
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/hold',
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/release',
+  'POST /api/v1/platform/wallet-credentials/:id/check',
+  'POST /api/v1/platform/wallet-credentials/:id/revoke',
+  'POST /api/v1/platform/wallet-credentials/:id/rotate-key',
+  'POST /api/v1/platform/wallet-credentials/migrate',
+  'POST /api/v1/platform/wallet-credentials/migrate/resolve',
+  'POST /api/v1/status/incidents',
+  'POST /api/v1/status/incidents/:id/resolve',
+  // P4: moves a person's sign-in identity.
+  'POST /api/v1/users/:id/emails',
+  'POST /api/v1/users/:id/emails/:email/primary',
   'POST /api/v1/users/:id/offboard',
   'POST /api/v1/users/:id/roles',
   'POST /api/v1/users/:id/roles/:role/remove-external',
+  'POST /api/v1/users/:id/sessions/revoke',
+  'PUT /api/v1/identities/:id/push-key',
   'PUT /api/v1/platform/entitlement-presets',
   'PUT /api/v1/platform/orgs/:id/entitlements',
+  'PUT /api/v1/platform/wallet-credentials',
+  'PUT /api/v1/platform/wallet-credentials/:id/cards',
 ];
 
 it('pins which platform routes take a key and which are person-only', () => {

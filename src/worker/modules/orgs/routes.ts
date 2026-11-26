@@ -2,66 +2,38 @@ import type { Context } from 'hono';
 import { z } from 'zod';
 import {
   BrandingSlotParamSchema,
-  CreateOrgSchema,
   EmailPreviewQuerySchema,
   IdParamSchema,
   IdSchema,
-  OkSchema,
-  OrgListQuerySchema,
-  OrgListSchema,
   OrgSchema,
-  OrgStatusSchema,
   OrgSummarySchema,
-  PlatformOrgSummarySchema,
   UpdateOrgSchema,
   UploadBrandingImageSchema,
 } from '../../../shared/contracts/index.ts';
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
-import { modeOf, requireAdmin } from '../../platform/auth.ts';
+import { modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { deleteBrandingImage, getBrandingImage, putBrandingImage } from './branding.ts';
 import { renderEmailPreview } from './email-preview.ts';
 import { membershipRoutes } from './membership-routes.ts';
-import type { OrgAdmin } from './repo-org-writes.ts';
-import { isPersonalOrg } from './repo-personal.ts';
-import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
-
-// Platform provisioning deliberately exposes only the directory projection, not workspace data.
-const PlatformOrgListSchema = OrgListSchema.extend({ items: z.array(PlatformOrgSummarySchema) });
+import { adminOf, orgsPlatformRoutes } from './routes-platform.ts';
+import { getOrg, updateOrg } from './service.ts';
 
 export const orgsRoutes = createRouter();
 // Membership endpoints have their own guards, including a public invitation landing page.
 orgsRoutes.route('/', membershipRoutes);
+// Directory and lifecycle are platform operations: each route declares its own `{ platform }` access, ahead of the
+// tenant guard below, which would turn a key away with 401.
+orgsRoutes.route('/', orgsPlatformRoutes);
 guard(orgsRoutes, requireTenantSession);
-// Directory and lifecycle are platform operations, not tenant workspace access.
-orgsRoutes.use('/', requireAdmin);
-orgsRoutes.use('/:id/status', requireAdmin);
-// Suspending a personal org is the platform's break-glass: a fresh sign-in.
-orgsRoutes.post(
-  '/:id/status',
-  requireStepUp(STEP_UP_SECONDS, (c) => isPersonalOrg(c.env.DB, c.req.param('id') ?? '')),
-);
-orgsRoutes.use('/:id', (c, next) =>
-  c.req.method === 'GET' || c.req.method === 'HEAD' || c.req.method === 'DELETE'
-    ? requireAdmin(c, next)
-    : next(),
-);
 // Two base64 PNGs of at most 200 KB each, plus JSON overhead.
 orgsRoutes.use('*', limitBody(1024 * 1024));
-
-/** The signed-in admin session: requireAdmin already proved it, and the platform grant re-checks it at commit. */
-function adminOf(c: Context<AppBindings>): OrgAdmin {
-  const auth = c.var.auth;
-  if (auth?.kind !== 'session') throw new UnauthenticatedError();
-  return { userId: auth.userId, sessionId: auth.sessionId };
-}
 
 async function authorizeOrg(c: Context<AppBindings>, id: string, capability: OrgCapability) {
   const auth = c.var.auth;
@@ -71,55 +43,6 @@ async function authorizeOrg(c: Context<AppBindings>, id: string, capability: Org
   return authority;
 }
 
-register(
-  orgsRoutes,
-  'orgs',
-  {
-    method: 'get',
-    path: '/',
-    summary: 'List organizations (personal organizations are never listed)',
-    query: OrgListQuerySchema,
-    response: PlatformOrgListSchema,
-  },
-  async (c) => {
-    const page = await listOrgs(serviceContext(c), c.req.valid('query'), modeOf(c.var.auth));
-    return c.json({ ...page, items: page.items.map((org) => PlatformOrgSummarySchema.parse(org)) });
-  },
-);
-register(
-  orgsRoutes,
-  'orgs',
-  {
-    method: 'post',
-    path: '/',
-    summary: 'Create an organization',
-    body: CreateOrgSchema,
-    status: 201,
-    response: OrgSchema,
-  },
-  async (c) =>
-    c.json(
-      await createOrg(serviceContext(c), requestActor(c), c.req.valid('json'), adminOf(c)),
-      201,
-    ),
-);
-register(
-  orgsRoutes,
-  'orgs',
-  {
-    method: 'get',
-    path: '/{id}',
-    summary: 'Get an organization for platform provisioning',
-    params: IdParamSchema,
-    response: PlatformOrgSummarySchema,
-  },
-  async (c) =>
-    c.json(
-      PlatformOrgSummarySchema.parse(
-        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), adminOf(c)),
-      ),
-    ),
-);
 register(
   orgsRoutes,
   'orgs',
@@ -156,28 +79,6 @@ register(
       throw new ForbiddenError();
     const admin = input.status === undefined ? undefined : adminOf(c);
     return c.json(await updateOrg(serviceContext(c), requestActor(c), id, input, authority, admin));
-  },
-);
-register(
-  orgsRoutes,
-  'orgs',
-  {
-    method: 'post',
-    path: '/{id}/status',
-    summary: 'Suspend or reactivate an organization',
-    params: IdParamSchema,
-    body: OrgStatusSchema,
-    response: PlatformOrgSummarySchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const id = c.req.valid('param').id;
-    await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
-    return c.json(
-      PlatformOrgSummarySchema.parse(
-        await getOrg(ctx, id, modeOf(c.var.auth), { ...adminOf(c), afterStatus: true }),
-      ),
-    );
   },
 );
 register(
@@ -279,20 +180,5 @@ register(
         "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
       'x-frame-options': 'SAMEORIGIN',
     });
-  },
-);
-register(
-  orgsRoutes,
-  'orgs',
-  {
-    method: 'delete',
-    path: '/{id}',
-    summary: 'Delete an organization',
-    params: IdParamSchema,
-    response: OkSchema,
-  },
-  async (c) => {
-    await deleteOrg(serviceContext(c), requestActor(c), c.req.valid('param').id, adminOf(c));
-    return c.json({ ok: true });
   },
 );
