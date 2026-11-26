@@ -1,7 +1,8 @@
-import { lazy, type ReactNode, Suspense, useState } from 'react';
+import { lazy, type ReactNode, Suspense } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { useDesigner } from '../../admin/templates/designer/context.tsx';
 import { type InputSpec, readInputs } from '../../admin/templates/designer/inputs.ts';
+import { useKept } from '../../admin/templates/designer/ui-keep.tsx';
 import { Button } from '../../ui/button.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Input, Textarea } from '../../ui/input.tsx';
@@ -114,8 +115,9 @@ function SampleForm() {
  * finds its control.
  */
 export function DataPanel({ structure }: { structure: ReactNode }) {
-  const [tab, setTab] = useState('data');
-  const [json, setJson] = useState(false);
+  // Kept across the phone breakpoint: the layout replaces this panel there and back.
+  const [tab, setTab] = useKept('data-panel:tab', 'data');
+  const [json, setJson] = useKept('data-panel:json', false);
   return (
     <Tabs value={tab} onValueChange={setTab} className="min-w-0">
       <div className="flex items-center gap-2 border-b border-border">
