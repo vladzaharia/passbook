@@ -686,7 +686,7 @@
     "operationId": "connections.getConnectionsByIdWebhookArrivals",
     "op": "GET /api/v1/connections/{id}/webhook-arrivals",
     "change": "200.items[].retentionId: field added",
-    "note": "Each accepted arrival carries retentionId, the id of its retained work in webhook-failures, so a client can tell an accepted delivery that issued nothing. Null until retained and after retention ends."
+    "note": "Accepted arrivals carry retentionId, their retained work in webhook-failures, so a delivery that issued nothing can be told."
   },
   {
     "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
