@@ -23,6 +23,9 @@ const LABELS: Record<string, string> = {
   unknown: 'Unknown',
   health: 'Health',
   lastRunAt: 'Last run',
+  keysetReady: 'Keyset ready',
+  rewrapState: 'Rewrap',
+  hooks: 'Hooks',
   id: 'Build',
 };
 

@@ -61,7 +61,9 @@ export async function checkTerminalFailures(ctx: ServiceContext): Promise<Draft>
       ctx.env.DB,
       `SELECT 'outbox_' || kind AS kind, count(*) AS n FROM outbox WHERE state = 'failed' GROUP BY kind
      UNION ALL
-     SELECT 'webhook' AS kind, count(*) AS n FROM connection_webhook_retention WHERE state = 'failed'`,
+     SELECT 'webhook' AS kind, count(*) AS n FROM connection_webhook_retention WHERE state = 'failed'
+     UNION ALL
+     SELECT 'dropped_' || job_kind AS kind, count(*) AS n FROM dlq_outcomes GROUP BY job_kind`,
     );
   } catch (error) {
     ctx.log.warn('status.probe_failed', { component: 'failures', code: 'PROBE_FAILED', error });
