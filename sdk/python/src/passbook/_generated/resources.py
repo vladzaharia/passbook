@@ -714,11 +714,12 @@ class EventsResource:
         pass_id: str | None = None,
         request_id: str | None = None,
         limit: int | None = None,
+        order: _Literal["asc", "desc"] | None = None,
         api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
-        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "requestId": request_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "requestId": request_id, "limit": limit, "order": order, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
 
     def list_deliveries(
         self,

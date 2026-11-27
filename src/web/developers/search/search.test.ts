@@ -38,9 +38,27 @@ describe('the index', () => {
     );
     for (const o of index.ops) expect(anchors.has(o.href), o.href).toBe(true);
     for (const e of index.errors) expect(e.href).toBe(`${PATHS.errors}/${e.code}`);
-    for (const e of index.events) expect(e.href).toBe(`${PATHS.webhooks}?type=${e.type}`);
+    for (const e of index.events) expect(e.href).toBe(`/workbench/events?type=${e.type}`);
     for (const row of [...index.guides, ...index.actions])
-      expect(row.href, row.id).toMatch(/^\/(developers|admin)\//);
+      expect(row.href, row.id).toMatch(/^\/(developers|admin|workbench)(\/|$)/);
+  });
+
+  it('lists the one-operation curl snippets by id for the Console', () => {
+    const withSamples = buildSearchIndex(site, [
+      {
+        id: 'create-order-pass',
+        title: 't',
+        guide: 'issue-on-purchase',
+        ops: ['passes.postPasses'],
+        ts: '',
+        curl: 'curl',
+      },
+      { id: 'two-ops', title: 't', guide: 'g', ops: ['a', 'b'], ts: '', curl: 'curl' },
+      { id: 'no-curl', title: 't', guide: 'g', ops: ['a'], ts: '', curl: undefined },
+    ]);
+    expect(withSamples.samples).toEqual([
+      { id: 'create-order-pass', op: 'passes.postPasses', guide: 'issue-on-purchase' },
+    ]);
   });
 
   it('resolves every hint link and the secret help to rows it has', () => {

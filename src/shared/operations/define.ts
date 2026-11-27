@@ -28,6 +28,11 @@ export interface OperationKindDef {
   retry: boolean;
   /** Stop and retry need a recent sign-in. */
   stepUp: boolean;
+  /**
+   * A Workbench token may stop and retry it. Opt in only when every retry writes Test state alone;
+   * a kind whose retry also writes state Live uses is left off, and the token is refused.
+   */
+  tokenActs?: boolean;
   /** The active-subject key: one active operation per subject. */
   dedupe?: (subject: Record<string, string>) => string;
   /** A running row with no heartbeat this long has stalled. */

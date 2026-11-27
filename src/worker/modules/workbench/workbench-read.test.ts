@@ -57,7 +57,13 @@ describe('GET /workbench/contexts', () => {
     const [status, body] = await get('/workbench/contexts', s.session.headers);
     expect(status).toBe(200);
     const ctxs = WorkbenchContextsSchema.parse(body);
-    expect(ctxs.sandbox).toMatchObject({ orgId: s.orgId, closed: false });
+    expect(ctxs.sandbox).toMatchObject({
+      orgId: s.orgId,
+      closed: false,
+      timeZone: 'America/Los_Angeles',
+    });
+    // An org's own zone setting is what its context carries.
+    expect(ctxs.orgs.every((o) => o.timeZone === 'America/Los_Angeles')).toBe(true);
     expect(ctxs.orgs.map((o) => o.orgId).sort()).toEqual([full.id, ro.id].sort());
     expect(ctxs.orgs.find((o) => o.orgId === full.id)?.tools).toContain('events');
     const author = ctxs.orgs.find((o) => o.orgId === ro.id)?.tools;

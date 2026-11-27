@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import type { Fetcher } from './transport.tsx';
 
 const API = '/api/v1/developer';
 const POLL_MS = 2000;
@@ -8,9 +9,16 @@ export const LISTEN_MS = 10 * 60_000;
 /** After this long with no call the page names the usual causes, while it keeps listening. */
 export const QUIET_MS = 45_000;
 
-async function callsAfter(cursor: string | null, signal: AbortSignal): Promise<RequestLogEntry[]> {
+async function callsAfter(
+  fetchFn: Fetcher,
+  cursor: string | null,
+  signal: AbortSignal,
+): Promise<RequestLogEntry[]> {
   const q = `source=key&limit=10${cursor ? `&after=${encodeURIComponent(cursor)}` : ''}`;
-  const res = await fetch(`${API}/logs?${q}`, { headers: { accept: 'application/json' }, signal });
+  const res = await fetchFn(`${API}/logs?${q}`, {
+    headers: { accept: 'application/json' },
+    signal,
+  });
   if (!res.ok) return [];
   return ((await res.json()) as { items: RequestLogEntry[] }).items;
 }
@@ -21,7 +29,7 @@ async function callsAfter(cursor: string | null, signal: AbortSignal): Promise<R
  * with nothing heard. `heard` is every new call,
  * oldest first. No new transport: it is the same read the Logs page makes.
  */
-export function useListener(active: boolean, startCursor: string | null) {
+export function useListener(active: boolean, startCursor: string | null, fetchFn: Fetcher = fetch) {
   const [heard, setHeard] = useState<RequestLogEntry[]>([]);
   const [over, setOver] = useState(false);
   const [quiet, setQuiet] = useState(false);
@@ -46,7 +54,7 @@ export function useListener(active: boolean, startCursor: string | null) {
         return;
       }
       try {
-        const rows = await callsAfter(cursor.current ?? null, stop.signal);
+        const rows = await callsAfter(fetchFn, cursor.current ?? null, stop.signal);
         const fresh = rows.slice().reverse();
         const newest = fresh.at(-1);
         if (newest) {
@@ -66,7 +74,7 @@ export function useListener(active: boolean, startCursor: string | null) {
       clearInterval(timer);
       clearTimeout(quietTimer);
     };
-  }, [active, round, startCursor]);
+  }, [active, round, startCursor, fetchFn]);
 
   const again = useCallback(() => setRound((r) => r + 1), []);
   return { heard, over, quiet, again };

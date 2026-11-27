@@ -284,18 +284,7 @@ export const WebhookDeliveryDetailSchema = WebhookDeliverySchema.extend({
   payload: WebhookEventSchema,
 });
 
-export const WebhookReplaySchema = z
-  .object({
-    from: TimestampSchema,
-    to: TimestampSchema,
-    include: z.enum(['failed', 'failed_and_cancelled', 'all']).default('failed'),
-    /** Also create deliveries for feed events the endpoint never had. */
-    missing: z.boolean().optional(),
-    /** Count what would be sent and change nothing. */
-    dryRun: z.boolean().optional(),
-  })
-  .refine((r) => r.from <= r.to, { message: 'from must not be after to', path: ['from'] });
-export const WebhookReplayResultSchema = z.object({ queued: z.number().int().nonnegative() });
+export { WebhookReplayResultSchema, WebhookReplaySchema } from './webhooks-replay.ts';
 
 /** `ev2.<22 chars>` (opaque), the older `ev1.<n>` (accepted for one more release), or `now` for the head. */
 export const EVENT_FEED_CURSOR = /^(?:now|ev1\.(?:0|[1-9]\d{0,14})|ev2\.[A-Za-z0-9_-]{22})$/;
@@ -317,6 +306,12 @@ export const EventFeedQuerySchema = z.object({
     .optional()
     .describe('Only events a call with this `x-request-id` caused.'),
   limit: z.coerce.number().int().min(1).max(200).default(50),
+  order: z
+    .enum(['asc', 'desc'])
+    .default('asc')
+    .describe(
+      "`desc` reads the newest events first, in one page, and refuses `after`. Its `nextCursor` is the newest event's: pass it as `after` to read what comes next.",
+    ),
   apiVersion: WebhookApiVersionSchema.optional(),
 });
 export const EventFeedPageSchema = z.object({

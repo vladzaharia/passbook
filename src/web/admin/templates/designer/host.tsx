@@ -11,6 +11,7 @@ import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { PassDetailDto, PassListSchema } from '@/shared/contracts/passes.ts';
 import type { ReleaseResult } from '@/shared/contracts/template-release-flow.ts';
+import type { PreviewSource } from '../../../channel-previews/types.ts';
 import { ApiError } from '../../../lib/errors.ts';
 import { type ToolApi, ToolScopeProvider } from '../../../lib/tool-api.tsx';
 import type { Crumb } from '../../../ui/index.ts';
@@ -61,6 +62,26 @@ export interface IssueTestInput {
   holderEmail?: string | undefined;
 }
 
+/**
+ * What a host adds around the core, each rendered inside the designer (so it reads `useDesigner`).
+ * Admin has none and renders exactly as before; the Workbench fills them (Data panel, Code,
+ * Try on my phone, the phone layout, the wallet-note peek).
+ */
+export interface DesignerExtras {
+  /** The structure column: the host's tabs around the section editor. */
+  Panel: ComponentType<{ structure: ReactNode }>;
+  /** Under the stage: the code that makes the pass. */
+  Code: ComponentType;
+  /** The head, in place of the page header: the template, then the actions the core offers. */
+  Head: ComponentType<{ name: string; actions: ReactNode }>;
+  /** Phone width: replaces the "preview only" notice. */
+  Phone: ComponentType<{ preview: ReactNode; issues: ReactNode }>;
+  /** Phone width: the bar fixed to the bottom, with the save the core runs. */
+  PhoneBar: ComponentType<{ dirty: boolean; saving: boolean; onSave: () => void }>;
+  /** At the stage's corner; sees what each wallet drops. */
+  Peek: ComponentType<{ source: PreviewSource | null }>;
+}
+
 export type PassHit = z.infer<typeof PassListSchema>['items'][number];
 
 export interface DesignerHost {
@@ -88,6 +109,7 @@ export interface DesignerHost {
   release?: (templateId: string, version: string, idempotencyKey: string) => Promise<ReleaseResult>;
   /** Issue a Test pass from the template's Test release. */
   issueTest?: (input: IssueTestInput) => Promise<PassDetailDto>;
+  extras?: DesignerExtras;
 }
 
 const HostContext = createContext<DesignerHost | null>(null);
@@ -124,6 +146,48 @@ export function DesignerHostProvider({
 
 const signIn = () =>
   Promise.reject(new ApiError({ status: 401, code: 'unauthorized', detail: 'Sign in to design.' }));
+
+/** A saved version's file: its bytes never change, so a session keeps them. Brand and other paths are fetched fresh. */
+const VERSION_FILE = /\/templates\/[^/]+\/versions\/[^/]+\/assets\//;
+
+const aborted = (signal: AbortSignal) =>
+  signal.reason ?? new DOMException('The file load was cancelled.', 'AbortError');
+
+/** Waits for `file`, or gives up at once when `signal` aborts; the shared request goes on for the others. */
+function untilAborted(file: Promise<Blob>, signal: AbortSignal): Promise<Blob> {
+  if (signal.aborted) return Promise.reject(aborted(signal));
+  return new Promise((resolve, reject) => {
+    const stop = () => reject(aborted(signal));
+    signal.addEventListener('abort', stop, { once: true });
+    file.then(resolve, reject).finally(() => signal.removeEventListener('abort', stop));
+  });
+}
+
+/**
+ * One request per file: callers asking for a path already in flight share it (the card, the images list
+ * and the stamps strip ask for the same files, and a re-render restarts a load), and a saved version's
+ * file stays for the life of the loader. A failure is never kept, so the next ask tries again.
+ */
+export function sharedLoader(
+  fetchFile: (path: string) => Promise<Blob>,
+): DesignerHost['loadAsset'] {
+  const files = new Map<string, Promise<Blob>>();
+  return (path, signal) => {
+    let file = files.get(path);
+    if (!file) {
+      const request = fetchFile(path);
+      file = request;
+      files.set(path, request);
+      request.then(
+        () => {
+          if (!VERSION_FILE.test(path)) files.delete(path);
+        },
+        () => files.delete(path),
+      );
+    }
+    return signal ? untilAborted(file, signal) : file;
+  };
+}
 
 /** No client: every call is refused before it leaves the page. */
 export const signedOutApi: ToolApi = {

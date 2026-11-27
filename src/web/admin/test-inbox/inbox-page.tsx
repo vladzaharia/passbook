@@ -1,12 +1,13 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronRight, FlaskConical, Package, Plus } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { MyEmailListSchema } from '@/shared/contracts/me.ts';
+import { api } from '@/web/lib/api.ts';
 import { pluralize } from '@/web/lib/format.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { ENTITY } from '../../lib/entities.ts';
-import { setMode, useMode } from '../../lib/mode.ts';
+import { getMode, setMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { useMemberships, useSession } from '../../lib/session.ts';
+import { useSession } from '../../lib/session.ts';
 import {
   Button,
   Card,
@@ -23,7 +24,9 @@ import {
   useNow,
 } from '../../ui/index.ts';
 import { useSettings } from '../settings/queries.ts';
-import { EmailPreview } from './preview.tsx';
+import { EmailPreview } from './email-sheet.tsx';
+import { type InboxHost, type InboxIo, useInboxHost } from './host.ts';
+import { FailedBadge } from './parts.tsx';
 import { useCapturedEmails } from './queries.ts';
 import type { InboxSearch } from './search.ts';
 
@@ -36,6 +39,20 @@ function PlatformRetention() {
   ) : null;
 }
 
+const io: InboxIo = {
+  accountEmails: (signal) => api.get('/api/v1/me/emails', MyEmailListSchema, { signal }),
+  modeNow: getMode,
+};
+
+/** The admin's host: the URL's organization and the session client. */
+export function useAdminInboxHost(): InboxHost {
+  const scope = useOrgScope();
+  return useInboxHost(
+    { orgId: scope.orgId, membership: scope.membership, ready: !scope.isLoading && !scope.isError },
+    io,
+  );
+}
+
 /** Mail captured in Test mode instead of being delivered to its intended recipient. */
 export function InboxPage({
   search,
@@ -44,38 +61,10 @@ export function InboxPage({
   search: InboxSearch;
   onSearch: (next: InboxSearch) => void;
 }) {
-  const mode = useMode();
-  const scope = useOrgScope();
-  const { orgId } = scope;
+  const host = useAdminInboxHost();
+  const { mode, orgId, userId, canRead, canOperate } = host;
   const session = useSession();
-  const memberships = useMemberships();
-  const userId = session.authed?.user.id;
-  const canRead = Boolean(
-    !session.isError &&
-      !session.isFetching &&
-      userId &&
-      !scope.isLoading &&
-      !scope.isError &&
-      !memberships.isFetching &&
-      orgId &&
-      scope.membership &&
-      scope.membership.userId === userId &&
-      scope.membership.capabilities.includes('passes:read'),
-  );
-  const canOperate = Boolean(canRead && scope.membership?.capabilities.includes('passes:operate'));
-  const authority = useMemo(
-    () => ({ orgId, mode, userId, canOperate, active: true, requests: new Set<AbortController>() }),
-    [orgId, mode, userId, canOperate],
-  );
-  useEffect(() => {
-    authority.active = true;
-    return () => {
-      authority.active = false;
-      for (const request of authority.requests) request.abort();
-      authority.requests.clear();
-    };
-  }, [authority]);
-  const list = useCapturedEmails(orgId);
+  const list = useCapturedEmails(host);
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = useNow();
 
@@ -152,6 +141,7 @@ export function InboxPage({
                     trailing={<ChevronRight aria-hidden className="size-4 text-fg-subtle" />}
                     meta={
                       <>
+                        {m.failed ? <FailedBadge /> : null}{' '}
                         {m.kind === 'bundle' ? 'Bundle' : 'Pass'} · To {m.to} ·{' '}
                         <RelTime at={m.createdAt} now={now} />
                       </>
@@ -170,9 +160,7 @@ export function InboxPage({
           id={search.email}
           orgId={orgId}
           userId={userId}
-          mode={mode}
-          canOperate={canOperate}
-          sendScope={authority}
+          host={host}
           onClose={() => onSearch({})}
         />
       ) : null}

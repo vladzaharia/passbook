@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OpConsole } from './app/console.tsx';
 import { resetBudget } from './budget.ts';
+import { tryClient } from './client.ts';
 import { applyPrefill, parseHash } from './prefill.ts';
 import { initialDraft } from './request.ts';
 import { fakeNetwork, json, passesCreate } from './test-support.ts';
@@ -69,7 +70,7 @@ describe('a guide link', () => {
         op={passesCreate}
         mode="console"
         origin="https://passbook.mobile"
-        csrf="c"
+        client={tryClient('c')}
         templateId={null}
         codes={new Set()}
         prefill={prefill}

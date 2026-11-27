@@ -92,3 +92,58 @@
   color: var(--pk-text-muted);
   font-size: 13px;
 }
+
+/* A client chip: the tool that made the call, quiet beside the code. Dropped on narrow rows, where the inspector has it. */
+.logs-client {
+  display: inline-block;
+  max-width: 14ch;
+  padding: 0 6px;
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--pk-border-subtle);
+  color: var(--pk-text-muted);
+  font: 400 11px / 18px var(--pk-font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.logs-client[data-via="try"] {
+  color: var(--pk-text-default);
+}
+.bench-row-meta .logs-err + .logs-client {
+  margin-inline-start: 6px;
+}
+@media (max-width: 640px) {
+  .bench-row-meta .logs-client {
+    display: none;
+  }
+}
+
+/* Bodies off for this org: one line and, for an admin, the way to turn them on. */
+.logs-off {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 12px 0;
+}
+.logs-off p {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+.logs-cut {
+  padding-block: 6px 0;
+}
+.logs-kept {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* The view tabs sit on the list they scope. */
+.logs-views {
+  margin-bottom: 8px;
+}
+.logs-views .bench-tabs {
+  padding-inline: 0;
+}

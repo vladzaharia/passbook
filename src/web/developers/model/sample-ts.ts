@@ -15,7 +15,18 @@ export type SampleOp = Pick<
   | 'paged'
   | 'sdkCall'
 > &
-  Partial<Pick<OpView, 'noContent' | 'cursorList'>>;
+  Partial<Pick<OpView, 'noContent' | 'cursorList'>> & {
+    /** Path values to write in place of the example ids (the console's own). */
+    ids?: Record<string, string>;
+  };
+
+/** The value a sample writes for `{name}`: the caller's own, else the example id. */
+export const idFor = (
+  op: Pick<SampleOp, 'ids'>,
+  path: string,
+  name: string,
+  type: string,
+): string => op.ids?.[name] || pathValue(path, name, type);
 
 /** The JSON body to send, when the operation takes one. */
 export function bodyOf(op: SampleOp): Json | undefined {
@@ -39,7 +50,7 @@ export function tsSample(op: SampleOp): string {
   const type = (name: string) => op.fields.find((f) => f.where === 'path' && f.name === name)?.type;
   const args = [...op.path.matchAll(/\{(\w+)\}/g)].map((m) => {
     const t = type(m[1] ?? '') ?? 'string';
-    const v = pathValue(op.path, m[1] ?? '', t);
+    const v = idFor(op, op.path, m[1] ?? '', t);
     return /^(integer|number)/.test(t) ? v : tsString(v);
   });
   const body = bodyOf(op);

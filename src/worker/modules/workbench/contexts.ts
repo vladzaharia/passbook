@@ -8,6 +8,7 @@ import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { homeSandboxOf } from '../developer/repo-home.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { testCapableOrg } from './context.ts';
 
 type Tool = (typeof WORKBENCH_TOOLS)[number];
@@ -45,6 +46,7 @@ export async function workbenchContexts(
       orgId: m.orgId,
       name: m.orgName,
       slug: m.orgSlug,
+      timeZone: await readOrgTimeZone(ctx.env.DB, m.orgId),
       tools: WORKBENCH_TOOLS.filter((t) => access.capabilities.includes(TOOL_CAPABILITY[t])),
     });
   }
@@ -55,6 +57,7 @@ export async function workbenchContexts(
           name: sandbox.name,
           slug: sandbox.slug,
           closed: sandbox.closed_at !== null,
+          timeZone: await readOrgTimeZone(ctx.env.DB, sandbox.org_id),
         }
       : null,
     orgs,

@@ -58,17 +58,32 @@ export function platformKeyFence(
 }
 
 /**
- * Rows a person started, for the live session that asks. A key never reads these.
+ * Rows a person started, for the live session that asks. A key never reads these, but for one condition:
+ * `pinnedSandbox`: a sandbox Workbench token (a key, no session) reads what the sandbox's owner started for
+ * that sandbox: their sandbox rows whose target is the org, while the sandbox is open. Stop and retry pass the same fence, then the kind's `tokenActs`.
  * `writer`: stopping or retrying needs the person's own live, strong session (a step-up replaces the one that started it).
  * `ownSession`: an own-only session (an email link) sees only what its own session started.
- * `pinnedOrg`: a Workbench token sees only the person's rows in that org's Test mode.
+ * `pinnedOrg`: a member Workbench token sees only the person's rows in that org's Test mode.
  */
 export function starterFence(
-  session: { userId: string; sessionId: string },
+  session: { userId: string; sessionId: string } | null,
   now: number,
-  options: { writer?: boolean; ownSession?: boolean; pinnedOrg?: string } = {},
+  options: {
+    writer?: boolean;
+    ownSession?: boolean;
+    pinnedOrg?: string;
+    pinnedSandbox?: string;
+  } = {},
 ): Fence {
-  const { writer = false, ownSession = false, pinnedOrg } = options;
+  const { writer = false, ownSession = false, pinnedOrg, pinnedSandbox } = options;
+  if (!session)
+    return {
+      ctes: '',
+      ctesParams: [],
+      where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.target_type = 'sandbox' AND o.target_id = ?
+        AND EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.org_id = ? AND d.user_id = o.actor_id AND d.closed_at IS NULL)`,
+      whereParams: [pinnedSandbox ?? '', pinnedSandbox ?? ''],
+    };
   return {
     ctes: '',
     ctesParams: [],

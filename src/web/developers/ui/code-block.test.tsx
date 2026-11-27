@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { Samples } from '../../workbench/webhooks/samples-tabs.tsx';
+import { Samples } from '../../workbench/events/samples-tabs.tsx';
 import type { Sample } from '../model/samples.ts';
 import { initCopy } from '../shell/copy.ts';
 import { JsonBlock, SampleTabs } from './code.tsx';

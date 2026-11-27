@@ -50,22 +50,67 @@ export interface WbPathOptions {
   hash?: string;
 }
 
-/**
- * A Workbench URL: `/workbench/o/$orgId/<tool>?<filters>#<id>`. A body never rides in a URL, so a
- * `body` param throws; prefills travel by `sessionStorage` nonce.
- */
-export function wbPath(orgId: string, tool: WbTool, options: WbPathOptions = {}): string {
+function tail(options: WbPathOptions): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(options.query ?? {})) {
     if (key.toLowerCase() === 'body') throw new Error('A Workbench URL never carries a body.');
     if (value !== undefined && value !== '') params.set(key, String(value));
   }
+  const query = params.toString();
+  const hash = options.hash ? `#${encodeURIComponent(options.hash)}` : '';
+  return `${query ? `?${query}` : ''}${hash}`;
+}
+
+/**
+ * A Workbench URL: `/workbench/o/$orgId/<tool>?<filters>#<id>`. A body never rides in a URL, so a
+ * `body` param throws; prefills travel by `sessionStorage` nonce.
+ */
+export function wbPath(orgId: string, tool: WbTool, options: WbPathOptions = {}): string {
   const base = CONTEXT_FREE.has(tool)
     ? `${WB_HOME}/${tool}`
     : `${WB_HOME}/o/${encodeURIComponent(orgId)}${tool === 'home' ? '' : `/${tool}`}`;
-  const query = params.toString();
-  const hash = options.hash ? `#${encodeURIComponent(options.hash)}` : '';
-  return `${base}${query ? `?${query}` : ''}${hash}`;
+  return `${base}${tail(options)}`;
+}
+
+/** A link from outside the space (docs, redirects): no context, so the Workbench picks the remembered one. */
+export function wbHref(tool: WbTool, options: WbPathOptions = {}): string {
+  return `${WB_HOME}${tool === 'home' ? '' : `/${tool}`}${tail(options)}`;
+}
+
+/**
+ * What Events opens (design §1.10). The address is `events?<params>#<id>`:
+ * - `#<eventId>` selects an event; `?endpoint=<id>` opens that endpoint's delivery of it and
+ *   `?capture=<id>` opens that captured request, both inside the selected event;
+ * - `?tab=endpoints#<endpointId>` selects an endpoint (the finish of Add endpoint lands here);
+ * - `?tab=endpoints&new=1` opens the Add endpoint wizard (it pushes history, so Back closes it);
+ * - `?type=`, `?request=` and `?pass=` narrow the list (the request is an `x-request-id`).
+ */
+export interface WbEventsLink {
+  event?: string;
+  endpoint?: string;
+  capture?: string;
+  tab?: 'endpoints';
+  add?: boolean;
+  type?: string;
+  request?: string;
+  pass?: string;
+}
+
+/** An Events URL: an endpoint is the selection on its own tab, and a filter on an event. */
+export function wbEventsPath(orgId: string, link: WbEventsLink = {}): string {
+  const endpoints = link.tab === 'endpoints';
+  return wbPath(orgId, 'events', {
+    query: {
+      tab: link.tab,
+      new: link.add ? 1 : undefined,
+      type: link.type,
+      request: link.request,
+      pass: link.pass,
+      endpoint: endpoints ? undefined : link.endpoint,
+      capture: endpoints ? undefined : link.capture,
+    },
+    hash: endpoints ? link.endpoint : link.event,
+  });
 }
 
 /** The area a Workbench path shows, or null outside the Workbench. */

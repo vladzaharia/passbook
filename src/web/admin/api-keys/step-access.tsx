@@ -36,7 +36,7 @@ export function StepAccess({
     capabilities,
     form.keyMode,
     developerOrg,
-  );
+  ).filter((s) => !form.cap || form.cap.scopes.includes(s));
   const presets = adminPresets(holdable, form.keyMode);
   const preset = selectedPreset(presets, form.scopes);
   const current = form.role ?? (form.custom || !preset ? 'custom' : preset.id);
@@ -129,7 +129,7 @@ export function StepAccess({
           error={errors.terminalIds}
         />
       ) : null}
-      {platform ? null : (
+      {platform || form.cap ? null : (
         <fieldset className="flex min-w-0 flex-col">
           <legend className="mb-2 text-sm font-medium text-fg">Or a role</legend>
           <div className={GRID}>

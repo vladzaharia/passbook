@@ -11,7 +11,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { BadRequestError } from '../../platform/errors.ts';
+import { BadRequestError, ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -39,6 +39,17 @@ guard(
     only: /^\/api\/v1\/api-keys(?!\/me$)/,
   }),
 );
+// A sandbox's token manages the keys of its org as the sandbox's person (their Test session), under the Workbench
+// cap, and never the key it stands for. `/me/rotate` stays the key's own call, which the cap refuses (404).
+apiKeysRoutes.use('*', async (c, next) => {
+  const auth = c.var.auth;
+  const pin = auth?.kind === 'api_key' ? auth.workbench : undefined;
+  if (pin?.subject === 'sandbox_key' && !c.req.path.endsWith('/me/rotate')) {
+    if (!pin.person) throw new ForbiddenError();
+    c.set('auth', pin.person);
+  }
+  await next();
+});
 // Making or rotating a key is a strong, recent sign-in with no email-link grace: a key outlives the grace.
 apiKeysRoutes.use('*', async (c, next) => {
   const auth = c.var.auth;

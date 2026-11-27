@@ -1,0 +1,23 @@
+.wb-keys-none {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+.wb-keys-own {
+  color: var(--pk-text-muted);
+  font-size: 12px;
+}
+.wb-keys-pane {
+  min-width: 0;
+}
+.bench-pane > .wb-keys-pane {
+  padding: 16px;
+}
+/* The key's page is one column in the pane, whatever the window's width. */
+.wb-keys-pane .grid[class*="grid-cols-2"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.wb-keys-pane .lg\:col-span-2 {
+  grid-column: auto;
+}

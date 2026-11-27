@@ -28,6 +28,7 @@ const index = (errors: ErrorDoc[], ops: OpDoc[]): SearchIndex => ({
   ops,
   guides: [],
   events: [],
+  samples: [],
   actions: [],
   hints: [],
   secretHelp: [],
