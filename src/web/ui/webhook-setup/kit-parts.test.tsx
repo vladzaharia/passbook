@@ -71,7 +71,7 @@ describe('TopicChecklist', () => {
     const { rerender } = render(<TopicChecklist topics={TOPICS} />);
     expect(screen.getByText('0 of 2 seen')).toBeInTheDocument();
     expect(screen.getByText('2 more optional')).toBeInTheDocument();
-    expect(screen.getByText('Labels may differ.')).toBeInTheDocument();
+    expect(screen.queryByText('Labels may differ.')).toBeNull();
     rerender(<TopicChecklist topics={TOPICS} seen={['orders/create']} />);
     expect(screen.getByText('1 of 2 seen')).toBeInTheDocument();
     expect(screen.getByText(/orders\/create/).closest('li')).toHaveTextContent('(seen)');
@@ -103,7 +103,8 @@ describe('SetupSteps', () => {
     expect(screen.getByText('(choose this)')).toBeInTheDocument();
     expect(screen.getByText('Subscribe to')).toBeInTheDocument();
     expect(screen.getByText(/Choose/)).toBeInTheDocument();
-    expect(screen.getAllByText('Labels may differ.').length).toBeGreaterThan(0);
+    // Said once by the guide's foot (SetupSources), not on the step.
+    expect(screen.queryByText('Labels may differ.')).toBeNull();
     expect(screen.getByText('In PassBook')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });

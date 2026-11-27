@@ -30,7 +30,13 @@ export { decodeStrings, parseStrings } from './schema/strings.ts';
 export { CONTRAST_MIN, contrastRatio, shownRatio } from './schema/validate-hig.ts';
 export type { PackageContents } from './schema/validate-package.ts';
 export type { CertificateInfo, SignedPass, SignPassOptions } from './sign/index.ts';
-export { buildManifest, certificateInfo, signManifest, signPass } from './sign/index.ts';
+export {
+  assertCanSign,
+  buildManifest,
+  certificateInfo,
+  signManifest,
+  signPass,
+} from './sign/index.ts';
 export { InMemoryTemplateRegistry } from './template/in-memory-registry.ts';
 export * from './template/index.ts';
 export type {

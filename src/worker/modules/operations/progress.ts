@@ -260,7 +260,6 @@ class Reporter implements Progress {
         await this.close(s, 'cancelled', null, null);
         return;
       }
-      const code = codeOf(this.ctx, this.id, error);
       // The step that was running; a tail that waits after Done (the erase) is not what failed.
       const tail = (key: string) =>
         kindOf(s.row.kind)?.steps.find((d) => d.key === key)?.tail === true;
@@ -268,6 +267,7 @@ class Reporter implements Progress {
         s.steps.find((x) => x.state === 'running') ??
         s.steps.find((x) => x.state === 'waiting' && !tail(x.key)) ??
         s.steps.find((x) => x.state === 'pending');
+      const code = codeOf(this.ctx, this.id, error, failing?.key ?? null);
       if (failing) {
         failing.state = 'failed';
         failing.finishedAt = now;

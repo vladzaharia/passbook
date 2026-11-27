@@ -50,6 +50,16 @@ describe('replacementOf', () => {
     expect(await forwardedId(kit.env.DB, c.id)).toBe(c.id);
   });
 
+  it('takes a first hop the caller already read, then follows the rest', async () => {
+    const a = await kit.pass({ memberName: 'A1' });
+    const b = await kit.pass({ memberName: 'B1' });
+    const c = await kit.pass({ memberName: 'C1' });
+    await replaced(a, b);
+    await replaced(b, c);
+    expect(await replacementOf(kit.env.DB, a.id, b.id)).toBe(c.id);
+    expect(await replacementOf(kit.env.DB, c.id, null)).toBeNull();
+  });
+
   it('ignores a move that has not replaced the old pass yet', async () => {
     const old = await kit.pass({ memberName: 'Waiting' });
     const next = await kit.pass({ memberName: 'Next' });

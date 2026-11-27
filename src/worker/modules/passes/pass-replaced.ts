@@ -5,10 +5,15 @@ import { replacedByOf } from './repo-pass-replaced.ts';
  * The pass a moved pass was replaced by (following a chain of moves), or null for a pass nobody replaced.
  * It is set in the batch that voids the old pass, so a pass is never both live and replaced.
  */
-export async function replacementOf(db: D1Database, passId: string): Promise<string | null> {
+export async function replacementOf(
+  db: D1Database,
+  passId: string,
+  /** The first hop, when the caller already read it in another query. */
+  firstHop?: string | null,
+): Promise<string | null> {
   let found: string | null = null;
   for (let at = passId, hops = 0; hops < 8; hops++) {
-    const next = await replacedByOf(db, at);
+    const next = hops === 0 && firstHop !== undefined ? firstHop : await replacedByOf(db, at);
     if (next === null) break;
     found = at = next;
   }
@@ -24,8 +29,12 @@ export async function forwardedId(db: D1Database, passId: string): Promise<strin
 }
 
 /** A connector sync that would write or bind a replaced pass is refused: its replacement carries the state. */
-export async function assertNotReplaced(db: D1Database, passId: string): Promise<void> {
-  const to = await replacementOf(db, passId);
+export async function assertNotReplaced(
+  db: D1Database,
+  passId: string,
+  firstHop?: string | null,
+): Promise<void> {
+  const to = await replacementOf(db, passId, firstHop);
   if (to !== null)
     throw new ConflictError(`This pass was replaced. Use pass ${to}.`, 'PASS_REPLACED');
 }

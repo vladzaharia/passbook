@@ -2267,6 +2267,7 @@ type ConnectionsWebhookArrivalsListItem struct {
 	Topic        *string `json:"topic"`
 	ContentClass string  `json:"contentClass"`
 	EventRef     *string `json:"eventRef"`
+	RetentionID  *string `json:"retentionId"`
 	UsedPrevious bool    `json:"usedPrevious"`
 	Count        int64   `json:"count"`
 }
@@ -2291,6 +2292,7 @@ type ConnectionsWebhookArrivalsListResponseItemsItem struct {
 	Topic        *string `json:"topic"`
 	ContentClass string  `json:"contentClass"`
 	EventRef     *string `json:"eventRef"`
+	RetentionID  *string `json:"retentionId"`
 	UsedPrevious bool    `json:"usedPrevious"`
 	Count        int64   `json:"count"`
 }

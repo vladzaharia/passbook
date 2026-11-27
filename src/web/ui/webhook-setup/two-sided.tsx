@@ -4,11 +4,15 @@ import { cn } from '../../lib/cn.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 
 const WIDE = '(min-width: 1024px)';
-const STICKY = 'sticky top-[calc(4.5rem+env(safe-area-inset-top))]';
+// Under the top bar with room to spare (the two-pane pages use the same 5rem), and no taller than what is left.
+const STICKY =
+  'sticky top-[calc(5rem+env(safe-area-inset-top))] max-h-[calc(100dvh-6rem-env(safe-area-inset-top))] overflow-y-auto';
 
 export interface TwoSidedProps {
   /** The provider's side: the guide's steps. Prose stays under 40rem inside it. */
   guide: ReactNode;
+  /** The provider's side named over the guide: "In Shopify". */
+  guideLabel?: string;
   /** PassBook's side: the URL to copy, the topics, the live check. */
   panel: ReactNode;
   /** The panel's name for screen readers: "PassBook". */
@@ -18,6 +22,24 @@ export interface TwoSidedProps {
   className?: string;
 }
 
+const HEAD = 'text-xs font-medium tracking-wide text-fg-muted uppercase';
+
+/** The side's name in the rail's own style, so the page and the rail say the same. */
+const Side = ({ label, children }: { label?: string | undefined; children: ReactNode }) => (
+  <div className="flex min-w-0 flex-col gap-4">
+    {label ? <p className={HEAD}>{label}</p> : null}
+    {children}
+  </div>
+);
+
+/** PassBook's side is one surface: the URL, the topics and the live check read as one block. */
+const Surface = ({ children }: { children: ReactNode }) => (
+  <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-border bg-surface-raised p-4">
+    <p className={HEAD}>In PassBook</p>
+    {children}
+  </div>
+);
+
 /**
  * Both sides of the setup at once. At 1024 and up the guide has the column and the PassBook panel
  * sticks beside it (22rem). From 640 to 1023 the panel folds into a sticky strip that opens as a
@@ -25,6 +47,7 @@ export interface TwoSidedProps {
  */
 export function TwoSided({
   guide,
+  guideLabel,
   panel,
   panelLabel = 'PassBook',
   strip,
@@ -37,18 +60,19 @@ export function TwoSided({
   if (wide)
     return (
       <div className={cn('grid grid-cols-[minmax(0,1fr)_22rem] items-start gap-8', className)}>
-        <div className="min-w-0">{guide}</div>
+        <Side label={guideLabel}>{guide}</Side>
         <aside aria-label={panelLabel} className={cn(STICKY, 'min-w-0')}>
-          {panel}
+          <Surface>{panel}</Surface>
         </aside>
       </div>
     );
   if (phone)
     return (
       <div className={cn('flex min-w-0 flex-col gap-6', className)}>
-        {guide}
+        {/* The rail's own line over the step says whose side this is: not said twice. */}
+        <div className="min-w-0">{guide}</div>
         <aside aria-label={panelLabel} className="min-w-0">
-          {panel}
+          <Surface>{panel}</Surface>
         </aside>
       </div>
     );
@@ -75,10 +99,10 @@ export function TwoSided({
           </button>
         </div>
         <div id={id} hidden={!open} className="mt-3">
-          {panel}
+          <Surface>{panel}</Surface>
         </div>
       </aside>
-      {guide}
+      <Side label={guideLabel}>{guide}</Side>
     </div>
   );
 }

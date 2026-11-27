@@ -55748,6 +55748,14 @@
                   ],
                   "maxLength": 200
                 },
+                "retentionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
                 "usedPrevious": {
                   "type": "boolean"
                 },
@@ -55765,6 +55773,7 @@
                 "topic",
                 "contentClass",
                 "eventRef",
+                "retentionId",
                 "usedPrevious",
                 "count"
               ]
@@ -109090,7 +109099,10 @@
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_MISMATCH",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
+          "IDENTITY_INTERMEDIATE_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -109270,7 +109282,10 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDENTITY_CERT_MISMATCH",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
+          "IDENTITY_INTERMEDIATE_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -109546,7 +109561,10 @@
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_MISMATCH",
+          "IDENTITY_CHAIN_INVALID",
           "IDENTITY_EXPIRED",
+          "IDENTITY_INTERMEDIATE_EXPIRED",
           "IDENTITY_MOVE_SAME",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
@@ -135875,6 +135893,7 @@
                       "topic": null,
                       "contentClass": "json",
                       "eventRef": null,
+                      "retentionId": "0193a1b2-7c00-7000-8000-a8139303a64a",
                       "usedPrevious": false,
                       "count": 2
                     }

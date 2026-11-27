@@ -2,12 +2,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { key, setupTillKit } from './guard-api-key-test-fixtures.ts';
+import { trackedZone, useKit } from './occupancy/whos-in-test-fixtures.ts';
 import { insertType } from './tags-policy-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof setupTillKit>>;
 let seq = 0;
 beforeAll(async () => {
   t = await setupTillKit();
+  useKit(t.kit);
 });
 
 /** A guest pass holding a loaner, bound as an admin would leave it. */
@@ -74,6 +76,49 @@ describe('a key at a Desk terminal signs out', () => {
       .map((r) => JSON.parse(r.detail))
       .find((d) => d.bindingId === bindingId);
     expect(mine).toMatchObject({ viaKeyId: k.apiKey.id });
+  });
+
+  it('names the key in the mark-out row of a person still inside', async () => {
+    const k = await t.till();
+    const { pass } = await lent();
+    const zone = await trackedZone();
+    const at = t.kit.clock.now();
+    const sessionId = t.kit.fx.ids.id();
+    await run(
+      t.kit.env.DB,
+      `INSERT INTO scanning_sessions (id,org_id,mode,name,status,accepts,settings,time_zone,created_at,updated_at)
+       SELECT ?,org_id,mode,name,'active',?,settings,time_zone,created_at,updated_at FROM scanners WHERE id=?`,
+      [sessionId, JSON.stringify({ templateIds: [t.templateId] }), k.terminal.id],
+    );
+    await run(
+      t.kit.env.DB,
+      `INSERT INTO scanning_devices (scanner_id,session_id,org_id,mode,surface,effective_surface,overrides)
+       SELECT id,?,org_id,mode,'phone','phone','{}' FROM scanners WHERE id=?`,
+      [sessionId, k.terminal.id],
+    );
+    await run(
+      t.kit.env.DB,
+      'INSERT INTO scanning_session_zones (session_id, zone_id, sort) VALUES (?, ?, 0)',
+      [sessionId, zone.id],
+    );
+    await run(
+      t.kit.env.DB,
+      `INSERT INTO scan_presence (pass_id, org_id, scope, state, tracking, entered_at, first_at, last_entry_at, last_scan_id)
+       VALUES (?, ?, ?, 'in', 1, ?, ?, ?, 'seed')`,
+      [pass.id, t.kit.org.id, `zone:${zone.id}`, at, at, at],
+    );
+    const res = await t.call(k.headers, '/sign-out', {
+      idempotencyKey: key(),
+      passId: pass.id,
+      tag: 'none',
+    });
+    expect(res.status).toBe(200);
+    const out = await first<{ detail: string }>(
+      t.kit.env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'scan.mark_out' AND target_id = ?",
+      [pass.id],
+    );
+    expect(JSON.parse(out?.detail ?? '{}')).toMatchObject({ viaKeyId: k.apiKey.id });
   });
 
   it("a key of another org does not reach this org's terminal", async () => {

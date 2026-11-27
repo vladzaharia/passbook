@@ -1,4 +1,4 @@
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, type ReactNode, useId, useState } from 'react';
 import type { OverlapHours } from '@/shared/contracts/webhook-secrets.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { Callout } from '../callout.tsx';
@@ -19,7 +19,7 @@ export const OVERLAP_CHOICES = [
  * button with `form={state.formId}`.
  */
 export function useRotateSecret(
-  rotate: (overlapHours: OverlapHours) => Promise<{ secret: string }>,
+  rotate: (overlapHours: OverlapHours) => Promise<{ secret?: string | undefined }>,
 ) {
   const formId = useId();
   const [busy, setBusy] = useState(false);
@@ -60,10 +60,16 @@ export type RotateSecretState = ReturnType<typeof useRotateSecret>;
 export function RotateSecretForm({
   state,
   onDone,
+  choices = OVERLAP_CHOICES,
+  extra,
 }: {
   state: RotateSecretState;
   /** The new secret was saved: close the host. */
   onDone: () => void;
+  /** The overlaps the receiver of the call accepts. */
+  choices?: readonly (typeof OVERLAP_CHOICES)[number][];
+  /** Above the overlap: a field to paste the new secret into. */
+  extra?: ReactNode;
 }) {
   if (state.secret)
     return (
@@ -84,14 +90,13 @@ export function RotateSecretForm({
       }}
     >
       {state.error ? <Callout tone="danger">{state.error}</Callout> : null}
+      {extra}
       <RadioGroup
         legend="Keep the old secret for"
         orientation="horizontal"
-        options={OVERLAP_CHOICES}
+        options={choices}
         value={state.overlap}
-        onValueChange={(v) =>
-          state.setOverlap(OVERLAP_CHOICES.find((o) => o.value === v)?.value ?? '24')
-        }
+        onValueChange={(v) => state.setOverlap(choices.find((o) => o.value === v)?.value ?? '24')}
       />
       <p className="text-xs text-fg-muted">
         {state.overlap === '0'

@@ -49,26 +49,63 @@ async function makeCertificate(options: {
   return cert;
 }
 
-/**
- * Generates a throwaway CA ("WWDR") and a pass certificate with Apple's subject layout
- * (UID = pass type id, OU = team id). Works in Node and in Workers; no OpenSSL needed.
- */
-export async function createFixtureIdentity(
-  identity: PassIdentity = FIXTURE_IDENTITY,
-  options: { now?: Date; days?: number; caDays?: number } = {},
-): Promise<SigningMaterial & { identity: PassIdentity }> {
-  const now = options.now ?? new Date();
-  const algorithm = {
-    name: 'RSASSA-PKCS1-v1_5',
-    modulusLength: 2048,
-    publicExponent: new Uint8Array([1, 0, 1]),
-    hash: 'SHA-256',
-  };
-  const caKeys = (await crypto.subtle.generateKey(algorithm, true, [
+/** A pass certificate and its key, signed by a fixture CA. */
+async function makeLeaf(
+  identity: PassIdentity,
+  ca: pki.Certificate,
+  caKey: CryptoKey,
+  options: { now: Date; days?: number },
+): Promise<{ identity: PassIdentity; certificate: string; privateKey: string }> {
+  const keys = (await crypto.subtle.generateKey(ALGORITHM, true, [
     'sign',
     'verify',
   ])) as CryptoKeyPair;
-  const leafKeys = (await crypto.subtle.generateKey(algorithm, true, [
+  const leaf = await makeCertificate({
+    subject: [
+      ['0.9.2342.19200300.100.1.1', identity.passTypeIdentifier],
+      ['2.5.4.11', identity.teamIdentifier],
+      ['2.5.4.3', `Pass Type ID: ${identity.passTypeIdentifier}`],
+    ],
+    issuer: ca.subject,
+    serial: 2,
+    publicKey: keys.publicKey,
+    signingKey: caKey,
+    days: options.days ?? 2,
+    now: options.now,
+  });
+  return {
+    identity,
+    certificate: pem('CERTIFICATE', leaf.toSchema(true).toBER(false)),
+    privateKey: pem(
+      'PRIVATE KEY',
+      (await crypto.subtle.exportKey('pkcs8', keys.privateKey)) as ArrayBuffer,
+    ),
+  };
+}
+
+const ALGORITHM = {
+  name: 'RSASSA-PKCS1-v1_5',
+  modulusLength: 2048,
+  publicExponent: new Uint8Array([1, 0, 1]),
+  hash: 'SHA-256',
+};
+
+/**
+ * Generates a throwaway CA ("WWDR") and a pass certificate with Apple's subject layout
+ * (UID = pass type id, OU = team id). Works in Node and in Workers; no OpenSSL needed.
+ * `siblings` are more pass types under the same CA, as Apple issues them: one intermediate verifies all.
+ */
+export async function createFixtureIdentity(
+  identity: PassIdentity = FIXTURE_IDENTITY,
+  options: { now?: Date; days?: number; caDays?: number; siblings?: PassIdentity[] } = {},
+): Promise<
+  SigningMaterial & {
+    identity: PassIdentity;
+    siblings: { identity: PassIdentity; certificate: string; privateKey: string }[];
+  }
+> {
+  const now = options.now ?? new Date();
+  const caKeys = (await crypto.subtle.generateKey(ALGORITHM, true, [
     'sign',
     'verify',
   ])) as CryptoKeyPair;
@@ -81,26 +118,17 @@ export async function createFixtureIdentity(
     days: options.caDays ?? 3,
     now,
   });
-  const leaf = await makeCertificate({
-    subject: [
-      ['0.9.2342.19200300.100.1.1', identity.passTypeIdentifier],
-      ['2.5.4.11', identity.teamIdentifier],
-      ['2.5.4.3', `Pass Type ID: ${identity.passTypeIdentifier}`],
-    ],
-    issuer: ca.subject,
-    serial: 2,
-    publicKey: leafKeys.publicKey,
-    signingKey: caKeys.privateKey,
-    days: options.days ?? 2,
-    now,
-  });
+  const leaf = await makeLeaf(identity, ca, caKeys.privateKey, { now, days: options.days });
+  const siblings = await Promise.all(
+    (options.siblings ?? []).map((other) =>
+      makeLeaf(other, ca, caKeys.privateKey, { now, days: options.days }),
+    ),
+  );
   return {
     identity,
-    certificate: pem('CERTIFICATE', leaf.toSchema(true).toBER(false)),
+    certificate: leaf.certificate,
     intermediate: pem('CERTIFICATE', ca.toSchema(true).toBER(false)),
-    privateKey: pem(
-      'PRIVATE KEY',
-      (await crypto.subtle.exportKey('pkcs8', leafKeys.privateKey)) as ArrayBuffer,
-    ),
+    privateKey: leaf.privateKey,
+    siblings,
   };
 }

@@ -3,8 +3,13 @@ import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { copyFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
+import {
+  createFixtureIdentity,
+  FIXTURE_IDENTITY,
+} from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
+import { E2E_KEK_V1 } from './lib/e2e-kek.ts';
+import { e2eKeysetCommitment } from './lib/e2e-keyset.ts';
 import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
 import { E2E_RELEASE_SQL } from './lib/e2e-release.ts';
 
@@ -21,9 +26,16 @@ const release = process.env.WALLET_E2E_RELEASE === '1';
 const scimToken = randomBytes(24).toString('hex');
 const varsFile = resolve(root, '.dev.vars.e2e');
 rmSync(varsFile, { force: true });
-const fixture = await createFixtureIdentity();
+// The platform's root pass type is a sibling under the same CA, so a spec can seed a database identity
+// that signs with the Worker's own intermediate (e2e/helpers/platform-root.ts reads it from the state folder).
+// It keeps the real identifier because the platform slot policy requires it; the certificate is signed by this
+// throwaway test CA, lives only in the local e2e database and cannot sign a pass Apple would accept.
+const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
+  siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
+});
+const kek = E2E_KEK_V1;
 writeDevVars(varsFile, {
-  KEK_V1: randomBytes(32).toString('base64'),
+  KEK_V1: kek,
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_ISSUER: oidcIssuer,
   PUBLIC_BASE_URL: e2eOrigin,
@@ -72,6 +84,9 @@ execFileSync(
   ['wrangler', 'd1', 'migrations', 'apply', 'wallet-platform', '--local', '--persist-to', state],
   { cwd: root, stdio: 'inherit' },
 );
+writeFileSync(resolve(state, 'platform-root.json'), JSON.stringify(fixture.siblings[0], null, 2), {
+  mode: 0o600,
+});
 // The Polaris ID binding's own D1 (test/idp-e2e/wrangler.jsonc), with the migration the real Worker deploys.
 execFileSync(
   'npx',
@@ -102,6 +117,23 @@ execFileSync(
     state,
     '--command',
     "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)",
+  ],
+  { cwd: root, stdio: 'inherit' },
+);
+// The credential-reference keyset dev and prod already hold: retained-webhook reads refuse without it, and
+// it is otherwise created only by the first retained credential. It commits to this run's KEK.
+execFileSync(
+  'npx',
+  [
+    'wrangler',
+    'd1',
+    'execute',
+    'wallet-platform',
+    '--local',
+    '--persist-to',
+    state,
+    '--command',
+    `INSERT INTO credential_ref_keyset (id, commitment) VALUES (1, '${await e2eKeysetCommitment(kek)}')`,
   ],
   { cwd: root, stdio: 'inherit' },
 );

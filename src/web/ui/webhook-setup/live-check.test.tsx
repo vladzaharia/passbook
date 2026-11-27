@@ -102,7 +102,7 @@ describe('LiveCheck listen', () => {
     listen(() => [arrival({ outcome: 'ignored', reason: 'stale', topic: 'orders/create' })]);
     await tick(0);
     expect(
-      screen.getByText('Samples prove the setup. Real orders issue passes.'),
+      screen.getByText('Samples prove the setup. Real records issue passes.'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Check what it made' })).toBeNull();
   });
