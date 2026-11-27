@@ -12,6 +12,7 @@ import { BenchTime } from '../bench/time.tsx';
 import { Trace, type TraceNode, traceNodes } from '../bench/trace.tsx';
 import { COPY_LANGS } from '../console/copy-as.ts';
 import { codeOf } from './curl.ts';
+import { HeadersTab } from './headers-tab.tsx';
 import { WbLink } from './link.tsx';
 import { keyTail, shownPath } from './model.ts';
 import { consoleLink, type OpIndex, opOf } from './ops.ts';
@@ -23,6 +24,7 @@ const C = LOGS_BENCH_COPY.inspector;
 const TABS = [
   { id: 'request', label: C.request },
   { id: 'response', label: C.response },
+  { id: 'headers', label: C.headers },
 ] as const;
 const NO_CODES: ReadonlySet<string> = new Set();
 
@@ -98,7 +100,8 @@ export function LogInspector({
       events,
     }),
   ];
-  const body = (which: 'request' | 'response') => {
+  const body = (which: 'request' | 'response' | 'headers') => {
+    if (which === 'headers' && full) return <HeadersTab headers={full.headers} />;
     if (!full) {
       return (
         <p className="logs-quiet" aria-busy={detail?.kind !== 'failed' || undefined}>
@@ -106,6 +109,7 @@ export function LogInspector({
         </p>
       );
     }
+    if (which === 'headers') return null;
     if (!full.bodiesRecorded) return <BodiesOff adminHref={adminHref} />;
     if (!full.hasBodies) return <p className="logs-quiet">{C.bodiesGone}</p>;
     return (
@@ -173,7 +177,7 @@ export function LogInspector({
       onNext={onNext}
       trace={<Trace nodes={nodes} />}
     >
-      {body(tab === 'response' ? 'response' : 'request')}
+      {body(tab === 'response' || tab === 'headers' ? tab : 'request')}
     </Inspector>
   );
 }

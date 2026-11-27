@@ -17,7 +17,7 @@ import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplate } from '../templates/api.ts';
 import { useConnector, useConnectors } from './api.ts';
 import { ConnectorStep } from './connector-picker.tsx';
-import { buildTiles, type ConnectorTile, tileKey } from './connector-tiles.ts';
+import { buildTiles, type ConnectorTile, OUTBOUND, tileKey } from './connector-tiles.ts';
 import { PASSBOOK_STEPS, railSteps, type SecretOrigin } from './create-wizard-steps.ts';
 import { useUploadDraft } from './files/use-upload-draft.ts';
 import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
@@ -79,7 +79,7 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
     scope: typeof scopeToken;
   }>();
   const created = createdResult?.scope === scopeToken ? createdResult : undefined;
-  const connector = useConnector(type, orgId);
+  const connector = useConnector(type === OUTBOUND ? undefined : type, orgId);
   const templateOrg = membership?.capabilities.includes('templates:read') ? orgId : undefined;
   const template = useTemplate(
     templateOrg ? life.defaultTemplateId || undefined : undefined,
@@ -94,7 +94,8 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
 
   const [restSample, setRestSample] = useRestSample(selectedTemplate, rows, setRows, setLife);
   const upload = useUploadDraft({ orgId, setDraft, onSample: setRestSample });
-  const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
+  const dirty =
+    !created && type !== OUTBOUND && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
 
   const info = connector.data;
@@ -129,7 +130,7 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
   }, [info]);
 
   const catalog = connectors.data?.items;
-  const tiles = useMemo(() => buildTiles(catalog ?? []), [catalog]);
+  const tiles = useMemo(() => (catalog ? buildTiles(catalog) : []), [catalog]);
   const recipeNow = draft.config.recipe as string | undefined;
   const pickTile = (tile: ConnectorTile) => {
     if (tile.key === tileKey(type, recipeNow)) return;
@@ -160,6 +161,10 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
     pickTile(tile);
     setStep(1);
   }, [tiles]);
+
+  // Sending out is not a stored connection: its own steps open at the endpoint, on their own URL.
+  const goOutbound = () =>
+    void navigate({ to: '/admin/connections/new', search: { source: OUTBOUND }, replace: true });
 
   const create = useConnectionCreation({
     currentScope,
@@ -214,6 +219,10 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
       return false;
     }
     setShowErrors(false);
+    if (step === 0 && type === OUTBOUND) {
+      goOutbound();
+      return true;
+    }
     if (step === REVIEW) {
       if (!blockCreate && orgId) create.mutate({ orgId, scope: scopeToken });
       return true;

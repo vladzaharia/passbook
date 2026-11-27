@@ -3,6 +3,7 @@ import { redirect } from '@tanstack/react-router';
 import type { OrgCapability, OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { canUseSpace, needsPocketId } from '@/shared/spaces.ts';
 import { ApiError } from './errors.ts';
+import { canUseAllScope } from './org-lists.ts';
 import { safeNext } from './redirect.ts';
 import { parseAdminPath } from './scope.ts';
 import { type AuthedSession, membershipsQuery, sessionQuery } from './session.ts';
@@ -59,7 +60,9 @@ export function canAccessOrgSection(rest: string, membership: OrgMembership | un
   if (within(path, '/connections')) {
     return hasCapability(
       membership,
-      path === '/connections/new' || path === '/connections/webhooks/new'
+      path === '/connections/new' ||
+        path === '/connections/webhooks/new' ||
+        /^\/connections\/webhooks\/[^/]+\/setup$/.test(path)
         ? 'integrations:manage'
         : 'integrations:read',
     );
@@ -78,18 +81,21 @@ export function canAccessOrgSection(rest: string, membership: OrgMembership | un
 /**
  * Platform pages need platform rights; an organization's pages need an active membership in
  * that exact organization. Platform status never opens an organization, and the scope in the
- * URL is never a grant on its own.
+ * URL is never a grant on its own. The All scope opens only its Passes page, and only for a
+ * principal who can read passes in two or more organizations (`memberships`).
  */
 export function canAccessAdminPath(
   pathname: string,
   platformAdmin: boolean,
   membership?: OrgMembership,
+  memberships: readonly OrgMembership[] = [],
 ): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   if (path === ADMIN_PREFIX || path === '/admin/account') return true;
   const { scope, rest } = parseAdminPath(path);
   if (!scope) return false;
   if (scope.kind === 'platform') return platformAdmin;
+  if (scope.kind === 'all') return rest === '/passes' && canUseAllScope(memberships);
   return membership?.orgId === scope.orgId && canAccessOrgSection(rest, membership);
 }
 

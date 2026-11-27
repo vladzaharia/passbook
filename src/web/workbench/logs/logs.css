@@ -147,3 +147,37 @@
 .logs-views .bench-tabs {
   padding-inline: 0;
 }
+
+/* The Headers tab: two short lists of name and value in mono. */
+.logs-hdrs-w {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.logs-hdrs-t {
+  margin: 0 0 6px;
+  color: var(--pk-text-muted);
+  font: 600 12px / 18px var(--pk-font-sans);
+}
+.logs-hdrs-l {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font: 400 12px / 18px var(--pk-font-mono);
+}
+.logs-hdrs-r {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  min-width: 0;
+}
+.logs-hdrs-r dt {
+  flex: none;
+  color: var(--pk-text-muted);
+}
+.logs-hdrs-r dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--pk-text-default);
+  overflow-wrap: anywhere;
+}

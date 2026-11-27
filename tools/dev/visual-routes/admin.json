@@ -71,6 +71,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}/setup",
+    "name": "admin-webhook-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/connections/webhooks/new",
     "name": "admin-webhook-new"
   },
@@ -336,6 +341,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/connections/webhooks/{endpointId}/setup?orgId={northwindId}",
+    "name": "legacy-webhook-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/connections/webhooks/new",
     "name": "legacy-webhook-new"
   },
@@ -521,5 +531,15 @@
     "path": "/admin/o/{northwindId}/passes",
     "name": "admin-passes-bulk-print",
     "click": "[role=checkbox][aria-label^=\"Select \"]:not([aria-label^=\"Select all\"])"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all",
+    "name": "admin-all"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all/passes",
+    "name": "admin-all-passes"
   }
 ]

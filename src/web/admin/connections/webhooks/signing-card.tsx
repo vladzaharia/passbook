@@ -2,7 +2,7 @@ import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { ACTION_ICON } from '../../../lib/action-icons.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { Button, Card, CardBody, CardHeader, KeyValue, useNow } from '../../../ui/index.ts';
-import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
+import { VerifyGuide } from '../../../ui/webhook-setup/index.ts';
 
 /**
  * Signing: when the secret was made and whether an old one still signs. The secret itself is
@@ -46,12 +46,10 @@ export function SigningCard({
             Rotate secret
           </Button>
         ) : null}
-        <details className="text-sm">
-          <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
-            How to verify
-          </summary>
-          <VerifyGuide className="pt-3" />
-        </details>
+        <section aria-label="Verify requests" className="flex flex-col gap-3">
+          <h3 className="text-sm font-medium text-fg-strong">Verify requests</h3>
+          <VerifyGuide />
+        </section>
       </CardBody>
     </Card>
   );

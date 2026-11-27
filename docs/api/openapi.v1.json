@@ -7340,6 +7340,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           }
         },
         "required": [
@@ -7828,6 +7837,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           },
           "email": {
             "type": "object",
@@ -22887,6 +22905,30 @@
           },
           "bodiesTruncated": {
             "type": "boolean"
+          },
+          "headers": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "req": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "res": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "req",
+              "res"
+            ]
           }
         },
         "required": [
@@ -22912,7 +22954,8 @@
           "responseBody",
           "bodiesExpireAt",
           "bodiesRecorded",
-          "bodiesTruncated"
+          "bodiesTruncated",
+          "headers"
         ]
       },
       "OrgsEntitlementsRetrieveResponse": {
@@ -92599,6 +92642,30 @@
                     },
                     "bodiesTruncated": {
                       "type": "boolean"
+                    },
+                    "headers": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "req": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "res": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "req",
+                        "res"
+                      ]
                     }
                   },
                   "required": [
@@ -92624,7 +92691,8 @@
                     "responseBody",
                     "bodiesExpireAt",
                     "bodiesRecorded",
-                    "bodiesTruncated"
+                    "bodiesTruncated",
+                    "headers"
                   ]
                 },
                 "example": {
@@ -92654,7 +92722,18 @@
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
                   "bodiesRecorded": true,
-                  "bodiesTruncated": false
+                  "bodiesTruncated": false,
+                  "headers": {
+                    "req": {
+                      "accept": "application/json",
+                      "passbook-version": "2026-11-01",
+                      "user-agent": "@passbook/sdk 1.4.2"
+                    },
+                    "res": {
+                      "content-type": "application/json",
+                      "etag": "\"3\""
+                    }
+                  }
                 }
               }
             }
@@ -97870,7 +97949,7 @@
           "resource": "requestLogs",
           "method": "list"
         },
-        "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. No header value is kept. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
+        "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. The detail adds a fixed allowlist of non-secret request and response header values, redacted; never Authorization or cookies. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
@@ -97965,7 +98044,18 @@
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
                   "bodiesRecorded": true,
-                  "bodiesTruncated": false
+                  "bodiesTruncated": false,
+                  "headers": {
+                    "req": {
+                      "accept": "application/json",
+                      "passbook-version": "2026-11-01",
+                      "user-agent": "@passbook/sdk 1.4.2"
+                    },
+                    "res": {
+                      "content-type": "application/json",
+                      "etag": "\"3\""
+                    }
+                  }
                 }
               }
             }
@@ -120562,6 +120652,15 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 3249
+            },
+            "required": false,
+            "name": "orgIds",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "minLength": 1,
               "maxLength": 64
             },
@@ -120787,6 +120886,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_SCOPE_TOO_WIDE",
           "RATE_LIMITED",
           "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",

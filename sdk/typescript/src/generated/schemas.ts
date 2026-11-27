@@ -5081,6 +5081,9 @@ export type PassDetail = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
   email?: {
     outcome: "queued" | "deferred" | "limited_org" | "limited_recipient" | "cancelled" | "none";
     cap?: "org" | "recipient";
@@ -6772,6 +6775,9 @@ export type PassSummary = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
 };
 
 export type PassUninstalledEvent = {
@@ -10008,6 +10014,10 @@ export type RequestLogsRetrieveResponse = {
   bodiesExpireAt: number | null;
   bodiesRecorded: boolean;
   bodiesTruncated: boolean;
+  headers: {
+    req: Record<string, string>;
+    res: Record<string, string>;
+  } | null;
 };
 
 export type RetentionReceiptsDownloadResponse = {

@@ -1,7 +1,6 @@
 import {
   type QueryClient,
   queryOptions,
-  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -19,7 +18,6 @@ import {
   PassAssetListSchema,
   PassAssetSchema,
   PassDetailSchema,
-  PassListSchema,
   type PassListStatusSchema,
   type PassSummaryDto,
   RefreshPassResponseSchema,
@@ -34,6 +32,8 @@ import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 export interface PassFilters {
   q?: string | undefined;
   orgId?: string | undefined;
+  /** The All scope only: narrow to these organizations (each must be readable). */
+  orgIds?: readonly string[] | undefined;
   templateId?: string | undefined;
   connectionId?: string | undefined;
   /** Created or updated by this import. */
@@ -91,42 +91,6 @@ export function canMutatePass(
         membership.capabilities.includes('passes:operate'),
     ) ?? false
   );
-}
-
-export function usePassList(filters: PassFilters) {
-  const scope = useOrgScope();
-  const allowed = Boolean(
-    !scope.isLoading &&
-      !scope.isError &&
-      filters.orgId &&
-      filters.orgId === scope.orgId &&
-      scope.membership?.capabilities.includes('passes:read'),
-  );
-  return useInfiniteQuery({
-    queryKey: passKeys.list({ ...filters, orgId: allowed ? scope.orgId : undefined }),
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
-      if (!allowed || !scope.orgId) throw new Error('Choose an authorized organization.');
-      const { noScanDays, match, ...rest } = filters;
-      return api.get('/api/v1/passes', PassListSchema, {
-        query: {
-          ...rest,
-          ...(noScanDays ? { scan: JSON.stringify({ noScanDays }) } : {}),
-          ...(match ? { match: JSON.stringify(match) } : {}),
-          ...(pageParam ? {} : { count: true }),
-          orgId: scope.orgId,
-          cursor: pageParam,
-          limit: 50,
-        },
-        signal,
-      });
-    },
-    getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
-    enabled: allowed,
-    // Keep filtered rows only while the selected, authorized organization stays the same.
-    placeholderData: (previous, query) =>
-      allowed && query?.queryKey[3].orgId === scope.orgId ? previous : undefined,
-  });
 }
 
 /** Void or email up to 100 passes of one org; each is audited on its own. */
