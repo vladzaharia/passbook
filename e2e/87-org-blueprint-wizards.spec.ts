@@ -22,6 +22,8 @@ async function clean(page: Page, step: string) {
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
+      // Colour transitions finish before axe samples contrast.
+      await page.waitForTimeout(300);
       const found = (
         await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
