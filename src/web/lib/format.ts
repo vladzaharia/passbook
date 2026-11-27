@@ -4,6 +4,7 @@ import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shar
 
 export { formatClockIn, formatFullIn, formatStampIn } from '../../shared/format-clock.ts';
 export { formatEndedOn } from '../../shared/format-date.ts';
+export { formatDayIn };
 
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
 // differently ("Nov 2, 2026, 11:51 PM" in Chromium, "… at 11:51 PM" in WebKit), so the parts are
