@@ -22,11 +22,20 @@ export async function sweepPassObjects(ctx: ServiceContext, pages = PAGES): Prom
   let scanned = 0;
   let deleted = 0;
   for (let page = 0; page < pages; page++) {
-    const listed = await bucket.list({
-      prefix: 'passes/',
-      limit: PAGE_SIZE,
-      ...(cursor ? { cursor } : {}),
-    });
+    let listed: R2Objects;
+    try {
+      listed = await bucket.list({
+        prefix: 'passes/',
+        limit: PAGE_SIZE,
+        ...(cursor ? { cursor } : {}),
+      });
+    } catch (error) {
+      if (!cursor) throw error;
+      // A cursor R2 no longer accepts must not stall every later run: start over.
+      await bucket.delete(CURSOR_KEY);
+      ctx.log.warn('passes.object_gc_cursor', { code: 'PASS_OBJECT_GC_CURSOR', error });
+      return;
+    }
     const aged: { key: string; passId: string; version: number; voided: boolean }[] = [];
     for (const o of listed.objects) {
       scanned += 1;
@@ -39,17 +48,15 @@ export async function sweepPassObjects(ctx: ServiceContext, pages = PAGES): Prom
         voided: m[3] === 'voided',
       });
     }
-    const files = aged.filter((a) => !a.voided);
     const referenced = await referencedObjectKeys(
       ctx.env.DB,
-      files.map((f) => f.key),
+      aged.map((a) => a.key),
     );
     const voided = aged.filter((a) => a.voided);
     const stale = await deletableVoidedCopies(ctx.env.DB, voided);
-    const doomed = [
-      ...files.filter((f) => !referenced.has(f.key)),
-      ...voided.filter((v) => stale.has(`${v.passId}/${v.version}`)),
-    ].map((d) => d.key);
+    const doomed = aged
+      .filter((a) => !referenced.has(a.key) && (!a.voided || stale.has(`${a.passId}/${a.version}`)))
+      .map((a) => a.key);
     if (doomed.length > 0) await bucket.delete(doomed);
     deleted += doomed.length;
     if (!listed.truncated) {
