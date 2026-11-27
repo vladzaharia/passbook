@@ -12,6 +12,8 @@ export interface ApnsTarget {
   apnsBinding: string | null;
   /** Apple team of the identity; selects the push key when there is no mTLS binding. */
   teamIdentifier?: string;
+  /** Pass id: APNs keeps only the newest of pushes queued with the same id for an offline device. */
+  collapseId?: string;
 }
 
 export type ApnsMethod = 'certificate' | 'key' | 'none';
@@ -50,6 +52,7 @@ async function pushOne(
         'apns-push-type': 'background',
         'apns-priority': '5',
         'apns-expiration': String(Math.floor(now / 1000) + 7 * 86400),
+        ...(target.collapseId ? { 'apns-collapse-id': target.collapseId } : {}),
         'content-type': 'application/json',
         ...extra,
       },
