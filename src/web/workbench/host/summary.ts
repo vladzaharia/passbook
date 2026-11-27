@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
+import { pollEvery } from '../../lib/poll-backoff.ts';
 import { PORTAL_READ, type WorkbenchApi } from './api.ts';
 
 /**
@@ -45,7 +46,7 @@ export function useWorkbenchSummary(
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === api?.orgId ? previous : undefined,
     // Every 30 s while the tab is visible (react-query pauses the interval when hidden).
-    refetchInterval: SUMMARY_POLL_MS,
+    refetchInterval: pollEvery(SUMMARY_POLL_MS),
     refetchIntervalInBackground: false,
     staleTime: 10_000,
   });

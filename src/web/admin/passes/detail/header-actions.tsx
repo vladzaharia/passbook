@@ -1,13 +1,21 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, MoreMenu } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
 
-export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
+export function HeaderActionsView({
+  runner,
+  lead,
+}: {
+  runner: PassActionRunner;
+  /** Shown first, in the same wrapping row. */
+  lead?: ReactNode;
+}) {
   const bar = runner.defs.filter((d) => d.bar);
   const more = runner.defs.filter((d) => !d.bar);
   const firstDanger = more.findIndex((d) => d.destructive);
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2">
+      {lead}
       {bar.map((d) => {
         const Icon = d.icon;
         const text = d.label;

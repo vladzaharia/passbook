@@ -4674,6 +4674,7 @@ class EmailFailedEvent(_Model):
     data: EmailFailedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class EmailFailedEventData(_Model):
     code: str | None = None
@@ -7240,6 +7241,7 @@ class PassChannelsChangedEvent(_Model):
     data: PassChannelsChangedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassChannelsChangedEventData(_Model):
     channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
@@ -8163,6 +8165,7 @@ class PassInstalledEvent(_Model):
     data: PassInstalledEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassInstalledEventData(_Model):
     wallet: _Literal["apple"] | str
@@ -8181,6 +8184,7 @@ class PassIssuedEvent(_Model):
     data: PassIssuedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassIssuedEventData(_Model):
     version: int | None = None
@@ -8202,6 +8206,7 @@ class PassPrintVoidedEvent(_Model):
     data: PassPrintVoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassPrintVoidedEventData(_Model):
     printId: str
@@ -8218,6 +8223,7 @@ class PassPrintedEvent(_Model):
     data: PassPrintedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassPrintedEventData(_Model):
     printId: str
@@ -8235,6 +8241,7 @@ class PassRemovedEvent(_Model):
     data: PassRemovedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassRemovedEventData(_Model):
     version: int | None = None
@@ -8252,6 +8259,7 @@ class PassReplacedEvent(_Model):
     data: PassReplacedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassReplacedEventData(_Model):
     replacedBy: str
@@ -8267,6 +8275,7 @@ class PassRestoredEvent(_Model):
     data: PassRestoredEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassRestoredEventData(_Model):
     version: int | None = None
@@ -8282,6 +8291,7 @@ class PassScanRefusedEvent(_Model):
     data: PassScanRefusedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassScanRefusedEventData(_Model):
     scanId: str | None = None
@@ -8302,6 +8312,7 @@ class PassScanUndoneEvent(_Model):
     data: PassScanUndoneEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassScanUndoneEventData(_Model):
     scanId: str | None = None
@@ -8319,6 +8330,7 @@ class PassScannedEvent(_Model):
     data: PassScannedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassScannedEventData(_Model):
     scanId: str | None = None
@@ -8817,6 +8829,7 @@ class PassUninstalledEvent(_Model):
     data: PassUninstalledEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassUninstalledEventData(_Model):
     wallet: _Literal["apple"] | str
@@ -8836,6 +8849,7 @@ class PassUnvoidedEvent(_Model):
     data: PassUnvoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassUnvoidedEventData(_Model):
     actorType: str | None = None
@@ -8851,6 +8865,7 @@ class PassUpdatedEvent(_Model):
     data: PassUpdatedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassUpdatedEventData(_Model):
     version: int | None = None
@@ -8898,6 +8913,7 @@ class PassVoidedEvent(_Model):
     data: PassVoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PassVoidedEventData(_Model):
     actorType: str | None = None
@@ -11956,6 +11972,7 @@ class PushFailedEvent(_Model):
     data: PushFailedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class PushFailedEventData(_Model):
     version: int | None = None
@@ -16453,6 +16470,7 @@ class WebhookTestEvent(_Model):
     data: WebhookTestEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: bool | None = None
 
 class WebhookTestEventData(_Model):
     pass

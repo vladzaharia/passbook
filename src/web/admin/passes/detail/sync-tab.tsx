@@ -19,9 +19,6 @@ import { useInsertHighlight } from '../../../lib/motion.ts';
 import {
   Badge,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   EmptyState,
   ErrorState,
   Handoff,
@@ -40,6 +37,7 @@ import {
   type SyncRow,
   shortDevice,
 } from './sync-model.ts';
+import { TabCard } from './tab-card.tsx';
 
 type Filter = EventGroup | 'all';
 const FILTERS = [
@@ -92,7 +90,17 @@ function Child({ e, now }: { e: PassEventDto; now: number }) {
   );
 }
 
-function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean }) {
+function Row({
+  row,
+  now,
+  isNew,
+  messageLinks,
+}: {
+  row: SyncRow;
+  now: number;
+  isNew: boolean;
+  messageLinks: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const Icon = iconOf(row);
   const single = row.events.length === 1 ? row.events[0] : undefined;
@@ -128,7 +136,7 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
           </span>
         </div>
         {detail ? <p className="line-clamp-2 text-xs break-words text-fg-muted">{detail}</p> : null}
-        {row.broadcastId ? (
+        {messageLinks && row.broadcastId ? (
           <Link
             to="/admin/messages/$broadcastId"
             params={{ broadcastId: row.broadcastId }}
@@ -181,19 +189,37 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
 }
 
 /** The rows own their highlight, so a filter change starts from a clean baseline. */
-function Log({ rows, now }: { rows: SyncRow[]; now: number }) {
+function Log({ rows, now, messageLinks }: { rows: SyncRow[]; now: number; messageLinks: boolean }) {
   const fresh = useInsertHighlight(rows.map((r) => r.id));
   return (
     <ol aria-label="Sync log" className="flex flex-col">
       {rows.map((row) => (
-        <Row key={row.id} row={row} now={now} isNew={fresh.has(row.id)} />
+        <Row
+          key={row.id}
+          row={row}
+          now={now}
+          isNew={fresh.has(row.id)}
+          messageLinks={messageLinks}
+        />
       ))}
     </ol>
   );
 }
 
 /** Why didn't my pass update? The ledger grouped by version, newest first. */
-export function SyncTab({ pass, active }: { pass: PassDetailDto; active: boolean }) {
+export function SyncTab({
+  pass,
+  active,
+  flat,
+  messageLinks = true,
+}: {
+  pass: PassDetailDto;
+  active: boolean;
+  /** The Workbench inspector: no card around it. */
+  flat?: boolean;
+  /** Admin links a broadcast's row to its message; the Workbench has no messages. */
+  messageLinks?: boolean;
+}) {
   const [filter, setFilter] = useState<Filter>('all');
   const query = usePassEvents(pass.id, filter, active);
   const now = useNow();
@@ -204,53 +230,48 @@ export function SyncTab({ pass, active }: { pass: PassDetailDto; active: boolean
   if (!query.isPlaceholderData) shown.current = filter;
   const busy = query.isPlaceholderData;
   return (
-    <Card className="relative min-w-0">
-      <LoadingRail show={busy} />
-      <CardHeader
-        title="Sync log"
-        actions={
-          <IconButton
-            size="sm"
-            label="Reload sync log"
-            data-busy={query.isFetching ? 'spin' : undefined}
-            icon={<RefreshCw aria-hidden />}
-            onClick={() => void query.refetch()}
-          />
-        }
-      />
-      <CardBody className="grid gap-4">
-        <SegmentedControl label="Show" options={FILTERS} value={filter} onValueChange={setFilter} />
-        {query.isError && !query.data ? (
-          <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
-        ) : (
-          <Handoff
-            loading={query.isPending}
-            skeleton={<SkeletonTimeline label="Loading sync log" />}
+    <TabCard
+      flat={flat}
+      title="Sync log"
+      rail={<LoadingRail show={busy} />}
+      actions={
+        <IconButton
+          size="sm"
+          label="Reload sync log"
+          data-busy={query.isFetching ? 'spin' : undefined}
+          icon={<RefreshCw aria-hidden />}
+          onClick={() => void query.refetch()}
+        />
+      }
+    >
+      <SegmentedControl label="Show" options={FILTERS} value={filter} onValueChange={setFilter} />
+      {query.isError && !query.data ? (
+        <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
+      ) : (
+        <Handoff loading={query.isPending} skeleton={<SkeletonTimeline label="Loading sync log" />}>
+          <div
+            aria-busy={busy || undefined}
+            className={cn(busy && 'opacity-60 transition-opacity')}
           >
-            <div
-              aria-busy={busy || undefined}
-              className={cn(busy && 'opacity-60 transition-opacity')}
-            >
-              {rows.length === 0 ? (
-                <EmptyState inline art="activity" title={EMPTY[busy ? shown.current : filter]} />
-              ) : (
-                <Log key={shown.current} rows={rows} now={now} />
-              )}
+            {rows.length === 0 ? (
+              <EmptyState inline art="activity" title={EMPTY[busy ? shown.current : filter]} />
+            ) : (
+              <Log key={shown.current} rows={rows} now={now} messageLinks={messageLinks} />
+            )}
+          </div>
+          {query.hasNextPage ? (
+            <div>
+              <Button
+                variant="outline"
+                loading={query.isFetchingNextPage}
+                onClick={() => void query.fetchNextPage()}
+              >
+                Load older
+              </Button>
             </div>
-            {query.hasNextPage ? (
-              <div>
-                <Button
-                  variant="outline"
-                  loading={query.isFetchingNextPage}
-                  onClick={() => void query.fetchNextPage()}
-                >
-                  Load older
-                </Button>
-              </div>
-            ) : null}
-          </Handoff>
-        )}
-      </CardBody>
-    </Card>
+          ) : null}
+        </Handoff>
+      )}
+    </TabCard>
   );
 }
