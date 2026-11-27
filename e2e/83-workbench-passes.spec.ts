@@ -238,7 +238,7 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   await shots(page, 'passes-voided', { show: '.wb-pass-stage' });
 
   // Every tenant call carried the bearer and no mode header.
-  const tenant = calls.filter((c) => /^\/api\/v1\/(passes|request-logs)/.test(c.path));
+  const tenant = calls.filter((c) => /^\/api\/v1\/(passes|request-logs|events)/.test(c.path));
   expect(tenant.length).toBeGreaterThan(0);
   for (const c of tenant) {
     expect(c.authorization, c.path).toMatch(/^Bearer /);

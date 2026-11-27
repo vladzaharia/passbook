@@ -16,6 +16,7 @@ import {
 } from '../../../ui/index.ts';
 import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { usePassDevices } from './sync-api.ts';
+import { SIMULATED_DEVICE } from './sync-labels.ts';
 import { pushReason, shortDevice } from './sync-model.ts';
 import { TabCard } from './tab-card.tsx';
 
@@ -154,7 +155,7 @@ export function DevicesTab({
                     leading={<Smartphone aria-hidden />}
                     title={
                       <span className="font-mono text-xs" title={d.device}>
-                        {d.simulated ? 'Simulated · ' : null}
+                        {d.simulated ? `${SIMULATED_DEVICE} · ` : null}
                         {shortDevice(d.device)}
                       </span>
                     }
