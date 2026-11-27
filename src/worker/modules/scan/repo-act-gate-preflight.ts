@@ -1,7 +1,6 @@
 import { stmt } from '../../platform/db.ts';
 import type { ScanActor } from './guard.ts';
-import { liveEventPresenceSql } from './repo-event-attendance.ts';
-import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
+import { verifiedPresenceCtesSql } from './repo-event-attendance.ts';
 import type { GateKey } from './repo-gates.ts';
 import { retainedEventCountSql } from './repo-scan-retention.ts';
 
@@ -27,29 +26,12 @@ export function heldGateCapacityStmt(
   gate: GateKey,
   eventId: string,
 ): D1PreparedStatement {
-  const org = '(SELECT org_id FROM scope)';
-  const mode = '(SELECT mode FROM scope)';
-  const event = '(SELECT event_id FROM scope)';
-  const witness = `SELECT witness.id AS witness_id FROM scans witness JOIN scope
-    ON witness.org_id=scope.org_id AND witness.mode=scope.mode AND witness.event_id=scope.event_id
-    WHERE (witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
-      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
-      AND witness.id IN (SELECT witness_id FROM live))`;
   return stmt(
     db,
     `WITH scope AS MATERIALIZED (
       SELECT org_id,mode,id AS event_id,capacity,reentry,? AS pass_id
       FROM scan_events WHERE id=? AND org_id=? AND mode=?
-    ), live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, mode, event, '1', true, true)}
-    ), common AS MATERIALIZED (
-      ${witness} AND ${scanLedgerCommonScopeSql('witness')}
-    ), candidate AS MATERIALIZED (
-      ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
-    ), verified AS MATERIALIZED (
-      SELECT live.pass_id,live.state FROM live
-      JOIN common USING(witness_id) JOIN candidate USING(witness_id)
-    ), totals AS MATERIALIZED (
+    ), ${verifiedPresenceCtesSql('scope', true)}, totals AS MATERIALIZED (
       SELECT COUNT(DISTINCT verified.pass_id) AS arrived,
         COUNT(DISTINCT CASE WHEN verified.state='in' THEN verified.pass_id END) AS inside,
         COALESCE(MAX(CASE WHEN verified.pass_id=scope.pass_id THEN 1 ELSE 0 END),0) AS has_arrived,

@@ -31,6 +31,7 @@ import { sweepIdentityMoves } from '../modules/passes/identity-move-sweep.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
+import { sweepPassObjects } from '../modules/passes/orphan-gc.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
@@ -113,6 +114,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'passes.object_gc', run: (ctx) => sweepPassObjects(ctx) },
     { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'operations.sweep', run: sweepOperations },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
