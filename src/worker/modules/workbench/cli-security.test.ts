@@ -289,7 +289,9 @@ describe('R6 lows', () => {
     expect((await t.approve(m.browser, id, m.orgId, s.ip)).status).toBe(200);
     t.kit.clock.advance(3 * 3_600_000);
     const { endUnclaimedCliTokens } = await import('./cli-revoke.ts');
-    expect(await endUnclaimedCliTokens({ env: t.kit.env, clock: t.kit.clock } as never)).toBeGreaterThanOrEqual(1);
+    expect(
+      await endUnclaimedCliTokens({ env: t.kit.env, clock: t.kit.clock } as never),
+    ).toBeGreaterThanOrEqual(1);
     const row = await first<{ revoked_at: number | null }>(
       t.db,
       'SELECT k.revoked_at FROM api_keys k JOIN cli_sessions c ON c.token_id = k.id WHERE c.id = ?',
