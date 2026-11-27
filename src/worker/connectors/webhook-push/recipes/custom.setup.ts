@@ -13,7 +13,7 @@ curl -X POST "$WEBHOOK_URL" \\
 export const customSetup = defineGuide({
   direction: 'inbound',
   recipe: 'custom',
-  version: '2026-11-25',
+  version: '2026-11-27',
   checkedAt: CHECKED_AT,
   provider: { name: 'Your system', consoleUrl: null, docs: [] },
   secret: { origin: 'passbook', allowPaste: true, prefix: null, minLength: 16, whereStep: null },
@@ -29,12 +29,7 @@ export const customSetup = defineGuide({
         { t: 'field', label: 'Timestamp', copy: 'timestampHeader' },
         {
           t: 'text',
-          text: 'The timestamp is in seconds. Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Send the signature as `v1=<hex>`.',
-        },
-        { t: 'note', text: 'The time may be 5 minutes behind or 1 minute ahead.' },
-        {
-          t: 'note',
-          text: 'Send JSON of at most 256 KB and 100 records. Each record has a ref and the record.',
+          text: 'Signature: hex HMAC-SHA256 of `{timestamp}.{raw body}`, sent as `v1=<hex>`.',
         },
       ],
     },

@@ -193,7 +193,7 @@ const OUTBOUND_GUIDE = {
       id: 'store',
       side: 'provider',
       title: 'Store the secret',
-      parts: [{ t: 'text', text: "Keep it in your server's environment, not in code." }],
+      parts: [{ t: 'field', label: 'Secret', copy: 'secret' }],
     },
   ],
   test: {

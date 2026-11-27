@@ -35,9 +35,8 @@ export const SHOPIFY_SECRET_STEP: Step = {
   parts: [
     {
       t: 'text',
-      text: 'Shopify signs every webhook made in admin with one secret for the store. It shows at the foot of the **Webhooks** page.',
+      text: 'At the foot of the **Webhooks** page.',
     },
-    { t: 'note', text: "Made by an app? Use that app's client secret." },
   ],
 };
 

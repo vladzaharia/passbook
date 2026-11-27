@@ -2,7 +2,7 @@
   "custom": {
     "direction": "inbound",
     "recipe": "custom",
-    "version": "2026-11-25",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Your system",
@@ -46,15 +46,7 @@
           },
           {
             "t": "text",
-            "text": "The timestamp is in seconds. Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Send the signature as `v1=<hex>`."
-          },
-          {
-            "t": "note",
-            "text": "The time may be 5 minutes behind or 1 minute ahead."
-          },
-          {
-            "t": "note",
-            "text": "Send JSON of at most 256 KB and 100 records. Each record has a ref and the record."
+            "text": "Signature: hex HMAC-SHA256 of `{timestamp}.{raw body}`, sent as `v1=<hex>`."
           }
         ],
         "verified": true
@@ -98,7 +90,7 @@
   "shopify-orders": {
     "direction": "inbound",
     "recipe": "shopify-orders",
-    "version": "2026-11-26",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",
@@ -207,11 +199,7 @@
         "parts": [
           {
             "t": "text",
-            "text": "Shopify signs every webhook made in admin with one secret for the store. It shows at the foot of the **Webhooks** page."
-          },
-          {
-            "t": "note",
-            "text": "Made by an app? Use that app's client secret."
+            "text": "At the foot of the **Webhooks** page."
           }
         ],
         "verified": false
@@ -252,7 +240,7 @@
   "shopify-customers": {
     "direction": "inbound",
     "recipe": "shopify-customers",
-    "version": "2026-11-26",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",
@@ -343,11 +331,7 @@
         "parts": [
           {
             "t": "text",
-            "text": "Shopify signs every webhook made in admin with one secret for the store. It shows at the foot of the **Webhooks** page."
-          },
-          {
-            "t": "note",
-            "text": "Made by an app? Use that app's client secret."
+            "text": "At the foot of the **Webhooks** page."
           }
         ],
         "verified": false

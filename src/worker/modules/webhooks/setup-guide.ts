@@ -4,7 +4,7 @@ import { SetupGuideSchema } from '../../../shared/contracts/connection-setup.ts'
 export const outboundSetup = SetupGuideSchema.parse({
   direction: 'outbound',
   recipe: 'outbound',
-  version: '2026-11-25',
+  version: '2026-11-27',
   checkedAt: '2026-11-25',
   provider: { name: 'Your server', consoleUrl: null, docs: [] },
   secret: {
@@ -22,7 +22,6 @@ export const outboundSetup = SetupGuideSchema.parse({
       title: 'Store the secret',
       parts: [
         { t: 'field', label: 'Secret', copy: 'secret' },
-        { t: 'text', text: "Keep it in your server's environment, not in code." },
       ],
     },
     {
