@@ -35,6 +35,8 @@ interface Decl {
   feature?: FeatureRule;
   stepUp?: StepUp;
   ownOnlyAdmitted: boolean;
+  /** A sandbox's person, in their own sandbox: the console-group exemption, so no console check and no `consoleAccess`. */
+  ownSandbox?: boolean;
 }
 
 /**
@@ -50,7 +52,9 @@ export async function admitTokenSession(
   if (decl.sessionKind === 'admin') throw workbenchTestOnly();
   // As `sessionOrThrow` does: a step-up's `when` may read the principal.
   c.set('auth', session);
-  const consoleAccess = !decl.ownOnlyAdmitted || hasConsoleAccess(c, session);
+  const consoleAccess = decl.ownSandbox
+    ? undefined
+    : !decl.ownOnlyAdmitted || hasConsoleAccess(c, session);
   if (decl.sessionKind === 'tenant' && consoleAccess) assertConsoleGroup(c, session);
   if (decl.stepUp && (!decl.stepUp.when || (await decl.stepUp.when(c))))
     assertStepUp(c, session, decl.stepUp.maxAgeSec);

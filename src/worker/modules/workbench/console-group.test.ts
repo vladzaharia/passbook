@@ -29,6 +29,14 @@ describe('L18: the console-group exemption (OIDC_CONSOLE_GROUP_REQUIRED on)', ()
       expect((await t.call('GET', path, client)).status, path).toBe(200);
   });
 
+  it('a developer without the group lists and makes keys through a sandbox token', async () => {
+    const d = await t.developer();
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    const client = t.asClient(token);
+    const list = await t.call('GET', `/api-keys?orgId=${d.made.orgId}`, client);
+    expect(list.status, await list.clone().text()).toBe(200);
+  });
+
   it('the same developer gets 403 on a regular org they belong to; with the group, 201', async () => {
     const d = await t.developer();
     const regular = await t.member();
