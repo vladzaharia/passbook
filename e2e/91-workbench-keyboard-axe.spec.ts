@@ -33,7 +33,13 @@ const focused = (page: Page) =>
 
 async function settled(page: Page, tool: WbTool, org: string) {
   await page.goto(wbPath(org, tool));
-  await expect(page.getByRole('main').getByRole('heading', { level: 1 }).first()).toBeVisible();
+  const main = page.getByRole('main');
+  await expect(main.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  // The heading shows before the tool's data: its skeletons (role=status, aria-busy) are the loading signal.
+  await expect(main.locator('[aria-busy="true"]')).toHaveCount(0);
+  // Sandbox's danger zone is a lazy chunk with no fallback: its buttons are the signal it has loaded.
+  if (tool === 'sandbox')
+    await expect(main.getByRole('button', { name: 'Delete sandbox' })).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -84,7 +90,7 @@ test('Tab: every tool is reachable and focus is always on something visible', as
       stopNames.push(`${now.tag}:${now.name}:${now.inMain}`);
       if (now.inMain) reachedMain = true;
     }
-    expect(stops, `${tool}: Tab stops`).toBeGreaterThan(5);
+    expect(stops, `${tool}: Tab stops ${stopNames.join(' | ')}`).toBeGreaterThan(5);
     // A tool with nothing to press in its stage (Design's empty list today) has no stop there: its defect is filed, not asserted.
     const pressable = await page
       .locator('main')
