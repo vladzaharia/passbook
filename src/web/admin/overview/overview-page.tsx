@@ -23,6 +23,7 @@ import {
 import { useOrgPages } from '../orgs/org-pages.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { ChartsCard } from './charts-card.tsx';
+import { DeveloperFunnelTile } from './developer-funnel.tsx';
 import { Health } from './health.tsx';
 import { Kpis, RANGE_LABEL } from './kpis.tsx';
 import type { OverviewSearch } from './overview-search.ts';
@@ -242,6 +243,7 @@ export function OverviewPage({
           loading={metrics.isPending}
           filtered={Boolean(orgId)}
         />
+        <DeveloperFunnelTile />
         {metrics.isPending ? (
           <MetricsSkeleton />
         ) : metrics.isError || !data ? (
