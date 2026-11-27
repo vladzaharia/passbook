@@ -1,4 +1,7 @@
 /* The Passes tool: the list's card thumbnail, the inspector's stage and the phone view. */
+.wb-tool-passes {
+  --wb-row: 64px;
+}
 .wb-pass-thumb {
   display: grid;
   grid-template-rows: repeat(3, 4px) 1fr;
@@ -7,7 +10,7 @@
   block-size: 46px;
   padding: 6px;
   border-radius: 6px;
-  background: var(--pk-text-strong);
+  background: color-mix(in oklab, var(--pk-text-strong) 72%, var(--pk-accent));
   box-shadow: var(--pk-elevation-1);
 }
 .wb-pass-thumb i {
@@ -45,6 +48,11 @@
     )
     0 0 / 14px 14px,
     var(--pk-surface-sunken);
+}
+
+/* The card is the stage's subject, not its whole: the actions stay on screen under it. */
+.wb-pass-stage .pc-stage {
+  max-width: 15rem;
 }
 
 /* A voided pass: one danger treatment, a quiet block with a 3 px rule. */

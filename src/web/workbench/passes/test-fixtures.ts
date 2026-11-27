@@ -43,6 +43,18 @@ export function passesHandlers(world: World): Record<string, FetchHandler> {
   ];
   const routes: [string, FetchHandler][] = [
     at('/api/v1/passes', () => json({ items: world.passes, nextCursor: null })),
+    at('/api/v1/events', () =>
+      json({
+        items: [
+          {
+            id: 'ev1',
+            type: 'pass.installed',
+            createdAt: 1_700_000_000_000,
+            requestId: 'req1',
+          },
+        ],
+      }),
+    ),
     at('/api/v1/request-logs', () =>
       json({
         items: [

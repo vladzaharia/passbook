@@ -14,16 +14,34 @@ const VIEWS = [
 ] as const;
 
 /** Every width and theme of a state: nothing serious or critical from axe, and a shot when asked for. */
-async function shots(page: Page, name: string) {
+async function shots(
+  page: Page,
+  name: string,
+  opts: {
+    /** The part the state is about, scrolled into view in the window. */
+    show?: string;
+    /** Puts the state back after a resize (a menu closes on one). */
+    prep?: () => Promise<void>;
+    /** Still holds after axe has read the page (a menu that closed itself would fail here). */
+    keep?: () => Promise<void>;
+  } = {},
+) {
   if (DIR) mkdirSync(DIR, { recursive: true });
   const before = page.viewportSize();
   for (const [width, height] of VIEWS) {
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
-      await page.evaluate(
-        () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
-      );
+      // A sheet's entrance and the inspector's fade are over before axe reads contrast.
+      await page.waitForTimeout(500);
+      await opts.prep?.();
+      if (opts.show) {
+        await page.locator(opts.show).first().scrollIntoViewIfNeeded({ timeout: 10_000 });
+        await page.waitForTimeout(250);
+      }
+      // The shot is of the state as set, before axe walks the page.
+      if (DIR && (!only || only.includes(name)))
+        await page.screenshot({ path: `${DIR}/${name}-${width}-${scheme}.png` });
       const found = (
         await new AxeBuilder({ page })
           // The bench IdChip's copy label does not start with its visible text (WCAG 2.5.3): bench's, not Passes'.
@@ -38,8 +56,7 @@ async function shots(page: Page, name: string) {
         () => document.documentElement.scrollWidth - window.innerWidth,
       );
       expect(sideways, `${name} ${width}`).toBeLessThanOrEqual(0);
-      if (!DIR || (only && !only.includes(name))) continue;
-      await page.screenshot({ path: `${DIR}/${name}-${width}-${scheme}.png` });
+      await opts.keep?.();
     }
   }
   await page.emulateMedia({ colorScheme: 'light' });
@@ -95,7 +112,7 @@ async function issuePass(page: Page, org: string) {
 test('Passes: a pass, its events and devices, simulate, Open in Console, and void', async ({
   page,
 }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(600_000);
   await signIn(page);
   const org = await sandboxOrgId(page);
   await issuePass(page, org);
@@ -132,23 +149,48 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   await page.waitForTimeout(1200);
   await shots(page, 'passes-open');
 
-  // `.` opens the Simulate menu; Installed adds a device and an event.
+  // `.` opens the Simulate menu; Installed adds a device and an event. The layout is settled first:
+  // a scroll or a resize closes a menu.
+  await page.waitForTimeout(800);
   await page.keyboard.press('.');
   const menu = page.getByRole('menu', { name: 'Simulate' });
   await expect(menu).toBeVisible();
-  await shots(page, 'passes-simulate');
+  await shots(page, 'passes-simulate', {
+    // A menu is placed when it opens, so each size opens it afresh.
+    prep: async () => {
+      await page.waitForTimeout(400);
+      const trigger = page.getByRole('button', { name: 'Simulate', exact: true });
+      if (await menu.isVisible()) await trigger.click();
+      await expect(menu).toBeHidden();
+      await page.keyboard.press('.');
+      await expect(menu).toBeVisible();
+    },
+    keep: async () => {
+      await expect(menu).toBeVisible();
+      // On screen: a menu placed outside the window is visible to the DOM and to nobody else.
+      const box = await menu.boundingBox();
+      const size = page.viewportSize();
+      expect(
+        box && size && box.y >= 0 && box.y + box.height <= size.height,
+        JSON.stringify(box),
+      ).toBe(true);
+    },
+  });
+  await page.waitForTimeout(800);
+  if (!(await menu.isVisible())) await page.keyboard.press('.');
+  await expect(menu).toBeVisible();
   const sent = page.waitForResponse(
     (r) => /\/passes\/[^/]+\/simulate$/.test(r.url()) && r.request().method() === 'POST',
   );
-  await menu.getByRole('menuitem', { name: 'Installed' }).click();
+  await menu.getByRole('menuitem', { name: 'Installed', exact: true }).click();
   expect((await sent).status()).toBe(201);
   await page.getByRole('tab', { name: 'Devices' }).click();
   await expect(page.getByText(/Simulated/).first()).toBeVisible({ timeout: 20_000 });
-  await shots(page, 'passes-devices');
+  await shots(page, 'passes-devices', { show: '[role=tabpanel]' });
 
   await page.getByRole('tab', { name: 'Events' }).click();
-  await expect(page.getByText(/installed/i).first()).toBeVisible({ timeout: 20_000 });
-  await shots(page, 'passes-events');
+  await expect(page.getByRole('link', { name: 'pass.installed' })).toBeVisible({ timeout: 20_000 });
+  await shots(page, 'passes-events', { show: '[role=tabpanel]' });
   await page.getByRole('tab', { name: 'Versions' }).click();
   await expect(page.getByRole('heading', { name: 'Versions' })).toBeVisible();
   await shots(page, 'passes-versions');
@@ -156,10 +198,16 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   await expect(page.getByRole('link', { name: /All in Logs/ })).toBeVisible();
   await shots(page, 'passes-calls');
 
-  // On my phone: a sandbox pass is a Test preview, its link as a QR.
-  await page.getByRole('button', { name: 'Test preview' }).click();
-  await expect(page.getByRole('link', { name: 'Open on this phone' })).toBeVisible();
-  await shots(page, 'passes-phone');
+  // On my phone: a sandbox pass is a Test preview, its link as a QR. A resize remounts the
+  // inspector between the side pane and the sheet, so each size opens it again.
+  const phone = page.getByRole('link', { name: 'Open on this phone' });
+  const openPhone = async () => {
+    if (!(await phone.isVisible()))
+      await page.getByRole('button', { name: 'Test preview' }).click();
+    await expect(phone).toBeVisible();
+  };
+  await openPhone();
+  await shots(page, 'passes-phone', { show: '.wb-pass-stage', prep: openPhone });
 
   // Open in Console hands the operation over by nonce, never a body in the URL.
   await page.getByRole('button', { name: 'Open in Console' }).click();
@@ -169,11 +217,19 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   await page.goBack();
 
   // Void asks first, then the pass reads Voided.
-  await page.getByRole('button', { name: 'Void', exact: true }).click();
-  await shots(page, 'passes-void');
+  const ask = page.locator('.wb-pass-void');
+  const openAsk = async () => {
+    if (!(await ask.isVisible()))
+      await page.getByRole('button', { name: 'Void', exact: true }).click();
+    await expect(ask).toBeVisible();
+  };
+  await openAsk();
+  await shots(page, 'passes-void', { show: '.wb-pass-void', prep: openAsk });
+  await page.waitForTimeout(800);
+  await openAsk();
   await page.getByRole('button', { name: 'Void pass' }).click();
   await expect(page.getByText('Voided').first()).toBeVisible({ timeout: 20_000 });
-  await shots(page, 'passes-voided');
+  await shots(page, 'passes-voided', { show: '.wb-pass-stage' });
 
   // Every tenant call carried the bearer and no mode header.
   const tenant = calls.filter((c) => /^\/api\/v1\/(passes|request-logs)/.test(c.path));

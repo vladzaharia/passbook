@@ -61,8 +61,16 @@ describe('Passes', () => {
     expect(await screen.findByRole('region', { name: 'Ada Lovelace preview' })).toBeInTheDocument();
     for (const name of ['Test preview', 'Simulate', 'Open in Console', 'Void'])
       expect(await screen.findByRole('button', { name })).toBeInTheDocument();
-    // The trail is admin's component, flat, on this tab's token.
+    // The pass's events, then the trail: admin's component, flat, on this tab's token.
     expect(await screen.findByRole('tab', { name: 'Events', selected: true })).toBeInTheDocument();
+    const events = await screen.findByRole('region', { name: 'Events' });
+    expect(await within(events).findByText('pass.installed')).toBeInTheDocument();
+    expect(within(events).getByRole('link', { name: /request/ })).toHaveAttribute(
+      'href',
+      '/workbench/o/sbx/logs#req1',
+    );
+    expect(screen.getByRole('region', { name: 'Sync log' })).toBeInTheDocument();
+    expect(w.calls.find((c) => c.path === '/api/v1/events')?.search).toContain('passId=p1');
     await waitFor(() =>
       expect(w.calls.some((c) => c.path === '/api/v1/passes/p1/events')).toBe(true),
     );

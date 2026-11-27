@@ -1,7 +1,6 @@
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
 import { DevicesTab } from '../../admin/passes/detail/devices-tab.tsx';
-import { SyncTab } from '../../admin/passes/detail/sync-tab.tsx';
 import { VersionsTab } from '../../admin/passes/detail/versions-tab.tsx';
 import { PassPreviewPanel } from '../../admin/passes/pass-preview.tsx';
 import { Buddy } from '../../ui/art/buddy.tsx';
@@ -12,6 +11,7 @@ import { StatusChip } from '../bench/status-chip.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { ToolFailed } from '../states/states.tsx';
 import { CallsTab } from './calls-tab.tsx';
+import { PassEventsTab } from './events-tab.tsx';
 import { moodOf, type PassTab, stateOf, TABS, titleOf, toneOf } from './model.ts';
 import { PassActions } from './pass-actions.tsx';
 import { usePassDetail } from './use-passes.ts';
@@ -112,7 +112,7 @@ export function PassInspector({
     >
       {full ? (
         tab === 'events' ? (
-          <SyncTab pass={full} active flat messageLinks={false} />
+          <PassEventsTab pass={full} orgId={orgId} />
         ) : tab === 'devices' ? (
           <DevicesTab pass={full} active flat />
         ) : tab === 'versions' ? (

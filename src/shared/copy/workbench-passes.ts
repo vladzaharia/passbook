@@ -49,6 +49,13 @@ export const WB_PASSES = {
     done: 'Pass voided',
     failed: 'Could not void',
   },
+  events: {
+    title: 'Events',
+    sync: 'Sync log',
+    empty: 'No events yet',
+    request: 'request',
+    all: 'All in Events',
+  },
   calls: {
     empty: 'No calls for this pass',
     all: 'All in Logs',
