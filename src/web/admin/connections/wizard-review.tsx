@@ -206,7 +206,7 @@ export function WizardAside({
           <EntityArt name={ENTITY.connection.art} size="sm" />
           <p className="text-xs text-fg-muted">
             {!connector
-              ? 'Pick a connector'
+              ? null
               : connector.capabilities.upload
                 ? 'The first row shows here.'
                 : step === 1

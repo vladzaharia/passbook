@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import type { Dict } from '../../admin/templates/designer/model.ts';
-import { useKept } from '../../admin/templates/designer/ui-keep.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Textarea } from '../../ui/input.tsx';
+import { useKept } from '../../ui/keep.tsx';
 import { parseSample } from './sample.ts';
 
 /** The sample as JSON text. Text being typed stays yours; a valid object becomes the sample at once. */

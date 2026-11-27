@@ -144,6 +144,18 @@ describe('Endpoints', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });
 
+  it('sends a test event to a paused endpoint, which the API accepts', async () => {
+    const user = userEvent.setup();
+    const w = { ...world(), endpoints: [CAPTURE, { ...HOOK, status: 'paused' as const }] };
+    const { calls } = await open('/workbench/o/sbx/events?tab=endpoints#we1', w);
+    const send = await screen.findByRole('button', { name: 'Send test event' });
+    expect(send).toBeEnabled();
+    await user.click(send);
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'POST' && c.path.endsWith('/we1/test'))).toBe(true),
+    );
+  });
+
   it('pauses and deletes a URL endpoint on the token', async () => {
     const user = userEvent.setup();
     const { calls } = await open('/workbench/o/sbx/events?tab=endpoints#we1');
