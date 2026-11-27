@@ -43,6 +43,7 @@ const SCOPES = [
   'scans:write',
   'nfc:read',
   'nfc:write',
+  'wallet:read',
 ];
 
 /** A sandbox key holds no key minting, terminal scope or scanning setup (SANDBOX_KEY_SCOPES). */

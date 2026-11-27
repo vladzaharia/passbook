@@ -64,6 +64,8 @@ function PresetDialog({ current, onClose }: { current: string; onClose: () => vo
     edit && parsed && 'value' in parsed
       ? entitlementImpact(before, { ...before, [edit.key]: parsed.value })
       : undefined;
+  // Saving moves the revision, so a draft made for the old one no longer counts.
+  const dirty = made?.id === id && impact !== undefined && impact.changes.length > 0;
   const pending = preset !== undefined && preset.pendingOrgs > 0;
 
   async function submit() {
@@ -87,7 +89,8 @@ function PresetDialog({ current, onClose }: { current: string; onClose: () => vo
         open
         onOpenChange={(open) => !open && onClose()}
         title="Edit presets"
-        dirty={made !== undefined}
+        dirty={dirty}
+        cancelLabel={dirty ? 'Cancel' : 'Close'}
         busy={query.isPending}
         submitLabel={!preset ? 'Retry' : pending ? 'Move the rest' : 'Continue'}
         onSubmit={submit}

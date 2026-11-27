@@ -57,11 +57,11 @@ export function handoffTarget(state: PlaygroundState): string {
   return safeNextPath(full) ? full : `${ANON_PATH}${flagged({ ...state, edits: {} }, code)}`;
 }
 
-/** What the signed-in side saves: the hash's blueprint, with the tab's kept edits when the hash lost them. */
+/** What the signed-in side saves: the hash's blueprint, with the tab's kept edits when this tab's own hand-off lost them. */
 export function handoffState(hash: string): PlaygroundState {
   const state = decodeHash(hash, DEFAULT_BLUEPRINT);
   const kept = readMirror();
-  if (!paramsOf(hash).has('i') && kept && kept.template === state.template)
+  if (ownsHandoff(hash) && !paramsOf(hash).has('i') && kept && kept.template === state.template)
     return { ...state, edits: kept.edits };
   return state;
 }
