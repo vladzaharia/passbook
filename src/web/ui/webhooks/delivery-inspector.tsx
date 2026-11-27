@@ -9,6 +9,7 @@ import { KeyValue } from '../key-value.tsx';
 import { Skeleton } from '../skeleton.tsx';
 import { StatusPill } from '../status-pill.tsx';
 import { Timeline, type TimelineItem } from '../timeline.tsx';
+import { VerifyGuide } from '../webhook-setup/verify-guide.tsx';
 import type { DeliveryDetail, DeliveryHost, DeliveryRead } from './delivery-types.ts';
 import {
   DELIVERY_STATE_LABEL,
@@ -18,7 +19,6 @@ import {
   passLabel,
   TRIGGER_LABEL,
 } from './labels.ts';
-import { VerifyGuide } from './verify-guide.tsx';
 
 export interface DeliveryInspectorProps {
   host: DeliveryHost;

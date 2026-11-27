@@ -32,12 +32,15 @@ interface Call {
 }
 
 /**
- * L17 (Workbench v2 §2.3): the Connections wizard, mounted in the Workbench on a member token,
- * creates, pauses and deletes a Test endpoint. Every tenant call it makes carries the bearer and no
- * mode header, and nothing on the page is a Live control. The Live endpoint id answering 404 is
- * the worker test's (`reach.test.ts`). Needs `WALLET_E2E_PREVIEW=1`.
+ * L17 (Workbench v2 §2.3): Add endpoint in the Workbench opens the one Connections wizard in admin,
+ * for the sandbox in Test, with `return=`; the finish comes back to the Workbench with the new
+ * endpoint selected, where it is paused and deleted on a member token. The Workbench's own tenant
+ * calls carry the bearer and no mode header, and nothing on the page is a Live control. The Live
+ * endpoint id answering 404 is the worker test's (`reach.test.ts`). Needs `WALLET_E2E_PREVIEW=1`.
  */
-test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', async ({ page }) => {
+test('L17: Add endpoint runs the admin wizard in Test and returns to the Workbench to pause and delete', async ({
+  page,
+}) => {
   test.setTimeout(160_000);
   // Adding an endpoint needs a recent sign-in; a long CI shard's stored session is stale.
   await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
@@ -45,16 +48,20 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
   await saveState(page, 'admin');
   const org = encodeURIComponent(readSeed().org.id);
 
+  // Only the Workbench's own calls: the admin wizard rides the session, not the token.
   const calls: Call[] = [];
   page.on('request', (request) => {
     const path = new URL(request.url()).pathname;
     if (!path.startsWith('/api/v1/')) return;
+    if (!new URL(request.frame().url()).pathname.startsWith('/workbench/')) return;
     const headers = request.headers();
     calls.push({ path, authorization: headers.authorization, mode: headers['x-passbook-mode'] });
   });
 
+  const events = `/workbench/o/${org}/events?tab=endpoints`;
+  const add = () => page.getByRole('link', { name: 'Add endpoint' }).first();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(`/workbench/o/${org}/events?tab=endpoints`);
+  await page.goto(events);
   await expect(page.getByRole('heading', { level: 1, name: /Events/ })).toBeVisible();
   // The Workbench is Test only: no mode switch anywhere.
   await expect(page.getByRole('radio', { name: 'Live' })).toHaveCount(0);
@@ -62,39 +69,71 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
   await shots(page, 'events-empty');
   expect(await serious(page), 'empty Events').toEqual([]);
 
-  // Add endpoint pushes `new=1`, so Back would close the wizard.
-  await page.getByRole('button', { name: 'Add endpoint' }).first().click();
-  await expect(page).toHaveURL(/tab=endpoints&new=1/);
-  const wizard = page.getByRole('dialog', { name: 'Add endpoint' });
-  await expect(wizard).toBeVisible();
-  // An organization has no capture endpoint to pick, and no org chooser.
-  await expect(wizard.getByRole('radio', { name: /Capture endpoint/ })).toHaveCount(0);
+  // Add endpoint is a link to the admin wizard, in Test, returning here.
+  await expect(add()).toHaveAttribute('href', /\/admin\/o\/[^/]+\/connections\/new\?/);
+  await expect(add()).toHaveAttribute('href', /source=outbound/);
+  await expect(add()).toHaveAttribute('href', /mode=test/);
+  await expect(add()).toHaveAttribute('href', /return=%2Fworkbench%2F/);
+
+  // Cancel before anything is created leaves without a question and adds nothing.
+  await add().click();
+  await page.waitForURL(/\/admin\/o\/[^/]+\/connections\/new\?/);
+  await expect(page.getByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
+  // A Test organization has no picker, so the first step has no Back; admin is in Test.
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Test' })).toBeChecked();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.waitForURL(/\/connections(\?|$)/);
+  await expect(page.getByRole('dialog', { name: 'Leave setup?' })).toHaveCount(0);
+
+  await page.goto(events);
+  await add().click();
+  await page.waitForURL(/\/admin\/o\/[^/]+\/connections\/new\?/);
   const url = `https://hooks.example.com/hooks/e2e-${Date.now()}`;
-  await wizard.getByRole('textbox', { name: /^URL/ }).fill(url);
-  await wizard.getByRole('textbox', { name: /^URL/ }).blur();
+  await page.getByRole('textbox', { name: /URL/ }).fill(url);
+  await page.getByRole('textbox', { name: /URL/ }).blur();
   await settle(page);
   await shots(page, 'events-wizard-destination');
-  expect(await serious(page), 'wizard').toEqual([]);
-  await wizard.getByRole('button', { name: 'Next' }).click();
-  await wizard.getByRole('button', { name: 'Next' }).click();
+  const next = () => page.getByRole('button', { name: 'Next', exact: true }).click();
+  await next();
+  await expect(page.getByRole('heading', { name: 'Choose events', level: 2 })).toBeVisible();
+  // Back returns a step; it is not the exit.
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
+  await next();
+  await next();
   await settle(page);
   await shots(page, 'events-wizard-review');
-  await wizard.getByRole('button', { name: 'Add endpoint' }).click();
+  await page.getByRole('button', { name: 'Add endpoint', exact: true }).click();
 
-  // The signing secret shows once; Done waits for "I saved the secret".
-  const done = page.getByRole('dialog', { name: /Set up your server/ });
-  await expect(done.getByRole('button', { name: 'Done' })).toBeDisabled();
+  // The signing secret shows once; Next waits for "I saved the secret".
+  await expect(page.getByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
   await settle(page);
   await shots(page, 'events-wizard-secret');
-  await done.getByRole('checkbox', { name: 'I saved the secret' }).check();
-  await done.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
+  await next();
+  await expect(page.getByRole('heading', { name: 'Check the signature', level: 2 })).toBeVisible();
+  await next();
 
-  // Finish lands on the endpoint, selected, with Send test event focused.
-  await expect(page).toHaveURL(/tab=endpoints#/);
+  // Done waits for one 2xx; the pinned receiver cannot answer, so stub the test's answer.
+  await expect(page.getByRole('heading', { name: 'Send a test', level: 2 })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Done', exact: true })).toBeDisabled();
+  await page.route('**/api/v1/webhook-endpoints/*/test', (route) =>
+    route.fulfill({
+      json: { ok: true, status: 200, durationMs: 140, errorCode: null, captureId: null },
+    }),
+  );
+  await page.getByRole('button', { name: 'Send test', exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'hooks.example.com is set up' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open endpoint' }).click();
+
+  // The finish returns to the Workbench by hash, with the new endpoint selected.
+  await page.waitForURL(/\/workbench\/o\/[^/]+\/events\?tab=endpoints#/);
   await expect(page).not.toHaveURL(/new=1/);
-  const send = page.getByRole('button', { name: 'Send test event' }).first();
-  await expect(send).toBeFocused();
   await expect(page.getByRole('heading', { level: 2, name: /hooks\.example\.com/ })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Live' })).toHaveCount(0);
   await shots(page, 'events-endpoint-added');
 
   // Pause, then delete after the confirm.
@@ -110,7 +149,7 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
   await expect(page.getByText('Endpoint deleted')).toBeVisible();
   await expect(page.getByRole('option', { name: /hooks\.example\.com/ })).toHaveCount(0);
 
-  // Every tenant call rode the Workbench token; none named a mode. (`developer/home` and `developer/sandbox`
+  // Every Workbench tenant call rode the token; none named a mode. (`developer/home` and `developer/sandbox`
   // are account-level reads on the session; the boundary test lists them.)
   const tenant = calls.filter(
     ({ path }) =>
@@ -119,7 +158,8 @@ test('L17: the mounted wizard creates, pauses and deletes a Test endpoint', asyn
       ),
   );
   expect(tenant.length).toBeGreaterThan(3);
-  for (const call of calls) expect(call.mode, call.path).toBeUndefined();
+  // The account reads (`session`, `orgs/memberships/me`) ride the cookie and carry admin's stored Test mode; the token's calls never name one.
+  for (const call of tenant) expect(call.mode, call.path).toBeUndefined();
   expect(
     tenant.filter((c) => !c.authorization?.startsWith('Bearer pbtry_')).map((c) => c.path),
     'tenant calls without the Workbench token',
