@@ -6,27 +6,42 @@ import {
   OffboardStartedSchema,
 } from '../../../shared/contracts/idp-access.ts';
 import { IdParamSchema } from '../../../shared/contracts/index.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { reportKeyAdminRefusal } from './actor.ts';
 import { accessView } from './dto.ts';
 import { idpIdempotent } from './idempotent.ts';
-import { startOffboard } from './service-offboard.ts';
-import { actorOf, removeExternalRole, setPlatformRole } from './service-roles.ts';
+import { callerOf } from './ops-start.ts';
+import { checked, startOffboard } from './service-offboard.ts';
+import { removeExternalRole, setPlatformRole } from './service-roles.ts';
 
 const TAG = 'polaris access';
-const READ = { platform: 'platform:users' } as const;
+const READ = { platform: 'platform:users', key: true } as const;
 /** Changes to who holds a role in Polaris ID: a platform admin signed in with Polaris ID recently. */
 const WRITE = {
+  platform: 'platform:users',
+  key: true,
+  signIn: 'oidc',
+  stepUp: { maxAgeSec: STEP_UP_SECONDS },
+} as const;
+/** P2: a role the Polaris ID owner added or paused is overruled by a person only (platform-keys design 2.3). */
+const PERSON_WRITE = {
   platform: 'platform:users',
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
+/** P3: the run is an irreversible fan-out; a key may ask for the plan. Refuse unless provably a dry run. */
+const OFFBOARD = {
+  ...PERSON_WRITE,
+  key: { unless: (_c: unknown, body: Record<string, unknown> | null) => body?.dryRun !== true },
+} as const;
 
 /** Mount at /api/v1/users, before `usersRoutes`. */
 export const userAccessRoutes = createRouter();
+userAccessRoutes.use('*', reportKeyAdminRefusal);
 userAccessRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
@@ -45,7 +60,10 @@ register(
     response: AccessViewSchema,
     auth: READ,
   },
-  async (c) => c.json(await accessView(serviceContext(c), c.req.valid('param').id)),
+  async (c) => {
+    platformActorOf(c);
+    return c.json(await accessView(serviceContext(c), c.req.valid('param').id));
+  },
 );
 
 register(
@@ -65,7 +83,9 @@ register(
   (c) => {
     const body = c.req.valid('json');
     const { id } = c.req.valid('param');
-    return idpIdempotent(c, body, 200, (ctx) => setPlatformRole(ctx, actorOf(c), id, body));
+    return idpIdempotent(c, body, 200, (ctx) =>
+      setPlatformRole(ctx, platformActorOf(c, { scope: 'platform:users' }), id, body),
+    );
   },
 );
 
@@ -80,11 +100,13 @@ register(
     operationId: 'polaris-access.postUsersByIdRolesByRoleRemoveExternal',
     params: ExternalRoleParamSchema,
     response: AccessViewSchema,
-    auth: WRITE,
+    auth: PERSON_WRITE,
   },
   (c) => {
     const { id, role } = c.req.valid('param');
-    return idpIdempotent(c, null, 200, (ctx) => removeExternalRole(ctx, actorOf(c), id, role));
+    return idpIdempotent(c, null, 200, (ctx) =>
+      removeExternalRole(ctx, platformActorOf(c), id, role),
+    );
   },
 );
 
@@ -102,14 +124,19 @@ register(
     bodyOptional: true,
     status: 202,
     response: OffboardStartedSchema,
-    auth: WRITE,
+    auth: OFFBOARD,
   },
   async (c) => {
     const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const ctx = serviceContext(c);
+    if (auth?.kind !== 'session') {
+      // A key asks for the plan only: the gate refused any other request (`OFFBOARD`).
+      platformActorOf(c, { scope: 'platform:users' });
+      return c.json({ plan: await checked(ctx, c.req.valid('param').id), operation: null }, 200);
+    }
     const started = await startOffboard(
       ctx,
+      callerOf(c),
       auth,
       c.req.valid('param').id,
       c.req.valid('json').dryRun,

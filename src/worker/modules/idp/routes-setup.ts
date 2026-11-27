@@ -1,19 +1,14 @@
-import type { Context } from 'hono';
 import {
   RotateScimSchema,
   SetupStatusSchema,
   StartSetupSchema,
 } from '../../../shared/contracts/idp-setup.ts';
 import { StartedOperationSchema } from '../../../shared/contracts/operations.ts';
-import { platformActorOf } from '../../platform/actor.ts';
-import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
-import type { AppBindings } from '../../platform/context.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
-import { startRotate, startSetup } from './ops-start.ts';
+import { callerOf, startRotate, startSetup } from './ops-start.ts';
 import { readSetup } from './setup-read.ts';
 
 const TAG = 'polaris setup';
@@ -25,14 +20,6 @@ const WRITE = {
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
-
-/** The admin session or Platform key the gate admitted, checked for the write scope. */
-function callerOf(c: Context<AppBindings>): SessionAuth | ApiKeyAuth {
-  platformActorOf(c, { scope: 'platform:settings' });
-  const auth = c.var.auth;
-  if (auth?.kind !== 'session' && auth?.kind !== 'api_key') throw new UnauthenticatedError();
-  return auth;
-}
 
 /** Mount at /api/v1/platform. */
 export const idpSetupRoutes = createRouter();
@@ -51,7 +38,7 @@ register(
       'What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read.',
     operationId: 'polaris-setup.getPlatformIdpSetup',
     response: SetupStatusSchema,
-    // §3.5 names `platform:status` for sessions. `platform:status` is not a key scope yet, so a key reads with `platform:read` until PK-2a makes it mintable; the join reconciles it.
+    // §3.5: `platform:status` for a session and for a key alike.
     auth: { platform: 'platform:status', key: true },
   },
   async (c) => c.json(await readSetup(serviceContext(c))),
@@ -73,10 +60,10 @@ register(
     auth: WRITE,
   },
   async (c) => {
-    const auth = callerOf(c);
+    const caller = callerOf(c, 'platform:settings');
     const operation = await startSetup(
       serviceContext(c),
-      auth,
+      caller,
       // An empty body skips validation: parse again so the default stays a dry run.
       StartSetupSchema.parse(c.req.valid('json') ?? {}),
       idempotencyKeyHeader(c.req.header('idempotency-key')),
@@ -102,10 +89,10 @@ register(
     auth: WRITE,
   },
   async (c) => {
-    const auth = callerOf(c);
+    const caller = callerOf(c, 'platform:settings');
     const operation = await startRotate(
       serviceContext(c),
-      auth,
+      caller,
       RotateScimSchema.parse(c.req.valid('json') ?? {}).dryRun,
       idempotencyKeyHeader(c.req.header('idempotency-key')),
     );

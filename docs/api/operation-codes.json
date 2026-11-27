@@ -5351,6 +5351,7 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "platform invitations delete /invitations/{id}": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5359,12 +5360,18 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "PLATFORM_INVITE_CONFLICT",
     "UNAUTHENTICATED"
   ],
-  "platform invitations get /invitations": [],
+  "platform invitations get /invitations": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
+  ],
   "platform invitations post /invitations": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5377,12 +5384,14 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "PLATFORM_INVITE_PENDING",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
   "platform invitations post /invitations/{id}/resend": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5395,11 +5404,13 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "PLATFORM_INVITE_CONFLICT",
     "UNAUTHENTICATED"
   ],
   "polaris access get /{id}/access": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5408,6 +5419,8 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris access post /{id}/offboard": [
@@ -5425,6 +5438,7 @@
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
     "LAST_ORG_ADMIN",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
@@ -5434,6 +5448,7 @@
     "USER_NOT_FOUND"
   ],
   "polaris access post /{id}/roles": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5446,10 +5461,12 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris access post /{id}/roles/{role}/remove-external": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5463,10 +5480,12 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris claims get /idp/groups/{key}/claims": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5475,9 +5494,11 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris claims get /{id}/claims": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5485,13 +5506,16 @@
     "IDP_MULTIPLE_ACCOUNTS",
     "IDP_NOT_MANAGED",
     "IDP_NO_ACCOUNT",
+    "IDP_PLATFORM_ADMIN",
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris claims patch /idp/groups/{key}/claims": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5500,9 +5524,11 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris claims patch /{id}/claims": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5510,13 +5536,16 @@
     "IDP_MULTIPLE_ACCOUNTS",
     "IDP_NOT_MANAGED",
     "IDP_NO_ACCOUNT",
+    "IDP_PLATFORM_ADMIN",
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris groups delete /idp/groups/{key}": [
+    "FORBIDDEN",
     "GROUP_NOT_FOUND",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
@@ -5529,23 +5558,29 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris groups delete /idp/groups/{key}/members/{id}": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
     "MEMBER_NOT_FOUND",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris groups delete /idp/groups/{key}/rules/{id}": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
     "RULE_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "polaris groups get /idp/groups": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5553,15 +5588,24 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
-    "IDP_SCIM_MISSING"
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
   "polaris groups get /idp/groups/{key}/members": [
-    "GROUP_NOT_FOUND"
+    "FORBIDDEN",
+    "GROUP_NOT_FOUND",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
   "polaris groups get /idp/groups/{key}/rules": [
-    "GROUP_NOT_FOUND"
+    "FORBIDDEN",
+    "GROUP_NOT_FOUND",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
   "polaris groups patch /idp/groups/{key}": [
+    "FORBIDDEN",
     "GROUP_NOT_FOUND",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
@@ -5574,9 +5618,11 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris groups post /idp/groups": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5592,10 +5638,12 @@
     "IDP_RULE_ORG_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "polaris groups post /idp/groups/ensure": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5607,9 +5655,11 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris groups post /idp/groups/{key}/members": [
+    "FORBIDDEN",
     "GROUP_NOT_FOUND",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
@@ -5626,10 +5676,12 @@
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
     "MEMBER_NOT_FOUND",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris groups post /idp/groups/{key}/rules": [
+    "FORBIDDEN",
     "GROUP_NOT_FOUND",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
@@ -5638,32 +5690,40 @@
     "IDP_RULE_EXISTS",
     "IDP_RULE_LIMIT",
     "IDP_RULE_ORG_REFUSED",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "polaris operations delete /{id}/holds/{role}": [
+    "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
     "IDP_NOT_HELD",
     "IDP_NOT_WANTED",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "polaris operations post /idp/reconcile": [
+    "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "UNAUTHENTICATED"
   ],
   "polaris operations post /idp/scim-breaker/clear": [
+    "FORBIDDEN",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
     "IDP_BREAKER_CLOSED",
+    "MISSING_SCOPE",
     "OPERATION_RUNNING",
     "UNAUTHENTICATED"
   ],
   "polaris platform get /idp": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5671,9 +5731,12 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
-    "IDP_SCIM_MISSING"
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
   "polaris platform get /idp/calls": [
+    "FORBIDDEN",
     "IDP_BUDGET",
     "IDP_CLIENT",
     "IDP_CONFLICT",
@@ -5681,10 +5744,17 @@
     "IDP_NOT_MANAGED",
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
-    "IDP_SCIM_MISSING"
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
-  "polaris platform get /idp/drift": [],
+  "polaris platform get /idp/drift": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
+  ],
   "polaris platform post /idp/freeze": [
+    "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",
     "IDEMPOTENCY_KEY_REUSED",
@@ -5696,6 +5766,7 @@
     "IDP_REFUSED",
     "IDP_SCIM_FOREIGN",
     "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "polaris setup get /idp/setup": [

@@ -19,6 +19,7 @@ export function registerManagedRoutes(identitiesRoutes: ReturnType<typeof create
     'identities',
     {
       method: 'post',
+      auth: { platform: 'platform:identities' },
       path: '/{id}/renew',
       summary: 'Get a new certificate now (managed identities)',
       params: IdParamSchema,

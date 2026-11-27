@@ -5,25 +5,29 @@ import {
   GroupKeyParamSchema,
   UpdateClaimsSchema,
 } from '../../../shared/contracts/idp-access.ts';
-import { currentUserId } from '../../platform/auth.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { reportKeyAdminRefusal } from './actor.ts';
 import { groupClaims, updateGroupClaims, updateUserClaims, userClaims } from './service-claims.ts';
 
 const TAG = 'polaris claims';
-/** Claims reach every app that signs in with Polaris ID: platform admins only, signed in with Polaris ID recently (no break-glass). */
+/** Claims reach every app that signs in with Polaris ID: a platform admin signed in with Polaris ID recently (no break-glass), or a Platform key. A key never reaches a platform admin's claims. */
 const AUTH = {
   platform: 'platform:claims',
+  key: true,
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
 
-const noStore = (router: ReturnType<typeof createRouter>) =>
+const noStore = (router: ReturnType<typeof createRouter>) => {
+  router.use('*', reportKeyAdminRefusal);
   router.use('*', async (c, next) => {
     await next();
     c.header('cache-control', 'no-store');
   });
+};
 
 /** Mount at /api/v1/users, before `usersRoutes`: the paths are `/{id}/claims`. */
 export const userClaimsRoutes = createRouter();
@@ -41,7 +45,7 @@ register(
     auth: AUTH,
   },
   async (c) =>
-    c.json(await userClaims(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
+    c.json(await userClaims(serviceContext(c), platformActorOf(c), c.req.valid('param').id)),
 );
 
 register(
@@ -60,7 +64,7 @@ register(
     c.json(
       await updateUserClaims(
         serviceContext(c),
-        currentUserId(c),
+        platformActorOf(c, { scope: 'platform:claims' }),
         c.req.valid('param').id,
         c.req.valid('json'),
       ),
@@ -83,7 +87,7 @@ register(
     auth: AUTH,
   },
   async (c) =>
-    c.json(await groupClaims(serviceContext(c), currentUserId(c), c.req.valid('param').key)),
+    c.json(await groupClaims(serviceContext(c), platformActorOf(c), c.req.valid('param').key)),
 );
 
 register(
@@ -102,7 +106,7 @@ register(
     c.json(
       await updateGroupClaims(
         serviceContext(c),
-        currentUserId(c),
+        platformActorOf(c, { scope: 'platform:claims' }),
         c.req.valid('param').key,
         c.req.valid('json'),
       ),
