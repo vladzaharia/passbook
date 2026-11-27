@@ -35,11 +35,9 @@ async function settled(page: Page, tool: WbTool, org: string) {
   await page.goto(wbPath(org, tool));
   const main = page.getByRole('main');
   await expect(main.getByRole('heading', { level: 1 }).first()).toBeVisible();
-  // The heading shows before the tool's data: its skeletons are the loading signal, either aria-busy
-  // (the UI kit) or a status labelled Loading (the bench list skeleton, which Logs and Events show).
-  await expect(
-    main.locator('[aria-busy="true"], [role="status"][aria-label="Loading"]'),
-  ).toHaveCount(0);
+  // The heading shows before the tool's data: content skeletons (kit Loading, BenchSkeleton) carry
+  // data-loading="content"; aria-busy stays for in-flight work and is not a loading signal.
+  await expect(main.locator('[data-loading="content"]')).toHaveCount(0);
   // Sandbox's danger zone is a lazy chunk with no fallback: its buttons are the signal it has loaded.
   if (tool === 'sandbox')
     await expect(main.getByRole('button', { name: 'Delete sandbox' })).toBeVisible();

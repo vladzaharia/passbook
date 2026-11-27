@@ -51,7 +51,7 @@ const meter = (n: number, limit: number | null | undefined) =>
 export function Stats({ orgId, summary }: { orgId: string; summary: Summary | undefined }) {
   if (!summary)
     return (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" role="status" aria-busy>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" role="status" data-loading="content">
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-20" />
         ))}

@@ -104,7 +104,7 @@ export function LogInspector({
     if (which === 'headers' && full) return <HeadersTab headers={full.headers} />;
     if (!full) {
       return (
-        <p className="logs-quiet" aria-busy={detail?.kind !== 'failed' || undefined}>
+        <p className="logs-quiet" data-loading={detail?.kind !== 'failed' ? 'content' : undefined}>
           {detail?.kind === 'failed' ? C.failed : LOGS_BENCH_COPY.inspector.loading}
         </p>
       );

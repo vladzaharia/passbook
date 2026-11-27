@@ -128,7 +128,7 @@ export function PassesFan({
 
 function PassesLoading() {
   return (
-    <div role="status" aria-busy className="flex justify-center gap-3 p-6">
+    <div role="status" data-loading="content" className="flex justify-center gap-3 p-6">
       {[0, 1, 2].map((i) => (
         <Skeleton key={i} className="h-40 w-36" />
       ))}

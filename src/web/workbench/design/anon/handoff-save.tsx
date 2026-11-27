@@ -146,7 +146,7 @@ export function HandoffSave() {
       {failure ? (
         <ErrorState error={failure} title={WB_DESIGN.anon.saveFailed} onRetry={() => void run()} />
       ) : (
-        <div role="status" aria-busy className="grid max-w-md gap-2">
+        <div role="status" data-loading="content" className="grid max-w-md gap-2">
           <p className="text-sm text-fg-muted">{WB_DESIGN.anon.saving}</p>
           <Skeleton className="h-11 w-full" />
         </div>

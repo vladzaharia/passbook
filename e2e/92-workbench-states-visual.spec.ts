@@ -220,7 +220,7 @@ test.describe('contexts', () => {
     await page.reload();
     await expect(text(page, 'Your session ended')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Sign in again' }).first()).toBeVisible();
-    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(page.locator('[data-loading="content"]')).toHaveCount(0);
     await shot(page, 'state-session-expired');
   });
 });
@@ -267,7 +267,7 @@ test.describe('a developer sandbox', () => {
       await page.goto(wbPath(org, tool));
       await expect(h1(page)).toBeVisible();
       await expect(text(page, heading)).toBeVisible();
-      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+      await expect(page.locator('[data-loading="content"]')).toHaveCount(0);
       if (tool === 'passes') {
         const radios = page.getByRole('radio');
         expect(await radios.count()).toBeGreaterThan(1);

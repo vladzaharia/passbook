@@ -20,7 +20,7 @@ function Rows({ children }: { children: ReactNode }) {
 
 function Loading() {
   return (
-    <div role="status" aria-busy className="flex flex-col gap-1 p-3">
+    <div role="status" data-loading="content" className="flex flex-col gap-1 p-3">
       {[0, 1, 2, 3].map((i) => (
         <Skeleton key={i} className="h-9 w-full" />
       ))}
