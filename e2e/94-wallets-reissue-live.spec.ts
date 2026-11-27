@@ -39,7 +39,11 @@ test.afterAll(async () => {
   await admin?.dispose();
 });
 
-const reissue = (orgId: string, provider: 'google' | 'samsung', headers: object = TEST) =>
+const reissue = (
+  orgId: string,
+  provider: 'google' | 'samsung',
+  headers: Record<string, string> = TEST,
+) =>
   admin.send<{ reissueId: string; instances: number; operationId: string | null }>(
     'POST',
     '/api/v1/wallet-providers/reissue',
