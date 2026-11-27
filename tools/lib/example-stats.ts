@@ -164,7 +164,7 @@ export const CALL = {
       'passbook-version': '2026-11-01',
       'user-agent': '@passbook/sdk 1.4.2',
     },
-    res: { 'content-type': 'application/json', 'x-request-id': uuid('request') },
+    res: { 'content-type': 'application/json', etag: '"3"' },
   },
 };
 /** The developer's day, by local hour of the last 24: work from 08:00 to 22:00, busiest after lunch. */

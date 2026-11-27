@@ -396,7 +396,7 @@ describe('POST /developer/sandbox/reopen', () => {
 });
 
 describe('the request log client', () => {
-  it('stores a short normalised client, never the header, and the log lists it', async () => {
+  it('stores a short normalised client, and redacts the User-Agent kept with the headers', async () => {
     const d = await t.developer();
     await t.call('/passes', { headers: { ...bearer(d.key.secret), 'user-agent': 'curl/8.7.1' } });
     await t.call('/passes', {

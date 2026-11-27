@@ -262,7 +262,7 @@ describe('Logs on the Workbench token', () => {
               'idempotency-key': 'idem-1',
               'content-length': '9',
             },
-            res: { etag: '"v2"', 'x-request-id': 'req-1' },
+            res: { etag: '"v2"' },
           },
         }),
       },
@@ -281,6 +281,8 @@ describe('Logs on the Workbench token', () => {
         headers: {
           req: {
             'idempotency-key': 'idem-1',
+            'if-match': '"v1"',
+            accept: 'application/json',
             'content-type': 'application/json',
             'content-length': '9',
           },
@@ -290,7 +292,13 @@ describe('Logs on the Workbench token', () => {
       'https://x.test',
     );
     expect(text).toContain('Authorization: Bearer $PASSBOOK_KEY');
-    expect(text).toContain("'idempotency-key: idem-1'");
+    expect(text).toContain("'accept: application/json'");
+    expect(text).not.toContain('idempotency-key');
+    expect(text).not.toContain('if-match');
+    const sneaky = detail(1, {
+      headers: { req: { authorization: 'Bearer SECRET-TOKEN' }, res: {} },
+    });
+    expect(codeOf('curl', sneaky, 'https://x.test')).not.toContain('SECRET-TOKEN');
     expect(text).not.toContain('content-length');
   });
 

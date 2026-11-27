@@ -2,10 +2,11 @@ import type { RequestLogDetail } from '../../../shared/contracts/developer.ts';
 import { type CopyLang, copyAs } from '../console/copy-as.ts';
 import type { Json } from '../console/types.ts';
 
-/** The stored request headers worth sending again: the length is the client's to compute, and a body's type is added with the body. */
+/** Stored request headers worth sending again. Left out: the length (the client's to compute), a body's type (added with the body), and Idempotency-Key and If-Match, which would replay the cached answer or fail with 412. */
+const SKIP = new Set(['content-length', 'idempotency-key', 'if-match']);
 const sentHeaders = (row: RequestLogDetail, hasBody: boolean): [string, string][] =>
   Object.entries(row.headers?.req ?? {}).filter(
-    ([name]) => name !== 'content-length' && !(hasBody && name === 'content-type'),
+    ([name]) => !SKIP.has(name) && !(hasBody && name === 'content-type'),
   );
 
 /** The logged call in a language, with the key read from `$PASSBOOK_KEY`; a body that is not JSON is left out. */

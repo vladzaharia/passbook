@@ -151,7 +151,7 @@
         },
         "res": {
           "content-type": "application/json",
-          "x-request-id": "0193a1b2-7c00-7000-8000-137ee11a36e0"
+          "etag": "\"3\""
         }
       }
     }

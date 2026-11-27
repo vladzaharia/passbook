@@ -14,16 +14,13 @@ export const REQUEST_HEADERS = [
   'if-none-match',
   'if-match',
 ] as const;
+/** Headers set by outer middleware after the log is taken (`ratelimit-*`, `x-request-id`) are not listed: they would never be there. */
 export const RESPONSE_HEADERS = [
   'content-type',
   'content-length',
   'etag',
   'location',
   'retry-after',
-  'ratelimit-limit',
-  'ratelimit-remaining',
-  'ratelimit-reset',
-  'x-request-id',
   'deprecation',
   'sunset',
 ] as const;
@@ -86,13 +83,13 @@ export function headersOf(json: string | null): LoggedHeaders | null {
   if (!json) return null;
   try {
     const v = JSON.parse(json) as Partial<LoggedHeaders>;
-    const clean = (o: unknown) =>
+    const clean = (o: unknown, allowed: readonly string[]) =>
       Object.fromEntries(
         Object.entries(o && typeof o === 'object' ? o : {}).filter(
-          (e): e is [string, string] => typeof e[1] === 'string',
+          (e): e is [string, string] => allowed.includes(e[0]) && typeof e[1] === 'string',
         ),
       );
-    return { req: clean(v.req), res: clean(v.res) };
+    return { req: clean(v.req, REQUEST_HEADERS), res: clean(v.res, RESPONSE_HEADERS) };
   } catch {
     return null;
   }
