@@ -134,13 +134,6 @@ export function legacyAdminTarget(
   const kept = /^\/admin\/orgs\//.test(path) ? withoutView : rest;
   if (step.kind === 'platform') return { to: platformPath(step.rest), search: kept };
   const explicit = step.kind === 'org' ? (step.orgId ?? explicitOrg(search)) : explicitOrg(search);
-  if (
-    step.kind === 'either' &&
-    !explicit &&
-    (step.preferPlatform ? ctx.platformAdmin : platformFirst(ctx))
-  ) {
-    return { to: scopePath(PLATFORM, step.rest), search: kept };
-  }
   // The overview link reopens All when that was the last scope and it is still open to this person.
   if (
     path === '/admin' &&
@@ -149,6 +142,13 @@ export function legacyAdminTarget(
     canUseAllScope(ctx.memberships)
   ) {
     return { to: allPath('/passes'), search: kept };
+  }
+  if (
+    step.kind === 'either' &&
+    !explicit &&
+    (step.preferPlatform ? ctx.platformAdmin : platformFirst(ctx))
+  ) {
+    return { to: scopePath(PLATFORM, step.rest), search: kept };
   }
   const detail = step.kind === 'org' && step.detail;
   const orgId = explicit ?? rememberedOrg(ctx, step.rest, detail);

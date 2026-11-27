@@ -681,6 +681,7 @@ describe('admin layout', () => {
     });
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
     await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByRole('option', { name: /Switch scope/ }));
     await user.click(await screen.findByRole('option', { name: /All organizations · Passes/ }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/all/passes'));
   });
