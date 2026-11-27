@@ -10,7 +10,6 @@ export function SidebarFoot() {
     <div className="shrink-0 border-t border-border p-2">
       <a
         href={bridge.href('home')}
-        aria-label={BRIDGE_COPY.entryName}
         title={BRIDGE_COPY.opensTest}
         className="flex min-h-9 items-center gap-2.5 rounded-md px-3 text-sm text-fg-muted transition-[color,background-color] duration-(--wl-dur-hover) hover:bg-state-hover-tint hover:text-fg-strong pointer-coarse:min-h-11"
       >
