@@ -4,7 +4,8 @@ import { all } from '../../platform/db.ts';
 export const REFERENCED_KEYS_SQL = `WITH k(key) AS (SELECT value FROM json_each(?1))
      SELECT key FROM k WHERE
        EXISTS (SELECT 1 FROM pass_versions v WHERE v.object_key = k.key AND (v.pass_id, v.version) NOT IN
-         (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?2)))
+         (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?2)
+           WHERE json_extract(value, '$[0]') IS NOT NULL AND json_extract(value, '$[1]') IS NOT NULL))
        OR EXISTS (SELECT 1 FROM passes p WHERE p.object_key = k.key)
        -- Held for the row's life: a claim is not cleared on restore and compensation re-reads its snapshot.
        OR EXISTS (SELECT 1 FROM passes p WHERE p.removal_claim_object_key = k.key)

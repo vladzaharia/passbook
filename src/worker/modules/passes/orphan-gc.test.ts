@@ -3,7 +3,7 @@ import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { PASS_OBJECT_GRACE_MS, sweepPassObjects } from './orphan-gc.ts';
 import { type Kit, setupKit, withoutTriggers } from './pass-test-fixtures.ts';
-import { REFERENCED_KEYS_SQL } from './repo-orphan-gc.ts';
+import { REFERENCED_KEYS_SQL, referencedObjectKeys } from './repo-orphan-gc.ts';
 
 const put = (kit: Kit, key: string) => kit.env.BUCKET.put(key, new Uint8Array([1]));
 const has = async (kit: Kit, key: string) => (await kit.env.BUCKET.head(key)) !== null;
@@ -167,6 +167,15 @@ describe('pass object gc', () => {
     await run(kit.env.DB, 'DELETE FROM pass_boundaries WHERE pass_id = ? AND version = 3', [id]);
     await sweepPassObjects(ctxOf(kit));
     expect(await has(kit, held)).toBe(false);
+  });
+
+  it('keeps a held key when the except list carries an all-null entry', async () => {
+    const kit = await setupKit();
+    const pass = await kit.pass();
+    const key = `passes/${pass.id}/v2-held.pkpass`;
+    await version(kit, pass.id, 2, key);
+    const bad = { passId: null as unknown as string, version: Number.NaN };
+    expect(await referencedObjectKeys(kit.env.DB, [key], [bad])).toEqual(new Set([key]));
   });
 
   it('looks keys up through indexes, never a table scan', async () => {

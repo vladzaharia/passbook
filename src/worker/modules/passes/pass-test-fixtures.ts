@@ -269,18 +269,19 @@ export async function withoutTriggers(
   fn: () => Promise<void>,
 ): Promise<void> {
   const saved: string[] = [];
-  for (const name of names) {
-    const row = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
-      [name],
-    );
-    if (row) saved.push(row.sql);
-    await run(db, `DROP TRIGGER IF EXISTS ${name}`);
-  }
   try {
+    for (const name of names) {
+      const row = await first<{ sql: string }>(
+        db,
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
+        [name],
+      );
+      if (row) saved.push(row.sql);
+      await run(db, `DROP TRIGGER IF EXISTS ${name}`);
+    }
     await fn();
   } finally {
-    for (const sql of saved) await run(db, sql);
+    for (const sql of saved)
+      await run(db, sql.replace(/^CREATE TRIGGER/i, 'CREATE TRIGGER IF NOT EXISTS'));
   }
 }
