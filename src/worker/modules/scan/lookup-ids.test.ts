@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { first, run } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
@@ -194,7 +195,7 @@ describe('exact lookup IDs', () => {
     const rows = await kit.env.DB.prepare('SELECT count(*) AS n FROM scans').first<{ n: number }>();
     expect(rows?.n).toBe(0);
     const json = JSON.stringify(await search('00001234'));
-    expect(json).not.toContain('00001234');
+    expectSecretAbsent(json, '00001234');
     expect(json).not.toContain('opaque:qr:payload');
   });
 

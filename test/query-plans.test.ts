@@ -219,18 +219,23 @@ describe('list and search query plans', () => {
   });
 });
 
+/** `verified` walks `live` and probes the ledger by primary key per witness; no ledger index scan. */
+function expectLedgerByLiveWitness(text: string, label?: string) {
+  const verified = text.slice(text.indexOf('MATERIALIZE verified'));
+  const walk = verified.indexOf('SCAN live');
+  expect(walk, label).toBeGreaterThan(-1);
+  expect(verified.slice(walk), label).toContain(
+    'SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)',
+  );
+  expect(verified, label).not.toContain('scans_pass_ok');
+  expect(verified, label).not.toContain('AUTOMATIC');
+}
+
 describe('scan and template sweep plans', () => {
   it('event totals read the ledger only for live witnesses, by primary key', async () => {
     const lines = await plans((db) => eventTotalsStmt(db, 'o', 'live', 'e').first());
     expect(fullScans(lines, 'scans')).toEqual([]);
-    const text = lines.join('\n');
-    expect(text.indexOf('MATERIALIZE live')).toBeLessThan(text.indexOf('MATERIALIZE common'));
-    const common = text.slice(
-      text.indexOf('MATERIALIZE common'),
-      text.indexOf('MATERIALIZE candidate'),
-    );
-    expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
-    expect(common).toContain('LIST SUBQUERY');
+    expectLedgerByLiveWitness(lines.join('\n'));
   });
 
   it('capacity reads the ledger only for live witnesses, by primary key', async () => {
@@ -241,14 +246,7 @@ describe('scan and template sweep plans', () => {
         .all<{ detail: string }>();
       const lines = rows.results.map((r) => r.detail);
       expect(fullScans(lines, 'scans'), String(reentry)).toEqual([]);
-      const text = lines.join('\n');
-      expect(text.indexOf('MATERIALIZE live')).toBeLessThan(text.indexOf('MATERIALIZE common'));
-      const common = text.slice(
-        text.indexOf('MATERIALIZE common'),
-        text.indexOf('MATERIALIZE candidate'),
-      );
-      expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
-      expect(common).toContain('LIST SUBQUERY');
+      expectLedgerByLiveWitness(lines.join('\n'), String(reentry));
     }
   });
 

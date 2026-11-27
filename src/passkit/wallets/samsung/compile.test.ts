@@ -253,6 +253,16 @@ describe('change text', () => {
   });
 });
 
+describe('sharing', () => {
+  it('is reported as omitted, since Samsung cannot restrict it', async () => {
+    const v = await view('starter-store-card');
+    v.sharingProhibited = true;
+    expect(lines(compile(v))).toContain('sharing | omitted | ');
+    v.sharingProhibited = false;
+    expect(lines(compile(v)).some((l) => l.startsWith('sharing'))).toBe(false);
+  });
+});
+
 describe('author choices', () => {
   it('leaves a field out when it is named in omit and reports it', async () => {
     const v = await view('starter-store-card', {
