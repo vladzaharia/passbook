@@ -21,6 +21,7 @@ import {
   legacyLiveRowsStmt,
   legacyLookupPassesStmt,
 } from './repo-read-once-legacy.ts';
+import { legacyOf } from './repo-read-once-legacy-auth.ts';
 import {
   legacyEventsStmt,
   legacyHistoryPageStmt,
@@ -28,9 +29,8 @@ import {
   legacyStaffActivityStmt,
   legacyTimeZonesStmt,
 } from './repo-read-once-legacy-staff.ts';
-import { legacyOf } from './repo-read-once-legacy-auth.ts';
-import { fence, scanner, seedScanRows } from './scan-read-once-test-fixtures.ts';
 import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
+import { fence, scanner, seedScanRows } from './scan-read-once-test-fixtures.ts';
 
 describe('scan readers on the join-once predicate equal their scalar originals', () => {
   it('returns the same rows for every actor kind', async () => {

@@ -1,6 +1,6 @@
 // Shared by the join-once differentials: the actor fields the readers consult, a fence per actor, and seeded
 // scanners, staff, scans, events and a photo of two orgs and both modes.
-import { passRow } from '../../platform/authority-checks.ts';
+import type { passRow } from '../../platform/authority-checks.ts';
 import { db } from '../../platform/authority-ext-fixtures.ts';
 import { authorityPredicate } from '../../platform/authority-read.ts';
 import type { Actor, Seed } from '../../platform/authority-read-join-fixtures.ts';

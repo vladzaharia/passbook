@@ -1,12 +1,12 @@
 // The scalar-form statements of the second half of the scan readers, as they were before P2b, kept so
 // scan-read-once-more.test.ts can show the join-once statements return the same rows for every actor.
 import type { SqlValue } from '../../platform/db.ts';
-import { HEADS_UP_SQL, REFUSED_SQL } from './outcome-bucket.ts';
 import { effectiveReleaseIs } from './effective-release.ts';
+import { HEADS_UP_SQL, REFUSED_SQL } from './outcome-bucket.ts';
+import type { ScanLogFilter } from './repo-feed.ts';
+import { where } from './repo-feed-scope.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
-import { where } from './repo-feed-scope.ts';
-import type { ScanLogFilter } from './repo-feed.ts';
 import type { ScanRow } from './repo-scans.ts';
 import { QUARTER } from './repo-summary-extras.ts';
 

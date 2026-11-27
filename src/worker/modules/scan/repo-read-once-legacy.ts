@@ -8,8 +8,8 @@ import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import type { LookupEntry } from './lookup-history.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
-import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
 import { refsClear } from './repo-read-fences.ts';
+import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
 import { actorPassScopeSql } from './repo-recipient-scope.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
 
