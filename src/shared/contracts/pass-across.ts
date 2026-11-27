@@ -15,7 +15,7 @@ export const PassAcrossShape = {
 export const PassOrgIdsSchema = z
   .string()
   .max(64 * 50 + 49)
-  .transform((v) => v.split(',').map((id) => id.trim()))
+  .transform((v) => [...new Set(v.split(',').map((id) => id.trim()))])
   .pipe(z.array(IdSchema).min(1).max(50));
 
 /** A query value holding JSON: parsed, or one validation issue. */

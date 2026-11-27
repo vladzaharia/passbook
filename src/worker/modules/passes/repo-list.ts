@@ -106,12 +106,27 @@ export function passFilterSql(filter: PassListFilter): {
     const matches = ['display_title', 'display_subtitle', 'external_id', 'holder_email'].map(
       (column) => prefixMatch(column, q),
     );
+    // Scoped like the outer query, so each lookup reads the (org_id, mode, ...) indexes and never other tenants.
+    const scope: string[] = [];
+    const scopeParams: (string | number)[] = [];
+    if (filter.orgId) {
+      scope.push('org_id = ?');
+      scopeParams.push(filter.orgId);
+    }
+    if (filter.orgIds) {
+      scope.push('org_id IN (SELECT value FROM json_each(?))');
+      scopeParams.push(JSON.stringify(filter.orgIds));
+    }
+    if (filter.mode) {
+      scope.push('mode = ?');
+      scopeParams.push(filter.mode);
+    }
+    const scoped = (cond: string) =>
+      `SELECT id FROM passes WHERE ${[...scope, cond].join(' AND ')}`;
     add(
-      `id IN (${[
-        ...matches.map((m) => `SELECT id FROM passes WHERE ${m.sql}`),
-        'SELECT id FROM passes WHERE serial = ?',
-      ].join(' UNION ')})`,
-      ...matches.flatMap((m) => m.params as (string | number)[]),
+      `id IN (${[...matches.map((m) => scoped(m.sql)), scoped('serial = ?')].join(' UNION ')})`,
+      ...matches.flatMap((m) => [...scopeParams, ...(m.params as (string | number)[])]),
+      ...scopeParams,
       q,
     );
   }
