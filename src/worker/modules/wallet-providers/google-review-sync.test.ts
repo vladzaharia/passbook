@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { REVIEW_TICK_BATCH, syncGoogleClassReviews } from './google-review-sync.ts';
+import { syncGoogleClassReviews } from './google-review-sync.ts';
 import { fixture, loyalty, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
@@ -78,13 +78,16 @@ describe('the review sync tick', () => {
     }
   });
 
-  it('takes at most a batch, oldest check first', async () => {
+  it('takes at most the limit, oldest check first', async () => {
+    // Each extra class needs a real issued offer (about 0.3 s alone, minutes under a loaded CI), so the
+    // limit is small; the tick passes REVIEW_TICK_BATCH to this same statement.
+    const limit = 3;
     const { f } = await pending();
     const klass = await first<{ hash: string; releaseId: string }>(
       f.kit.env.DB,
       'SELECT class_id_hash AS hash, release_id AS releaseId FROM wallet_google_classes',
     );
-    for (let i = 0; i < REVIEW_TICK_BATCH + 5; i++) {
+    for (let i = 0; i < limit + 3; i++) {
       const second = await f.kit.pass({});
       const [offer] = await listWalletOffers(f.kit.ctx, second.id);
       await issueWalletOffer(f.kit.ctx, offer?.href.split('/')[2] ?? '', 'google');
@@ -104,12 +107,12 @@ describe('the review sync tick', () => {
     const due = await listDueGoogleClassReviews(
       f.kit.env.DB,
       f.kit.clock.now() + 10_000_000,
-      REVIEW_TICK_BATCH,
+      limit,
     );
-    expect(due).toHaveLength(REVIEW_TICK_BATCH);
+    expect(due).toHaveLength(limit);
     const checked = await all<{ hash: string }>(
       f.kit.env.DB,
-      `SELECT class_id_hash AS hash FROM wallet_google_classes ORDER BY COALESCE(review_checked_at, 0) LIMIT ${REVIEW_TICK_BATCH}`,
+      `SELECT class_id_hash AS hash FROM wallet_google_classes ORDER BY COALESCE(review_checked_at, 0) LIMIT ${limit}`,
     );
     expect(due.map((d) => d.classIdHash)).toEqual(checked.map((c) => c.hash));
   });
