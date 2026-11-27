@@ -74,7 +74,11 @@ export type KeyRef =
   | 'a.limit_key'
   | '(SELECT limit_key FROM actor_ok)';
 
-const allowed = (key: KeyRef) => `(SELECT id FROM key_templates WHERE key_id=${key})`;
+/** The read predicate holds the key's templates once, in its `key_tpl` CTE, by the key's id, so a use does not re-expand the actor. */
+const allowed = (key: KeyRef) =>
+  key === '(SELECT limit_key FROM actor_ok)'
+    ? '(SELECT id FROM key_tpl)'
+    : `(SELECT id FROM key_templates WHERE key_id=${key})`;
 
 export const partsOf = (ref: TemplateRef): readonly RefPart[] => ('all' in ref ? ref.all : [ref]);
 export const columnOf = (part: RefPart): string => ('list' in part ? part.list : part.column);

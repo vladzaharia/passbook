@@ -4,6 +4,7 @@
 // here inside HEADROOM extra levels, so a view or reference that grows fails this test instead of a route.
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { tenantFilter } from './authority-read.ts';
 import { restrictRow, TEMPLATE_REFS } from './authority-restrict.ts';
 import { all } from './db.ts';
 
@@ -46,5 +47,24 @@ describe('limited-key conditions leave depth headroom on D1', () => {
     }
     expect(lo).toBeGreaterThan(HEADROOM);
     expect(lo).toBeLessThan(100);
+  });
+});
+
+// workerd 1.20261110 (D1) also refuses a statement that expands the `actor_ok` CTE too many times, a limit apart from
+// the expression depth above ("VIEWs and/or subqueries nested too deep"; four sibling uses fit, eight do not). A read
+// filter reads the actor's org, mode and key once each and the key's templates from `key_tpl`, never through `actor_ok`.
+describe('a read filter expands the actor a bounded number of times', () => {
+  const uses = (sql: string) => (sql.match(/\bactor_ok\b/g) ?? []).length;
+
+  it.each(Object.keys(TEMPLATE_REFS))('%s', (table) => {
+    const filter = tenantFilter('x', table);
+    expect(uses(filter)).toBeLessThanOrEqual(3);
+    expect(filter).not.toContain('key_templates');
+  });
+
+  it('the key lookup is a use of key_tpl, not of the actor', () => {
+    expect(uses(restrictRow('webhook_deliveries', 'x', '(SELECT limit_key FROM actor_ok)'))).toBe(
+      1,
+    );
   });
 });

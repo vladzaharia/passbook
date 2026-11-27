@@ -115,7 +115,6 @@
     "wrangler": "4.161.0"
   },
   "overrides": {
-    "workerd": "1.20261104.1",
     "@cloudflare/vitest-plugin": {
       "zod": "4.6.7"
     },
