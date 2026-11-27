@@ -20,9 +20,7 @@ export const outboundSetup = SetupGuideSchema.parse({
       id: 'store',
       side: 'provider',
       title: 'Store the secret',
-      parts: [
-        { t: 'field', label: 'Secret', copy: 'secret' },
-      ],
+      parts: [{ t: 'field', label: 'Secret', copy: 'secret' }],
     },
     {
       id: 'verify',
