@@ -199,6 +199,8 @@ type ApiKeysActivityListQuery struct {
 
 type ApiKeysActivityListResult = ApiKeyActivity
 
+type ApiKeysCliTokensRevokeResult = CliTokenEnded
+
 type ApiKeysCreateBody = ApiKeysCreateParams
 
 type ApiKeysCreateParams struct {
@@ -1091,6 +1093,10 @@ type CapturedEmailDetail struct {
 type CapturedEmailPage struct {
 	Items      []CapturedEmail `json:"items"`
 	NextCursor *string         `json:"nextCursor"`
+}
+
+type CliTokenEnded struct {
+	Ok bool `json:"ok"`
 }
 
 type ConnectionPreview struct {

@@ -723,9 +723,6 @@
     "NOT_FOUND",
     "UNAUTHENTICATED"
   ],
-  "cli post /cli-tokens/revoke": [
-    "UNAUTHENTICATED"
-  ],
   "cli post /sessions": [],
   "cli post /sessions/lookup": [
     "CLI_CODE_NOT_FOUND",
@@ -5463,6 +5460,9 @@
     "MISSING_SCOPE",
     "NOT_FOUND",
     "PLATFORM_INVITE_CONFLICT",
+    "UNAUTHENTICATED"
+  ],
+  "platform post /cli-tokens/revoke": [
     "UNAUTHENTICATED"
   ],
   "polaris access get /{id}/access": [

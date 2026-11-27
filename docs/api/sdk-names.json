@@ -2837,26 +2837,24 @@
   },
   "cli.postSessionsByIdDeny": {
     "resource": "cli.sessions",
-    "method": "deny",
+    "method": "decline",
     "sdk": false,
     "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
   },
   "cli.postSessionsToken": {
     "resource": "cli.sessions",
-    "method": "poll",
+    "method": "retrieve",
     "sdk": false,
     "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
   },
   "cli.deleteTokensById": {
-    "resource": "cli.tokens",
-    "method": "revoke",
-    "sdk": false,
-    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+    "resource": "apiKeys.cliTokens",
+    "method": "revoke"
   },
-  "cli.postCliTokensRevoke": {
-    "resource": "cli.tokens",
+  "platform.postCliTokensRevoke": {
+    "resource": "platform.cliTokens",
     "method": "revokeAll",
     "sdk": false,
-    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+    "reason": "Platform administration by a person; no key calls it."
   }
 }

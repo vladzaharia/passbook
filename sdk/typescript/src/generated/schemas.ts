@@ -766,6 +766,10 @@ export type CapturedEmailPage = {
   nextCursor: string | null;
 };
 
+export type CliTokenEnded = {
+  ok: true;
+};
+
 export type ConnectionPreview = {
   ok: boolean;
   errorCode?: string;

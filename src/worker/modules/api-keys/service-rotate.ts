@@ -8,9 +8,10 @@ import { terminalsOf } from './repo-family.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { reachable } from './service.ts';
-import { assertCredentialKey, assertOrgBoundScopes, invalid, newSecret } from './service-create.ts';
+import { assertCredentialKey, assertOrgBoundScopes, invalid } from './service-create.ts';
 import type { ApiKeyDto } from './service-dto.ts';
 import { parseScopes, type Resources, toDto } from './service-dto.ts';
+import { newSecret } from './service-secret.ts';
 
 const HOUR = 3_600_000;
 

@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import type { z } from 'zod';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
+import type { SignInLevel } from '../../shared/sign-in.ts';
 import type { PlatformScope, TenantScope } from './api-scopes.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
@@ -136,3 +137,11 @@ export function sessionKindOf(auth: RouteAuth): 'plain' | 'tenant' | 'admin' {
   if ('human' in auth) return auth.requestMode ? 'tenant' : 'plain';
   return auth.session === 'admin' ? 'admin' : 'tenant';
 }
+
+/** The sign-in level a route asks of a session: `oidc` is `strict` plus the Polaris-only check (`requireCaller`). */
+export const signInOf = (auth: RouteAuth): SignInLevel =>
+  'human' in auth || 'scope' in auth
+    ? auth.signIn === 'oidc'
+      ? 'strict'
+      : (auth.signIn ?? 'idp')
+    : 'idp';

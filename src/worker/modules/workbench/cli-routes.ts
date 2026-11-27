@@ -4,6 +4,7 @@ import {
   ApproveCliSchema,
   CliSessionReviewSchema,
   CliSessionStartedSchema,
+  CliTokenEndedSchema,
   CliTokenPollSchema,
   CliTokenSchema,
   LookupCliCodeSchema,
@@ -203,7 +204,7 @@ register(
     // The one `/cli` route a CLI token calls (CLI_LOGOUT_ROUTE): its own id, never another's.
     auth: { scope: CLI_SCOPES },
     params: IdParamSchema,
-    response: OkSchema,
+    response: CliTokenEndedSchema,
   },
   async (c) => {
     const auth = c.var.auth;
@@ -221,12 +222,12 @@ cliPlatformRoutes.use('*', async (c, next) => {
 });
 register(
   cliPlatformRoutes,
-  'cli',
+  'platform',
   {
     method: 'post',
     path: '/cli-tokens/revoke',
     summary: 'Kill switch: end every CLI token, or those of one organization or person',
-    operationId: 'cli.postCliTokensRevoke',
+    operationId: 'platform.postCliTokensRevoke',
     auth: { platform: 'platform:users', signIn: 'oidc', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     body: RevokeCliTokensSchema,
     response: RevokedCliTokensSchema,

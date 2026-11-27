@@ -27,10 +27,24 @@ class ApiKeysActivityResource:
         return self._core.request("GET", f"/api/v1/api-keys/{_p(id)}/activity", query={"limit": limit}, result=m.ApiKeysActivityListResult, **opts)
 
 
+class ApiKeysCliTokensResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ApiKeysCliTokensRevokeResult:
+        """Sign out: a CLI token ends itself (send it as the bearer); a person ends their own `DELETE /api/v1/cli/tokens/{id}`"""
+        return self._core.request("DELETE", f"/api/v1/cli/tokens/{_p(id)}", result=m.ApiKeysCliTokensRevokeResult, **opts)
+
+
 class ApiKeysResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.activity = ApiKeysActivityResource(core)
+        self.cli_tokens = ApiKeysCliTokensResource(core)
 
     def create(
         self,

@@ -1,4 +1,4 @@
-import { type CredentialStore, DEFAULT_ORIGIN, originOf, type Profile } from './credentials.ts';
+import type { CredentialStore, Profile } from './credentials.ts';
 
 /** The slice of the environment `login`, `logout` and `open` use. `bin.ts` supplies the real one. */
 export interface LoginIo {
@@ -126,6 +126,3 @@ export async function logout(io: LoginIo): Promise<void> {
       : 'Signed out here. The server could not be reached, so end the token in Keys.',
   );
 }
-
-export const describeOrigin = (baseUrl: string | undefined): string =>
-  originOf(baseUrl?.trim() || DEFAULT_ORIGIN);

@@ -80,6 +80,8 @@ export const RevokeCliTokensSchema = z.strictObject({
   orgId: IdSchema.optional(),
   userId: IdSchema.optional(),
 });
+/** `DELETE /cli/tokens/{id}`: the token is ended. */
+export const CliTokenEndedSchema = z.object({ ok: z.literal(true) });
 export const RevokedCliTokensSchema = z.object({ revoked: z.number().int() });
 
 /**

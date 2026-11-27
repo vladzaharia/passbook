@@ -5,10 +5,9 @@ import {
   TEST_ONLY_SCOPES,
 } from '../../../shared/contracts/api-keys.ts';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
-import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
+import type { ApiKeyKind } from '../../platform/api-key-token.ts';
 import { CREDENTIAL_SCOPES, effectiveScopes } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -22,6 +21,9 @@ import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
+import { type CliMint, newSecret } from './service-secret.ts';
+
+export { newSecret } from './service-secret.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
 export const MAX_LIFETIME_MS = 91 * 86_400_000;
@@ -29,24 +31,6 @@ export const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Open (not revoked) child keys one key may hold. */
 const MAX_CHILDREN = 50;
 const RESTRICTABLE = /^(passes|nfc):|^templates:read$|^holders:write$/;
-
-/** A CLI sign-in's key: its secret tail is derived from the session, so the poll that wins can hand it over. */
-export interface CliMint {
-  tail(prefix: string): Promise<string>;
-}
-
-/** A fresh secret: shown once, stored only as its hash. */
-export async function newSecret(
-  ctx: ServiceContext,
-  kind: ApiKeyKind,
-  mode: 'live' | 'test',
-  cli?: CliMint,
-) {
-  const prefix = ctx.ids.token(6);
-  const label = secretLabel(kind, mode, cli ? 'cli' : 'app');
-  const secret = `${label}_${prefix}_${cli ? await cli.tail(prefix) : ctx.ids.token(32)}`;
-  return { prefix, label, secret, hash: await sha256Hex(secret) };
-}
 
 /** A credential scope (`scanning:admin`, `nfc:keys`) mints PINs, pairing codes and tag keys: only a live key of one organization, and it expires within 90 days. Refused at mint, not at the first call. */
 export function assertCredentialKey(

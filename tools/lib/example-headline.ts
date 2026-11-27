@@ -94,6 +94,38 @@ const SETUP_VIEW = {
 };
 
 export const HEADLINE: Record<string, unknown> = {
+  'cli.postSessions request': {
+    client: { name: 'passbook-cli', version: '0.2.0', os: 'macOS' },
+    accountHint: IDS.user,
+  },
+  'cli.postSessions response': {
+    deviceCode: 'q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE',
+    userCode: 'BCDF-GHJK',
+    verificationUri: 'https://passbook.mobile/workbench/cli',
+    expiresIn: 600,
+    interval: 5,
+  },
+  'cli.postSessionsToken request': { deviceCode: 'q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE' },
+  'cli.postSessionsToken response': {
+    token: 'pbcli_test_k3Qx9Zt2_Hn4vR8sLw1YcT6mPq0eUjXb5DgAoZ7iKfN',
+    tokenId: IDS.user,
+    orgId: IDS.org,
+    context: { kind: 'sandbox', name: 'Dana Whitfield sandbox' },
+    account: { id: IDS.user, name: 'Dana Whitfield', email: 'dana@example.com' },
+    expiresAt: T.recent,
+    origin: 'https://passbook.mobile',
+  },
+  'cli.postSessionsLookup request': { userCode: 'BCDF-GHJK' },
+  'cli.postSessionsLookup response': {
+    id: IDS.incident,
+    client: { name: 'passbook-cli', version: '0.2.0', os: 'macOS' },
+    startedAt: T.recent,
+    startCountry: 'US',
+    startCity: 'Seattle',
+    mismatch: false,
+    account: { id: IDS.user, name: 'Dana Whitfield', email: 'dana@example.com' },
+    accountMismatch: false,
+  },
   'polaris-setup.getPlatformIdpSetup response': SETUP_VIEW,
   'polaris-setup.postPlatformIdpSetup request': { dryRun: false, items: ['groups'] },
   'polaris-setup.postPlatformIdpScimTokenRotate request': { dryRun: false },

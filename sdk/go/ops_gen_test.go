@@ -281,6 +281,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"apiKeys.cliTokens.revoke", "DELETE", "/api/v1/cli/tokens/id1", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.APIKeys.CliTokens.Revoke(ctx, "id1")
+		},
+	},
+	{
 		"connections.list", "GET", "/api/v1/connections", false,
 		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

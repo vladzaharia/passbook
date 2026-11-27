@@ -22,6 +22,7 @@ __all__ = [
     "ApiKeyRotationKey2",
     "ApiKeyRotationPrevious",
     "ApiKeysActivityListResult",
+    "ApiKeysCliTokensRevokeResult",
     "ApiKeysCreateBody",
     "ApiKeysCreateParams",
     "ApiKeysCreateResult",
@@ -164,6 +165,7 @@ __all__ = [
     "CapturedEmail",
     "CapturedEmailDetail",
     "CapturedEmailPage",
+    "CliTokenEnded",
     "ConnectionPreview",
     "ConnectionPreviewColumnsItem",
     "ConnectionPreviewColumnsItemValuesItem",
@@ -3131,6 +3133,9 @@ class CapturedEmailDetail(_Model):
 class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
     nextCursor: str | None
+
+class CliTokenEnded(_Model):
+    ok: _Literal[True]
 
 class ConnectionPreview(_Model):
     ok: bool
@@ -16193,6 +16198,8 @@ class UnknownWebhookEvent(_Model):
     data: _Dict[str, _Any] | None = None
 
 ApiKeysActivityListResult = ApiKeyActivity
+
+ApiKeysCliTokensRevokeResult = CliTokenEnded
 
 ApiKeysCreateBody = ApiKeysCreateParams
 

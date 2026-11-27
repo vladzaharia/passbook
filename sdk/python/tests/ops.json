@@ -1159,6 +1159,27 @@
   }
  },
  {
+  "id": "cli.deleteTokensById",
+  "call": "api_keys.cli_tokens.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/cli/tokens/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "connections.getConnections",
   "call": "connections.list",
   "http": "GET",

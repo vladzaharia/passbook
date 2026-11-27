@@ -1,0 +1,93 @@
+{
+  "cli.deleteTokensById": {
+    "description": "Signs the CLI out: a `pbcli_` token ends itself when sent as the bearer with its own id, and a person ends a CLI token they approved. Any other id answers 404.",
+    "response": {
+      "ok": true
+    }
+  },
+  "cli.postSessions": {
+    "description": "Starts a CLI sign-in (`passbook login`). No auth. Returns a device code to poll with and a code the person types at `verificationUri`; the page never takes a code from its URL.",
+    "request": {
+      "client": {
+        "name": "passbook-cli",
+        "version": "0.2.0",
+        "os": "macOS"
+      },
+      "accountHint": "0193a1b2-7c00-7000-8000-000000000011"
+    },
+    "response": {
+      "deviceCode": "q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE",
+      "userCode": "BCDF-GHJK",
+      "verificationUri": "https://passbook.mobile/workbench/cli",
+      "expiresIn": 600,
+      "interval": 5
+    }
+  },
+  "cli.postSessionsToken": {
+    "description": "Polls a CLI sign-in with its device code in the body. Answers 400 pending, slow down, denied or expired until the person approves, then the 30-day Test token once.",
+    "request": {
+      "deviceCode": "q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE"
+    },
+    "response": {
+      "token": "pbcli_test_k3Qx9Zt2_Hn4vR8sLw1YcT6mPq0eUjXb5DgAoZ7iKfN",
+      "tokenId": "0193a1b2-7c00-7000-8000-000000000011",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "context": {
+        "kind": "sandbox",
+        "name": "Dana Whitfield sandbox"
+      },
+      "account": {
+        "id": "0193a1b2-7c00-7000-8000-000000000011",
+        "name": "Dana Whitfield",
+        "email": "dana@example.com"
+      },
+      "expiresAt": 1795570500000,
+      "origin": "https://passbook.mobile"
+    }
+  },
+  "cli.postSessionsLookup": {
+    "request": {
+      "userCode": "BCDF-GHJK"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+      "client": {
+        "name": "passbook-cli",
+        "version": "0.2.0",
+        "os": "macOS"
+      },
+      "startedAt": 1795570500000,
+      "startCountry": "US",
+      "startCity": "Seattle",
+      "mismatch": false,
+      "account": {
+        "id": "0193a1b2-7c00-7000-8000-000000000011",
+        "name": "Dana Whitfield",
+        "email": "dana@example.com"
+      },
+      "accountMismatch": false
+    }
+  },
+  "cli.postSessionsByIdApprove": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "cli.postSessionsByIdDeny": {
+    "response": {
+      "ok": true
+    }
+  },
+  "cli.postCliTokensRevoke": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "userId": "0193a1b2-7c00-7000-8000-000000000011"
+    },
+    "response": {
+      "revoked": 33
+    }
+  }
+}
