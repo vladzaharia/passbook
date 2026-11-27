@@ -104,8 +104,8 @@ export function scanRead(
   sql: string,
   params: readonly SqlValue[] = [],
   extra?: { ctes: string; params?: readonly SqlValue[] },
-  /** Why this statement may skip the join-once check (it reads no tenant data). Prod code has none. */
-  exempt?: string,
+  /** Skips `assertActorOnce` for a scalar-form original in the differential tests. Only `legacyRead` may pass it (`scan-read-exempt.test.ts`). */
+  exempt?: 'differential-legacy',
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;

@@ -31,4 +31,4 @@ export const legacyRead = (
   sql: string,
   params: readonly SqlValue[] = [],
   extra?: { ctes: string; params?: readonly SqlValue[] },
-) => scanRead(db, auth, sql, params, extra, 'scalar-form original kept for the differential test');
+) => scanRead(db, auth, sql, params, extra, 'differential-legacy');

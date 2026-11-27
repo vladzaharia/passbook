@@ -152,7 +152,7 @@ describe('scan read corpus', () => {
     expect(skipped.params.length).toBeLessThan(base.params.length);
   });
 
-  it('a staffed session scanner reads what its scalar-form fence read, live and once revoked', async () => {
+  it('a staffed scanner reads what its scalar-form fence read, live and once revoked', async () => {
     const { real } = await maximal();
     const actor = real;
     const auth = scanReadAuthority(actor, { now: clock.now() });

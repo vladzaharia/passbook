@@ -20,8 +20,10 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     via: [
       'src/worker/modules/scan/repo-scans.ts',
       'src/worker/modules/scan/repo-act-attempt-authority.ts',
+      'src/worker/modules/scan/repo-read-fences.ts',
+      'src/worker/modules/scan/repo-read-authority.ts',
     ],
-    hash: 'ced0eddc957b',
+    hash: '984324735bf7',
   },
   'src/worker/modules/scan/repo-counts.ts': {
     reason:
@@ -40,7 +42,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/platform/authority-statements.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: 'd5ab1e5797ac',
+    hash: 'a4a35100db35',
   },
   'src/worker/modules/events/repo.ts': {
     reason:
