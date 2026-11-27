@@ -61,7 +61,7 @@ export function useQuickstart(initial: Session, onContexts?: () => void) {
   const csrf = session.kind === 'out' ? '' : session.csrf;
   const sandbox = made ?? (session.kind === 'ready' ? session.sandbox : null);
   const transport = useTransport(sandbox?.orgId ?? null, csrf);
-  const { home, skew, refresh } = useHome();
+  const { home, skew, refresh, poll } = useHome();
   const progress: DeveloperProgress | null = home?.progress ?? null;
   const client = useMemo(
     () =>
@@ -291,6 +291,7 @@ export function useQuickstart(initial: Session, onContexts?: () => void) {
     pass,
     home,
     skew,
+    poll,
     progress,
     refresh,
     renderedMs,
