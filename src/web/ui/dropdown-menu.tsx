@@ -52,10 +52,11 @@ const ITEM =
  * The menu opens on pointer down, so on a phone's bottom action sheet an item can land under the
  * finger and the gesture that opened it would activate it: its pointer up, or the click the browser
  * sends to whatever is under the finger afterwards (a touch's pointer up stays on the trigger, its
- * click does not). Touch, pen and coarse-pointer devices (whose taps can report as mouse) ignore
- * the opening gesture's pointer up (matched by `pointerId`) and its click. A fresh press on an
- * item ends the guard, so a deliberate tap always selects; mouse press-drag-release and keyboard
- * select immediately.
+ * click does not). Touch, pen, coarse-pointer devices (whose taps can report as mouse) and any
+ * pointer while the menu is a sheet (a narrow window with a mouse or trackpad) ignore the opening
+ * gesture's pointer up (matched by `pointerId`) and its click. A fresh press on an item ends the
+ * guard, so a deliberate tap or click always selects; on the desktop popover a mouse
+ * press-drag-release and the keyboard select immediately.
  */
 const OPENING_GESTURE_MS = 350;
 /** A click follows its pointer up within a frame or two; this bounds how late one still counts as the same gesture. */
@@ -92,8 +93,10 @@ function track() {
 }
 
 const coarse = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;
-const isTouchLike = (event: PointerEvent) =>
-  event.pointerType === 'touch' || event.pointerType === 'pen' || coarse();
+/** The menu renders as a bottom sheet below Tailwind's `sm`, whatever the pointer: a mouse opener lands on an item too. */
+const sheet = () => window.matchMedia?.('(max-width: 39.99rem)').matches ?? false;
+const guarded = (event: PointerEvent) =>
+  event.pointerType === 'touch' || event.pointerType === 'pen' || coarse() || sheet();
 
 /** Handlers for an item: compose them with your own on every menu item that activates on pointer up or click. */
 export function useIgnoreOpeningGesture() {
@@ -107,7 +110,7 @@ export function useIgnoreOpeningGesture() {
       pressed.current = true;
     },
     onPointerUp: (event: PointerEvent) => {
-      if (pressed.current || !isTouchLike(event)) return;
+      if (pressed.current || !guarded(event)) return;
       const opener = press
         ? event.pointerId === press.id
         : performance.now() - at < OPENING_GESTURE_MS;
@@ -116,7 +119,7 @@ export function useIgnoreOpeningGesture() {
     onClick: (event: MouseEvent) => {
       // detail 0 is the keyboard, or Radix's own click from a pointer up that the guard let through.
       if (pressed.current || event.detail === 0) return;
-      if (!(press?.touch || coarse())) return;
+      if (!(press?.touch || coarse() || sheet())) return;
       const now = performance.now();
       const same = press
         ? lastPress === press && (press.up === null || now - press.up < CLICK_AFTER_UP_MS)
