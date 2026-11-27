@@ -1,11 +1,12 @@
 import { all, batch, stmt } from '../../platform/db.ts';
 import { listPassesSql, type PassListFilter } from './repo-list.ts';
-import { mapPass, type Pass, type PassDbRow } from './repo-map.ts';
+import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
 
 /**
  * Newest first across organizations: one indexed branch per organization (`passes_org_mode`, no sort),
- * read in one round trip and merged here. Each branch holds its own newest `limit + 1` below the cursor,
- * so the newest `limit + 1` overall lie in their union.
+ * read in one round trip and merged here. Each branch holds its own newest `limit + 1` ids below the cursor,
+ * so the newest `limit + 1` overall lie in their union. Only ids come from the branches; the page's rows are
+ * read in a second query, so a wide list never pulls orgs x (limit + 1) full rows.
  */
 export async function listPassBranches(
   db: D1Database,
@@ -15,16 +16,23 @@ export async function listPassBranches(
   const results = await batch(
     db,
     orgIds.map((orgId) => {
-      const { sql, params } = listPassesSql({ ...filter, orgId });
+      const { sql, params } = listPassesSql({ ...filter, orgId }, true);
       return stmt(db, sql, params);
     }),
   );
-  const rows = results
-    .flatMap((r) => r.results as PassDbRow[])
-    .sort((a, b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
-  const page = rows.slice(0, filter.limit).map(mapPass);
-  const last = page.at(-1);
-  return { items: page, nextCursor: rows.length > filter.limit && last ? last.id : null };
+  const ids = results
+    .flatMap((r) => (r.results as { id: string }[]).map((row) => row.id))
+    .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  const pageIds = ids.slice(0, filter.limit);
+  const last = pageIds.at(-1);
+  const nextCursor = ids.length > filter.limit && last ? last : null;
+  if (pageIds.length === 0) return { items: [], nextCursor };
+  const rows = await all<PassDbRow>(
+    db,
+    `${PASS_SELECT} WHERE id IN (SELECT value FROM json_each(?)) ORDER BY id DESC`,
+    [JSON.stringify(pageIds)],
+  );
+  return { items: rows.map(mapPass), nextCursor };
 }
 
 export interface OrgLabel {

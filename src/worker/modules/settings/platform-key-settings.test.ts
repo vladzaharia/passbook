@@ -58,10 +58,12 @@ describe('platform settings by key', () => {
     expect((await call('/platform/settings', key.headers)).status).toBe(200);
   });
 
-  it('refuses a sign-in setting, in any shape, and writes nothing', async () => {
+  it('refuses a sign-in or data-deleting setting, in any shape, and writes nothing', async () => {
     const key = await platformKey(['platform:settings']);
     for (const values of [
       { 'oidc.trustEmail': true },
+      { 'retention.auditDays': 400 },
+      { 'sandbox.purgeDays': 1 },
       { 'auth.magicLinkEnabled': false },
       { 'scan.undoWindowMinutes': 17, 'auth.magicLinkEnabled': false },
       'oidc.trustEmail',
