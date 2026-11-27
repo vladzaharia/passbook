@@ -1,4 +1,7 @@
-// The join-once read predicate (`rows`, `anchor`, `tenant`) over seeded child rows, for every actor kind.
+// The join-once read predicate (`rows`, `anchor`, `tenant`) over seeded child rows, for every actor kind. Differential:
+// it returns exactly the rows of the scalar form it replaced (`EXISTS (SELECT 1 FROM actor_ok)` with one
+// `(SELECT ... FROM actor_ok)` per column), rebuilt here from the new text. The scalar form is over the workerd
+// 1.20261110.1 nesting limit, so this comparison runs on workerds whose SQLite accepts it.
 import { describe, expect, it } from 'vitest';
 import { passRow } from './authority-checks.ts';
 import { db } from './authority-ext-fixtures.ts';
@@ -6,6 +9,13 @@ import { authorityPredicate } from './authority-read.ts';
 import { type Actor, actors, seed, TABLES } from './authority-read-join-fixtures.ts';
 import { assertActorOnce } from './authority-read-once.ts';
 import { all } from './db.ts';
+
+/** The scalar spelling of a tenant term written against `ao`. */
+const scalar = (sql: string) =>
+  sql
+    .replaceAll('ao.org_id', '(SELECT org_id FROM actor_ok)')
+    .replaceAll('ao.mode', '(SELECT mode FROM actor_ok)')
+    .replaceAll('ao.limit_key', '(SELECT limit_key FROM actor_ok)');
 
 function forms(actor: Actor, now: number, ids: { own: string; other: string }) {
   const checks = actor.check ? passRow(actor.check === 'own' ? ids.own : ids.other) : undefined;
@@ -24,13 +34,16 @@ function forms(actor: Actor, now: number, ids: { own: string; other: string }) {
     if (actor.platform) {
       if (table !== 'passes' && table !== 'scan_events') return null;
       const newWhere = `${p.platform} AND ${named ? 'x.org_id = nm.org_id AND ' : ''}x.mode = ao.mode`;
+      const oldWhere = `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? 'x.org_id = (SELECT org_id FROM named) AND ' : ''}x.mode = (SELECT mode FROM actor_ok)`;
       return {
+        old: `WITH ${withNamed(p.ctes)} SELECT ${sel} FROM ${table} x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${oldWhere} ${tail}`,
         new: `WITH ${withNamed(p.ctes)} SELECT ${sel} FROM ${p.rows}${named ? 'named nm CROSS JOIN ' : ''}${table} x WHERE ${newWhere} ${tail}`,
         params,
       };
     }
     if (actor.scope === 'platform') return null;
     return {
+      old: `WITH ${p.ctes} SELECT ${sel} FROM ${table} x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${scalar(p.tenant('x', table, scope))} ${tail}`,
       new: `WITH ${p.ctes} SELECT ${sel} FROM ${p.rows}${table} x WHERE ${p.ok} AND ${p.tenant('x', table, scope)} ${tail}`,
       params: p.params,
     };
@@ -44,6 +57,8 @@ describe('join-once read predicate', () => {
     const now = s.f.clock.now();
     const ids = { own: s.w.a.pass, other: s.tb.passes.live ?? '' };
     let nonEmpty = 0;
+    let compared = 0;
+    let tooDeep = 0;
     for (const actor of await actors(s)) {
       const { p, rowsOf } = forms(actor, now, ids);
       const present = (
@@ -59,11 +74,22 @@ describe('join-once read predicate', () => {
         p.params,
       );
       expect(anchored, `${actor.name}: anchor`).toEqual([{ v: present }]);
+      expect(
+        await all(db, `WITH ${p.ctes} SELECT EXISTS (SELECT 1 FROM actor_ok) AS v`, p.params),
+        `${actor.name}: verdict`,
+      ).toEqual([{ v: present }]);
       for (const t of TABLES) {
         const q = rowsOf(t);
         if (!q) continue;
         assertActorOnce(q.new);
         const got = await all(db, q.new, q.params);
+        const was = await all(db, q.old, q.params).catch((e: unknown) => {
+          if (/nested too deep/.test(String(e))) return null;
+          throw e;
+        });
+        if (was) compared++;
+        else tooDeep++;
+        if (was) expect(got, `${actor.name}: ${t.table} old vs new`).toEqual(was);
         if (got.length > 0) nonEmpty++;
         const counted = rowsOf(t, true);
         const n = await all(db, counted?.new ?? '', counted?.params ?? []);
@@ -71,6 +97,9 @@ describe('join-once read predicate', () => {
       }
     }
     expect(nonEmpty).toBeGreaterThan(40);
+    // Where the old form is over the limit, the new form answers alone; it is never skipped silently.
+    expect(compared + tooDeep).toBeGreaterThan(40);
+    expect(compared > 0 || tooDeep > 0).toBe(true);
   });
 
   it('sees what each limit allows', async () => {
