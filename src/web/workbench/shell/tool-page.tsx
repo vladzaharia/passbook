@@ -1,5 +1,6 @@
 import { Eye } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
+import { POLL_PAUSED } from '@/shared/copy/workbench-poll.ts';
 import { WB_AREA, WB_SHELL_COPY, WB_TAB_TITLE } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { useDocumentTitle } from '../../lib/route-focus.tsx';
@@ -76,7 +77,7 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
         <div ref={setStatus} data-bench-status="" className="empty:hidden" />
         {limited ? (
           <span role="status" className="text-[0.8125rem] text-fg-muted">
-            {WB_SHELL_COPY.paused}
+            {POLL_PAUSED}
           </span>
         ) : null}
         <div className="ml-auto flex flex-wrap items-center gap-2">

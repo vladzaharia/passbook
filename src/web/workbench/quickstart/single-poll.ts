@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { backoffMs, holdPoll } from '../../lib/poll-backoff.ts';
+import { backoffMs } from '../../lib/poll-backoff.ts';
+import { holdPoll } from '../../lib/poll-hold.ts';
 
 /** One read every 2 s at most for the whole page: 30 a minute, whatever is listening. */
 export const QS_TICK_MS = 2000;

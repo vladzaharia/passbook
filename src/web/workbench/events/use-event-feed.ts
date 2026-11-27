@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookEventSchema } from '@/shared/contracts/webhooks.ts';
-import { pacer } from '../../lib/poll-backoff.ts';
+import { pacer } from '../../lib/poll-hold.ts';
 import type { EventsApi, FeedFilter } from './api.ts';
 
 export type FeedEvent = z.infer<typeof WebhookEventSchema>;

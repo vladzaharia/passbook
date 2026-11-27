@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  BACKOFF_CAP_MS,
-  backoffMs,
-  holdPoll,
-  pacer,
-  pollEvery,
-  pollPaused,
-} from './poll-backoff.ts';
+import { BACKOFF_CAP_MS, backoffMs, pollEvery } from './poll-backoff.ts';
+import { holdPoll, pacer, pollPaused } from './poll-hold.ts';
 
 const limited = (retryAfter?: number) => ({ status: 429, retryAfter });
 

@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pollPaused } from '../../lib/poll-backoff.ts';
+import { pollPaused } from '../../lib/poll-hold.ts';
 import { QS_TICK_MS, useSinglePoll } from './single-poll.ts';
 
 afterEach(() => vi.useRealTimers());

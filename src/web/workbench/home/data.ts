@@ -5,7 +5,8 @@ import { RequestLogPageSchema } from '../../../shared/contracts/developer.ts';
 import { PassListSchema } from '../../../shared/contracts/passes.ts';
 import { EventFeedPageSchema } from '../../../shared/contracts/webhooks.ts';
 import { WorkbenchSummarySchema } from '../../../shared/contracts/workbench-read.ts';
-import { pacer, pollEvery } from '../../lib/poll-backoff.ts';
+import { pollEvery } from '../../lib/poll-backoff.ts';
+import { pacer } from '../../lib/poll-hold.ts';
 import type { WorkbenchApi } from '../host/api.ts';
 
 /** Home reads only through the host's token client: Test is the token's own mode. */

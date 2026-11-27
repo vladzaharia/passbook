@@ -1,7 +1,7 @@
 /**
  * One place where a poller slows down when the server says 429: `Retry-After` when it came, otherwise doubling
- * from the poll's own pace up to 60 s. A success returns it to normal pace. `usePollPaused` (poll-paused.tsx)
- * reads `pollPaused` to say so. No imports: the Workbench shell holds this file.
+ * from the poll's own pace up to 60 s. A success returns it to normal pace. The Workbench shell holds this file, so
+ * the store that says "paused" (poll-hold.ts) plugs in through `reportPolls` when a tool loads.
  */
 export const BACKOFF_CAP_MS = 60_000;
 
@@ -20,21 +20,11 @@ export function backoffMs(ms: number, error: unknown, streak: number): number | 
   return sent && sent > 0 ? Math.max(ms, sent * 1000) : Math.min(BACKOFF_CAP_MS, ms * 2 ** streak);
 }
 
-const held = new Map<string, number>();
-const subs = new Set<() => void>();
+type Report = (key: string, until: number | null) => void;
+let report: Report | undefined;
 
-/** Marks the poller `key` paused until `until` (ms), or running again when null. */
-export function holdPoll(key: string, until: number | null): void {
-  if (until === null ? !held.delete(key) : held.get(key) === until) return;
-  if (until !== null) held.set(key, until);
-  for (const fn of subs) fn();
-}
-
-export const pollPaused = (): boolean => [...held.values()].some((t) => t > Date.now());
-
-export function subscribePoll(fn: () => void): () => void {
-  subs.add(fn);
-  return () => void subs.delete(fn);
+export function reportPolls(fn: Report): void {
+  report = fn;
 }
 
 interface PollQuery {
@@ -53,7 +43,7 @@ export function pollEvery(ms: number): (query: PollQuery) => number {
       const { error, errorUpdatedAt } = query.state;
       if (!isLimited(error)) {
         streaks.delete(query);
-        holdPoll(query.queryHash, null);
+        report?.(query.queryHash, null);
         return ms;
       }
       let s = streaks.get(query);
@@ -62,29 +52,10 @@ export function pollEvery(ms: number): (query: PollQuery) => number {
         streaks.set(query, s);
       }
       const wait = backoffMs(ms, error, s.n) ?? ms;
-      holdPoll(query.queryHash, errorUpdatedAt + wait);
+      report?.(query.queryHash, errorUpdatedAt + wait);
       return wait;
     };
     intervals.set(ms, fn);
   }
   return fn;
-}
-
-/** The pace of a hand-rolled poll loop: `after(error)` is how long to wait before the next read. */
-export function pacer(key: string, ms: number) {
-  let streak = 0;
-  return {
-    after(error?: unknown): number {
-      const wait = backoffMs(ms, error, streak + 1);
-      if (wait === null) {
-        streak = 0;
-        holdPoll(key, null);
-        return ms;
-      }
-      streak += 1;
-      holdPoll(key, Date.now() + wait);
-      return wait;
-    },
-    stop: () => holdPoll(key, null),
-  };
 }

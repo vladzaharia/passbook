@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
-import { pacer } from '../../lib/poll-backoff.ts';
+import { pacer } from '../../lib/poll-hold.ts';
 import { useToolApi } from '../../lib/tool-api.tsx';
 import { refusingApi } from '../host/refusing.ts';
 import { type Cursor, type Page, readLog } from './api.ts';
