@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { uid } from './helpers/api.ts';
+import { apiAs, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
@@ -63,9 +63,20 @@ test('New organization: Basics, Plan, Review, then the org opens', async ({ page
 
   await expect(dialog.getByRole('heading', { name: 'Check and create' })).toBeVisible();
   await expect(dialog.getByRole('region', { name: 'Basics' }).getByText(name)).toBeVisible();
+  await expect(dialog.getByRole('region', { name: 'Plan' }).getByText('Premium')).toBeVisible();
   await look(page, 'org-3-review');
   await dialog.getByRole('button', { name: 'Create organization' }).click();
   await page.waitForURL((u) => /\/admin\/platform\/orgs\/[0-9a-f-]+$/.test(u.pathname));
+
+  // The chosen plan is the one the org was saved on.
+  const orgId = new URL(page.url()).pathname.split('/').pop();
+  const admin = await apiAs('admin');
+  try {
+    const plan = await admin.get<{ preset: string }>(`/api/v1/platform/orgs/${orgId}/entitlements`);
+    expect(plan.preset).toBe('premium');
+  } finally {
+    await admin.dispose();
+  }
 });
 
 test('Use blueprint: Name, Look, Review, then the template opens', async ({ page }) => {
@@ -81,11 +92,19 @@ test('Use blueprint: Name, Look, Review, then the template opens', async ({ page
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'Logo and colour' })).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).waitFor();
+  // A colour on the Look step reaches Review; the org's own brand is left alone.
+  await page.getByLabel('Custom colour').fill('#0f766e');
+  const forAll = page.getByRole('switch', { name: 'Use for all passes' });
+  if (await forAll.isVisible()) {
+    if ((await forAll.getAttribute('aria-checked')) === 'true') await forAll.click();
+    await expect(forAll).not.toBeChecked();
+  }
   await look(page, 'bp-2-look');
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /^(Next|Review)$/ }).click();
 
   await expect(page.getByRole('heading', { name: 'Check and create' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Name' }).getByText(name)).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Look' }).getByText('#0f766e')).toBeVisible();
   await look(page, 'bp-3-review');
   await page.getByRole('button', { name: 'Create template' }).click();
   await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));

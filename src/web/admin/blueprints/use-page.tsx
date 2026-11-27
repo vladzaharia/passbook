@@ -103,7 +103,14 @@ function Loaded({
   const canGoBack = useCanGoBack();
   const guard = useUnsavedChangesGuard(name !== b.name || quick.touched);
 
-  const looks = [quick.logo ? 'Logo' : '', quick.color ? 'Colour' : ''].filter(Boolean);
+  const goal = choices.goal ? (quick.goal ?? choices.goal.value) : undefined;
+  const currency = choices.currency ? (quick.currency ?? choices.currency.value) : undefined;
+  const looks = [
+    quick.logo ? 'Logo' : '',
+    quick.color ? 'Colour' : '',
+    quick.goal !== undefined ? 'Stamps' : '',
+    quick.currency !== undefined ? 'Currency' : '',
+  ].filter(Boolean);
   const w = useWizard<StepId>({
     steps: STEPS.map((s) => ({
       ...s,
@@ -235,6 +242,10 @@ function Loaded({
                       label: 'Colour',
                       value: quick.color ? toHex(quick.color) : 'From the blueprint',
                     },
+                    ...(goal !== undefined
+                      ? [{ label: 'Stamps for a reward', value: String(goal) }]
+                      : []),
+                    ...(currency !== undefined ? [{ label: 'Currency', value: currency }] : []),
                     ...(canBrand
                       ? [{ label: 'Use for all passes', value: brandAll ? 'Yes' : 'No' }]
                       : []),

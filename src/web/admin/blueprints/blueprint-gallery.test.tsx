@@ -241,7 +241,7 @@ describe('quick setup', () => {
     expect(body?.version.assets.some((a) => a.name.startsWith('logo') && a.upload)).toBe(true);
   });
 
-  it('offers the stamps goal and the currency, and sends the choices', async () => {
+  it('offers the stamps goal and the currency, sends the choices and lists every one on Review', async () => {
     phone();
     const user = userEvent.setup();
     const doc = sampleDoc();
@@ -280,11 +280,30 @@ describe('quick setup', () => {
     await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
     const dialog = document.body;
     await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.upload(
+      within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
+      logoFile(200, 60),
+    );
+    await within(dialog).findByText('logo.png');
+    fireColor(within(dialog).getByLabelText('Custom colour'), '#aa3311');
     await user.click(await within(dialog).findByRole('combobox', { name: 'Stamps for a reward' }));
     await user.click(await screen.findByRole('option', { name: '8' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Currency' }));
     await user.click(await screen.findByRole('option', { name: 'CAD' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
+    // Review lists every choice the request carries.
+    const review = await screen.findByRole('region', { name: 'Look' });
+    const shown = Object.fromEntries(
+      within(review)
+        .getAllByRole('term')
+        .map((t) => [t.textContent, t.nextElementSibling?.textContent]),
+    );
+    expect(shown).toMatchObject({
+      Logo: 'logo.png',
+      Colour: '#aa3311',
+      'Stamps for a reward': '8',
+      Currency: 'CAD',
+    });
     await user.click(await screen.findByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     const sent = bodies[0]?.version.manifest as {

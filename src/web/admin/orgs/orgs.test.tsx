@@ -348,6 +348,91 @@ describe('orgs list', () => {
     expect(screen.queryByRole('status', { name: /Organization created/ })).toBeNull();
   });
 
+  it('holds Next on the Plan step while plans load, then shows the chosen plan on Review', async () => {
+    let release: (r: Response) => void = () => {};
+    const gate = new Promise<Response>((r) => {
+      release = r;
+    });
+    let body: unknown;
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': (_u, init) => {
+          if (init?.method === 'POST') {
+            body = JSON.parse(String(init.body));
+            return json(summary({ id: 'o2' }), 201);
+          }
+          return json({ items: [], nextCursor: null });
+        },
+        '/api/v1/platform/entitlement-presets': () => gate,
+      },
+    });
+    const ui = userEvent.setup();
+    await screen.findByText('No organizations');
+    await ui.click(screen.getByRole('button', { name: 'New organization' }));
+    const dialog = await screen.findByRole('dialog');
+    await ui.type(within(dialog).getByLabelText(/Name/), 'Acme Gym');
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    // The step is not skipped, and a second Next does not move past it.
+    expect(within(dialog).getByRole('heading', { name: 'Pick a plan' })).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(within(dialog).getByRole('heading', { name: 'Pick a plan' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('heading', { name: 'Check and create' })).toBeNull();
+    release(
+      json({
+        presets: ENTITLEMENT_PRESETS.map((p) => ({
+          preset: p,
+          label: PRESET_LABEL[p],
+          revision: 1,
+          updatedAt: 1_700_000_000_000,
+          orgCount: 0,
+          pendingOrgs: 0,
+          values: presetValues(p),
+        })),
+      }),
+    );
+    await ui.click(await within(dialog).findByRole('radio', { name: 'Premium' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    const plan = within(dialog).getByRole('region', { name: 'Plan' });
+    expect(within(plan).getByText('Premium')).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
+    await waitFor(() => expect(body).toMatchObject({ preset: 'premium' }));
+  });
+
+  it('skips the Plan step when plans fail to load, and says so on Review', async () => {
+    let body: unknown;
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': (_u, init) => {
+          if (init?.method === 'POST') {
+            body = JSON.parse(String(init.body));
+            return json(summary({ id: 'o2' }), 201);
+          }
+          return json({ items: [], nextCursor: null });
+        },
+        '/api/v1/platform/entitlement-presets': () => problem(500, 'x', 'x'),
+      },
+    });
+    const ui = userEvent.setup();
+    await screen.findByText('No organizations');
+    await ui.click(screen.getByRole('button', { name: 'New organization' }));
+    const dialog = await screen.findByRole('dialog');
+    await ui.type(within(dialog).getByLabelText(/Name/), 'Acme Gym');
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Next' })).toBeEnabled());
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(
+      await within(dialog).findByRole('heading', { name: 'Check and create' }),
+    ).toBeInTheDocument();
+    const plan = within(dialog).getByRole('region', { name: 'Plan' });
+    expect(within(plan).getByText('Standard (default)')).toBeInTheDocument();
+    expect(
+      within(dialog).getByText('Plans did not load. The default plan is used.'),
+    ).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
+    await waitFor(() => expect(body).toMatchObject({ preset: 'standard' }));
+  });
+
   it('shows a slug conflict from the server', async () => {
     await renderApp('/admin/orgs', {
       session: 'admin',

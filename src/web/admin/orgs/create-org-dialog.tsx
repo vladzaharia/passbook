@@ -2,10 +2,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { CreateOrgSchema } from '@/shared/contracts/orgs.ts';
+import { PRESET_LABEL } from '@/shared/copy/entitlements.ts';
 import { PLAN_COPY } from '@/shared/copy/plans.ts';
 import {
   FormField,
   Input,
+  SkeletonRows,
   SwitchRow,
   useWizard,
   WizardDialog,
@@ -43,7 +45,8 @@ type StepId = (typeof STEPS)[number]['id'];
 /**
  * Creates the org and opens it, where a Created callout and the checklist carry the next steps.
  * The dialog has no history entry of its own, so Back from the new org returns to the list.
- * A failed plan read drops the Plan step; the create still sends the default plan.
+ * Next waits on the Plan step while the plans load; a failed read drops the step, and Review says
+ * the default plan is used.
  */
 export function CreateOrgDialog({
   open,
@@ -68,15 +71,16 @@ export function CreateOrgDialog({
     steps: STEPS.map((s) => ({
       ...s,
       ...(s.id === 'basics' ? { summary: name.trim() || undefined } : {}),
-      ...(s.id === 'plan' ? { skip: plans.length === 0, summary: plan?.label } : {}),
+      ...(s.id === 'plan' ? { skip: presets.isError, summary: plan?.label } : {}),
     })),
     errors: {
       basics: {
         ...(name.trim() ? {} : { name: 'Required.' }),
         ...(SLUG.test(slug) ? {} : { slug: 'Use 2 to 64 lowercase letters, digits or hyphens.' }),
       },
+      plan: presets.isPending ? { wait: 'Plans are loading.' } : {},
     },
-    hints: { basics: 'Name the organization.' },
+    hints: { basics: 'Name the organization.', plan: 'Loading plans.' },
     fieldStep: { name: 'basics', slug: 'basics', addMe: 'basics', preset: 'plan' },
     onFinish: async () => {
       const org = await create.mutateAsync({
@@ -153,12 +157,17 @@ export function CreateOrgDialog({
       {w.id === 'plan' ? (
         <fieldset className="m-0 min-w-0 border-0 p-0">
           <legend className="sr-only">{PLAN_COPY.title}</legend>
-          <PlanPicker plans={plans} current={null} picked={preset} onPick={setPreset} />
+          {presets.isPending ? (
+            <SkeletonRows rows={3} label="Loading plans" />
+          ) : (
+            <PlanPicker plans={plans} current={null} picked={preset} onPick={setPreset} />
+          )}
         </fieldset>
       ) : null}
       {w.id === 'review' ? (
         <WizardReview
           onEdit={w.go}
+          {...(presets.isError ? { note: 'Plans did not load. The default plan is used.' } : {})}
           sections={[
             {
               id: 'basics',
@@ -169,15 +178,19 @@ export function CreateOrgDialog({
                 { label: 'Admin', value: addMe ? 'You' : 'Nobody yet' },
               ],
             },
-            ...(plans.length > 0
-              ? [
-                  {
-                    id: 'plan' as const,
-                    title: 'Plan',
-                    items: [{ label: 'Plan', value: plan?.label ?? preset }],
-                  },
-                ]
-              : []),
+            {
+              id: 'plan' as const,
+              title: 'Plan',
+              ...(presets.isError ? { edit: false as const } : {}),
+              items: [
+                {
+                  label: 'Plan',
+                  value: presets.isError
+                    ? `${PRESET_LABEL[DEFAULT_PLAN]} (default)`
+                    : (plan?.label ?? PRESET_LABEL[preset as PlanId]),
+                },
+              ],
+            },
           ]}
         />
       ) : null}
