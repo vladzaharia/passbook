@@ -32,29 +32,28 @@ describe('assertActorOnce evasions', () => {
     ],
     [
       'IFNULL around a comparison after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND IFNULL(x.org_id = ao.org_id, 1)`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND IFNULL(x.org_id = ao.org_id, 1)`,
     ],
     ['IS NOT NOT NULL', (r) => `FROM ${r}passes x WHERE ao.org_id IS NOT NOT NULL`],
-    ['bare platform term', (r) => `FROM ${r}passes x WHERE ao.org_id IS NULL`],
     [
       'ISNULL() after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND ISNULL(ao.org_id)`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND ISNULL(ao.org_id)`,
     ],
     [
       'ISNULL postfix after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND ao.org_id ISNULL`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND ao.org_id ISNULL`,
     ],
     [
       'parenthesised after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND (ao.org_id) IS NULL`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND (ao.org_id) IS NULL`,
     ],
     [
       'COALESCE after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND COALESCE(ao.org_id, '') = ''`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND COALESCE(ao.org_id, '') = ''`,
     ],
     [
       'IS NOT NOT NULL after present',
-      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND ao.org_id IS NOT NOT NULL`,
+      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND ao.org_id IS NOT NOT NULL`,
     ],
   ];
   it.each(cases)('refuses %s', async (_n, from) => {
@@ -77,7 +76,7 @@ describe('assertActorOnce evasions', () => {
 });
 
 describe('platform anchor', () => {
-  it('a missing key returns no foreign rows with the platform term, and the bare term is refused', async () => {
+  it('a missing key returns no foreign rows: the sentinel is not NULL', async () => {
     const s = await seed();
     const p = authorityPredicate(
       { kind: 'api_key', keyId: 'no-such-key', scope: 'scans:read' },
@@ -86,8 +85,7 @@ describe('platform anchor', () => {
     const q = (where: string) =>
       `WITH ${p.ctes} SELECT x.id FROM ${p.anchor} CROSS JOIN passes x WHERE ${where}`;
     expect(await all(db, q(p.platform), p.params)).toEqual([]);
-    expect((await all(db, q('ao.org_id IS NULL'), p.params)).length).toBeGreaterThan(0);
-    expect(() => assertActorOnce(q('ao.org_id IS NULL'))).toThrow(/SQL_ACTOR_REUSE|once/);
+    expect(await all(db, q('ao.org_id IS NULL'), p.params)).toEqual([]);
     expect(() => assertActorOnce(q(p.platform))).not.toThrow();
   });
 

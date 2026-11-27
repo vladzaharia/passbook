@@ -19,7 +19,7 @@ export function previewCurrentStmt(
   return scanRead(
     db,
     auth,
-    `SELECT COALESCE(${auth.present}, 0) AS actor_ok, p.id IS NOT NULL AS pass_ok
+    `SELECT ${auth.authorized('actor_ok')}, p.id IS NOT NULL AS pass_ok
      FROM ${auth.anchor}
      LEFT JOIN passes p ON ${auth.present} AND p.id = ? AND ${auth.tenantOnce('p', 'passes')} AND p.template_id = ?
        AND (${passVisibleSql('p', { credential: '?', lifecycle: '?' })})
@@ -36,4 +36,4 @@ export function previewCurrentStmt(
 
 /** The viewer's authority alone: checked before the credential keyset may be created on first use. */
 export const previewActorStmt = (db: D1Database, auth: ScanReadAuthority): D1PreparedStatement =>
-  scanRead(db, auth, `SELECT COALESCE(${auth.present}, 0) AS actor_ok FROM ${auth.anchor}`);
+  scanRead(db, auth, `SELECT ${auth.authorized('actor_ok')} FROM ${auth.anchor}`);

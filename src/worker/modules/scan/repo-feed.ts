@@ -124,9 +124,13 @@ export async function countScanRows(
     scanRead(
       db,
       auth,
-      `${RACE_EXPORT_COUNT} SELECT count(*) AS n FROM (SELECT 1 FROM ${auth.rows}scans s
+      `${RACE_EXPORT_COUNT} SELECT count(*) AS n FROM capped`,
+      [],
+      {
+        ctes: `capped AS MATERIALIZED (SELECT 1 FROM ${auth.rows}scans s
         WHERE ${auth.present} AND ${narrowTenant(f, auth) ?? auth.tenantOnce('s', 'scans')} AND ${w.sql} LIMIT ?)`,
-      [...w.params, cap + 1],
+        params: [...w.params, cap + 1],
+      },
     ),
   ]);
   const ok = (authorized?.results[0] as { authorized: number } | undefined)?.authorized === 1;

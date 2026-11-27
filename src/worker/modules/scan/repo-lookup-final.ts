@@ -79,6 +79,6 @@ export const lookupGateStmt = (db: D1Database, auth: ScanReadAuthority) =>
     db,
     auth,
     `${RACE_KEYSET}
-    SELECT COALESCE(${auth.present}, 0) AS authorized,
+    SELECT ${auth.authorized('authorized')},
       (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset FROM ${auth.anchor}`,
   );
