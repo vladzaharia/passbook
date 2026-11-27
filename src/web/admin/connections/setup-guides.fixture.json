@@ -2,12 +2,17 @@
   "custom": {
     "direction": "inbound",
     "recipe": "custom",
-    "version": "2026-11-27",
+    "version": "2026-11-28",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Your system",
       "consoleUrl": null,
-      "docs": []
+      "docs": [
+        {
+          "label": "Sign a custom source",
+          "url": "https://passbook.mobile/developers/guides/set-up-a-webhook-source#sign-a-custom-source"
+        }
+      ]
     },
     "secret": {
       "origin": "passbook",
@@ -90,7 +95,7 @@
   "shopify-orders": {
     "direction": "inbound",
     "recipe": "shopify-orders",
-    "version": "2026-11-27",
+    "version": "2026-11-28",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",
@@ -157,10 +162,6 @@
           {
             "t": "path",
             "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
-          },
-          {
-            "t": "text",
-            "text": "Add one webhook for each event. Shopify takes one event per webhook."
           },
           {
             "t": "field",
@@ -240,7 +241,7 @@
   "shopify-customers": {
     "direction": "inbound",
     "recipe": "shopify-customers",
-    "version": "2026-11-27",
+    "version": "2026-11-28",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",
@@ -289,10 +290,6 @@
           {
             "t": "path",
             "items": ["Settings", "Notifications", "Webhooks", "Create webhook"]
-          },
-          {
-            "t": "text",
-            "text": "Add one webhook for each event. Shopify takes one event per webhook."
           },
           {
             "t": "field",

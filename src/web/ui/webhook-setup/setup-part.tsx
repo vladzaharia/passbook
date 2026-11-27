@@ -37,7 +37,13 @@ function FieldGrid({ fields, values }: { fields: Field[]; values: SetupValues })
                   <CopyRow label={f.label} value={copy} showLabel={false} />
                 ) : (
                   <span className="text-sm text-fg-muted">
-                    {f.copy === 'secret' ? 'Shown once, when it was made.' : 'Not available yet.'}
+                    {f.copy === 'secret' ? (
+                      <span role="img" aria-label="Hidden">
+                        ••••••••••••
+                      </span>
+                    ) : (
+                      'Not available yet.'
+                    )}
                   </span>
                 )
               ) : f.choose ? (

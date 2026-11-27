@@ -116,6 +116,9 @@ export function eventsHandlers(world: World, calls: Calls[]): Record<string, Fet
     at('/api/v1/webhook-endpoints/we1/deliveries', () =>
       json({ items: world.deliveries.we1 ?? [], nextCursor: null }),
     ),
+    at('/api/v1/webhook-endpoints/we1/test', () =>
+      json({ ok: true, status: 200, durationMs: 9, errorCode: null, captureId: null }),
+    ),
     at('/api/v1/webhook-endpoints/we1/tests', () => json({ items: [] })),
     at('/api/v1/webhook-endpoints/we-new/test', () =>
       json({ ok: true, status: 200, durationMs: 9, errorCode: null, captureId: null }),

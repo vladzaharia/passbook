@@ -13,9 +13,18 @@ curl -X POST "$WEBHOOK_URL" \\
 export const customSetup = defineGuide({
   direction: 'inbound',
   recipe: 'custom',
-  version: '2026-11-27',
+  version: '2026-11-28',
   checkedAt: CHECKED_AT,
-  provider: { name: 'Your system', consoleUrl: null, docs: [] },
+  provider: {
+    name: 'Your system',
+    consoleUrl: null,
+    docs: [
+      {
+        label: 'Sign a custom source',
+        url: 'https://passbook.mobile/developers/guides/set-up-a-webhook-source#sign-a-custom-source',
+      },
+    ],
+  },
   secret: { origin: 'passbook', allowPaste: true, prefix: null, minLength: 16, whereStep: null },
   subscriptions: { perWebhook: 'many', topics: [] },
   steps: [

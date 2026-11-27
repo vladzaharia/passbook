@@ -14,9 +14,9 @@ import unverified from './UNVERIFIED.md?raw';
  * `version` and a new pin, so the change shows in review.
  */
 const PINS: Record<string, { version: string; hash: string }> = {
-  custom: { version: '2026-11-27', hash: '34ae73dfd7cf6174' },
-  'shopify-orders': { version: '2026-11-27', hash: '4a5b6d7ddf4bdb87' },
-  'shopify-customers': { version: '2026-11-27', hash: '4e66350ad2db6dd3' },
+  custom: { version: '2026-11-28', hash: 'd404d7b563a0c490' },
+  'shopify-orders': { version: '2026-11-28', hash: '879575630397542f' },
+  'shopify-customers': { version: '2026-11-28', hash: 'a949924ea959ff77' },
   'stripe-subscriptions': { version: '2026-11-26', hash: '925695bb1e1880b0' },
   'stripe-payments': { version: '2026-11-26', hash: '749b4fbfff2a5136' },
   'calcom-bookings': { version: '2026-11-26', hash: '6a8ba432d4c963fd' },
