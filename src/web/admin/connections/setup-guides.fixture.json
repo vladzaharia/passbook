@@ -2,7 +2,7 @@
   "custom": {
     "direction": "inbound",
     "recipe": "custom",
-    "version": "2026-11-28",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Your system",
@@ -95,7 +95,7 @@
   "shopify-orders": {
     "direction": "inbound",
     "recipe": "shopify-orders",
-    "version": "2026-11-28",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",
@@ -241,7 +241,7 @@
   "shopify-customers": {
     "direction": "inbound",
     "recipe": "shopify-customers",
-    "version": "2026-11-28",
+    "version": "2026-11-27",
     "checkedAt": "2026-11-25",
     "provider": {
       "name": "Shopify",

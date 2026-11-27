@@ -9,7 +9,7 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 const SHOTS = '.wrangler/agent-logs/wh-recover-shots';
 const SIZES = [
   ['desktop', 1440, 900],
-  ['tablet', 820, 1180],
+  ['tablet', 834, 1112],
   ['phone', 390, 844],
 ] as const;
 

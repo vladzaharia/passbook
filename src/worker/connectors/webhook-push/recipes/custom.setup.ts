@@ -13,7 +13,7 @@ curl -X POST "$WEBHOOK_URL" \\
 export const customSetup = defineGuide({
   direction: 'inbound',
   recipe: 'custom',
-  version: '2026-11-28',
+  version: '2026-11-27',
   checkedAt: CHECKED_AT,
   provider: {
     name: 'Your system',

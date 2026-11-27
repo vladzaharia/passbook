@@ -11,7 +11,7 @@ import {
 export const shopifyCustomersSetup = defineGuide({
   direction: 'inbound',
   recipe: 'shopify-customers',
-  version: '2026-11-28',
+  version: '2026-11-27',
   checkedAt: CHECKED_AT,
   provider: SHOPIFY_PROVIDER,
   secret: SHOPIFY_SECRET,

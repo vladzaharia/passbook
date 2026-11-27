@@ -9,7 +9,7 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 const DIR = process.env.W7_SHOTS ?? process.env.SHOTS_DIR;
 const VIEWS = [
   [1440, 900],
-  [820, 1180],
+  [834, 1112],
   [390, 844],
 ] as const;
 
