@@ -39,7 +39,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/platform/authority-statements.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: 'c724d42b0b53',
+    hash: '4366a4d9f9d0',
   },
   'src/worker/modules/events/repo.ts': {
     reason:

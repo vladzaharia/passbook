@@ -31,14 +31,9 @@ export function authorityPredicate(
   const actor = actorSql(principal, options.now, b);
   const checks = (options.checks ?? []).map((c) => `COALESCE((${c.ok(b, options.scope)}), 0) = 1`);
   const tenant = options.scope === 'platform' ? '' : ' AND a.org_id IS NOT NULL';
-  // The key's own templates, read by its id: a restricted key's `limit_key` is that id, and every other row of the
-  // predicate is gated by `limit_key IS NULL`. Reaching them through `actor_ok` instead re-expands the actor body at
-  // every use, and workerd 1.20261110 refuses a statement that expands it this often ("nested too deep").
   const ok = ['a.actor_ok = 1', 'a.org_ok = 1', ...checks].join(' AND ');
-  const keyTemplates = b.bind(principal.kind === 'api_key' ? principal.keyId : null);
   const ctes = `actor AS MATERIALIZED (${actor}),
-    actor_ok AS MATERIALIZED (SELECT a.org_id AS org_id, a.mode AS mode, a.limit_key AS limit_key FROM actor a WHERE ${ok}${tenant}),
-    key_tpl AS MATERIALIZED (SELECT t.id AS id FROM key_templates t WHERE t.key_id = ${keyTemplates})`;
+    actor_ok AS MATERIALIZED (SELECT a.org_id AS org_id, a.mode AS mode, a.limit_key AS limit_key FROM actor a WHERE ${ok}${tenant})`;
   return { ctes, params: b.params };
 }
 
