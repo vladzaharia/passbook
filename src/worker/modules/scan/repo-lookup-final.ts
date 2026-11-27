@@ -2,6 +2,7 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LookupEntry } from './lookup-history.ts';
+import { RACE_KEYSET } from './race-tags.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
@@ -77,6 +78,7 @@ export const lookupGateStmt = (db: D1Database, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `SELECT COALESCE(${auth.present}, 0) AS authorized,
+    `${RACE_KEYSET}
+    SELECT COALESCE(${auth.present}, 0) AS authorized,
       (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset FROM ${auth.anchor}`,
   );

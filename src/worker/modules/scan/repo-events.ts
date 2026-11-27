@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, prefixMatch, type SqlValue } from '../../platform/db.ts';
+import { RACE_EVENT_ROWS } from './race-tags.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -70,11 +71,8 @@ const scopedEventTemplates = `SELECT x.template_id FROM scan_event_templates x
   WHERE x.event_id=e.id`;
 
 /** Relationship counts and returned identifiers must belong to the event's scope. */
-const eventSelect = (
-  expectedSql: string,
-  arrivedSql: string,
-  from = '',
-) => `SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
+const eventSelect = (expectedSql: string, arrivedSql: string, from = '') => `${RACE_EVENT_ROWS}
+  SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
     e.time_zone, e.capacity, e.reentry, e.hard_limit, e.note, e.expected, e.expected_at, ${expectedSql} AS live_expected, e.archived_at, e.updated_at, e.config_epoch,
     (SELECT json_group_array(template_id) FROM (${scopedEventTemplates} ORDER BY x.template_id)) AS template_ids,
     (SELECT json_group_array(template_id) FROM (
