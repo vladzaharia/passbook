@@ -1,4 +1,4 @@
-import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import { type HistoryRow, scanReferenceOf } from './history-row.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import type { ScanReadAuthority } from './repo-read-authority.ts';
@@ -15,8 +15,6 @@ export function testFence(orgId: string, mode: 'live' | 'test' = 'live'): ScanRe
     ctes: `actor AS MATERIALIZED (SELECT ? AS org_id, ? AS mode),
       actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
     params: [orgId, mode],
-    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-    tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
     rows: predicate.rows,
     anchor: predicate.anchor,
     present: predicate.ok,

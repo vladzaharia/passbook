@@ -5,7 +5,7 @@ import { dayStartMs } from './dto-console.ts';
 import { SELECT_WITH_COUNT } from './repo-events.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
 import { HISTORY_COLUMNS, HISTORY_JOINS, type HistorySelector } from './repo-history-rows.ts';
-import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
+import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
 import { afterCursorSql, type StaffPage, staffNameMatch } from './repo-staff-page.ts';
 import {
   PIN_MISSES_PER_PERSON,
@@ -17,7 +17,7 @@ import { dayWindowOf, PIN_MISSES_PER_STAFF_DAY } from './staff-pin-day.ts';
 
 export function legacyStaffActivityStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   zones: readonly string[],
   now: number,
   page: StaffPage,
@@ -95,7 +95,7 @@ export function legacyStaffActivityStmt(
     ...cursor.params,
     page.limit + 1,
   ];
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT scope.auth_ok, scope.snapshot_ok, page.*, ${HISTORY_COLUMNS}
@@ -106,8 +106,8 @@ export function legacyStaffActivityStmt(
   );
 }
 
-export const legacyTimeZonesStmt = (db: D1Database, auth: ScanReadAuthority) =>
-  scanRead(
+export const legacyTimeZonesStmt = (db: D1Database, auth: LegacyAuth) =>
+  legacyRead(
     db,
     auth,
     `SELECT DISTINCT sc.time_zone FROM scanners sc WHERE ${auth.ok} AND ${auth.tenant('sc', 'scanners')}`,
@@ -116,12 +116,12 @@ export const legacyTimeZonesStmt = (db: D1Database, auth: ScanReadAuthority) =>
 /** The events read of `readEvents`, with the filter after the tenant (ids only; no cursor). */
 export const legacyEventsStmt = (
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   filter: string,
   params: SqlValue[],
   now: number,
 ) =>
-  scanRead(
+  legacyRead(
     db,
     auth,
     `${SELECT_WITH_COUNT} WHERE ${auth.ok} AND ${auth.tenant('e', 'scan_events')}${filter}`,
@@ -130,11 +130,11 @@ export const legacyEventsStmt = (
 
 export const legacyHistoryPageStmt = (
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   sel: HistorySelector,
   now: number,
 ) =>
-  scanRead(
+  legacyRead(
     db,
     auth,
     `SELECT ${HISTORY_COLUMNS} FROM page ${HISTORY_JOINS}
@@ -149,8 +149,8 @@ export const legacyHistoryPageStmt = (
     },
   );
 
-export const legacyLookupGateStmt = (db: D1Database, auth: ScanReadAuthority) =>
-  scanRead(
+export const legacyLookupGateStmt = (db: D1Database, auth: LegacyAuth) =>
+  legacyRead(
     db,
     auth,
     `SELECT ${auth.ok} AS authorized, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset`,

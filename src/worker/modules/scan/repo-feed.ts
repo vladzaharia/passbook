@@ -123,8 +123,8 @@ export async function countScanRows(
     scanRead(
       db,
       auth,
-      `SELECT count(*) AS n FROM (SELECT 1 FROM scans s
-        WHERE ${auth.ok} AND ${narrowTenant(f, auth) ?? auth.tenant('s', 'scans')} AND ${w.sql} LIMIT ?)`,
+      `SELECT count(*) AS n FROM (SELECT 1 FROM ${auth.rows}scans s
+        WHERE ${auth.present} AND ${narrowTenant(f, auth) ?? auth.tenantOnce('s', 'scans')} AND ${w.sql} LIMIT ?)`,
       [...w.params, cap + 1],
     ),
   ]);

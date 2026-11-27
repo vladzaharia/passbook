@@ -16,7 +16,17 @@ import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIs } from './effective-release.ts';
 import { createGuardHarness, get } from './guard-test-fixtures.ts';
 import { pinKeyset } from './keyset-pin.ts';
-import { scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { countScanRows } from './repo-feed.ts';
+import { scanAuthorizedStmt, scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { legacyOf } from './repo-read-once-legacy-auth.ts';
+import {
+  legacyActorFenceStmt,
+  legacyAuthorizedStmt,
+  legacyBrandingStmt,
+  legacyFeedCountStmt,
+} from './repo-read-once-legacy-more.ts';
+import { passlessStmt } from './repo-resolve-passless-read.ts';
+import { orgBrandingForActorStmt } from './repo-session.ts';
 import { copyScanEpochs, scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 
 /*
@@ -79,8 +89,8 @@ describe('scan read corpus', () => {
     const stmt = scanRead(
       env.DB,
       auth,
-      `SELECT x.id FROM scans x JOIN passes p ON p.id = x.pass_id
-        WHERE ${auth.ok} AND ${auth.tenant('x', 'scans')}
+      `SELECT x.id FROM ${auth.rows}scans x JOIN passes p ON p.id = x.pass_id
+        WHERE ${auth.present} AND ${auth.tenantOnce('x', 'scans')}
           AND x.outcome IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           AND ${effectiveReleaseIs('p')}
         LIMIT 50`,
@@ -109,7 +119,7 @@ describe('scan read corpus', () => {
       scanRead(
         env.DB,
         scanReadAuthority(actor, { now: clock.now() }),
-        'SELECT org_id FROM actor_ok',
+        'SELECT ao.org_id FROM actor_ok ao',
       ).all();
     expect((await read()).results).toHaveLength(1);
     await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), s.id]);
@@ -126,7 +136,7 @@ describe('scan read corpus', () => {
     const strict = scanReadAuthority(paused, { now: clock.now() });
     const relaxed = scanReadAuthority(paused, { now: clock.now(), read: { pausedSession: true } });
     expect(relaxed.params.length).toBeGreaterThan(strict.params.length);
-    await scanRead(env.DB, relaxed, 'SELECT org_id FROM actor_ok').all();
+    await scanRead(env.DB, relaxed, 'SELECT ao.org_id FROM actor_ok ao').all();
 
     const monitor: ScanActor = {
       ...actor,
@@ -140,6 +150,38 @@ describe('scan read corpus', () => {
       read: { stafflessMonitor: true },
     });
     expect(skipped.params.length).toBeLessThan(base.params.length);
+  });
+
+  it('a staffed session scanner reads what its scalar-form fence read, live and once revoked', async () => {
+    const { actor, other, templateId } = await maximal();
+    const auth = scanReadAuthority(actor, { now: clock.now(), event: other, templateId });
+    const old = legacyOf(auth);
+    const inner = { sql: 'EXISTS (SELECT 1 FROM passes p WHERE p.org_id = ao.org_id)', params: [] };
+    const filter = { mode: 'live', limit: 5, orgId } as const;
+    const rows = async (stmt: D1PreparedStatement) => (await stmt.all()).results;
+    const compare = async () => {
+      expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual(
+        await rows(legacyAuthorizedStmt(env.DB, old)),
+      );
+      expect(await rows(orgBrandingForActorStmt(env.DB, auth))).toEqual(
+        await rows(legacyBrandingStmt(env.DB, old)),
+      );
+      expect(await rows(passlessStmt(env.DB, auth, [inner]))).toEqual(
+        await rows(legacyActorFenceStmt(env.DB, old, inner)),
+      );
+      const [was] = await rows(legacyFeedCountStmt(env.DB, old, filter, 10));
+      expect((await countScanRows(env.DB, auth, filter, 10)).n).toBe(
+        (await rows(legacyAuthorizedStmt(env.DB, old))).length ? (was as { n: number }).n : 0,
+      );
+    };
+    await compare();
+    expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 1 }]);
+    await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
+      clock.now(),
+      actor.scanner?.id ?? '',
+    ]);
+    await compare();
+    expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 0 }]);
   });
 
   it('pinKeyset reads the keyset once per context and again for another', async () => {

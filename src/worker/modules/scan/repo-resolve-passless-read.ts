@@ -7,7 +7,7 @@ import { type CandidateMatchInput, candidateMatchPredicate } from './repo-resolv
 
 /**
  * Some pass of the tenant matches the input (`null`: the code cleaned to nothing, so none does),
- * narrowed by `filter` over the pass row `p`. `org` and `mode` are SQL: `actor_ok` columns in a read,
+ * narrowed by `filter` over the pass row `p`. `org` and `mode` are SQL: `ao` columns in a read,
  * `{org}` and `{mode}` in a grant check.
  */
 export function matchingPassSql(
@@ -67,7 +67,7 @@ export function passlessStmt(
   return scanRead(
     db,
     auth,
-    `SELECT 1 AS ok FROM actor_ok WHERE ${parts.map((part) => `(${part.sql})`).join(' AND ')}`,
+    `SELECT 1 AS ok FROM actor_ok ao WHERE ${parts.map((part) => `(${part.sql})`).join(' AND ')}`,
     parts.flatMap((part) => part.params),
   );
 }

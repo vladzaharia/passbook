@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import type { ScanActor } from './actor.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { listConsoleEvents } from './repo-events.ts';
@@ -24,8 +24,6 @@ const fixedAuth: ScanReadAuthority = {
   ctes: `actor AS MATERIALIZED (SELECT 'o' AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
     actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
   params: [],
-  ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-  tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
   rows: fragments.rows,
   anchor: fragments.anchor,
   present: fragments.ok,
@@ -38,7 +36,6 @@ const platformAuth: ScanReadAuthority = {
   ...fixedAuth,
   ctes: `actor AS MATERIALIZED (SELECT NULL AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
     actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
-  tenant: (alias) => `${alias}.mode = (SELECT mode FROM actor_ok)`,
   tenantOnce: (alias) => `${fragments.platform} AND ${alias}.mode = ao.mode`,
 };
 

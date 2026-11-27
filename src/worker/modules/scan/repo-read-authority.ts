@@ -1,6 +1,6 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
-import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
@@ -19,16 +19,6 @@ export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
   ctes: string;
   params: SqlValue[];
-  /**
-   * The scalar fence: true only when the actor's checks all hold.
-   * @deprecated Re-expands the actor at every use. Use `rows` or `anchor` with `present`; P2b removes it.
-   */
-  ok: string;
-  /**
-   * Rows of `table` (aliased `alias`) belong to the actor's org and mode.
-   * @deprecated Use `tenantOnce`; P2b removes it.
-   */
-  tenant: (alias: string, table: string) => string;
   /** First FROM term of a row read (`actor_ok ao CROSS JOIN `): no actor, no rows. Once per statement. */
   rows: string;
   /** Outermost FROM of a read that must answer when the actor fails: `ao` columns are then NULL. */
@@ -89,8 +79,6 @@ export function scanReadAuthority(
   return {
     ctes,
     params,
-    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-    tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
     ...once(predicate),
     relaxed: input.read !== undefined,
   } as ScanReadAuthority;
@@ -116,12 +104,13 @@ export function scanRead(
   sql: string,
   params: readonly SqlValue[] = [],
   extra?: { ctes: string; params?: readonly SqlValue[] },
+  /** Why this statement may skip the join-once check (it reads no tenant data). Prod code has none. */
+  exempt?: string,
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;
-  // The reads P2b has not moved yet still use the scalar form and have no `ao`; every join-once read is checked.
-  if (/\bactor_ok\s+ao\b/i.test(text)) assertActorOnce(text);
   assertBudget('', all, PARAM_BUDGET);
+  if (!exempt) assertActorOnce(text);
   const bytes = encoder.encode(text).length;
   if (bytes > READ_SQL_BYTE_BUDGET)
     throw new AuthorityError(
@@ -133,7 +122,7 @@ export function scanRead(
 
 /** `authorized` is 1 when the actor's checks all hold now. */
 export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
-  scanRead(db, auth, `SELECT ${auth.ok} AS authorized`);
+  scanRead(db, auth, `SELECT COALESCE(${auth.present}, 0) AS authorized FROM ${auth.anchor}`);
 
 /** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
 export function scanReadFence(auth: StrictReadAuthority): { sql: string; params: SqlValue[] } {
@@ -176,11 +165,6 @@ export function apiKeyReadAuthority(
   return {
     ctes: named ? `${ctes},\n    named AS MATERIALIZED (SELECT ? AS org_id)` : ctes,
     params: named ? [...params, namedOrgId] : params,
-    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-    tenant: (alias, table) =>
-      bound
-        ? tenantFilter(alias, table, 'org_mode')
-        : `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
     // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
     rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
     anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
@@ -209,7 +193,6 @@ export function withSessionRow<A extends ScanReadAuthority>(
     session_row AS MATERIALIZED (SELECT 1 AS ok FROM scanning_sessions
       WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
-    ok: `(${auth.ok} AND EXISTS (SELECT 1 FROM session_row))`,
     present: `(${auth.present} AND EXISTS (SELECT 1 FROM session_row))`,
   };
 }
@@ -244,8 +227,6 @@ export function keyScanReadAuthority(
   return {
     ctes,
     params,
-    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-    tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
     ...once(predicate),
     keyRead: true,
     relaxed: true,

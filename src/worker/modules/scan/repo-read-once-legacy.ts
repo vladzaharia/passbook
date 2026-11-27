@@ -8,14 +8,14 @@ import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import type { LookupEntry } from './lookup-history.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
-import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
+import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
 import { refsClear } from './repo-read-fences.ts';
 import { actorPassScopeSql } from './repo-recipient-scope.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
 
 export function legacyLiveRecipientStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   actor: ScanActor,
   scannerId: string,
 ): D1PreparedStatement {
@@ -23,7 +23,7 @@ export function legacyLiveRecipientStmt(
     actor.scanningSession && actor.scanningSession.id !== scannerId
       ? actor.scanningSession.id
       : null;
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT m.watch,
@@ -49,7 +49,7 @@ export function legacyLiveRecipientStmt(
 
 export function legacyLiveRowsStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   actor: ScanActor,
   entries: readonly LiveRingRow[],
 ): D1PreparedStatement {
@@ -81,7 +81,7 @@ export function legacyLiveRowsStmt(
                 AND j.value || '${'f'.repeat(48)}'))`
     : '0';
   if (scope) params.push(...scope.params);
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT ring.i AS i,
@@ -108,7 +108,7 @@ export function legacyLiveRowsStmt(
 
 export function legacyLivePhotoStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   actor: ScanActor,
   entry: LiveRingRow,
 ): D1PreparedStatement | null {
@@ -118,7 +118,7 @@ export function legacyLivePhotoStmt(
   // A staffless monitor reads with the role the source had: only while that staff binding holds.
   const borrowed = actor.role === null && entry.sourceStaff !== null;
   const prefixes = entry.refPrefixes.slice(0, 3);
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT mp.r2_key AS r2_key, mp.version AS version
@@ -157,7 +157,7 @@ export function legacyLivePhotoStmt(
 
 export function legacyLookupPassesStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   actor: ScanActor,
   entries: readonly LookupEntry[],
   refs: readonly string[],
@@ -181,7 +181,7 @@ export function legacyLookupPassesStmt(
     }),
   );
   const params: SqlValue[] = [...scope.params, ...cleared.params];
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT ring.i AS i,
@@ -207,12 +207,12 @@ export function legacyLookupPassesStmt(
 
 export function legacyLivePlaceEventStmt(
   db: D1Database,
-  auth: ScanReadAuthority,
+  auth: LegacyAuth,
   orgId: string,
   mode: Mode,
   eventId: string,
 ): D1PreparedStatement {
-  return scanRead(
+  return legacyRead(
     db,
     auth,
     `SELECT e.name, e.capacity, e.reentry FROM scan_events e
