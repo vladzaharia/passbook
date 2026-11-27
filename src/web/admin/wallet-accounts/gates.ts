@@ -12,7 +12,9 @@ export interface Gate {
 /** What the switch waits on, shown as plain rows; null roundTrip (Test) has no such row. */
 export function gatesOf(e: WalletEnrolment): Gate[] {
   const fresh = checkFresh(null, 0, e.prerequisites.check);
-  const gates: Gate[] = [{ label: 'Account check', ok: fresh, state: fresh ? 'Passed' : 'Needed' }];
+  const gates: Gate[] = [
+    { label: 'Enrolment check', ok: fresh, state: fresh ? 'Passed' : 'Needed' },
+  ];
   if (e.prerequisites.roundTrip !== null)
     gates.push({
       label: 'Test round trip',

@@ -147,12 +147,37 @@ sends every later message with that version.
   and sends no `timeout` after that. Without it, the app holds until `result`
   (15 s, then `timeout`) as before.
 - The app drops the same payload from the same source within 1500 ms. A tag
-  read the web asked for with `tagRead` is never dropped. Other scans are
-  queued, not dropped; if the queue (8) is full the app sends `busy`.
+  read the web asked for with `tagRead` is never dropped. There is no scan
+  queue: a read arriving while the gate is held (waiting for the ack) shows
+  "Finish the current scan first." and is not forwarded. Queuing happens in the
+  web page, not here. Up to 16 acknowledged reads await their verdict.
 - Additive event `{event:'busy', id?:string}`: a `tagRead` (with its `id`) was
   refused because a read is in flight, or the scan queue is full. It does not
   cancel the pending check. A web that does not know `busy` ignores it.
   `cancelled` keeps its meaning: the read ended without a result.
+
+### `scanSettle` (additive, still v2)
+
+- Both sides list `scanSettle` in `features` (web in `hello`, app in `ready` and
+  `capabilities`). The web sends the ops below only when the app listed both
+  `scanAck` and `scanSettle`. `android/web/reader-client.js` (third-party
+  adapter) does not list it and never sends them.
+- `{version:2, op:'revise', id, outcome:'accepted'|'rejected'|'error'}`: a
+  correction to a read that already got `result`. The status line changes only
+  when `id` is the read delivered last and the latest one answered. No buzz, no
+  gate change.
+- `{version:2, op:'dropped', id, reason:'duplicate'|'replaced'|'closed'}`: the
+  page ended the read without a verdict. The app releases the id once and, only
+  when it is the read delivered last, shows "Already scanned", "Skipped" or the
+  idle text. An unknown reason reads as `closed`. No buzz.
+- Status text is written only for the read delivered last. A `result`,
+  `revise` or `dropped` for an older id finishes silently; unknown or already
+  released ids are ignored.
+- Every `hello` resets the gate and the delivered and answered ids, and records
+  whether the page listed `scanSettle`.
+- When the page listed `scanSettle` it buzzes itself (a v2 `haptic`) and the app
+  adds no native buzz on `result`. For a page without it the app keeps its
+  100 ms buzz on `result`.
 
 ## Receipt acknowledgement (`scanAck`, additive, still v2)
 

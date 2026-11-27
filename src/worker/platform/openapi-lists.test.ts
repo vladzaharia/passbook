@@ -49,6 +49,8 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/platform/idp/drift',
   // The setup checklist: a fixed list of items, not rows to page.
   '/api/v1/platform/idp/setup',
+  // One row per wallet open to the org (at most one per provider and mode): fixed, not a page.
+  '/api/v1/orgs/{orgId}/wallet-health',
   // A sandbox's recent device passes: the newest 50, capped by the open-pass limit.
   '/api/v1/developer/device-passes',
 ]);

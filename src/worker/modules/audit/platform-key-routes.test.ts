@@ -108,6 +108,11 @@ describe('a Platform key on the platform audit log', () => {
         "INSERT INTO audit_log (at, org_id, actor_type, action) VALUES (?, ?, 'system', 'probe.row')",
         [fx.clock.now(), org.id],
       );
+    await run(
+      env.DB,
+      "INSERT INTO audit_log (at, org_id, actor_type, action, target_type, target_id) VALUES (?, NULL, 'system', 'probe.row', 'org', ?)",
+      [fx.clock.now(), personal.id],
+    );
     const orgsOf = async (headers: Record<string, string>) =>
       (
         (await (await call('?action=probe.row&limit=50', headers)).json()) as {
@@ -121,6 +126,8 @@ describe('a Platform key on the platform audit log', () => {
     const csv = await (await call('/export?action=probe.row', key.headers)).text();
     expect(csv).toContain(regular.id);
     expect(csv).not.toContain(personal.id);
-    expect(await orgsOf(admin.headers)).toEqual(expect.arrayContaining([personal.id, regular.id]));
+    expect(await orgsOf(admin.headers)).toEqual(
+      expect.arrayContaining([personal.id, regular.id, null]),
+    );
   });
 });
