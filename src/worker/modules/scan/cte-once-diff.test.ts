@@ -1,11 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { run } from '../../platform/db.ts';
+import type { Pass } from '../passes/repo-map.ts';
 import { heldGateCapacityStmt } from './repo-act-gate-preflight.ts';
 import { eventTotalsStmt, liveEventPresenceSql } from './repo-event-attendance.ts';
 import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
 import { capacityFullPredicate } from './repo-gates.ts';
-import { retainedEventCountSql } from './repo-scan-retention.ts';
+import {
+  clearScanRetentionDeleteStmt,
+  retainedEventCountSql,
+  stageScanRetentionDeleteStmt,
+} from './repo-scan-retention.ts';
+import { prepareScanRetentionDelete } from './scan-retention-proof.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 // Differential: the statements as they read before each CTE was referenced once.
@@ -83,65 +89,70 @@ const one = async (sql: string, params: unknown[]) =>
     .bind(...params)
     .first();
 
-describe('capacity statements read each CTE once with identical results', () => {
-  it('matches the previous statements across presence, undo, deletion and capacity', async () => {
-    const event = await kit.event({ templateIds: [templateId] });
-    const scanner = await kit.scanner({ eventId: event.id });
-    const passes = [];
-    const scans: string[] = [];
-    for (let n = 0; n < 5; n++) {
-      const pass = await kit.scanPass(templateId);
-      passes.push(pass);
-      const res = await kit.post(scanner.headers, '/actions', {
-        input: codeOf(pass),
-        idempotencyKey: key(),
-        clientTs: kit.clock.now(),
-        actionId: 'check_in',
-      });
-      expect(res.status).toBe(200);
-      scans.push(((await res.json()) as { scanId: string }).scanId);
-    }
-    const stranger = await kit.scanPass(templateId);
-    const subjects = [...passes, stranger];
-    const mode = 'live' as Mode;
-    const org = kit.org.id;
-    const compare = async () => {
-      const actor = { orgId: org, mode } as never;
-      expect(await eventTotalsStmt(kit.env.DB, org, mode, event.id).first()).toEqual(
-        await one(oldTotals, [org, mode, event.id]),
-      );
-      for (const [capacity, reentry] of [
-        [null, 0],
-        [1, 1],
-        [3, 1],
-        [3, 0],
-        [5, 0],
-      ] as const) {
-        await run(kit.env.DB, 'UPDATE scan_events SET capacity=?, reentry=? WHERE id=?', [
-          capacity,
-          reentry,
-          event.id,
-        ]);
-        for (const p of subjects) {
-          const gate = { passId: p.id, actionId: 'check_in', scope: 'event' };
-          expect(await heldGateCapacityStmt(kit.env.DB, actor, gate, event.id).first()).toEqual(
-            await one(oldHeld, [p.id, event.id, org, mode]),
+const mode = 'live' as Mode;
+
+/** An event with five checked-in passes and one stranger, and the old and new statements compared on it. */
+async function populate() {
+  const event = await kit.event({ templateIds: [templateId] });
+  const scanner = await kit.scanner({ eventId: event.id });
+  const passes: Pass[] = [];
+  const scans: string[] = [];
+  for (let n = 0; n < 5; n++) {
+    const pass = await kit.scanPass(templateId);
+    passes.push(pass);
+    const res = await kit.post(scanner.headers, '/actions', {
+      input: codeOf(pass),
+      idempotencyKey: key(),
+      clientTs: kit.clock.now(),
+      actionId: 'check_in',
+    });
+    expect(res.status).toBe(200);
+    scans.push(((await res.json()) as { scanId: string }).scanId);
+  }
+  const stranger = await kit.scanPass(templateId);
+  const org = kit.org.id;
+  const totals = () => eventTotalsStmt(kit.env.DB, org, mode, event.id).first();
+  const compare = async () => {
+    const actor = { orgId: org, mode } as never;
+    expect(await totals()).toEqual(await one(oldTotals, [org, mode, event.id]));
+    for (const [capacity, reentry] of [
+      [null, 0],
+      [1, 1],
+      [3, 1],
+      [3, 0],
+      [5, 0],
+    ] as const) {
+      await run(kit.env.DB, 'UPDATE scan_events SET capacity=?, reentry=? WHERE id=?', [
+        capacity,
+        reentry,
+        event.id,
+      ]);
+      for (const p of [...passes, stranger]) {
+        const gate = { passId: p.id, actionId: 'check_in', scope: 'event' };
+        expect(await heldGateCapacityStmt(kit.env.DB, actor, gate, event.id).first()).toEqual(
+          await one(oldHeld, [p.id, event.id, org, mode]),
+        );
+        for (const re of [true, false]) {
+          const max = capacity ?? 2;
+          const now = capacityFullPredicate(org, mode, event.id, max, re, p.id);
+          expect(await one(`SELECT ${now.sql} AS full`, now.params)).toEqual(
+            await one(oldCapacity(re), [org, mode, event.id, p.id, max]),
           );
-          for (const re of [true, false]) {
-            const max = capacity ?? 2;
-            const now = capacityFullPredicate(org, mode, event.id, max, re, p.id);
-            expect(await one(`SELECT ${now.sql} AS full`, now.params)).toEqual(
-              await one(oldCapacity(re), [org, mode, event.id, p.id, max]),
-            );
-          }
         }
       }
-    };
+    }
+  };
+  return { event, scanner, passes, scans, totals, compare };
+}
+
+const arrivedOf = async (totals: () => Promise<unknown>) =>
+  ((await totals()) as { arrived: number }).arrived;
+
+describe('capacity statements read each CTE once with identical results', () => {
+  it('matches the previous statements across presence, undo, deletion and capacity', async () => {
+    const { passes, scans, totals, compare } = await populate();
     await compare();
-    expect(await eventTotalsStmt(kit.env.DB, org, mode, event.id).first()).toEqual({
-      arrived: 5,
-      inside: 5,
-    });
+    expect(await totals()).toEqual({ arrived: 5, inside: 5 });
     // One pass leaves, one scan is undone, one pass is deleted, one is removed.
     await run(kit.env.DB, "UPDATE scan_presence SET state='out' WHERE pass_id=?", [passes[0]?.id]);
     await run(kit.env.DB, "UPDATE scan_gates SET state='out' WHERE pass_id=?", [passes[0]?.id]);
@@ -150,6 +161,70 @@ describe('capacity statements read each CTE once with identical results', () => 
     await compare();
     await run(kit.env.DB, 'UPDATE passes SET deleted_at=1 WHERE id=?', [passes[2]?.id]);
     await run(kit.env.DB, 'UPDATE passes SET removed_at=1 WHERE id=?', [passes[3]?.id]);
+    await compare();
+  });
+
+  it('matches the previous statements for the legacy gate arm and untracked presence', async () => {
+    const { event, passes, totals, compare } = await populate();
+    const db = kit.env.DB;
+    // Passes 0 and 1 keep only an event-scoped gate row (no presence row to prove the entry); pass 1 is then deleted.
+    for (const pass of [passes[0], passes[1]]) {
+      await run(db, 'DELETE FROM scan_presence WHERE pass_id=?', [pass?.id]);
+      await run(db, "UPDATE scan_gates SET scope='event:' || ? WHERE pass_id=?", [
+        event.id,
+        pass?.id,
+      ]);
+    }
+    await compare();
+    expect(await arrivedOf(totals)).toBe(5);
+    await run(db, 'UPDATE passes SET deleted_at=1 WHERE id=?', [passes[1]?.id]);
+    await compare();
+    expect(await arrivedOf(totals)).toBe(4);
+    // Pass 2 is an untracked entrant that dies; pass 3 a tracked one that dies: only occupancy tells them apart.
+    await run(db, 'UPDATE scan_presence SET tracking=0 WHERE pass_id IN (?, ?)', [
+      passes[2]?.id,
+      passes[3]?.id,
+    ]);
+    await run(db, 'UPDATE scan_presence SET tracking=1 WHERE pass_id=?', [passes[3]?.id]);
+    await run(db, 'UPDATE passes SET deleted_at=1 WHERE id IN (?, ?)', [
+      passes[2]?.id,
+      passes[3]?.id,
+    ]);
+    await compare();
+  });
+
+  it('matches the previous statements with proven retained deletions', async () => {
+    const { passes, scans, totals, compare } = await populate();
+    const db = kit.env.DB;
+    for (const pass of [passes[0], passes[1]]) {
+      if (!pass) throw new Error('Missing pass');
+      const deletion = await prepareScanRetentionDelete(kit.env, pass);
+      await db.batch([
+        stageScanRetentionDeleteStmt(db, pass.id, deletion),
+        db.prepare('DELETE FROM passes WHERE id=?').bind(pass.id),
+        clearScanRetentionDeleteStmt(db, deletion),
+      ]);
+    }
+    const retained = await db
+      .prepare('SELECT count(*) AS n FROM scan_retained_gates WHERE scan_id IN (?, ?)')
+      .bind(scans[0], scans[1])
+      .first<{ n: number }>();
+    expect(retained?.n).toBe(2);
+    await compare();
+    expect(await totals()).toEqual({ arrived: 5, inside: 5 });
+  });
+
+  it('excludes a witness outside the ledger scope exactly as before', async () => {
+    const { scanner, passes, scans, totals, compare } = await populate();
+    const db = kit.env.DB;
+    // Live presence still names each witness; only the ledger scope drops them.
+    await run(db, 'INSERT INTO scan_quarantine_exclusions (scan_id) VALUES (?)', [scans[0]]);
+    await compare();
+    expect(await arrivedOf(totals)).toBe(4);
+    await run(db, 'UPDATE passes SET test_data_quarantined=1 WHERE id=?', [passes[1]?.id]);
+    await compare();
+    expect(await arrivedOf(totals)).toBe(3);
+    await run(db, "UPDATE scanners SET mode='test' WHERE id=?", [scanner.id]);
     await compare();
   });
 });

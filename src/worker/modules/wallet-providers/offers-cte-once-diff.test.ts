@@ -1,6 +1,7 @@
-import { expect, it } from 'vitest';
-import { all, first, run } from '../../platform/db.ts';
+import { expect, it, vi } from 'vitest';
+import { all, first, run, type SqlValue } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { publishRelease, routeFetchToMock } from './google-runtime-test-fixtures.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { legacyWalletOfferSnapshotCurrent } from './offers-legacy-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
@@ -256,4 +257,211 @@ it('reads each CTE once and answers like the previous offer snapshot statement',
     operation.instanceId,
   ]);
   await matrix();
+});
+
+it('projection fence matches legacy under row mutations', async () => {
+  const f = await setupWalletOfferKit({ google: 'configured' });
+  const db = marketFence(f.kit.env.DB);
+  const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
+  if (!snapshot?.pass.releaseId) throw new Error('Missing approved fixture');
+  routeFetchToMock();
+  try {
+    await publishRelease(f, 0);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+  const now = f.kit.clock.now();
+  const scope = {
+    releaseIdSql: 'requested.release_id',
+    orgIdSql: 'requested.org_id',
+    modeSql: 'requested.mode',
+    providerSql: 'requested.provider',
+    templateIdSql: 'requested.template_id',
+    versionSql: 'requested.version',
+    sourceReleaseIdSql: 'requested.source_id',
+    nowSql: 'requested.now_ms',
+    credentialKeysetCommitmentSql: 'requested.credential_keyset_commitment',
+  };
+  const releases = [] as {
+    provider: string;
+    id: string;
+    candidateId: string;
+    approvalId: string;
+  }[];
+  for (const provider of ['samsung', 'google']) {
+    const row = await first<{ id: string; candidateId: string; approvalId: string }>(
+      db,
+      `SELECT id, candidate_id AS candidateId, approval_id AS approvalId FROM template_releases
+       WHERE org_id = ? AND provider = ? AND template_id = ?`,
+      [f.pass.orgId, provider, f.pass.templateId],
+    );
+    if (!row) throw new Error(`Missing ${provider} release`);
+    releases.push({ provider, ...row });
+  }
+  const answers = async () => {
+    const out: (number | null)[] = [];
+    for (const release of releases) {
+      const params = [
+        release.id,
+        f.pass.orgId,
+        f.pass.mode,
+        release.provider,
+        f.pass.templateId,
+        f.pass.templateVersion,
+        snapshot.pass.releaseId,
+        now,
+      ];
+      const read = (predicate: string) =>
+        first<{ ok: number }>(
+          db,
+          `SELECT 1 AS ok FROM (SELECT ? AS release_id, ? AS org_id, ? AS mode, ? AS provider,
+            ? AS template_id, ? AS version, ? AS source_id, ? AS now_ms,
+            ${pinnedKeysetSql} AS credential_keyset_commitment) requested WHERE ${predicate}`,
+          params,
+        );
+      const next = await read(projectionReleaseBindingPredicateSql(scope));
+      expect(next, `${release.provider} release`).toEqual(
+        await read(legacyProjectionReleaseBindingPredicateSql(scope)),
+      );
+      out.push(next ? 1 : null);
+    }
+    return out;
+  };
+  expect(await answers()).toEqual([1, 1]);
+
+  // The guards refuse these edits in production; the worker test setup restores them after the test.
+  const guards = await all<{ name: string }>(
+    db,
+    `SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name IN (
+      'wallet_provider_accounts', 'template_candidates', 'template_provider_apple_sources',
+      'template_approvals', 'template_releases')`,
+  );
+  for (const { name } of guards) await run(db, `DROP TRIGGER IF EXISTS "${name}"`);
+
+  const columnsOf = async (table: string, where: string, id: string, columns: string[]) =>
+    first<Record<string, SqlValue>>(
+      db,
+      `SELECT ${columns.join(', ')} FROM ${table} WHERE ${where}`,
+      [id],
+    );
+  /** Sets columns on one row, reads both fences, and puts the original values back. */
+  const mutated = async (
+    table: string,
+    where: string,
+    id: string,
+    set: Record<string, SqlValue>,
+  ) => {
+    const columns = Object.keys(set);
+    const before = await columnsOf(table, where, id, columns);
+    if (!before) throw new Error(`Missing ${table} row`);
+    const assign = columns.map((c) => `${c} = ?`).join(', ');
+    await run(db, `UPDATE ${table} SET ${assign} WHERE ${where}`, [...Object.values(set), id]);
+    try {
+      return await answers();
+    } finally {
+      await run(db, `UPDATE ${table} SET ${assign} WHERE ${where}`, [...Object.values(before), id]);
+    }
+  };
+  const perRelease = async (
+    table: string,
+    key: 'id' | 'candidateId' | 'approvalId',
+    set: (provider: string) => Record<string, SqlValue>,
+    column = 'id',
+  ) => {
+    const result: (number | null)[][] = [];
+    for (const release of releases)
+      result.push(await mutated(table, `${column} = ?`, release[key], set(release.provider)));
+    return result;
+  };
+  const accountOf = async (candidateId: string) =>
+    (
+      await first<{ id: string }>(
+        db,
+        'SELECT provider_account_id AS id FROM template_candidates WHERE id = ?',
+        [candidateId],
+      )
+    )?.id ?? '';
+  const authorOf = async (candidateId: string) =>
+    (
+      await first<{ id: string }>(
+        db,
+        'SELECT author_id AS id FROM template_candidates WHERE id = ?',
+        [candidateId],
+      )
+    )?.id ?? '';
+  const [samsung, google] = releases as [(typeof releases)[number], (typeof releases)[number]];
+
+  // Each mutation breaks exactly the release it touches, and both fences agree on every state.
+  const accountRevoked = async (r: (typeof releases)[number]) =>
+    mutated('wallet_provider_accounts', 'id = ?', await accountOf(r.candidateId), {
+      revoked_at: 1,
+    });
+  expect(await accountRevoked(samsung)).toEqual([null, 1]);
+  expect(await accountRevoked(google)).toEqual([1, null]);
+
+  for (const projection of ['{', '[]', '"x"'])
+    expect(
+      await perRelease('template_candidates', 'candidateId', () => ({
+        projection_json: projection,
+      })),
+    ).toEqual([
+      [null, 1],
+      [1, null],
+    ]);
+  expect(
+    await perRelease('template_candidates', 'candidateId', () => ({ adapter_revision: 999 })),
+  ).toEqual([
+    [null, 1],
+    [1, null],
+  ]);
+
+  // The Apple source is a view over its release, so its generation and hash are checked as the candidate records them.
+  for (const set of [
+    { source_release_generation: 999 },
+    { source_release_hash: 'f'.repeat(64) },
+    { content_hash: 'f'.repeat(64) },
+  ])
+    expect(await perRelease('template_candidates', 'candidateId', () => set)).toEqual([
+      [null, 1],
+      [1, null],
+    ]);
+
+  // Approval independence: a peer approval by the candidate's own author does not stand, a sole one does.
+  for (const release of releases) {
+    const author = await authorOf(release.candidateId);
+    const own = await mutated('template_approvals', 'id = ?', release.approvalId, {
+      kind: 'peer',
+      reviewer_id: author,
+    });
+    expect(own).toEqual(release === samsung ? [null, 1] : [1, null]);
+    const sole = await mutated('template_approvals', 'id = ?', release.approvalId, {
+      kind: 'sole',
+      reviewer_id: author,
+    });
+    expect(sole).toEqual([1, 1]);
+  }
+
+  // A superseded head: a newer generation of the same release line leaves this release without its head row.
+  for (const release of releases) {
+    const row = await first<Record<string, SqlValue>>(
+      db,
+      'SELECT * FROM template_releases WHERE id = ?',
+      [release.id],
+    );
+    if (!row) throw new Error('Missing release row');
+    const newer = { ...row, id: crypto.randomUUID(), generation: Number(row.generation) + 1 };
+    const names = Object.keys(newer);
+    await run(
+      db,
+      `INSERT INTO template_releases (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`,
+      Object.values(newer),
+    );
+    try {
+      expect(await answers()).toEqual(release === samsung ? [null, 1] : [1, null]);
+    } finally {
+      await run(db, 'DELETE FROM template_releases WHERE id = ?', [newer.id]);
+    }
+  }
+  expect(await answers()).toEqual([1, 1]);
+  expect(google.id).not.toBe(samsung.id);
 });
