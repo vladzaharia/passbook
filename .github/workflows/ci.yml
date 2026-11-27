@@ -98,12 +98,12 @@ jobs:
     # Draft PRs skip CI; marking a PR ready runs it.
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
-    # Two shards: one job passed 25 minutes once the suite grew past ~220 tests.
+    # Three shards: with two, shard 2 reached 27.5 of 30 minutes on 2026-11-27.
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     # Browsers ship in the image (no apt on the hot path); keep the tag in step with @playwright/test.
     container:
       image: mcr.microsoft.com/playwright@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f # v1.64.1-noble
@@ -119,7 +119,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/2
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/3
         env:
           WALLET_E2E_PREVIEW: '1'
           # Actions resets HOME to /github/home (owned by pwuser) in container steps; Firefox refuses to start as root there.
