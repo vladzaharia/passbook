@@ -81,7 +81,11 @@ describe('platform keys in the wizard', () => {
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
     await user.click(within(dialog).getByRole('checkbox', { name: 'Assign holders' }));
     await user.click(within(dialog).getByRole('radio', { name: 'Platform' }));
-    expect(within(dialog).getByRole('checkbox', { name: 'Read the platform' })).toBeChecked();
+    expect(
+      within(dialog).getByRole('checkbox', {
+        name: 'Read the platform, claim values and invitation addresses',
+      }),
+    ).toBeChecked();
     expect(within(dialog).queryByRole('checkbox', { name: 'Read passes' })).toBeNull();
     expect(within(dialog).getByText('Removed: Assign holders.')).toBeInTheDocument();
     expect(within(dialog).getByRole('checkbox', { name: 'Polaris ID groups' })).toBeInTheDocument();
