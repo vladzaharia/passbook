@@ -1,4 +1,5 @@
 import { all, first } from '../../platform/db.ts';
+import { madeByLiveKey } from './repo-key-creator.ts';
 
 /** The PassBook user behind a Polaris ID subject, with what the desired state needs of them. */
 export interface IdentityRow {
@@ -138,8 +139,9 @@ export interface ClaimSource {
  * Claims of a subject that are inside their window and whose invitation is still open (not revoked,
  * or accepted). An accepted invitation moves its reason to the membership, sponsorship or group row.
  */
-export const claimSources = (db: D1Database, subject: string, now: number) =>
-  all<ClaimSource>(
+export const claimSources = (db: D1Database, subject: string, now: number) => {
+  const byLive = madeByLiveKey('pi', now);
+  return all<ClaimSource>(
     db,
     `SELECT c.id,
        CASE WHEN c.org_invitation_id IS NOT NULL THEN 'member'
@@ -158,12 +160,13 @@ export const claimSources = (db: D1Database, subject: string, now: number) =>
        AND po.revoked_at IS NULL AND po.accepted_at IS NULL AND po.expires_at > ?
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = po.org_id AND o.status IN ('active', 'suspended'))
      LEFT JOIN platform_invitations pi ON pi.id = c.platform_invitation_id
-       AND pi.revoked_at IS NULL AND pi.accepted_at IS NULL
+       AND pi.revoked_at IS NULL AND pi.accepted_at IS NULL AND ${byLive.sql}
      WHERE c.subject = ? AND c.claim_until > ? AND c.swept_at IS NULL
        AND (oi.id IS NOT NULL OR di.id IS NOT NULL OR pi.id IS NOT NULL)
      ORDER BY c.created_at, c.id`,
-    [now, now, subject, now],
+    [now, now, ...byLive.params, subject, now],
   );
+};
 
 /** The keys among `keys` that name a group that still exists. */
 export async function liveGroupKeys(db: D1Database, keys: readonly string[]): Promise<Set<string>> {

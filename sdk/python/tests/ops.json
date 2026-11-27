@@ -8205,6 +8205,490 @@
   }
  },
  {
+  "id": "polaris-platform.getPlatformIdp",
+  "call": "platform.idp.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/idp",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "connected": false,
+   "mode": "dry_run",
+   "frozen": false,
+   "keyExpiresAt": 0,
+   "problems": [
+    "x"
+   ],
+   "budget": {},
+   "lastScimAt": 0,
+   "drift": {},
+   "breakerOpen": false
+  }
+ },
+ {
+  "id": "polaris-platform.getPlatformIdpCalls",
+  "call": "platform.idp.calls.list",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/calls",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": 0,
+     "phase": "x",
+     "method": "x",
+     "target": "x",
+     "actor": "x",
+     "reason": "x",
+     "status": "x",
+     "at": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "polaris-platform.getPlatformIdpDrift",
+  "call": "platform.idp.drift.list",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/drift",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "userId": "x",
+     "target": "x",
+     "kind": "x",
+     "foundAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "polaris-groups.getPlatformIdpGroups",
+  "call": "platform.groups.list",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/groups",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "key": "x",
+     "kind": "role",
+     "name": "x",
+     "friendlyName": "x",
+     "members": 0,
+     "claims": [
+      "x"
+     ],
+     "otherClients": 0,
+     "flags": [
+      "x"
+     ],
+     "rules": 0,
+     "manual": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "polaris-groups.postPlatformIdpGroups",
+  "call": "platform.groups.create",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/groups",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "key": "x",
+   "friendlyName": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": "x",
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-groups.postPlatformIdpGroupsEnsure",
+  "call": "platform.groups.ensure",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/groups/ensure",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "role": "console"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": "x",
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-groups.patchPlatformIdpGroupsByKey",
+  "call": "platform.groups.update",
+  "http": "PATCH",
+  "path": "/api/v1/platform/idp/groups/{key}",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "friendlyName": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": "x",
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-groups.deletePlatformIdpGroupsByKey",
+  "call": "platform.groups.delete",
+  "http": "DELETE",
+  "path": "/api/v1/platform/idp/groups/{key}",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": "x",
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
+  "call": "platform.groups.claims.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/groups/{key}/claims",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "claims": {},
+   "otherKeys": 0
+  }
+ },
+ {
+  "id": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
+  "call": "platform.groups.claims.update",
+  "http": "PATCH",
+  "path": "/api/v1/platform/idp/groups/{key}/claims",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "set": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "set": [
+    "x"
+   ],
+   "removed": [
+    "x"
+   ],
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
+  "call": "platform.groups.members.list",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/groups/{key}/members",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "subject": "x",
+     "userId": "x",
+     "source": "manual",
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
+  "call": "platform.groups.members.create",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/groups/{key}/members",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "userId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "subject": "x",
+   "userId": "x",
+   "source": "manual",
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
+  "call": "platform.groups.members.delete",
+  "http": "DELETE",
+  "path": "/api/v1/platform/idp/groups/{key}/members/{id}",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   },
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "polaris-groups.getPlatformIdpGroupsByKeyRules",
+  "call": "platform.groups.rules.list",
+  "http": "GET",
+  "path": "/api/v1/platform/idp/groups/{key}/rules",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgRoles": [
+      "org_admin"
+     ],
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "polaris-groups.postPlatformIdpGroupsByKeyRules",
+  "call": "platform.groups.rules.create",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/groups/{key}/rules",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgRoles": [
+    "org_admin"
+   ],
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
+  "call": "platform.groups.rules.delete",
+  "http": "DELETE",
+  "path": "/api/v1/platform/idp/groups/{key}/rules/{id}",
+  "pathParams": [
+   {
+    "name": "key",
+    "py": "key",
+    "integer": false
+   },
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "polaris-operations.postPlatformIdpReconcile",
+  "call": "platform.idp.check",
+  "http": "POST",
+  "path": "/api/v1/platform/idp/reconcile",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "operation": {
+    "id": "x",
+    "kind": "x",
+    "status": "queued",
+    "title": "x",
+    "text": "x",
+    "orgId": "x",
+    "mode": "live",
+    "target": {
+     "type": "x",
+     "id": "x"
+    },
+    "step": "x",
+    "steps": [
+     {
+      "key": "x",
+      "label": "x",
+      "state": "pending",
+      "done": 0,
+      "total": 0,
+      "detail": "x",
+      "until": 0,
+      "waitingReason": "blocked",
+      "group": "x",
+      "startedAt": 0,
+      "finishedAt": 0
+     }
+    ],
+    "attempt": 0,
+    "cancelable": false,
+    "cancelRequested": false,
+    "startedBy": {
+     "type": "user",
+     "id": "x"
+    },
+    "createdAt": 0,
+    "startedAt": 0,
+    "updatedAt": 0,
+    "finishedAt": 0,
+    "error": {
+     "code": "x",
+     "message": "x",
+     "step": "x",
+     "retryable": false
+    },
+    "result": {
+     "href": "x",
+     "ids": {}
+    },
+    "revision": 0,
+    "pollAfterMs": 0
+   }
+  }
+ },
+ {
   "id": "polaris-setup.postPlatformIdpScimTokenRotate",
   "call": "platform.idp.scim_token.rotate",
   "http": "POST",
@@ -8356,6 +8840,131 @@
     },
     "revision": 0,
     "pollAfterMs": 0
+   }
+  }
+ },
+ {
+  "id": "platform-invitations.getPlatformInvitations",
+  "call": "platform.invitations.list",
+  "http": "GET",
+  "path": "/api/v1/platform/invitations",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "email": "x",
+     "groups": [
+      "x"
+     ],
+     "developer": false,
+     "state": "pending",
+     "createdAt": 0,
+     "expiresAt": 0,
+     "acceptedAt": 0,
+     "revokedAt": 0,
+     "createdBy": {
+      "kind": "user",
+      "id": "x",
+      "name": "x"
+     }
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "platform-invitations.postPlatformInvitations",
+  "call": "platform.invitations.create",
+  "http": "POST",
+  "path": "/api/v1/platform/invitations",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "email": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "email": "x",
+   "groups": [
+    "x"
+   ],
+   "developer": false,
+   "state": "pending",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "acceptedAt": 0,
+   "revokedAt": 0,
+   "createdBy": {
+    "kind": "user",
+    "id": "x",
+    "name": "x"
+   }
+  }
+ },
+ {
+  "id": "platform-invitations.deletePlatformInvitationsById",
+  "call": "platform.invitations.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/platform/invitations/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "platform-invitations.postPlatformInvitationsByIdResend",
+  "call": "platform.invitations.resend",
+  "http": "POST",
+  "path": "/api/v1/platform/invitations/{id}/resend",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "email": "x",
+   "groups": [
+    "x"
+   ],
+   "developer": false,
+   "state": "pending",
+   "createdAt": 0,
+   "expiresAt": 0,
+   "acceptedAt": 0,
+   "revokedAt": 0,
+   "createdBy": {
+    "kind": "user",
+    "id": "x",
+    "name": "x"
    }
   }
  },
@@ -12655,6 +13264,299 @@
    "html": "x",
    "text": "x",
    "forwarding": "none"
+  }
+ },
+ {
+  "id": "polaris-access.getUsersByIdAccess",
+  "call": "platform.users.access.retrieve",
+  "http": "GET",
+  "path": "/api/v1/users/{id}/access",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "userId": "x",
+   "connected": false,
+   "platformAdmin": false,
+   "disabled": false,
+   "linked": false,
+   "account": {
+    "class": "created",
+    "disabledInIdp": false
+   },
+   "roles": [
+    {
+     "role": "console",
+     "wanted": false,
+     "present": false,
+     "presence": "none",
+     "held": false,
+     "memberships": [
+      {
+       "org": {
+        "id": "x",
+        "name": "x"
+       }
+      }
+     ],
+     "sponsorships": [
+      {
+       "org": {
+        "id": "x",
+        "name": "x"
+       }
+      }
+     ],
+     "grantedAt": 0,
+     "error": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "polaris-claims.getUsersByIdClaims",
+  "call": "platform.users.claims.retrieve",
+  "http": "GET",
+  "path": "/api/v1/users/{id}/claims",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "claims": {},
+   "otherKeys": 0
+  }
+ },
+ {
+  "id": "polaris-claims.patchUsersByIdClaims",
+  "call": "platform.users.claims.update",
+  "http": "PATCH",
+  "path": "/api/v1/users/{id}/claims",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "set": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "set": [
+    "x"
+   ],
+   "removed": [
+    "x"
+   ],
+   "dryRun": false
+  }
+ },
+ {
+  "id": "polaris-access.postUsersByIdOffboard",
+  "call": "platform.users.offboard",
+  "http": "POST",
+  "path": "/api/v1/users/{id}/offboard",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "plan": {
+    "userId": "x",
+    "memberships": [
+     {
+      "org": {
+       "id": "x",
+       "name": "x"
+      },
+      "membershipId": "x"
+     }
+    ],
+    "kept": [
+     {
+      "org": {
+       "id": "x",
+       "name": "x"
+      }
+     }
+    ],
+    "sponsorships": [
+     {
+      "org": {
+       "id": "x",
+       "name": "x"
+      }
+     }
+    ],
+    "grants": [
+     "developer"
+    ],
+    "personalKeys": 0,
+    "platformKeys": [
+     "x"
+    ],
+    "sessions": 0,
+    "sandboxOrgId": "x",
+    "removes": [
+     "console"
+    ],
+    "external": [
+     "console"
+    ],
+    "blockers": [
+     {
+      "org": {
+       "id": "x",
+       "name": "x"
+      },
+      "code": "LAST_ORG_ADMIN"
+     }
+    ]
+   },
+   "operation": {
+    "id": "x",
+    "kind": "x",
+    "status": "queued",
+    "title": "x",
+    "text": "x",
+    "orgId": "x",
+    "mode": "live",
+    "target": {
+     "type": "x",
+     "id": "x"
+    },
+    "step": "x",
+    "steps": [
+     {
+      "key": "x",
+      "label": "x",
+      "state": "pending",
+      "done": 0,
+      "total": 0,
+      "detail": "x",
+      "until": 0,
+      "waitingReason": "blocked",
+      "group": "x",
+      "startedAt": 0,
+      "finishedAt": 0
+     }
+    ],
+    "attempt": 0,
+    "cancelable": false,
+    "cancelRequested": false,
+    "startedBy": {
+     "type": "user",
+     "id": "x"
+    },
+    "createdAt": 0,
+    "startedAt": 0,
+    "updatedAt": 0,
+    "finishedAt": 0,
+    "error": {
+     "code": "x",
+     "message": "x",
+     "step": "x",
+     "retryable": false
+    },
+    "result": {
+     "href": "x",
+     "ids": {}
+    },
+    "revision": 0,
+    "pollAfterMs": 0
+   }
+  }
+ },
+ {
+  "id": "polaris-access.postUsersByIdRoles",
+  "call": "platform.users.roles.set",
+  "http": "POST",
+  "path": "/api/v1/users/{id}/roles",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "role": "developer",
+   "grant": false
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "userId": "x",
+   "connected": false,
+   "platformAdmin": false,
+   "disabled": false,
+   "linked": false,
+   "account": {
+    "class": "created",
+    "disabledInIdp": false
+   },
+   "roles": [
+    {
+     "role": "console",
+     "wanted": false,
+     "present": false,
+     "presence": "none",
+     "held": false,
+     "memberships": [
+      {
+       "org": {
+        "id": "x",
+        "name": "x"
+       }
+      }
+     ],
+     "sponsorships": [
+      {
+       "org": {
+        "id": "x",
+        "name": "x"
+       }
+      }
+     ],
+     "grantedAt": 0,
+     "error": "x"
+    }
+   ]
   }
  },
  {

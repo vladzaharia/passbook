@@ -1,7 +1,10 @@
+import type { Context } from 'hono';
 import type { StartSetup } from '../../../shared/contracts/idp-setup.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
-import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
-import { ConflictError, UnavailableError } from '../../platform/errors.ts';
+import { type Actor, platformActorOf } from '../../platform/actor.ts';
+import type { PlatformScope } from '../../platform/api-scopes.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { ConflictError, UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -21,6 +24,19 @@ import { BREAKER_KEY, BREAKER_LATCH_MS } from './scim-effects.ts';
 import { setupTarget } from './setup-run.ts';
 import { rotateTarget } from './setup-token.ts';
 import type { WritableRole } from './types.ts';
+
+/** Who starts an operation: the actor, and the principal an idempotency key is scoped to. */
+export interface Caller {
+  actor: Actor;
+  principal: string;
+}
+
+export function callerOf(c: Context<AppBindings>, scope?: PlatformScope): Caller {
+  const auth = c.var.auth;
+  if (!auth) throw new UnauthenticatedError();
+  const actor = platformActorOf(c, scope ? { scope } : {});
+  return { actor, principal: principalOf(auth) };
+}
 
 type Spec = {
   kind:
@@ -67,13 +83,13 @@ async function replayOf(
 /** A replay answered before any state check. */
 export async function replay(
   ctx: ServiceContext,
-  auth: SessionAuth | ApiKeyAuth,
+  caller: Caller,
   kind: Spec['kind'],
   key: string | undefined,
   target?: Spec['target'],
 ): Promise<OperationDto | null> {
   return key
-    ? replayOf(ctx, await operationIdFor(principalOf(auth), kind, key), kind, target)
+    ? replayOf(ctx, await operationIdFor(caller.principal, kind, key), kind, target)
     : null;
 }
 
@@ -83,27 +99,26 @@ export async function replay(
  */
 export async function startIdpOp(
   ctx: ServiceContext,
-  auth: SessionAuth | ApiKeyAuth,
+  { actor, principal }: Caller,
   spec: Spec,
 ): Promise<OperationDto> {
-  const actor = actorOf(auth);
   const id = spec.idempotencyKey
-    ? await operationIdFor(principalOf(auth), spec.kind, spec.idempotencyKey)
+    ? await operationIdFor(principal, spec.kind, spec.idempotencyKey)
     : ctx.ids.id();
   const known = await replayOf(ctx, id, spec.kind, spec.target);
   if (known) return known;
   const { operation, created } = await startOperationOnce(ctx, {
     id,
     kind: spec.kind,
-    actor,
+    actor: { type: actor.actorType, id: actor.actorId },
     ...(spec.target ? { target: spec.target } : {}),
     ...(spec.subject ? { subject: spec.subject } : {}),
   });
   if (!created) return operation;
   if (spec.audit)
     await recordAudit(ctx, {
-      actorType: actor.type,
-      actorId: actor.id,
+      actorType: actor.actorType,
+      actorId: actor.actorId,
       action: spec.audit.action,
       targetType: spec.audit.targetType,
       targetId: spec.audit.targetId,
@@ -113,14 +128,8 @@ export async function startIdpOp(
   return operation;
 }
 
-/** Who started an operation: a person, or the Platform key that did (setup and rotation accept both). */
-const actorOf = (auth: SessionAuth | ApiKeyAuth) =>
-  auth.kind === 'session'
-    ? ({ type: 'user', id: auth.userId } as const)
-    : ({ type: 'api_key', id: auth.keyId } as const);
-
-export const limited = (ctx: ServiceContext, auth: SessionAuth | ApiKeyAuth) =>
-  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${actorOf(auth).id}`);
+export const limited = (ctx: ServiceContext, { actor }: Caller) =>
+  enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:idp-ops:${actor.actorId}`);
 
 export function needBinding(ctx: ServiceContext): void {
   if (!idpConfigured(ctx.env))
@@ -130,16 +139,16 @@ export function needBinding(ctx: ServiceContext): void {
 /** Check now, or a dry run (`dryRun`): one reconcile of every group. */
 export async function startCheck(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  caller: Caller,
   dryRun: boolean,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
   const kind = dryRun ? 'idp.dry_run' : 'idp.check';
-  const again = await replay(ctx, auth, kind, idempotencyKey);
+  const again = await replay(ctx, caller, kind, idempotencyKey);
   if (again) return again;
   needBinding(ctx);
-  await limited(ctx, auth);
-  return startIdpOp(ctx, auth, {
+  await limited(ctx, caller);
+  return startIdpOp(ctx, caller, {
     kind: dryRun ? 'idp.dry_run' : 'idp.check',
     idempotencyKey,
     audit: { action: dryRun ? 'idp.dry_run' : 'idp.check', targetType: 'idp', targetId: 'sync' },
@@ -149,13 +158,13 @@ export async function startCheck(
 /** Restore a role the owner paused in Polaris ID. 409 when it is not paused. */
 export async function startRestore(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  caller: Caller,
   userId: string,
   role: WritableRole,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
   const target = restoreTarget(userId, role);
-  const again = await replay(ctx, auth, 'idp.restore', idempotencyKey, target);
+  const again = await replay(ctx, caller, 'idp.restore', idempotencyKey, target);
   if (again) return again;
   needBinding(ctx);
   await requireUser(ctx, userId);
@@ -166,8 +175,8 @@ export async function startRestore(
   // The pause is the owner's "no": it stays for a user who is off or a role nothing wants.
   if (!(await desiredState(ctx.env.DB, heldRow.subject, ctx.clock.now())).targets.has(role))
     throw new ConflictError('Nothing wants this role now.', 'IDP_NOT_WANTED');
-  await limited(ctx, auth);
-  return startIdpOp(ctx, auth, {
+  await limited(ctx, caller);
+  return startIdpOp(ctx, caller, {
     kind: 'idp.restore',
     target,
     subject: { userId, role },
@@ -179,16 +188,16 @@ export async function startRestore(
 /** Clear the SCIM breaker. 409 when it is not tripped. */
 export async function startBreakerClear(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  caller: Caller,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
-  const again = await replay(ctx, auth, 'idp.breaker_clear', idempotencyKey);
+  const again = await replay(ctx, caller, 'idp.breaker_clear', idempotencyKey);
   if (again) return again;
   const trippedAt = await latchedAt(ctx.env.DB, BREAKER_KEY, ctx.clock.now(), BREAKER_LATCH_MS);
   if (trippedAt === null)
     throw new ConflictError('The SCIM breaker is not tripped.', 'IDP_BREAKER_CLOSED');
-  await limited(ctx, auth);
-  return startIdpOp(ctx, auth, {
+  await limited(ctx, caller);
+  return startIdpOp(ctx, caller, {
     kind: 'idp.breaker_clear',
     // The trip the admin saw: the run clears that one, never a later one.
     target: { type: 'scim_breaker', id: String(trippedAt) },
@@ -203,16 +212,16 @@ export async function startBreakerClear(
  */
 export async function startSetup(
   ctx: ServiceContext,
-  auth: SessionAuth | ApiKeyAuth,
+  caller: Caller,
   body: StartSetup,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
   const target = setupTarget(body.dryRun, body.items);
-  const again = await replay(ctx, auth, 'idp.setup', idempotencyKey, target);
+  const again = await replay(ctx, caller, 'idp.setup', idempotencyKey, target);
   if (again) return again;
   needBinding(ctx);
-  await limited(ctx, auth);
-  return startIdpOp(ctx, auth, {
+  await limited(ctx, caller);
+  return startIdpOp(ctx, caller, {
     kind: 'idp.setup',
     target,
     idempotencyKey,
@@ -225,16 +234,16 @@ export async function startSetup(
 /** Rotate the SCIM token, or preview it. */
 export async function startRotate(
   ctx: ServiceContext,
-  auth: SessionAuth | ApiKeyAuth,
+  caller: Caller,
   dryRun: boolean,
   idempotencyKey: string | undefined,
 ): Promise<OperationDto> {
   const target = rotateTarget(dryRun);
-  const again = await replay(ctx, auth, 'idp.scim_rotate', idempotencyKey, target);
+  const again = await replay(ctx, caller, 'idp.scim_rotate', idempotencyKey, target);
   if (again) return again;
   needBinding(ctx);
-  await limited(ctx, auth);
-  return startIdpOp(ctx, auth, {
+  await limited(ctx, caller);
+  return startIdpOp(ctx, caller, {
     kind: 'idp.scim_rotate',
     target,
     idempotencyKey,

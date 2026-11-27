@@ -76,6 +76,26 @@ export async function matchesConnectionPass(
   return row !== null;
 }
 
+/**
+ * `matchesConnectionPass` and, in the same trip, the pass that replaced this one in an identity move (the first
+ * hop): the sync's checks of one pass share one read.
+ */
+export async function connectionPassState(
+  db: D1Database,
+  context: ConnectionPassContext,
+): Promise<{ matches: boolean; replacedBy: string | null }> {
+  if (!validConnectionPassContext(context)) return { matches: false, replacedBy: null };
+  const row = await first<{ matches: number; replacedBy: string | null }>(
+    db,
+    `SELECT (${connectionPassPredicate} AND (${connectionPassFences(context) || '1 = 1'})) AS matches,
+       (SELECT m.replaced_by FROM pass_moves m
+        WHERE m.old_pass_id = passes.id AND m.replaced_by IS NOT NULL LIMIT 1) AS replacedBy
+     FROM passes WHERE id = ?`,
+    [...connectionPassParams(context), context.passId],
+  );
+  return { matches: row?.matches === 1, replacedBy: row?.replacedBy ?? null };
+}
+
 /** Connections have no Test environment; their `mode` is only the scheduling strategy. */
 export async function connectionForPass(
   db: D1Database,

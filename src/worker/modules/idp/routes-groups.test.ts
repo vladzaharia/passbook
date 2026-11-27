@@ -61,7 +61,7 @@ describe('access', () => {
     await expectProblem(
       await h.call(BASE, { headers: (await makeApiKey(f())).headers }),
       403,
-      'PERSON_REQUIRED',
+      'MISSING_SCOPE',
     );
     expect((await h.call(BASE, { headers: admin.headers })).status).toBe(200);
     const link = await person(['admin', 'user'], 'magic_link');

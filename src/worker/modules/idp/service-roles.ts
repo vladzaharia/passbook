@@ -1,10 +1,10 @@
-import type { Context } from 'hono';
 import type { AccessView, GrantRole } from '../../../shared/contracts/idp-access.ts';
-import type { AppBindings } from '../../platform/context.ts';
-import { ConflictError, UnauthenticatedError } from '../../platform/errors.ts';
+import type { Actor } from '../../platform/actor.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { requireUser } from '../users/service.ts';
+import { auditActorOf, bindingActorOf, byUserOf } from './actor.ts';
 import { idpClient } from './client.ts';
 import { accessView } from './dto.ts';
 import { removedTarget } from './effects.ts';
@@ -13,17 +13,6 @@ import { isLiveAdmin } from './platform-admin.ts';
 import { insertGrant, liveGrantOf, revokeGrant } from './repo-role-grants.ts';
 import { statesOfUser } from './repo-state.ts';
 import type { WritableRole } from './types.ts';
-
-/** Who asked: a platform admin's session, or a platform key. Both land in the audit log. */
-export type Actor = { type: 'user' | 'api_key'; id: string };
-
-/** The audit actor of a call: the signed-in admin, or the platform key. */
-export function actorOf(c: Context<AppBindings>): Actor {
-  const auth = c.var.auth;
-  if (auth?.kind === 'session') return { type: 'user', id: auth.userId };
-  if (auth?.kind === 'api_key') return { type: 'api_key', id: auth.keyId };
-  throw new UnauthenticatedError();
-}
 
 const ADMIN_MESSAGE = 'Platform admins hold every role. Change it in Polaris ID.';
 
@@ -51,15 +40,25 @@ export async function setPlatformRole(
   const live = await liveGrantOf(db, userId, body.role);
   let changed = false;
   if (body.grant && !live) {
-    await insertGrant(db, { id: ctx.ids.id(), userId, role: body.role, grantedBy: actor.id, now });
+    await insertGrant(db, {
+      id: ctx.ids.id(),
+      userId,
+      role: body.role,
+      grantedBy: await byUserOf(db, actor),
+      now,
+    });
     changed = true;
   } else if (!body.grant && live) {
-    changed = await revokeGrant(db, { userId, role: body.role, by: actor.id, now });
+    changed = await revokeGrant(db, {
+      userId,
+      role: body.role,
+      by: await byUserOf(db, actor),
+      now,
+    });
   }
   if (changed)
     await recordAudit(ctx, {
-      actorType: actor.type,
-      actorId: actor.id,
+      ...auditActorOf(actor),
       action: body.grant ? 'idp.role_grant' : 'idp.role_revoke',
       targetType: 'user',
       targetId: userId,
@@ -90,15 +89,14 @@ export async function removeExternalRole(
     {
       ref: `external-${ctx.requestId ?? ctx.ids.id()}`,
       reason: 'remove_external',
-      actor: { kind: actor.type === 'user' ? 'user' : 'key', id: actor.id },
+      actor: bindingActorOf(actor),
       override: true,
     },
   );
   if (!result.dryRun && result.removed.includes(role)) {
     await removedTarget(ctx, { subject: found.subject, userId }, role, 'removed_anyway');
     await recordAudit(ctx, {
-      actorType: actor.type,
-      actorId: actor.id,
+      ...auditActorOf(actor),
       action: 'idp.remove_external',
       targetType: 'user',
       targetId: userId,

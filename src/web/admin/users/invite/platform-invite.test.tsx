@@ -75,6 +75,7 @@ describe('platform Invite wizard', () => {
                 expiresAt: 2,
                 acceptedAt: null,
                 revokedAt: null,
+                createdBy: { kind: 'user', id: 'u1', name: 'Ada Lovelace' },
                 link: 'https://wallet.test/invite#p_secret',
               },
               201,
