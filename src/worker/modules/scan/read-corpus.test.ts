@@ -119,7 +119,7 @@ describe('scan read corpus', () => {
       scanRead(
         env.DB,
         scanReadAuthority(actor, { now: clock.now() }),
-        'SELECT ao.org_id FROM actor_ok ao',
+        'SELECT ao.present FROM actor_ok ao',
       ).all();
     expect((await read()).results).toHaveLength(1);
     await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), s.id]);
@@ -136,7 +136,7 @@ describe('scan read corpus', () => {
     const strict = scanReadAuthority(paused, { now: clock.now() });
     const relaxed = scanReadAuthority(paused, { now: clock.now(), read: { pausedSession: true } });
     expect(relaxed.params.length).toBeGreaterThan(strict.params.length);
-    await scanRead(env.DB, relaxed, 'SELECT ao.org_id FROM actor_ok ao').all();
+    await scanRead(env.DB, relaxed, 'SELECT ao.present FROM actor_ok ao').all();
 
     const monitor: ScanActor = {
       ...actor,
@@ -153,8 +153,9 @@ describe('scan read corpus', () => {
   });
 
   it('a staffed session scanner reads what its scalar-form fence read, live and once revoked', async () => {
-    const { actor, other, templateId } = await maximal();
-    const auth = scanReadAuthority(actor, { now: clock.now(), event: other, templateId });
+    const { real } = await maximal();
+    const actor = real;
+    const auth = scanReadAuthority(actor, { now: clock.now() });
     const old = legacyOf(auth);
     const inner = { sql: 'EXISTS (SELECT 1 FROM passes p WHERE p.org_id = ao.org_id)', params: [] };
     const filter = { mode: 'live', limit: 5, orgId } as const;
