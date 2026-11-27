@@ -19,7 +19,6 @@ import {
   PageHeader,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { usePassList } from './api.ts';
 import { BulkRunCard } from './bulk-run-card.tsx';
 import { canChangePasses, filterSelection, leaveSelection } from './change/selection.ts';
 import { useCurrentBulkRun } from './find-api.ts';
@@ -27,6 +26,7 @@ import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
 import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
 import { orgIdsOf, PassFindToolbar } from './find-toolbar.tsx';
+import { usePassList } from './list-api.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { exportPassesCsv } from './list-export.ts';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
