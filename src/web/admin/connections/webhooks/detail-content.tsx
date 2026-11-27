@@ -151,7 +151,10 @@ export function EndpointDetail({
         actions={
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             {e.mode === 'test' ? (
-              <OpenInWorkbench tool="events" options={{ query: { tab: 'endpoints' }, hash: e.id }} />
+              <OpenInWorkbench
+                tool="events"
+                options={{ query: { tab: 'endpoints' }, hash: e.id }}
+              />
             ) : null}
             {canManage ? (
               <>
