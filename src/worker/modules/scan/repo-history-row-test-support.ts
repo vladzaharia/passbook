@@ -1,4 +1,4 @@
-import { tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import { type HistoryRow, scanReferenceOf } from './history-row.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import type { ScanReadAuthority } from './repo-read-authority.ts';
@@ -6,12 +6,20 @@ import { loadManifests, type ManifestCache, manifestCacheKey } from './repo-temp
 
 /** Test-only: a fence that holds for one org in live mode, so a page statement runs without a session. */
 export function testFence(orgId: string, mode: 'live' | 'test' = 'live'): ScanReadAuthority {
+  // Only its SQL fragments are used (the join, the tenant); the CTEs below are the test's own.
+  const predicate = authorityPredicate(
+    { kind: 'scanner', scannerId: 'test', credentialEpoch: 0 },
+    { scope: 'org_mode', now: 0 },
+  );
   return {
     ctes: `actor AS MATERIALIZED (SELECT ? AS org_id, ? AS mode),
-      actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
+      actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
     params: [orgId, mode],
-    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
-    tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+    rows: predicate.rows,
+    anchor: predicate.anchor,
+    present: predicate.ok,
+    platform: predicate.platform,
+    tenantOnce: (alias, table) => predicate.tenant(alias, table, 'org_mode'),
   };
 }
 

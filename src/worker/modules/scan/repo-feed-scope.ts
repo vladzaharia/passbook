@@ -113,7 +113,7 @@ const scopedReferenceSql = (scan: 's' | 'cs', ref: ScopedReference) => `EXISTS (
 )`;
 /**
  * The filter conditions over `s`, without the tenant: the org and mode come from the fence of the
- * statement (`auth.tenant`), never from the request. A scanner, staff, event or pass filter rides
+ * statement (`auth.tenantOnce`), never from the request. A scanner, staff, event or pass filter rides
  * its own index; callers without an org narrow the mode with `+s.mode` so the planner keeps it.
  * Position continuation is the decoded `(at, id)` of a row of the same snapshot.
  */

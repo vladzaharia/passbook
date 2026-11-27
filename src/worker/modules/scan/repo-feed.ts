@@ -39,7 +39,7 @@ export interface ScanLogFilter {
  */
 function narrowTenant(f: ScanLogFilter, auth: ScanReadAuthority): string | undefined {
   return !f.orgId && (f.scannerId || f.staffId || f.eventId || f.passId)
-    ? auth.tenant('+s', 'scans')
+    ? auth.tenantOnce('+s', 'scans')
     : undefined;
 }
 
@@ -123,8 +123,8 @@ export async function countScanRows(
     scanRead(
       db,
       auth,
-      `SELECT count(*) AS n FROM (SELECT 1 FROM scans s
-        WHERE ${auth.ok} AND ${narrowTenant(f, auth) ?? auth.tenant('s', 'scans')} AND ${w.sql} LIMIT ?)`,
+      `SELECT count(*) AS n FROM (SELECT 1 FROM ${auth.rows}scans s
+        WHERE ${auth.present} AND ${narrowTenant(f, auth) ?? auth.tenantOnce('s', 'scans')} AND ${w.sql} LIMIT ?)`,
       [...w.params, cap + 1],
     ),
   ]);

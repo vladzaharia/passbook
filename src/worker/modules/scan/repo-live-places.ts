@@ -13,9 +13,8 @@ export function livePlaceEventStmt(
   return scanRead(
     db,
     auth,
-    `SELECT e.name, e.capacity, e.reentry FROM scan_events e
-      WHERE e.id=? AND e.org_id=? AND e.mode=? AND e.archived_at IS NULL
-        AND ${auth.ok}`,
+    `SELECT e.name, e.capacity, e.reentry FROM ${auth.rows}scan_events e
+      WHERE e.id=? AND e.org_id=? AND e.mode=? AND e.archived_at IS NULL`,
     [eventId, orgId, mode],
   );
 }
