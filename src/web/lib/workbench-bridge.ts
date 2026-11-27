@@ -1,6 +1,6 @@
 import { useRouter, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
+import { BRIDGE_AREA } from '@/shared/copy/workbench-bridge.ts';
 import {
   safeReturn,
   type WbPathOptions,
@@ -104,7 +104,7 @@ function fromReferrer(): string | null {
 /** The chip's words: the Workbench tool the person came from, else "Workbench". */
 export function bridgeLabel(back: string): string {
   const tool = wbToolOf(back);
-  return tool ? WB_AREA[tool].title : 'Workbench';
+  return tool ? BRIDGE_AREA[tool].title : 'Workbench';
 }
 
 /**

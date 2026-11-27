@@ -1,6 +1,5 @@
 import { Wrench } from 'lucide-react';
-import { BRIDGE_COPY } from '@/shared/copy/workbench-bridge.ts';
-import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
+import { BRIDGE_AREA, BRIDGE_COPY } from '@/shared/copy/workbench-bridge.ts';
 import { SANDBOX_ONLY, WB_TOOLS, type WbPathOptions, type WbTool } from '@/shared/workbench.ts';
 import type { CommandItem } from '../command-palette.tsx';
 
@@ -13,7 +12,7 @@ export function workbenchItems(
 ): CommandItem[] {
   return WB_TOOLS.filter((t) => sandbox || !SANDBOX_ONLY.has(t)).map((t) => ({
     id: `${PREFIX}${t}`,
-    label: `${BRIDGE_COPY.open}: ${WB_AREA[t].title}`,
+    label: `${BRIDGE_COPY.open}: ${BRIDGE_AREA[t].title}`,
     icon: Wrench,
     hint: BRIDGE_COPY.test,
     onSelect: () => window.location.assign(href(t)),
@@ -23,5 +22,5 @@ export function workbenchItems(
 /** Words an item answers to besides its label. */
 export const workbenchWords = (item: CommandItem): string[] => [
   'workbench',
-  ...(WB_AREA[item.id.slice(PREFIX.length) as WbTool]?.keywords ?? []),
+  ...(BRIDGE_AREA[item.id.slice(PREFIX.length) as WbTool]?.keywords ?? []),
 ];
