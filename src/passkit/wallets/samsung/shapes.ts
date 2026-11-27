@@ -58,6 +58,7 @@ export const NOTIFICATION_STATES = [
   'DELETED',
   'SUSPENDED',
   'MIGRATED',
+  'CANCELED', // [U] section 5 and our sender use it; the S-api states table omits it
 ] as const;
 
 const attributes = (type: keyof typeof REQUIRED) =>

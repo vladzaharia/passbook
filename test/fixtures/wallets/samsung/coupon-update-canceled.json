@@ -1,0 +1,25 @@
+{
+  "provenance": "doc-shape",
+  "note": "Doc-shape, not recorded from Samsung: built from the documented response shapes in docs/design/wallet-providers/samsung-wallet.md (S-card attribute tables, S-api Get Card Data, Update Notification and Send Card State). Real recordings are owner-held (journey 20) and replace this file by name. Source: S-api Update Notification, POST /{cc2}/wltex/cards/{cardId}/updates, 200/204 empty body.",
+  "name": "coupon-update-canceled",
+  "request": {
+    "method": "POST",
+    "path": "/US/wltex/cards/<card-id>/updates",
+    "body": {
+      "card": {
+        "type": "coupon",
+        "data": [
+          {
+            "refId": "<ref-1>",
+            "state": "CANCELED"
+          }
+        ]
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": ""
+  }
+}

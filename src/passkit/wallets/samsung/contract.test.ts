@@ -98,9 +98,9 @@ describe('shape checks reject what Samsung rejects', () => {
     expect(updateNotification.safeParse(migrated).success).toBe(true);
   });
 
-  it('rejects CANCELED in an Update Notification, which section 4 does not list', () => {
+  it('accepts CANCELED in an Update Notification, used for a per-card void', () => {
     const body = { card: { type: 'loyalty', data: [{ refId: 'r', state: 'CANCELED' }] } };
-    expect(updateNotification.safeParse(body).success).toBe(false);
+    expect(updateNotification.safeParse(body).success).toBe(true);
   });
 
   it('rejects an Update Notification state Samsung does not list', () => {
@@ -118,7 +118,7 @@ describe('fixtures', () => {
         all.some((f) => f.name === `${type}-get-card-data`),
         type,
       ).toBe(true);
-      for (const state of ['updated', 'active', 'expired', 'deleted'])
+      for (const state of ['updated', 'active', 'expired', 'deleted', 'canceled'])
         expect(
           all.some((f) => f.name === `${type}-update-${state}`),
           `${type} ${state}`,
