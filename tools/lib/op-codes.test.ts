@@ -9,6 +9,12 @@ const read = <T>(file: string): T =>
 const table = read<Record<string, string[]>>('docs/api/operation-codes.json');
 
 describe('operation codes', () => {
+  it('drops the codes under an @absorbs function and keeps the ones its tag names', () => {
+    const make = table[routeKey('developer', 'post', '/')] ?? [];
+    expect(make).toContain('DEVICE_PASS_IDENTITY_NOT_READY');
+    expect(make).not.toContain('IDENTITY_RETIRED');
+  });
+
   it('lists what a handler reaches, not what its module throws', () => {
     const codes = table[routeKey('templates', 'get', '/{id}/input-schema')] ?? [];
     expect(codes).toContain('TEMPLATE_NOT_FOUND');

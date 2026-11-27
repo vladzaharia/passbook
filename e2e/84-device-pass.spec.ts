@@ -350,6 +350,10 @@ test('Device pass in the Workbench: make, QR, phones, void, add again, blocked',
   await expect(dialog.getByText(/\d of 5 on phones/)).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(dialog.getByRole('img', { name: /QR code to add/ })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(dialog.getByRole('img', { name: /QR code to add/ })).toBeHidden();
+  await expect(dialog.getByRole('link', { name: 'Open on this phone' })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
   shots += await axeShots(page, 'device-ui-qr');
   await page.setViewportSize({ width: 1440, height: 900 });
   await dialog.getByRole('button', { name: 'Done' }).click();

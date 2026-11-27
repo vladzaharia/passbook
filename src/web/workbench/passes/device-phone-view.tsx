@@ -90,7 +90,7 @@ export function DevicePhoneView({ passes }: { passes: readonly PassSummaryDto[] 
           <p className="text-sm text-fg-muted">{WB_PASSES.phone.empty}</p>
         ) : (
           <ul className="flex min-w-0 flex-col gap-2">
-            {sources.slice(0, 12).map((p) => (
+            {sources.map((p) => (
               <li
                 key={p.id}
                 className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-surface-raised p-3"
@@ -215,7 +215,10 @@ export function DevicePhoneView({ passes }: { passes: readonly PassSummaryDto[] 
       </section>
       {shown ? (
         <DevicePassDialog
-          pass={shown.pass}
+          pass={{
+            ...shown.pass,
+            state: items.find((i) => i.id === shown.pass.id)?.state ?? shown.pass.state,
+          }}
           title={shown.title}
           active={active}
           limit={limit}

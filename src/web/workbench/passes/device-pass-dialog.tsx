@@ -61,7 +61,7 @@ export function DevicePassDialog({
         <div className="flex min-w-0 flex-col items-center gap-4">
           {live ? (
             <>
-              <span className="wb-device-qr max-sm:hidden">
+              <span className="wb-device-qr">
                 <QrTile value={link} alt={D.qrAlt(title)} />
                 <i aria-hidden className="wb-device-sweep" />
               </span>

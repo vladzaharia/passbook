@@ -101,6 +101,12 @@
   background: var(--pk-accent);
   opacity: 0;
 }
+/* Below 640 px the phone in hand is the phone: Open on this phone replaces the QR. */
+@media (max-width: 639px) {
+  .wb-device-qr {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   .wb-device-sweep {
     animation: wb-device-sweep 1.1s var(--wl-ease-move, ease-out) 0.3s 1 both;
