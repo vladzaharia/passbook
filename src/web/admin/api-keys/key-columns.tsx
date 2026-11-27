@@ -75,6 +75,9 @@ export function keyColumns({
                     {isOwn?.(k) ? 'Sandbox key' : k.parentKeyId ? 'Child' : 'Personal'}
                   </span>
                 )}
+                {k.origin === 'cli' ? (
+                  <span className="shrink-0 text-xs font-normal text-fg-muted">CLI</span>
+                ) : null}
               </span>
               <code className="block truncate font-mono text-xs text-fg-muted">{keyPrefix(k)}</code>
               {k.kind === 'platform' &&

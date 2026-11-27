@@ -1,0 +1,27 @@
+{
+  "wallet-health.getOrgsByOrgIdWalletHealth": {
+    "description": "The health of each wallet open to the organization in the key's mode: the last update the provider accepted, updates queued, failed in the last 24 hours and with an unknown outcome, and the provider's last report. A wallet that is not released, not in the plan or not enrolled is left out. A key needs wallet:read.",
+    "response": {
+      "items": [
+        {
+          "provider": "google",
+          "mode": "live",
+          "tone": "attention",
+          "lastSuccessAt": 1795571880000,
+          "queued": 2,
+          "failed24h": 0,
+          "uncertain": 4,
+          "uncertainWaiting": 1,
+          "callbackAt": 1795568400000
+        }
+      ]
+    }
+  },
+  "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck": {
+    "description": "Sends a wallet's updates with an unknown outcome to settle, once they are past the 10 minute window; those still inside it settle by themselves. Answers how many were sent (at most 50) and how many are still waiting. A key needs passes:write; ten calls an hour per wallet.",
+    "response": {
+      "due": 3,
+      "waiting": 1
+    }
+  }
+}

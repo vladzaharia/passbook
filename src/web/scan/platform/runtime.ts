@@ -7,7 +7,6 @@ import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { tagsPortOf } from '../assign/tags-port.ts';
 import { createCamera } from '../camera/controller.ts';
 import { createBus } from '../input/bus.ts';
-import { connectNativeReader } from '../input/native-reader.ts';
 import type { RawRead } from '../input/types.ts';
 import { createWebNfcSource } from '../input/web-nfc-source.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
@@ -29,7 +28,7 @@ import { draftPortOf } from './draft-port.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
 import { openLocalStores } from './local-stores.ts';
-import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
+import { createNativeRuntime } from './native-runtime.ts';
 import { connectOffline } from './offline-runtime.ts';
 import { createWakeLock } from './wake-lock.ts';
 
@@ -82,11 +81,8 @@ export async function createRuntime(
   const fields = new WedgeFields();
   const webNfc = createWebNfcSource();
   const tagEnded = new Set<(why: 'cancelled' | 'timeout') => void>();
-  let tagReading = false;
   const pin = createDirectionPin(clock);
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
-  let native: ReturnType<typeof connectNativeReader> = null;
-  let vasFallbackNoticeShown = false;
   const wakeLock = createWakeLock(notice);
   const camera = createCamera(
     video,
@@ -156,41 +152,20 @@ export async function createRuntime(
       if (current.started) camera.start();
     }
   };
-  native = connectNativeReader({
-    read(read) {
-      if (!held && idle()) notice('Not scanning right now. Resume, then scan again.', false);
-      return emit(read);
-    },
-    cancelled(id) {
-      const l = store.getSnapshot().state.loop;
-      if ((l.s === 'checking' || l.s === 'applying') && l.input.id === id)
-        store.dispatch({ type: 'fail', key: l.key, error: 'timeout' });
-    },
-    unsupported: () => notice('Wallet pass verification is unavailable. Scan the barcode.', false),
-    tagEnded(why) {
-      for (const listener of tagEnded) listener(why);
-    },
-    capabilities(value) {
-      void setNativeCapabilities(value).then(() => {
-        // Android reads tags continuously: ask for them with every start from now on.
-        const nfc = getNativeCapabilities()?.nfc;
-        const wants = nfc?.continuous === true && nfc.formats.includes('tag-uid');
-        if (wants !== tagReading) {
-          tagReading = wants;
-          native?.setTagReading(wants);
-          const { started, block } = store.getSnapshot().state;
-          if (started && !block && !document.hidden) native?.start();
-        }
-        const vasOff = getNativeCapabilities()?.vas.available === false;
-        if (!vasFallbackNoticeShown && scanner?.settings.reader === 'nfc' && vasOff) {
-          notice('Wallet pass verification is unavailable. Scan the barcode.', false);
-          vasFallbackNoticeShown = true;
-        }
-        syncCameraMode();
-      });
-    },
+  const nativeRuntime = createNativeRuntime({
+    session: () => session,
+    dispatch: (read) => bus.emit(read),
+    now: () => clock.now(),
+    held: () => held,
+    idle: () => Boolean(idle()),
+    notice,
+    snapshot: store.getSnapshot,
+    nfcReader: () => scanner?.settings.reader === 'nfc',
+    syncCameraMode,
+    tagEnded,
+    fail: (key) => store.dispatch({ type: 'fail', key, error: 'timeout' }),
   });
-  native?.customerBranding(customerBrandingOf(session));
+  const native = nativeRuntime.native;
   const stopWedge = createWedgeSource({
     clock,
     fields,
@@ -240,29 +215,8 @@ export async function createRuntime(
       s.camera === 'starting' && decodeActive({ ...s, camera: 'live' }, !document.hidden);
     if (warming || decodeActive(s, !document.hidden)) camera.resume();
     else camera.pause();
-    if (s.loop.s === 'checking' || s.loop.s === 'applying')
-      native?.customerStatus('checking', s.loop.input.id);
-    if (s.loop.s === 'verdict') {
-      const outcome =
-        !s.loop.outcome.local && s.loop.outcome.kind === 'ok'
-          ? 'accepted'
-          : s.loop.outcome.kind === 'refused'
-            ? 'rejected'
-            : 'error';
-      native?.result(s.loop.input.id, outcome);
-      const displayStatus =
-        outcome === 'error'
-          ? 'failed'
-          : outcome === 'accepted' && s.loop.outcome.checkIn?.direction === 'out'
-            ? 'checkedOut'
-            : outcome;
-      native?.customerStatus(displayStatus, s.loop.input.id);
-    }
-    if (s.loop.s === 'ready' || s.loop.s === 'paused') native?.customerStatus('ready');
-    if (s.block) {
-      camera.stop();
-      native?.stop();
-    }
+    if (s.block) camera.stop();
+    nativeRuntime.sync(s);
   });
   return {
     store,
@@ -315,7 +269,7 @@ export async function createRuntime(
       offline?.dispose();
       stopWedge();
       stopWebNfc();
-      native?.dispose();
+      nativeRuntime.dispose();
       camera.stop();
       wakeLock.release();
       store.dispose();

@@ -2,6 +2,7 @@ import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { all, chunk, first, placeholders, prefixMatch, run } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
+import { PUBLIC_AUDIT_SQL } from '../../platform/repo-audit-public.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { UserRow } from '../auth/repo.ts';
 
@@ -144,16 +145,13 @@ export async function ownedPassCount(db: Db, userId: string, viewerId: string): 
   return row?.n ?? 0;
 }
 
-const PUBLIC_ORG =
-  'AND (org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))';
-
 /** `excludePersonal`: a Platform key never sees a personal org's rows. */
 export const recentAudit = (db: Db, userId: string, excludePersonal = false) =>
   all<{ id: number; at: number; action: string; actor_type: string; actor_id: string | null }>(
     db,
     `SELECT id, at, action, actor_type, actor_id FROM audit_log
      WHERE target_type = 'user' AND target_id = ?
-       ${excludePersonal ? PUBLIC_ORG : ''}
+       ${excludePersonal ? `AND ${PUBLIC_AUDIT_SQL}` : ''}
      ORDER BY at DESC, id DESC LIMIT 20`,
     [userId],
   );

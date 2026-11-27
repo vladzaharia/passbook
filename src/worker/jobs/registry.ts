@@ -21,6 +21,7 @@ import {
   handleGoogleKeyRotate,
 } from '../modules/wallet-providers/google-managed-job.ts';
 import { handleGoogleReconcile } from '../modules/wallet-providers/google-reconcile-job.ts';
+import { handleUncertainRecheck } from '../modules/wallet-providers/health-job.ts';
 import { handleProjectionSystem } from '../modules/wallet-providers/projection-system-job.ts';
 import { handleWalletReissue } from '../modules/wallet-providers/wallet-reissue.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
@@ -47,6 +48,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.google_issuer': handleGoogleIssuer,
   'wallet.google_key_rotate': handleGoogleKeyRotate,
   'wallet.credential_check': handleCredentialCheck,
+  'wallet.uncertain_recheck': handleUncertainRecheck,
   'wallet.google_art': handleGoogleArt,
   'wallet.google_reconcile': handleGoogleReconcile,
   'wallet.reissue': handleWalletReissue,
@@ -92,6 +94,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'wallet.google_issuer':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.google_key_rotate':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.uncertain_recheck':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.credential_check':
       return JOB_HANDLERS[job.kind](job, ctx);
