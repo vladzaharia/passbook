@@ -69,7 +69,7 @@ export const CliTokenSchema = z.object({
   tokenId: IdSchema,
   orgId: IdSchema,
   context: z.object({ kind: z.enum(['sandbox', 'org']), name: z.string() }),
-  account: z.object({ name: z.string(), email: z.string() }),
+  account: z.object({ id: IdSchema, name: z.string(), email: z.string() }),
   expiresAt: TimestampSchema,
   origin: z.string().url().describe('The origin that issued it; send it there only.'),
 });

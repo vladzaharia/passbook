@@ -1,12 +1,20 @@
 # @passbook/cli
 
 ```sh
-export PASSBOOK_KEY=pbp_test_...
+npx @passbook/cli login
 npx @passbook/cli listen --forward-to localhost:3000/hooks
 npx @passbook/cli types <templateId> > passbook-types.ts
 ```
 
-Needs Node 20+ and a `pbp_test_` key. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
+Needs Node 20+ and a sign-in (`login`) or a `pbp_test_` key in `PASSBOOK_KEY`, which wins. `PASSBOOK_BASE_URL` overrides `https://passbook.mobile`.
+
+## login, logout, open
+
+`login` prints a code and opens `/workbench/cli`. Type the code there, check the account, where it started and the context, then approve. It keeps a `pbcli_test_` token for 30 days (7 days idle): Test data of your sandbox or one org, never Live, and it cannot make keys. `--switch` signs in as another account; `--no-browser` only prints. `logout` ends the token and forgets it.
+
+The token is kept in the OS keychain (macOS Keychain, libsecret), else in `~/.config/passbook/credentials.json` (mode 0600). It is sent only to the origin that issued it, never printed, and `PASSBOOK_BASE_URL` set to another host gets none.
+
+`open [id|tool]` opens the Workbench in your browser's own session: `passbook open logs`, or a pasted id. The URL carries no token or code.
 
 ## listen
 

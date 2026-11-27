@@ -23,6 +23,7 @@ CREATE TABLE cli_sessions (
   org_id TEXT REFERENCES orgs (id) ON DELETE CASCADE,
   approved_at INTEGER,
   approve_country TEXT,
+  mismatch_at INTEGER,
   token_id TEXT REFERENCES api_keys (id) ON DELETE SET NULL,
   consumed_at INTEGER,
   token_revoked_at INTEGER,

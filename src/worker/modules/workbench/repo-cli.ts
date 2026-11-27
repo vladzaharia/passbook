@@ -18,6 +18,7 @@ export interface CliSessionRow {
   user_id: string | null;
   org_id: string | null;
   approved_at: number | null;
+  mismatch_at: number | null;
   token_id: string | null;
   consumed_at: number | null;
   token_revoked_at: number | null;
@@ -220,3 +221,10 @@ export async function ownsCliToken(db: D1Database, id: string, userId: string): 
   );
   return row !== null;
 }
+
+/** Notes that another account tried to approve: the polling device is told. */
+export const markMismatch = (db: D1Database, id: string, now: number) =>
+  run(db, 'UPDATE cli_sessions SET mismatch_at = ? WHERE id = ? AND mismatch_at IS NULL', [
+    now,
+    id,
+  ]);

@@ -38,6 +38,7 @@ export async function approveCliSession(
   if (!row)
     throw new NotFoundError('No such code. Check it against your terminal.', 'CLI_CODE_NOT_FOUND');
   if (row.account_hint !== null && row.account_hint !== session.userId) {
+    await repo.markMismatch(ctx.env.DB, id, now);
     await recordAudit(ctx, {
       orgId: target.org_id,
       actorType: 'user',

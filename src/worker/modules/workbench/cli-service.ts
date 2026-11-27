@@ -6,6 +6,7 @@ import {
   normalizeCliCode,
 } from '../../../shared/contracts/cli.ts';
 import {
+  CLI_ACCOUNT_MISMATCH_COPY,
   CLI_AUTH_PENDING_COPY,
   CLI_BUSY_COPY,
   CLI_CODE_DENIED_COPY,
@@ -15,7 +16,12 @@ import {
 } from '../../../shared/copy/cli.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { BadRequestError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  UnavailableError,
+} from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -35,6 +41,7 @@ export interface CliMeta {
 
 const expired = () => new BadRequestError(CLI_CODE_EXPIRED_COPY, 'CLI_CODE_EXPIRED');
 const denied = () => new BadRequestError(CLI_CODE_DENIED_COPY, 'CLI_CODE_DENIED');
+const accountMismatch = () => new ConflictError(CLI_ACCOUNT_MISMATCH_COPY, 'CLI_ACCOUNT_MISMATCH');
 const pending = () => new BadRequestError(CLI_AUTH_PENDING_COPY, 'CLI_AUTH_PENDING');
 const slowDown = () => new BadRequestError(CLI_SLOW_DOWN_COPY, 'CLI_SLOW_DOWN');
 const notFound = () => new NotFoundError(CLI_CODE_NOT_FOUND_COPY, 'CLI_CODE_NOT_FOUND');
@@ -151,6 +158,8 @@ export async function pollCliSession(ctx: ServiceContext, deviceCode: string): P
   if (row.state === 'denied') throw denied();
   if (row.state === 'pending' || row.token_id === null) {
     if (row.expires_at <= now) throw expired();
+    // An account other than the one the CLI asked for tried to approve: the CLI is told, once it polls.
+    if (row.mismatch_at !== null) throw accountMismatch();
     const tooFast = row.last_poll_at !== null && now - row.last_poll_at < row.interval_s * 1000;
     await repo.notePoll(ctx.env.DB, row.id, now, tooFast);
     throw tooFast ? slowDown() : pending();
@@ -175,7 +184,7 @@ export async function pollCliSession(ctx: ServiceContext, deviceCode: string): P
     tokenId: won.token_id,
     orgId: won.org_id,
     context: { kind: org.kind === 'developer' ? 'sandbox' : 'org', name: org.name },
-    account: { name: user.name ?? user.primary_email, email: user.primary_email },
+    account: { id: user.id, name: user.name ?? user.primary_email, email: user.primary_email },
     expiresAt: key.expires_at ?? now,
     origin: new URL(baseUrl(ctx.env)).origin,
   };

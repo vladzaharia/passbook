@@ -198,6 +198,8 @@ describe('L23: account hint', () => {
     expect(
       await first(t.db, "SELECT 1 FROM audit_log WHERE action = 'cli_session.account_mismatch'"),
     ).not.toBeNull();
+    // The device is told when it polls, and the right account can still approve.
+    await expectProblem(await t.poll(s.deviceCode, s.ip), 409, 'CLI_ACCOUNT_MISMATCH');
     expect((await t.approve(owner.browser, found.id, owner.orgId, s.ip)).status).toBe(200);
   });
 });
