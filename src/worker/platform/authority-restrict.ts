@@ -67,13 +67,8 @@ export const TEMPLATE_REFS: Readonly<Record<string, TemplateRef>> = {
   webhook_attempts: { all: [ofEndpoint, { ...ofEvent, nullable: true }] },
 };
 
-/** Where the limited key's id is read: the grant row `g` (or `k` in an upsert's conflict test), the actor row `a`, or the read predicate's `actor_ok` row `ao` (or, in the deprecated scalar form, its scalar subquery). */
-export type KeyRef =
-  | 'g.limit_key'
-  | 'k.limit_key'
-  | 'a.limit_key'
-  | 'ao.limit_key'
-  | '(SELECT limit_key FROM actor_ok)';
+/** Where the limited key's id is read: the grant row `g` (or `k` in an upsert's conflict test), the actor row `a`, or the read predicate's `actor_ok` row `ao`. */
+export type KeyRef = 'g.limit_key' | 'k.limit_key' | 'a.limit_key' | 'ao.limit_key';
 
 const allowed = (key: KeyRef) => `(SELECT id FROM key_templates WHERE key_id=${key})`;
 

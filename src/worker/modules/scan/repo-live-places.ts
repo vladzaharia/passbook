@@ -14,7 +14,8 @@ export function livePlaceEventStmt(
     db,
     auth,
     `SELECT e.name, e.capacity, e.reentry FROM ${auth.rows}scan_events e
-      WHERE e.id=? AND e.org_id=? AND e.mode=? AND e.archived_at IS NULL`,
+      WHERE ${auth.present} AND ${auth.tenantOnce('e', 'scan_events')}
+        AND e.id=? AND e.org_id=? AND e.mode=? AND e.archived_at IS NULL`,
     [eventId, orgId, mode],
   );
 }
