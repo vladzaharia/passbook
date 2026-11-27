@@ -142715,7 +142715,6 @@
         },
         "operationId": "webhooks.postWebhookEndpointsByIdCapturesSecret",
         "x-workbench": "test",
-        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "revealSecret"
