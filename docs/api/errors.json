@@ -988,6 +988,78 @@
       ]
     },
     {
+      "code": "CLI_ACCOUNT_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_AUTH_PENDING",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_BUSY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_DENIED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_EXPIRED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_SLOW_DOWN",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_TOKEN_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "CONFLICT",
       "statuses": [
         409

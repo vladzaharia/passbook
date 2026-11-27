@@ -317,7 +317,7 @@ describe('L26: a CLI token stops', () => {
 
 describe('L27: redaction', () => {
   it('hides pbcli_ values and the code keys in logs', () => {
-    expect(redactString('Bearer pbcli_test_abcdefgh_' + 'x'.repeat(43))).not.toContain(
+    expect(redactString(`Bearer pbcli_test_abcdefgh_${'x'.repeat(43)}`)).not.toContain(
       'pbcli_test',
     );
     expect(redactString('x pbcli_test_abcdefgh_yyyy z')).toBe('x pbcli_[redacted] z');

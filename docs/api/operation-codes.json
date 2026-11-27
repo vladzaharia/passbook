@@ -719,6 +719,58 @@
     "UNAUTHENTICATED",
     "WORKBENCH_TEST_ONLY"
   ],
+  "cli delete /tokens/{id}": [
+    "NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "cli post /cli-tokens/revoke": [
+    "UNAUTHENTICATED"
+  ],
+  "cli post /sessions": [],
+  "cli post /sessions/lookup": [
+    "CLI_CODE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "cli post /sessions/token": [
+    "CLI_AUTH_PENDING",
+    "CLI_CODE_DENIED",
+    "CLI_CODE_EXPIRED",
+    "CLI_SLOW_DOWN"
+  ],
+  "cli post /sessions/{id}/approve": [
+    "API_KEY_CHILD_CANNOT_MINT",
+    "API_KEY_CHILD_WIDER",
+    "API_KEY_CREDENTIAL_LIVE_ORG",
+    "API_KEY_EXPIRY_REQUIRED",
+    "API_KEY_EXPIRY_TOO_LONG",
+    "API_KEY_PARENT_RETIRING",
+    "API_KEY_PLATFORM_LIVE",
+    "API_KEY_PLATFORM_SCOPES_ALONE",
+    "API_KEY_PLATFORM_SCOPE_KIND",
+    "API_KEY_RESTRICTION_UNSUPPORTED",
+    "API_KEY_SCAN_ORG_REQUIRED",
+    "API_KEY_SCOPE_EXCEEDS_CREATOR",
+    "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+    "API_KEY_TERMINALS_REQUIRED",
+    "API_KEY_TERMINALS_UNUSED",
+    "CLI_ACCOUNT_MISMATCH",
+    "CLI_CODE_NOT_FOUND",
+    "CONSOLE_ACCESS_REQUIRED",
+    "DEVELOPER_ACCESS_REQUIRED",
+    "EXPIRY_PAST",
+    "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION",
+    "WORKBENCH_TEST_ONLY"
+  ],
+  "cli post /sessions/{id}/deny": [
+    "CLI_CODE_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "connections delete /uploads/{fileId}": [
     "ACTOR_CHANGED",
     "AUTHORITY_DENIED",

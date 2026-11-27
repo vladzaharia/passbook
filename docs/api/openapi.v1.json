@@ -10890,6 +10890,14 @@
                     "maxLength": 64,
                     "default": null
                   },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "app",
+                      "cli"
+                    ],
+                    "default": "app"
+                  },
                   "secret": {
                     "type": "string"
                   }
@@ -11125,6 +11133,14 @@
                     "minLength": 1,
                     "maxLength": 64,
                     "default": null
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "app",
+                      "cli"
+                    ],
+                    "default": "app"
                   }
                 },
                 "required": [
@@ -11359,6 +11375,14 @@
                 "minLength": 1,
                 "maxLength": 64,
                 "default": null
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "app",
+                  "cli"
+                ],
+                "default": "app"
               }
             },
             "required": [
@@ -11597,6 +11621,14 @@
             "minLength": 1,
             "maxLength": 64,
             "default": null
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app",
+              "cli"
+            ],
+            "default": "app"
           },
           "lastIpPrefix": {
             "type": [
@@ -12012,6 +12044,14 @@
             "minLength": 1,
             "maxLength": 64,
             "default": null
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app",
+              "cli"
+            ],
+            "default": "app"
           },
           "secret": {
             "type": "string"
@@ -71695,6 +71735,14 @@
                   "minLength": 1,
                   "maxLength": 64,
                   "default": null
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": [
+                    "app",
+                    "cli"
+                  ],
+                  "default": "app"
                 }
               },
               "required": [
@@ -97130,6 +97178,839 @@
         ]
       }
     },
+    "/api/v1/cli/sessions": {
+      "post": {
+        "summary": "Start a CLI sign-in: a device code, and the code the person types",
+        "operationId": "cli.postSessions",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "os": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "hostname": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "os"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "accountHint": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deviceCode": {
+                      "type": "string",
+                      "description": "Secret. Poll with it; never put it in a URL."
+                    },
+                    "userCode": {
+                      "type": "string",
+                      "description": "Shown as XXXX-XXXX. The person types it at verificationUri."
+                    },
+                    "verificationUri": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Absolute. Carries no code."
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    },
+                    "interval": {
+                      "type": "integer",
+                      "description": "Seconds between polls."
+                    }
+                  },
+                  "required": [
+                    "deviceCode",
+                    "userCode",
+                    "verificationUri",
+                    "expiresIn",
+                    "interval"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "create",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/lookup": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "What a typed code is: the device, where it started and the account approving",
+        "operationId": "cli.postSessionsLookup",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  }
+                },
+                "required": [
+                  "userCode"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "client": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "version": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "os": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "hostname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version",
+                        "os"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "startCountry": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startCity": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "mismatch": {
+                      "type": "boolean",
+                      "description": "The approving network differs from the starting one."
+                    },
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "email"
+                      ]
+                    },
+                    "accountMismatch": {
+                      "type": "boolean",
+                      "description": "The device asked for another account."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "client",
+                    "startedAt",
+                    "startCountry",
+                    "startCity",
+                    "mismatch",
+                    "account",
+                    "accountMismatch"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "lookup",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-codes": [
+          "CLI_CODE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/{id}/approve": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Approve a CLI sign-in for one context: Test only, 30 days",
+        "operationId": "cli.postSessionsByIdApprove",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "orgId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "approve",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_CHILD_CANNOT_MINT",
+          "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_PARENT_RETIRING",
+          "API_KEY_PLATFORM_LIVE",
+          "API_KEY_PLATFORM_SCOPES_ALONE",
+          "API_KEY_PLATFORM_SCOPE_KIND",
+          "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCAN_ORG_REQUIRED",
+          "API_KEY_SCOPE_EXCEEDS_CREATOR",
+          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+          "API_KEY_TERMINALS_REQUIRED",
+          "API_KEY_TERMINALS_UNUSED",
+          "CLI_ACCOUNT_MISMATCH",
+          "CLI_CODE_NOT_FOUND",
+          "CONSOLE_ACCESS_REQUIRED",
+          "DEVELOPER_ACCESS_REQUIRED",
+          "EXPIRY_PAST",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/{id}/deny": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Deny a CLI sign-in",
+        "operationId": "cli.postSessionsByIdDeny",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "deny",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "CLI_CODE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/token": {
+      "post": {
+        "summary": "Poll a CLI sign-in with its device code: pending, or the token, once",
+        "operationId": "cli.postSessionsToken",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deviceCode": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "deviceCode"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "pbcli_test_…, shown once. Test only."
+                    },
+                    "tokenId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "context": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "sandbox",
+                            "org"
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "name"
+                      ]
+                    },
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "email"
+                      ]
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "origin": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "The origin that issued it; send it there only."
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "tokenId",
+                    "orgId",
+                    "context",
+                    "account",
+                    "expiresAt",
+                    "origin"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "poll",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "CLI_AUTH_PENDING",
+          "CLI_CODE_DENIED",
+          "CLI_CODE_EXPIRED",
+          "CLI_SLOW_DOWN",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/tokens/{id}": {
+      "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "holders:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "scans:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "logs:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Sign out: a CLI token ends itself (send it as the bearer); a person ends their own",
+        "operationId": "cli.deleteTokensById",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-workbench-cli": true,
+        "x-sdk": {
+          "resource": "cli.tokens",
+          "method": "revoke",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/cli-tokens/revoke": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Kill switch: end every CLI token, or those of one organization or person",
+        "operationId": "cli.postCliTokensRevoke",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "revoked"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.tokens",
+          "method": "revokeAll",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/resolve": {
       "get": {
         "summary": "What a pasted id is in your Test data: a request, a pass, an event, a key, or Live",
@@ -97228,6 +98109,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "workbench",
           "method": "resolve",
@@ -97945,6 +98827,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "requestLogs",
           "method": "list"
@@ -98072,6 +98955,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "requestLogs",
           "method": "retrieve"
@@ -113516,6 +114400,7 @@
         },
         "operationId": "templates.getTemplatesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "templates",
           "method": "retrieve"
@@ -114596,6 +115481,8 @@
           }
         },
         "operationId": "templates.getTemplatesByIdInputSchema",
+        "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "templates",
           "method": "retrieveInputSchema"
@@ -120859,6 +121746,7 @@
         },
         "operationId": "passes.getPasses",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "list"
@@ -121059,6 +121947,7 @@
         },
         "operationId": "passes.postPasses",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "create"
@@ -121913,6 +122802,7 @@
         },
         "operationId": "passes.getPassesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "retrieve"
@@ -122232,6 +123122,7 @@
         },
         "operationId": "passes.patchPassesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "update"
@@ -127589,6 +128480,7 @@
         },
         "operationId": "passes.postPassesByIdSimulate",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "simulate"
@@ -140923,6 +141815,7 @@
         },
         "operationId": "webhooks.postWebhookEndpointsCapture",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "ensureCapture"
@@ -141104,6 +141997,7 @@
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "list"
@@ -141208,6 +142102,7 @@
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "retrieve"
@@ -141411,6 +142306,7 @@
         },
         "operationId": "webhooks.postWebhookEndpointsByIdCapturesSecret",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "revealSecret"
@@ -142213,6 +143109,7 @@
         },
         "operationId": "events.getEvents",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "events",
           "method": "list"
@@ -142328,6 +143225,7 @@
         },
         "operationId": "events.getEventsById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "events",
           "method": "retrieve"

@@ -2816,5 +2816,47 @@
   "workbench.listRequestLogs": {
     "resource": "requestLogs",
     "method": "list"
+  },
+  "cli.postSessions": {
+    "resource": "cli.sessions",
+    "method": "create",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsLookup": {
+    "resource": "cli.sessions",
+    "method": "lookup",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdApprove": {
+    "resource": "cli.sessions",
+    "method": "approve",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdDeny": {
+    "resource": "cli.sessions",
+    "method": "deny",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsToken": {
+    "resource": "cli.sessions",
+    "method": "poll",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.deleteTokensById": {
+    "resource": "cli.tokens",
+    "method": "revoke",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postCliTokensRevoke": {
+    "resource": "cli.tokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
   }
 }

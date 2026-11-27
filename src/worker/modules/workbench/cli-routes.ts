@@ -12,12 +12,8 @@ import {
   StartCliSessionSchema,
 } from '../../../shared/contracts/cli.ts';
 import { IdParamSchema, OkSchema } from '../../../shared/contracts/common.ts';
-import { CLI_TOKEN_PREFIX } from '../../platform/api-key-token.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { apiKeyMissing, bearerOf, keyCaller } from '../../platform/auth.ts';
-import { resolveBearer } from '../../platform/auth-workbench.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { noteKeyRefused } from '../../platform/denied.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import {
@@ -185,29 +181,34 @@ register(
   },
 );
 
+/** Any scope a CLI token holds: it always holds at least one (a token is made with one or more). */
+const CLI_SCOPES = [
+  'passes:read',
+  'passes:write',
+  'holders:write',
+  'templates:read',
+  'webhooks:manage',
+  'scans:read',
+  'logs:read',
+] as const;
+
 register(
   cliRoutes,
   'cli',
   {
     method: 'delete',
     path: '/tokens/{id}',
-    summary: 'Sign out: a CLI token ends itself. Send it as the bearer.',
+    summary: 'Sign out: a CLI token ends itself (send it as the bearer); a person ends their own',
     operationId: 'cli.deleteTokensById',
-    public: true,
+    // The one `/cli` route a CLI token calls (CLI_LOGOUT_ROUTE): its own id, never another's.
+    auth: { scope: CLI_SCOPES },
     params: IdParamSchema,
     response: OkSchema,
   },
   async (c) => {
-    // The one `/cli` route a CLI token calls (CLI_LOGOUT_ROUTE): its own id, never another's.
-    const sent = bearerOf(c);
-    if (sent === null || sent === 'empty' || !sent.token.startsWith(CLI_TOKEN_PREFIX))
-      throw apiKeyMissing();
-    const key = await resolveBearer(c, sent.token, keyCaller(c), undefined);
-    if (key?.kind !== 'api_key' || key.via !== 'cli') {
-      noteKeyRefused(c, { code: 'INVALID_API_KEY', token: sent.token });
-      throw new UnauthenticatedError('The CLI token is invalid or expired.', 'INVALID_API_KEY');
-    }
-    await logoutCliToken(serviceContext(c), key, c.req.valid('param').id);
+    const auth = c.var.auth;
+    if (auth?.kind !== 'api_key' && auth?.kind !== 'session') throw new UnauthenticatedError();
+    await logoutCliToken(serviceContext(c), auth, c.req.valid('param').id);
     return c.json({ ok: true as const });
   },
 );

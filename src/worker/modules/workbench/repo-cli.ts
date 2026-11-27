@@ -210,3 +210,13 @@ export async function endCliTokensWhere(
   );
   return ended.length;
 }
+
+/** The token `id` was approved by this person. */
+export async function ownsCliToken(db: D1Database, id: string, userId: string): Promise<boolean> {
+  const row = await first<{ ok: number }>(
+    db,
+    'SELECT 1 AS ok FROM cli_sessions WHERE token_id = ? AND user_id = ?',
+    [id, userId],
+  );
+  return row !== null;
+}

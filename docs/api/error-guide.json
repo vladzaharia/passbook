@@ -4174,5 +4174,53 @@
     "when": "The account making the request is the one being disabled.",
     "fix": "Ask another platform admin.",
     "retryable": false
+  },
+  "CLI_AUTH_PENDING": {
+    "title": "CLI sign-in waiting",
+    "when": "The device code was polled before the person approved the sign-in.",
+    "fix": "Keep polling at the interval until approval, denial or expiry.",
+    "retryable": true
+  },
+  "CLI_SLOW_DOWN": {
+    "title": "CLI polling too fast",
+    "when": "The device code was polled sooner than its interval. The interval grows by 5 seconds each time.",
+    "fix": "Wait the interval the session reports, then poll again.",
+    "retryable": true
+  },
+  "CLI_CODE_DENIED": {
+    "title": "CLI sign-in denied",
+    "when": "The person denied the sign-in.",
+    "fix": "Run passbook login again if it was a mistake.",
+    "retryable": false
+  },
+  "CLI_CODE_EXPIRED": {
+    "title": "CLI code expired",
+    "when": "The device code is unknown, expired (10 minutes) or already used.",
+    "fix": "Run passbook login again.",
+    "retryable": false
+  },
+  "CLI_CODE_NOT_FOUND": {
+    "title": "No such CLI code",
+    "when": "The typed code is not a pending sign-in. A wrong, expired and used code answer alike.",
+    "fix": "Check the code against your terminal, then type it again.",
+    "retryable": false
+  },
+  "CLI_ACCOUNT_MISMATCH": {
+    "title": "Different account approved",
+    "when": "The CLI asked for another account than the one approving.",
+    "fix": "Sign in as the account the CLI used, or run passbook login --switch.",
+    "retryable": false
+  },
+  "CLI_TOKEN_NOT_ALLOWED": {
+    "title": "CLI sign-in cannot do this",
+    "when": "A pbcli_ token called a route outside its list: a key, credential or step-up route, or an operation the CLI never calls.",
+    "fix": "Use the Workbench for this, or a Test key from your server.",
+    "retryable": false
+  },
+  "CLI_BUSY": {
+    "title": "CLI sign-ins are busy",
+    "when": "Too many CLI sign-ins are waiting platform-wide.",
+    "fix": "Try passbook login again in a minute.",
+    "retryable": true
   }
 }

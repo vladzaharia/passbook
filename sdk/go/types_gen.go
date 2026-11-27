@@ -71,6 +71,7 @@ type ApiKeyDetail struct {
 	RateTier      *string        `json:"rateTier,omitempty"`
 	ParentKeyID   *string        `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string        `json:"rotatedFrom,omitempty"`
+	Origin        *string        `json:"origin,omitempty"`
 	LastIPPrefix  *string        `json:"lastIpPrefix"`
 	Parent        map[string]any `json:"parent"`
 	ReplacedBy    map[string]any `json:"replacedBy"`
@@ -100,6 +101,7 @@ type ApiKeyMinted struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        *string  `json:"secret,omitempty"`
 }
 
@@ -135,6 +137,7 @@ type ApiKeyRotationKey1 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        string   `json:"secret"`
 }
 
@@ -161,6 +164,7 @@ type ApiKeyRotationKey2 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeyRotationPrevious struct {
@@ -186,6 +190,7 @@ type ApiKeyRotationPrevious struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysActivityListQuery struct {
@@ -235,6 +240,7 @@ type ApiKeysListItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysListQuery struct {
@@ -273,6 +279,7 @@ type ApiKeysListResponseItemsItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysRetireBody = ApiKeysRetireParams

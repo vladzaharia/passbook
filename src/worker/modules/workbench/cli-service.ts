@@ -33,7 +33,10 @@ export interface CliMeta {
   city: string | null;
 }
 
-const gone = (code: string, copy: string) => new BadRequestError(copy, code);
+const expired = () => new BadRequestError(CLI_CODE_EXPIRED_COPY, 'CLI_CODE_EXPIRED');
+const denied = () => new BadRequestError(CLI_CODE_DENIED_COPY, 'CLI_CODE_DENIED');
+const pending = () => new BadRequestError(CLI_AUTH_PENDING_COPY, 'CLI_AUTH_PENDING');
+const slowDown = () => new BadRequestError(CLI_SLOW_DOWN_COPY, 'CLI_SLOW_DOWN');
 const notFound = () => new NotFoundError(CLI_CODE_NOT_FOUND_COPY, 'CLI_CODE_NOT_FOUND');
 
 /** `POST /cli/sessions`: a device code, and the code the person types. */
@@ -144,16 +147,13 @@ export async function denyCliSession(
 export async function pollCliSession(ctx: ServiceContext, deviceCode: string): Promise<CliToken> {
   const now = ctx.clock.now();
   const row = await repo.byDeviceHash(ctx.env.DB, await deviceCodeHash(deviceCode));
-  const expired = () => gone('CLI_CODE_EXPIRED', CLI_CODE_EXPIRED_COPY);
   if (!row || row.consumed_at !== null || row.token_revoked_at !== null) throw expired();
-  if (row.state === 'denied') throw gone('CLI_CODE_DENIED', CLI_CODE_DENIED_COPY);
+  if (row.state === 'denied') throw denied();
   if (row.state === 'pending' || row.token_id === null) {
     if (row.expires_at <= now) throw expired();
     const tooFast = row.last_poll_at !== null && now - row.last_poll_at < row.interval_s * 1000;
     await repo.notePoll(ctx.env.DB, row.id, now, tooFast);
-    throw tooFast
-      ? gone('CLI_SLOW_DOWN', CLI_SLOW_DOWN_COPY)
-      : gone('CLI_AUTH_PENDING', CLI_AUTH_PENDING_COPY);
+    throw tooFast ? slowDown() : pending();
   }
   // The one poll that sets `consumed_at` hands the token over; a racing poll finds it gone.
   const won = await repo.consumeCliSession(ctx.env.DB, row.id, now);

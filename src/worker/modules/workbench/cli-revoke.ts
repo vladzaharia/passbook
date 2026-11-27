@@ -1,26 +1,35 @@
-import type { ApiKeyAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { endCliToken } from '../api-keys/repo-cli.ts';
 import { recordAudit } from '../audit/service.ts';
 import * as repo from './repo-cli.ts';
 
-/** `DELETE /cli/tokens/{id}`: a token ends itself (`passbook logout`). Any other id is not found. */
+/**
+ * `DELETE /cli/tokens/{id}` (`passbook logout`): a token ends itself, and a person ends a token of their own.
+ * Any other id is not found.
+ */
 export async function logoutCliToken(
   ctx: ServiceContext,
-  auth: ApiKeyAuth,
+  auth: ApiKeyAuth | SessionAuth,
   id: string,
 ): Promise<void> {
-  if (auth.via !== 'cli' || auth.keyId !== id) throw new NotFoundError();
+  const byDevice = auth.kind === 'api_key';
+  if (
+    byDevice
+      ? auth.via !== 'cli' || auth.keyId !== id
+      : !(await repo.ownsCliToken(ctx.env.DB, id, auth.userId))
+  )
+    throw new NotFoundError();
   if (await endCliToken(ctx.env.DB, id, 'logout', ctx.clock.now()))
     await recordAudit(ctx, {
-      orgId: auth.orgId,
-      actorType: 'api_key',
-      actorId: id,
+      orgId: byDevice ? auth.orgId : null,
+      actorType: byDevice ? 'api_key' : 'user',
+      actorId: byDevice ? id : auth.userId,
       action: 'cli_token.revoked',
       targetType: 'api_key',
       targetId: id,
-      detail: { reason: 'logout', by: 'device' },
+      detail: { reason: 'logout', by: byDevice ? 'device' : 'person' },
     });
 }
 

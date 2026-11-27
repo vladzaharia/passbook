@@ -2367,6 +2367,7 @@ class ApiKeyDetail(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     lastIpPrefix: str | None
     parent: _Dict[str, _Any] | None
     replacedBy: _Dict[str, _Any] | None
@@ -2395,6 +2396,7 @@ class ApiKeyMinted(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str | None = None
 
 class ApiKeyRetired(_Model):
@@ -2427,6 +2429,7 @@ class ApiKeyRotationKey1(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str
 
 class ApiKeyRotationKey2(_Model):
@@ -2452,6 +2455,7 @@ class ApiKeyRotationKey2(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeyRotationPrevious(_Model):
     id: str
@@ -2476,6 +2480,7 @@ class ApiKeyRotationPrevious(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysCreateParams(_Model):
     orgId: str | None
@@ -2513,6 +2518,7 @@ class ApiKeysListItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysListResponse(_Model):
     items: _List[ApiKeysListResponseItemsItem]
@@ -2542,6 +2548,7 @@ class ApiKeysListResponseItemsItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysRetireParams(_Model):
     orgId: str | None
