@@ -41,6 +41,20 @@ describe('MoreMenu', () => {
     expect(pick).toHaveBeenCalledOnce();
   });
 
+  it('iconOnly keeps the name and drops the word', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MoreMenu iconOnly>
+        <DropdownMenuItem>Copy</DropdownMenuItem>
+      </MoreMenu>,
+    );
+    const more = screen.getByRole('button', { name: 'More' });
+    expect(more).toHaveTextContent('');
+    expect((await axe(container)).violations).toEqual([]);
+    await user.click(more);
+    expect(await screen.findByRole('menuitem', { name: 'Copy' })).toBeInTheDocument();
+  });
+
   it('returns focus to More after a dialog opened from an item closes', async () => {
     const user = userEvent.setup();
     render(<Harness />);

@@ -17,6 +17,9 @@ import { Skeleton } from '../../ui/skeleton.tsx';
 import { adminLink } from '../host/tool-host.tsx';
 import { AREA_ICON } from '../shell/nav-model.ts';
 
+/** One title scale for every Workbench state, heading or not. */
+export const STATE_TITLE = 'text-base font-semibold text-fg-strong';
+
 /** The buddy on the stage, one line, one way on: the Workbench's own states (design §6). */
 export function StageState({
   scene,
@@ -42,19 +45,13 @@ export function StageState({
       <div aria-hidden className="relative mt-[4.5rem] mb-1 h-0 w-full">
         <Buddy mood={mood} scene={scene} state="login" />
       </div>
-      <Title
-        tabIndex={heading ? -1 : undefined}
-        className={cn(
-          'outline-none',
-          heading
-            ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
-            : 'text-sm font-medium text-fg-strong',
-        )}
-      >
+      <Title tabIndex={heading ? -1 : undefined} className={cn('outline-none', STATE_TITLE)}>
         {title}
       </Title>
       {children}
-      {action ? <div className="mt-2 max-sm:w-full max-sm:[&>*]:w-full">{action}</div> : null}
+      {action ? (
+        <div className="mt-2 flex justify-center max-sm:w-full max-sm:[&>*]:w-full">{action}</div>
+      ) : null}
     </div>
   );
 }
@@ -80,8 +77,8 @@ export function NoWorkbenchAccess() {
   return (
     <NoAccessState
       heading
+      titleClassName={STATE_TITLE}
       title={WB_STATES.noAccess.title}
-      description={WB_STATES.noAccess.description}
       actions={
         <Button asChild variant="outline">
           <a href={MARKETING_PATHS.access}>{WB_STATES.noAccess.action}</a>
@@ -96,8 +93,8 @@ export function ContextNotFound() {
   return (
     <NoAccessState
       heading
+      titleClassName={STATE_TITLE}
       title={WB_STATES.notFound.title}
-      description={WB_STATES.notFound.description}
       actions={
         <Button asChild variant="outline">
           <Link to="/workbench">{WB_STATES.notFound.action}</Link>
@@ -106,6 +103,11 @@ export function ContextNotFound() {
     />
   );
 }
+
+const NAME_MAX = 24;
+/** An org name long enough to wrap the heading to three lines at 390 reads cut short. */
+const shortName = (name: string): string =>
+  name.length > NAME_MAX ? `${name.slice(0, NAME_MAX - 1).trimEnd()}…` : name;
 
 /**
  * A deep link to an area this org's Test does not allow: the area is absent from the nav, so this
@@ -124,7 +126,8 @@ export function ToolNotAllowed({
   return (
     <NoAccessState
       heading
-      title={WB_STATES.notAllowed.title(orgName)}
+      titleClassName={cn(STATE_TITLE, 'max-w-full line-clamp-2 break-words')}
+      title={WB_STATES.notAllowed.title(shortName(orgName))}
       actions={
         <>
           <Button asChild variant="outline" iconStart={<Icon aria-hidden />}>
@@ -162,7 +165,19 @@ export function NoSandboxState() {
 export function ToolEmpty({ tool, action }: { tool: WbTool; action?: ReactNode }) {
   const empty = WB_EMPTY[tool];
   if (!empty) return null;
-  return <EmptyState art="log" surface="stage" title={empty.title} action={action} />;
+  return (
+    <EmptyState
+      art={empty.art}
+      surface="stage"
+      titleClassName={STATE_TITLE}
+      title={empty.title}
+      action={
+        action ? (
+          <div className="flex justify-center [&>*]:justify-center">{action}</div>
+        ) : undefined
+      }
+    />
+  );
 }
 
 /** The kind of failure in one line: the network, access or the server. */
@@ -176,7 +191,14 @@ export function failedLine(error: unknown): string {
 
 /** A failed load: one line saying what failed, and Retry. */
 export function ToolFailed({ error, onRetry }: { error: unknown; onRetry: () => unknown }) {
-  return <ErrorState error={error} title={failedLine(error)} onRetry={onRetry} />;
+  return (
+    <ErrorState
+      error={error}
+      title={failedLine(error)}
+      titleClassName={STATE_TITLE}
+      onRetry={onRetry}
+    />
+  );
 }
 
 /** Mid-reset: a status skeleton reading "Resetting", not focusable; the tray carries progress. */
@@ -189,4 +211,9 @@ export function ResettingState() {
       ))}
     </div>
   );
+}
+
+/** The sandbox is closed: one line on the stage. */
+export function ClosedState() {
+  return <StageState scene="beat" mood="flat" title={WB_STATES.sandboxClosed.title} />;
 }

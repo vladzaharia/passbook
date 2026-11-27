@@ -87,7 +87,7 @@ export function HomeView() {
 
   const sandbox = context.kind === 'sandbox';
   const menu = (
-    <MoreMenu>
+    <MoreMenu iconOnly>
       {sandbox ? (
         <>
           <DropdownMenuItem asChild>

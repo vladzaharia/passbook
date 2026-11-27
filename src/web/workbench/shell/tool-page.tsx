@@ -69,7 +69,7 @@ export function ToolPage({
   );
   return (
     <div className="wb-rise flex min-w-0 flex-col gap-4">
-      <header className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-2">
+      <header className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-2 max-sm:flex-nowrap">
         <GlyphTile tool={tool} />
         <h1
           tabIndex={-1}
@@ -77,7 +77,9 @@ export function ToolPage({
         >
           {title}
         </h1>
-        {count ? <span className="font-mono text-[0.8125rem] text-fg-muted">{count}</span> : null}
+        {count ? (
+          <span className="min-w-0 truncate font-mono text-[0.8125rem] text-fg-muted">{count}</span>
+        ) : null}
         <span
           ref={setCount}
           data-bench-count=""
@@ -89,7 +91,7 @@ export function ToolPage({
             {POLL_PAUSED}
           </span>
         ) : null}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
           {canMarkSeen && area && context && seenAt !== undefined ? (
             <Button
               variant="ghost"

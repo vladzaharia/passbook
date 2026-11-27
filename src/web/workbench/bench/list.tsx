@@ -93,7 +93,7 @@ export function BenchList<T>({
   tone?: (item: T) => StatusTone;
   selection: BenchSelection<T>;
   fresh?: ReadonlySet<string>;
-  footer?: { count: ReactNode; onMore?: () => void; loading?: boolean };
+  footer?: { count?: ReactNode; onMore?: () => void; loading?: boolean };
   /** Shown in place of the rows when there are none (a BenchState). */
   empty?: ReactNode;
   /** A heading above the first row of each run of items with the same group (the console's index). */
@@ -181,7 +181,7 @@ export function BenchList<T>({
       </div>
       {footer ? (
         <div className="bench-list-f">
-          <span className="bench-list-n">{footer.count}</span>
+          {footer.count ? <span className="bench-list-n">{footer.count}</span> : null}
           {footer.onMore ? (
             <button
               type="button"
