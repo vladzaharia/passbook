@@ -233,8 +233,8 @@ describe('redactQuery', () => {
   });
 });
 
-describe('redactBody blanks opaque maps whatever their case', () => {
-  it('blanks scope, overrides and manifest, and keys that differ only in case', () => {
+describe('redactBody blanks caller-shaped maps, nested and in arrays', () => {
+  it('blanks scope, overrides, manifest and case variants, however deep', () => {
     const out = JSON.parse(
       redacted({
         scope: { a: `${S}-a` },
@@ -242,9 +242,14 @@ describe('redactBody blanks opaque maps whatever their case', () => {
         manifest: { c: `${S}-c` },
         Metadata: { d: `${S}-d` },
         PAYLOAD: { e: `${S}-e` },
+        items: [{ id: 'x', Scope: { f: `${S}-f` }, nested: { overrides: [`${S}-g`] } }],
+        key: { Manifest: { h: `${S}-h` } },
       }),
     );
     for (const key of ['scope', 'overrides', 'manifest', 'Metadata', 'PAYLOAD'])
       expect(out[key]).toBe('[redacted]');
+    expect(out.items[0]).toEqual({ id: 'x', Scope: '[redacted]', nested: '[redacted]' });
+    expect(out.key.Manifest).toBe('[redacted]');
+    expect(JSON.stringify(out)).not.toContain(S);
   });
 });

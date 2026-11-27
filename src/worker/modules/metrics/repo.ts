@@ -185,6 +185,10 @@ export interface RecentRow {
   target_id: string | null;
 }
 
+/** The platform feed leaves out personal orgs, which are private to their owner. */
+const PUBLIC_ORG =
+  '(org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))';
+
 /** Audit rows carry no mode, so test mode shows none, like the sign-in series. */
 export async function recentAudit(db: D1Database, scope: Scope, limit: number, tenant: boolean) {
   // Audit entries have no reliable template dimension.
@@ -192,7 +196,8 @@ export async function recentAudit(db: D1Database, scope: Scope, limit: number, t
   return all<RecentRow>(
     db,
     `SELECT at, action, org_id, ${tenant ? 'NULL AS target_id' : 'target_id'} FROM audit_log
-     ${scope.orgId ? 'WHERE org_id = ?' : ''} ORDER BY at DESC LIMIT ?`,
+     WHERE ${scope.orgId ? 'org_id = ?' : PUBLIC_ORG}
+     ORDER BY at DESC LIMIT ?`,
     [...(scope.orgId ? [scope.orgId] : []), limit],
   );
 }

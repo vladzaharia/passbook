@@ -56,7 +56,7 @@ register(
       await listPlatformAudit(
         serviceContext(c),
         c.req.valid('query'),
-        c.var.auth?.kind === 'api_key',
+        c.var.auth?.kind !== 'session',
       ),
     ),
 );
@@ -139,7 +139,8 @@ register(
     const query = c.req.valid('query');
     const keyId = auth.kind === 'api_key' ? auth.keyId : null;
     const out = await auditCsv(
-      (cursor, limit) => listPlatformAudit(ctx, { ...query, cursor, limit }, keyId !== null),
+      (cursor, limit) =>
+        listPlatformAudit(ctx, { ...query, cursor, limit }, auth.kind !== 'session'),
       () =>
         enforceExportLimit(
           ctx,

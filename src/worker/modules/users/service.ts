@@ -102,7 +102,7 @@ export async function getUserDetail(
     repo.listRecentSessions(db, id),
     repo.ownedPasses(db, id, viewerId),
     repo.ownedPassCount(db, id, viewerId),
-    repo.recentAudit(db, id),
+    repo.recentAudit(db, id, viewerId),
     repo.factsFor(db, [id], viewerId),
   ]);
   return {

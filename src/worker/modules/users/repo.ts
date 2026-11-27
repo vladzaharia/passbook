@@ -144,12 +144,16 @@ export async function ownedPassCount(db: Db, userId: string, viewerId: string): 
   return row?.n ?? 0;
 }
 
-export const recentAudit = (db: Db, userId: string) =>
+/** Rows of a personal org stay with its owner (`viewerId`). */
+export const recentAudit = (db: Db, userId: string, viewerId = '') =>
   all<{ id: number; at: number; action: string; actor_type: string; actor_id: string | null }>(
     db,
     `SELECT id, at, action, actor_type, actor_id FROM audit_log
-     WHERE target_type = 'user' AND target_id = ? ORDER BY at DESC, id DESC LIMIT 20`,
-    [userId],
+     WHERE target_type = 'user' AND target_id = ?
+       AND (org_id IS NULL OR org_id NOT IN (
+         SELECT id FROM orgs WHERE personal_user_id IS NOT NULL AND personal_user_id != ?))
+     ORDER BY at DESC, id DESC LIMIT 20`,
+    [userId, viewerId],
   );
 
 /** The same change as a `platform.user.*` grant: the acting admin's session must be live at commit. */

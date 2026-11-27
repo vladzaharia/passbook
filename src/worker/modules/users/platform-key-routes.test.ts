@@ -336,3 +336,37 @@ describe('metrics of a personal org', () => {
     ).toBe(200);
   });
 });
+
+describe('audit rows of personal orgs, through the other reads a key has', () => {
+  it('leaves them out of the metrics recent feed and the user detail, for a key and a person', async () => {
+    const owner = await user();
+    const personal = await makeOrg(f(), { personalUserId: owner });
+    const regular = await makeOrg(f());
+    const target = await user();
+    for (const org of [personal, regular])
+      await run(
+        h.env.DB,
+        "INSERT INTO audit_log (at, org_id, actor_type, action, target_type, target_id) VALUES (?, ?, 'system', ?, 'user', ?)",
+        [h.clock.now(), org.id, org === personal ? 'probe.personal' : 'probe.regular', target],
+      );
+    const key = await platformKey(['platform:status', 'platform:users']);
+    const recent = async (headers: Record<string, string>) =>
+      (
+        (await (await send('GET', '/api/v1/metrics/platform/overview', headers)).json()) as {
+          recent: { action: string }[];
+        }
+      ).recent.map((r) => r.action);
+    const detail = async (headers: Record<string, string>) =>
+      (
+        (await (await send('GET', `/api/v1/users/${target}`, headers)).json()) as {
+          recentAudit: { action: string }[];
+        }
+      ).recentAudit.map((r) => r.action);
+    for (const headers of [key.headers, await person()]) {
+      expect(await recent(headers)).toContain('probe.regular');
+      expect(await recent(headers)).not.toContain('probe.personal');
+      expect(await detail(headers)).toContain('probe.regular');
+      expect(await detail(headers)).not.toContain('probe.personal');
+    }
+  });
+});
