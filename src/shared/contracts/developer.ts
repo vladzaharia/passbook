@@ -118,6 +118,10 @@ export const RequestLogDetailSchema = RequestLogEntrySchema.extend({
   bodiesRecorded: z.boolean(),
   /** A stored body was cut at 8 KB, or was too large to keep. */
   bodiesTruncated: z.boolean(),
+  /** Allowlisted, non-secret header values of the call; null on rows from before they were kept. */
+  headers: z
+    .object({ req: z.record(z.string(), z.string()), res: z.record(z.string(), z.string()) })
+    .nullable(),
 });
 export type RequestLogDetail = z.infer<typeof RequestLogDetailSchema>;
 

@@ -11,6 +11,7 @@ import {
 } from './repo-request-log.ts';
 import { bodiesRecorded } from './request-log-bodies.ts';
 import { clientOf } from './request-log-client.ts';
+import { headersJson } from './request-log-headers.ts';
 import { BODY_READ_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
 /** Only a Test secret or a try token can be a sandbox's, so only they are ever copied: a Live call is never read. */
@@ -112,8 +113,8 @@ const flagsOf = (header: (name: string) => string | undefined) =>
 /**
  * Logs an org's Test calls to `request_log` after the response is made: one background write (`waitUntil`), so
  * the request pays for nothing but copying a small JSON stream. Nothing else is logged: not a Live call, and the
- * insert and the table's triggers back that up. No header is stored, so no secret can be: only the pinned
- * version date and the presence of Idempotency-Key, If-Match and PassBook-Version. Bodies are kept only where the
+ * insert and the table's triggers back that up. Headers are kept from a fixed allowlist of non-secret ones
+ * (`request-log-headers.ts`), so no secret can be stored; the pinned version date and the presence flags stay too. Bodies are kept only where the
  * org records them (`bodiesRecorded`). The request is copied only when its bearer looks like a Test secret or
  * try token and its body is JSON of at most 16 KB.
  */
@@ -156,6 +157,7 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
       ? (c.req.header('passbook-version') ?? null)
       : null,
     flags: flagsOf((name) => c.req.header(name)),
+    headers: headersJson((name) => c.req.header(name), res.headers),
   };
   const type = res.headers.get('content-type');
   const copies = { sent, received: res.clone().body, type };

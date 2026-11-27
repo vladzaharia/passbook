@@ -18,13 +18,14 @@ import {
   FLAG_IF_MATCH,
   FLAG_VERSION,
   getLog,
+  type ListRow,
   LOG_BODY_MS,
-  type LogRow,
   listLogs,
   logCap,
 } from './repo-request-log.ts';
 import { tryKeyOf } from './repo-try.ts';
 import { bodiesRecorded } from './request-log-bodies.ts';
+import { headersOf } from './request-log-headers.ts';
 
 type Entry = z.infer<typeof RequestLogEntrySchema>;
 type Detail = z.infer<typeof RequestLogDetailSchema>;
@@ -46,10 +47,7 @@ export async function orgOfCaller(
   return sandbox.org_id;
 }
 
-export const entryOf = (
-  r: Omit<LogRow, 'request_body' | 'response_body'>,
-  showBodies = true,
-): Entry => ({
+export const entryOf = (r: ListRow, showBodies = true): Entry => ({
   id: r.id,
   requestId: r.request_id,
   at: r.at,
@@ -133,6 +131,7 @@ export async function getOrgRequestLog(
     bodiesExpireAt: showBodies && row.has_bodies === 1 ? row.at + LOG_BODY_MS : null,
     bodiesTruncated: showBodies && row.bodies_truncated === 1,
     bodiesRecorded: await bodiesRecorded(ctx, orgId),
+    headers: headersOf(row.headers),
   };
 }
 

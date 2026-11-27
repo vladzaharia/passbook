@@ -22887,6 +22887,30 @@
           },
           "bodiesTruncated": {
             "type": "boolean"
+          },
+          "headers": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "req": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "res": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "req",
+              "res"
+            ]
           }
         },
         "required": [
@@ -22912,7 +22936,8 @@
           "responseBody",
           "bodiesExpireAt",
           "bodiesRecorded",
-          "bodiesTruncated"
+          "bodiesTruncated",
+          "headers"
         ]
       },
       "OrgsEntitlementsRetrieveResponse": {
@@ -92498,6 +92523,30 @@
                     },
                     "bodiesTruncated": {
                       "type": "boolean"
+                    },
+                    "headers": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "req": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "res": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "req",
+                        "res"
+                      ]
                     }
                   },
                   "required": [
@@ -92523,7 +92572,8 @@
                     "responseBody",
                     "bodiesExpireAt",
                     "bodiesRecorded",
-                    "bodiesTruncated"
+                    "bodiesTruncated",
+                    "headers"
                   ]
                 },
                 "example": {
@@ -92553,7 +92603,18 @@
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
                   "bodiesRecorded": true,
-                  "bodiesTruncated": false
+                  "bodiesTruncated": false,
+                  "headers": {
+                    "req": {
+                      "accept": "application/json",
+                      "passbook-version": "2026-11-01",
+                      "user-agent": "@passbook/sdk 1.4.2"
+                    },
+                    "res": {
+                      "content-type": "application/json",
+                      "x-request-id": "0193a1b2-7c00-7000-8000-137ee11a36e0"
+                    }
+                  }
                 }
               }
             }
@@ -97864,7 +97925,18 @@
                   "responseBody": "{\"items\":[],\"nextCursor\":null}",
                   "bodiesExpireAt": 1796175300000,
                   "bodiesRecorded": true,
-                  "bodiesTruncated": false
+                  "bodiesTruncated": false,
+                  "headers": {
+                    "req": {
+                      "accept": "application/json",
+                      "passbook-version": "2026-11-01",
+                      "user-agent": "@passbook/sdk 1.4.2"
+                    },
+                    "res": {
+                      "content-type": "application/json",
+                      "x-request-id": "0193a1b2-7c00-7000-8000-137ee11a36e0"
+                    }
+                  }
                 }
               }
             }

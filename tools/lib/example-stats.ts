@@ -158,6 +158,14 @@ export const CALL = {
   bodiesExpireAt: T.recent + 7 * DAY,
   bodiesRecorded: true,
   bodiesTruncated: false,
+  headers: {
+    req: {
+      accept: 'application/json',
+      'passbook-version': '2026-11-01',
+      'user-agent': '@passbook/sdk 1.4.2',
+    },
+    res: { 'content-type': 'application/json', 'x-request-id': uuid('request') },
+  },
 };
 /** The developer's day, by local hour of the last 24: work from 08:00 to 22:00, busiest after lunch. */
 const HOURS = Array.from({ length: 24 }, (_, i) =>

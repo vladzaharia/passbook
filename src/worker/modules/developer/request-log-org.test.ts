@@ -32,7 +32,7 @@ async function realOrg() {
 }
 
 describe('the org request log', () => {
-  it('records resource id, api version and header flags, and never a header value', async () => {
+  it('records resource id, api version and header flags, and never a secret header value', async () => {
     const { org, key } = await realOrg();
     const id = t.kit.f.ids.id();
     await t.call(`/passes/${id}`, {
@@ -54,8 +54,8 @@ describe('the org request log', () => {
     const plain = rows.find((r) => r.resource_id === null);
     expect(plain).toMatchObject({ api_version: null, flags: 0 });
     const everything = JSON.stringify(rows);
-    for (const secret of [...SECRETS, 'idem-SECRET-VALUE', 'etag-SECRET', key.secret])
-      expect(everything, secret).not.toContain(secret);
+    // Idempotency-Key and If-Match are allowlisted (request-log-headers.test.ts); every secret stays out.
+    for (const secret of [...SECRETS, key.secret]) expect(everything, secret).not.toContain(secret);
   });
 
   it('stores a path without terminal escape characters', async () => {
