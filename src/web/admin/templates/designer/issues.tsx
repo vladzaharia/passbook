@@ -77,10 +77,12 @@ export function Issues({
         </p>
       ) : null}
       {rows.length === 0 && !checking && !failed ? (
-        <p className="flex items-center gap-2 text-sm text-fg-muted">
-          <CircleCheck aria-hidden className="size-4 text-success" />
-          {readOnly ? 'No issues.' : 'Ready to save.'}
-        </p>
+        readOnly ? null : (
+          <p className="flex items-center gap-2 text-sm text-fg-muted">
+            <CircleCheck aria-hidden className="size-4 text-success" />
+            Ready to save.
+          </p>
+        )
       ) : (
         <ul className="grid gap-1">
           {rows.map((row) => {

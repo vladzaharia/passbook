@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { safeNextPath } from '@/shared/next.ts';
 import { DEFAULTS, encodeHash, type PlaygroundState } from '../../playground/hash.ts';
-import { ANON_PATH, handoffState, handoffTarget, isHandoffHash } from './handoff.ts';
+import {
+  ANON_PATH,
+  handoffState,
+  handoffTarget,
+  isHandoffHash,
+  namesBlueprint,
+  ownsHandoff,
+  spendHandoff,
+} from './handoff.ts';
 import { clearMirror, readMirror } from './use-anon-state.ts';
 
 const STORE = 'baked:starter-store-card';
@@ -41,5 +49,21 @@ describe('the hand-off from the signed-out page', () => {
     expect(readMirror()?.edits).toEqual({ holder: 'Ada' });
     clearMirror();
     expect(readMirror()).toBeNull();
+  });
+
+  it('binds the save to the tab that pressed it: the code matches once, then is spent', () => {
+    const target = handoffTarget(state({}));
+    const hash = target.slice(target.indexOf('#'));
+    expect(ownsHandoff(hash)).toBe(true);
+    expect(ownsHandoff(`${hash.replace(/s=[^&]+/, 's=1')}`)).toBe(false);
+    expect(ownsHandoff('#t=x')).toBe(false);
+    spendHandoff();
+    expect(ownsHandoff(hash)).toBe(false);
+  });
+
+  it('knows a link that names a blueprint', () => {
+    expect(namesBlueprint('#t=baked%3Aa')).toBe(true);
+    expect(namesBlueprint('#s=abc')).toBe(true);
+    expect(namesBlueprint('#c=google')).toBe(false);
   });
 });

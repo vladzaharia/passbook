@@ -8,6 +8,7 @@ import { docOf } from '../../../admin/templates/designer/api.ts';
 import { releaseInTest } from '../../../admin/templates/designer/hosts.tsx';
 import { isRecord } from '../../../admin/templates/designer/model.ts';
 import { ApiError } from '../../../lib/errors.ts';
+import { Button } from '../../../ui/button.tsx';
 import { ErrorState } from '../../../ui/error-state.tsx';
 import { Skeleton } from '../../../ui/skeleton.tsx';
 import { toast } from '../../../ui/toaster.tsx';
@@ -15,7 +16,7 @@ import { useToolHost } from '../../host/tool-host.tsx';
 import type { InputValues } from '../../playground/model.ts';
 import { ToolPage } from '../../shell/tool-page.tsx';
 import { wantIssueFocus } from '../issue-focus.ts';
-import { handoffState } from './handoff.ts';
+import { handoffCode, handoffState, ownsHandoff, spendHandoff } from './handoff.ts';
 import { clearMirror } from './use-anon-state.ts';
 
 const enc = encodeURIComponent;
@@ -37,6 +38,11 @@ export function HandoffSave() {
   const router = useRouter();
   const [failure, setFailure] = useState<unknown>(null);
   const running = useRef(false);
+  // Unasked only for the hand-off this tab started; any other link shows the values and waits for Save.
+  const own = useRef(ownsHandoff(location.hash));
+  const [confirmed, setConfirmed] = useState(own.current);
+  // One key per hand-off, so a retry or a reload never makes a second template.
+  const key = useRef(own.current ? `anon-${handoffCode(location.hash)}` : crypto.randomUUID());
   const { api } = host;
   const { orgId } = host.context;
 
@@ -70,15 +76,28 @@ export function HandoffSave() {
           assets: doc.assets.flatMap((a) => (a.sha1 ? [{ name: a.name, sha1: a.sha1 }] : [])),
         },
       };
-      const made = await api.post(`${path}/use`, TemplateDetailSchema, body, {
-        headers: { 'idempotency-key': crypto.randomUUID() },
-      });
+      // A second save of the same blueprint finds its name taken: the next free number goes on it.
+      let made: Awaited<ReturnType<typeof api.post<typeof TemplateDetailSchema>>> | undefined;
+      for (let n = 1; !made; n++) {
+        try {
+          made = await api.post(
+            `${path}/use`,
+            TemplateDetailSchema,
+            { ...body, name: n === 1 ? blueprint.name : `${blueprint.name} ${n}` },
+            { headers: { 'idempotency-key': `${key.current}-${n}` } },
+          );
+        } catch (cause) {
+          if (!(cause instanceof ApiError) || cause.code !== 'TEMPLATE_EXISTS' || n >= 9)
+            throw cause;
+        }
+      }
       const first = made.activeVersion ?? made.versions[0]?.version;
       if (first)
         await releaseInTest(api, orgId, made.id, first, crypto.randomUUID()).catch((cause) =>
           toast.error(cause, WB_DESIGN.phone.noRelease),
         );
       clearMirror();
+      if (own.current) spendHandoff();
       wantIssueFocus();
       router.history.replace(`${wbPath(orgId, 'design')}/${enc(made.id)}`);
       toast.success(WB_DESIGN.anon.saved(made.name));
@@ -90,9 +109,42 @@ export function HandoffSave() {
   }, [api, orgId, router]);
 
   useEffect(() => {
-    void run();
-  }, [run]);
+    if (confirmed) void run();
+  }, [confirmed, run]);
 
+  if (!confirmed) {
+    const edits = Object.entries(handoffState(location.hash).edits);
+    return (
+      <ToolPage tool="design">
+        <div className="grid max-w-md gap-3">
+          <p className="text-sm text-fg-strong">{WB_DESIGN.anon.review}</p>
+          {edits.length > 0 ? (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              {edits.map(([name, value]) => (
+                <div key={name} className="contents">
+                  <dt className="text-fg-muted">{name}</dt>
+                  <dd className="min-w-0 break-words font-mono text-xs text-fg">
+                    {typeof value === 'string' ? value : JSON.stringify(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-sm text-fg-muted">{WB_DESIGN.anon.noEdits}</p>
+          )}
+          <div className="flex gap-2">
+            <Button onClick={() => setConfirmed(true)}>{WB_DESIGN.anon.save}</Button>
+            <Button
+              variant="outline"
+              onClick={() => router.history.replace(wbPath(orgId, 'design'))}
+            >
+              {WB_DESIGN.anon.cancel}
+            </Button>
+          </div>
+        </div>
+      </ToolPage>
+    );
+  }
   return (
     <ToolPage tool="design">
       {failure ? (

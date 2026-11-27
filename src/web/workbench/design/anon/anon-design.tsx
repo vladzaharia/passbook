@@ -25,7 +25,7 @@ export function AnonDesign({ blueprint }: { blueprint: AnonBlueprint }) {
       ...anonymousDesignerHost({}),
       // Nothing but the blueprint's own files: no API path is ever asked for.
       loadAsset: (path: string, signal?: AbortSignal) =>
-        path.startsWith(`${folder}/`)
+        new URL(path, location.origin).pathname.startsWith(`${folder}/`)
           ? load(path, signal)
           : Promise.reject(
               new ApiError({ status: 404, code: 'asset_unavailable', detail: 'No file.' }),

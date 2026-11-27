@@ -55,7 +55,7 @@ export function useAnonState(data: BlueprintPreviews) {
   const [state, setState] = useState<PlaygroundState>(() => openingState(location.hash));
   useEffect(() => {
     const next = encodeHash(state);
-    if (next !== location.hash) history.replaceState(null, '', next);
+    if (next !== location.hash) history.replaceState(history.state, '', next);
     writeMirror(state);
   }, [state]);
   useEffect(() => {

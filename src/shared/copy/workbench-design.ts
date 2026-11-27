@@ -51,5 +51,9 @@ export const WB_DESIGN = {
     noBlueprint: 'That blueprint is no longer offered.',
     needSandbox: 'Make your sandbox to keep this design.',
     makeSandbox: 'Create sandbox',
+    review: 'Save this design to your sandbox?',
+    noEdits: 'The blueprint as it is.',
+    cancel: 'Cancel',
+    sandboxOnly: 'Open this link in your sandbox to save it.',
   },
 } as const;

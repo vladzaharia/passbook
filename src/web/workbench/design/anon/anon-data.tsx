@@ -1,13 +1,12 @@
 import { Share2 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { type InputSpec, readInputs } from '../../../admin/templates/designer/inputs.ts';
 import { Button } from '../../../ui/button.tsx';
 import { FormField } from '../../../ui/field.tsx';
-import { Textarea } from '../../../ui/input.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs.tsx';
-import { parseSample } from '../sample.ts';
 import { Control } from '../sample-control.tsx';
+import { SampleJsonField } from '../sample-json-field.tsx';
 import { useAnon } from './anon-context.tsx';
 
 function coerce(spec: InputSpec, text: string): unknown {
@@ -43,27 +42,12 @@ function Form() {
 
 function Json() {
   const { values, setValues } = useAnon();
-  const [text, setText] = useState(() => JSON.stringify(values, null, 2));
-  const [problem, setProblem] = useState<string | null>(null);
   return (
-    <FormField label={WB_DESIGN.jsonInput} error={problem ?? undefined}>
-      {(control) => (
-        <Textarea
-          {...control}
-          className="font-mono text-xs"
-          rows={14}
-          spellCheck={false}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            const parsed = parseSample(e.target.value);
-            if (!parsed.ok) return setProblem(parsed.problem);
-            setProblem(null);
-            setValues(parsed.sample);
-          }}
-        />
-      )}
-    </FormField>
+    <SampleJsonField
+      canonical={JSON.stringify(values, null, 2)}
+      disabled={false}
+      onSample={setValues}
+    />
   );
 }
 
