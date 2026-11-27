@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
-import { AUTH_PAGE_COPY } from '@/shared/copy/sign-in.ts';
-import { personLabel } from '../../lib/format.ts';
+import { AUTH_PAGE_COPY } from '@/shared/copy/auth-page.ts';
+import { personLabel } from '../../lib/person-label.ts';
 import { useSession } from '../../lib/session.ts';
 import { EntityAvatar } from '../avatar.tsx';
 import { IconButton } from '../icon-button.tsx';
