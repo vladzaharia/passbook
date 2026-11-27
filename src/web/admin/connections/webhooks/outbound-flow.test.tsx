@@ -6,9 +6,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
-import { CONNECTOR } from '../../passes/test-fixtures.ts';
+import { CONNECTOR, ORG } from '../../passes/test-fixtures.ts';
 import { comeBack, returnTarget } from './outbound-return.ts';
-import { type Calls, endpoint, hooks, manager, ORG } from './test-fixtures.ts';
+import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
   renderApp(path, { session: 'admin', memberships: [manager], selectedOrg: 'org1', handlers });
