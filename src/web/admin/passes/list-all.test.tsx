@@ -148,13 +148,15 @@ describe('the All organizations passes list', () => {
     expect(screen.getAllByRole('button', { name: /clear/i }).length).toBeGreaterThan(0);
   });
 
-  const email = encodeURIComponent(JSON.stringify([{ k: '$email', o: 'is', v: 'a@b.co' }]));
+  // The router reads a bare JSON-looking value as JSON, so string params are quoted.
+  const quoted = (v: string) => encodeURIComponent(JSON.stringify(v));
+  const email = quoted(JSON.stringify([{ k: '$email', o: 'is', v: 'a@b.co' }]));
   it.each([
     ['holder email chip', `m=${email}`],
     ['organization chip', 'orgIds=o2'],
     ['status', 'status=voided'],
     ['holder state', 'holderState=owned'],
-    ['on device', 'onDevice=true'],
+    ['on device', `onDevice=${quoted('true')}`],
     ['scan', 'noScanDays=30'],
     ['free text', 'q=zz'],
   ])('shows the filtered empty state for the %s', async (_name, query) => {
