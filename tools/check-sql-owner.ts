@@ -51,6 +51,8 @@ const OPTIONAL_BIND = [
   new RegExp(String.raw`${P}\s*(?:=|==|!=|<>|<=?|>=?)\s*(?:'[^']*'|-?\d)`, 'gi'),
   new RegExp(String.raw`(?:\(|\bOR\b|\bAND\b|\bWHERE\b)\s*${P}\s*\bOR\b`, 'gi'),
   new RegExp(String.raw`\bOR\b\s*${P}\s*(?:\)|\bAND\b|\bOR\b)`, 'gi'),
+  // A bind interpolated through a helper (`${p(x)}`, `${b.bind(x)}`); column helpers render names, not binds.
+  /\$\{\s*(?:\w+\.)*(?:p|bind)\([^{}]*\)\s*\}\s+IS\s+(?:NOT\s+)?NULL\b/gi,
 ];
 const TEST_FILE =
   /\.test\.tsx?$|(^|\/)(?:test-kit|test-support|test-utils|testing|[a-z0-9-]*(?:test-support|fixtures?))\.tsx?$/;

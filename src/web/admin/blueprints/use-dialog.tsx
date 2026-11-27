@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { Button, Dialog, DialogContent, FormField, Select } from '../../ui/index.ts';
+import { FormDialog, FormField, Select, useFormErrors } from '../../ui/index.ts';
 
 type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name' | 'activeVersion'>;
 
@@ -30,6 +30,7 @@ export function UseBlueprintDialog({
     orgs.find((m) => m.orgId === scope.orgId)?.orgId ??
     (orgs.length === 1 ? orgs[0]?.orgId : undefined);
   const [chosen, setChosen] = useState<string | undefined>(undefined);
+  const check = useFormErrors({ org: chosen ? undefined : 'Choose an organization.' });
   const blueprintId = blueprint.id;
   const go = useCallback(
     (orgId: string) => {
@@ -46,32 +47,25 @@ export function UseBlueprintDialog({
   }, [open, direct, go]);
   if (direct) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        title="Use blueprint"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button disabled={!chosen} onClick={() => chosen && go(chosen)}>
-              Continue
-            </Button>
-          </>
-        }
-      >
-        <FormField label="Organization" required>
-          {(c) => (
-            <Select
-              {...c}
-              value={chosen}
-              placeholder="Choose an organization"
-              onValueChange={setChosen}
-              options={orgs.map((m) => ({ value: m.orgId, label: m.orgName }))}
-            />
-          )}
-        </FormField>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Use blueprint"
+      check={check}
+      submitLabel="Continue"
+      onSubmit={() => chosen && go(chosen)}
+    >
+      <FormField label="Organization" required error={check.errors.org}>
+        {(c) => (
+          <Select
+            {...c}
+            value={chosen}
+            placeholder="Choose an organization"
+            onValueChange={setChosen}
+            options={orgs.map((m) => ({ value: m.orgId, label: m.orgName }))}
+          />
+        )}
+      </FormField>
+    </FormDialog>
   );
 }
