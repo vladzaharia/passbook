@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SegmentedControl } from '../../../ui/index.ts';
+import { PHONE, useMediaQuery } from '../../../lib/media.ts';
+import { SegmentedControl, Select } from '../../../ui/index.ts';
 import type { Selection } from './model.ts';
 import type { Action } from './reducer.ts';
 import type { WalletName } from './wallets/roles-model.ts';
@@ -106,6 +107,19 @@ export function ModeSwitch({
   options: readonly { value: DesignerMode; label: string }[];
   onChange: (mode: DesignerMode) => void;
 }) {
+  const phone = useMediaQuery(PHONE);
+  if (phone)
+    return (
+      <div className="mb-4">
+        <Select
+          aria-label="Designer mode"
+          className="w-full"
+          options={options}
+          value={mode}
+          onValueChange={(v) => onChange(v as DesignerMode)}
+        />
+      </div>
+    );
   return (
     <div className="mb-4">
       <SegmentedControl
