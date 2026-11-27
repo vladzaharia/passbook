@@ -1214,17 +1214,23 @@ __all__ = [
     "PlatformAppleIdentitiesListResponseItemsItemNfcKeysItem",
     "PlatformAppleIdentitiesListResponseItemsItemReadiness",
     "PlatformAppleIdentitiesListResponseOpenRunsItem",
+    "PlatformAppleIdentitiesListResult",
     "PlatformAppleIdentitiesMakeDefaultResponse",
+    "PlatformAppleIdentityMovesListItem",
     "PlatformAppleIdentityMovesListResponse",
     "PlatformAppleIdentityMovesListResponseItemsItem",
+    "PlatformAppleIdentityMovesListResult",
     "PlatformAppleIdentityMovesPreviewResponse",
+    "PlatformAppleIdentityMovesPreviewResult",
     "PlatformAppleIdentityMovesStartParams",
     "PlatformAppleIdentityMovesStartResponse",
     "PlatformAppleIdentityMovesStartResponseStartedBy",
     "PlatformAppleIdentityMovesStartResponseStepsItem",
     "PlatformAppleIdentityMovesStartTimerResponse",
+    "PlatformAuditEntriesListItem",
     "PlatformAuditEntriesListResponse",
     "PlatformAuditEntriesListResponseItemsItem",
+    "PlatformAuditEntriesListResult",
     "PlatformEntitlementPresetsListResponse",
     "PlatformEntitlementPresetsListResponsePresetsItem",
     "PlatformEntitlementPresetsListResult",
@@ -9715,6 +9721,22 @@ class PlatformAppleIdentitiesMakeDefaultResponse(_Model):
     identityId: str
     changed: bool
 
+class PlatformAppleIdentityMovesListItem(_Model):
+    id: str
+    operationId: str
+    orgId: str
+    fromIdentityId: str
+    toIdentityId: str
+    oldPassId: str
+    newPassId: str
+    state: _Literal["planned", "issued", "notified", "registered", "voided", "kept", "kept_both", "failed"] | str
+    reason: str | None
+    conflictCount: int
+    registeredAt: int | None
+    voidAt: int | None
+    voidedAt: int | None
+    updatedAt: int
+
 class PlatformAppleIdentityMovesListResponse(_Model):
     items: _List[PlatformAppleIdentityMovesListResponseItemsItem]
     nextCursor: str | None
@@ -9791,6 +9813,21 @@ class PlatformAppleIdentityMovesStartResponseStepsItem(_Model):
 class PlatformAppleIdentityMovesStartTimerResponse(_Model):
     moveId: str
     armed: _Literal[True]
+
+class PlatformAuditEntriesListItem(_Model):
+    id: int
+    at: int
+    orgId: str | None
+    orgLabel: str | None = None
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
+    actorId: str | None
+    actorLabel: str | None = None
+    action: str
+    targetType: str | None
+    targetId: str | None
+    targetLabel: str | None = None
+    requestId: str | None
+    detail: _Any | None = None
 
 class PlatformAuditEntriesListResponse(_Model):
     items: _List[PlatformAuditEntriesListResponseItemsItem]
@@ -16978,6 +17015,14 @@ PassesVersionsRetrieveResult = PassDetail
 PassesVoidResult = PassSummary
 
 PlatformAppleCallsListResult = PlatformAppleCallsListResponse
+
+PlatformAppleIdentitiesListResult = PlatformAppleIdentitiesListResponse
+
+PlatformAppleIdentityMovesListResult = PlatformAppleIdentityMovesListResponse
+
+PlatformAppleIdentityMovesPreviewResult = PlatformAppleIdentityMovesPreviewResponse
+
+PlatformAuditEntriesListResult = PlatformAuditEntriesListResponse
 
 PlatformEntitlementPresetsListResult = PlatformEntitlementPresetsListResponse
 

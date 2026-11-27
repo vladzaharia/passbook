@@ -102,6 +102,20 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.auditEntries.list", "GET", "/api/v1/audit/platform", false,
+		"", `{"items":[{"id":0,"at":0,"orgId":"x","actorType":"user","actorId":"x","action":"x","targetType":"x","targetId":"x","requestId":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AuditEntries.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.auditEntries.export", "GET", "/api/v1/audit/platform/export", false,
+		"", "",
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return downloaded(c.Platform.AuditEntries.Export(ctx, nil))
+		},
+	},
+	{
 		"brand.retrieve", "GET", "/api/v1/brand", false,
 		"", `{"orgId":"x","name":"x","accent":"x","webLogo":{"url":"x","w":0,"h":0},"supportEmail":"x","supportUrl":"x","mark":"full","markChosen":"full","markAllowed":["full"],"configRevision":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1755,6 +1769,27 @@ var generatedOps = []opCase{
 		"", `{"items":[{"id":0,"callId":"x","phase":"x","method":"x","target":"x","caller":"x","status":"x","durationMs":0,"at":0}],"available":false}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Platform.AppleCalls.List(ctx, nil)
+		},
+	},
+	{
+		"platform.appleIdentities.list", "GET", "/api/v1/platform/apple/identities", false,
+		"", `{"items":[{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0,"slot":"root","purpose":"passes","managed":"connector","registrationCount":0,"openRunId":"x","dormant":false,"readiness":{"eligible":false,"certificate":false,"issuing":false,"pushHealthy":false,"pushProbeAt":0,"pushProbeFresh":false,"deviceTest":false,"ready":false}}],"openRuns":[{"slot":"root","runId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentities.List(ctx)
+		},
+	},
+	{
+		"platform.appleIdentityMoves.list", "GET", "/api/v1/platform/apple/identity-moves", false,
+		"", `{"items":[{"id":"x","operationId":"x","orgId":"x","fromIdentityId":"x","toIdentityId":"x","oldPassId":"x","newPassId":"x","state":"planned","reason":"x","conflictCount":0,"registeredAt":0,"voidAt":0,"voidedAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentityMoves.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.appleIdentityMoves.preview", "GET", "/api/v1/platform/apple/identity-moves/preview", false,
+		"", `{"toIdentityId":"x","passes":0,"registered":0,"holders":0,"kept":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentityMoves.Preview(ctx, nil)
 		},
 	},
 	{
