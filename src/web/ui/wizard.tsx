@@ -1,8 +1,7 @@
 import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { useChangeCount } from '../lib/change-count.ts';
-import { PHONE, useMediaQuery } from '../lib/media.ts';
+import { useMediaQuery } from '../lib/media.ts';
 import { useBlockedSubmit } from './form.tsx';
-import { toast } from './toaster.tsx';
 import { type WizardBarAction, WizardButtons } from './wizard/wizard-actions.tsx';
 import { WizardStep } from './wizard/wizard-step.tsx';
 import { WizardStepper } from './wizard/wizard-stepper.tsx';
@@ -208,7 +207,6 @@ export function Wizard({
 }: WizardProps) {
   const blocked = useBlockedSubmit<HTMLDivElement>();
   // The stage is a desktop companion; below 1024 it would stack under the step as dead space.
-  const phone = useMediaQuery(PHONE);
   const staged = useMediaQuery('(min-width: 1024px)') && Boolean(aside);
   const previous = useRef(current);
   const key = useChangeCount(current);
@@ -256,14 +254,10 @@ export function Wizard({
       <WizardBar
         {...bar}
         onNext={next}
-        onBlocked={
-          onBlocked ??
-          (() => {
-            blocked.block(bar.nextHint);
-            // The bar hides its hint on a phone: a press says why.
-            if (phone && bar.nextHint) toast.info(bar.nextHint);
-          })
-        }
+        onBlocked={() => {
+          onBlocked?.();
+          blocked.block(bar.nextHint);
+        }}
       />
     </div>
   );
