@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { pollEvery } from '../../lib/poll-backoff.ts';
 import { useToolApi, useToolKey } from '../../lib/tool-api.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
 import { type EventsApi, eventsApi } from './api.ts';
 import { workbenchDeliveryHost } from './host-links.tsx';
+
+export const ENDPOINTS_POLL_MS = 10_000;
+/** Deliveries and captures. */
+export const READ_POLL_MS = 8000;
 
 /** The Events tool's calls on this context's token client. */
 export function useEventsApi(): EventsApi {
@@ -25,7 +30,7 @@ export function useEndpoints() {
   return useQuery({
     queryKey: ['workbench', 'events', 'endpoints', ...key],
     queryFn: () => api.endpoints().then((r) => r.items),
-    refetchInterval: 10_000,
+    refetchInterval: pollEvery(ENDPOINTS_POLL_MS),
   });
 }
 
@@ -36,7 +41,7 @@ export function useEventDeliveries(eventId: string) {
   return useQuery({
     queryKey: ['workbench', 'events', 'deliveries', eventId, ...key],
     queryFn: () => api.eventDeliveries(eventId).then((r) => r.items),
-    refetchInterval: 8000,
+    refetchInterval: pollEvery(READ_POLL_MS),
   });
 }
 
@@ -48,6 +53,6 @@ export function useCaptures(endpointId: string | undefined) {
     queryKey: ['workbench', 'events', 'captures', endpointId, ...key],
     queryFn: () => api.captures(endpointId as string).then((r) => r.items),
     enabled: Boolean(endpointId),
-    refetchInterval: 8000,
+    refetchInterval: pollEvery(READ_POLL_MS),
   });
 }

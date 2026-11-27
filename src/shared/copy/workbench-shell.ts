@@ -55,6 +55,7 @@ export const WB_SHELL_COPY = {
   shortcuts: 'Keyboard shortcuts',
   singleKeys: 'Single-key shortcuts',
   singleKeysHelp: 'Letters, g chords and ?. ⌘K, ⌘↵, ⌘S, ⌘/ and Esc always work.',
+  paused: 'Paused for a moment',
   markSeen: 'Mark seen',
   testDataOnly: 'Test data only',
   chordHint: 'Go to…',

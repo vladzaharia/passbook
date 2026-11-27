@@ -60,7 +60,13 @@ export const BENCH_COPY = {
       passEvents: 'Events of this pass',
     },
   },
-  live: { listening: 'Listening', paused: 'Paused', offline: 'Offline', resume: 'Resume' },
+  live: {
+    listening: 'Listening',
+    paused: 'Paused',
+    limited: 'Paused for a moment',
+    offline: 'Offline',
+    resume: 'Resume',
+  },
   loading: 'Loading',
   state: {
     noSandbox: 'No sandbox yet',

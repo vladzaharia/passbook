@@ -5,6 +5,7 @@ import { RequestLogPageSchema } from '../../../shared/contracts/developer.ts';
 import { PassListSchema } from '../../../shared/contracts/passes.ts';
 import { EventFeedPageSchema } from '../../../shared/contracts/webhooks.ts';
 import { WorkbenchSummarySchema } from '../../../shared/contracts/workbench-read.ts';
+import { pacer, pollEvery } from '../../lib/poll-backoff.ts';
 import type { WorkbenchApi } from '../host/api.ts';
 
 /** Home reads only through the host's token client: Test is the token's own mode. */
@@ -20,8 +21,8 @@ export const EVENTS_LIMIT = 5;
 export const PASSES_LIMIT = 5;
 export const CALLS_POLL_MS = 5_000;
 export const EVENTS_POLL_MS = 5_000;
-const SUMMARY_POLL_MS = 15_000;
-const PASSES_POLL_MS = 15_000;
+export const SUMMARY_POLL_MS = 15_000;
+export const PASSES_POLL_MS = 15_000;
 
 export type Summary = z.infer<typeof WorkbenchSummarySchema>;
 export type CallRow = z.infer<typeof RequestLogPageSchema>['items'][number];
@@ -33,7 +34,7 @@ export function useHomeSummary(api: WorkbenchApi) {
     queryKey: ['workbench', 'home', 'summary', api.orgId] as const,
     queryFn: ({ signal }) =>
       api.get(P.summary, WorkbenchSummarySchema, { query: { orgId: api.orgId }, signal }),
-    refetchInterval: SUMMARY_POLL_MS,
+    refetchInterval: pollEvery(SUMMARY_POLL_MS),
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
@@ -47,7 +48,7 @@ export function useRecentCalls(api: WorkbenchApi) {
         query: { orgId: api.orgId, limit: CALLS_LIMIT },
         signal,
       }),
-    refetchInterval: CALLS_POLL_MS,
+    refetchInterval: pollEvery(CALLS_POLL_MS),
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
@@ -61,7 +62,7 @@ export function useRecentPasses(api: WorkbenchApi) {
         query: { orgId: api.orgId, limit: PASSES_LIMIT },
         signal,
       }),
-    refetchInterval: PASSES_POLL_MS,
+    refetchInterval: pollEvery(PASSES_POLL_MS),
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
   });
@@ -107,6 +108,7 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
     const ctl = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let caughtUp = false;
+    const pace = pacer('home-events', EVENTS_POLL_MS);
     cursor.current = undefined;
     setLoading(true);
     setError(null);
@@ -125,6 +127,7 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
       setLoading(false);
     };
 
+    let failure: unknown;
     const poll = async () => {
       if (ctl.signal.aborted) return;
       if (document.visibilityState === 'visible') {
@@ -133,13 +136,14 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
           cursor.current = page.nextCursor;
           if (page.items.length > 0)
             setItems((prev) => newestFirst([...prev.slice().reverse(), ...page.items]));
+          failure = undefined;
         } catch (e) {
-          // A failed refresh keeps what is shown; the next tick asks again.
+          // A failed refresh keeps what is shown; the next tick asks again, later after a 429.
           if (ctl.signal.aborted) return;
-          void e;
+          failure = e;
         }
       }
-      timer = setTimeout(poll, EVENTS_POLL_MS);
+      timer = setTimeout(poll, pace.after(failure));
     };
 
     const back = () => {
@@ -164,6 +168,7 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
     return () => {
       ctl.abort();
       clearTimeout(timer);
+      pace.stop();
       document.removeEventListener('visibilitychange', back);
     };
   }, [api, attempt]);

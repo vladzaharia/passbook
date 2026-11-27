@@ -5,9 +5,10 @@ import {
   PassDevicesSchema,
   PassEventListSchema,
 } from '@/shared/contracts/events.ts';
+import { pollEvery } from '../../../lib/poll-backoff.ts';
 import { useToolApi, useToolKey } from '../../../lib/tool-api.tsx';
 
-const POLL_MS = 15_000;
+export const POLL_MS = 15_000;
 
 /**
  * The pass trail, devices and versions are shared tools: admin's pass page and the Workbench's
@@ -29,7 +30,7 @@ export function usePassDevices(id: string, active: boolean) {
   return useQuery({
     queryKey: [...syncKeys.devices(id), ...toolKey],
     queryFn: ({ signal }) => api.get(`/api/v1/passes/${id}/devices`, PassDevicesSchema, { signal }),
-    refetchInterval: active ? POLL_MS : false,
+    refetchInterval: active ? pollEvery(POLL_MS) : false,
   });
 }
 
@@ -50,7 +51,7 @@ export function usePassEvents(id: string, group: EventGroup | 'all', active: boo
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     // Refetching reloads every loaded page, so polling stops once older pages are open.
     refetchInterval: (query) =>
-      active && (query.state.data?.pages.length ?? 1) <= 1 ? POLL_MS : false,
+      active && (query.state.data?.pages.length ?? 1) <= 1 ? pollEvery(POLL_MS)(query) : false,
   });
 }
 
