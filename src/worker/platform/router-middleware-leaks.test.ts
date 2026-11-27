@@ -70,3 +70,20 @@ describe('routers with their own larger cap drop the 256 KB default', () => {
     expect(res.status).not.toBe(413);
   });
 });
+
+describe('membership routes keep a body cap of their own', () => {
+  it('a 2 MB body gets 413, even on the anonymous invitation preview', async () => {
+    const orgId = api.rig.orgId;
+    const rows: [string, string, Record<string, string> | undefined][] = [
+      ['POST', '/api/v1/orgs/invitations/preview', undefined],
+      ['POST', '/api/v1/orgs/invitations/accept', admin],
+      ['POST', `/api/v1/orgs/${orgId}/invitations`, admin],
+      ['POST', `/api/v1/orgs/${orgId}/invitations/x/resend`, admin],
+      ['PATCH', `/api/v1/orgs/${orgId}/memberships/x`, admin],
+    ];
+    for (const [method, path, headers] of rows) {
+      const res = await api.call(method, path, big(2_000_000), headers);
+      expect(res.status, `${method} ${path}`).toBe(413);
+    }
+  });
+});

@@ -53,7 +53,7 @@ const session = (c: Context<AppBindings>): SessionAuth => {
   return auth;
 };
 
-export const membershipRoutes = createRouter({ bodyLimit: false });
+export const membershipRoutes = createRouter();
 
 // The old landing address, still in mailed links: it opens the invitation page, carrying the fragment on.
 // The accepting POST is always strong-session (no email-link grace) and CSRF protected.

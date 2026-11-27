@@ -1,23 +1,72 @@
-import type { Env, Hono, MiddlewareHandler } from 'hono';
+import type { Context, Env, Hono, MiddlewareHandler } from 'hono';
+import { matchedRoutes } from 'hono/route';
 
-type Own = { readonly routes: ReadonlyArray<{ method: string; path: string }> };
+type Own = {
+  readonly routes: ReadonlyArray<{ method: string; path: string; handler: unknown }>;
+};
 type Entry = { method: string; re: RegExp };
 
 const inner = new WeakMap<object, object>();
 /** The middleware behind an `ownRoutesOnly` wrapper, so the guard registries still recognise it. */
 export const innerOf = (handler: object): object => inner.get(handler) ?? handler;
 
+const routers = new WeakMap<object, Own>();
+/** The router an `ownRoutesOnly` wrapper was made for; undefined for any other handler. */
+export const scopedRouter = (scoped: unknown) =>
+  typeof scoped === 'function' ? routers.get(scoped) : undefined;
+
 const owners = new WeakMap<object, (base: string, method: string, path: string) => boolean>();
 
-/** A Hono route pattern as a regex; a trailing slash is optional. */
+const esc = (text: string) => text.replace(/[.+?^$()|[\]{}\\*]/g, '\\$&');
+
+/**
+ * A Hono route pattern as a regex; a trailing slash is optional. Handles `:id`, `:id{regex}`,
+ * `:id?` and `*`; any other use of `{`, `}` or `?` throws, so a route this cannot read fails at
+ * registration instead of silently losing its router's guard.
+ */
 export const patternOf = (pattern: string): RegExp => {
-  const body = pattern
-    .replace(/[.+?^$()|[\]\\]/g, '\\$&')
-    .replace(/:[A-Za-z0-9_]+\{([^}]*)\}/g, '$1')
-    .replace(/:[A-Za-z0-9_]+/g, '[^/]+')
-    .replace(/\/\*$/, '(?:/.*)?')
-    .replace(/\*/g, '.*');
-  return new RegExp(`^${body}/?$`);
+  let out = '';
+  let i = 0;
+  while (i < pattern.length) {
+    const ch = pattern.charAt(i);
+    if (ch === ':') {
+      const name = /^:[A-Za-z0-9_]+/.exec(pattern.slice(i));
+      if (!name) throw new Error(`router-scope: cannot read route pattern ${pattern}`);
+      i += name[0].length;
+      let re = '[^/]+';
+      if (pattern.charAt(i) === '{') {
+        let depth = 0;
+        let j = i;
+        for (; j < pattern.length; j += 1) {
+          const c = pattern.charAt(j);
+          if (c === '\\') j += 1;
+          else if (c === '{') depth += 1;
+          else if (c === '}' && --depth === 0) break;
+        }
+        if (depth !== 0) throw new Error(`router-scope: cannot read route pattern ${pattern}`);
+        re = pattern
+          .slice(i + 1, j)
+          .replace(/^\^/, '')
+          .replace(/\$$/, '');
+        i = j + 1;
+      }
+      if (pattern.charAt(i) === '?') {
+        i += 1;
+        if (out.endsWith('/')) out = out.slice(0, -1);
+        out += `(?:/(?:${re}))?`;
+      } else out += `(?:${re})`;
+    } else if (ch === '*') {
+      if (i === pattern.length - 1 && out.endsWith('/')) out = `${out.slice(0, -1)}(?:/.*)?`;
+      else out += '.*';
+      i += 1;
+    } else if (ch === '{' || ch === '}' || ch === '?') {
+      throw new Error(`router-scope: cannot read route pattern ${pattern}`);
+    } else {
+      out += esc(ch);
+      i += 1;
+    }
+  }
+  return new RegExp(`^${out}/?$`);
 };
 
 const methodMatches = (own: string, method: string) =>
@@ -43,10 +92,16 @@ function ownerOf(router: Own) {
   };
 }
 
+/** Whether any route handler (not middleware) matches this request's method and path. */
+const hasHandler = (c: Context) =>
+  matchedRoutes(c).some((r) => methodMatches(r.method, c.req.method) && r.method !== 'ALL');
+
 /**
  * Runs `mw` only for requests one of the router's own handlers matches. Hono runs a router's
  * `use('*', ...)` for every request under its mount path, so on a prefix shared with another
- * router (e.g. /api/v1/orgs) a bare wildcard also reaches that router's routes.
+ * router (e.g. /api/v1/orgs) a bare wildcard also reaches that router's routes. A request no
+ * handler answers at all (an unknown path, a wrong method) still runs it, so an anonymous caller
+ * gets the guard's 401 there instead of a 404 that lists which routes exist.
  */
 export function ownRoutesOnly<E extends Env>(
   router: Hono<E> | Own,
@@ -58,9 +113,10 @@ export function ownRoutesOnly<E extends Env>(
   const scoped: MiddlewareHandler<E> = (c, next) => {
     const mounted = c.req.routePath;
     const base = mounted.endsWith(rel) ? mounted.slice(0, mounted.length - rel.length) : '';
-    return owns(base, c.req.method, c.req.path) ? mw(c, next) : next();
+    return owns(base, c.req.method, c.req.path) || !hasHandler(c) ? mw(c, next) : next();
   };
   owners.set(scoped, owns);
+  routers.set(scoped, router as Own);
   inner.set(scoped, innerOf(mw));
   return scoped;
 }
