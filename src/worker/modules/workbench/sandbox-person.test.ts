@@ -1,4 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
+import type { SessionAuth } from '../../platform/auth.ts';
+import { admitTokenSession } from '../../platform/auth-workbench.ts';
 import { run } from '../../platform/db.ts';
 import { workbenchKit } from './workbench-test-fixtures.ts';
 
@@ -55,5 +58,78 @@ describe('Sandbox token person swap', () => {
       ),
     );
     expect(res.status).toBeGreaterThanOrEqual(401);
+  });
+
+  it('applies the org api plan level after the swap', async () => {
+    const d = await t.developer();
+    await run(
+      t.kit.env.DB,
+      `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?1, 'api', '"off"', 1)`,
+      [d.made.orgId],
+    );
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    await expectProblem(
+      await t.call('GET', `/api-keys?orgId=${d.made.orgId}`, t.asClient(token)),
+      403,
+      'FEATURE_NOT_INCLUDED',
+    );
+  });
+
+  it('asks the swapped person for a recent sign-in to make a key', async () => {
+    const d = await t.developer();
+    const { token } = await t.wbMint(d.browser, d.made.orgId);
+    t.kit.clock.advance(11 * 60_000);
+    await expectProblem(
+      await t.call('POST', '/api-keys', t.asClient(token), {
+        orgId: d.made.orgId,
+        name: 'late',
+        kind: 'service',
+        scopes: ['passes:read'],
+        expiresAt: t.kit.clock.now() + 86_400_000,
+      }),
+      403,
+      'STEP_UP_REQUIRED',
+    );
+  });
+
+  it('admission re-checks the own-sandbox exemption instead of trusting the flag', async () => {
+    const d = await t.developer();
+    const other = await t.developer();
+    t.kit.env.OIDC_CONSOLE_GROUP_REQUIRED = 'true';
+    try {
+      const person = (orgId: string, roles: SessionAuth['roles']): SessionAuth => ({
+        kind: 'session',
+        userId: d.user.id,
+        sessionId: 'h',
+        roles,
+        csrfSecret: '',
+        amr: 'oidc',
+        mode: 'test',
+        via: 'try',
+        workbench: { orgId, subject: 'member' },
+      });
+      const admit = (s: SessionAuth) =>
+        admitTokenSession(
+          // The refusal path reads only the env, the stores and the principal.
+          {
+            env: t.kit.env,
+            var: { stores: {} },
+            set: () => undefined,
+            get: () => undefined,
+          } as never,
+          s,
+          { sessionKind: 'tenant', ownOnlyAdmitted: false, ownSandbox: true },
+        );
+      // Not their sandbox.
+      await expect(admit(person(other.made.orgId, ['user', 'developer']))).rejects.toMatchObject({
+        code: 'CONSOLE_ACCESS_REQUIRED',
+      });
+      // Their sandbox, but no developer role.
+      await expect(admit(person(d.made.orgId, ['user']))).rejects.toMatchObject({
+        code: 'CONSOLE_ACCESS_REQUIRED',
+      });
+    } finally {
+      t.kit.env.OIDC_CONSOLE_GROUP_REQUIRED = 'false';
+    }
   });
 });
