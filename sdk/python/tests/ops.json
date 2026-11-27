@@ -366,6 +366,48 @@
   "cursor": null
  },
  {
+  "id": "audit.getAuditPlatform",
+  "call": "platform.audit_entries.list",
+  "published": false,
+  "http": "GET",
+  "path": "/api/v1/audit/platform",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": 0,
+     "at": 0,
+     "orgId": "x",
+     "actorType": "user",
+     "actorId": "x",
+     "action": "x",
+     "targetType": "x",
+     "targetId": "x",
+     "requestId": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "audit.getAuditPlatformExport",
+  "call": "platform.audit_entries.export",
+  "published": false,
+  "http": "GET",
+  "path": "/api/v1/audit/platform/export",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
   "id": "brand.getBrand",
   "call": "brand.retrieve",
   "published": true,
@@ -9016,6 +9058,125 @@
     }
    ],
    "available": false
+  }
+ },
+ {
+  "id": "wallet-identities.getPlatformAppleIdentities",
+  "call": "platform.apple_identities.list",
+  "published": false,
+  "http": "GET",
+  "path": "/api/v1/platform/apple/identities",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "label": "x",
+     "passTypeIdentifier": "x",
+     "teamIdentifier": "x",
+     "source": "env",
+     "certSha256": "x",
+     "certSubject": "x",
+     "certSerial": "x",
+     "notBefore": 0,
+     "notAfter": 0,
+     "daysRemaining": 0,
+     "apnsBinding": "x",
+     "apnsAvailable": false,
+     "apnsHealth": "unknown",
+     "nfcEnabled": false,
+     "isDefault": false,
+     "createdAt": 0,
+     "slot": "root",
+     "purpose": "passes",
+     "managed": "connector",
+     "registrationCount": 0,
+     "openRunId": "x",
+     "dormant": false,
+     "readiness": {
+      "eligible": false,
+      "certificate": false,
+      "issuing": false,
+      "pushHealthy": false,
+      "pushProbeAt": 0,
+      "pushProbeFresh": false,
+      "deviceTest": false,
+      "ready": false
+     }
+    }
+   ],
+   "openRuns": [
+    {
+     "slot": "root",
+     "runId": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "wallet-identities.getPlatformAppleIdentityMoves",
+  "call": "platform.apple_identity_moves.list",
+  "published": false,
+  "http": "GET",
+  "path": "/api/v1/platform/apple/identity-moves",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "operationId": "x",
+     "orgId": "x",
+     "fromIdentityId": "x",
+     "toIdentityId": "x",
+     "oldPassId": "x",
+     "newPassId": "x",
+     "state": "planned",
+     "reason": "x",
+     "conflictCount": 0,
+     "registeredAt": 0,
+     "voidAt": 0,
+     "voidedAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "wallet-identities.getPlatformAppleIdentityMovesPreview",
+  "call": "platform.apple_identity_moves.preview",
+  "published": false,
+  "http": "GET",
+  "path": "/api/v1/platform/apple/identity-moves/preview",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "fromIdentityId",
+    "py": "from_identity_id",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "toIdentityId": "x",
+   "passes": 0,
+   "registered": 0,
+   "holders": 0,
+   "kept": {}
   }
  },
  {

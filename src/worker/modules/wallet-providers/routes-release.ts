@@ -11,8 +11,7 @@ import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { enableReady, releaseReport } from './release-readiness.ts';
 
 /**
- * Mount at /api/v1/platform before the router-level `requireAdmin` of the wallet platform routes, which ignores a
- * Bearer key: the report and the dry run take a Platform key, the apply is a person's (the owner's go/no-go).
+ * Mount at /api/v1/platform: the report and the dry run take a Platform key, the apply is a person's (the owner's go/no-go).
  */
 export const walletReleaseRoutes = createRouter();
 walletReleaseRoutes.use('*', async (c, next) => {

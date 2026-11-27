@@ -9618,7 +9618,6 @@
   ],
   "wallet identities get /apple-calls": [],
   "wallet identities get /preview": [
-    "FORBIDDEN",
     "IDENTITY_CERT_MISMATCH",
     "IDENTITY_CHAIN_INVALID",
     "IDENTITY_EXPIRED",
@@ -9627,8 +9626,7 @@
     "IDENTITY_NOT_CONFIGURED",
     "IDENTITY_NOT_FOUND",
     "IDENTITY_RETIRED",
-    "ORG_NOT_FOUND",
-    "UNAUTHENTICATED"
+    "ORG_NOT_FOUND"
   ],
   "wallet identities post /": [
     "FORBIDDEN",

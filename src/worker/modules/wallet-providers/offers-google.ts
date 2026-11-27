@@ -1,4 +1,5 @@
 import { runFirstTapUpsert } from '../../jobs/wallet-first-tap.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -46,6 +47,11 @@ async function provisionFirstTap(
               now: () => ctx.clock.now(),
               sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
               over: () => over,
+            }).catch((error: unknown) => {
+              ctx.log.warn('wallet.google_first_tap_wait_failed', {
+                code: 'WALLET_GOOGLE_FIRST_TAP_WAIT',
+                d1: classifyD1Error(error)?.kind ?? null,
+              });
             });
           return result;
         })
