@@ -272,6 +272,9 @@ jobs:
         run: npm run coverage:worker -- --shard=${{ matrix.shard }}/16 --reporter=blob --reporter=default
         env:
           COVERAGE_SHARD: '1'
+      # The shard's own corpus (.wrangler/sql-corpus), no second test run: SQLite 3.54.1 with D1's limits.
+      - name: SQL depth oracle
+        run: npm run check:sql-depth
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: worker-coverage-${{ matrix.shard }}
