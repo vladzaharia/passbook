@@ -27,7 +27,9 @@ export function d1<T = Record<string, unknown>>(sql: string): T[] {
       const parsed = JSON.parse(out.slice(out.indexOf('['))) as { results: T[] }[];
       return parsed.at(-1)?.results ?? [];
     } catch (error) {
-      const detail = String((error as { stderr?: unknown }).stderr ?? error);
+      // `wrangler d1 execute --json` reports a failure as JSON on stdout and leaves stderr empty.
+      const { stderr, stdout } = error as { stderr?: unknown; stdout?: unknown };
+      const detail = `${String(stderr ?? '')}${String(stdout ?? '')}` || String(error);
       if (attempt >= 5 || !/locked|busy/i.test(detail))
         throw new Error(`d1 failed: ${detail.slice(0, 600)}`);
       execFileSync('sleep', ['1']);

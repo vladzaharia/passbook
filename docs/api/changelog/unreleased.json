@@ -902,7 +902,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
   },
   {
     "key": "GET /api/v1/developer/home 200.calls[].resourceId: field added",
@@ -990,7 +990,7 @@
     "operationId": "developer.getLogs",
     "op": "GET /api/v1/developer/logs",
     "change": "200.items[].flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
   },
   {
     "key": "GET /api/v1/developer/logs 200.items[].resourceId: field added",
@@ -1054,7 +1054,15 @@
     "operationId": "developer.getLog",
     "op": "GET /api/v1/developer/logs/{id}",
     "change": "200.flags: field added",
-    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Never their values."
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.headers: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.headers: field added",
+    "note": "headers holds the call's allowlisted request and response header values, redacted; null on older rows. Never Authorization or cookies."
   },
   {
     "key": "GET /api/v1/developer/logs/{id} 200.resourceId: field added",
@@ -2463,6 +2471,14 @@
     "op": "GET /api/v1/request-logs",
     "change": "new operation",
     "note": "Lists an organization's Test calls for 7 days, with filters and an after cursor to tail."
+  },
+  {
+    "key": "GET /api/v1/request-logs/{id} 200.headers: field added",
+    "class": "additive",
+    "operationId": "workbench.getRequestLog",
+    "op": "GET /api/v1/request-logs/{id}",
+    "change": "200.headers: field added",
+    "note": "headers holds the call's allowlisted request and response header values, redacted; null on older rows. Never Authorization or cookies."
   },
   {
     "key": "GET /api/v1/request-logs/{id} new operation",

@@ -19,6 +19,7 @@ describe('bench states', () => {
       ['console-idle', 'nudge', 'Run the request.'],
       ['webhooks-idle', 'listen', 'Listening for events'],
       ['logs-idle', 'inspect', 'Waiting for your first call'],
+      ['logs-listen', 'listen', 'Waiting for your first call'],
       ['keys-none', 'tuck', 'No keys'],
       ['no-match', 'search', 'No matches'],
       ['failed', 'plug', 'Did not load'],

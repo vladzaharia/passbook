@@ -104,7 +104,7 @@ export const RequestLogEntrySchema = z.object({
   resourceId: IdSchema.nullable(),
   /** The `PassBook-Version` date the call pinned. */
   apiVersion: z.string().nullable(),
-  /** Which headers the call carried. Presence only, never a value. */
+  /** Which headers the call carried. Presence only; the values are in the detail's `headers`. */
   flags: z.object({ idempotencyKey: z.boolean(), ifMatch: z.boolean(), version: z.boolean() }),
 });
 export type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
@@ -118,6 +118,10 @@ export const RequestLogDetailSchema = RequestLogEntrySchema.extend({
   bodiesRecorded: z.boolean(),
   /** A stored body was cut at 8 KB, or was too large to keep. */
   bodiesTruncated: z.boolean(),
+  /** Allowlisted, non-secret header values of the call; null on rows from before they were kept. */
+  headers: z
+    .object({ req: z.record(z.string(), z.string()), res: z.record(z.string(), z.string()) })
+    .nullable(),
 });
 export type RequestLogDetail = z.infer<typeof RequestLogDetailSchema>;
 
