@@ -17,6 +17,8 @@ export class GoogleMemberFailedError extends UnavailableError {}
 /** The first tap builds the object itself, inside this budget; a slower provider gets an error page. */
 let firstTapBudgetMs = 15_000;
 
+const CLAIM_POLL_MS = 50;
+
 /** Tests only: a budget short enough to outlast with a slow provider. */
 export function setFirstTapBudgetForTest(ms: number): () => void {
   const previous = firstTapBudgetMs;
@@ -33,14 +35,25 @@ async function provisionFirstTap(
   pass: Pass,
 ): Promise<{ ready: WalletOperation | null; outcome: string }> {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let over = false;
   try {
     const outcome = await Promise.race([
-      runFirstTapUpsert(ctx, operation, pass).catch((error: unknown) => {
-        ctx.log.warn('wallet.google_first_tap_failed', {
-          code: error instanceof AppError ? error.code : 'WALLET_GOOGLE_FIRST_TAP',
-        });
-        return 'failed' as const;
-      }),
+      runFirstTapUpsert(ctx, operation, pass)
+        .then(async (result) => {
+          // Another runner (the minute cron) holds the claim: wait for its result inside this budget.
+          while (result === 'not_claimed' && !over) {
+            const row = await getWalletOperation(ctx.env.DB, operation);
+            if (row?.state !== 'claimed') break;
+            await new Promise((resolve) => setTimeout(resolve, CLAIM_POLL_MS));
+          }
+          return result;
+        })
+        .catch((error: unknown) => {
+          ctx.log.warn('wallet.google_first_tap_failed', {
+            code: error instanceof AppError ? error.code : 'WALLET_GOOGLE_FIRST_TAP',
+          });
+          return 'failed' as const;
+        }),
       new Promise<'timeout'>((resolve) => {
         timer = setTimeout(() => resolve('timeout'), firstTapBudgetMs);
       }),
@@ -51,6 +64,7 @@ async function provisionFirstTap(
       outcome,
     };
   } finally {
+    over = true;
     clearTimeout(timer);
   }
 }
