@@ -3,11 +3,12 @@ import { join } from 'node:path';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
 import { CONNECTOR } from '../../passes/test-fixtures.ts';
 import { comeBack, returnTarget } from './outbound-return.ts';
-import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
+import { type Calls, endpoint, hooks, manager, ORG } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
   renderApp(path, { session: 'admin', memberships: [manager], selectedOrg: 'org1', handlers });
@@ -31,6 +32,25 @@ describe('every way in lands in the wizard, on the outbound path', () => {
     await open('/admin/o/org1/connections/webhooks/new', []);
     expect(await screen.findByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+  });
+
+  it('sends the Test mode header on every request when opened in Test', async () => {
+    setMode('test');
+    const seen: Array<string | undefined> = [];
+    const calls: Calls[] = [];
+    await open(
+      '/admin/o/org1/connections/webhooks/new',
+      calls,
+      hooks(calls, undefined, {
+        '/api/v1/orgs': (_url, init) => {
+          seen.push(new Headers(init?.headers).get(MODE_HEADER) ?? undefined);
+          return json({ items: [ORG], nextCursor: null });
+        },
+      }),
+    );
+    expect(await screen.findByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(new Set(seen)).toEqual(new Set(['test']));
   });
 
   it('is the Send events tile of the picker, and Back returns to it', async () => {
