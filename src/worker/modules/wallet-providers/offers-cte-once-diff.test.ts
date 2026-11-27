@@ -1,11 +1,21 @@
 import { expect, it } from 'vitest';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { legacyWalletOfferSnapshotCurrent } from './offers-legacy-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
+import {
+  legacyProjectionReleaseBindingPredicateSql,
+  withLegacyProjection,
+} from './projection-legacy-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
+import {
+  walletInstanceOperationCurrentSql,
+  walletInstanceProofSql,
+} from './repo-instance-proof.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { type WalletOfferFence, walletOfferSnapshotCurrent } from './repo-offers.ts';
+import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 import {
   seedHistoricalOfferRef,
   seedHistoricalProviderInstance,
@@ -105,7 +115,82 @@ it('reads each CTE once and answers like the previous offer snapshot statement',
     expect(next).toBe(await legacyWalletOfferSnapshotCurrent(db, ...args));
     if (next) trueCount++;
   };
+  // The projection fence and the instance proof embedding it, current against legacy, on every state below.
+  let trueProjection = 0;
+  let trueProof = 0;
+  const projectionScope = {
+    releaseIdSql: 'requested.release_id',
+    orgIdSql: 'requested.org_id',
+    modeSql: 'requested.mode',
+    providerSql: 'requested.provider',
+    templateIdSql: 'requested.template_id',
+    versionSql: 'requested.version',
+    sourceReleaseIdSql: 'requested.source_id',
+    nowSql: 'requested.now_ms',
+    credentialKeysetCommitmentSql: 'requested.credential_keyset_commitment',
+  };
+  const baseScope = {
+    release_id: approved.release.id as string | null,
+    org_id: f.pass.orgId as string,
+    mode: f.pass.mode as string,
+    provider: 'samsung' as string,
+    template_id: f.pass.templateId as string,
+    version: f.pass.templateVersion as string | number,
+    source_id: snapshot.pass.releaseId as string | null,
+    now_ms: now as number | null,
+  };
+  const projectionDiffs = async () => {
+    const other = (v: string) => `${v}-other`;
+    const scopes = [
+      baseScope,
+      { ...baseScope, release_id: crypto.randomUUID() },
+      { ...baseScope, org_id: other(baseScope.org_id) },
+      { ...baseScope, mode: other(baseScope.mode) },
+      { ...baseScope, provider: 'google' },
+      { ...baseScope, template_id: other(baseScope.template_id) },
+      { ...baseScope, version: `${baseScope.version}9` },
+      { ...baseScope, source_id: crypto.randomUUID() },
+      { ...baseScope, now_ms: null },
+    ];
+    for (const scope of scopes) {
+      const read = (predicate: string) =>
+        first(
+          db,
+          `SELECT 1 AS ok FROM (SELECT ? AS release_id, ? AS org_id, ? AS mode, ? AS provider,
+            ? AS template_id, ? AS version, ? AS source_id, ? AS now_ms,
+            ${pinnedKeysetSql} AS credential_keyset_commitment) requested WHERE ${predicate}`,
+          Object.values(scope),
+        );
+      const next = await read(projectionReleaseBindingPredicateSql(projectionScope));
+      expect(next).toEqual(await read(legacyProjectionReleaseBindingPredicateSql(projectionScope)));
+      if (next) trueProjection++;
+    }
+    const now$ = String(now);
+    for (const byEpoch of [false, true]) {
+      for (const requiredKind of [undefined, 'revoke'] as const) {
+        const proofs = [
+          walletInstanceProofSql('i', 'op', now$, false, requiredKind, byEpoch),
+          walletInstanceProofSql('i', 'op', now$, true, requiredKind, byEpoch),
+          walletInstanceOperationCurrentSql('i', 'op', now$, requiredKind, byEpoch),
+        ];
+        for (const proof of proofs) {
+          const read = (predicate: string) =>
+            all<{ id: string }>(
+              db,
+              `SELECT op.id FROM wallet_provider_instances i
+               JOIN wallet_provider_instance_operations op ON op.instance_id = i.id
+               JOIN passes p ON p.id = i.pass_id WHERE ${predicate} ORDER BY op.id`,
+            );
+          const next = await read(proof);
+          if (requiredKind !== 'revoke')
+            expect(next).toEqual(await read(withLegacyProjection(proof, now$)));
+          if (next.length > 0 && requiredKind !== 'revoke') trueProof++;
+        }
+      }
+    }
+  };
   const matrix = async () => {
+    await projectionDiffs();
     for (const offer of [undefined, pending, consumed]) await both(offer);
     await both({ ...pending, consumed: true });
     await both({ ...pending, refHash: 'c'.repeat(64) });
@@ -130,6 +215,8 @@ it('reads each CTE once and answers like the previous offer snapshot statement',
 
   await matrix();
   expect(trueCount).toBeGreaterThan(2);
+  expect(trueProjection).toBeGreaterThan(0);
+  expect(trueProof).toBeGreaterThan(0);
   // Delivery: the guarded UPDATE of each statement flips only its own consumed ref.
   const deliveredAt = (hash: string) =>
     first(db, 'SELECT delivered_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [hash]);

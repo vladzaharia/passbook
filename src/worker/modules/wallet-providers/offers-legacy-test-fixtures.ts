@@ -1,12 +1,15 @@
 import { first } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo.ts';
 import type { NativeProvider } from './projection-contract.ts';
+import {
+  legacyProjectionReleaseBindingPredicateSql,
+  withLegacyProjection,
+} from './projection-legacy-test-fixtures.ts';
 import { walletEnrolmentIssuesSql, walletProviderEnabledSql } from './provider-policy.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { walletRetiredInstanceSettledSql } from './repo-instance-retirement.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { WalletOfferFence } from './repo-offers.ts';
-import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
 /** Test fixture: the offer snapshot statement as it read before each CTE was referenced once. */
 export async function legacyWalletOfferSnapshotCurrent(
@@ -21,7 +24,7 @@ export async function legacyWalletOfferSnapshotCurrent(
   offer?: WalletOfferFence,
 ): Promise<boolean> {
   if (offer?.deliver && (!offer.consumed || provider !== 'samsung')) return false;
-  const projection = projectionReleaseBindingPredicateSql({
+  const projection = legacyProjectionReleaseBindingPredicateSql({
     releaseIdSql: 'requested.projection_id',
     orgIdSql: 'p.org_id',
     modeSql: 'p.mode',
@@ -110,7 +113,7 @@ export async function legacyWalletOfferSnapshotCurrent(
       JOIN wallet_provider_instances i ON i.id = candidate.instance_id
       JOIN wallet_provider_instance_operations op ON op.id = candidate.operation_id
       CROSS JOIN requested
-      WHERE ${walletInstanceOperationCurrentSql('i', 'op', 'requested.now')}
+      WHERE ${withLegacyProjection(walletInstanceOperationCurrentSql('i', 'op', 'requested.now'), 'requested.now')}
     )`
         : ''
     }
