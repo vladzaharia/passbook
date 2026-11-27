@@ -77,6 +77,11 @@ export const WB_TOOL_BUDGET_BYTES = 75_000;
  */
 export const WB_DESIGN_BUDGET_BYTES = 230_000;
 /**
+ * Home, in gzip bytes: 74.9 kB without the signed-out read-only Console, which loads lazily but
+ * adds its preload list to the route (1.7 kB measured).
+ */
+export const WB_HOME_BUDGET_BYTES = 78_000;
+/**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
  * anonymous Design route (the blueprints in the designer core, `wb-tool-playground`), which shares the
  * design budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
@@ -85,7 +90,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
   console: WB_TOOL_BUDGET_BYTES,
   events: WB_TOOL_BUDGET_BYTES,
-  home: WB_TOOL_BUDGET_BYTES,
+  home: WB_HOME_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
   passes: WB_TOOL_BUDGET_BYTES,
   sandbox: WB_TOOL_BUDGET_BYTES,

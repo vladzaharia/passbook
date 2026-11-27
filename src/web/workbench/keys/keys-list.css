@@ -21,3 +21,7 @@
 .wb-keys-pane .lg\:col-span-2 {
   grid-column: auto;
 }
+/* A key's name is a person's word, not an identifier: the list's mono stays on ids and prefixes. */
+.wb-key-name {
+  font-family: var(--pk-font-sans, system-ui, sans-serif);
+}

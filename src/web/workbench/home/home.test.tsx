@@ -142,13 +142,39 @@ describe('Home (sandbox)', () => {
     }
   });
 
-  it('is gone from the next step once Quickstart is done, and the fan takes its place', async () => {
+  it('names what to try next once Quickstart is done, without the progress ticks', async () => {
     await renderApp('/workbench/o/sbx', {
       session: 'developer',
       handlers: homeHandlers({ ...SANDBOX, quickstart: { done: 5, total: 5 } }),
     });
     await screen.findByRole('heading', { name: 'Test passes' });
-    expect(screen.queryByText('Next step')).not.toBeInTheDocument();
+    expect(screen.getByText('Next step')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hear a webhook' })).toBeInTheDocument();
+    expect(screen.queryByText(/of 5 done/)).not.toBeInTheDocument();
+  });
+
+  it("leaves the Workbench's own reads out of Recent calls", async () => {
+    await renderApp('/workbench/o/sbx', {
+      session: 'developer',
+      handlers: homeHandlers(SANDBOX, [
+        {
+          ...call('w1', 200),
+          method: 'GET',
+          path: '/api/v1/workbench/summary',
+          route: '/api/v1/workbench/summary',
+        },
+        {
+          ...call('w2', 200),
+          method: 'GET',
+          path: '/api/v1/operations',
+          route: '/api/v1/operations',
+        },
+        call('c1', 201),
+      ]),
+    });
+    expect(await screen.findByText('/api/v1/passes')).toBeInTheDocument();
+    expect(screen.queryByText('/api/v1/workbench/summary')).not.toBeInTheDocument();
+    expect(screen.queryByText('/api/v1/operations')).not.toBeInTheDocument();
   });
 });
 
@@ -160,7 +186,7 @@ describe('Home (org)', () => {
     });
     expect(await screen.findByText('Test data only')).toBeVisible();
     expect(screen.getAllByText('Test data only')).toHaveLength(1);
-    expect(screen.queryByText('Next step')).not.toBeInTheDocument();
+    expect(screen.getByText('Next step')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Errors\s*3/ })).toHaveAttribute(
       'href',
       '/workbench/o/nw/logs?status=4xx',

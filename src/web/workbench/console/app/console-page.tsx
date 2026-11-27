@@ -23,10 +23,13 @@ import { useOpSelection } from './use-op-selection.ts';
 
 const C = CONSOLE_COPY;
 
-/** With no link to one, the console opens on a read: the first GET in reference order, never a write. */
-export function safeStart(index: RunIndex): IndexOp | null {
+/**
+ * With no link to one, the console opens on a read: the first GET in reference order, never a
+ * write, and one this context may run (`allowed`).
+ */
+export function safeStart(index: RunIndex, allowed: (op: { wb: boolean }) => boolean = () => true) {
   for (const g of index.groups)
-    for (const i of g.items) if (i.method === 'get') return { ...i, group: g.label };
+    for (const i of g.items) if (i.method === 'get' && allowed(i)) return { ...i, group: g.label };
   return null;
 }
 
@@ -49,7 +52,8 @@ export function ConsolePage() {
   const router = useRouter();
   const client = useConsoleClient();
   const orgId = client?.orgId;
-  const context = useWorkbenchContexts().data?.find((c) => c.orgId === orgId) ?? null;
+  const contexts = useWorkbenchContexts();
+  const context = contexts.data?.find((c) => c.orgId === orgId) ?? null;
   const search = useLocation({ select: (l) => l.searchStr });
   const hash = useLocation({ select: (l) => l.hash });
   const pathname = useLocation({ select: (l) => l.pathname });
@@ -77,6 +81,11 @@ export function ConsolePage() {
     });
   }, [attempt]);
 
+  // A member's Test may call the allowlisted operations only; the server holds the line, this says why.
+  const lockedHere = useCallback(
+    (op: { wb: boolean }) => context?.kind === 'org' && !op.wb,
+    [context],
+  );
   const launch = useMemo(() => launchOf(search), [search]);
   const all = useMemo(() => (index && index !== 'failed' ? flatten(index) : []), [index]);
   const needle = query.trim().toLowerCase();
@@ -95,9 +104,11 @@ export function ConsolePage() {
   // No (known) operation in the address: open on the first read, and say so in the address.
   useEffect(() => {
     if (!index || index === 'failed' || current || launch.from) return;
-    const start = safeStart(index);
+    // Wait for the context: a member's Test runs the allowlisted operations only.
+    if (client && contexts.isPending) return;
+    const start = safeStart(index, (op) => !lockedHere(op));
     if (start) select(start.id, { open: false });
-  }, [index, current, select, launch.from]);
+  }, [index, current, select, launch.from, client, contexts.isPending, lockedHere]);
 
   // Beside the stage the index opens on the operation the link named, centred in its own pane. The list's
   // own scroll-into-view also moves the page; the page goes back to where it was.
@@ -153,11 +164,6 @@ export function ConsolePage() {
   );
   const clear = useCallback(() => setQuery(''), []);
 
-  // A member's Test may call the allowlisted operations only; the server holds the line, this says why.
-  const lockedHere = useCallback(
-    (op: { wb: boolean }) => context?.kind === 'org' && !op.wb,
-    [context],
-  );
   const reasonFor = (op: IndexOp): string | null =>
     !client || !context
       ? C.reason.noSandbox
