@@ -3,6 +3,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { waitForClaimHolder } from './first-tap-claim-wait.ts';
 import { registerGoogleCallbackBinding } from './google-callback-binding.ts';
 import { googleClassPartition } from './google-compile.ts';
 import type { GoogleSaveOffer } from './google-offer.ts';
@@ -16,8 +17,6 @@ export class GoogleMemberFailedError extends UnavailableError {}
 
 /** The first tap builds the object itself, inside this budget; a slower provider gets an error page. */
 let firstTapBudgetMs = 15_000;
-
-const CLAIM_POLL_MS = 50;
 
 /** Tests only: a budget short enough to outlast with a slow provider. */
 export function setFirstTapBudgetForTest(ms: number): () => void {
@@ -41,11 +40,13 @@ async function provisionFirstTap(
       runFirstTapUpsert(ctx, operation, pass)
         .then(async (result) => {
           // Another runner (the minute cron) holds the claim: wait for its result inside this budget.
-          while (result === 'not_claimed' && !over) {
-            const row = await getWalletOperation(ctx.env.DB, operation);
-            if (row?.state !== 'claimed') break;
-            await new Promise((resolve) => setTimeout(resolve, CLAIM_POLL_MS));
-          }
+          if (result === 'not_claimed')
+            await waitForClaimHolder({
+              read: () => getWalletOperation(ctx.env.DB, operation),
+              now: () => ctx.clock.now(),
+              sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+              over: () => over,
+            });
           return result;
         })
         .catch((error: unknown) => {
@@ -59,10 +60,15 @@ async function provisionFirstTap(
       }),
     ]);
     ctx.log.info('wallet.google_first_tap_ran', { code: 'WALLET_GOOGLE_FIRST_TAP', outcome });
-    return {
-      ready: outcome === 'timeout' ? null : await getWalletOperation(ctx.env.DB, operation),
-      outcome,
-    };
+    if (outcome === 'timeout') return { ready: null, outcome };
+    // A read that fails is a classified 503 (the caller logs the pending code), never a 500.
+    const ready = await getWalletOperation(ctx.env.DB, operation).catch((error: unknown) => {
+      ctx.log.warn('wallet.google_first_tap_failed', {
+        code: error instanceof AppError ? error.code : 'WALLET_GOOGLE_FIRST_TAP',
+      });
+      return null;
+    });
+    return { ready, outcome };
   } finally {
     over = true;
     clearTimeout(timer);

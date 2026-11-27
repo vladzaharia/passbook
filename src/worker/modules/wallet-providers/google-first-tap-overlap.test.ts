@@ -10,6 +10,8 @@ import { drainWalletProviderSync } from './sync.ts';
 const overlap = vi.hoisted(() => ({
   /** Runs the cron to its provider call and returns once it holds the claim; set per test. */
   beforeTap: async (): Promise<void> => undefined,
+  /** Called with the tap's own run result, before it starts to wait. */
+  afterTap: (_result: string): void => undefined,
 }));
 vi.mock('../../jobs/wallet-first-tap.ts', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../jobs/wallet-first-tap.ts')>();
@@ -17,7 +19,9 @@ vi.mock('../../jobs/wallet-first-tap.ts', async (importOriginal) => {
     ...real,
     runFirstTapUpsert: async (ctx: ServiceContext, op: WalletOperation, pass: never) => {
       await overlap.beforeTap();
-      return real.runFirstTapUpsert(ctx, op, pass);
+      const result = await real.runFirstTapUpsert(ctx, op, pass);
+      overlap.afterTap(result);
+      return result;
     },
   };
 });
@@ -52,9 +56,15 @@ it('waits for the cron that holds the claim instead of answering preparing', asy
     cron = drainWalletProviderSync(jobCtxOf(kit));
     await inFlight;
     overlap.beforeTap = async () => undefined;
-    setTimeout(release, 0);
+  };
+  const seen: string[] = [];
+  // The cron's provider call ends only once the tap has lost the claim.
+  overlap.afterTap = (result) => {
+    seen.push(result);
+    release();
   };
   const location = await issueWalletOffer(kit.ctx, token, 'google');
   await cron;
+  expect(seen).toEqual(['not_claimed']);
   expect(location).toMatch(/^https:\/\/pay\.google\.com\/gp\/v\/save\//);
 });
