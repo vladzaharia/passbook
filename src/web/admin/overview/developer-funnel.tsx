@@ -54,7 +54,7 @@ export function DeveloperFunnelTile() {
                 {steps(f).map((s) => (
                   <li
                     key={s.id}
-                    className="grid grid-cols-[minmax(7rem,9.5rem)_minmax(0,1fr)_3rem] items-center gap-3 text-sm"
+                    className="grid grid-cols-[minmax(7rem,9.5rem)_minmax(0,1fr)_2.5rem] items-center gap-2 sm:gap-3 text-sm"
                   >
                     <span className="truncate text-fg-muted">{s.label}</span>
                     <span aria-hidden className="h-2 rounded-full bg-surface-sunken">
@@ -74,7 +74,7 @@ export function DeveloperFunnelTile() {
               <dl className="grid grid-cols-3 gap-x-6 gap-y-3 self-start lg:grid-cols-1">
                 {[
                   ['Completion', formatShare(f.completion)],
-                  ['Median to first pass', formatSpan(f.ttfpP50Ms)],
+                  ['Median to pass', formatSpan(f.ttfpP50Ms)],
                   ['90th percentile', formatSpan(f.ttfpP90Ms)],
                 ].map(([k, v]) => (
                   <div key={k}>
