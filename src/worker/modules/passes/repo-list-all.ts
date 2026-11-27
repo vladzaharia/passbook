@@ -27,12 +27,22 @@ export async function listPassBranches(
   const last = pageIds.at(-1);
   const nextCursor = ids.length > filter.limit && last ? last : null;
   if (pageIds.length === 0) return { items: [], nextCursor };
-  const rows = await all<PassDbRow>(
-    db,
-    `${PASS_SELECT} WHERE id IN (SELECT value FROM json_each(?)) ORDER BY id DESC`,
-    [JSON.stringify(pageIds)],
-  );
+  const rows = await passesByIds(db, orgIds, pageIds);
   return { items: rows.map(mapPass), nextCursor };
+}
+
+/** The rows of these pass ids, newest first, and only those in `orgIds`: the second read keeps the first's tenant bound. */
+export function passesByIds(
+  db: D1Database,
+  orgIds: readonly string[],
+  ids: readonly string[],
+): Promise<PassDbRow[]> {
+  return all<PassDbRow>(
+    db,
+    `${PASS_SELECT} WHERE id IN (SELECT value FROM json_each(?))
+       AND org_id IN (SELECT value FROM json_each(?)) ORDER BY id DESC`,
+    [JSON.stringify(ids), JSON.stringify(orgIds)],
+  );
 }
 
 export interface OrgLabel {
