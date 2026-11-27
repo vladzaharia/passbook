@@ -842,6 +842,100 @@ func (r *HoldersResource) Unassign(ctx context.Context, body *HoldersUnassignBod
 	return &out, nil
 }
 
+type IdentitiesPushKeyResource struct {
+	c *core
+}
+
+func newIdentitiesPushKeyResource(c *core) *IdentitiesPushKeyResource {
+	return &IdentitiesPushKeyResource{
+		c: c,
+	}
+}
+
+// Delete Remove the APNs push key of the identity team `DELETE /api/v1/identities/{id}/push-key`
+func (r *IdentitiesPushKeyResource) Delete(ctx context.Context, id string, opts ...RequestOption) (*IdentitiesPushKeyDeleteResult, error) {
+	var out IdentitiesPushKeyDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/identities/" + pathEscape(id) + "/push-key"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Upload Set or replace the APNs push key (.p8) of the identity team `PUT /api/v1/identities/{id}/push-key`
+func (r *IdentitiesPushKeyResource) Upload(ctx context.Context, id string, body *IdentitiesPushKeyUploadBody, opts ...RequestOption) (*IdentitiesPushKeyUploadResult, error) {
+	var out IdentitiesPushKeyUploadResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/identities/" + pathEscape(id) + "/push-key", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type IdentitiesResource struct {
+	c       *core
+	PushKey *IdentitiesPushKeyResource
+}
+
+func newIdentitiesResource(c *core) *IdentitiesResource {
+	return &IdentitiesResource{
+		c:       c,
+		PushKey: newIdentitiesPushKeyResource(c),
+	}
+}
+
+// CheckApns Probe APNs with the identity certificate using a dummy token `POST /api/v1/identities/{id}/apns-check`
+func (r *IdentitiesResource) CheckApns(ctx context.Context, id string, opts ...RequestOption) (*IdentitiesCheckApnsResult, error) {
+	var out IdentitiesCheckApnsResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/identities/" + pathEscape(id) + "/apns-check"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Upload an Apple identity `POST /api/v1/identities`
+func (r *IdentitiesResource) Create(ctx context.Context, body *IdentitiesCreateBody, opts ...RequestOption) (*IdentitiesCreateResult, error) {
+	var out IdentitiesCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/identities", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Renew Get a new certificate now (managed identities) `POST /api/v1/identities/{id}/renew`
+func (r *IdentitiesResource) Renew(ctx context.Context, id string, opts ...RequestOption) (*IdentitiesRenewResult, error) {
+	var out IdentitiesRenewResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/identities/" + pathEscape(id) + "/renew"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Get an Apple identity `GET /api/v1/identities/{id}`
+func (r *IdentitiesResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*IdentitiesRetrieveResult, error) {
+	var out IdentitiesRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/identities/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Rotate Replace the certificate and key of an Apple identity `POST /api/v1/identities/{id}/rotate`
+func (r *IdentitiesResource) Rotate(ctx context.Context, id string, body *IdentitiesRotateBody, opts ...RequestOption) (*IdentitiesRotateResult, error) {
+	var out IdentitiesRotateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/identities/" + pathEscape(id) + "/rotate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Update an Apple identity `PATCH /api/v1/identities/{id}`
+func (r *IdentitiesResource) Update(ctx context.Context, id string, body *IdentitiesUpdateBody, opts ...RequestOption) (*IdentitiesUpdateResult, error) {
+	var out IdentitiesUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/identities/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type MessageRulesRunsResource struct {
 	c *core
 }
@@ -1106,6 +1200,25 @@ func (r *PlatformOrgsResource) Retrieve(ctx context.Context, id string, opts ...
 func (r *PlatformOrgsResource) SetStatus(ctx context.Context, id string, body *PlatformOrgsSetStatusBody, opts ...RequestOption) (*PlatformOrgsSetStatusResult, error) {
 	var out PlatformOrgsSetStatusResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(id) + "/status", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformAppleCallsResource struct {
+	c *core
+}
+
+func newPlatformAppleCallsResource(c *core) *PlatformAppleCallsResource {
+	return &PlatformAppleCallsResource{
+		c: c,
+	}
+}
+
+// List Apple provisioner's call ledger `GET /api/v1/platform/apple-calls`
+func (r *PlatformAppleCallsResource) List(ctx context.Context, query *PlatformAppleCallsListQuery, opts ...RequestOption) (*PlatformAppleCallsListResult, error) {
+	var out PlatformAppleCallsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/apple-calls", query: queryValues(query)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1449,6 +1562,46 @@ func (r *PlatformInvitationsResource) Revoke(ctx context.Context, id string, opt
 	return &out, nil
 }
 
+type PlatformWalletAccountsGoogleManagedResource struct {
+	c *core
+}
+
+func newPlatformWalletAccountsGoogleManagedResource(c *core) *PlatformWalletAccountsGoogleManagedResource {
+	return &PlatformWalletAccountsGoogleManagedResource{
+		c: c,
+	}
+}
+
+// Complete Finish a parked managed Google issuer with an issuer id made in the console `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete`
+func (r *PlatformWalletAccountsGoogleManagedResource) Complete(ctx context.Context, orgId string, body *PlatformWalletAccountsGoogleManagedCompleteBody, opts ...RequestOption) (*PlatformWalletAccountsGoogleManagedCompleteResult, error) {
+	var out PlatformWalletAccountsGoogleManagedCompleteResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/orgs/" + pathEscape(orgId) + "/wallet-accounts/google/managed/complete", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Start a managed Google issuer for an organization `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed`
+func (r *PlatformWalletAccountsGoogleManagedResource) Create(ctx context.Context, orgId string, body *PlatformWalletAccountsGoogleManagedCreateBody, opts ...RequestOption) (*PlatformWalletAccountsGoogleManagedCreateResult, error) {
+	var out PlatformWalletAccountsGoogleManagedCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/orgs/" + pathEscape(orgId) + "/wallet-accounts/google/managed", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformWalletAccountsResource struct {
+	c             *core
+	GoogleManaged *PlatformWalletAccountsGoogleManagedResource
+}
+
+func newPlatformWalletAccountsResource(c *core) *PlatformWalletAccountsResource {
+	return &PlatformWalletAccountsResource{
+		c:             c,
+		GoogleManaged: newPlatformWalletAccountsGoogleManagedResource(c),
+	}
+}
+
 type PlatformRetentionReceiptsResource struct {
 	c *core
 }
@@ -1499,6 +1652,107 @@ func (r *PlatformSettingsResource) Update(ctx context.Context, body *PlatformSet
 		return nil, err
 	}
 	return &out, nil
+}
+
+type PlatformWalletCredentialsChecksResource struct {
+	c *core
+}
+
+func newPlatformWalletCredentialsChecksResource(c *core) *PlatformWalletCredentialsChecksResource {
+	return &PlatformWalletCredentialsChecksResource{
+		c: c,
+	}
+}
+
+// Create Check a platform wallet credential with its provider `POST /api/v1/platform/wallet-credentials/{id}/check`
+func (r *PlatformWalletCredentialsChecksResource) Create(ctx context.Context, id string, opts ...RequestOption) (*PlatformWalletCredentialsChecksCreateResult, error) {
+	var out PlatformWalletCredentialsChecksCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/wallet-credentials/" + pathEscape(id) + "/check"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Read the result of a platform wallet credential check `GET /api/v1/platform/wallet-credentials/{id}/checks/{checkId}`
+func (r *PlatformWalletCredentialsChecksResource) Retrieve(ctx context.Context, id string, checkId string, opts ...RequestOption) (*PlatformWalletCredentialsChecksRetrieveResult, error) {
+	var out PlatformWalletCredentialsChecksRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/platform/wallet-credentials/" + pathEscape(id) + "/checks/" + pathEscape(checkId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformWalletCredentialsResource struct {
+	c      *core
+	Checks *PlatformWalletCredentialsChecksResource
+}
+
+func newPlatformWalletCredentialsResource(c *core) *PlatformWalletCredentialsResource {
+	return &PlatformWalletCredentialsResource{
+		c:      c,
+		Checks: newPlatformWalletCredentialsChecksResource(c),
+	}
+}
+
+// List List the platform wallet credentials `GET /api/v1/platform/wallet-credentials`
+func (r *PlatformWalletCredentialsResource) List(ctx context.Context, query *PlatformWalletCredentialsListQuery, opts ...RequestOption) *Pager[PlatformWalletCredentialsListItem] {
+	return newPager[PlatformWalletCredentialsListItem](r.c, call{method: "GET", path: "/api/v1/platform/wallet-credentials", query: queryValues(query)}, "cursor", opts)
+}
+
+// Migrate Queue the migration of legacy wallet accounts onto credential sources `POST /api/v1/platform/wallet-credentials/migrate`
+func (r *PlatformWalletCredentialsResource) Migrate(ctx context.Context, opts ...RequestOption) (*PlatformWalletCredentialsMigrateResult, error) {
+	var out PlatformWalletCredentialsMigrateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/wallet-credentials/migrate"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RetrieveMigration Report the legacy wallet accounts waiting for a credential source `GET /api/v1/platform/wallet-credentials/migrate`
+func (r *PlatformWalletCredentialsResource) RetrieveMigration(ctx context.Context, query *PlatformWalletCredentialsRetrieveMigrationQuery, opts ...RequestOption) *Pager[PlatformWalletCredentialsRetrieveMigrationItem] {
+	return newPager[PlatformWalletCredentialsRetrieveMigrationItem](r.c, call{method: "GET", path: "/api/v1/platform/wallet-credentials/migrate", query: queryValues(query)}, "cursor", opts)
+}
+
+// RotateKey Rotate a platform Google credential's service-account key now `POST /api/v1/platform/wallet-credentials/{id}/rotate-key`
+func (r *PlatformWalletCredentialsResource) RotateKey(ctx context.Context, id string, opts ...RequestOption) (*PlatformWalletCredentialsRotateKeyResult, error) {
+	var out PlatformWalletCredentialsRotateKeyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/platform/wallet-credentials/" + pathEscape(id) + "/rotate-key"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// SetSamsungCard Name the Samsung card of one more type on a platform credential `PUT /api/v1/platform/wallet-credentials/{id}/cards`
+func (r *PlatformWalletCredentialsResource) SetSamsungCard(ctx context.Context, id string, body *PlatformWalletCredentialsSetSamsungCardBody, opts ...RequestOption) (*PlatformWalletCredentialsSetSamsungCardResult, error) {
+	var out PlatformWalletCredentialsSetSamsungCardResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/platform/wallet-credentials/" + pathEscape(id) + "/cards", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Upsert Create or rotate a platform wallet credential `PUT /api/v1/platform/wallet-credentials`
+func (r *PlatformWalletCredentialsResource) Upsert(ctx context.Context, body *PlatformWalletCredentialsUpsertBody, opts ...RequestOption) (*PlatformWalletCredentialsUpsertResult, error) {
+	var out PlatformWalletCredentialsUpsertResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/platform/wallet-credentials", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PlatformWalletEnrollmentsResource struct {
+	c *core
+}
+
+func newPlatformWalletEnrollmentsResource(c *core) *PlatformWalletEnrollmentsResource {
+	return &PlatformWalletEnrollmentsResource{
+		c: c,
+	}
+}
+
+// List List every organization enrollment of a wallet provider `GET /api/v1/platform/wallet-enrolments`
+func (r *PlatformWalletEnrollmentsResource) List(ctx context.Context, query *PlatformWalletEnrollmentsListQuery, opts ...RequestOption) *Pager[PlatformWalletEnrollmentsListItem] {
+	return newPager[PlatformWalletEnrollmentsListItem](r.c, call{method: "GET", path: "/api/v1/platform/wallet-enrolments", query: queryValues(query)}, "cursor", opts)
 }
 
 type PlatformWalletReleaseResource struct {
@@ -1741,12 +1995,16 @@ type PlatformResource struct {
 	c                  *core
 	Metrics            *PlatformMetricsResource
 	Orgs               *PlatformOrgsResource
+	AppleCalls         *PlatformAppleCallsResource
 	EntitlementPresets *PlatformEntitlementPresetsResource
 	Idp                *PlatformIdpResource
 	Groups             *PlatformGroupsResource
 	Invitations        *PlatformInvitationsResource
+	WalletAccounts     *PlatformWalletAccountsResource
 	RetentionReceipts  *PlatformRetentionReceiptsResource
 	Settings           *PlatformSettingsResource
+	WalletCredentials  *PlatformWalletCredentialsResource
+	WalletEnrollments  *PlatformWalletEnrollmentsResource
 	WalletRelease      *PlatformWalletReleaseResource
 	Status             *PlatformStatusResource
 	Users              *PlatformUsersResource
@@ -1757,12 +2015,16 @@ func newPlatformResource(c *core) *PlatformResource {
 		c:                  c,
 		Metrics:            newPlatformMetricsResource(c),
 		Orgs:               newPlatformOrgsResource(c),
+		AppleCalls:         newPlatformAppleCallsResource(c),
 		EntitlementPresets: newPlatformEntitlementPresetsResource(c),
 		Idp:                newPlatformIdpResource(c),
 		Groups:             newPlatformGroupsResource(c),
 		Invitations:        newPlatformInvitationsResource(c),
+		WalletAccounts:     newPlatformWalletAccountsResource(c),
 		RetentionReceipts:  newPlatformRetentionReceiptsResource(c),
 		Settings:           newPlatformSettingsResource(c),
+		WalletCredentials:  newPlatformWalletCredentialsResource(c),
+		WalletEnrollments:  newPlatformWalletEnrollmentsResource(c),
 		WalletRelease:      newPlatformWalletReleaseResource(c),
 		Status:             newPlatformStatusResource(c),
 		Users:              newPlatformUsersResource(c),
@@ -4060,6 +4322,7 @@ type Resources struct {
 	Deliveries           *DeliveriesResource
 	Events               *EventsResource
 	Holders              *HoldersResource
+	Identities           *IdentitiesResource
 	MessageRules         *MessageRulesResource
 	Platform             *PlatformResource
 	NFC                  *NfcResource
@@ -4103,6 +4366,7 @@ func newResources(c *core) Resources {
 		Deliveries:           newDeliveriesResource(c),
 		Events:               newEventsResource(c),
 		Holders:              newHoldersResource(c),
+		Identities:           newIdentitiesResource(c),
 		MessageRules:         newMessageRulesResource(c),
 		Platform:             newPlatformResource(c),
 		NFC:                  newNfcResource(c),

@@ -438,9 +438,12 @@ __all__ = [
     "IdentitiesCertificatesRevokeParams",
     "IdentitiesCertificatesRevokeResponse",
     "IdentitiesCheckApnsResponse",
+    "IdentitiesCheckApnsResult",
+    "IdentitiesCreateBody",
     "IdentitiesCreateParams",
     "IdentitiesCreateResponse",
     "IdentitiesCreateResponseNfcKeysItem",
+    "IdentitiesCreateResult",
     "IdentitiesDeleteResponse",
     "IdentitiesListResponse",
     "IdentitiesListResponse1",
@@ -450,18 +453,27 @@ __all__ = [
     "IdentitiesListResponse2ItemsItem",
     "IdentitiesPushKeyDeleteResponse",
     "IdentitiesPushKeyDeleteResponseNfcKeysItem",
+    "IdentitiesPushKeyDeleteResult",
+    "IdentitiesPushKeyUploadBody",
     "IdentitiesPushKeyUploadParams",
     "IdentitiesPushKeyUploadResponse",
     "IdentitiesPushKeyUploadResponseNfcKeysItem",
+    "IdentitiesPushKeyUploadResult",
     "IdentitiesRenewResponse",
+    "IdentitiesRenewResult",
     "IdentitiesRetrieveResponse",
     "IdentitiesRetrieveResponseNfcKeysItem",
+    "IdentitiesRetrieveResult",
+    "IdentitiesRotateBody",
     "IdentitiesRotateParams",
     "IdentitiesRotateResponse",
     "IdentitiesRotateResponseNfcKeysItem",
+    "IdentitiesRotateResult",
+    "IdentitiesUpdateBody",
     "IdentitiesUpdateParams",
     "IdentitiesUpdateResponse",
     "IdentitiesUpdateResponseNfcKeysItem",
+    "IdentitiesUpdateResult",
     "IdentityRunsCancelResponse",
     "IdentityRunsListResponse",
     "IdentityRunsListResponseItemsItem",
@@ -1194,6 +1206,7 @@ __all__ = [
     "PassesVoidResult",
     "PlatformAppleCallsListResponse",
     "PlatformAppleCallsListResponseItemsItem",
+    "PlatformAppleCallsListResult",
     "PlatformAppleIdentitiesCreateParams",
     "PlatformAppleIdentitiesCreateResponse",
     "PlatformAppleIdentitiesListResponse",
@@ -1535,12 +1548,21 @@ __all__ = [
     "PlatformUsersUpdateParams",
     "PlatformUsersUpdateResponse",
     "PlatformUsersUpdateResult",
+    "PlatformWalletAccountsGoogleManagedCompleteBody",
     "PlatformWalletAccountsGoogleManagedCompleteParams",
     "PlatformWalletAccountsGoogleManagedCompleteResponse",
+    "PlatformWalletAccountsGoogleManagedCompleteResult",
+    "PlatformWalletAccountsGoogleManagedCreateBody",
     "PlatformWalletAccountsGoogleManagedCreateParams",
     "PlatformWalletAccountsGoogleManagedCreateResponse",
+    "PlatformWalletAccountsGoogleManagedCreateResult",
     "PlatformWalletCredentialsChecksCreateResponse",
+    "PlatformWalletCredentialsChecksCreateResult",
     "PlatformWalletCredentialsChecksRetrieveResponse",
+    "PlatformWalletCredentialsChecksRetrieveResult",
+    "PlatformWalletCredentialsListItem",
+    "PlatformWalletCredentialsListItemLastCheck1",
+    "PlatformWalletCredentialsListItemLastCheck2",
     "PlatformWalletCredentialsListResponse",
     "PlatformWalletCredentialsListResponseItemsItem",
     "PlatformWalletCredentialsListResponseItemsItemLastCheck1",
@@ -1556,21 +1578,30 @@ __all__ = [
     "PlatformWalletCredentialsListResponseReleaseSamsungLive2",
     "PlatformWalletCredentialsListResponseReleaseSamsungTest1",
     "PlatformWalletCredentialsListResponseReleaseSamsungTest2",
+    "PlatformWalletCredentialsListResult",
     "PlatformWalletCredentialsMigrateResponse",
+    "PlatformWalletCredentialsMigrateResult",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsResolveMigrationResponse",
+    "PlatformWalletCredentialsRetrieveMigrationItem",
+    "PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem",
     "PlatformWalletCredentialsRetrieveMigrationResponse",
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItem",
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem",
+    "PlatformWalletCredentialsRetrieveMigrationResult",
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsRevokeResponse",
     "PlatformWalletCredentialsRevokeResponseLastCheck1",
     "PlatformWalletCredentialsRevokeResponseLastCheck2",
     "PlatformWalletCredentialsRotateKeyResponse",
+    "PlatformWalletCredentialsRotateKeyResult",
+    "PlatformWalletCredentialsSetSamsungCardBody",
     "PlatformWalletCredentialsSetSamsungCardParams",
     "PlatformWalletCredentialsSetSamsungCardResponse",
     "PlatformWalletCredentialsSetSamsungCardResponseLastCheck1",
     "PlatformWalletCredentialsSetSamsungCardResponseLastCheck2",
+    "PlatformWalletCredentialsSetSamsungCardResult",
+    "PlatformWalletCredentialsUpsertBody",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
@@ -1579,8 +1610,11 @@ __all__ = [
     "PlatformWalletCredentialsUpsertResponse",
     "PlatformWalletCredentialsUpsertResponseLastCheck1",
     "PlatformWalletCredentialsUpsertResponseLastCheck2",
+    "PlatformWalletCredentialsUpsertResult",
+    "PlatformWalletEnrollmentsListItem",
     "PlatformWalletEnrollmentsListResponse",
     "PlatformWalletEnrollmentsListResponseItemsItem",
+    "PlatformWalletEnrollmentsListResult",
     "PlatformWalletReleaseEnableReadyBody",
     "PlatformWalletReleaseEnableReadyParams",
     "PlatformWalletReleaseEnableReadyResponse",
@@ -2529,7 +2563,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:orgs", "platform:groups", "platform:claims", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:orgs", "platform:groups", "platform:claims", "platform:identities", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -11475,6 +11509,32 @@ class PlatformWalletCredentialsChecksRetrieveResponse(_Model):
     code: str | None
     checkedAt: int | None
 
+class PlatformWalletCredentialsListItem(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsListItemLastCheck1 | PlatformWalletCredentialsListItemLastCheck2 | None
+
+class PlatformWalletCredentialsListItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsListItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
+
 class PlatformWalletCredentialsListResponse(_Model):
     items: _List[PlatformWalletCredentialsListResponseItemsItem]
     nextCursor: str | None
@@ -11557,6 +11617,20 @@ class PlatformWalletCredentialsResolveMigrationParams(_Model):
 
 class PlatformWalletCredentialsResolveMigrationResponse(_Model):
     accounts: int
+
+class PlatformWalletCredentialsRetrieveMigrationItem(_Model):
+    accountId: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    state: _Literal["ready", "refused"] | str
+    reason: _Literal["identity_shared", "org_credential_exists", "unreadable", "unproven_claim", None] | str
+    identityShared: _List[PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem]
+
+class PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
 
 class PlatformWalletCredentialsRetrieveMigrationResponse(_Model):
     pending: int
@@ -11694,6 +11768,16 @@ class PlatformWalletCredentialsUpsertResponseLastCheck2(_Model):
     ok: _Literal[False]
     code: str
     at: int
+
+class PlatformWalletEnrollmentsListItem(_Model):
+    orgId: str
+    orgName: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    source: _Literal["platform", "org", None] | str
+    state: _Literal["off", "on", "held", "revoked"] | str
+    hold: _Dict[str, _Any] | None
+    updatedAt: int
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -16577,7 +16661,31 @@ HoldersUnassignBody = HoldersUnassignParams
 
 HoldersUnassignResult = HoldersUnassignResponse
 
+IdentitiesCheckApnsResult = IdentitiesCheckApnsResponse
+
+IdentitiesCreateBody = IdentitiesCreateParams
+
+IdentitiesCreateResult = IdentitiesCreateResponse
+
 IdentitiesListResponse = IdentitiesListResponse1 | IdentitiesListResponse2
+
+IdentitiesPushKeyDeleteResult = IdentitiesPushKeyDeleteResponse
+
+IdentitiesPushKeyUploadBody = IdentitiesPushKeyUploadParams
+
+IdentitiesPushKeyUploadResult = IdentitiesPushKeyUploadResponse
+
+IdentitiesRenewResult = IdentitiesRenewResponse
+
+IdentitiesRetrieveResult = IdentitiesRetrieveResponse
+
+IdentitiesRotateBody = IdentitiesRotateParams
+
+IdentitiesRotateResult = IdentitiesRotateResponse
+
+IdentitiesUpdateBody = IdentitiesUpdateParams
+
+IdentitiesUpdateResult = IdentitiesUpdateResponse
 
 InvitationsCreateBody = InvitationsCreateParams
 
@@ -16869,6 +16977,8 @@ PassesVersionsRetrieveResult = PassDetail
 
 PassesVoidResult = PassSummary
 
+PlatformAppleCallsListResult = PlatformAppleCallsListResponse
+
 PlatformEntitlementPresetsListResult = PlatformEntitlementPresetsListResponse
 
 PlatformEntitlementPresetsUpdateBody = PlatformEntitlementPresetsUpdateParams
@@ -17033,7 +17143,37 @@ PlatformUsersUpdateBody = PlatformUsersUpdateParams
 
 PlatformUsersUpdateResult = PlatformUsersUpdateResponse
 
+PlatformWalletAccountsGoogleManagedCompleteBody = PlatformWalletAccountsGoogleManagedCompleteParams
+
+PlatformWalletAccountsGoogleManagedCompleteResult = PlatformWalletAccountsGoogleManagedCompleteResponse
+
+PlatformWalletAccountsGoogleManagedCreateBody = PlatformWalletAccountsGoogleManagedCreateParams
+
+PlatformWalletAccountsGoogleManagedCreateResult = PlatformWalletAccountsGoogleManagedCreateResponse
+
+PlatformWalletCredentialsChecksCreateResult = PlatformWalletCredentialsChecksCreateResponse
+
+PlatformWalletCredentialsChecksRetrieveResult = PlatformWalletCredentialsChecksRetrieveResponse
+
+PlatformWalletCredentialsListResult = PlatformWalletCredentialsListResponse
+
+PlatformWalletCredentialsMigrateResult = PlatformWalletCredentialsMigrateResponse
+
+PlatformWalletCredentialsRetrieveMigrationResult = PlatformWalletCredentialsRetrieveMigrationResponse
+
+PlatformWalletCredentialsRotateKeyResult = PlatformWalletCredentialsRotateKeyResponse
+
+PlatformWalletCredentialsSetSamsungCardBody = PlatformWalletCredentialsSetSamsungCardParams
+
+PlatformWalletCredentialsSetSamsungCardResult = PlatformWalletCredentialsSetSamsungCardResponse
+
 PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 | PlatformWalletCredentialsUpsertParams2
+
+PlatformWalletCredentialsUpsertBody = PlatformWalletCredentialsUpsertParams
+
+PlatformWalletCredentialsUpsertResult = PlatformWalletCredentialsUpsertResponse
+
+PlatformWalletEnrollmentsListResult = PlatformWalletEnrollmentsListResponse
 
 PlatformWalletReleaseEnableReadyBody = PlatformWalletReleaseEnableReadyParams
 

@@ -3133,6 +3133,10 @@ type IdentitiesCheckApnsResponse struct {
 	Method    *string `json:"method,omitempty"`
 }
 
+type IdentitiesCheckApnsResult = IdentitiesCheckApnsResponse
+
+type IdentitiesCreateBody = IdentitiesCreateParams
+
 type IdentitiesCreateParams struct {
 	OrgID          *string `json:"orgId,omitempty"`
 	Label          string  `json:"label"`
@@ -3188,6 +3192,8 @@ type IdentitiesCreateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesCreateResult = IdentitiesCreateResponse
 
 type IdentitiesDeleteResponse struct {
 	Ok bool `json:"ok"`
@@ -3311,6 +3317,10 @@ type IdentitiesPushKeyDeleteResponseNfcKeysItem struct {
 	PassesLeft  *int64 `json:"passesLeft"`
 }
 
+type IdentitiesPushKeyDeleteResult = IdentitiesPushKeyDeleteResponse
+
+type IdentitiesPushKeyUploadBody = IdentitiesPushKeyUploadParams
+
 type IdentitiesPushKeyUploadParams struct {
 	KeyID string `json:"keyId"`
 	P8    string `json:"p8"`
@@ -3362,6 +3372,8 @@ type IdentitiesPushKeyUploadResponseNfcKeysItem struct {
 	PassesLeft  *int64 `json:"passesLeft"`
 }
 
+type IdentitiesPushKeyUploadResult = IdentitiesPushKeyUploadResponse
+
 type IdentitiesRenewResponse struct {
 	ID         string  `json:"id"`
 	OrgID      *string `json:"orgId"`
@@ -3377,6 +3389,8 @@ type IdentitiesRenewResponse struct {
 	UpdatedAt  int64   `json:"updatedAt"`
 	FinishedAt *int64  `json:"finishedAt"`
 }
+
+type IdentitiesRenewResult = IdentitiesRenewResponse
 
 type IdentitiesRetrieveResponse struct {
 	ID                 string                                  `json:"id"`
@@ -3423,6 +3437,10 @@ type IdentitiesRetrieveResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesRetrieveResult = IdentitiesRetrieveResponse
+
+type IdentitiesRotateBody = IdentitiesRotateParams
 
 type IdentitiesRotateParams struct {
 	CertificatePem *string `json:"certificatePem,omitempty"`
@@ -3476,6 +3494,10 @@ type IdentitiesRotateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesRotateResult = IdentitiesRotateResponse
+
+type IdentitiesUpdateBody = IdentitiesUpdateParams
 
 type IdentitiesUpdateParams struct {
 	Label       *string `json:"label,omitempty"`
@@ -3531,6 +3553,8 @@ type IdentitiesUpdateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesUpdateResult = IdentitiesUpdateResponse
 
 type IdentityRunsCancelResponse struct {
 	ID         string  `json:"id"`
@@ -8859,6 +8883,10 @@ type PassesVersionsRetrieveResult = PassDetail
 
 type PassesVoidResult = PassSummary
 
+type PlatformAppleCallsListQuery struct {
+	Since *int64 `json:"since,omitempty"`
+}
+
 type PlatformAppleCallsListResponse struct {
 	Items     []PlatformAppleCallsListResponseItemsItem `json:"items"`
 	Available bool                                      `json:"available"`
@@ -8875,6 +8903,8 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	DurationMs *int64  `json:"durationMs"`
 	At         int64   `json:"at"`
 }
+
+type PlatformAppleCallsListResult = PlatformAppleCallsListResponse
 
 type PlatformAppleIdentitiesCreateParams struct {
 	Slot string `json:"slot"`
@@ -11199,6 +11229,8 @@ type PlatformUsersUpdateResponse struct {
 
 type PlatformUsersUpdateResult = PlatformUsersUpdateResponse
 
+type PlatformWalletAccountsGoogleManagedCompleteBody = PlatformWalletAccountsGoogleManagedCompleteParams
+
 type PlatformWalletAccountsGoogleManagedCompleteParams struct {
 	IssuerID string `json:"issuerId"`
 }
@@ -11212,6 +11244,10 @@ type PlatformWalletAccountsGoogleManagedCompleteResponse struct {
 	IssuerID   *string `json:"issuerId"`
 	UpdatedAt  int64   `json:"updatedAt"`
 }
+
+type PlatformWalletAccountsGoogleManagedCompleteResult = PlatformWalletAccountsGoogleManagedCompleteResponse
+
+type PlatformWalletAccountsGoogleManagedCreateBody = PlatformWalletAccountsGoogleManagedCreateParams
 
 type PlatformWalletAccountsGoogleManagedCreateParams struct {
 	Mode string `json:"mode"`
@@ -11227,16 +11263,55 @@ type PlatformWalletAccountsGoogleManagedCreateResponse struct {
 	UpdatedAt  int64   `json:"updatedAt"`
 }
 
+type PlatformWalletAccountsGoogleManagedCreateResult = PlatformWalletAccountsGoogleManagedCreateResponse
+
 type PlatformWalletCredentialsChecksCreateResponse struct {
 	CheckID string `json:"checkId"`
 	Status  string `json:"status"`
 }
+
+type PlatformWalletCredentialsChecksCreateResult = PlatformWalletCredentialsChecksCreateResponse
 
 type PlatformWalletCredentialsChecksRetrieveResponse struct {
 	CheckID   string  `json:"checkId"`
 	Status    string  `json:"status"`
 	Code      *string `json:"code"`
 	CheckedAt *int64  `json:"checkedAt"`
+}
+
+type PlatformWalletCredentialsChecksRetrieveResult = PlatformWalletCredentialsChecksRetrieveResponse
+
+type PlatformWalletCredentialsListItem struct {
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsListResponse struct {
@@ -11329,6 +11404,8 @@ type PlatformWalletCredentialsMigrateResponse struct {
 	Queued int64 `json:"queued"`
 }
 
+type PlatformWalletCredentialsMigrateResult = PlatformWalletCredentialsMigrateResponse
+
 type PlatformWalletCredentialsResolveMigrationParams struct {
 	OrgID    string `json:"orgId"`
 	Mode     string `json:"mode"`
@@ -11338,6 +11415,27 @@ type PlatformWalletCredentialsResolveMigrationParams struct {
 
 type PlatformWalletCredentialsResolveMigrationResponse struct {
 	Accounts int64 `json:"accounts"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItem struct {
+	AccountID      string                                                             `json:"accountId"`
+	OrgID          string                                                             `json:"orgId"`
+	Mode           string                                                             `json:"mode"`
+	Provider       string                                                             `json:"provider"`
+	State          string                                                             `json:"state"`
+	Reason         *string                                                            `json:"reason"`
+	IdentityShared []PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem `json:"identityShared"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem struct {
+	OrgID    string `json:"orgId"`
+	Mode     string `json:"mode"`
+	Provider string `json:"provider"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationQuery struct {
+	After  *string `json:"after,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsRetrieveMigrationResponse struct {
@@ -11401,6 +11499,10 @@ type PlatformWalletCredentialsRotateKeyResponse struct {
 	RunID string `json:"runId"`
 }
 
+type PlatformWalletCredentialsRotateKeyResult = PlatformWalletCredentialsRotateKeyResponse
+
+type PlatformWalletCredentialsSetSamsungCardBody = PlatformWalletCredentialsSetSamsungCardParams
+
 type PlatformWalletCredentialsSetSamsungCardParams struct {
 	Type             string `json:"type"`
 	CardID           string `json:"cardId"`
@@ -11435,6 +11537,10 @@ type PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 struct {
 	Code string `json:"code"`
 	At   int64  `json:"at"`
 }
+
+type PlatformWalletCredentialsSetSamsungCardResult = PlatformWalletCredentialsSetSamsungCardResponse
+
+type PlatformWalletCredentialsUpsertBody = PlatformWalletCredentialsUpsertParams
 
 type PlatformWalletCredentialsUpsertParams = any
 
@@ -11496,6 +11602,25 @@ type PlatformWalletCredentialsUpsertResponseLastCheck2 struct {
 	Ok   bool   `json:"ok"`
 	Code string `json:"code"`
 	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsUpsertResult = PlatformWalletCredentialsUpsertResponse
+
+type PlatformWalletEnrollmentsListItem struct {
+	OrgID     string         `json:"orgId"`
+	OrgName   string         `json:"orgName"`
+	Mode      string         `json:"mode"`
+	Provider  string         `json:"provider"`
+	Source    *string        `json:"source"`
+	State     string         `json:"state"`
+	Hold      map[string]any `json:"hold"`
+	UpdatedAt int64          `json:"updatedAt"`
+}
+
+type PlatformWalletEnrollmentsListQuery struct {
+	Provider string  `json:"provider"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {

@@ -10,6 +10,7 @@ import { ConnectorsResource } from './resources/connectors.ts';
 import { DeliveriesResource } from './resources/deliveries.ts';
 import { EventsResource } from './resources/events.ts';
 import { HoldersResource } from './resources/holders.ts';
+import { IdentitiesResource } from './resources/identities.ts';
 import { MessageRulesResource } from './resources/message-rules.ts';
 import { PlatformResource } from './resources/platform.ts';
 import { NfcResource } from './resources/nfc.ts';
@@ -52,6 +53,7 @@ export class Resources {
   readonly deliveries: DeliveriesResource;
   readonly events: EventsResource;
   readonly holders: HoldersResource;
+  readonly identities: IdentitiesResource;
   readonly messageRules: MessageRulesResource;
   readonly platform: PlatformResource;
   readonly nfc: NfcResource;
@@ -92,6 +94,7 @@ export class Resources {
     this.deliveries = new DeliveriesResource(core);
     this.events = new EventsResource(core);
     this.holders = new HoldersResource(core);
+    this.identities = new IdentitiesResource(core);
     this.messageRules = new MessageRulesResource(core);
     this.platform = new PlatformResource(core);
     this.nfc = new NfcResource(core);

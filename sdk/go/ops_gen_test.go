@@ -631,6 +631,78 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"identities.create", "POST", "/api/v1/identities", false,
+		`{"label":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Create(ctx, &b)
+		},
+	},
+	{
+		"identities.retrieve", "GET", "/api/v1/identities/id1", false,
+		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"identities.update", "PATCH", "/api/v1/identities/id1", false,
+		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"identities.checkApns", "POST", "/api/v1/identities/id1/apns-check", false,
+		"", `{"health":"healthy","status":0,"reason":"x","checkedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.CheckApns(ctx, "id1")
+		},
+	},
+	{
+		"identities.pushKey.upload", "PUT", "/api/v1/identities/id1/push-key", false,
+		`{"keyId":"x","p8":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesPushKeyUploadBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.PushKey.Upload(ctx, "id1", &b)
+		},
+	},
+	{
+		"identities.pushKey.delete", "DELETE", "/api/v1/identities/id1/push-key", false,
+		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.PushKey.Delete(ctx, "id1")
+		},
+	},
+	{
+		"identities.renew", "POST", "/api/v1/identities/id1/renew", false,
+		"", `{"id":"x","orgId":"x","kind":"provision","targetType":"identity","targetId":"x","state":"queued","step":"x","attempt":0,"waitingFor":"x","errorCode":"x","createdAt":0,"updatedAt":0,"finishedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.Renew(ctx, "id1")
+		},
+	},
+	{
+		"identities.rotate", "POST", "/api/v1/identities/id1/rotate", false,
+		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Rotate(ctx, "id1", &b)
+		},
+	},
+	{
 		"messageRules.list", "GET", "/api/v1/message-rules", false,
 		"", `{"items":[{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"anchor":{"kind":"input","input":"x"},"offset":{"amount":0,"unit":"day","when":"before"},"yearly":false,"sendAt":"x","timeZone":"x","message":"x","clearAfter":0,"state":"on","pausedCode":"RULE_CREATOR_REVOKED","nextCheckAt":0,"sent":0,"skipped":0,"createdAt":0,"updatedAt":0,"version":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1679,6 +1751,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.appleCalls.list", "GET", "/api/v1/platform/apple-calls", false,
+		"", `{"items":[{"id":0,"callId":"x","phase":"x","method":"x","target":"x","caller":"x","status":"x","durationMs":0,"at":0}],"available":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleCalls.List(ctx, nil)
+		},
+	},
+	{
 		"platform.orgs.listClosed", "GET", "/api/v1/platform/closed-orgs", false,
 		"", `{"items":[{"id":"x","slug":"x","name":"x","closedAt":0,"purgeAfter":0,"purging":false,"held":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1962,6 +2041,28 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.walletAccounts.googleManaged.create", "POST", "/api/v1/platform/orgs/id1/wallet-accounts/google/managed", false,
+		`{"mode":"live"}`, `{"runId":"x","state":"queued","step":"x","waitingFor":"x","errorCode":"x","issuerId":"x","updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletAccountsGoogleManagedCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletAccounts.GoogleManaged.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.walletAccounts.googleManaged.complete", "POST", "/api/v1/platform/orgs/id1/wallet-accounts/google/managed/complete", false,
+		`{"issuerId":"x"}`, `{"runId":"x","state":"queued","step":"x","waitingFor":"x","errorCode":"x","issuerId":"x","updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletAccountsGoogleManagedCompleteBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletAccounts.GoogleManaged.Complete(ctx, "id1", &b)
+		},
+	},
+	{
 		"platform.orgs.personalLabels.list", "GET", "/api/v1/platform/personal-org-labels", false,
 		"", `{"items":[{"orgId":"x","label":"x"}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1998,6 +2099,77 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Platform.Settings.Update(ctx, &b)
+		},
+	},
+	{
+		"platform.walletCredentials.list", "GET", "/api/v1/platform/wallet-credentials", false,
+		"", `{"items":[{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}],"nextCursor":null,"release":{"google":{"live":{"state":"disabled","reason":"not_released"},"test":{"state":"disabled","reason":"not_released"}},"samsung":{"live":{"state":"disabled","reason":"not_released"},"test":{"state":"disabled","reason":"not_released"}}}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.upsert", "PUT", "/api/v1/platform/wallet-credentials", false,
+		`{"provider":"google","expectedRevision":0,"credentials":{"issuerId":"x","serviceAccountEmail":"x","privateKeyPem":"x","scopes":["https://www.googleapis.com/auth/wallet_object.issuer"]},"mode":"live"}`, `{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletCredentialsUpsertBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletCredentials.Upsert(ctx, &b)
+		},
+	},
+	{
+		"platform.walletCredentials.retrieveMigration", "GET", "/api/v1/platform/wallet-credentials/migrate", false,
+		"", `{"pending":0,"migrated":0,"items":[{"accountId":"x","orgId":"x","mode":"live","provider":"google","state":"ready","reason":"identity_shared","identityShared":[{"orgId":"x","mode":"live","provider":"google"}]}],"nextCursor":null,"next":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.RetrieveMigration(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.migrate", "POST", "/api/v1/platform/wallet-credentials/migrate", false,
+		"", `{"queued":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Migrate(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.setSamsungCard", "PUT", "/api/v1/platform/wallet-credentials/id1/cards", false,
+		`{"type":"loyalty","cardId":"x","expectedRevision":0}`, `{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletCredentialsSetSamsungCardBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletCredentials.SetSamsungCard(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.walletCredentials.checks.create", "POST", "/api/v1/platform/wallet-credentials/id1/check", false,
+		"", `{"checkId":"x","status":"queued"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Checks.Create(ctx, "id1")
+		},
+	},
+	{
+		"platform.walletCredentials.checks.retrieve", "GET", "/api/v1/platform/wallet-credentials/id1/checks/id2", false,
+		"", `{"checkId":"x","status":"pending","code":"x","checkedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Checks.Retrieve(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.walletCredentials.rotateKey", "POST", "/api/v1/platform/wallet-credentials/id1/rotate-key", false,
+		"", `{"runId":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.RotateKey(ctx, "id1")
+		},
+	},
+	{
+		"platform.walletEnrollments.list", "GET", "/api/v1/platform/wallet-enrolments", false,
+		"", `{"items":[{"orgId":"x","orgName":"x","mode":"live","provider":"google","source":"platform","state":"off","hold":{"at":0,"reason":"x"},"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletEnrollments.List(ctx, nil).All(ctx)
 		},
 	},
 	{

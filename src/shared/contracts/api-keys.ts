@@ -39,6 +39,7 @@ export const MINTABLE_PLATFORM_SCOPES = [
   'platform:orgs',
   'platform:groups',
   'platform:claims',
+  'platform:identities',
   'platform:status',
   'platform:audit',
   'platform:settings',

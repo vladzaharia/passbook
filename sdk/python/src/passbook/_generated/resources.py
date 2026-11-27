@@ -813,6 +813,84 @@ class HoldersResource:
         return self._core.request("POST", "/api/v1/holders/unassign", body=body, result=m.HoldersUnassignResult, **opts)
 
 
+class IdentitiesPushKeyResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def delete(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesPushKeyDeleteResult:
+        """Remove the APNs push key of the identity team `DELETE /api/v1/identities/{id}/push-key`"""
+        return self._core.request("DELETE", f"/api/v1/identities/{_p(id)}/push-key", result=m.IdentitiesPushKeyDeleteResult, **opts)
+
+    def upload(
+        self,
+        id: str,
+        body: m.IdentitiesPushKeyUploadBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesPushKeyUploadResult:
+        """Set or replace the APNs push key (.p8) of the identity team `PUT /api/v1/identities/{id}/push-key`"""
+        return self._core.request("PUT", f"/api/v1/identities/{_p(id)}/push-key", body=body, result=m.IdentitiesPushKeyUploadResult, **opts)
+
+
+class IdentitiesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.push_key = IdentitiesPushKeyResource(core)
+
+    def check_apns(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesCheckApnsResult:
+        """Probe APNs with the identity certificate using a dummy token `POST /api/v1/identities/{id}/apns-check`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/apns-check", result=m.IdentitiesCheckApnsResult, **opts)
+
+    def create(
+        self,
+        body: m.IdentitiesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesCreateResult:
+        """Upload an Apple identity `POST /api/v1/identities`"""
+        return self._core.request("POST", "/api/v1/identities", body=body, result=m.IdentitiesCreateResult, **opts)
+
+    def renew(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRenewResult:
+        """Get a new certificate now (managed identities) `POST /api/v1/identities/{id}/renew`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/renew", result=m.IdentitiesRenewResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRetrieveResult:
+        """Get an Apple identity `GET /api/v1/identities/{id}`"""
+        return self._core.request("GET", f"/api/v1/identities/{_p(id)}", result=m.IdentitiesRetrieveResult, **opts)
+
+    def rotate(
+        self,
+        id: str,
+        body: m.IdentitiesRotateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRotateResult:
+        """Replace the certificate and key of an Apple identity `POST /api/v1/identities/{id}/rotate`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/rotate", body=body, result=m.IdentitiesRotateResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.IdentitiesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesUpdateResult:
+        """Update an Apple identity `PATCH /api/v1/identities/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/identities/{_p(id)}", body=body, result=m.IdentitiesUpdateResult, **opts)
+
+
 class MessageRulesRunsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1064,6 +1142,20 @@ class PlatformOrgsResource:
     ) -> m.PlatformOrgsSetStatusResult:
         """Suspend or reactivate an organization `POST /api/v1/orgs/{id}/status`"""
         return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/status", body=body, result=m.PlatformOrgsSetStatusResult, **opts)
+
+
+class PlatformAppleCallsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        since: int | None | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformAppleCallsListResult:
+        """Apple provisioner's call ledger `GET /api/v1/platform/apple-calls`"""
+        return self._core.request("GET", "/api/v1/platform/apple-calls", query={"since": since}, result=m.PlatformAppleCallsListResult, **opts)
 
 
 class PlatformEntitlementPresetsResource:
@@ -1346,6 +1438,35 @@ class PlatformInvitationsResource:
         return self._core.request("DELETE", f"/api/v1/platform/invitations/{_p(id)}", result=m.PlatformInvitationsRevokeResult, **opts)
 
 
+class PlatformWalletAccountsGoogleManagedResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def complete(
+        self,
+        org_id: str,
+        body: m.PlatformWalletAccountsGoogleManagedCompleteBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletAccountsGoogleManagedCompleteResult:
+        """Finish a parked managed Google issuer with an issuer id made in the console `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete`"""
+        return self._core.request("POST", f"/api/v1/platform/orgs/{_p(org_id)}/wallet-accounts/google/managed/complete", body=body, result=m.PlatformWalletAccountsGoogleManagedCompleteResult, **opts)
+
+    def create(
+        self,
+        org_id: str,
+        body: m.PlatformWalletAccountsGoogleManagedCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletAccountsGoogleManagedCreateResult:
+        """Start a managed Google issuer for an organization `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed`"""
+        return self._core.request("POST", f"/api/v1/platform/orgs/{_p(org_id)}/wallet-accounts/google/managed", body=body, result=m.PlatformWalletAccountsGoogleManagedCreateResult, **opts)
+
+
+class PlatformWalletAccountsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.google_managed = PlatformWalletAccountsGoogleManagedResource(core)
+
+
 class PlatformRetentionReceiptsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1387,6 +1508,101 @@ class PlatformSettingsResource:
     ) -> m.PlatformSettingsUpdateResult:
         """Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`"""
         return self._core.request("PUT", "/api/v1/platform/settings", body=body, result=m.PlatformSettingsUpdateResult, **opts)
+
+
+class PlatformWalletCredentialsChecksResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsChecksCreateResult:
+        """Check a platform wallet credential with its provider `POST /api/v1/platform/wallet-credentials/{id}/check`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-credentials/{_p(id)}/check", result=m.PlatformWalletCredentialsChecksCreateResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        check_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsChecksRetrieveResult:
+        """Read the result of a platform wallet credential check `GET /api/v1/platform/wallet-credentials/{id}/checks/{checkId}`"""
+        return self._core.request("GET", f"/api/v1/platform/wallet-credentials/{_p(id)}/checks/{_p(check_id)}", result=m.PlatformWalletCredentialsChecksRetrieveResult, **opts)
+
+
+class PlatformWalletCredentialsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.checks = PlatformWalletCredentialsChecksResource(core)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletCredentialsListItem]:
+        """List the platform wallet credentials `GET /api/v1/platform/wallet-credentials`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-credentials", query={"cursor": cursor}, result=m.PlatformWalletCredentialsListResult, cursor_param="cursor", **opts)
+
+    def migrate(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsMigrateResult:
+        """Queue the migration of legacy wallet accounts onto credential sources `POST /api/v1/platform/wallet-credentials/migrate`"""
+        return self._core.request("POST", "/api/v1/platform/wallet-credentials/migrate", result=m.PlatformWalletCredentialsMigrateResult, **opts)
+
+    def retrieve_migration(
+        self,
+        *,
+        after: str | None = None,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletCredentialsRetrieveMigrationItem]:
+        """Report the legacy wallet accounts waiting for a credential source `GET /api/v1/platform/wallet-credentials/migrate`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-credentials/migrate", query={"after": after, "cursor": cursor}, result=m.PlatformWalletCredentialsRetrieveMigrationResult, cursor_param="cursor", **opts)
+
+    def rotate_key(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsRotateKeyResult:
+        """Rotate a platform Google credential's service-account key now `POST /api/v1/platform/wallet-credentials/{id}/rotate-key`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-credentials/{_p(id)}/rotate-key", result=m.PlatformWalletCredentialsRotateKeyResult, **opts)
+
+    def set_samsung_card(
+        self,
+        id: str,
+        body: m.PlatformWalletCredentialsSetSamsungCardBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsSetSamsungCardResult:
+        """Name the Samsung card of one more type on a platform credential `PUT /api/v1/platform/wallet-credentials/{id}/cards`"""
+        return self._core.request("PUT", f"/api/v1/platform/wallet-credentials/{_p(id)}/cards", body=body, result=m.PlatformWalletCredentialsSetSamsungCardResult, **opts)
+
+    def upsert(
+        self,
+        body: m.PlatformWalletCredentialsUpsertBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsUpsertResult:
+        """Create or rotate a platform wallet credential `PUT /api/v1/platform/wallet-credentials`"""
+        return self._core.request("PUT", "/api/v1/platform/wallet-credentials", body=body, result=m.PlatformWalletCredentialsUpsertResult, **opts)
+
+
+class PlatformWalletEnrollmentsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        provider: _Literal["google", "samsung"],
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletEnrollmentsListItem]:
+        """List every organization enrollment of a wallet provider `GET /api/v1/platform/wallet-enrolments`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-enrolments", query={"provider": provider, "cursor": cursor, "limit": limit}, result=m.PlatformWalletEnrollmentsListResult, cursor_param="cursor", **opts)
 
 
 class PlatformWalletReleaseResource:
@@ -1599,12 +1815,16 @@ class PlatformResource:
         self._core = core
         self.metrics = PlatformMetricsResource(core)
         self.orgs = PlatformOrgsResource(core)
+        self.apple_calls = PlatformAppleCallsResource(core)
         self.entitlement_presets = PlatformEntitlementPresetsResource(core)
         self.idp = PlatformIdpResource(core)
         self.groups = PlatformGroupsResource(core)
         self.invitations = PlatformInvitationsResource(core)
+        self.wallet_accounts = PlatformWalletAccountsResource(core)
         self.retention_receipts = PlatformRetentionReceiptsResource(core)
         self.settings = PlatformSettingsResource(core)
+        self.wallet_credentials = PlatformWalletCredentialsResource(core)
+        self.wallet_enrollments = PlatformWalletEnrollmentsResource(core)
         self.wallet_release = PlatformWalletReleaseResource(core)
         self.status = PlatformStatusResource(core)
         self.users = PlatformUsersResource(core)
@@ -3814,6 +4034,7 @@ class Resources:
         self.deliveries = DeliveriesResource(core)
         self.events = EventsResource(core)
         self.holders = HoldersResource(core)
+        self.identities = IdentitiesResource(core)
         self.message_rules = MessageRulesResource(core)
         self.platform = PlatformResource(core)
         self.nfc = NfcResource(core)
