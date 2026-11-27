@@ -22,6 +22,7 @@ import { Route as AdminPlatformRouteRouteImport } from './routes/admin/platform/
 import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
 import { Route as WorkbenchIndexRouteImport } from './routes/workbench/index'
 import { Route as WorkbenchToolRouteImport } from './routes/workbench/$tool'
+import { Route as WorkbenchCliRouteImport } from './routes/workbench/cli'
 import { Route as WorkbenchDesignRouteImport } from './routes/workbench/design'
 import { Route as WorkbenchQuickstartRouteImport } from './routes/workbench/quickstart'
 import { Route as AdminAllIndexRouteImport } from './routes/admin/all/index'
@@ -202,6 +203,11 @@ const WorkbenchIndexRoute = WorkbenchIndexRouteImport.update({
 const WorkbenchToolRoute = WorkbenchToolRouteImport.update({
   id: '/$tool',
   path: '/$tool',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const WorkbenchCliRoute = WorkbenchCliRouteImport.update({
+  id: '/cli',
+  path: '/cli',
   getParentRoute: () => WorkbenchRouteRoute,
 } as any)
 const WorkbenchDesignRoute = WorkbenchDesignRouteImport.update({
@@ -854,6 +860,7 @@ export interface FileRoutesByFullPath {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/cli': typeof WorkbenchCliRoute
   '/workbench/design': typeof WorkbenchDesignRoute
   '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin/': typeof AdminIndexRoute
@@ -981,6 +988,7 @@ export interface FileRoutesByTo {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/cli': typeof WorkbenchCliRoute
   '/workbench/design': typeof WorkbenchDesignRoute
   '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin': typeof AdminIndexRoute
@@ -1111,6 +1119,7 @@ export interface FileRoutesById {
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
   '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/cli': typeof WorkbenchCliRoute
   '/workbench/design': typeof WorkbenchDesignRoute
   '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin/': typeof AdminIndexRoute
@@ -1244,6 +1253,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/workbench/$tool'
+    | '/workbench/cli'
     | '/workbench/design'
     | '/workbench/quickstart'
     | '/admin/'
@@ -1371,6 +1381,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/workbench/$tool'
+    | '/workbench/cli'
     | '/workbench/design'
     | '/workbench/quickstart'
     | '/admin'
@@ -1500,6 +1511,7 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/passes/$passId'
     | '/workbench/$tool'
+    | '/workbench/cli'
     | '/workbench/design'
     | '/workbench/quickstart'
     | '/admin/'
@@ -1721,6 +1733,13 @@ declare module '@tanstack/react-router' {
       path: '/$tool'
       fullPath: '/workbench/$tool'
       preLoaderRoute: typeof WorkbenchToolRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/workbench/cli': {
+      id: '/workbench/cli'
+      path: '/cli'
+      fullPath: '/workbench/cli'
+      preLoaderRoute: typeof WorkbenchCliRouteImport
       parentRoute: typeof WorkbenchRouteRoute
     }
     '/workbench/design': {
@@ -2835,6 +2854,7 @@ const WorkbenchOOrgIdRouteRouteWithChildren =
 
 interface WorkbenchRouteRouteChildren {
   WorkbenchToolRoute: typeof WorkbenchToolRoute
+  WorkbenchCliRoute: typeof WorkbenchCliRoute
   WorkbenchDesignRoute: typeof WorkbenchDesignRoute
   WorkbenchQuickstartRoute: typeof WorkbenchQuickstartRoute
   WorkbenchIndexRoute: typeof WorkbenchIndexRoute
@@ -2843,6 +2863,7 @@ interface WorkbenchRouteRouteChildren {
 
 const WorkbenchRouteRouteChildren: WorkbenchRouteRouteChildren = {
   WorkbenchToolRoute: WorkbenchToolRoute,
+  WorkbenchCliRoute: WorkbenchCliRoute,
   WorkbenchDesignRoute: WorkbenchDesignRoute,
   WorkbenchQuickstartRoute: WorkbenchQuickstartRoute,
   WorkbenchIndexRoute: WorkbenchIndexRoute,

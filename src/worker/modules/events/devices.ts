@@ -9,6 +9,8 @@ import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { removalVersion } from '../passes/repo-remove.ts';
 import { readMode, type ScopeArg } from '../passes/scope.ts';
+import { devicePassEnabled } from '../workbench/device-pass-identity.ts';
+import { devicesOfPass } from '../workbench/repo-device-pass-devices.ts';
 import { hashDevice } from './record.ts';
 import { type LatestDeviceEvent, latestDeviceEvents, registrationsOfPass } from './repo.ts';
 import { simulatedDevicesOfPass } from './repo-simulated.ts';
@@ -128,11 +130,13 @@ export async function listPassDevices(
     typeof orgScope === 'object' && orgScope !== null
       ? { ...orgScope, orgId: pass.orgId }
       : pass.orgId;
-  const [registrations, simulatedRows, latest, removedVersion] = await Promise.all([
+  const [registrations, simulatedRows, latest, removedVersion, phones] = await Promise.all([
     registrationsOfPass(db, passId, fence),
     simulatedDevicesOfPass(db, passId, pass.orgId),
     latestDeviceEvents(db, passId, fence),
     pass.removedAt !== null ? removalVersion(db, passId, pinnedScope) : null,
+    // The developer's own phone, for a Test pass with device passes on (the Workbench shows it as "My phone").
+    pass.mode === 'test' && devicePassEnabled(ctx.env) ? devicesOfPass(db, passId) : [],
   ]);
   const seen = fold(latest);
   const registeredAt = new Map<string, number>(
@@ -147,6 +151,12 @@ export async function listPassDevices(
     simulated.set(hash, row.id);
     if (row.removed_at === null) registeredAt.set(hash, row.created_at);
   }
+  const phone = new Map<string, boolean>();
+  for (const row of phones) {
+    const hash = await hashDevice(row.device_id);
+    registeredAt.set(hash, row.created_at);
+    phone.set(hash, (row.last_seen_at ?? 0) >= row.updated_at);
+  }
   const removal = pass.removedAt !== null ? { at: pass.removedAt, version: removedVersion } : null;
   const hashes = new Set([...registeredAt.keys(), ...seen.keys()]);
   const devices: PassSyncDeviceDto[] = [];
@@ -158,7 +168,14 @@ export async function listPassDevices(
     if (at === null && !s.unregistered) continue;
     const device = describe(pass, hash, s, at, removal);
     const simulatedId = simulated.get(hash);
-    devices.push(simulatedId ? { ...device, simulated: true, deviceId: simulatedId } : device);
+    const seenCurrent = phone.get(hash);
+    if (seenCurrent !== undefined) {
+      // A device pass is rebuilt on demand: the phone is current once it has fetched since the last change.
+      const status =
+        device.status === 'push_failing' ? device.status : seenCurrent ? 'current' : 'waiting';
+      devices.push({ ...device, status, devicePass: true });
+    } else
+      devices.push(simulatedId ? { ...device, simulated: true, deviceId: simulatedId } : device);
   }
   devices.sort(
     (a, b) =>

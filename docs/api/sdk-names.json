@@ -391,6 +391,12 @@
     "resource": "developerInvitations",
     "method": "create"
   },
+  "developer.deleteDevicePassesById": {
+    "resource": "developer.devicePasses",
+    "method": "void",
+    "sdk": false,
+    "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+  },
   "developer.deleteSandbox": {
     "resource": "developer.sandbox",
     "method": "close",
@@ -408,6 +414,12 @@
     "method": "retrieve",
     "sdk": false,
     "reason": "Developer portal access: a signed-in person in a browser, not an integration."
+  },
+  "developer.getDevicePasses": {
+    "resource": "developer.devicePasses",
+    "method": "list",
+    "sdk": false,
+    "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
   },
   "developer.getHome": {
     "resource": "developer.home",
@@ -444,6 +456,24 @@
     "method": "retrieve",
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postDevicePasses": {
+    "resource": "developer.devicePasses",
+    "method": "create",
+    "sdk": false,
+    "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+  },
+  "developer.postDevicePassesByIdAgain": {
+    "resource": "developer.devicePasses",
+    "method": "addAgain",
+    "sdk": false,
+    "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+  },
+  "developer.postDevicePassesByIdCode": {
+    "resource": "developer.devicePasses",
+    "method": "replaceCode",
+    "sdk": false,
+    "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
   },
   "developer.postSandbox": {
     "resource": "developer.sandbox",
@@ -1582,6 +1612,12 @@
     "method": "downloadWebLogo",
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getDevicePassByCode": {
+    "resource": "public.devicePasses",
+    "method": "download",
+    "sdk": false,
+    "reason": "A one-time link a phone opens from a QR code: a person's browser, not an integration."
   },
   "public.getPByToken": {
     "resource": "public.passes",
@@ -2814,5 +2850,57 @@
   "workbench.listRequestLogs": {
     "resource": "requestLogs",
     "method": "list"
+  },
+  "platform.postDevicePassesUnblock": {
+    "resource": "platform.devicePasses",
+    "method": "clearBlock",
+    "sdk": false,
+    "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+  },
+  "platform.postDevicePassesVoid": {
+    "resource": "platform.devicePasses",
+    "method": "voidAll",
+    "sdk": false,
+    "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+  },
+  "cli.postSessions": {
+    "resource": "cli.sessions",
+    "method": "create",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsLookup": {
+    "resource": "cli.sessions",
+    "method": "lookup",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdApprove": {
+    "resource": "cli.sessions",
+    "method": "approve",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdDeny": {
+    "resource": "cli.sessions",
+    "method": "decline",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsToken": {
+    "resource": "cli.sessions",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.deleteTokensById": {
+    "resource": "apiKeys.cliTokens",
+    "method": "revoke"
+  },
+  "platform.postCliTokensRevoke": {
+    "resource": "platform.cliTokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Platform administration by a person; no key calls it."
   }
 }

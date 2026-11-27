@@ -20,6 +20,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { revokePlatformOfKey } from '../idp/invitations/repo-platform.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
+import { admitCliToken } from './cli-gate.ts';
 import { auditPlatformKeyRefusal } from './refusal-audit.ts';
 import * as repo from './repo.ts';
 import { selfSuccessors } from './repo-family.ts';
@@ -218,6 +219,8 @@ export async function keyAuthOf(
   if (row.kind === 'platform' && row.creator_active !== 1) return refused('creator');
   // A personal key dies with its membership or user; its reach is capped by the member's roles now.
   if (row.kind === 'personal' && row.member_roles === null) return null;
+  // A CLI token's own rules: ended, idle, its person's groups gone, then its route allowlist and Test only.
+  if (row.origin === 'cli' && !(await admitCliToken(env, row, caller, now))) return null;
   // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
   const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
   if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return refused('ip');
@@ -280,6 +283,7 @@ export async function keyAuthOf(
     mode: row.mode,
     ...(row.restricted === 1 ? { limited: true as const } : {}),
     ...(row.org_kind === 'developer' ? { orgKind: 'developer' as const } : {}),
+    ...(row.origin === 'cli' ? { via: 'cli' as const } : {}),
   };
   rememberApiTier(auth, tier);
   return auth;

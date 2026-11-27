@@ -867,6 +867,13 @@
               },
               "firstDevice": {
                 "type": "boolean"
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -1000,6 +1007,13 @@
                   "wallet",
                   "push_gone"
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -2007,6 +2021,13 @@
                     "type": "null"
                   }
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "additionalProperties": false

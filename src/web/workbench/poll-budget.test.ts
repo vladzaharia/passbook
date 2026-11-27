@@ -13,6 +13,7 @@ import {
 } from './home/data.ts';
 import { SUMMARY_POLL_MS } from './host/summary.ts';
 import { POLL_MS as LOGS_POLL_MS } from './logs/use-log.ts';
+import { DEVICE_POLL_MS } from './passes/device-pass-api.ts';
 import { LIST_POLL_MS, TAB_POLL_MS } from './passes/use-passes.ts';
 import { QS_TICK_MS } from './quickstart/single-poll.ts';
 
@@ -30,7 +31,7 @@ const ROUTE_CALLS: Record<WbTool, number> = {
   quickstart: perMin(QS_TICK_MS),
   // The list and the open pass, then the busiest tab: sync reads devices and events, the others read once.
   passes:
-    perMin(LIST_POLL_MS, LIST_POLL_MS) +
+    perMin(LIST_POLL_MS, LIST_POLL_MS, DEVICE_POLL_MS) +
     Math.max(perMin(SYNC_POLL_MS, SYNC_POLL_MS), perMin(TAB_POLL_MS)),
   events: perMin(FEED_POLL_MS, ENDPOINTS_POLL_MS, READ_POLL_MS, READ_POLL_MS),
   logs: perMin(LOGS_POLL_MS),

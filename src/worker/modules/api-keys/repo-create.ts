@@ -90,6 +90,7 @@ export async function createKey(
     'created_by_key',
     'rate_tier',
     'created_amr',
+    'origin',
   ];
   const values = [
     key.name,
@@ -111,6 +112,7 @@ export async function createKey(
     // A tier a platform admin set follows the key through rotation; a new key has none.
     rotating ? key.rate_tier : null,
     key.created_amr,
+    key.origin ?? 'app',
   ];
   if (authority.kind === 'platform') {
     if (

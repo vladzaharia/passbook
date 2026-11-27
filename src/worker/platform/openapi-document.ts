@@ -1,4 +1,5 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { CLI_LOGOUT_ROUTE, CLI_ROUTES } from '../../shared/contracts/cli.ts';
 import { WORKBENCH_ROUTES } from '../../shared/contracts/workbench.ts';
 import { API_VERSIONS } from './api-version.ts';
 import type { AppBindings } from './context.ts';
@@ -20,6 +21,7 @@ type Op = {
   'x-deprecated'?: string;
   'x-operation-key'?: string;
   'x-workbench'?: 'test';
+  'x-workbench-cli'?: true;
   parameters?: Param[];
   requestBody?: { content?: Record<string, { schema?: { properties?: Record<string, object> } }> };
 };
@@ -104,13 +106,19 @@ export function withDeprecationNotes(doc: Doc): Doc {
   return doc;
 }
 
-/** `x-workbench: test` on the operations a member's Workbench token may call (`WORKBENCH_ROUTES`). */
+/**
+ * `x-workbench: test` on the operations a member's Workbench token may call (`WORKBENCH_ROUTES`), and
+ * `x-workbench-cli: true` on the few a CLI token may (`CLI_ROUTES`, a subset, and its own logout).
+ */
 export function withWorkbench(doc: Doc): Doc {
   const allowed = new Set(WORKBENCH_ROUTES);
+  const cli = new Set([...CLI_ROUTES, CLI_LOGOUT_ROUTE]);
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     const route = path.replace(/\{(\w+)\}/g, ':$1');
     for (const [method, op] of Object.entries(item)) {
-      if (op && allowed.has(`${method.toUpperCase()} ${route}`)) op['x-workbench'] = 'test';
+      const key = `${method.toUpperCase()} ${route}`;
+      if (op && allowed.has(key)) op['x-workbench'] = 'test';
+      if (op && cli.has(key)) op['x-workbench-cli'] = true;
     }
   }
   return doc;

@@ -44,5 +44,6 @@ export function toDto(
     rateTier: (row.rate_tier as ApiKeyDto['rateTier']) ?? null,
     parentKeyId: row.parent_key_id,
     rotatedFrom: row.rotated_from,
+    origin: row.origin ?? 'app',
   };
 }

@@ -305,7 +305,8 @@
         401
       ],
       "modules": [
-        "apple"
+        "apple",
+        "workbench"
       ]
     },
     {
@@ -988,6 +989,78 @@
       ]
     },
     {
+      "code": "CLI_ACCOUNT_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_AUTH_PENDING",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_BUSY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_DENIED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_EXPIRED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_CODE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_SLOW_DOWN",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "CLI_TOKEN_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "CONFLICT",
       "statuses": [
         409
@@ -1224,7 +1297,107 @@
         400
       ],
       "modules": [
-        "apple"
+        "apple",
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_BLOCKED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_BUILD_INVALID",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_CODE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_CODE_USED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_IDENTITY_NOT_READY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_NOT_SANDBOX",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_SOURCE_VOIDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_PASS_STILL_OPEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workbench"
       ]
     },
     {
@@ -1919,7 +2092,8 @@
       "modules": [
         "identities",
         "passes",
-        "templates"
+        "templates",
+        "workbench"
       ]
     },
     {
@@ -4253,7 +4427,8 @@
         404
       ],
       "modules": [
-        "public"
+        "public",
+        "workbench"
       ]
     },
     {
@@ -4524,7 +4699,8 @@
         400
       ],
       "modules": [
-        "apple"
+        "apple",
+        "workbench"
       ]
     },
     {
@@ -6299,7 +6475,8 @@
         400
       ],
       "modules": [
-        "apple"
+        "apple",
+        "workbench"
       ]
     },
     {
