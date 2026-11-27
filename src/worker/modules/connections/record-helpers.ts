@@ -42,9 +42,20 @@ export function holderEmailOf(
 export const MAX_SAMPLES = 5;
 const SAMPLE_MAX = 300;
 
+const SIGN_CODE = /^SIGN_[A-Z_]{1,35}$/;
+
+/** The code a failed record stores and shows. A signing refusal is the identity's fault, not the record's: it stays RECORD_ERROR. */
 export function errorCode(error: unknown): string {
   const code = (error as { code?: unknown } | null)?.code;
-  return typeof code === 'string' && /^[A-Z][A-Z_]{1,39}$/.test(code) ? code : 'RECORD_ERROR';
+  return typeof code === 'string' && /^[A-Z][A-Z_]{1,39}$/.test(code) && !SIGN_CODE.test(code)
+    ? code
+    : 'RECORD_ERROR';
+}
+
+/** The signing refusal behind a failed record, as a log field. */
+export function signCauseOf(error: unknown): { causeCode?: string } {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' && SIGN_CODE.test(code) ? { causeCode: code } : {};
 }
 
 /** `ref: CODE path message; ...` for one failed record. */

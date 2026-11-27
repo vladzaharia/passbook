@@ -863,6 +863,12 @@
     "fix": "Revoke an old certificate, then send the request again.",
     "retryable": false
   },
+  "IDENTITY_CERT_MISMATCH": {
+    "title": "Certificate for another identity",
+    "when": "The certificate is for a different pass type or team than the identity it is set on.",
+    "fix": "Upload the certificate for this pass type and team, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_CERT_NOT_FOUND": {
     "title": "Certificate not found",
     "when": "No certificate with that id belongs to the identity.",
@@ -873,6 +879,12 @@
     "title": "Certificate cannot be revoked",
     "when": "Only a superseded certificate that Apple issued can be revoked.",
     "fix": "Pick a superseded certificate from the identity's history.",
+    "retryable": false
+  },
+  "IDENTITY_CHAIN_INVALID": {
+    "title": "Identity chain invalid",
+    "when": "The signing identity's certificate does not verify against the Apple intermediate, so it cannot sign passes.",
+    "fix": "Upload the identity's certificate again, then send the request again.",
     "retryable": false
   },
   "IDENTITY_CHANGED": {
@@ -927,6 +939,12 @@
     "title": "Handle taken",
     "when": "Another identity uses this handle.",
     "fix": "Choose another handle.",
+    "retryable": false
+  },
+  "IDENTITY_INTERMEDIATE_EXPIRED": {
+    "title": "Apple intermediate expired",
+    "when": "The Apple intermediate certificate that identities chain to has expired.",
+    "fix": "Contact support to update it, then send the request again.",
     "retryable": false
   },
   "IDENTITY_NOT_CONFIGURED": {
