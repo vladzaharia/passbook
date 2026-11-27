@@ -16,7 +16,7 @@ import { loadIndex } from '../data.ts';
 import { launchOf, shimHash } from '../launch.ts';
 import type { RunIndex } from '../types.ts';
 import { type IndexOp, OpIndex } from './index-pane.tsx';
-import { LazyState } from './lazy-state.tsx';
+import { LazyFailed } from './lazy-state.tsx';
 import { Ready } from './ready.tsx';
 import { useLogRead } from './use-launch.ts';
 import { useOpSelection } from './use-op-selection.ts';
@@ -174,7 +174,7 @@ export function ConsolePage() {
           : null;
 
   if (index === 'failed')
-    return <LazyState scene="failed" onRetry={() => setAttempt((n) => n + 1)} />;
+    return <LazyFailed error={new Error('index')} onRetry={() => setAttempt((n) => n + 1)} />;
   if (!index) return <BenchSkeleton rows={8} />;
 
   const stage = (

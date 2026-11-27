@@ -50,7 +50,9 @@ export function StageState({
       </Title>
       {children}
       {action ? (
-        <div className="mt-2 flex justify-center max-sm:w-full max-sm:[&>*]:w-full">{action}</div>
+        <div className="mt-2 flex flex-wrap justify-center gap-2 max-sm:w-full max-sm:flex-col max-sm:[&>*]:w-full">
+          {action}
+        </div>
       ) : null}
     </div>
   );
@@ -189,12 +191,20 @@ export function failedLine(error: unknown): string {
   return WB_STATES.failed.server;
 }
 
-/** A failed load: one line saying what failed, and Retry. */
-export function ToolFailed({ error, onRetry }: { error: unknown; onRetry: () => unknown }) {
+/** A failed load: one line saying what failed (or the cause's own `reason`), and Retry. */
+export function ToolFailed({
+  error,
+  reason,
+  onRetry,
+}: {
+  error?: unknown;
+  reason?: string;
+  onRetry: () => unknown;
+}) {
   return (
     <ErrorState
       error={error}
-      title={failedLine(error)}
+      title={reason ?? failedLine(error)}
       titleClassName={STATE_TITLE}
       onRetry={onRetry}
     />

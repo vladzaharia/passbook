@@ -257,7 +257,7 @@ test('the Console: a search with no match says so, and Clear brings the index ba
   const index = page.getByRole('listbox', { name: 'Operations' });
   await expect(index).toBeVisible();
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('zzzzzz');
-  await expect(page.getByRole('region', { name: /^No operations match/ })).toBeVisible();
+  await expect(page.getByText(/^No operations match/)).toBeVisible();
   await expect(index).toBeHidden();
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(index).toBeVisible();

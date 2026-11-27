@@ -10,11 +10,10 @@ import { LiveIndicator, useLiveState } from '../bench/live.tsx';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { BenchSplit } from '../bench/split.tsx';
-import { BenchState } from '../bench/state.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { Toolbar } from '../bench/toolbar.tsx';
 import { useBenchSelection } from '../bench/use-selection.ts';
-import { ToolFailed } from '../states/states.tsx';
+import { StageState, ToolFailed } from '../states/states.tsx';
 import type { EventsParams } from './use-address.ts';
 import { type FeedEvent, useEventFeed } from './use-event-feed.ts';
 import { useEventsApi } from './use-events.ts';
@@ -121,7 +120,7 @@ export function EventsPanel({
         onClose={() => selection.setOpen(false)}
         main={
           feed.failed ? (
-            <ToolFailed error={new Error('events')} onRetry={feed.reload} />
+            <ToolFailed reason={BENCH_COPY.state.failed} onRetry={feed.reload} />
           ) : !feed.ready ? (
             <BenchSkeleton rows={6} />
           ) : (
@@ -133,11 +132,16 @@ export function EventsPanel({
               fresh={feed.fresh}
               empty={
                 filters > 0 ? (
-                  <BenchState scene="no-match">
-                    <button type="button" className="btn outline" onClick={clear}>
-                      {BENCH_COPY.state.clearFilters}
-                    </button>
-                  </BenchState>
+                  <StageState
+                    scene="search"
+                    mood="curious"
+                    title={BENCH_COPY.state.noMatch}
+                    action={
+                      <button type="button" className="btn outline" onClick={clear}>
+                        {BENCH_COPY.state.clearFilters}
+                      </button>
+                    }
+                  />
                 ) : (
                   empty
                 )

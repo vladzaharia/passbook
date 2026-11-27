@@ -94,7 +94,7 @@ export function BenchList<T>({
   selection: BenchSelection<T>;
   fresh?: ReadonlySet<string>;
   footer?: { count?: ReactNode; onMore?: () => void; loading?: boolean };
-  /** Shown in place of the rows when there are none (a BenchState). */
+  /** Shown in place of the rows when there are none (a StageState). */
   empty?: ReactNode;
   /** A heading above the first row of each run of items with the same group (the console's index). */
   groupOf?: (item: T) => string | undefined;
