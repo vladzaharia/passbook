@@ -217,6 +217,7 @@ describe('check-bundle', () => {
       'home',
       'keys',
       'logs',
+      'passes',
       'playground',
       'quickstart',
       'sandbox',

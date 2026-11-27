@@ -95,6 +95,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -219,6 +222,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -328,6 +334,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -433,6 +442,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -539,6 +551,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -638,6 +653,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -739,6 +757,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -862,6 +883,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -993,6 +1017,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1201,6 +1228,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1361,6 +1391,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1488,6 +1521,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1622,6 +1658,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1734,6 +1773,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1846,6 +1888,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1972,6 +2017,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2077,6 +2125,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2146,6 +2197,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [

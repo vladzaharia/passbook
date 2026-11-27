@@ -157,6 +157,14 @@
 .bench-mn-i:focus-visible {
   outline-offset: -2px;
 }
+.bench-mn-f {
+  display: block;
+  margin: 4px -4px -4px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-muted);
+  font-size: 12px;
+}
 .bench-mn-i[aria-disabled] {
   color: var(--pk-text-subtle);
   cursor: default;

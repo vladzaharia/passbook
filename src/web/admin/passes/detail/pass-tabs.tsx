@@ -20,6 +20,7 @@ import { SyncTab } from './sync-tab.tsx';
 import { TagsCard } from './tags-card.tsx';
 import { TermCard } from './term-card.tsx';
 import { VersionsTab } from './versions-tab.tsx';
+import { WalletProviderStatus } from './wallet-provider-status.tsx';
 
 type Template = UseQueryResult<import('zod').infer<typeof TemplateDetailSchema>>;
 
@@ -78,7 +79,11 @@ export function PassTabs({
         <CheckInCard pass={pass} readOnly={readOnly} />
       </TabsContent>
       <TabsContent value="devices" className="min-w-0">
-        <DevicesTab pass={pass} active={tab === 'devices'} />
+        <DevicesTab
+          pass={pass}
+          active={tab === 'devices'}
+          extra={<WalletProviderStatus pass={pass} active={tab === 'devices'} />}
+        />
       </TabsContent>
       <TabsContent value="sync" className="min-w-0">
         <SyncTab pass={pass} active={tab === 'sync'} />
