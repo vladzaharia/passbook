@@ -1,11 +1,14 @@
 import { env } from 'cloudflare:workers';
+import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { ManualClock } from './clock.ts';
+import type { AppBindings } from './context.ts';
 import { first } from './db.ts';
 import type { AppEnv } from './env.ts';
 import {
   IDEMPOTENCY_TTL_MS,
   type IdempotencyScope,
+  idempotentJson,
   sweepIdempotency,
   withIdempotency,
 } from './idempotency.ts';
@@ -177,5 +180,39 @@ describe('withIdempotency', () => {
       "SELECT COUNT(*) AS n FROM idempotent_requests WHERE key LIKE 'bulk-%'",
     );
     expect(left?.n).toBe(100);
+  });
+});
+
+describe('idempotentJson stored option', () => {
+  it('returns the full body once, then replays and keeps only the stored form at rest', async () => {
+    const { ctx } = setup();
+    let runs = 0;
+    const app = new Hono<AppBindings>();
+    app.post('/keys', (c) =>
+      idempotentJson(
+        c,
+        ctx,
+        { orgId: 'org-a', mode: 'live', principal: 'key:k1', body: {} },
+        201,
+        async () => ({ id: ++runs, secret: 'whsec_plain' }),
+        undefined,
+        (body) => ({ id: body.id }),
+      ),
+    );
+    const post = () =>
+      app.request('/keys', { method: 'POST', headers: { 'idempotency-key': 'stored-opt' } });
+    const one = await post();
+    expect(one.status).toBe(201);
+    expect(await one.json()).toEqual({ id: 1, secret: 'whsec_plain' });
+    expect(one.headers.get('Idempotent-Replayed')).toBeNull();
+    const two = await post();
+    expect(two.headers.get('Idempotent-Replayed')).toBe('true');
+    expect(await two.json()).toEqual({ id: 1 });
+    expect(runs).toBe(1);
+    const row = await first<{ n: number }>(
+      e.DB,
+      "SELECT COUNT(*) AS n FROM idempotent_requests WHERE key = 'stored-opt' AND body LIKE '%whsec_plain%'",
+    );
+    expect(row?.n).toBe(0);
   });
 });

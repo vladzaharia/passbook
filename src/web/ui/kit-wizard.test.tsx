@@ -6,6 +6,7 @@ import '../lib/test-utils.tsx';
 import { Celebrate } from './celebrate.tsx';
 import { Checklist } from './checklist.tsx';
 import { OptionTile } from './option-tile.tsx';
+import { toast } from './toaster.tsx';
 import { TwoPane } from './two-pane.tsx';
 import { Wizard } from './wizard.tsx';
 
@@ -139,6 +140,33 @@ describe('Wizard and OptionTile', () => {
     expect(onNext).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Pick a source.'));
     expect(screen.getByText('Step 1 of 2')).toBeInTheDocument();
+  });
+
+  it('says why a blocked Next is blocked on a phone, where the bar hides the hint', async () => {
+    const user = userEvent.setup();
+    const info = vi.spyOn(toast, 'info').mockImplementation(() => '');
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width: 639'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    render(
+      <Wizard
+        steps={[{ id: 'a', title: 'Source' }]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        onNext={() => {}}
+        nextDisabled
+        nextHint="Send a test first."
+      >
+        <p>Step</p>
+      </Wizard>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(info).toHaveBeenCalledWith('Send a test first.');
+    info.mockRestore();
   });
 
   it('submits the form a formId names, and a blocked press does not', async () => {
