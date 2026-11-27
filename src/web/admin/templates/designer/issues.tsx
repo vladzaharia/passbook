@@ -31,7 +31,7 @@ export function Issues({
   /** The check itself failed (network, server); the list may be stale. */
   failed?: string | undefined;
 }) {
-  const { doc, focusTarget, edit } = useDesigner();
+  const { doc, focusTarget, edit, readOnly } = useDesigner();
   // The dry run already says it; the local check only fills in while it has not answered.
   const server = issues.some(
     (i) => i.code === 'COLOR_CONTRAST' && /^(foreground|label)Color$/.test(i.path ?? ''),
@@ -77,10 +77,12 @@ export function Issues({
         </p>
       ) : null}
       {rows.length === 0 && !checking && !failed ? (
-        <p className="flex items-center gap-2 text-sm text-fg-muted">
-          <CircleCheck aria-hidden className="size-4 text-success" />
-          Ready to save.
-        </p>
+        readOnly ? null : (
+          <p className="flex items-center gap-2 text-sm text-fg-muted">
+            <CircleCheck aria-hidden className="size-4 text-success" />
+            Ready to save.
+          </p>
+        )
       ) : (
         <ul className="grid gap-1">
           {rows.map((row) => {
