@@ -2,8 +2,13 @@
 // key, the NFC pass-in-limits read) return exactly what their scalar-form statements returned, for every actor.
 import { describe, expect, it } from 'vitest';
 import { passInTenantLimits } from '../modules/nfc/repo-tag-bindings.ts';
-import { orgFence, platformFence, platformKeyFence } from '../modules/operations/repo-fence.ts';
-import { listFenced } from '../modules/operations/repo-read.ts';
+import {
+  orgFence,
+  platformFence,
+  platformKeyFence,
+  starterFence,
+} from '../modules/operations/repo-fence.ts';
+import { getFenced, listFenced } from '../modules/operations/repo-read.ts';
 import { keyOrgInvitations, keyOrgMembers } from '../modules/orgs/repo-members.ts';
 import { passRow } from './authority-checks.ts';
 import { db } from './authority-ext-fixtures.ts';
@@ -118,10 +123,32 @@ describe('operations fences', () => {
         expect(ids(await listFenced(db, c.fence, filter)), `${a.name}: ${c.name} list`).toEqual(
           was,
         );
+        for (const id of was)
+          expect((await getFenced(db, c.fence, id))?.id, `${a.name}: ${c.name} get`).toBe(id);
         if (was.length > 0) nonEmpty++;
       }
     }
     expect(nonEmpty).toBeGreaterThan(8);
+  });
+});
+
+describe('starter fence', () => {
+  it('has no actor join and reads through listFenced', async () => {
+    await world();
+    const fence = starterFence({ userId: 'u', sessionId: 'none' }, 1);
+    expect(fence.from).toBe('operations o');
+    expect(fence.ctes).toBe('');
+    expect(
+      await listFenced(db, fence, {
+        active: false,
+        actor: null,
+        kinds: null,
+        kind: null,
+        target: null,
+        after: null,
+        limit: 10,
+      }),
+    ).toEqual([]);
   });
 });
 
