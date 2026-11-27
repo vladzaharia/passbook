@@ -672,6 +672,19 @@ describe('admin layout', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/settings'));
   });
 
+  it('offers All organizations · Passes from the palette and opens it', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderApp('/admin/o/o1/passes', {
+      session: 'user',
+      memberships: [membershipFixture('o1'), membershipFixture('o2')],
+      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await screen.findByRole('heading', { name: 'Passes', level: 1 });
+    await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByRole('option', { name: /All organizations · Passes/ }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/all/passes'));
+  });
+
   it('collapses the nav into a sheet via the menu button', async () => {
     const user = userEvent.setup();
     await renderApp('/admin', { session: 'admin' });

@@ -5,9 +5,10 @@ import { notFound, redirect } from '@tanstack/react-router';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { currentPath } from './current-path.ts';
 import { canAccessAdminPath } from './guards.ts';
-import { listableMemberships } from './org-lists.ts';
+import { canUseAllScope, listableMemberships } from './org-lists.ts';
 import {
   type AdminScope,
+  allPath,
   orgPath,
   PLATFORM,
   parseAdminPath,
@@ -139,6 +140,15 @@ export function legacyAdminTarget(
     (step.preferPlatform ? ctx.platformAdmin : platformFirst(ctx))
   ) {
     return { to: scopePath(PLATFORM, step.rest), search: kept };
+  }
+  // The overview link reopens All when that was the last scope and it is still open to this person.
+  if (
+    path === '/admin' &&
+    !explicit &&
+    (ctx.tab ?? ctx.remembered)?.kind === 'all' &&
+    canUseAllScope(ctx.memberships)
+  ) {
+    return { to: allPath('/passes'), search: kept };
   }
   const detail = step.kind === 'org' && step.detail;
   const orgId = explicit ?? rememberedOrg(ctx, step.rest, detail);

@@ -158,7 +158,7 @@ export function AdminPalette({
           ? [
               {
                 id: 'scope:all',
-                label: 'All organizations',
+                label: 'All organizations · Passes',
                 icon: Layers,
                 hint: adminScope?.kind === 'all' ? 'Current' : undefined,
                 onSelect: switchAll,
