@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fixtureInput, fixtureState } from '../machine/fixtures.test-support.ts';
-import type { ScanState } from '../machine/types.ts';
+import { fixtureInput } from '../machine/fixtures.test-support.ts';
 import { buzz } from './haptics.ts';
 import { createNativeRuntime } from './native-runtime.ts';
 
