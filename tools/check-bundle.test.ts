@@ -209,7 +209,7 @@ describe('check-bundle', () => {
     expect(WB_TOOLS_MEASURED.design).toBe(WB_DESIGN_BUDGET_BYTES);
     expect(WB_TOOLS_MEASURED.quickstart).toBe(WB_TOOL_BUDGET_BYTES);
     expect(WB_TOOLS_MEASURED.sandbox).toBe(WB_TOOL_BUDGET_BYTES);
-    expect(WB_TOOLS_MEASURED.playground).toBe(92_000);
+    expect(WB_TOOLS_MEASURED.playground).toBe(WB_DESIGN_BUDGET_BYTES);
     expect(Object.keys(WB_TOOLS_MEASURED).sort()).toEqual([
       'console',
       'design',
