@@ -176,7 +176,7 @@ describe('route guards in the app', () => {
     await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     expect(await screen.findByRole('option', { name: 'Harbor' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Platform' })).toBeNull();
-    expect(screen.queryByRole('option', { name: 'All organizations' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'All organizations' })).toBeInTheDocument();
   });
 
   it('keeps API keys available to a platform admin without membership', async () => {
@@ -672,6 +672,20 @@ describe('admin layout', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/settings'));
   });
 
+  it('offers All organizations · Passes from the palette and opens it', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderApp('/admin/o/o1/passes', {
+      session: 'user',
+      memberships: [membershipFixture('o1'), membershipFixture('o2')],
+      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await screen.findByRole('heading', { name: 'Passes', level: 1 });
+    await user.keyboard('{Control>}k{/Control}');
+    await user.click(await screen.findByRole('option', { name: /Switch scope/ }));
+    await user.click(await screen.findByRole('option', { name: /All organizations · Passes/ }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/all/passes'));
+  });
+
   it('collapses the nav into a sheet via the menu button', async () => {
     const user = userEvent.setup();
     await renderApp('/admin', { session: 'admin' });
@@ -873,6 +887,7 @@ describe('admin layout', () => {
     await user.click(scope);
     expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual([
       'Platform',
+      'All organizations',
       'Henrys',
       'Harbor',
     ]);
@@ -901,7 +916,7 @@ describe('developer sandboxes in admin lists', () => {
     await renderApp('/admin/o/o1', { session: 'user', memberships: orgs() });
     await user.click(await screen.findByRole('combobox', { name: 'Scope: Henrys' }));
     const options = within(await screen.findByRole('listbox')).getAllByRole('option');
-    expect(options.map((o) => o.textContent)).toEqual(['Henrys', 'Harbor']);
+    expect(options.map((o) => o.textContent)).toEqual(['All organizations', 'Henrys', 'Harbor']);
   });
 
   it('leaves them out of the /admin chooser', async () => {
@@ -941,11 +956,17 @@ describe('scope switcher with a personal organization', () => {
       'separator',
       'Organizations',
       'option',
+      'option',
     ]);
     const options = within(list).getAllByRole('option');
-    expect(options.map((o) => o.textContent)).toEqual(['Platform', 'Personal', 'Henrys']);
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Platform',
+      'Personal',
+      'All organizations',
+      'Henrys',
+    ]);
     expect(options[1]?.querySelector('.lucide-user')).not.toBeNull();
-    expect(options[2]?.querySelector('.lucide-user')).toBeNull();
+    expect(options[3]?.querySelector('.lucide-user')).toBeNull();
   });
 
   it('uses the user icon on the trigger when Personal is current', async () => {
@@ -970,7 +991,7 @@ describe('scope switcher with a personal organization', () => {
       within(list)
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['Personal', 'Henrys']);
+    ).toEqual(['Personal', 'All organizations', 'Henrys']);
   });
 
   it('shows a lone Personal as a label with the user icon', async () => {

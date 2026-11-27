@@ -521,5 +521,15 @@
     "path": "/admin/o/{northwindId}/passes",
     "name": "admin-passes-bulk-print",
     "click": "[role=checkbox][aria-label^=\"Select \"]:not([aria-label^=\"Select all\"])"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all",
+    "name": "admin-all"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all/passes",
+    "name": "admin-all-passes"
   }
 ]

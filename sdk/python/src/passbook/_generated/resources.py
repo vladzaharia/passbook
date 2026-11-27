@@ -1821,6 +1821,7 @@ class PassesResource:
     def list(
         self,
         *,
+        org_ids: str | None = None,
         template_id: str | None = None,
         connection_id: str | None = None,
         import_id: str | None = None,
@@ -1838,7 +1839,7 @@ class PassesResource:
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.PassSummary]:
         """List passes `GET /api/v1/passes`"""
-        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/passes", query={"orgIds": org_ids, "templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
 
     def match_photos(
         self,

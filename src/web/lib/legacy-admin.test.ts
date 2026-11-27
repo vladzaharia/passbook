@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { type LegacyContext, legacyAdminTarget } from './legacy-admin.ts';
-import { PLATFORM } from './scope.ts';
+import { ALL, PLATFORM } from './scope.ts';
 import { membershipFixture } from './test-utils.tsx';
 
 const one: LegacyContext = { platformAdmin: false, memberships: [membershipFixture('o1')] };
@@ -186,5 +186,15 @@ describe('legacy admin URLs', () => {
     expect(legacyAdminTarget('/admin/account', {}, one)).toBeUndefined();
     expect(legacyAdminTarget('/admin/unknown', {}, one)).toBeUndefined();
     expect(legacyAdminTarget('/admin/passes-extra', {}, one)).toBeUndefined();
+  });
+
+  it('reopens All from /admin when it was the last scope and is still open', () => {
+    expect(go('/admin', {}, { ...two, remembered: ALL }).to).toBe('/admin/all/passes');
+    expect(go('/admin', {}, { ...two, platformAdmin: true, tab: ALL }).to).toBe(
+      '/admin/all/passes',
+    );
+    // One readable organization is not enough for All; the remembered All is ignored.
+    expect(go('/admin', {}, { ...one, remembered: ALL }).to).toBe('/admin/o/o1');
+    expect(go('/admin', { orgId: 'o2' }, { ...two, remembered: ALL }).to).toBe('/admin/o/o2');
   });
 });

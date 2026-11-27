@@ -820,6 +820,7 @@ export type PassImportsUndoResult = PassImportUndo;
 
 /** Query of `passes.list`. */
 export type PassesListQuery = {
+  orgIds?: string;
   templateId?: string;
   connectionId?: string;
   importId?: string;

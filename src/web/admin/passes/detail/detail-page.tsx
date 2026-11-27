@@ -4,6 +4,7 @@ import { usePeekMinted } from '../../../lib/motion.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
 import { usePass } from '../api.ts';
+import { useBackCrumb } from './back-crumb.ts';
 import type { PassDetailSearch as Search } from './detail-types.ts';
 import { LoadedPassDetail } from './loaded-pass-detail.tsx';
 import '../passes.css';
@@ -47,8 +48,9 @@ function PassDetailContent({
       pass.data?.orgId === scope.orgId &&
       scope.membership?.capabilities.includes('passes:read'),
   );
+  const back = useBackCrumb();
   const crumbs = [
-    { label: 'Passes', to: '/admin/passes' },
+    back,
     {
       label:
         !pass.isError && matchesScope && pass.data ? entityLabel(pass.data.title, 'Pass') : 'Pass',

@@ -39,7 +39,8 @@ export const Route = createFileRoute('/admin/')({
       isAdmin(session) &&
       raw0.orgId === undefined &&
       raw0.next === undefined &&
-      last?.kind !== 'org'
+      last?.kind !== 'org' &&
+      last?.kind !== 'all'
     ) {
       const { orgId: _o, filterOrgId, ...kept } = raw0;
       throw redirect({ to: platformPath(), search: { ...kept, filterOrgId }, replace: true });

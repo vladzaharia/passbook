@@ -557,3 +557,39 @@ describe('organization Members and Wallet accounts', () => {
     );
   });
 });
+
+describe('the All scope', () => {
+  const org = (id: string, overrides: Partial<OrgMembership> = {}) =>
+    membershipFixture(id, overrides);
+  const noPasses = org('c', { capabilities: ['org:read'] });
+  const path = '/admin/all/passes';
+
+  it('opens with passes:read in two or more organizations', () => {
+    expect(canAccessAdminPath(path, false, undefined, [org('a'), org('b')])).toBe(true);
+    expect(canAccessAdminPath(path, true, undefined, [org('a'), org('b'), noPasses])).toBe(true);
+  });
+
+  it('stays closed with one readable organization, none, or no memberships list', () => {
+    expect(canAccessAdminPath(path, false, undefined, [org('a')])).toBe(false);
+    expect(canAccessAdminPath(path, false, undefined, [org('a'), noPasses])).toBe(false);
+    expect(canAccessAdminPath(path, false, undefined, [])).toBe(false);
+    expect(canAccessAdminPath(path, true)).toBe(false);
+  });
+
+  it('does not count revoked, sandbox or duplicate memberships', () => {
+    const two = [org('a'), org('b', { revokedAt: 1 })];
+    expect(canAccessAdminPath(path, false, undefined, two)).toBe(false);
+    expect(
+      canAccessAdminPath(path, false, undefined, [org('a'), org('s', { testOnly: true })]),
+    ).toBe(false);
+    expect(canAccessAdminPath(path, false, undefined, [org('a'), org('a')])).toBe(false);
+  });
+
+  it('admits only the Passes path, platform status adds nothing', () => {
+    const both = [org('a'), org('b')];
+    for (const rest of ['', '/passes/p1', '/passes/new', '/templates', '/members']) {
+      expect(canAccessAdminPath(`/admin/all${rest}`, true, undefined, both), rest).toBe(false);
+    }
+    expect(canAccessAdminPath('/admin/all/passes/', false, undefined, both)).toBe(true);
+  });
+});

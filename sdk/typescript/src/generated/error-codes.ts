@@ -426,6 +426,7 @@ export type ErrorCode =
   | 'ORG_PURGING'
   | 'ORG_REOPEN_WINDOW'
   | 'ORG_REQUIRED'
+  | 'ORG_SCOPE_TOO_WIDE'
   | 'ORG_SLUG_RESERVED'
   | 'ORG_SLUG_TAKEN'
   | 'ORG_STATUS_ALONE'
