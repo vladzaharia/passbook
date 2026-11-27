@@ -34,7 +34,7 @@ describe('native reader haptics', () => {
     expect(s.sent.at(-1)).toEqual({ version: 2, op: 'haptic', pattern: [40, 70, 40] });
   });
 
-  it('reports the sender gate only for v2 with scanAck and scanSettle', () => {
+  it('reports the sender gate only with scanAck and scanSettle', () => {
     const s = setup();
     s.ready(2, ['scanAck', 'scanSettle']);
     expect(s.settleReady).toHaveBeenLastCalledWith(true);
@@ -44,6 +44,12 @@ describe('native reader haptics', () => {
     expect(s.settleReady).toHaveBeenLastCalledWith(false);
     s.ready(2);
     expect(s.settleReady).toHaveBeenLastCalledWith(false);
+  });
+});
+
+describe('native reader haptics, v1 app', () => {
+  it('never reports the gate for a v1 ready', () => {
+    const s = setup();
     s.ready(1, ['scanAck', 'scanSettle']);
     expect(s.settleReady).toHaveBeenLastCalledWith(false);
   });
