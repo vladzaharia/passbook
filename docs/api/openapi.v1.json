@@ -95621,10 +95621,6 @@
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
@@ -96173,10 +96169,6 @@
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
@@ -96352,10 +96344,6 @@
           "DEVICE_PASS_NOT_FOUND",
           "DEVICE_PASS_NOT_SANDBOX",
           "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
@@ -97646,10 +97634,6 @@
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "SANDBOX_CONFLICT",
@@ -98664,6 +98648,10 @@
                         "timeZone": {
                           "type": "string",
                           "description": "The sandbox org's IANA zone; every time shows in it."
+                        },
+                        "devicePass": {
+                          "type": "boolean",
+                          "description": "Device passes are on: a Test pass of the sandbox can go on your phone."
                         }
                       },
                       "required": [
@@ -98671,7 +98659,8 @@
                         "name",
                         "slug",
                         "closed",
-                        "timeZone"
+                        "timeZone",
+                        "devicePass"
                       ],
                       "description": "Your developer sandbox, or null before you make one."
                     },
@@ -107458,10 +107447,6 @@
         },
         "x-codes": [
           "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -147492,10 +147477,6 @@
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "IDP_BUDGET",
           "IDP_CLIENT",
           "IDP_CONFLICT",
@@ -179756,10 +179737,6 @@
           "APPLE_UNAUTHORIZED",
           "DEVICE_INVALID",
           "FORBIDDEN",
-          "IDENTITY_EXPIRED",
-          "IDENTITY_NOT_CONFIGURED",
-          "IDENTITY_NOT_FOUND",
-          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PUSH_TOKEN_INVALID",
           "RATE_LIMITED",

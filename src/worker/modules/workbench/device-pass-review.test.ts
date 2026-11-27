@@ -169,4 +169,17 @@ describe('R2 review fixes', () => {
     expect(await stateOf(o.dp.id)).toEqual({ state: 'voided', void_reason: 'platform' });
     expect((await auditOf(o.dp.id)).map((a) => a.action)).toContain('device_pass.voided');
   });
+
+  it('the Workbench contexts carry the flag for the sandbox, and follow it', async () => {
+    const d = await t.developer();
+    const flag = async () => {
+      const res = await t.api('GET', '/workbench/contexts', d.browser, undefined, null);
+      expect(res.status, await res.clone().text()).toBe(200);
+      return ((await res.json()) as { sandbox: { devicePass: boolean } }).sandbox.devicePass;
+    };
+    expect(await flag()).toBe(true);
+    t.flag(false);
+    expect(await flag()).toBe(false);
+    t.flag(true);
+  });
 });

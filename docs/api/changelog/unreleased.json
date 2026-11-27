@@ -3929,6 +3929,14 @@
     "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
+    "key": "GET /api/v1/workbench/contexts 200.sandbox.devicePass: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.sandbox.devicePass: field added",
+    "note": "The sandbox context carries devicePass: true while device passes are on. The Workbench shows On my phone from it."
+  },
+  {
     "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
     "class": "additive",
     "operationId": "workbench.getContexts",

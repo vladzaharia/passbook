@@ -26,6 +26,7 @@ export const deviceEvent = (
  * Tells the phones of one device pass to fetch it again (a new version, a void, an expiry). A failure reaches
  * the source pass's stream as `push.failed` (and a gone phone as `device.unregistered`); it never throws, so the
  * change that caused the push is not undone by it.
+ * @absorbs It answers nothing: no code of what it calls reaches a route.
  */
 export async function pushDevicePass(ctx: ServiceContext, id: string): Promise<void> {
   try {
