@@ -1,5 +1,5 @@
 import { Link, useRouter } from '@tanstack/react-router';
-import { ArrowUpRight, KeyRound, RotateCcw, SquareTerminal } from 'lucide-react';
+import { ArrowUpRight, KeyRound, RefreshCw, SquareTerminal } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useCallback, useMemo } from 'react';
 import { WB_HOME_COPY as C } from '../../../shared/copy/workbench-home.ts';
 import { WB_SHELL_COPY } from '../../../shared/copy/workbench-shell.ts';
@@ -98,7 +98,7 @@ export function HomeView() {
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to={wbPath(orgId, 'sandbox')}>
-              <RotateCcw aria-hidden />
+              <RefreshCw aria-hidden />
               {C.menu.reset}
             </Link>
           </DropdownMenuItem>

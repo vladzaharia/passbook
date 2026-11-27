@@ -1,6 +1,6 @@
 /** Home's words (design §1.7, §3.1, §6). Shared states live in workbench-states.ts. */
 export const WB_HOME_COPY = {
-  menu: { more: 'More', newKey: 'New key', reset: 'Reset sandbox', admin: 'Open in admin' },
+  menu: { newKey: 'New key', reset: 'Reset sandbox', admin: 'Open in admin' },
   next: {
     label: 'Next step',
     progress: (done: number, total: number) => `${done} of ${total} done`,
@@ -37,7 +37,6 @@ export const WB_HOME_COPY = {
     add: 'Add endpoint',
   },
   passes: { title: 'Test passes', all: 'All passes', empty: 'No passes', action: 'Make one' },
-  live: { calls: 'Calls update live', events: 'Events update live' },
   celebrate: {
     firstCall: 'First successful call',
     onPhone: 'First pass saved on a phone',
