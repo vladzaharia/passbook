@@ -1,0 +1,3070 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`capacity statements read each CTE once with identical results > excludes a witness outside the ledger scope exactly as before 1`] = `
+[
+  {
+    "arrived": 4,
+    "inside": 4,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > excludes a witness outside the ledger scope exactly as before 2`] = `
+[
+  {
+    "arrived": 3,
+    "inside": 3,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > excludes a witness outside the ledger scope exactly as before 3`] = `
+[
+  {
+    "arrived": 0,
+    "inside": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements across presence, undo, deletion and capacity 1`] = `
+[
+  {
+    "arrived": 5,
+    "inside": 5,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements across presence, undo, deletion and capacity 2`] = `
+[
+  {
+    "arrived": 4,
+    "inside": 4,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements across presence, undo, deletion and capacity 3`] = `
+[
+  {
+    "arrived": 3,
+    "inside": 3,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements across presence, undo, deletion and capacity 4`] = `
+[
+  {
+    "arrived": 3,
+    "inside": 3,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements for the legacy gate arm and untracked presence 1`] = `
+[
+  {
+    "arrived": 5,
+    "inside": 5,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements for the legacy gate arm and untracked presence 2`] = `
+[
+  {
+    "arrived": 4,
+    "inside": 4,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements for the legacy gate arm and untracked presence 3`] = `
+[
+  {
+    "arrived": 4,
+    "inside": 4,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+]
+`;
+
+exports[`capacity statements read each CTE once with identical results > matches the previous statements with proven retained deletions 1`] = `
+[
+  {
+    "arrived": 5,
+    "inside": 5,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 0,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+  {
+    "full": 1,
+  },
+]
+`;
