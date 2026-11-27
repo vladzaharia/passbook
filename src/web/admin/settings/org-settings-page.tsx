@@ -63,7 +63,7 @@ export function OrgSettingsSections({
   const plan = useOrgPlan(orgId, canManage && !sandbox);
   if (!canManage) return <ReadOnlySettings orgId={orgId} />;
   const scope = `org:${orgId}`;
-  const api = plan.data?.features.find((f) => f.key === 'api')?.level != null;
+  const api = plan.data?.features.find((f) => f.key === 'api') !== undefined;
   const privacy = sandbox || !api ? PRIVACY.filter((f) => f.key !== BODIES_KEY) : PRIVACY;
   return (
     <>

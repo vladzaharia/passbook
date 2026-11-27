@@ -10,6 +10,7 @@ import {
   RetiredApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
+import { admitTokenSession } from '../../platform/auth-workbench.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { BadRequestError, ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -46,7 +47,12 @@ apiKeysRoutes.use('*', async (c, next) => {
   const pin = auth?.kind === 'api_key' ? auth.workbench : undefined;
   if (pin?.subject === 'sandbox_key' && !c.req.path.endsWith('/me/rotate')) {
     if (!pin.person) throw new ForbiddenError();
-    c.set('auth', pin.person);
+    // Admitted as a member token's session is: step-up and plan level, with the own-sandbox console exemption.
+    await admitTokenSession(c, pin.person, {
+      sessionKind: 'tenant',
+      ownOnlyAdmitted: false,
+      ownSandbox: true,
+    });
   }
   await next();
 });
