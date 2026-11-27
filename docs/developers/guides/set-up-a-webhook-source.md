@@ -21,4 +21,4 @@ Pick the sender. Create the connection in PassBook first: it gives you the URL, 
 
 ## Result
 
-The guide for your sender returns the steps and no secret. The same steps show in Connections, with a live check that waits for the first request.
+Connections also runs a live check that waits for the first request.
