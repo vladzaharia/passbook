@@ -27,6 +27,26 @@ final class BridgeHandshakeTests: XCTestCase {
         XCTAssertEqual(handshake.outgoing(snapshot: Data("c".utf8)), .ready)
     }
 
+    func testScanSettleIsAdvertised() {
+        XCTAssertTrue(BridgeHandshake.advertisedFeatures.contains("scanSettle"))
+        XCTAssertTrue(BridgeHandshake.advertisedFeatures.contains("scanAck"))
+    }
+
+    func testReviseDroppedAndV2HapticAreAcceptedAtV2() {
+        var handshake = BridgeHandshake()
+        handshake.hello(version: 2, versions: [1, 2], features: ["scanAck", "scanSettle"])
+        for op in ["revise", "dropped", "haptic"] {
+            XCTAssertTrue(handshake.accepts(version: 2, op: op))
+        }
+        XCTAssertFalse(handshake.accepts(version: 1, op: "revise"))
+    }
+
+    @MainActor func testV2HapticPatternsMapToFeedback() {
+        XCTAssertEqual(ScannerViewController.hapticKind([100]), .tap)
+        XCTAssertEqual(ScannerViewController.hapticKind([100, 50, 100]), .warning)
+        XCTAssertNil(ScannerViewController.hapticKind([]))
+    }
+
     func testVersionFollowsTheLatestHelloOnly() {
         var handshake = BridgeHandshake()
         handshake.hello(version: 2, versions: [1, 2], features: nil)
@@ -56,7 +76,7 @@ final class BridgeHandshakeTests: XCTestCase {
     }
 
     func testAdvertisesScanAckAndKeepsLegacyGateWithoutItInTheHello() {
-        XCTAssertEqual(BridgeHandshake.advertisedFeatures, ["scanAck"])
+        XCTAssertEqual(BridgeHandshake.advertisedFeatures, ["scanAck", "scanSettle"])
         var handshake = BridgeHandshake()
         handshake.hello(version: 2, versions: [1, 2], features: nil)
         var gate = ScanGate()

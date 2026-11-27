@@ -246,6 +246,9 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
                   let outcome = request["outcome"] as? String,
                   ["accepted", "rejected", "error"].contains(outcome) else { return }
             releaseGate(id: id, byAck: false)
+        case "revise", "dropped":
+            // scanSettle: no pending ids and no native buzz here; the web view shows the verdict.
+            return
         case "haptic":
             guard let pattern = request["pattern"] as? [Int], let kind = Self.hapticKind(pattern) else { return }
             switch kind {
