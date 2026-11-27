@@ -111,35 +111,40 @@ function scrubString(value: string): string {
  * Maps whose keys and values the caller chose: pass input, event data, connection config, import rows. Their whole
  * subtree is blanked, keys included. The allowlist above names the platform's own fields only.
  */
-const OPAQUE = new Set([
-  'input',
-  'data',
-  'config',
-  'fields',
-  'rows',
-  'row',
-  'personalization',
-  'metadata',
-  'values',
-  'options',
-  'passJson',
-  'patch',
-  'claims',
-  'mapping',
-  'secrets',
-  'headers',
-  'attributes',
-  'payload',
-  'custom',
-  'context',
-  'params',
-  'properties',
-  'answers',
-  'sample',
-  'body',
-  'extra',
-  'tags',
-]);
+const OPAQUE = new Set(
+  [
+    'input',
+    'data',
+    'config',
+    'fields',
+    'rows',
+    'row',
+    'personalization',
+    'metadata',
+    'values',
+    'options',
+    'passJson',
+    'patch',
+    'claims',
+    'mapping',
+    'secrets',
+    'headers',
+    'attributes',
+    'payload',
+    'custom',
+    'context',
+    'params',
+    'properties',
+    'answers',
+    'sample',
+    'body',
+    'extra',
+    'tags',
+    'scope',
+    'overrides',
+    'manifest',
+  ].map((k) => k.toLowerCase()),
+);
 
 /**
  * A problem answer's `issues` are the platform's field contract (`path`, `code`, `message` per issue, never the
@@ -176,7 +181,7 @@ function walk(value: unknown, safe: boolean, depth: number): unknown {
         scrubString(k).slice(0, 64),
         problem && k === 'issues'
           ? issues(v)
-          : OPAQUE.has(k) ||
+          : OPAQUE.has(k.toLowerCase()) ||
               (v !== null && typeof v === 'object' && !isSafe(k) && !CONTAINERS.has(k))
             ? BLANK
             : walk(v, isSafe(k) || (problem && PROBLEM_KEYS.has(k)), depth + 1),

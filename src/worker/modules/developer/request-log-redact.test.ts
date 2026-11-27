@@ -232,3 +232,19 @@ describe('redactQuery', () => {
     expect(redactQuery('?')).toBeNull();
   });
 });
+
+describe('redactBody blanks opaque maps whatever their case', () => {
+  it('blanks scope, overrides and manifest, and keys that differ only in case', () => {
+    const out = JSON.parse(
+      redacted({
+        scope: { a: `${S}-a` },
+        overrides: { b: `${S}-b` },
+        manifest: { c: `${S}-c` },
+        Metadata: { d: `${S}-d` },
+        PAYLOAD: { e: `${S}-e` },
+      }),
+    );
+    for (const key of ['scope', 'overrides', 'manifest', 'Metadata', 'PAYLOAD'])
+      expect(out[key]).toBe('[redacted]');
+  });
+});
