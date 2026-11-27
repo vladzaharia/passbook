@@ -205,8 +205,10 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A key with no org (platform key) may name the org it acts on; an org-bound key may only name its own.
       const named = p.orgId ?? null;
       const orgCol = `COALESCE(k.org_id, ${b.bind(named)})`;
-      const live = `${withParams(b.params, keyLive('k', now, true))}
-        AND (k.org_id IS NULL OR ${b.bind(named)} IS NULL OR k.org_id = ${b.bind(named)})
+      // No named org: nothing to compare, so the term is left out.
+      const live = `${withParams(b.params, keyLive('k', now, true))}${
+        named === null ? '' : `\n        AND (k.org_id IS NULL OR k.org_id = ${b.bind(named)})`
+      }
         AND (k.org_id IS NOT NULL OR o.personal_user_id IS NULL)
         AND ${withParams(b.params, keyHoldsScope('k', p.scope))}
         AND ${developerTestOnly('o', 'k.mode')}`;
