@@ -7,12 +7,8 @@ import type {
 } from '../../../shared/contracts/identities.ts';
 import type { Actor } from '../../platform/context.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
-import {
-  ConflictError,
-  NotFoundError,
-  PersonRequiredError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { PersonRequiredError } from '../../platform/errors-denial.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { dropTeamApnsTokens } from '../delivery/apns-jwt.ts';
@@ -179,7 +175,7 @@ export async function updateIdentity(
   id: string,
   patch: Patch,
 ): Promise<IdentityDto> {
-  // P3: choosing the default decides who signs every org's passes, the act of POST /platform/apple/identities/:id/default.
+  // P3: the default signs every org's passes (as POST /platform/apple/identities/:id/default).
   if (patch.isDefault !== undefined && actor.type === 'api_key') throw new PersonRequiredError();
   const row = await requireRow(ctx, id);
   assertPatchable(row, patch);
