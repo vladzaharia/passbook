@@ -6,7 +6,6 @@ import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
-import { readablePassOrgs } from '../../lib/org-lists.ts';
 import { orgPath } from '../../lib/scope.ts';
 import { useSwatches } from '../../lib/swatches.ts';
 import {
@@ -26,7 +25,7 @@ import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
 import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
 import { orgIdsOf, PassFindToolbar } from './find-toolbar.tsx';
-import { isFiltered, useAllScopeOrgIds, usePassList } from './list-api.ts';
+import { isFiltered, useAllScopeOrgIds, useAllScopeOrgs, usePassList } from './list-api.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { exportPassesCsv } from './list-export.ts';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
@@ -48,6 +47,7 @@ export function PassesListPage({
   const { orgId } = scope;
   // The All scope lists every readable organization without edits; opening a row is the scope switch.
   const all = useAdminScope()?.kind === 'all';
+  const readable = useAllScopeOrgs(all);
   const readableIds = useAllScopeOrgIds(all);
   const returnTo = useRouterState({ select: (state) => state.location.href });
   const canRead = all
@@ -111,10 +111,6 @@ export function PassesListPage({
           : (templates.data?.items ?? []).map((t) => [t.id, t.name] as const),
       ),
     [all, rows, templates.data],
-  );
-  const readable = useMemo(
-    () => (all ? readablePassOrgs(scope.memberships).filter((m) => readableIds.has(m.orgId)) : []),
-    [all, scope.memberships, readableIds],
   );
   const orgs = useMemo(() => new Map(readable.map((m) => [m.orgId, m])), [readable]);
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);

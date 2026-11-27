@@ -6,8 +6,7 @@ import { releaseHold } from './holds.ts';
 import { platformBy } from './routes.ts';
 
 /**
- * Mount at /api/v1/platform before the router-level `requireAdmin` of the wallet platform routes, which ignores a
- * Bearer key. Releasing a legal hold lets a purge run: a person's call, so a Platform key gets 403 PERSON_REQUIRED.
+ * Mount at /api/v1/platform. Releasing a legal hold lets a purge run: a person's call, so a Platform key gets 403 PERSON_REQUIRED.
  */
 export const retentionPlatformReleaseRoutes = createRouter();
 retentionPlatformReleaseRoutes.use('*', async (c, next) => {

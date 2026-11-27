@@ -12,7 +12,20 @@ const overlap = vi.hoisted(() => ({
   beforeTap: async (): Promise<void> => undefined,
   /** Called with the tap's own run result, before it starts to wait. */
   afterTap: (_result: string): void => undefined,
+  /** The next read of the operation fails once. */
+  failRead: false,
 }));
+vi.mock('./instance.ts', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./instance.ts')>();
+  return {
+    ...real,
+    getWalletOperation: (...args: Parameters<typeof real.getWalletOperation>) => {
+      if (!overlap.failRead) return real.getWalletOperation(...args);
+      overlap.failRead = false;
+      return Promise.reject(new Error('D1 down'));
+    },
+  };
+});
 vi.mock('../../jobs/wallet-first-tap.ts', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../jobs/wallet-first-tap.ts')>();
   return {
@@ -67,4 +80,42 @@ it('waits for the cron that holds the claim instead of answering preparing', asy
   await cron;
   expect(seen).toEqual(['not_claimed']);
   expect(location).toMatch(/^https:\/\/pay\.google\.com\/gp\/v\/save\//);
+});
+
+it('logs a failed wait read as its own event, not as a failed upsert', async () => {
+  const { f } = await fixture();
+  const kit = f.kit;
+  const token = await tokenOf(f);
+  const provider = globalThis.fetch;
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let cron: Promise<void> = Promise.resolve();
+  overlap.beforeTap = async () => {
+    let held: () => void = () => undefined;
+    const inFlight = new Promise<void>((resolve) => {
+      held = resolve;
+    });
+    let first = true;
+    vi.stubGlobal('fetch', (...args: Parameters<typeof fetch>) => {
+      if (!first) return provider(...args);
+      first = false;
+      held();
+      return gate.then(() => provider(...args));
+    });
+    cron = drainWalletProviderSync(jobCtxOf(kit));
+    await inFlight;
+    overlap.beforeTap = async () => undefined;
+  };
+  overlap.afterTap = () => {
+    overlap.failRead = true;
+    release();
+  };
+  const warn = vi.spyOn(kit.ctx.log, 'warn');
+  await issueWalletOffer(kit.ctx, token, 'google').catch(() => undefined);
+  await cron;
+  const events = warn.mock.calls.map((call) => call[0]);
+  expect(events).toContain('wallet.google_first_tap_wait_failed');
+  expect(events).not.toContain('wallet.google_first_tap_failed');
 });

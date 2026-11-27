@@ -205,8 +205,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', retentionRoutes);
   app.route('/api/v1/orgs', orgLifecycleRoutes);
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
-  // Platform routes that declare their own key access come before the first router-level `requireAdmin`, which
-  // ignores a Bearer key (walletPlatformRoutes, below it).
+  // Platform routes that declare their own key access.
   app.route('/api/v1/platform', platformSettingsRoutes);
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
   // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.

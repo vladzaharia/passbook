@@ -5,6 +5,7 @@ import { api } from '../../lib/api.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { canUseAllScope, readablePassOrgs } from '../../lib/org-lists.ts';
 import { type PassFilters, passKeys } from './api.ts';
+import { allChips, chipFilter } from './find-query.ts';
 
 /** Which list: one organization (the URL's), or every organization the caller can read. */
 export type PassScope = { kind: 'org' } | { kind: 'all' };
@@ -12,19 +13,27 @@ export type PassScope = { kind: 'org' } | { kind: 'all' };
 /** Filters that name one organization's templates, connections or imports mean nothing across organizations. */
 export const SINGLE_ORG_KEYS = ['templateId', 'connectionId', 'importId', 'match'] as const;
 
-/** The readable organization ids behind the All scope; empty elsewhere. */
-export function useAllScopeOrgIds(all: boolean): ReadonlySet<string> {
+/** The readable organizations behind the All scope; empty elsewhere. */
+export function useAllScopeOrgs(all: boolean) {
   const scope = useOrgScope();
   const ready = !scope.isLoading && !scope.isError;
   return useMemo(
-    () => new Set(all && ready ? readablePassOrgs(scope.memberships).map((m) => m.orgId) : []),
+    () => (all && ready ? readablePassOrgs(scope.memberships) : []),
     [all, ready, scope.memberships],
   );
+}
+
+/** Their ids. */
+export function useAllScopeOrgIds(all: boolean): ReadonlySet<string> {
+  const orgs = useAllScopeOrgs(all);
+  return useMemo(() => new Set(orgs.map((m) => m.orgId)), [orgs]);
 }
 
 /** Whether the search narrows the list; filters this scope ignores do not count. */
 export function isFiltered(search: object, all: boolean): boolean {
   const ignored: string[] = all ? [...SINGLE_ORG_KEYS, 'm'] : ['orgIds'];
+  // `m` is ignored across organizations except for its holder-email chip, which still goes to the server.
+  if (all && chipFilter(allChips({ m: (search as { m?: string }).m })).holderEmail) return true;
   return Object.entries(search).some(
     ([k, v]) => v !== undefined && v !== '' && !ignored.includes(k),
   );

@@ -39,8 +39,8 @@ export const identitiesRoutes = createRouter();
 const isOrgList = (c: Parameters<typeof requireAdmin>[0]) => !!c.req.query('orgId');
 
 /**
- * Two reads serve a member of the organization as well as a platform admin, so they keep a dispatching guard (a
- * person-only reason: `orgId` and the certificate history are org reads, checked in the handler). Every other route
+ * Two reads serve a member of the organization as well as a platform admin, so they keep a dispatching guard (`orgId` and the
+ * certificate history are org reads, checked in the handler). Every other route
  * declares `{ platform: 'platform:identities' }` itself and is person-only; the certificate, push-key and rotate
  * writes ask a recent sign-in.
  */
