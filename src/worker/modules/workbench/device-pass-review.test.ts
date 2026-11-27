@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { makeSession } from '../../../../test/helpers/index.ts';
 import { DevicePassResponseSchema } from '../../../shared/contracts/device-passes.ts';
 import { all, first } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { BROWSER } from '../developer/try-token-test-fixtures.ts';
 import { endSandboxDevicePasses } from './device-pass-end.ts';
 import { type DevicePassKit, devicePassKit } from './device-pass-test-fixtures.ts';
 
@@ -130,7 +132,12 @@ describe('R2 review fixes', () => {
     const d = await t.developer();
     const o = await opened(d);
     t.kit.clock.advance(24 * 3_600_000 + 1_000);
-    const again = await t.api('POST', `/developer/device-passes/${o.dp.id}/again`, d.browser);
+    // The first session lapsed with the day; sign in again.
+    const fresh = await makeSession(t.kit.f, { userId: d.user.id, roles: ['user', 'developer'] });
+    const again = await t.api('POST', `/developer/device-passes/${o.dp.id}/again`, {
+      ...fresh.headers,
+      ...BROWSER,
+    });
     expect(again.status, await again.clone().text()).toBe(201);
     expect(await stateOf(o.dp.id)).toEqual({ state: 'expired', void_reason: 'expired' });
     expect((await auditOf(o.dp.id)).map((a) => a.action)).toContain('device_pass.expired');
