@@ -1,6 +1,7 @@
 import { guestUntil } from '../../../passkit/template/access/decide.ts';
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { AccessManifest, Json, TemplateManifest } from '../../../passkit/types.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { deletePass } from '../passes/service.ts';
@@ -37,7 +38,6 @@ const QUERY_ALLOWANCE = 300;
 const QUERY_CEILING = 700;
 const DELETE_CAP = 20;
 /** No zone set: the owner's default, never UTC. */
-const DEFAULT_ZONE = 'America/Los_Angeles';
 const REASON = 'retention.guest_passes';
 
 /** The pass's end under one manifest: its own, else the plan's days from the start day; null when not a guest plan. */
@@ -124,7 +124,7 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
   const zoneOf = async (orgId: string) => {
     const known = zones.get(orgId);
     if (known) return known;
-    const zone = (await readOrgTimeZone(ctx.env.DB, orgId)) ?? DEFAULT_ZONE;
+    const zone = (await readOrgTimeZone(ctx.env.DB, orgId)) ?? DEFAULT_TIME_ZONE;
     zones.set(orgId, zone);
     return zone;
   };

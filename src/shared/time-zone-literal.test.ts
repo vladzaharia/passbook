@@ -9,16 +9,13 @@ const TEST_NAME =
 
 /**
  * Files where a UTC name is the zone's own name or a label, not a fallback for "no zone known":
- * the constants, the zone picker's labels, a label for a missing zone name, and the visitor files
- * being removed.
+ * the constants, the zone picker's labels, and a label for a missing zone name.
  */
 const ZONE_NAME = new Set([
   'shared/time-zone.ts',
   'web/lib/timezones.ts',
   'web/admin/scanning/sessions/zone-name.ts',
   'passkit/build-local-time.ts',
-  'worker/email/visitor.ts',
-  'worker/modules/visitors/routes.ts',
 ]);
 
 /**
