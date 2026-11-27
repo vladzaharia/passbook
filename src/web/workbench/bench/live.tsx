@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
+import { usePollPaused } from '../../lib/use-poll-paused.ts';
 import { BenchSlot } from './slots.tsx';
 import './state.css';
 
 const C = BENCH_COPY.live;
 
 /** Listening while it polls, Paused when you paused it or left the tab, Offline when the network is gone. */
-export type LiveState = 'listening' | 'paused' | 'offline';
+export type LiveState = 'listening' | 'paused' | 'limited' | 'offline';
 
 /** The browser's own online state, followed. */
 export function useOnline(): boolean {
@@ -29,7 +30,8 @@ export function useOnline(): boolean {
 /** The state to show, from the tool's own `paused` and the network. */
 export function useLiveState(paused: boolean): LiveState {
   const online = useOnline();
-  return !online ? 'offline' : paused ? 'paused' : 'listening';
+  const limited = usePollPaused();
+  return !online ? 'offline' : paused ? 'paused' : limited ? 'limited' : 'listening';
 }
 
 /**

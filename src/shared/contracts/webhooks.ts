@@ -154,6 +154,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     requestId: z.string().optional(),
     /** Only on a sample sent from "Send test": it describes no real pass. */
     sample: z.literal(true).optional(),
+    /** Present, true, only on an event the Workbench simulator sent. */
+    simulated: z.boolean().optional(),
   });
 
 const P = WebhookPassRefSchema;

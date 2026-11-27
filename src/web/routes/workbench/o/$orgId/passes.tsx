@@ -1,6 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ToolPlaceholder } from '../../../../workbench/tools/placeholder.tsx';
+import { PassesPage } from '../../../../workbench/tools/tool-passes.tsx';
 
-export const Route = createFileRoute('/workbench/o/$orgId/passes')({
-  component: () => <ToolPlaceholder tool="passes" />,
-});
+export const Route = createFileRoute('/workbench/o/$orgId/passes')({ component: PassesPage });

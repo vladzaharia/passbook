@@ -5,13 +5,13 @@ import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { useDesigner } from '../../admin/templates/designer/context.tsx';
 import { useDesignerHost } from '../../admin/templates/designer/host.tsx';
-import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../../pass-card/barcode-engine.ts';
 import { Button } from '../../ui/button.tsx';
 import { CopyButton } from '../../ui/copy-button.tsx';
 import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useOptionalToolHost } from '../host/tool-host.tsx';
+import { QrTile } from '../ui/qr-tile.tsx';
 import { takeIssueFocus } from './issue-focus.ts';
 import { sampleOf } from './sample.ts';
 import { useOpenTemplate } from './template-context.tsx';
@@ -45,32 +45,6 @@ export function useIssue() {
     }
   }
   return { issue, busy, can: Boolean(issueTest) };
-}
-
-/** A link as a QR on a white tile, drawn as an image. Without the encoder the link beside it is the way in. */
-function Qr({ value }: { value: string }) {
-  const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
-  useEffect(() => {
-    if (engine) return;
-    let live = true;
-    loadBarcodeEngine().then(
-      (e) => live && setEngine(() => e),
-      () => undefined,
-    );
-    return () => {
-      live = false;
-    };
-  }, [engine]);
-  const size = 'size-44 rounded-lg bg-white p-2';
-  if (!engine) return <span className={size} aria-hidden />;
-  const svg = engine({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
-  return (
-    <img
-      className={size}
-      src={`data:image/svg+xml;base64,${btoa(svg)}`}
-      alt="QR code of the Add to Wallet link"
-    />
-  );
 }
 
 const absolute = (url: string) => (url.startsWith('/') ? `${location.origin}${url}` : url);
@@ -132,7 +106,11 @@ export function TryOnPhone({ icon = false }: { icon?: boolean }) {
                 <p className="text-sm text-fg-muted">{WB_DESIGN.phone.sandbox}</p>
               ) : (
                 <>
-                  <Qr value={absolute(issued.downloadUrl)} />
+                  <QrTile
+                    value={absolute(issued.downloadUrl)}
+                    alt="QR code of the Add to Wallet link"
+                    className="grid size-44 place-items-center rounded-lg bg-white p-2"
+                  />
                   <p className="text-sm text-fg-muted">{WB_DESIGN.phone.scan}</p>
                   <CopyButton value={absolute(issued.downloadUrl)} label={WB_DESIGN.phone.link} />
                 </>
