@@ -119,11 +119,11 @@ describe('the opening gesture', () => {
 
 describe('the opening gesture in a sheet', () => {
   const asSheet = (on: boolean) =>
-    vi
-      .spyOn(window, 'matchMedia')
-      .mockImplementation(
-        (q) => ({ matches: on && q.includes('max-width'), media: q }) as MediaQueryList,
-      );
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: on && q.includes('max-width'),
+      media: q,
+    }));
+  afterEach(() => vi.unstubAllGlobals());
   let n = 100;
 
   it.each(['mouse', 'pen', 'touch'])('ignores a %s opener pointer up and click', (pointerType) => {
