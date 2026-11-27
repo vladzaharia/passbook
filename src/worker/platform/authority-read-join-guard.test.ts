@@ -22,6 +22,11 @@ describe('assertActorOnce evasions', () => {
     ['actor', (r) => `FROM ${r}passes x WHERE EXISTS (SELECT 1 FROM ACTOR)`],
     ['IN actor_ok', (r) => `FROM ${r}passes x WHERE x.org_id IN ACTOR_OK`],
     ['shadowed alias', (r) => `FROM ${r}passes x WHERE x.id IN (SELECT id FROM api_keys ao)`],
+    ['ISNULL()', (r) => `FROM ${r}passes x WHERE ISNULL(ao.org_id)`],
+    ['ISNULL postfix', (r) => `FROM ${r}passes x WHERE ao.org_id ISNULL`],
+    ['parenthesised', (r) => `FROM ${r}passes x WHERE (ao.org_id) IS NULL`],
+    ['COALESCE', (r) => `FROM ${r}passes x WHERE COALESCE(ao.org_id, '') = ''`],
+    ['IS NOT NOT NULL', (r) => `FROM ${r}passes x WHERE ao.org_id IS NOT NOT NULL`],
     ['bare platform term', (r) => `FROM ${r}passes x WHERE ao.org_id IS NULL`],
   ];
   it.each(cases)('refuses %s', async (_n, from) => {
