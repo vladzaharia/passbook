@@ -228,7 +228,7 @@ describe('native settle through the runtime', () => {
     expect(ops()).toEqual([]);
   });
 
-  it('a parked read whose slot is replaced in one reduce is dropped closed, never answered', () => {
+  it('a read in flight whose slot is replaced in one reduce is dropped closed, never answered', () => {
     const h = harness();
     h.onRead(() => checking(1, 2));
     h.scan('n1');
