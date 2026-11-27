@@ -306,13 +306,8 @@ CW12 status (2026-11-25):
   - `e2e/62-wallets-samsung.spec.ts`: the holder adds a Test pass, Samsung fetches the card and reports ADDED, and an
     edit reaches Samsung. Samsung issuance now has its purpose (`SAMSUNG_ISSUANCE`,
     `runtime-core-credentials.ts`), and the new-model credential and enrolment read as present (0207, 0208).
-- **Open: Samsung void, unvoid, delete and expiry e2e.** CW11 parity is on main, so these are unblocked. Add them to
-  the Samsung spec and assert each through `__mock/state` `samsung.refs`: void records `CANCELED`, unvoid `ACTIVE`,
-  delete a tombstone, expiry `EXPIRED`.
-- **Open: typed types, Live, email, bundles, transfer and reissue e2e.** Only Day pass (Google) and loyalty
-  (Samsung) are covered. The Google class rule passes every blueprint, so the spec no longer needs Day pass alone.
-- **Open: recorded fixtures.** Contract tests still use doc-shape fixtures until the owner records with
-  `tools/record-wallet-contract.ts` (`docs/runbooks/record-wallet-fixtures.md`).
+- **Done (2026-11-27).** Samsung void, unvoid, delete and expiry; typed types, transfer and bundles for both providers; reissue, Live isolation and designer 390 px (`e2e/94-wallets-reissue-live.spec.ts`, `test/cross-wallet-e2e`).
+- **Open (owner): recorded fixtures.** Contract tests use doc-shape fixtures, Samsung included (`test/samsung-contract`), until the owner records with `tools/record-wallet-contract.ts` (`docs/runbooks/record-wallet-fixtures.md`). Real-device runs and Samsung Q13 and Q14 are owner-gated too.
 
 Parallel lanes: {CW9a, CW10a} start at once; CW1 -> CW2 -> {CW3, CW4, CW6} -> CW5 -> {CW7 -> CW8}; {CW9b, CW10b} after epochs land; CW11; CW12. The issuance gate stays closed throughout; lifting it is an owner action per account (Q2).
 

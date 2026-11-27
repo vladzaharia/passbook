@@ -68,4 +68,8 @@ Every body is scrubbed, then checked again; a fixture that still looks like it h
 git --no-pager diff --stat -- test/fixtures/wallets && git --no-pager diff -- test/fixtures/wallets
 ```
 
+A recorded file replaces the doc-shape file of the same name. Samsung's doc-shape fixtures carry `provenance: "doc-shape"`; the recorder omits that key, so a recorded file counts as recorded. `src/passkit/wallets/samsung/contract.test.ts` holds both to the same shapes, so a mismatch after recording is a real finding: fix the compiler or the shape, never the fixture.
+
+The recorder writes only `<type>-update-<state>`; Get Card Data (`<type>-get-card-data`) and Send Card State (`send-card-state-<event>`) come from `scrub-capture` with that `NAME`.
+
 Messages V1 to V6 have their own tool: `tools/record-google-messages.ts`.
