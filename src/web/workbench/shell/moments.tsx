@@ -1,5 +1,5 @@
 import { KeyRound } from 'lucide-react';
-import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
+import { POLARIS_ID_COPY } from '@/shared/copy/auth-page.ts';
 import { STATE_COPY } from '@/shared/copy/states.ts';
 import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { Buddy } from '../../ui/art/index.ts';

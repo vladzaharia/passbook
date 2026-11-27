@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowUpRight, KeyRound } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
-import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
+import { POLARIS_ID_COPY } from '@/shared/copy/auth-page.ts';
+import { wbLabel } from '@/shared/copy/workbench-shell.ts';
 import { WB_EMPTY, WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { MARKETING_PATHS } from '@/shared/marketing.ts';
 import { type WbTool, wbPath } from '@/shared/workbench.ts';
@@ -129,7 +129,7 @@ export function ToolNotAllowed({
         <>
           <Button asChild variant="outline" iconStart={<Icon aria-hidden />}>
             <Link to={wbPath(orgId, nearest)}>
-              {WB_STATES.notAllowed.nearest(WB_AREA[nearest].label)}
+              {WB_STATES.notAllowed.nearest(wbLabel(nearest))}
             </Link>
           </Button>
           <Button asChild variant="outline" iconStart={<ArrowUpRight aria-hidden />}>

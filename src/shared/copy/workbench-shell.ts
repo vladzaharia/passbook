@@ -1,33 +1,14 @@
 import type { WbTool } from '../workbench.ts';
+import { WB_AREA_WORDS } from './workbench-areas.ts';
 
 /**
  * The Workbench's own words: area names, groups, the bar, the switcher, attention and keys
  * (design §1.4, §1.6, §5.4). States live in workbench-states.ts.
  */
-export const WB_AREA: Record<
-  WbTool,
-  { label: string; title: string; keywords: readonly string[] }
-> = {
-  home: { label: 'Home', title: 'Home', keywords: ['overview', 'start'] },
-  quickstart: { label: 'Quickstart', title: 'Quickstart', keywords: ['start', 'first call'] },
-  design: {
-    label: 'Design',
-    title: 'Design',
-    keywords: ['templates', 'designer', 'blueprints'],
-  },
-  passes: { label: 'Passes', title: 'Passes', keywords: ['simulate', 'phone', 'devices'] },
-  console: { label: 'Console', title: 'Console', keywords: ['run', 'request', 'try'] },
-  logs: { label: 'Logs', title: 'Logs', keywords: ['requests', 'calls', 'errors'] },
-  events: {
-    label: 'Events',
-    title: 'Events',
-    keywords: ['webhooks', 'endpoints', 'deliveries', 'captures'],
-  },
-  inbox: { label: 'Inbox', title: 'Test inbox', keywords: ['emails', 'mail'] },
-  activity: { label: 'Activity', title: 'Activity', keywords: ['operations', 'jobs', 'running'] },
-  keys: { label: 'Keys', title: 'Keys', keywords: ['api keys', 'secrets', 'tokens'] },
-  sandbox: { label: 'Sandbox', title: 'Sandbox', keywords: ['reset', 'limits', 'start over'] },
-};
+export const WB_AREA = WB_AREA_WORDS;
+
+/** The nav label: the title, bar the Test inbox, which reads "Inbox" there. */
+export const wbLabel = (t: WbTool): string => (t === 'inbox' ? 'Inbox' : WB_AREA[t].title);
 
 /** The tab title when it says more than the h1: Events is where webhooks live. */
 export const WB_TAB_TITLE: Partial<Record<WbTool, string>> = { events: 'Events and webhooks' };
