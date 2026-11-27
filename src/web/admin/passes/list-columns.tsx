@@ -146,7 +146,10 @@ export function OrgChip({ pass }: { pass: PassSummaryDto }) {
   const org = useList().orgs.get(pass.orgId);
   const name = pass.orgName ?? org?.orgName ?? '—';
   return (
-    <span className="inline-flex min-w-0 items-center gap-2 text-sm text-fg-muted" title={name}>
+    <span
+      className="inline-flex min-w-0 max-w-56 items-center gap-2 text-sm text-fg-muted"
+      title={name}
+    >
       <OrgMark
         org={{ orgId: pass.orgId, orgName: name, personal: org?.personal ?? false }}
         size={24}

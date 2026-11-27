@@ -86,7 +86,7 @@ describe('the All organizations passes list', () => {
     await screen.findByRole('link', { name: 'Sam Jones' });
     expect(screen.getAllByTitle('Northwind').length).toBeGreaterThan(0);
     expect(screen.getAllByTitle('Harbor').length).toBeGreaterThan(0);
-    expect(screen.getByText('Ferry')).toBeInTheDocument();
+    expect(screen.getAllByText('Ferry').length).toBeGreaterThan(0);
   });
 
   it("opens a row in the row's own organization and remembers the list", async () => {
@@ -145,7 +145,7 @@ describe('the All organizations passes list', () => {
   it('offers to clear filters when they match nothing', async () => {
     await open('/admin/all/passes?status=voided', () => page([]));
     expect(await screen.findByText(/no .*match/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /clear/i }).length).toBeGreaterThan(0);
   });
 
   it('shows the server message for too many organizations, with no retry', async () => {

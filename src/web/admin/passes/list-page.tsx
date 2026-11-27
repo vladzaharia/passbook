@@ -46,7 +46,7 @@ export function PassesListPage({
 }) {
   const scope = useOrgScope();
   const { orgId } = scope;
-  // The All scope lists every readable organization, read-only: opening a row is the scope switch.
+  // The All scope lists every readable organization without edits; opening a row is the scope switch.
   const all = useAdminScope()?.kind === 'all';
   const readable = useMemo(
     () => (all && !scope.isLoading && !scope.isError ? readablePassOrgs(scope.memberships) : []),

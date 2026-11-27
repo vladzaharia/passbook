@@ -40,8 +40,10 @@ export function OrgsFilter({
             picked.length > 0 && 'border-accent bg-accent-subtle',
           )}
         >
-          <span className="text-fg-muted">Organization:</span>
-          <span className="min-w-0 truncate">{summary}</span>
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="shrink-0 text-fg-muted">Organization:</span>
+            <span className="min-w-0 truncate">{summary}</span>
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-72 flex-col gap-1">
