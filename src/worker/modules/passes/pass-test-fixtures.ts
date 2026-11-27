@@ -22,6 +22,7 @@ import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memo
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ManualClock } from '../../platform/clock.ts';
+import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { nullLogger } from '../../platform/log.ts';
@@ -259,4 +260,27 @@ export function expectValidZip(bytes: Uint8Array): string[] {
     at += 46 + nameLength + extraLength + commentLength;
   }
   return names;
+}
+
+/** Runs `fn` with the named triggers dropped, then recreates them so later tests see the real schema. */
+export async function withoutTriggers(
+  db: D1Database,
+  names: string[],
+  fn: () => Promise<void>,
+): Promise<void> {
+  const saved: string[] = [];
+  for (const name of names) {
+    const row = await first<{ sql: string }>(
+      db,
+      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
+      [name],
+    );
+    if (row) saved.push(row.sql);
+    await run(db, `DROP TRIGGER IF EXISTS ${name}`);
+  }
+  try {
+    await fn();
+  } finally {
+    for (const sql of saved) await run(db, sql);
+  }
 }

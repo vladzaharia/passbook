@@ -30,7 +30,7 @@ async function purge(ctx: ServiceContext): Promise<number> {
     const held = await referencedObjectKeys(
       ctx.env.DB,
       rows.flatMap((r) => (r.objectKey ? [r.objectKey] : [])),
-      rows,
+      rows.map(({ passId, version }) => ({ passId, version })),
     );
     const keys = rows.flatMap((r) => [
       ...(r.objectKey && !held.has(r.objectKey) ? [r.objectKey] : []),

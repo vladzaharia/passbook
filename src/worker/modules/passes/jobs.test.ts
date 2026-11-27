@@ -13,7 +13,7 @@ import {
 import { diffVersions, getVersionDetail } from './detail.ts';
 import { voidedKey } from './file.ts';
 import { dailyPasses } from './jobs.ts';
-import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import { type Kit, setupKit, withoutTriggers } from './pass-test-fixtures.ts';
 import {
   blockedDeletedPasses,
   deletePassRows,
@@ -83,18 +83,19 @@ describe('version retention', () => {
     const [v1] = await rows(pass.id);
     const bound = v1?.object_key ?? '';
     // Seeded directly: the insert guard demands a live, issuable pass.
-    await run(kit.env.DB, 'DROP TRIGGER pass_issuance_delivery_insert_guard');
-    await run(
-      kit.env.DB,
-      `INSERT INTO pass_issuance_deliveries
+    await withoutTriggers(kit.env.DB, ['pass_issuance_delivery_insert_guard'], async () => {
+      await run(
+        kit.env.DB,
+        `INSERT INTO pass_issuance_deliveries
        (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
         source_lifecycle_generation, source_link_generation, source_object_key, template_id,
         connection_id, connection_ref, connection_generation, context, state, outbox_id, created_at)
        SELECT id, org_id, mode, COALESCE(holder_email, 'h@example.com'), COALESCE(identity_id, 'i'), owner_user_id, credential_generation,
          lifecycle_generation, link_generation, object_key, template_id, connection_id, external_ref,
          1, '{}', 'pending', NULL, ? FROM passes WHERE id = ?`,
-      [Date.now(), pass.id],
-    );
+        [Date.now(), pass.id],
+      );
+    });
     for (let i = 2; i <= 8; i++)
       await updatePass(
         jobCtxOf(kit),
@@ -123,6 +124,25 @@ describe('version retention', () => {
     expect(await kit.env.BUCKET.head(key(4))).toBeNull();
     // The purged row drops its pointer; the holder keeps the object.
     expect(after.every((r) => r.purged_at === null || r.object_key === null)).toBe(true);
+    await run(kit.env.DB, 'DELETE FROM pass_issuance_deliveries WHERE pass_id = ?', [pass.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removal_claim_object_key = NULL WHERE id = ?', [
+      pass.id,
+    ]);
+  });
+
+  it('keeps a purged version object that an unpurged version shares', async () => {
+    const pass = await passWithVersions(8);
+    const before = await rows(pass.id);
+    const shared = before.find((r) => r.version === 1)?.object_key ?? '';
+    await run(
+      kit.env.DB,
+      'UPDATE pass_versions SET object_key = ? WHERE pass_id = ? AND version = 6',
+      [shared, pass.id],
+    );
+    const other = before.find((r) => r.version === 2)?.object_key ?? '';
+    await dailyPasses(kit.ctx);
+    expect(await kit.env.BUCKET.head(shared)).not.toBeNull();
+    expect(await kit.env.BUCKET.head(other)).toBeNull();
   });
 
   it('deletes the voided Apple variant of every purged version', async () => {

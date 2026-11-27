@@ -3,12 +3,14 @@ import { all } from '../../platform/db.ts';
 /** The SQL behind `referencedObjectKeys`; exported so a test can pin its query plan. */
 export const REFERENCED_KEYS_SQL = `WITH k(key) AS (SELECT value FROM json_each(?1))
      SELECT key FROM k WHERE
-       EXISTS (SELECT 1 FROM pass_versions v WHERE v.object_key = k.key AND NOT EXISTS
-         (SELECT 1 FROM json_each(?2) x WHERE json_extract(x.value, '$[0]') = v.pass_id
-            AND json_extract(x.value, '$[1]') = v.version))
+       EXISTS (SELECT 1 FROM pass_versions v WHERE v.object_key = k.key AND (v.pass_id, v.version) NOT IN
+         (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?2)))
        OR EXISTS (SELECT 1 FROM passes p WHERE p.object_key = k.key)
+       -- Held for the row's life: a claim is not cleared on restore and compensation re-reads its snapshot.
        OR EXISTS (SELECT 1 FROM passes p WHERE p.removal_claim_object_key = k.key)
        OR EXISTS (SELECT 1 FROM pass_boundaries b WHERE b.object_key = k.key)
+       -- Held for the row's life, terminal or not: the delivery ledger is immutable authority (0045), and
+       -- the asset GC (repo-pass-asset-references.ts) treats these keys as held the same way.
        OR EXISTS (SELECT 1 FROM pass_issuance_deliveries d WHERE d.source_object_key = k.key)
        OR EXISTS (SELECT 1 FROM pass_issuance_deliveries d WHERE d.target_object_key = k.key)`;
 
