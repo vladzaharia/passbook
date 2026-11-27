@@ -17,19 +17,24 @@ import {
   KeyValue,
   MoreMenu,
   PageHeader,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   TwoPane,
   toast,
   useNow,
 } from '../../../ui/index.ts';
+import { LiveCheck } from '../../../ui/webhook-setup/index.ts';
 import { useEndpointActions } from './api.ts';
 import { Deliveries } from './deliveries.tsx';
+import type { EndpointTab } from './detail-tabs.ts';
 import { EndpointStatus } from './endpoint-status.tsx';
 import { endpointHost, endpointState, lastDelivery, spanLabel } from './health.ts';
 import { ReplayDialog } from './replay-dialog.tsx';
 import { RotateDialog } from './rotate-dialog.tsx';
 import { SettingsCard } from './settings-card.tsx';
 import { SigningCard } from './signing-card.tsx';
-import { TestSend } from './test-send.tsx';
 
 /** The one sentence a state needs; the pill says which state, this says what to do. */
 function StateCallout({
@@ -83,9 +88,11 @@ function StateCallout({
 export function EndpointDetail({
   endpoint: e,
   canManage,
+  tab = 'overview',
 }: {
   endpoint: WebhookEndpointDto;
   canManage: boolean;
+  tab?: EndpointTab | undefined;
 }) {
   const navigate = useNavigate();
   const mode = useMode();
@@ -96,6 +103,8 @@ export function EndpointDetail({
   const [del, setDel] = useState(false);
   const host = endpointHost(e);
   const paused = e.status === 'paused';
+  const setTab = (next: string) =>
+    void navigate({ to: '.', search: { tab: next as EndpointTab }, replace: true });
 
   const setStatus = (status: 'active' | 'paused') =>
     actions.update
@@ -161,41 +170,62 @@ export function EndpointDetail({
           onReplay={() => setReplay(true)}
         />
       </div>
-      <TwoPane
-        asideFirst
-        aside={
-          <>
-            <Card>
-              <CardHeader title="Overview" />
-              <CardBody>
-                <KeyValue
-                  items={[
-                    { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
-                    { label: 'API version', value: e.apiVersion, mono: true },
-                    { label: 'Last success', value: formatDateTime(e.lastSuccessAt, 'None yet') },
-                    { label: 'Last failure', value: formatDateTime(e.lastFailureAt, 'None') },
-                    { label: 'Added', value: formatDateTime(e.createdAt) },
-                  ]}
+      <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+        <TabsList aria-label="Webhook sections">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
+          <TabsTrigger value="signing">Signing</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <TwoPane
+            asideFirst
+            aside={
+              <>
+                <Card>
+                  <CardHeader title="Overview" />
+                  <CardBody>
+                    <KeyValue
+                      items={[
+                        { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
+                        { label: 'API version', value: e.apiVersion, mono: true },
+                        {
+                          label: 'Last success',
+                          value: formatDateTime(e.lastSuccessAt, 'None yet'),
+                        },
+                        { label: 'Last failure', value: formatDateTime(e.lastFailureAt, 'None') },
+                        { label: 'Added', value: formatDateTime(e.createdAt) },
+                      ]}
+                    />
+                  </CardBody>
+                </Card>
+                <LiveCheck
+                  mode="send"
+                  host={host}
+                  canSend={canManage}
+                  send={() => actions.test.mutateAsync()}
                 />
-              </CardBody>
-            </Card>
-            <TestSend endpointId={e.id} host={host} canManage={canManage} />
-            <SigningCard endpoint={e} canManage={canManage} onRotate={() => setRotate(true)} />
-          </>
-        }
-      >
-        <Card>
-          <CardHeader title="Deliveries" />
-          <CardBody>
-            <Deliveries endpointId={e.id} canManage={canManage} endpointStatus={e.status} />
-          </CardBody>
-        </Card>
-        <SettingsCard
-          key={JSON.stringify([e.url, e.description, e.eventTypes, e.templateIds])}
-          endpoint={e}
-          canManage={canManage}
-        />
-      </TwoPane>
+              </>
+            }
+          >
+            <SettingsCard
+              key={JSON.stringify([e.url, e.description, e.eventTypes, e.templateIds])}
+              endpoint={e}
+              canManage={canManage}
+            />
+          </TwoPane>
+        </TabsContent>
+        <TabsContent value="deliveries">
+          <Card>
+            <CardHeader title="Deliveries" />
+            <CardBody>
+              <Deliveries endpointId={e.id} canManage={canManage} endpointStatus={e.status} />
+            </CardBody>
+          </Card>
+        </TabsContent>
+        <TabsContent value="signing">
+          <SigningCard endpoint={e} canManage={canManage} onRotate={() => setRotate(true)} />
+        </TabsContent>
+      </Tabs>
       {canManage ? (
         <>
           <ReplayDialog endpointId={e.id} open={replay} onOpenChange={setReplay} />

@@ -12,13 +12,22 @@ const sent = (calls: Calls[], method: string, path: string) =>
 
 afterEach(() => resetModeForTests());
 
-describe('add endpoint', () => {
+const OUTBOUND = '/admin/connections/webhooks/new';
+const next = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole('button', { name: 'Next' }));
+
+/** Types the URL on the Endpoint step and moves to Events. */
+async function typeUrl(user: ReturnType<typeof userEvent.setup>, url: string) {
+  await user.type(await screen.findByRole('textbox', { name: /URL/ }), url);
+}
+
+describe('add endpoint (the outbound path of the wizard)', () => {
   it('creates, shows the secret once, then sends a test event', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/new', calls);
-    const url = await screen.findByRole('textbox', { name: /URL/ });
-    await user.type(url, 'https://hooks.example.com/passbook');
+    await open(OUTBOUND, calls);
+    expect(await screen.findByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
+    await typeUrl(user, 'https://hooks.example.com/passbook');
     await user.tab();
     await waitFor(() =>
       expect(
@@ -30,8 +39,11 @@ describe('add endpoint', () => {
         ),
       ).toBe(true),
     );
-    await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
-    expect(await screen.findByRole('heading', { name: 'Signing secret' })).toBeVisible();
+    await next(user);
+    expect(await screen.findByRole('heading', { name: 'Choose events', level: 2 })).toBeVisible();
+    await next(user);
+    await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
+    expect(await screen.findByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
     const post = calls.find((c) => c.method === 'POST' && c.search === '');
     // The session names the organization in the body; without it the API answers 400.
     expect(post?.body).toMatchObject({
@@ -40,16 +52,24 @@ describe('add endpoint', () => {
       eventTypes: ['pass.issued', 'pass.installed', 'pass.uninstalled', 'pass.scanned'],
       templateIds: null,
     });
-    expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('button', { name: 'Copy signing secret' })).toBeVisible();
-    expect(screen.getByRole('region', { name: 'Verify snippet' })).toBeVisible();
-
-    await user.click(screen.getByRole('button', { name: 'Send test event' }));
-    expect(await screen.findByText('Delivered: 200 in 140 ms', { selector: 'span' })).toBeVisible();
-    expect(sent(calls, 'POST', '/api/v1/webhook-endpoints/we-new/test')).toHaveLength(1);
-
     await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
-    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await next(user);
+    expect(
+      await screen.findByRole('heading', { name: 'Check the signature', level: 2 }),
+    ).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Node verify snippet' })).toBeVisible();
+    await next(user);
+    expect(await screen.findByRole('heading', { name: 'Send a test', level: 2 })).toBeVisible();
+    const done = screen.getByRole('button', { name: 'Done' });
+    expect(done).toHaveAttribute('aria-disabled', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Send test' }));
+    expect((await screen.findAllByText(/Delivered/)).length).toBeGreaterThan(0);
+    expect(sent(calls, 'POST', '/api/v1/webhook-endpoints/we-new/test')).toHaveLength(1);
+    await waitFor(() => expect(done).not.toHaveAttribute('aria-disabled'));
+    await user.click(done);
     expect(
       await screen.findByRole('heading', { name: 'hooks.example.com', level: 1 }),
     ).toBeVisible();
@@ -58,7 +78,9 @@ describe('add endpoint', () => {
   it('ticks a set of events from a quick pick and keeps the ticks editable', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/new', calls);
+    await open(OUTBOUND, calls);
+    await typeUrl(user, 'https://hooks.example.com/x');
+    await next(user);
     const picks = await screen.findByRole('group', { name: 'Quick picks' });
     expect(within(picks).getAllByRole('button')).toHaveLength(6);
     await user.click(within(picks).getByRole('button', { name: 'Scans' }));
@@ -82,37 +104,45 @@ describe('add endpoint', () => {
   it('blocks an empty URL and no events, and names the problem', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/new', calls);
-    await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
+    await open(OUTBOUND, calls);
+    await screen.findByRole('textbox', { name: /URL/ });
+    await next(user);
     expect(await screen.findByText('Enter the URL.')).toBeVisible();
-    expect(calls.some((c) => c.method === 'POST')).toBe(false);
     await user.type(screen.getByRole('textbox', { name: /URL/ }), 'http://plain.example.com');
-    await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
+    await next(user);
     expect(await screen.findByText('Use an https URL.')).toBeVisible();
+    expect(calls.some((c) => c.method === 'POST' && c.search === '')).toBe(false);
+    await user.clear(screen.getByRole('textbox', { name: /URL/ }));
+    await user.type(screen.getByRole('textbox', { name: /URL/ }), 'https://hooks.example.com/x');
+    await next(user);
+    for (const box of await screen.findAllByRole('checkbox', { checked: true }))
+      await user.click(box);
+    await next(user);
+    expect(await screen.findByText('Pick at least one event.')).toBeVisible();
   });
 
   it('shows the save-time refusal under the URL', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
     await open(
-      '/admin/connections/webhooks/new',
+      OUTBOUND,
       calls,
       hooks(calls, undefined, {
         '/api/v1/webhook-endpoints': () => problem(422, 'UNSAFE_URL', 'That host is not allowed.'),
       }),
     );
-    await user.type(await screen.findByRole('textbox', { name: /URL/ }), 'https://10.0.0.1/x');
+    await typeUrl(user, 'https://10.0.0.1/x');
     await user.tab();
     expect(await screen.findByText('That host is not allowed.')).toBeVisible();
     await user.type(screen.getByRole('textbox', { name: /URL/ }), 'y');
     await waitFor(() => expect(screen.queryByText('That host is not allowed.')).toBeNull());
   });
 
-  it('keeps the form and says so when the endpoint limit is reached', async () => {
+  it('stays on Review and says so when the endpoint limit is reached', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
     await open(
-      '/admin/connections/webhooks/new',
+      OUTBOUND,
       calls,
       hooks(calls, undefined, {
         '/api/v1/webhook-endpoints': (_u, init) =>
@@ -127,15 +157,14 @@ describe('add endpoint', () => {
               }),
       }),
     );
-    await user.type(
-      await screen.findByRole('textbox', { name: /URL/ }),
-      'https://hooks.example.com/x',
-    );
-    await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
+    await typeUrl(user, 'https://hooks.example.com/x');
+    await next(user);
+    await next(user);
+    await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
     expect(
       await screen.findByText('This mode already has 10 endpoints. Delete one first.'),
     ).toBeVisible();
-    expect(screen.getByRole('textbox', { name: /URL/ })).toHaveValue('https://hooks.example.com/x');
+    expect(screen.getByRole('button', { name: 'Add endpoint' })).toBeVisible();
   });
 });
 
@@ -223,8 +252,8 @@ describe('endpoint actions', () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
     await open('/admin/connections/webhooks/we1', calls);
-    await user.click(await screen.findByRole('button', { name: 'Send test event' }));
-    expect(await screen.findByText('Delivered', { selector: '[role=status] *' })).toBeVisible();
+    await user.click(await screen.findByRole('button', { name: 'Send test' }));
+    expect((await screen.findAllByText(/Delivered/)).length).toBeGreaterThan(0);
     expect(sent(calls, 'POST', '/api/v1/webhook-endpoints/we1/test')).toHaveLength(1);
   });
 
@@ -250,9 +279,8 @@ describe('endpoint actions', () => {
           ),
       }),
     );
-    await user.click(await screen.findByRole('button', { name: 'Send test event' }));
-    expect((await screen.findAllByText('Failed: HTTP 503')).length).toBeGreaterThan(0);
-    expect(await screen.findByText('Check the endpoint.')).toBeVisible();
+    await user.click(await screen.findByRole('button', { name: 'Send test' }));
+    expect(await screen.findByText('Server error')).toBeVisible();
   });
 
   it('reports a refused test (rate limit) as an error', async () => {
@@ -266,7 +294,7 @@ describe('endpoint actions', () => {
           problem(429, 'RATE_LIMITED', 'Too many test events. Try again in a minute.'),
       }),
     );
-    await user.click(await screen.findByRole('button', { name: 'Send test event' }));
+    await user.click(await screen.findByRole('button', { name: 'Send test' }));
     expect(
       (await screen.findAllByText('Too many test events. Try again in a minute.')).length,
     ).toBeGreaterThan(0);
@@ -282,17 +310,16 @@ describe('secrets, focus, sending and lookups', () => {
       .getAll()
       .filter((m) => JSON.stringify(m.state.data ?? '').includes('whsec_'));
 
-  it('moves focus to the secret and keeps it out of the mutation cache (create)', async () => {
+  it('moves focus to the secret step and keeps the secret out of the mutation cache (create)', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    const { queryClient } = await open('/admin/connections/webhooks/new', calls);
-    await user.type(
-      await screen.findByRole('textbox', { name: /URL/ }),
-      'https://hooks.example.com/x',
-    );
-    await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
-    const group = await screen.findByRole('group', { name: 'Signing secret' });
-    await waitFor(() => expect(group).toHaveFocus());
+    const { queryClient } = await open(OUTBOUND, calls);
+    await typeUrl(user, 'https://hooks.example.com/x');
+    await next(user);
+    await next(user);
+    await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
+    const heading = await screen.findByRole('heading', { name: 'Copy the secret', level: 2 });
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(secretsInCache(queryClient)).toEqual([]);
   });
 
@@ -325,13 +352,13 @@ describe('secrets, focus, sending and lookups', () => {
     );
     const getsOf = () =>
       calls.filter((c) => c.method === 'GET' && c.path === '/api/v1/webhook-endpoints/we1').length;
-    await screen.findByRole('table', { name: 'Deliveries' });
+    await screen.findByRole('heading', { name: 'Settings' });
     const gets = getsOf();
-    await user.click(screen.getByRole('button', { name: 'Send test event' }));
-    expect(await screen.findByText('Sending…')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Send test' }));
+    expect((await screen.findAllByText('Sending a test.')).length).toBeGreaterThan(0);
     release(json({ ok: true, status: 200, durationMs: 5, errorCode: null, captureId: null }));
     await waitFor(() => expect(getsOf()).toBeGreaterThan(gets));
-    await waitFor(() => expect(screen.queryByText('Sending…')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Sending a test.')).toBeNull());
   });
 
   it('names a missing endpoint a webhook', async () => {
@@ -352,7 +379,7 @@ describe('endpoint helpers', () => {
   it('shows nothing extra for a healthy endpoint', async () => {
     const calls: Calls[] = [];
     await open('/admin/connections/webhooks/we1', calls, hooks(calls, { endpoints: [endpoint()] }));
-    await screen.findByRole('table', { name: 'Deliveries' });
+    await screen.findByRole('heading', { name: 'Settings' });
     expect(screen.queryByText('Deliveries are failing')).toBeNull();
   });
 });

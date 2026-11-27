@@ -26,14 +26,14 @@ afterEach(() => {
 describe('signing on the endpoint page', () => {
   it('shows when the secret was made, never the secret, and how to verify', async () => {
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls);
+    await open('/admin/connections/webhooks/we1?tab=signing', calls);
     await screen.findByRole('heading', { name: 'Signing' });
     const signing = screen;
     expect(signing.getByText('Secret set')).toBeVisible();
     expect(signing.queryByText(/whsec_/)).toBeNull();
-    expect(signing.getByText('How to verify')).toBeVisible();
+    expect(signing.getByText('Verify requests')).toBeVisible();
     expect(signing.getByText(/HMAC-SHA256/)).toBeInTheDocument();
-    expect(signing.getByRole('region', { name: 'Verify snippet' })).toHaveTextContent(
+    expect(signing.getByRole('region', { name: 'Node verify snippet' })).toHaveTextContent(
       'x-passbook-signature',
     );
   });
@@ -41,7 +41,7 @@ describe('signing on the endpoint page', () => {
   it('names the time an old secret still signs, only while it does', async () => {
     const calls: Calls[] = [];
     await open(
-      '/admin/connections/webhooks/we1',
+      '/admin/connections/webhooks/we1?tab=signing',
       calls,
       hooks(calls, { endpoints: [endpoint({ previousSecretExpiresAt: NOW + 24 * HOUR })] }),
     );
@@ -51,7 +51,7 @@ describe('signing on the endpoint page', () => {
   it('omits the old secret line once it has expired', async () => {
     const calls: Calls[] = [];
     await open(
-      '/admin/connections/webhooks/we1',
+      '/admin/connections/webhooks/we1?tab=signing',
       calls,
       hooks(calls, { endpoints: [endpoint({ previousSecretExpiresAt: NOW - HOUR })] }),
     );
@@ -62,7 +62,7 @@ describe('signing on the endpoint page', () => {
   it('rotates from the card and reveals the new secret once, with Copy', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls);
+    await open('/admin/connections/webhooks/we1?tab=signing', calls);
     await user.click(await screen.findByRole('button', { name: 'Rotate secret' }));
     await user.click(await screen.findByRole('button', { name: 'Rotate' }));
     const dialog = await screen.findByRole('dialog', { name: 'New signing secret' });
@@ -73,10 +73,10 @@ describe('signing on the endpoint page', () => {
 
   it('gives a reader the dates and the guide without Rotate', async () => {
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls, hooks(calls), reader);
+    await open('/admin/connections/webhooks/we1?tab=signing', calls, hooks(calls), reader);
     expect(await screen.findByText('Secret set')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Rotate secret' })).toBeNull();
-    expect(screen.getByText('How to verify')).toBeVisible();
+    expect(screen.getByText('Verify requests')).toBeVisible();
   });
 });
 
@@ -94,7 +94,7 @@ describe('delivery sheet', () => {
   it('shows the request headers of the latest attempt and how to verify', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls);
+    await open('/admin/connections/webhooks/we1?tab=deliveries', calls);
     await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
     const sheet = await screen.findByRole('dialog', { name: 'Delivery' });
     const headers = await within(sheet).findByRole('region', { name: 'Request headers' });
@@ -113,7 +113,7 @@ describe('delivery sheet', () => {
   it('links the pass and says what a failed delivery needs', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls);
+    await open('/admin/connections/webhooks/we1?tab=deliveries', calls);
     await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
     const sheet = await screen.findByRole('dialog', { name: 'Delivery' });
     expect(await within(sheet).findByRole('link', { name: 'ORD-7' })).toHaveAttribute(
@@ -129,7 +129,7 @@ describe('delivery sheet', () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
     await open(
-      '/admin/connections/webhooks/we1',
+      '/admin/connections/webhooks/we1?tab=deliveries',
       calls,
       hooks(
         calls,
@@ -158,15 +158,18 @@ describe('delivery sheet', () => {
   });
 });
 
-describe('endpoint page order', () => {
-  it('puts deliveries before settings', async () => {
+describe('endpoint page tabs', () => {
+  it('opens on Overview, with deliveries and signing a tab away', async () => {
+    const user = userEvent.setup();
     const calls: Calls[] = [];
     await open('/admin/connections/webhooks/we1', calls);
-    const deliveries = await screen.findByRole('heading', { name: 'Deliveries' });
-    const settings = screen.getByRole('heading', { name: 'Settings' });
-    expect(
-      deliveries.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(await screen.findByRole('tab', { name: 'Overview', selected: true })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Deliveries' })).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'Deliveries' }));
+    expect(await screen.findByRole('heading', { name: 'Deliveries' })).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Signing' }));
+    expect(await screen.findByText('Secret set')).toBeVisible();
   });
 });
 
@@ -174,7 +177,7 @@ describe('delivery curl', () => {
   it('copies a script that signs a fresh timestamp and posts the same body', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/we1', calls);
+    await open('/admin/connections/webhooks/we1?tab=deliveries', calls);
     await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
     const sheet = await screen.findByRole('dialog', { name: 'Delivery' });
     await user.click(await within(sheet).findByText('Copy as curl'));

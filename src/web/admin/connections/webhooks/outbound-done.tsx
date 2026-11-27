@@ -2,8 +2,7 @@ import { Webhook } from 'lucide-react';
 import type { z } from 'zod';
 import type { WebhookEndpointCreatedSchema } from '@/shared/contracts/webhooks.ts';
 import { SecretReveal } from '../../../ui/secret-reveal.tsx';
-import { LiveCheck, SetupSteps } from '../../../ui/webhook-setup/index.ts';
-import { VerifyGuide } from '../../../ui/webhooks/verify-guide.tsx';
+import { LiveCheck, SetupSteps, VerifyGuide } from '../../../ui/webhook-setup/index.ts';
 import { useEndpointActions, useOutboundSetup } from './api.ts';
 import { endpointHost } from './health.ts';
 

@@ -1,16 +1,16 @@
 import { Server, Webhook } from 'lucide-react';
-import { FormField } from '../../../ui/field.tsx';
-import { Input } from '../../../ui/input.tsx';
 import { OptionTile } from '../../../ui/option-tile.tsx';
 import { WizardReview, type WizardReviewSection } from '../../../ui/wizard/wizard-review.tsx';
-import { EndpointFields, type TemplateChoices } from './endpoint-fields.tsx';
+import { UrlField } from './endpoint-fields.tsx';
+import { EventFields, type TemplateChoices } from './event-fields.tsx';
 import type { FormErrors, FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
-import type { OutboundHost, OutboundKind } from './outbound-wizard.tsx';
+import type { OutboundKind } from './outbound-wizard.tsx';
 
 /** The destination: your server's URL, or (in a sandbox) the capture endpoint. */
 export function OutboundStepWhere({
-  host,
+  sandbox,
+  quota,
   kind,
   onKind,
   form,
@@ -19,7 +19,9 @@ export function OutboundStepWhere({
   checking,
   onUrlBlur,
 }: {
-  host: OutboundHost;
+  /** A sandbox may also pick the built-in capture endpoint. */
+  sandbox: boolean;
+  quota: { used: number; limit: number | null } | null;
   kind: OutboundKind;
   onKind: (kind: OutboundKind) => void;
   form: FormState;
@@ -28,10 +30,9 @@ export function OutboundStepWhere({
   checking: boolean;
   onUrlBlur: () => void;
 }) {
-  const quota = host.quota;
   return (
     <>
-      {host.sandbox ? (
+      {sandbox ? (
         <fieldset className="flex min-w-0 flex-col">
           <legend className="mb-2 text-sm font-medium text-fg">Send to</legend>
           <div className="grid gap-3 @md:grid-cols-2">
@@ -57,46 +58,15 @@ export function OutboundStepWhere({
         </fieldset>
       ) : null}
       {kind === 'url' ? (
-        <FormField
-          label="URL"
-          required
-          error={errors.url}
-          help={
-            errors.url
-              ? undefined
-              : 'https only. A signing secret is shown once after you add this.'
-          }
-        >
-          {(f) => (
-            <Input
-              {...f}
-              data-autofocus
-              data-draft
-              type="url"
-              inputMode="url"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="https://example.com/hooks/passbook"
-              aria-busy={checking || undefined}
-              value={form.url}
-              onChange={(e) => onChange({ url: e.target.value })}
-              onBlur={onUrlBlur}
-            />
-          )}
-        </FormField>
-      ) : null}
-      {kind === 'url' ? (
-        <FormField label="Description">
-          {(f) => (
-            <Input
-              {...f}
-              data-draft
-              maxLength={120}
-              value={form.description}
-              onChange={(e) => onChange({ description: e.target.value })}
-            />
-          )}
-        </FormField>
+        <UrlField
+          autoFocus
+          value={form}
+          onChange={onChange}
+          errors={errors}
+          checking={checking}
+          onUrlBlur={onUrlBlur}
+          urlHelp="https only. A signing secret is shown once after you add this."
+        />
       ) : null}
       {quota && quota.limit !== null ? (
         <p
@@ -120,15 +90,7 @@ export function OutboundStepEvents({
   errors: FormErrors;
   templates: TemplateChoices;
 }) {
-  return (
-    <EndpointFields
-      value={form}
-      onChange={onChange}
-      errors={errors}
-      templates={templates}
-      hideDestination
-    />
-  );
+  return <EventFields value={form} onChange={onChange} errors={errors} templates={templates} />;
 }
 
 /** Everything the endpoint will have, by step, each with a way back. */
@@ -136,10 +98,13 @@ export function OutboundReview({
   kind,
   form,
   onEdit,
+  level,
 }: {
   kind: OutboundKind;
   form: FormState;
   onEdit: (step: 'where' | 'events') => void;
+  /** The section titles' heading level: 3 under a page's step heading, 4 under a dialog's. */
+  level?: 3 | 4;
 }) {
   const sections: WizardReviewSection<'where' | 'events'>[] = [
     {
@@ -179,6 +144,7 @@ export function OutboundReview({
   ];
   return (
     <WizardReview
+      {...(level ? { level } : {})}
       sections={sections}
       onEdit={onEdit}
       note={kind === 'url' ? 'The signing secret is shown once, after you add it.' : undefined}

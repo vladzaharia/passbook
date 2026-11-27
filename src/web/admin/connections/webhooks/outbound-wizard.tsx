@@ -8,7 +8,7 @@ import { isApiError } from '../../../lib/errors.ts';
 import { useWizard } from '../../../ui/wizard/use-wizard.ts';
 import { WizardDialog } from '../../../ui/wizard/wizard-dialog.tsx';
 import { useSecretCalls, useValidateEndpoint } from './api.ts';
-import type { TemplateChoices } from './endpoint-fields.tsx';
+import type { TemplateChoices } from './event-fields.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
 import { OUTBOUND_DONE, OutboundDone } from './outbound-done.tsx';
@@ -178,7 +178,8 @@ export function OutboundWizard({
     >
       {w.id === 'where' ? (
         <OutboundStepWhere
-          host={host}
+          sandbox={host.sandbox}
+          quota={host.quota}
           kind={kind}
           onKind={setKind}
           form={form}

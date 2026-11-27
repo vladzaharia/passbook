@@ -63,7 +63,7 @@ function setup(connectors = ALL, picked: { type?: string; recipe?: string } = {}
 describe('connector tiles', () => {
   it('makes a tile per connector and sender, grouped in order', () => {
     const tiles = buildTiles(ALL);
-    expect(tiles).toHaveLength(12);
+    expect(tiles).toHaveLength(13);
     expect(tiles.map((t) => t.category)).toEqual([
       'files',
       'files',
@@ -76,6 +76,7 @@ describe('connector tiles', () => {
       'commerce',
       'bookings',
       'bookings',
+      'outbound',
       'try',
     ]);
     const stripe = tiles.find((t) => t.key === 'stripe-payments');
@@ -94,6 +95,12 @@ describe('connector tiles', () => {
       info('webhook-push', 'Webhook push', 'apis', 20, { entitled: false, recipes: SENDERS }),
     ];
     expect(buildTiles(noCustom as never[]).map((t) => t.key)).not.toContain('webhook-push');
+  });
+
+  it('offers sending events out as its own tile, not a stored connection', () => {
+    const out = buildTiles(ALL).find((t) => t.key === 'outbound');
+    expect(out).toMatchObject({ label: 'Send events to your server', category: 'outbound' });
+    expect(matchTiles(buildTiles(ALL), 'endpoint').map((t) => t.key)).toEqual(['outbound']);
   });
 
   it('keys a tile by its sender, Custom by the connector', () => {
@@ -121,7 +128,8 @@ describe('connector picker', () => {
     expect(screen.getByRole('searchbox', { name: 'Search connectors' })).toBeVisible();
     expect(screen.getByRole('radiogroup', { name: 'Files and sheets' })).toBeVisible();
     expect(screen.getByRole('radiogroup', { name: 'Bookings and tickets' })).toBeVisible();
-    expect(screen.getAllByRole('radio')).toHaveLength(12);
+    expect(screen.getAllByRole('radio')).toHaveLength(13);
+    expect(screen.getByRole('radiogroup', { name: 'Send from PassBook' })).toBeVisible();
   });
 
   it('shows one plain list with no search for a few tiles', () => {
@@ -136,7 +144,7 @@ describe('connector picker', () => {
       ...ALL.slice(0, 4),
       info('webhook-push', 'Webhook push', 'apis', 20, { recipes: SENDERS.slice(0, 4) }),
     ] as never[]);
-    expect(screen.getAllByRole('radio')).toHaveLength(9);
+    expect(screen.getAllByRole('radio')).toHaveLength(10);
     expect(screen.queryByRole('searchbox')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Commerce' })).toBeVisible();
   });

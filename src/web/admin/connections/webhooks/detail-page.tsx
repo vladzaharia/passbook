@@ -7,6 +7,7 @@ import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { Button, detailError, EmptyState, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
 import { useWebhookEndpoint } from './api.ts';
 import { EndpointDetail } from './detail-content.tsx';
+import type { EndpointTab } from './detail-tabs.ts';
 
 const crumbs = [
   { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
@@ -34,17 +35,24 @@ function NotFound() {
 }
 
 /** Loads the endpoint, then checks it belongs to the selected org before showing anything. */
-export function EndpointDetailPage({ endpointId }: { endpointId: string }) {
+export function EndpointDetailPage({
+  endpointId,
+  tab,
+}: {
+  endpointId: string;
+  tab?: EndpointTab | undefined;
+}) {
   const { hasExplicitOrg, requestedOrgId } = useOrgScope();
   return (
     <Loader
       key={JSON.stringify([endpointId, hasExplicitOrg, requestedOrgId])}
       endpointId={endpointId}
+      tab={tab}
     />
   );
 }
 
-function Loader({ endpointId }: { endpointId: string }) {
+function Loader({ endpointId, tab }: { endpointId: string; tab?: EndpointTab | undefined }) {
   const scope = useOrgScope();
   const canFetch = Boolean(
     !scope.isLoading &&
@@ -97,6 +105,7 @@ function Loader({ endpointId }: { endpointId: string }) {
       key={canManage ? 'manage' : 'read'}
       endpoint={endpoint.data}
       canManage={canManage}
+      tab={tab}
     />
   );
 }

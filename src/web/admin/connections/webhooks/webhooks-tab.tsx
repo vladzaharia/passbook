@@ -26,7 +26,9 @@ import { lastDelivery } from './health.ts';
 export function AddEndpointButton({ variant = 'primary' }: { variant?: 'primary' | 'outline' }) {
   return (
     <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
-      <Link to="/admin/connections/webhooks/new">Add endpoint</Link>
+      <Link to="/admin/connections/new" search={{ source: 'outbound' }}>
+        Add endpoint
+      </Link>
     </Button>
   );
 }
