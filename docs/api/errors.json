@@ -197,7 +197,8 @@
         403
       ],
       "modules": [
-        "api-keys"
+        "api-keys",
+        "orgs"
       ]
     },
     {

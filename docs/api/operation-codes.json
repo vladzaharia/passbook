@@ -3481,6 +3481,7 @@
     "UNAUTHENTICATED"
   ],
   "organization memberships get /{id}/invitations": [
+    "API_KEY_RESTRICTED_ROUTE",
     "FORBIDDEN",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
@@ -3489,6 +3490,7 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "organization memberships get /{id}/memberships": [
+    "API_KEY_RESTRICTED_ROUTE",
     "FORBIDDEN",
     "NOT_FOUND",
     "ORG_FORBIDDEN",

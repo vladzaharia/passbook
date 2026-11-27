@@ -164,7 +164,7 @@ describe('org members and invitations for a key', () => {
           db,
           `WITH ${p.ctes} SELECT ${SELECT_MEMBERS}
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
-     WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
+     WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) AND (SELECT limit_key FROM actor_ok) IS NULL AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
      ORDER BY m.created_at, m.id`,
           [...p.params, orgId],
         );
@@ -175,7 +175,7 @@ describe('org members and invitations for a key', () => {
         const invitations = await all(
           db,
           `WITH ${p.ctes} SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
-     FROM org_invitations m WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) ORDER BY m.created_at, m.id`,
+     FROM org_invitations m WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) AND (SELECT limit_key FROM actor_ok) IS NULL ORDER BY m.created_at, m.id`,
           [...p.params, orgId],
         );
         expect(

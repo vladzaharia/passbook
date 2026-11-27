@@ -178,8 +178,22 @@ export function pendingInvitationFor(db: D1Database, orgId: string, email: strin
 /** A key's read of its own org: the grant's actor checks, re-run inside the query, name the org (never the request). */
 const keyReadGuard = (principal: Principal, checks: Check[], now: number) => {
   const p = authorityPredicate(principal, { scope: 'org', now, checks });
-  return { head: `WITH ${p.ctes}`, rows: p.rows, params: p.params, sql: 'm.org_id = ao.org_id' };
+  return {
+    head: `WITH ${p.ctes}`,
+    rows: p.rows,
+    params: p.params,
+    sql: 'm.org_id = ao.org_id AND ao.limit_key IS NULL',
+  };
 };
+/** A key limited to templates or styles: people's emails are outside what such a key is for. */
+export async function keyIsLimited(db: D1Database, keyId: string): Promise<boolean> {
+  const row = await first<{ restricted: number }>(
+    db,
+    'SELECT restricted FROM api_keys WHERE id = ?',
+    [keyId],
+  );
+  return row?.restricted === 1;
+}
 /** The org's members for a key: the invitation's address, never an account's primary email. */
 export function keyOrgMembers(
   db: D1Database,
