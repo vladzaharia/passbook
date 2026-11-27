@@ -1,3 +1,4 @@
+import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { all, chunk, first, placeholders, prefixMatch, run } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
@@ -156,12 +157,12 @@ export async function setStatusAsAdmin(
   ctx: ServiceContext,
   userId: string,
   status: 'active' | 'disabled',
-  admin: { userId: string; sessionId: string },
+  admin: PlatformCaller,
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const g = grant(ctx, {
     purpose: status === 'disabled' ? 'platform.user.disable' : 'platform.user.enable',
-    principal: { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
+    principal: callerPrincipal(admin),
     target: userId,
   });
   g.update('users', {

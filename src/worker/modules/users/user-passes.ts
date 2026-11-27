@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { Channel } from '../../../shared/contracts/channels.ts';
 import type { UserPassesQuerySchema, UserPassListSchema } from '../../../shared/contracts/users.ts';
 import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
+import { callerActor, type PlatformCaller } from '../../platform/actor.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { viewerOrgName } from '../orgs/personal-names.ts';
@@ -16,11 +17,13 @@ type Page = z.infer<typeof UserPassListSchema>;
  */
 export async function listPassesOfUser(
   ctx: ServiceContext,
-  actorId: string,
+  who: PlatformCaller,
   userId: string,
   query: z.infer<typeof UserPassesQuerySchema>,
 ): Promise<Page> {
   await requireUser(ctx, userId);
+  // The viewer of a personal org is a person: a key sees none of them as its own.
+  const actorId = who.userId ?? '';
   const db = ctx.env.DB;
   const cursor = query.cursor ?? '~';
   const want = query.limit + 1;
@@ -44,9 +47,10 @@ export async function listPassesOfUser(
   const more = ids.length > query.limit;
   const rows = ids.length ? await passesByIds(db, ids) : [];
   const page = rows.slice(0, query.limit);
+  const actor = callerActor(who);
   await recordAudit(ctx, {
-    actorType: 'user',
-    actorId,
+    actorType: actor.type,
+    actorId: actor.id,
     action: 'platform.user_passes_read',
     targetType: 'user',
     targetId: userId,

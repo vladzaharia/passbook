@@ -36,6 +36,7 @@ export const PLATFORM_KEY_SCOPES = [
 export const MINTABLE_PLATFORM_SCOPES = [
   'platform:read',
   'platform:users',
+  'platform:orgs',
   'platform:groups',
   'platform:claims',
   'platform:status',

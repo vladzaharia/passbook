@@ -10,9 +10,12 @@ import {
   ReceiptListQuerySchema,
   ReceiptListSchema,
 } from '../../../shared/contracts/retention.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { byUserOfCaller } from '../idp/actor.ts';
+import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { listHoldViews, listReceiptItems, receiptFile } from './console.ts';
 import { type HoldBy, placeHold, releaseHold } from './holds.ts';
@@ -32,9 +35,21 @@ async function orgBy(c: C, orgId: string, capability: 'audit:read' | 'org:manage
   return authority;
 }
 
+/** The release of a hold is a person's: this is the signed-in admin. */
 export const platformBy = (c: C): HoldBy => {
   const auth = sessionOf(c);
   return { kind: 'platform', admin: { userId: auth.userId, sessionId: auth.sessionId } };
+};
+
+/** A platform admin, or a Platform key with `platform:orgs`; a key's `placed_by` column names its creator. */
+const platformPlaceBy = async (c: C): Promise<HoldBy> => {
+  const admin = platformActorOf(c, { scope: 'platform:orgs' });
+  return { kind: 'platform', admin, user: await byUserOfCaller(c.env.DB, admin) };
+};
+
+/** A key is nobody's owner: a personal org's holds and receipts are not its to read or place. */
+const keyNotPersonal = async (c: C, orgId: string) => {
+  if (platformActorOf(c).keyId) await requireNotPersonalFor(c.env.DB, orgId, '');
 };
 
 const download = (c: C, name: string) =>
@@ -161,18 +176,21 @@ register(
   'retention',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/orgs/{orgId}/retention/holds',
     summary: 'List the legal holds of an organization',
     params: HoldParamsSchema,
     query: CursorQuerySchema,
     response: HoldListSchema,
   },
-  async (c) =>
-    c.json({
-      items: await listHoldViews(serviceContext(c).env.DB, c.req.valid('param').orgId, 'platform'),
+  async (c) => {
+    const { orgId } = c.req.valid('param');
+    await keyNotPersonal(c, orgId);
+    return c.json({
+      items: await listHoldViews(serviceContext(c).env.DB, orgId, 'platform'),
       nextCursor: null,
-    }),
+    });
+  },
 );
 
 register(
@@ -180,7 +198,7 @@ register(
   'retention',
   {
     method: 'post',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/orgs/{orgId}/retention/holds',
     summary: 'Place a platform legal hold; only a platform administrator releases it',
     params: HoldParamsSchema,
@@ -189,12 +207,9 @@ register(
     status: 201,
   },
   async (c) => {
-    await placeHold(
-      serviceContext(c),
-      c.req.valid('param').orgId,
-      c.req.valid('json'),
-      platformBy(c),
-    );
+    const { orgId } = c.req.valid('param');
+    await keyNotPersonal(c, orgId);
+    await placeHold(serviceContext(c), orgId, c.req.valid('json'), await platformPlaceBy(c));
     return c.json({ ok: true as const }, 201);
   },
 );
@@ -204,17 +219,18 @@ register(
   'retention',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/orgs/{orgId}/retention/receipts',
     summary: 'List the retention receipts of an organization',
     params: HoldParamsSchema,
     query: ReceiptListQuerySchema,
     response: ReceiptListSchema,
   },
-  async (c) =>
-    c.json(
-      await listReceiptItems(serviceContext(c), c.req.valid('param').orgId, c.req.valid('query')),
-    ),
+  async (c) => {
+    const { orgId } = c.req.valid('param');
+    await keyNotPersonal(c, orgId);
+    return c.json(await listReceiptItems(serviceContext(c), orgId, c.req.valid('query')));
+  },
 );
 
 register(
@@ -222,7 +238,7 @@ register(
   'retention',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/orgs/{orgId}/retention/receipts/{receiptId}/download',
     summary: 'Download one retention receipt of an organization',
     params: ReceiptIdParamsSchema,
@@ -230,18 +246,19 @@ register(
   },
   async (c) => {
     const { orgId, receiptId } = c.req.valid('param');
+    await keyNotPersonal(c, orgId);
     download(c, `retention-receipt-${receiptId}.json`);
     return c.json(await receiptFile(serviceContext(c), orgId, receiptId));
   },
 );
 
-/** Deletions of the platform pass's own records (no organization): administrators only. */
+/** Deletions of the platform pass's own records (no organization): administrators and Platform keys. */
 register(
   retentionPlatformRoutes,
   'retention',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/retention/receipts',
     summary: 'List retention receipts of platform-scope deletions',
     query: ReceiptListQuerySchema,
@@ -255,7 +272,7 @@ register(
   'retention',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/retention/receipts/{receiptId}/download',
     summary: 'Download one platform-scope retention receipt',
     params: PlatformReceiptParamsSchema,

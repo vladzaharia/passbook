@@ -1,3 +1,4 @@
+import { callerActor, type PlatformCaller } from '../../platform/actor.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -7,14 +8,15 @@ import { requireUser } from './service.ts';
 
 export async function revokeUserSessions(
   ctx: ServiceContext,
-  actorId: string,
+  who: PlatformCaller,
   id: string,
 ): Promise<number> {
   await requireUser(ctx, id);
   const count = await revokeAllForUser(ctx, id);
+  const actor = callerActor(who);
   await recordAudit(ctx, {
-    actorType: 'user',
-    actorId,
+    actorType: actor.type,
+    actorId: actor.id,
     action: 'user.sessions_revoke',
     targetType: 'user',
     targetId: id,
@@ -26,7 +28,7 @@ export async function revokeUserSessions(
 /** Revokes one session of the user; another user's session id is not found. */
 export async function revokeUserSession(
   ctx: ServiceContext,
-  actorId: string,
+  who: PlatformCaller,
   id: string,
   sessionId: string,
 ): Promise<void> {
@@ -35,9 +37,10 @@ export async function revokeUserSession(
   if (!row || row.user_id !== id)
     throw new NotFoundError('Session not found.', 'SESSION_NOT_FOUND');
   await revokeOne(ctx, sessionId);
+  const actor = callerActor(who);
   await recordAudit(ctx, {
-    actorType: 'user',
-    actorId,
+    actorType: actor.type,
+    actorId: actor.id,
     action: 'session.revoke',
     targetType: 'user',
     targetId: id,

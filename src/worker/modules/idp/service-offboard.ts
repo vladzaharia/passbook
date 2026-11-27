@@ -101,7 +101,12 @@ async function endAccess(
   for (const id of plan.platformKeys) await revokeApiKey(ctx, platform, id);
   if (plan.sandboxOrgId) await closeSandbox(ctx, plan.sandboxOrgId, undefined, 'admin');
   // Disabling revokes every session and marks the user for the drain, which takes the roles away.
-  await setUserStatus(ctx, auth.userId, plan.userId, 'disabled', auth.sessionId);
+  await setUserStatus(
+    ctx,
+    { userId: auth.userId, sessionId: auth.sessionId },
+    plan.userId,
+    'disabled',
+  );
 }
 
 /**

@@ -710,6 +710,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.metrics.retrieveOverview", "GET", "/api/v1/metrics/platform/overview", false,
+		"", `{"source":"analytics_engine","range":"24h","bucketMs":0,"unavailable":["x"],"totals":{"passes":0,"activePasses":0,"voidedPasses":0,"holders":0,"devices":0,"issued":0,"updated":0,"downloads":0,"registrations":0,"refreshes":0,"pushes":0,"pushFailures":0,"emails":0,"emailFailures":0,"syncRuns":0,"signIns":0,"scans":0,"scanRefused":0},"series":{"issued":[{"t":0,"v":0}],"updated":[{"t":0,"v":0}],"downloads":[{"t":0,"v":0}],"registrations":[{"t":0,"v":0}],"refreshes":[{"t":0,"v":0}],"pushes":[{"t":0,"v":0}],"pushFailures":[{"t":0,"v":0}],"emails":[{"t":0,"v":0}],"emailFailures":[{"t":0,"v":0}],"syncRuns":[{"t":0,"v":0}],"signIns":[{"t":0,"v":0}],"scans":[{"t":0,"v":0}]},"setup":{"orgs":0,"assignedTemplates":0,"passes":0,"approvedTemplates":0,"releasedTemplates":0,"walletPasses":0,"passEmailsSent":0,"latestPassId":"x","scanners":0},"live":[{"eventId":"x","name":"x","arrived":0,"expected":0,"ratePerMin":0}],"recent":[{"at":0,"action":"x","orgId":"x","targetId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Metrics.RetrieveOverview(ctx, nil)
+		},
+	},
+	{
 		"nfc.bindings.delete", "DELETE", "/api/v1/nfc/bindings/id1", false,
 		"", `{"id":"x","mode":"live","kind":"uid","assurance":"basic","hint":"x","label":"x","pool":false,"status":"active","state":"assigned","createdAt":0,"lastSeenAt":0,"keysetId":"x","binding":{"id":"x","tagId":"x","scope":"pass","passId":"x","passTitle":"x","userId":"x","holderName":"x","source":"scanner","boundAt":0,"boundByName":"x","scannerName":"x","endedAt":0,"endCause":"admin"}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -921,6 +928,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.orgs.list", "GET", "/api/v1/orgs", false,
+		"", `{"items":[{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.create", "POST", "/api/v1/orgs", false,
+		`{"slug":"x","name":"x"}`, `{"id":"x","slug":"x","name":"x","status":"active","defaultIdentityId":"x","branding":{},"createdAt":0,"updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.orgs.retrieve", "GET", "/api/v1/orgs/id1", false,
+		"", `{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"developerInvitations.list", "GET", "/api/v1/orgs/id1/developer-invitations", false,
 		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"state":"pending","createdAt":0,"expiresAt":0,"revokedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1028,6 +1060,17 @@ var generatedOps = []opCase{
 		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Orgs.Plan.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.setStatus", "POST", "/api/v1/orgs/id1/status", false,
+		`{"status":"active"}`, `{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsSetStatusBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.SetStatus(ctx, "id1", &b)
 		},
 	},
 	{
@@ -1629,6 +1672,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.orgs.listClosed", "GET", "/api/v1/platform/closed-orgs", false,
+		"", `{"items":[{"id":"x","slug":"x","name":"x","closedAt":0,"purgeAfter":0,"purging":false,"held":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.ListClosed(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.entitlementPresets.list", "GET", "/api/v1/platform/entitlement-presets", false,
+		"", `{"presets":[{"preset":"x","label":"x","revision":0,"updatedAt":0,"orgCount":0,"pendingOrgs":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.EntitlementPresets.List(ctx)
+		},
+	},
+	{
+		"platform.entitlementPresets.update", "PUT", "/api/v1/platform/entitlement-presets", false,
+		`{"preset":"x","expectedRevision":0,"values":{}}`, `{"preset":{"preset":"x","label":"x","revision":0,"updatedAt":0,"orgCount":0,"pendingOrgs":0,"values":{}},"moved":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformEntitlementPresetsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.EntitlementPresets.Update(ctx, &b)
+		},
+	},
+	{
 		"platform.idp.retrieve", "GET", "/api/v1/platform/idp", false,
 		"", `{"connected":false,"mode":"dry_run","frozen":false,"keyExpiresAt":0,"problems":["x"],"budget":{},"lastScimAt":0,"drift":{},"breakerOpen":false}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1834,6 +1902,77 @@ var generatedOps = []opCase{
 		"", `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Platform.Invitations.Resend(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.entitlements.retrieve", "GET", "/api/v1/platform/orgs/id1/entitlements", false,
+		"", `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.Entitlements.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.entitlements.update", "PUT", "/api/v1/platform/orgs/id1/entitlements", false,
+		`{"expectedRevision":0,"preset":"x","overrides":{}}`, `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsEntitlementsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.Entitlements.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.orgs.legalHolds.list", "GET", "/api/v1/platform/orgs/id1/retention/holds", false,
+		"", `{"items":[{"id":"x","passId":"x","passLabel":"x","placedByKind":"org","placedByLabel":"x","reason":"x","createdAt":0,"releasedAt":0,"releasedByLabel":"x","canRelease":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.LegalHolds.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.legalHolds.create", "POST", "/api/v1/platform/orgs/id1/retention/holds", false,
+		`{"reason":"x"}`, `{"ok":true}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsLegalHoldsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.LegalHolds.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.orgs.retentionReceipts.list", "GET", "/api/v1/platform/orgs/id1/retention/receipts", false,
+		"", `{"items":[{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.RetentionReceipts.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.retentionReceipts.download", "GET", "/api/v1/platform/orgs/id1/retention/receipts/id2/download", false,
+		"", `{"receipt":{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false,"orgId":"x","seq":0,"prevMac":"x","mac":"x","refsDigest":"x","requestId":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.RetentionReceipts.Download(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.orgs.personalLabels.list", "GET", "/api/v1/platform/personal-org-labels", false,
+		"", `{"items":[{"orgId":"x","label":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.PersonalLabels.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.retentionReceipts.list", "GET", "/api/v1/platform/retention/receipts", false,
+		"", `{"items":[{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.RetentionReceipts.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.retentionReceipts.download", "GET", "/api/v1/platform/retention/receipts/id1/download", false,
+		"", `{"receipt":{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false,"orgId":"x","seq":0,"prevMac":"x","mac":"x","refsDigest":"x","requestId":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.RetentionReceipts.Download(ctx, "id1")
 		},
 	},
 	{
@@ -2261,6 +2400,45 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.status.retrieve", "GET", "/api/v1/status", false,
+		"", `{"overall":"failing","build":{"id":"x","tag":"x","timestamp":"x"},"components":[{"id":"x","kind":"database","label":"x","state":"failing","detail":"x","checkedAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.Retrieve(ctx, nil)
+		},
+	},
+	{
+		"platform.status.listIncidents", "GET", "/api/v1/status/incidents", false,
+		"", `{"items":[{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ListIncidents(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.status.openIncident", "POST", "/api/v1/status/incidents", false,
+		`{"title":"x","note":"x","impact":"notice"}`, `{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformStatusOpenIncidentBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Status.OpenIncident(ctx, &b)
+		},
+	},
+	{
+		"platform.status.resolveIncident", "POST", "/api/v1/status/incidents/id1/resolve", false,
+		"", `{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ResolveIncident(ctx, "id1")
+		},
+	},
+	{
+		"platform.status.listWorkflowRuns", "GET", "/api/v1/status/workflows", false,
+		"", `{"items":[{"instanceId":"x","kind":"template_import","orgId":"x","targetId":"x","status":"queued","startedAt":0,"finishedAt":0,"errorCode":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ListWorkflowRuns(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"templates.reviews.list", "GET", "/api/v1/template-reviews", false,
 		"", `{"items":[{"templateId":"x","templateName":"x","orgId":"x","version":"x","requestedBy":"x","requestedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -2514,6 +2692,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.users.list", "GET", "/api/v1/users", false,
+		"", `{"items":[{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.users.retrieve", "GET", "/api/v1/users/id1", false,
+		"", `{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0,"signInMethods":["oidc"],"emails":[{"email":"x","verifiedVia":"magic_link","verifiedAt":0}],"identities":[{"provider":"x","subject":"x","emailClaim":"x","emailVerified":false,"groups":["x"],"lastUsedAt":0}],"sessions":[{"id":"x","amr":"oidc","roles":["admin"],"createdAt":0,"lastSeenAt":0,"expiresAt":0,"revokedAt":0,"userAgent":"x","current":false,"method":"x"}],"passes":[{"id":"x","templateName":"x","orgName":"x","status":"active"}],"passCount":0,"recentAudit":[{"id":0,"at":0,"action":"x","actorType":"x","actorId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.update", "PATCH", "/api/v1/users/id1", false,
+		`{"status":"active"}`, `{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Update(ctx, "id1", &b)
+		},
+	},
+	{
 		"platform.users.access.retrieve", "GET", "/api/v1/users/id1/access", false,
 		"", `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -2550,6 +2753,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.users.passes.list", "GET", "/api/v1/users/id1/passes", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","orgStatus":"active","timeZone":"x","templateName":"x","status":"active","holding":"owned","channels":["mobile"],"issuedAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Passes.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
 		"platform.users.roles.set", "POST", "/api/v1/users/id1/roles", false,
 		`{"role":"developer","grant":false}`, `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -2558,6 +2768,20 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Platform.Users.Roles.Set(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.sessions.revokeAll", "POST", "/api/v1/users/id1/sessions/revoke", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Sessions.RevokeAll(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.sessions.revoke", "DELETE", "/api/v1/users/id1/sessions/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Sessions.Revoke(ctx, "id1", "id2")
 		},
 	},
 	{

@@ -11,6 +11,7 @@ import { DeliveriesResource } from './resources/deliveries.ts';
 import { EventsResource } from './resources/events.ts';
 import { HoldersResource } from './resources/holders.ts';
 import { MessageRulesResource } from './resources/message-rules.ts';
+import { PlatformResource } from './resources/platform.ts';
 import { NfcResource } from './resources/nfc.ts';
 import { OperationsResource } from './resources/operations.ts';
 import { DeveloperInvitationsResource } from './resources/developer-invitations.ts';
@@ -23,7 +24,6 @@ import { PassesResource } from './resources/passes.ts';
 import { PrintJobsResource } from './resources/print-jobs.ts';
 import { BulkRunsResource } from './resources/bulk-runs.ts';
 import { PassViewsResource } from './resources/pass-views.ts';
-import { PlatformResource } from './resources/platform.ts';
 import { RequestLogsResource } from './resources/request-logs.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
 import { ScanEventsResource } from './resources/scan-events.ts';
@@ -53,6 +53,7 @@ export class Resources {
   readonly events: EventsResource;
   readonly holders: HoldersResource;
   readonly messageRules: MessageRulesResource;
+  readonly platform: PlatformResource;
   readonly nfc: NfcResource;
   readonly operations: OperationsResource;
   readonly developerInvitations: DeveloperInvitationsResource;
@@ -65,7 +66,6 @@ export class Resources {
   readonly printJobs: PrintJobsResource;
   readonly bulkRuns: BulkRunsResource;
   readonly passViews: PassViewsResource;
-  readonly platform: PlatformResource;
   readonly requestLogs: RequestLogsResource;
   readonly rollCalls: RollCallsResource;
   readonly scanEvents: ScanEventsResource;
@@ -93,6 +93,7 @@ export class Resources {
     this.events = new EventsResource(core);
     this.holders = new HoldersResource(core);
     this.messageRules = new MessageRulesResource(core);
+    this.platform = new PlatformResource(core);
     this.nfc = new NfcResource(core);
     this.operations = new OperationsResource(core);
     this.developerInvitations = new DeveloperInvitationsResource(core);
@@ -105,7 +106,6 @@ export class Resources {
     this.printJobs = new PrintJobsResource(core);
     this.bulkRuns = new BulkRunsResource(core);
     this.passViews = new PassViewsResource(core);
-    this.platform = new PlatformResource(core);
     this.requestLogs = new RequestLogsResource(core);
     this.rollCalls = new RollCallsResource(core);
     this.scanEvents = new ScanEventsResource(core);

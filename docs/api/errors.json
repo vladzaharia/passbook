@@ -2474,7 +2474,8 @@
         409
       ],
       "modules": [
-        "idp"
+        "idp",
+        "users"
       ]
     },
     {
@@ -3779,6 +3780,15 @@
       "modules": [
         "passes",
         "platform"
+      ]
+    },
+    {
+      "code": "ORG_ADD_ME_NEEDS_PERSON",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {

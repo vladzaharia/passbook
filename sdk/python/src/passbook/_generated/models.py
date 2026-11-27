@@ -1214,9 +1214,12 @@ __all__ = [
     "PlatformAuditEntriesListResponseItemsItem",
     "PlatformEntitlementPresetsListResponse",
     "PlatformEntitlementPresetsListResponsePresetsItem",
+    "PlatformEntitlementPresetsListResult",
+    "PlatformEntitlementPresetsUpdateBody",
     "PlatformEntitlementPresetsUpdateParams",
     "PlatformEntitlementPresetsUpdateResponse",
     "PlatformEntitlementPresetsUpdateResponsePreset",
+    "PlatformEntitlementPresetsUpdateResult",
     "PlatformGroupsClaimsRetrieveResponse",
     "PlatformGroupsClaimsRetrieveResponseClaimsValue",
     "PlatformGroupsClaimsRetrieveResult",
@@ -1342,44 +1345,70 @@ __all__ = [
     "PlatformMetricsRetrieveOverviewResponseSeriesUpdatedItem",
     "PlatformMetricsRetrieveOverviewResponseSetup",
     "PlatformMetricsRetrieveOverviewResponseTotals",
+    "PlatformMetricsRetrieveOverviewResult",
+    "PlatformOrgsCreateBody",
     "PlatformOrgsCreateParams",
+    "PlatformOrgsCreateResult",
     "PlatformOrgsDeleteResponse",
     "PlatformOrgsEntitlementsRetrieveResponse",
     "PlatformOrgsEntitlementsRetrieveResponseItemsItem",
     "PlatformOrgsEntitlementsRetrieveResponsePresetsItem",
+    "PlatformOrgsEntitlementsRetrieveResult",
+    "PlatformOrgsEntitlementsUpdateBody",
     "PlatformOrgsEntitlementsUpdateParams",
     "PlatformOrgsEntitlementsUpdateParamsOverridesValue",
     "PlatformOrgsEntitlementsUpdateResponse",
     "PlatformOrgsEntitlementsUpdateResponseItemsItem",
     "PlatformOrgsEntitlementsUpdateResponsePresetsItem",
+    "PlatformOrgsEntitlementsUpdateResult",
+    "PlatformOrgsLegalHoldsCreateBody",
     "PlatformOrgsLegalHoldsCreateParams",
     "PlatformOrgsLegalHoldsCreateResponse",
+    "PlatformOrgsLegalHoldsCreateResult",
+    "PlatformOrgsLegalHoldsListItem",
     "PlatformOrgsLegalHoldsListResponse",
     "PlatformOrgsLegalHoldsListResponseItemsItem",
+    "PlatformOrgsLegalHoldsListResult",
     "PlatformOrgsLegalHoldsReleaseResponse",
+    "PlatformOrgsListClosedItem",
     "PlatformOrgsListClosedResponse",
     "PlatformOrgsListClosedResponseItemsItem",
+    "PlatformOrgsListClosedResult",
+    "PlatformOrgsListItem",
+    "PlatformOrgsListItemCounts",
     "PlatformOrgsListResponse",
     "PlatformOrgsListResponseItemsItem",
     "PlatformOrgsListResponseItemsItemCounts",
+    "PlatformOrgsListResult",
+    "PlatformOrgsPersonalLabelsListItem",
     "PlatformOrgsPersonalLabelsListResponse",
     "PlatformOrgsPersonalLabelsListResponseItemsItem",
+    "PlatformOrgsPersonalLabelsListResult",
     "PlatformOrgsRetentionReceiptsDownloadResponse",
     "PlatformOrgsRetentionReceiptsDownloadResponseReceipt",
+    "PlatformOrgsRetentionReceiptsDownloadResult",
+    "PlatformOrgsRetentionReceiptsListItem",
     "PlatformOrgsRetentionReceiptsListResponse",
     "PlatformOrgsRetentionReceiptsListResponseItemsItem",
+    "PlatformOrgsRetentionReceiptsListResult",
     "PlatformOrgsRetrieveResponse",
     "PlatformOrgsRetrieveResponseCounts",
+    "PlatformOrgsRetrieveResult",
+    "PlatformOrgsSetStatusBody",
     "PlatformOrgsSetStatusParams",
     "PlatformOrgsSetStatusResponse",
     "PlatformOrgsSetStatusResponseCounts",
+    "PlatformOrgsSetStatusResult",
     "PlatformOrgsWalletEnrollmentsHoldParams",
     "PlatformOrgsWalletEnrollmentsHoldResponse",
     "PlatformOrgsWalletEnrollmentsReleaseResponse",
     "PlatformRetentionReceiptsDownloadResponse",
     "PlatformRetentionReceiptsDownloadResponseReceipt",
+    "PlatformRetentionReceiptsDownloadResult",
+    "PlatformRetentionReceiptsListItem",
     "PlatformRetentionReceiptsListResponse",
     "PlatformRetentionReceiptsListResponseItemsItem",
+    "PlatformRetentionReceiptsListResult",
     "PlatformSettingsRetrieveImpactResponse",
     "PlatformSettingsRetrieveResponse",
     "PlatformSettingsRetrieveResponseItemsItem",
@@ -1393,16 +1422,24 @@ __all__ = [
     "PlatformSettingsUpdateResponseOidc",
     "PlatformSettingsUpdateResponseReleased",
     "PlatformSettingsUpdateResult",
+    "PlatformStatusListIncidentsItem",
     "PlatformStatusListIncidentsResponse",
     "PlatformStatusListIncidentsResponseItemsItem",
+    "PlatformStatusListIncidentsResult",
+    "PlatformStatusListWorkflowRunsItem",
     "PlatformStatusListWorkflowRunsResponse",
     "PlatformStatusListWorkflowRunsResponseItemsItem",
+    "PlatformStatusListWorkflowRunsResult",
+    "PlatformStatusOpenIncidentBody",
     "PlatformStatusOpenIncidentParams",
     "PlatformStatusOpenIncidentResponse",
+    "PlatformStatusOpenIncidentResult",
     "PlatformStatusResolveIncidentResponse",
+    "PlatformStatusResolveIncidentResult",
     "PlatformStatusRetrieveResponse",
     "PlatformStatusRetrieveResponseBuild",
     "PlatformStatusRetrieveResponseComponentsItem",
+    "PlatformStatusRetrieveResult",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
     "PlatformUsersAccessRetrieveResponse",
@@ -1443,8 +1480,10 @@ __all__ = [
     "PlatformUsersHoldsDeleteResponseOperation",
     "PlatformUsersHoldsDeleteResponseOperationStartedBy",
     "PlatformUsersHoldsDeleteResponseOperationStepsItem",
+    "PlatformUsersListItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersListResult",
     "PlatformUsersOffboardBody",
     "PlatformUsersOffboardParams",
     "PlatformUsersOffboardResponse",
@@ -1458,14 +1497,17 @@ __all__ = [
     "PlatformUsersOffboardResponsePlanSponsorshipsItem",
     "PlatformUsersOffboardResponsePlanSponsorshipsItemOrg",
     "PlatformUsersOffboardResult",
+    "PlatformUsersPassesListItem",
     "PlatformUsersPassesListResponse",
     "PlatformUsersPassesListResponseItemsItem",
+    "PlatformUsersPassesListResult",
     "PlatformUsersRetrieveResponse",
     "PlatformUsersRetrieveResponseEmailsItem",
     "PlatformUsersRetrieveResponseIdentitiesItem",
     "PlatformUsersRetrieveResponsePassesItem",
     "PlatformUsersRetrieveResponseRecentAuditItem",
     "PlatformUsersRetrieveResponseSessionsItem",
+    "PlatformUsersRetrieveResult",
     "PlatformUsersRolesRemoveExternalResponse",
     "PlatformUsersRolesRemoveExternalResponseAccount",
     "PlatformUsersRolesRemoveExternalResponseRolesItem",
@@ -1484,9 +1526,13 @@ __all__ = [
     "PlatformUsersRolesSetResponseRolesItemSponsorshipsItemOrg",
     "PlatformUsersRolesSetResult",
     "PlatformUsersSessionsRevokeAllResponse",
+    "PlatformUsersSessionsRevokeAllResult",
     "PlatformUsersSessionsRevokeResponse",
+    "PlatformUsersSessionsRevokeResult",
+    "PlatformUsersUpdateBody",
     "PlatformUsersUpdateParams",
     "PlatformUsersUpdateResponse",
+    "PlatformUsersUpdateResult",
     "PlatformWalletAccountsGoogleManagedCompleteParams",
     "PlatformWalletAccountsGoogleManagedCompleteResponse",
     "PlatformWalletAccountsGoogleManagedCreateParams",
@@ -2481,7 +2527,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:groups", "platform:claims", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:orgs", "platform:groups", "platform:claims", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -10440,6 +10486,18 @@ class PlatformOrgsLegalHoldsCreateParams(_Model):
 class PlatformOrgsLegalHoldsCreateResponse(_Model):
     ok: _Literal[True]
 
+class PlatformOrgsLegalHoldsListItem(_Model):
+    id: str
+    passId: str | None
+    passLabel: str | None
+    placedByKind: _Literal["org", "platform"] | str
+    placedByLabel: str
+    reason: str | None
+    createdAt: int
+    releasedAt: int | None
+    releasedByLabel: str | None
+    canRelease: bool
+
 class PlatformOrgsLegalHoldsListResponse(_Model):
     items: _List[PlatformOrgsLegalHoldsListResponseItemsItem]
     nextCursor: str | None
@@ -10459,6 +10517,15 @@ class PlatformOrgsLegalHoldsListResponseItemsItem(_Model):
 class PlatformOrgsLegalHoldsReleaseResponse(_Model):
     ok: _Literal[True]
 
+class PlatformOrgsListClosedItem(_Model):
+    id: str
+    slug: str
+    name: str
+    closedAt: int
+    purgeAfter: int
+    purging: bool
+    held: bool
+
 class PlatformOrgsListClosedResponse(_Model):
     items: _List[PlatformOrgsListClosedResponseItemsItem]
     nextCursor: str | None
@@ -10471,6 +10538,25 @@ class PlatformOrgsListClosedResponseItemsItem(_Model):
     purgeAfter: int
     purging: bool
     held: bool
+
+class PlatformOrgsListItem(_Model):
+    id: str
+    slug: str
+    name: str
+    status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
+    createdAt: int
+    counts: PlatformOrgsListItemCounts
+    countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
+
+class PlatformOrgsListItemCounts(_Model):
+    passes: int
+    templates: int
+    connections: int
+    apiKeys: int
+    members: int | None = None
 
 class PlatformOrgsListResponse(_Model):
     items: _List[PlatformOrgsListResponseItemsItem]
@@ -10494,6 +10580,10 @@ class PlatformOrgsListResponseItemsItemCounts(_Model):
     connections: int
     apiKeys: int
     members: int | None = None
+
+class PlatformOrgsPersonalLabelsListItem(_Model):
+    orgId: str
+    label: str
 
 class PlatformOrgsPersonalLabelsListResponse(_Model):
     items: _List[PlatformOrgsPersonalLabelsListResponseItemsItem]
@@ -10522,6 +10612,17 @@ class PlatformOrgsRetentionReceiptsDownloadResponseReceipt(_Model):
     mac: str
     refsDigest: str | None
     requestId: str | None
+
+class PlatformOrgsRetentionReceiptsListItem(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
 
 class PlatformOrgsRetentionReceiptsListResponse(_Model):
     items: _List[PlatformOrgsRetentionReceiptsListResponseItemsItem]
@@ -10607,6 +10708,17 @@ class PlatformRetentionReceiptsDownloadResponseReceipt(_Model):
     mac: str
     refsDigest: str | None
     requestId: str | None
+
+class PlatformRetentionReceiptsListItem(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
 
 class PlatformRetentionReceiptsListResponse(_Model):
     items: _List[PlatformRetentionReceiptsListResponseItemsItem]
@@ -10694,6 +10806,15 @@ class PlatformSettingsUpdateResponseReleased(_Model):
     google: bool
     samsung: bool
 
+class PlatformStatusListIncidentsItem(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
 class PlatformStatusListIncidentsResponse(_Model):
     items: _List[PlatformStatusListIncidentsResponseItemsItem]
     nextCursor: str | None
@@ -10706,6 +10827,16 @@ class PlatformStatusListIncidentsResponseItemsItem(_Model):
     impact: _Literal["notice", "degraded", "outage"] | str
     startedAt: int
     resolvedAt: int | None
+
+class PlatformStatusListWorkflowRunsItem(_Model):
+    instanceId: str
+    kind: _Literal["template_import", "bulk_reissue", "connection_sync", "broadcast", "pass_import"] | str
+    orgId: str | None
+    targetId: str | None
+    status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
+    startedAt: int
+    finishedAt: int | None
+    errorCode: str | None
 
 class PlatformStatusListWorkflowRunsResponse(_Model):
     items: _List[PlatformStatusListWorkflowRunsResponseItemsItem]
@@ -11036,6 +11167,17 @@ class PlatformUsersHoldsDeleteResponseOperationStepsItem(_Model):
     startedAt: int | None
     finishedAt: int | None
 
+class PlatformUsersListItem(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    passCount: int | None = None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
+
 class PlatformUsersListResponse(_Model):
     items: _List[PlatformUsersListResponseItemsItem]
     nextCursor: str | None
@@ -11101,6 +11243,19 @@ class PlatformUsersOffboardResponsePlanSponsorshipsItem(_Model):
 class PlatformUsersOffboardResponsePlanSponsorshipsItemOrg(_Model):
     id: str
     name: str
+
+class PlatformUsersPassesListItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgStatus: _Literal["active", "suspended"] | str
+    timeZone: str
+    templateName: str
+    status: _Literal["active", "voided"] | str
+    holding: _Literal["owned", "waiting"] | str
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
+    issuedAt: int
+    updatedAt: int
 
 class PlatformUsersPassesListResponse(_Model):
     items: _List[PlatformUsersPassesListResponseItemsItem]
@@ -16700,6 +16855,12 @@ PassesVersionsRetrieveResult = PassDetail
 
 PassesVoidResult = PassSummary
 
+PlatformEntitlementPresetsListResult = PlatformEntitlementPresetsListResponse
+
+PlatformEntitlementPresetsUpdateBody = PlatformEntitlementPresetsUpdateParams
+
+PlatformEntitlementPresetsUpdateResult = PlatformEntitlementPresetsUpdateResponse
+
 PlatformGroupsClaimsRetrieveResult = PlatformGroupsClaimsRetrieveResponse
 
 PlatformGroupsClaimsUpdateBody = PlatformGroupsClaimsUpdateParams
@@ -16770,11 +16931,61 @@ PlatformInvitationsResendResult = PlatformInvitationsResendResponse
 
 PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
+PlatformMetricsRetrieveOverviewResult = PlatformMetricsRetrieveOverviewResponse
+
+PlatformOrgsCreateBody = PlatformOrgsCreateParams
+
+PlatformOrgsCreateResult = Org
+
+PlatformOrgsEntitlementsRetrieveResult = PlatformOrgsEntitlementsRetrieveResponse
+
+PlatformOrgsEntitlementsUpdateBody = PlatformOrgsEntitlementsUpdateParams
+
+PlatformOrgsEntitlementsUpdateResult = PlatformOrgsEntitlementsUpdateResponse
+
+PlatformOrgsLegalHoldsCreateBody = PlatformOrgsLegalHoldsCreateParams
+
+PlatformOrgsLegalHoldsCreateResult = PlatformOrgsLegalHoldsCreateResponse
+
+PlatformOrgsLegalHoldsListResult = PlatformOrgsLegalHoldsListResponse
+
+PlatformOrgsListClosedResult = PlatformOrgsListClosedResponse
+
+PlatformOrgsListResult = PlatformOrgsListResponse
+
+PlatformOrgsPersonalLabelsListResult = PlatformOrgsPersonalLabelsListResponse
+
+PlatformOrgsRetentionReceiptsDownloadResult = PlatformOrgsRetentionReceiptsDownloadResponse
+
+PlatformOrgsRetentionReceiptsListResult = PlatformOrgsRetentionReceiptsListResponse
+
+PlatformOrgsRetrieveResult = PlatformOrgsRetrieveResponse
+
+PlatformOrgsSetStatusBody = PlatformOrgsSetStatusParams
+
+PlatformOrgsSetStatusResult = PlatformOrgsSetStatusResponse
+
+PlatformRetentionReceiptsDownloadResult = PlatformRetentionReceiptsDownloadResponse
+
+PlatformRetentionReceiptsListResult = PlatformRetentionReceiptsListResponse
+
 PlatformSettingsRetrieveResult = PlatformSettingsRetrieveResponse
 
 PlatformSettingsUpdateBody = PlatformSettingsUpdateParams
 
 PlatformSettingsUpdateResult = PlatformSettingsUpdateResponse
+
+PlatformStatusListIncidentsResult = PlatformStatusListIncidentsResponse
+
+PlatformStatusListWorkflowRunsResult = PlatformStatusListWorkflowRunsResponse
+
+PlatformStatusOpenIncidentBody = PlatformStatusOpenIncidentParams
+
+PlatformStatusOpenIncidentResult = PlatformStatusOpenIncidentResponse
+
+PlatformStatusResolveIncidentResult = PlatformStatusResolveIncidentResponse
+
+PlatformStatusRetrieveResult = PlatformStatusRetrieveResponse
 
 PlatformUsersAccessRetrieveResult = PlatformUsersAccessRetrieveResponse
 
@@ -16784,13 +16995,27 @@ PlatformUsersClaimsUpdateBody = PlatformUsersClaimsUpdateParams
 
 PlatformUsersClaimsUpdateResult = PlatformUsersClaimsUpdateResponse
 
+PlatformUsersListResult = PlatformUsersListResponse
+
 PlatformUsersOffboardBody = PlatformUsersOffboardParams
 
 PlatformUsersOffboardResult = PlatformUsersOffboardResponse
 
+PlatformUsersPassesListResult = PlatformUsersPassesListResponse
+
+PlatformUsersRetrieveResult = PlatformUsersRetrieveResponse
+
 PlatformUsersRolesSetBody = PlatformUsersRolesSetParams
 
 PlatformUsersRolesSetResult = PlatformUsersRolesSetResponse
+
+PlatformUsersSessionsRevokeAllResult = PlatformUsersSessionsRevokeAllResponse
+
+PlatformUsersSessionsRevokeResult = PlatformUsersSessionsRevokeResponse
+
+PlatformUsersUpdateBody = PlatformUsersUpdateParams
+
+PlatformUsersUpdateResult = PlatformUsersUpdateResponse
 
 PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 | PlatformWalletCredentialsUpsertParams2
 

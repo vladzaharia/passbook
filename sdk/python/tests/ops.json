@@ -3535,6 +3535,148 @@
   }
  },
  {
+  "id": "metrics.getMetricsPlatformOverview",
+  "call": "platform.metrics.retrieve_overview",
+  "http": "GET",
+  "path": "/api/v1/metrics/platform/overview",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "source": "analytics_engine",
+   "range": "24h",
+   "bucketMs": 0,
+   "unavailable": [
+    "x"
+   ],
+   "totals": {
+    "passes": 0,
+    "activePasses": 0,
+    "voidedPasses": 0,
+    "holders": 0,
+    "devices": 0,
+    "issued": 0,
+    "updated": 0,
+    "downloads": 0,
+    "registrations": 0,
+    "refreshes": 0,
+    "pushes": 0,
+    "pushFailures": 0,
+    "emails": 0,
+    "emailFailures": 0,
+    "syncRuns": 0,
+    "signIns": 0,
+    "scans": 0,
+    "scanRefused": 0
+   },
+   "series": {
+    "issued": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "updated": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "downloads": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "registrations": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "refreshes": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "pushes": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "pushFailures": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "emails": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "emailFailures": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "syncRuns": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "signIns": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ],
+    "scans": [
+     {
+      "t": 0,
+      "v": 0
+     }
+    ]
+   },
+   "setup": {
+    "orgs": 0,
+    "assignedTemplates": 0,
+    "passes": 0,
+    "approvedTemplates": 0,
+    "releasedTemplates": 0,
+    "walletPasses": 0,
+    "passEmailsSent": 0,
+    "latestPassId": "x",
+    "scanners": 0
+   },
+   "live": [
+    {
+     "eventId": "x",
+     "name": "x",
+     "arrived": 0,
+     "expected": 0,
+     "ratePerMin": 0
+    }
+   ],
+   "recent": [
+    {
+     "at": 0,
+     "action": "x",
+     "orgId": "x",
+     "targetId": "x"
+    }
+   ]
+  }
+ },
+ {
   "id": "nfc-tags.deleteNfcBindingsByBindingId",
   "call": "nfc.bindings.delete",
   "http": "DELETE",
@@ -4651,6 +4793,95 @@
   }
  },
  {
+  "id": "orgs.getOrgs",
+  "call": "platform.orgs.list",
+  "http": "GET",
+  "path": "/api/v1/orgs",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "slug": "x",
+     "name": "x",
+     "status": "active",
+     "createdAt": 0,
+     "counts": {
+      "passes": 0,
+      "templates": 0,
+      "connections": 0,
+      "apiKeys": 0
+     },
+     "countsCapped": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "orgs.postOrgs",
+  "call": "platform.orgs.create",
+  "http": "POST",
+  "path": "/api/v1/orgs",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "slug": "x",
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "defaultIdentityId": "x",
+   "branding": {},
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "orgs.getOrgsById",
+  "call": "platform.orgs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "createdAt": 0,
+   "counts": {
+    "passes": 0,
+    "templates": 0,
+    "connections": 0,
+    "apiKeys": 0
+   },
+   "countsCapped": false
+  }
+ },
+ {
   "id": "developer-invitations.getOrgsByIdDeveloperInvitations",
   "call": "developer_invitations.list",
   "http": "GET",
@@ -5113,6 +5344,41 @@
     }
    ],
    "footer": "full"
+  }
+ },
+ {
+  "id": "orgs.postOrgsByIdStatus",
+  "call": "platform.orgs.set_status",
+  "http": "POST",
+  "path": "/api/v1/orgs/{id}/status",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "status": "active"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "createdAt": 0,
+   "counts": {
+    "passes": 0,
+    "templates": 0,
+    "connections": 0,
+    "apiKeys": 0
+   },
+   "countsCapped": false
   }
  },
  {
@@ -8205,6 +8471,86 @@
   }
  },
  {
+  "id": "org-lifecycle.getPlatformClosedOrgs",
+  "call": "platform.orgs.list_closed",
+  "http": "GET",
+  "path": "/api/v1/platform/closed-orgs",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "slug": "x",
+     "name": "x",
+     "closedAt": 0,
+     "purgeAfter": 0,
+     "purging": false,
+     "held": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "entitlements.getPlatformEntitlementPresets",
+  "call": "platform.entitlement_presets.list",
+  "http": "GET",
+  "path": "/api/v1/platform/entitlement-presets",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "presets": [
+    {
+     "preset": "x",
+     "label": "x",
+     "revision": 0,
+     "updatedAt": 0,
+     "orgCount": 0,
+     "pendingOrgs": 0,
+     "values": {}
+    }
+   ]
+  }
+ },
+ {
+  "id": "entitlements.putPlatformEntitlementPresets",
+  "call": "platform.entitlement_presets.update",
+  "http": "PUT",
+  "path": "/api/v1/platform/entitlement-presets",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "preset": "x",
+   "expectedRevision": 0,
+   "values": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "preset": {
+    "preset": "x",
+    "label": "x",
+    "revision": 0,
+    "updatedAt": 0,
+    "orgCount": 0,
+    "pendingOrgs": 0,
+    "values": {}
+   },
+   "moved": 0
+  }
+ },
+ {
   "id": "polaris-platform.getPlatformIdp",
   "call": "platform.idp.retrieve",
   "http": "GET",
@@ -8965,6 +9311,318 @@
     "kind": "user",
     "id": "x",
     "name": "x"
+   }
+  }
+ },
+ {
+  "id": "entitlements.getPlatformOrgsByIdEntitlements",
+  "call": "platform.orgs.entitlements.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/orgs/{id}/entitlements",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "preset": "x",
+   "presetLabel": "x",
+   "revision": 0,
+   "updatedAt": 0,
+   "items": [
+    {
+     "key": "api",
+     "value": 0,
+     "presetValue": 0,
+     "source": "preset",
+     "note": "x",
+     "expiresAt": 0
+    }
+   ],
+   "presets": [
+    {
+     "preset": "x",
+     "label": "x",
+     "orgCount": 0,
+     "values": {}
+    }
+   ]
+  }
+ },
+ {
+  "id": "entitlements.putPlatformOrgsByIdEntitlements",
+  "call": "platform.orgs.entitlements.update",
+  "http": "PUT",
+  "path": "/api/v1/platform/orgs/{id}/entitlements",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "expectedRevision": 0,
+   "preset": "x",
+   "overrides": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "preset": "x",
+   "presetLabel": "x",
+   "revision": 0,
+   "updatedAt": 0,
+   "items": [
+    {
+     "key": "api",
+     "value": 0,
+     "presetValue": 0,
+     "source": "preset",
+     "note": "x",
+     "expiresAt": 0
+    }
+   ],
+   "presets": [
+    {
+     "preset": "x",
+     "label": "x",
+     "orgCount": 0,
+     "values": {}
+    }
+   ]
+  }
+ },
+ {
+  "id": "retention.getPlatformOrgsByOrgIdRetentionHolds",
+  "call": "platform.orgs.legal_holds.list",
+  "http": "GET",
+  "path": "/api/v1/platform/orgs/{orgId}/retention/holds",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "passId": "x",
+     "passLabel": "x",
+     "placedByKind": "org",
+     "placedByLabel": "x",
+     "reason": "x",
+     "createdAt": 0,
+     "releasedAt": 0,
+     "releasedByLabel": "x",
+     "canRelease": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "retention.postPlatformOrgsByOrgIdRetentionHolds",
+  "call": "platform.orgs.legal_holds.create",
+  "http": "POST",
+  "path": "/api/v1/platform/orgs/{orgId}/retention/holds",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "reason": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "retention.getPlatformOrgsByOrgIdRetentionReceipts",
+  "call": "platform.orgs.retention_receipts.list",
+  "http": "GET",
+  "path": "/api/v1/platform/orgs/{orgId}/retention/receipts",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "cls": "x",
+     "kind": "sweep",
+     "ranAt": 0,
+     "cutoffAt": 0,
+     "policyDays": 0,
+     "deleted": 0,
+     "anonymised": 0,
+     "verified": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
+  "call": "platform.orgs.retention_receipts.download",
+  "http": "GET",
+  "path": "/api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   },
+   {
+    "name": "receiptId",
+    "py": "receipt_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "receipt": {
+    "id": "x",
+    "cls": "x",
+    "kind": "sweep",
+    "ranAt": 0,
+    "cutoffAt": 0,
+    "policyDays": 0,
+    "deleted": 0,
+    "anonymised": 0,
+    "verified": false,
+    "orgId": "x",
+    "seq": 0,
+    "prevMac": "x",
+    "mac": "x",
+    "refsDigest": "x",
+    "requestId": "x"
+   }
+  }
+ },
+ {
+  "id": "orgs.getPlatformPersonalOrgLabels",
+  "call": "platform.orgs.personal_labels.list",
+  "http": "GET",
+  "path": "/api/v1/platform/personal-org-labels",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "orgId": "x",
+     "label": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "retention.getPlatformRetentionReceipts",
+  "call": "platform.retention_receipts.list",
+  "http": "GET",
+  "path": "/api/v1/platform/retention/receipts",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "cls": "x",
+     "kind": "sweep",
+     "ranAt": 0,
+     "cutoffAt": 0,
+     "policyDays": 0,
+     "deleted": 0,
+     "anonymised": 0,
+     "verified": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "retention.getPlatformRetentionReceiptsByReceiptIdDownload",
+  "call": "platform.retention_receipts.download",
+  "http": "GET",
+  "path": "/api/v1/platform/retention/receipts/{receiptId}/download",
+  "pathParams": [
+   {
+    "name": "receiptId",
+    "py": "receipt_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "receipt": {
+    "id": "x",
+    "cls": "x",
+    "kind": "sweep",
+    "ranAt": 0,
+    "cutoffAt": 0,
+    "policyDays": 0,
+    "deleted": 0,
+    "anonymised": 0,
+    "verified": false,
+    "orgId": "x",
+    "seq": 0,
+    "prevMac": "x",
+    "mac": "x",
+    "refsDigest": "x",
+    "requestId": "x"
    }
   }
  },
@@ -11947,6 +12605,142 @@
   }
  },
  {
+  "id": "status.getStatus",
+  "call": "platform.status.retrieve",
+  "http": "GET",
+  "path": "/api/v1/status",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "overall": "failing",
+   "build": {
+    "id": "x",
+    "tag": "x",
+    "timestamp": "x"
+   },
+   "components": [
+    {
+     "id": "x",
+     "kind": "database",
+     "label": "x",
+     "state": "failing",
+     "detail": "x",
+     "checkedAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "status.getStatusIncidents",
+  "call": "platform.status.list_incidents",
+  "http": "GET",
+  "path": "/api/v1/status/incidents",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "title": "x",
+     "note": "x",
+     "component": "api",
+     "impact": "notice",
+     "startedAt": 0,
+     "resolvedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "status.postStatusIncidents",
+  "call": "platform.status.open_incident",
+  "http": "POST",
+  "path": "/api/v1/status/incidents",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "title": "x",
+   "note": "x",
+   "impact": "notice"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "title": "x",
+   "note": "x",
+   "component": "api",
+   "impact": "notice",
+   "startedAt": 0,
+   "resolvedAt": 0
+  }
+ },
+ {
+  "id": "status.postStatusIncidentsByIdResolve",
+  "call": "platform.status.resolve_incident",
+  "http": "POST",
+  "path": "/api/v1/status/incidents/{id}/resolve",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "title": "x",
+   "note": "x",
+   "component": "api",
+   "impact": "notice",
+   "startedAt": 0,
+   "resolvedAt": 0
+  }
+ },
+ {
+  "id": "status.getStatusWorkflows",
+  "call": "platform.status.list_workflow_runs",
+  "http": "GET",
+  "path": "/api/v1/status/workflows",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "instanceId": "x",
+     "kind": "template_import",
+     "orgId": "x",
+     "targetId": "x",
+     "status": "queued",
+     "startedAt": 0,
+     "finishedAt": 0,
+     "errorCode": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "templates.getTemplateReviews",
   "call": "templates.reviews.list",
   "http": "GET",
@@ -13263,6 +14057,151 @@
   }
  },
  {
+  "id": "users.getUsers",
+  "call": "platform.users.list",
+  "http": "GET",
+  "path": "/api/v1/users",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "primaryEmail": "x",
+     "status": "active",
+     "lastRoles": [
+      "admin"
+     ],
+     "createdAt": 0,
+     "lastLoginAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "users.getUsersById",
+  "call": "platform.users.retrieve",
+  "http": "GET",
+  "path": "/api/v1/users/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "primaryEmail": "x",
+   "status": "active",
+   "lastRoles": [
+    "admin"
+   ],
+   "createdAt": 0,
+   "lastLoginAt": 0,
+   "signInMethods": [
+    "oidc"
+   ],
+   "emails": [
+    {
+     "email": "x",
+     "verifiedVia": "magic_link",
+     "verifiedAt": 0
+    }
+   ],
+   "identities": [
+    {
+     "provider": "x",
+     "subject": "x",
+     "emailClaim": "x",
+     "emailVerified": false,
+     "groups": [
+      "x"
+     ],
+     "lastUsedAt": 0
+    }
+   ],
+   "sessions": [
+    {
+     "id": "x",
+     "amr": "oidc",
+     "roles": [
+      "admin"
+     ],
+     "createdAt": 0,
+     "lastSeenAt": 0,
+     "expiresAt": 0,
+     "revokedAt": 0,
+     "userAgent": "x",
+     "current": false,
+     "method": "x"
+    }
+   ],
+   "passes": [
+    {
+     "id": "x",
+     "templateName": "x",
+     "orgName": "x",
+     "status": "active"
+    }
+   ],
+   "passCount": 0,
+   "recentAudit": [
+    {
+     "id": 0,
+     "at": 0,
+     "action": "x",
+     "actorType": "x",
+     "actorId": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "users.patchUsersById",
+  "call": "platform.users.update",
+  "http": "PATCH",
+  "path": "/api/v1/users/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "status": "active"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "primaryEmail": "x",
+   "status": "active",
+   "lastRoles": [
+    "admin"
+   ],
+   "createdAt": 0,
+   "lastLoginAt": 0
+  }
+ },
+ {
   "id": "polaris-access.getUsersByIdAccess",
   "call": "platform.users.access.retrieve",
   "http": "GET",
@@ -13496,6 +14435,44 @@
   }
  },
  {
+  "id": "users.getUsersByIdPasses",
+  "call": "platform.users.passes.list",
+  "http": "GET",
+  "path": "/api/v1/users/{id}/passes",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgName": "x",
+     "orgStatus": "active",
+     "timeZone": "x",
+     "templateName": "x",
+     "status": "active",
+     "holding": "owned",
+     "channels": [
+      "mobile"
+     ],
+     "issuedAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "polaris-access.postUsersByIdRoles",
   "call": "platform.users.roles.set",
   "http": "POST",
@@ -13553,6 +14530,53 @@
      "error": "x"
     }
    ]
+  }
+ },
+ {
+  "id": "users.postUsersByIdSessionsRevoke",
+  "call": "platform.users.sessions.revoke_all",
+  "http": "POST",
+  "path": "/api/v1/users/{id}/sessions/revoke",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "users.deleteUsersByIdSessionsBySessionId",
+  "call": "platform.users.sessions.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/users/{id}/sessions/{sessionId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "sessionId",
+    "py": "session_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
   }
  },
  {

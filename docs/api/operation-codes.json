@@ -1797,6 +1797,8 @@
   ],
   "entitlements get /entitlement-presets": [],
   "entitlements get /orgs/{id}/entitlements": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED"
@@ -1820,12 +1822,16 @@
   ],
   "entitlements put /entitlement-presets": [
     "ENTITLEMENTS_CHANGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "PRESET_MOVING",
     "PRESET_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "entitlements put /orgs/{id}/entitlements": [
     "ENTITLEMENTS_CHANGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED",
@@ -2821,9 +2827,12 @@
   ],
   "metrics get /platform/developer": [],
   "metrics get /platform/overview": [
+    "FORBIDDEN",
     "METRICS_NOT_FOUND",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
-    "ORG_PERSONAL"
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "nfc get /{slug}": [],
   "nfc-keysets get /keysets": [
@@ -3565,6 +3574,8 @@
   "orgs get /": [],
   "orgs get /personal-org-labels": [],
   "orgs get /{id}": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED"
@@ -3622,12 +3633,17 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "orgs post /": [
+    "FORBIDDEN",
     "IDENTITY_NOT_FOUND",
+    "MISSING_SCOPE",
+    "ORG_ADD_ME_NEEDS_PERSON",
     "ORG_SLUG_RESERVED",
     "ORG_SLUG_TAKEN",
     "UNAUTHENTICATED"
   ],
   "orgs post /{id}/status": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
@@ -5958,12 +5974,25 @@
     "WALLET_OFFER_NOT_FOUND",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
-  "retention get /orgs/{orgId}/retention/holds": [],
+  "retention get /orgs/{orgId}/retention/holds": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
+  ],
   "retention get /orgs/{orgId}/retention/receipts": [
-    "INVALID_CURSOR"
+    "FORBIDDEN",
+    "INVALID_CURSOR",
+    "MISSING_SCOPE",
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "retention get /orgs/{orgId}/retention/receipts/{receiptId}/download": [
-    "RECEIPT_NOT_FOUND"
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "ORG_PERSONAL",
+    "RECEIPT_NOT_FOUND",
+    "UNAUTHENTICATED"
   ],
   "retention get /retention/receipts": [
     "INVALID_CURSOR"
@@ -5999,7 +6028,9 @@
   ],
   "retention post /orgs/{orgId}/retention/holds": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
+    "ORG_PERSONAL",
     "PASS_NOT_FOUND",
     "UNAUTHENTICATED",
     "VALIDATION"
@@ -9369,22 +9400,41 @@
     "USER_NOT_FOUND"
   ],
   "users delete /{id}/sessions/{sessionId}": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "SESSION_NOT_FOUND",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users get /": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "users get /{id}": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users get /{id}/passes": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users patch /{id}": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
@@ -9405,6 +9455,8 @@
     "USER_NOT_FOUND"
   ],
   "users post /{id}/sessions/revoke": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
