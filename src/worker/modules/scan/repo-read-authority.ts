@@ -185,14 +185,15 @@ export function apiKeyReadAuthority(
       bound
         ? tenantFilter(alias, table, 'org_mode')
         : `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
-    rows: predicate.rows,
-    anchor: predicate.anchor,
+    // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
+    rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
+    anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
     present: predicate.ok,
     platform: predicate.platform,
     tenantOnce: (alias, table) =>
       bound
         ? predicate.tenant(alias, table, 'org_mode')
-        : `${predicate.platform} AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = ao.mode`,
+        : `${predicate.platform} AND ${named ? `${alias}.org_id = nm.org_id AND ` : ''}${alias}.mode = ao.mode`,
     relaxed: true,
   };
 }

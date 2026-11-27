@@ -1,10 +1,11 @@
 // Staff-activity, events, history-page and lookup-gate statements as they were before P2a (scalar actor form).
+import type { SqlValue } from '../../platform/db.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { dayStartMs } from './dto-console.ts';
+import { SELECT_WITH_COUNT } from './repo-events.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
 import { HISTORY_COLUMNS, HISTORY_JOINS, type HistorySelector } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
-import { SELECT_WITH_COUNT } from './repo-events.ts';
 import { afterCursorSql, type StaffPage, staffNameMatch } from './repo-staff-page.ts';
 import {
   PIN_MISSES_PER_PERSON,
@@ -113,12 +114,18 @@ export const legacyTimeZonesStmt = (db: D1Database, auth: ScanReadAuthority) =>
   );
 
 /** The events read of `readEvents`, with the filter after the tenant (ids only; no cursor). */
-export const legacyEventsStmt = (db: D1Database, auth: ScanReadAuthority, filter: string, now: number) =>
+export const legacyEventsStmt = (
+  db: D1Database,
+  auth: ScanReadAuthority,
+  filter: string,
+  params: SqlValue[],
+  now: number,
+) =>
   scanRead(
     db,
     auth,
     `${SELECT_WITH_COUNT} WHERE ${auth.ok} AND ${auth.tenant('e', 'scan_events')}${filter}`,
-    [now],
+    [now, ...params],
   );
 
 export const legacyHistoryPageStmt = (

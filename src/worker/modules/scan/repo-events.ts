@@ -90,7 +90,10 @@ const eventSelect = (
        AND s.mode=e.mode AND s.revoked_at IS NULL) AS scanners
   FROM ${from}scan_events e`;
 
-export const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'));
+export const SELECT_WITH_COUNT = eventSelect(
+  eventExpectedCountSql('e', '?'),
+  eventArrivedCountSql('e'),
+);
 const selectUnder = (auth: ScanReadAuthority) =>
   eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'), auth.rows);
 
@@ -156,12 +159,10 @@ export const eventsStmt = (
   params: SqlValue[],
   now: number,
 ) =>
-  scanRead(
-    db,
-    auth,
-    `${selectUnder(auth)} WHERE ${auth.tenantOnce('e', 'scan_events')}${filter}`,
-    [now, ...params],
-  );
+  scanRead(db, auth, `${selectUnder(auth)} WHERE ${auth.tenantOnce('e', 'scan_events')}${filter}`, [
+    now,
+    ...params,
+  ]);
 
 /** Rows with their occupancy counts under one fence and filter, and whether the fence holds, in one batch. */
 async function readEvents(

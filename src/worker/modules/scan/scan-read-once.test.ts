@@ -5,7 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { passRow } from '../../platform/authority-checks.ts';
 import { db } from '../../platform/authority-ext-fixtures.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
-import { type Actor, actors, type Seed, seed } from '../../platform/authority-read-join-fixtures.ts';
+import {
+  type Actor,
+  actors,
+  type Seed,
+  seed,
+} from '../../platform/authority-read-join-fixtures.ts';
 import { all, run } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql } from './effective-release.ts';
@@ -13,15 +18,15 @@ import type { LiveRingRow } from './live-ring.ts';
 import type { LookupEntry } from './lookup-history.ts';
 import { eventsStmt } from './repo-events.ts';
 import { historyPageStmt } from './repo-history-rows.ts';
-import { liveRecipientStmt, livePhotoStmt, liveRowsStmt } from './repo-live-render.ts';
 import { livePlaceEventStmt } from './repo-live-places.ts';
+import { livePhotoStmt, liveRecipientStmt, liveRowsStmt } from './repo-live-render.ts';
 import { lookupGateStmt, lookupPassesStmt } from './repo-lookup-final.ts';
 import { apiKeyReadAuthority, type ScanReadAuthority } from './repo-read-authority.ts';
 import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
 import {
-  legacyLiveRecipientStmt,
   legacyLivePhotoStmt,
   legacyLivePlaceEventStmt,
+  legacyLiveRecipientStmt,
   legacyLiveRowsStmt,
   legacyLookupPassesStmt,
 } from './scan-read-once-legacy.ts';
@@ -246,7 +251,7 @@ describe('scan readers on the join-once predicate equal their scalar originals',
       for (const filter of ['', ' AND e.archived_at IS NULL ORDER BY e.id LIMIT ?'])
         await same(
           at('events'),
-          legacyEventsStmt(db, auth, filter, now),
+          legacyEventsStmt(db, auth, filter, filter ? [5] : [], now),
           eventsStmt(db, auth, filter, filter ? [5] : [], now),
         );
       const sel = { where: 's.id IS NOT NULL', params: [], limit: 20 };
@@ -255,7 +260,8 @@ describe('scan readers on the join-once predicate equal their scalar originals',
         legacyHistoryPageStmt(db, auth, { ...sel, tenant: auth.tenant('+s', 'scans') }, now),
         historyPageStmt(db, auth, { ...sel, tenant: auth.tenantOnce('+s', 'scans') }, now),
       );
-      for (const zones of [['UTC'], []]) {
+      // A platform key's tenant names a mode; staff have none, and the feed never reads them.
+      for (const zones of actor.platform ? [] : [['UTC'], []]) {
         const was = await legacyStaffActivityStmt(db, auth, zones, now, page, 'UTC').all();
         const is = await readStaffActivity(db, auth, zones, now, page, 'UTC');
         expect(is, at(`staff ${zones.length}`)).toEqual(was.results);

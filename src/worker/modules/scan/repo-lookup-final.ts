@@ -53,15 +53,14 @@ export function lookupPassesStmt(
     db,
     auth,
     `SELECT ring.i AS i,
-      COALESCE((SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
-        WHERE p.id = ring.pass_id AND ${auth.tenantOnce('p', 'passes')}
-          AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
-          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql} AND ${cleared.sql}), 0) AS pass_ok,
-      EXISTS (SELECT 1 FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}) AS present,
-      (SELECT ${effectiveReleaseIdSql('hp')} FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}) AS head
-    FROM ${auth.rows}ring`,
+      CASE WHEN p.id IS NULL THEN 0 WHEN p.image_generation = ring.img THEN 2 ELSE 1 END AS pass_ok,
+      hp.id IS NOT NULL AS present,
+      CASE WHEN hp.id IS NULL THEN NULL ELSE ${effectiveReleaseIdSql('hp')} END AS head
+    FROM ${auth.rows}ring
+      LEFT JOIN passes p ON p.id = ring.pass_id AND ${auth.tenantOnce('p', 'passes')}
+        AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
+        AND ${scope.sql} AND ${cleared.sql} AND ${effectiveReleaseIdSql('p')} IS ring.rel
+      LEFT JOIN passes hp ON hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,

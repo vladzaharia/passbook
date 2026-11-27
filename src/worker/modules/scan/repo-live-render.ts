@@ -73,16 +73,21 @@ export function liveRowsStmt(
     ]),
   );
   const params: SqlValue[] = [];
+  // The pass joins the ring row instead of hanging off it as a scalar subquery: nested, the effective-release
+  // expression pushes the statement past 80 expression levels; flat, it stays near 65. It comes last in the ON.
+  const passJoin = scope
+    ? `LEFT JOIN passes p ON ring.pass_id IS NOT NULL AND ring.cred IS NOT NULL AND p.id = ring.pass_id
+        AND ${auth.tenantOnce('p', 'passes')}
+        AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
+        AND ${scope.sql}
+        AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb, json_each(ring.refs) j
+          WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
+            AND tomb.credential_hash BETWEEN j.value || '${'0'.repeat(48)}'
+              AND j.value || '${'f'.repeat(48)}')
+        AND ${effectiveReleaseIdSql('p')} IS ring.rel`
+    : '';
   const passOk = scope
-    ? `(SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
-        WHERE ring.pass_id IS NOT NULL AND ring.cred IS NOT NULL AND p.id = ring.pass_id
-          AND ${auth.tenantOnce('p', 'passes')}
-          AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
-          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql}
-          AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb, json_each(ring.refs) j
-            WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
-              AND tomb.credential_hash BETWEEN j.value || '${'0'.repeat(48)}'
-                AND j.value || '${'f'.repeat(48)}'))`
+    ? 'CASE WHEN p.id IS NULL THEN 0 WHEN p.image_generation = ring.img THEN 2 ELSE 1 END'
     : '0';
   if (scope) params.push(...scope.params);
   return scanRead(
@@ -92,11 +97,11 @@ export function liveRowsStmt(
       CASE WHEN ring.scan_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scans s
         WHERE s.id = ring.scan_id AND ${auth.tenantOnce('s', 'scans')} AND s.pass_id IS ring.pass_id
           AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}) END AS scan_ok,
-      COALESCE(${passOk}, 0) AS pass_ok,
+      ${passOk} AS pass_ok,
       CASE WHEN ring.staff_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scan_staff st
         WHERE st.id = ring.staff_id AND st.org_id = ao.org_id
           AND st.auth_epoch = ring.staff_epoch AND st.disabled_at IS NULL) END AS staff_ok
-    FROM ${auth.rows}ring`,
+    FROM ${auth.rows}ring ${passJoin}`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,
