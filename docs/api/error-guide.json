@@ -1589,6 +1589,12 @@
     "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
+  "ORG_SCOPE_TOO_WIDE": {
+    "title": "Too many organizations",
+    "when": "A pass list with orgId=all covers more than 50 organizations.",
+    "fix": "Send orgIds with up to 50 organization ids.",
+    "retryable": false
+  },
   "ORG_SLUG_RESERVED": {
     "title": "Slug reserved",
     "when": "The slug starts with personal-, which belongs to personal organizations.",

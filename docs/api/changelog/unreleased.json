@@ -2057,12 +2057,76 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "GET /api/v1/passes 200.items[].orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].orgName: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].templateName: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].timeZone: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
     "key": "GET /api/v1/passes optional parameter query:count added",
     "class": "additive",
     "operationId": "passes.getPasses",
     "op": "GET /api/v1/passes",
     "change": "optional parameter query:count added",
     "note": "count=true adds the number of passes the filters match."
+  },
+  {
+    "key": "GET /api/v1/passes optional parameter query:orgIds added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "optional parameter query:orgIds added",
+    "note": "With orgId=all, only these organizations (comma-separated, up to 50)."
+  },
+  {
+    "key": "GET /api/v1/passes orgId=all",
+    "class": "notable",
+    "operationId": "",
+    "op": "GET /api/v1/passes",
+    "change": "orgId=all",
+    "note": "orgId=all lists every organization you can read passes in. A sign-in gets its memberships with passes:read; an All-organizations key gets all."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "GET /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
@@ -2127,6 +2191,30 @@
     "op": "GET /api/v1/passes/{id}/prints",
     "change": "200.prints[].stale: field added",
     "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "GET /api/v1/passes/{id}/versions/{version} 200.versions[].source: enum value \"move\" added",
@@ -3526,6 +3614,30 @@
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "PATCH /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
@@ -5505,6 +5617,30 @@
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
   },
   {
+    "key": "POST /api/v1/passes 201.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes 201.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
     "key": "POST /api/v1/passes 201.versions[].source: enum value \"move\" added",
     "class": "notable",
     "operationId": "passes.postPasses",
@@ -5569,6 +5705,54 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/remove 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/remove 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/remove 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/renew 200.versions[].source: enum value \"move\" added",
     "class": "notable",
     "operationId": "passes.postPassesByIdRenew",
@@ -5585,12 +5769,60 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/restore 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/simulate new operation",
     "class": "additive",
     "operationId": "passes.postPassesByIdSimulate",
     "op": "POST /api/v1/passes/{id}/simulate",
     "change": "new operation",
     "note": "Simulate sends a real Test event for a Test pass; its signed webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "POST /api/v1/passes/{id}/stamps 200.versions[].source: enum value \"move\" added",
@@ -5609,12 +5841,60 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/void 200.matched: field added",
     "class": "additive",
     "operationId": "passes.postPassesByIdVoid",
     "op": "POST /api/v1/passes/{id}/void",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "POST /api/v1/passes/bulk-print 202.operationId: field added",
@@ -7143,6 +7423,30 @@
     "op": "PUT /api/v1/passes/{id}/channels",
     "change": "200.levels: field added",
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
   },
   {
     "key": "PUT /api/v1/passes/{id}/connection 200.versions[].source: enum value \"move\" added",

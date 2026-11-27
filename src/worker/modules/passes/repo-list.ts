@@ -6,6 +6,8 @@ import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from
 
 export interface PassListFilter {
   orgId?: string | null;
+  /** Any of these organizations (a list across organizations). */
+  orgIds?: string[];
   /** The caller's mode; admin and API lists always set it. */
   mode?: Mode;
   templateId?: string;
@@ -52,6 +54,8 @@ export function passFilterSql(filter: PassListFilter): {
     params.push(...values);
   };
   if (filter.orgId) add('org_id = ?', filter.orgId);
+  if (filter.orgIds)
+    add('org_id IN (SELECT value FROM json_each(?))', JSON.stringify(filter.orgIds));
   if (filter.mode) add('mode = ?', filter.mode);
   if (filter.templateId) add('template_id = ?', filter.templateId);
   if (filter.templateIds?.length)
@@ -127,20 +131,28 @@ export async function countPasses(db: D1Database, filter: PassListFilter): Promi
   return row?.n ?? 0;
 }
 
+/** The page statement of a list: one more row than the limit, so the caller can tell there is a next page. */
+export function listPassesSql(filter: PassListFilter): {
+  sql: string;
+  params: (string | number)[];
+} {
+  const { where, params } = passFilterSql(filter);
+  return {
+    sql: `${PASS_SELECT} WHERE ${where.join(' AND ')}
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = passes.id AND t.state = 'pending')
+      ORDER BY id DESC LIMIT ?`,
+    params: [...params, filter.limit + 1],
+  };
+}
+
 /** Newest first by id (UUIDv7). Search is prefix-only on display fields, exact on serial. */
 export async function listPasses(
   db: D1Database,
   filter: PassListFilter,
 ): Promise<{ items: Pass[]; nextCursor: string | null }> {
-  const { where, params } = passFilterSql(filter);
-  const rows = await all<PassDbRow>(
-    db,
-    `${PASS_SELECT} WHERE ${where.join(' AND ')}
-      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
-        WHERE t.pass_id = passes.id AND t.state = 'pending')
-      ORDER BY id DESC LIMIT ?`,
-    [...params, filter.limit + 1],
-  );
+  const { sql, params } = listPassesSql(filter);
+  const rows = await all<PassDbRow>(db, sql, params);
   const page = rows.slice(0, filter.limit).map(mapPass);
   const last = page.at(-1);
   return { items: page, nextCursor: rows.length > filter.limit && last ? last.id : null };
