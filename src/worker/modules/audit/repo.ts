@@ -82,10 +82,13 @@ export async function listAuditRows(
   if (filter.from !== undefined) add('at >= ?', filter.from);
   if (filter.to !== undefined) add('at <= ?', filter.to);
   if (filter.before !== undefined) add('id < ?', filter.before);
-  if (filter.excludePersonal)
+  if (filter.excludePersonal) {
+    const personal = 'SELECT id FROM orgs WHERE personal_user_id IS NOT NULL';
     where.push(
-      '(org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))',
+      `(org_id IS NULL OR org_id NOT IN (${personal}))`,
+      `NOT COALESCE(target_type = 'org' AND target_id IN (${personal}), 0)`,
     );
+  }
   const sql = `SELECT id, at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, detail
      FROM audit_log ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT ?`;
   return all<AuditRow>(db, sql, [...params, limit]);
