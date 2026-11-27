@@ -4084,5 +4084,71 @@
     "when": "A platform route was called with an API key that is not a platform key.",
     "fix": "Call it with a platform key that holds the route's scope.",
     "retryable": false
+  },
+  "IDP_GROUP_LIMIT": {
+    "title": "Group limit reached",
+    "when": "PassBook manages at most 50 custom groups.",
+    "fix": "Delete a group you no longer use.",
+    "retryable": false
+  },
+  "IDP_RULE_EXISTS": {
+    "title": "Rule exists",
+    "when": "The org already has a rule on the group.",
+    "fix": "End the existing rule, or leave it.",
+    "retryable": false
+  },
+  "IDP_RULE_LIMIT": {
+    "title": "Rule limit reached",
+    "when": "A group takes at most 5 org rules.",
+    "fix": "End a rule you no longer need.",
+    "retryable": false
+  },
+  "IDP_RULE_ORG_REFUSED": {
+    "title": "Org cannot feed a group",
+    "when": "A personal org, sandbox or closed org cannot feed a group.",
+    "fix": "Pick a standard, active org.",
+    "retryable": false
+  },
+  "GROUP_NOT_FOUND": {
+    "title": "Group not found",
+    "when": "No live group has this key.",
+    "fix": "List the groups and use one of their keys.",
+    "retryable": false
+  },
+  "IDP_MEMBER_EXISTS": {
+    "title": "Already a member",
+    "when": "The account is already a member of the group.",
+    "fix": "Nothing to do.",
+    "retryable": false
+  },
+  "IDP_MULTIPLE_ACCOUNTS": {
+    "title": "Several Polaris ID accounts",
+    "when": "The user has more than one Polaris ID account.",
+    "fix": "Remove the extra account in Polaris ID, then retry.",
+    "retryable": false
+  },
+  "IDP_NO_ACCOUNT": {
+    "title": "No Polaris ID account",
+    "when": "The user is not in Polaris ID.",
+    "fix": "Invite the user to Polaris ID first.",
+    "retryable": false
+  },
+  "MEMBER_NOT_FOUND": {
+    "title": "Member not found",
+    "when": "No live member has this id on the group.",
+    "fix": "List the group's members and use one of their ids.",
+    "retryable": false
+  },
+  "IDP_PLATFORM_ADMIN": {
+    "title": "Platform admin",
+    "when": "The user is a platform admin. A key never changes a platform admin.",
+    "fix": "Change it in Polaris ID.",
+    "retryable": false
+  },
+  "SELF_DISABLE": {
+    "title": "Cannot disable yourself",
+    "when": "The account making the request is the one being disabled.",
+    "fix": "Ask another platform admin.",
+    "retryable": false
   }
 }

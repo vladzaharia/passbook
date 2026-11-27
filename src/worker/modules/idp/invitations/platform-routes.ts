@@ -5,7 +5,7 @@ import {
   PlatformInvitationCreatedSchema,
   PlatformInvitationListSchema,
 } from '../../../../shared/contracts/platform-invitations.ts';
-import { currentUserId } from '../../../platform/auth.ts';
+import { platformActorOf } from '../../../platform/actor.ts';
 import { createRouter, register } from '../../../platform/openapi.ts';
 import { serviceContext } from '../../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../../platform/sign-in-guard.ts';
@@ -18,8 +18,8 @@ import {
 } from './platform-service.ts';
 
 const TAG = 'platform invitations';
-/** A platform invitation puts a person in groups other apps trust: platform admins only, signed in with Polaris ID, step-up to write. */
-const READ = { platform: 'platform:users', signIn: 'oidc' } as const;
+/** A platform invitation puts a person in groups other apps trust: a platform admin signed in with Polaris ID (step-up to write), or a Platform key. */
+const READ = { platform: 'platform:users', key: true, signIn: 'oidc' } as const;
 const WRITE = { ...READ, stepUp: { maxAgeSec: STEP_UP_SECONDS } } as const;
 /** The stored copy of a replayable answer never holds the link. */
 const withoutLink = ({ link: _link, ...rest }: PlatformInvitationCreated) => rest;
@@ -47,7 +47,7 @@ register(
   (c) => {
     const body = c.req.valid('json');
     const ctx = serviceContext(c);
-    const actor = currentUserId(c);
+    const actor = platformActorOf(c, { scope: 'platform:users' });
     return idempotentSecret(
       c,
       ctx,
@@ -71,7 +71,10 @@ register(
     query: CursorQuerySchema,
     response: PlatformInvitationListSchema,
   },
-  async (c) => c.json(await listPlatformInvitations(serviceContext(c))),
+  async (c) => {
+    platformActorOf(c);
+    return c.json(await listPlatformInvitations(serviceContext(c)));
+  },
 );
 
 register(
@@ -87,7 +90,11 @@ register(
     codes: ['PLATFORM_INVITE_CONFLICT'],
   },
   async (c) => {
-    await revokePlatformInvitation(serviceContext(c), currentUserId(c), c.req.valid('param').id);
+    await revokePlatformInvitation(
+      serviceContext(c),
+      platformActorOf(c, { scope: 'platform:users' }),
+      c.req.valid('param').id,
+    );
     return c.json({ ok: true as const });
   },
 );
@@ -108,7 +115,7 @@ register(
   (c) => {
     const { id } = c.req.valid('param');
     const ctx = serviceContext(c);
-    const actor = currentUserId(c);
+    const actor = platformActorOf(c, { scope: 'platform:users' });
     return idempotentSecret(
       c,
       ctx,

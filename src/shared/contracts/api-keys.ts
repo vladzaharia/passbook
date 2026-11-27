@@ -35,6 +35,11 @@ export const PLATFORM_KEY_SCOPES = [
  */
 export const MINTABLE_PLATFORM_SCOPES = [
   'platform:read',
+  'platform:users',
+  'platform:groups',
+  'platform:claims',
+  'platform:status',
+  'platform:audit',
   'platform:settings',
   'platform:wallet',
 ] as const satisfies readonly (typeof PLATFORM_KEY_SCOPES)[number][];

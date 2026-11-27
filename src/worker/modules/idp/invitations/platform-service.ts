@@ -4,6 +4,7 @@ import type {
   PlatformInvitationCreated,
 } from '../../../../shared/contracts/platform-invitations.ts';
 import { INVITE_PATH, INVITE_PREFIX } from '../../../../shared/invitation-link.ts';
+import type { Actor } from '../../../platform/actor.ts';
 import { baseUrl } from '../../../platform/env.ts';
 import {
   ConflictError,
@@ -17,6 +18,7 @@ import { recordAudit } from '../../audit/service.ts';
 import { createEmailBindingMailer } from '../../delivery/mailer.ts';
 import { idpReady } from '../../dev-access/availability.ts';
 import { userName } from '../../orgs/repo-members.ts';
+import { auditActorOf } from '../actor.ts';
 import { idpClient, idpConfigured } from '../client.ts';
 import { platformInvitationEmail } from './platform-email.ts';
 import { platformInviteOf } from './platform-resolve.ts';
@@ -48,6 +50,11 @@ function dto(row: PlatformRow, now: number): PlatformInvitation {
     expiresAt: row.expires_at,
     acceptedAt: row.accepted_at,
     revokedAt: row.revoked_at,
+    createdBy: {
+      kind: row.created_by_key ? 'key' : 'user',
+      id: row.created_by_key ?? row.created_by_user ?? '',
+      name: row.creator_name,
+    },
   };
 }
 
@@ -72,7 +79,7 @@ export async function listPlatformInvitations(
   ctx: ServiceContext,
 ): Promise<{ items: PlatformInvitation[]; nextCursor: null }> {
   const now = ctx.clock.now();
-  const rows = await listPlatform(ctx.env.DB, now - LISTED_FOR, LIST_LIMIT);
+  const rows = await listPlatform(ctx.env.DB, now - LISTED_FOR, LIST_LIMIT, now);
   return { items: rows.map((row) => dto(row, now)), nextCursor: null };
 }
 
@@ -85,7 +92,7 @@ interface Issued {
 /** Writes the row and mails the link; a failed mail revokes the row. The link comes back once. */
 async function issue(
   ctx: ServiceContext,
-  actorId: string,
+  actor: Actor,
   op: 'create' | 'resend',
   input: Issued,
 ): Promise<PlatformInvitationCreated> {
@@ -101,15 +108,14 @@ async function issue(
       hash: await sha256Hex(secret),
       groups: input.groups,
       developer: input.developer,
-      createdByUser: actorId,
-      createdByKey: null,
+      createdByUser: actor.userId,
+      createdByKey: actor.keyId,
       now,
       expires: now + TTL,
       claimUntil: now + TTL + DAY,
     },
     {
-      actorType: 'user',
-      actorId,
+      ...auditActorOf(actor),
       action: 'idp.invite_platform',
       targetType: 'platform_invitation',
       targetId: id,
@@ -124,7 +130,7 @@ async function issue(
         link,
         base: baseUrl(ctx.env),
         developer: input.developer,
-        inviter: await userName(db, actorId),
+        inviter: actor.userId ? await userName(db, actor.userId) : null,
       }),
     });
   } catch {
@@ -133,14 +139,14 @@ async function issue(
     await revokePlatform(db, id, ctx.clock.now());
     throw new UnavailableError('Unable to deliver the invitation.');
   }
-  const row = await platformById(db, id);
+  const row = await platformById(db, id, ctx.clock.now());
   if (!row) throw new NotFoundError();
   return { ...dto(row, now), link };
 }
 
 export async function createPlatformInvitation(
   ctx: ServiceContext,
-  actorId: string,
+  actor: Actor,
   input: CreatePlatformInvitation,
 ): Promise<PlatformInvitationCreated> {
   await assertLive(ctx, input.developer);
@@ -155,16 +161,16 @@ export async function createPlatformInvitation(
       'This address already has a pending invitation. Revoke it to send a new one.',
       'PLATFORM_INVITE_PENDING',
     );
-  return issue(ctx, actorId, 'create', input);
+  return issue(ctx, actor, 'create', input);
 }
 
 /** A new secret on a new row; the old row is revoked (rows are immutable). Pending and expired invitations only. */
 export async function resendPlatformInvitation(
   ctx: ServiceContext,
-  actorId: string,
+  actor: Actor,
   id: string,
 ): Promise<PlatformInvitationCreated> {
-  const old = await platformById(ctx.env.DB, id);
+  const old = await platformById(ctx.env.DB, id, ctx.clock.now());
   if (!old) throw new NotFoundError();
   const invite = platformInviteOf(old, ctx.clock.now());
   if (!invite || invite.state === 'accepted' || invite.state === 'revoked')
@@ -174,7 +180,7 @@ export async function resendPlatformInvitation(
   if (!(await revokePlatform(ctx.env.DB, id, ctx.clock.now())))
     throw new ConflictError('This invitation has ended.', 'PLATFORM_INVITE_CONFLICT');
   await withdrawSetups(ctx, 'platform', id);
-  return issue(ctx, actorId, 'resend', {
+  return issue(ctx, actor, 'resend', {
     email: old.email,
     groups: invite.groups,
     developer: invite.developer,
@@ -183,16 +189,15 @@ export async function resendPlatformInvitation(
 
 export async function revokePlatformInvitation(
   ctx: ServiceContext,
-  actorId: string,
+  actor: Actor,
   id: string,
 ): Promise<void> {
-  const row = await platformById(ctx.env.DB, id);
+  const row = await platformById(ctx.env.DB, id, ctx.clock.now());
   if (!row) throw new NotFoundError();
   if (!(await revokePlatform(ctx.env.DB, id, ctx.clock.now())))
     throw new ConflictError('This invitation has ended.', 'PLATFORM_INVITE_CONFLICT');
   await recordAudit(ctx, {
-    actorType: 'user',
-    actorId,
+    ...auditActorOf(actor),
     action: 'idp.invite_platform',
     targetType: 'platform_invitation',
     targetId: id,

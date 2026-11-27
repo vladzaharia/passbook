@@ -49,7 +49,7 @@ async function acceptSweptPlatform(
   invitationId: string,
   subject: string,
 ): Promise<void> {
-  const row = await platformById(ctx.env.DB, invitationId);
+  const row = await platformById(ctx.env.DB, invitationId, ctx.clock.now());
   const invite = row ? platformInviteOf(row, ctx.clock.now()) : null;
   if (invite?.state !== 'pending' || invite.developer) return;
   try {

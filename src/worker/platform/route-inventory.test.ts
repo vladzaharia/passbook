@@ -171,20 +171,10 @@ const SCANNER = [
 const OWN_GUARD = [
   // A signed link: the signature is the credential (modules/org-lifecycle).
   'GET /api/v1/org-exports/:exportId/download',
-  'DELETE /api/v1/identities/:id',
-  'DELETE /api/v1/identities/:id/push-key',
   'GET /api/v1/identities',
-  'GET /api/v1/identities/:id',
-  'GET /api/v1/identities/:id/certificates',
   'GET /api/v1/orgs/invitations/accept',
-  'PATCH /api/v1/identities/:id',
-  'POST /api/v1/identities',
-  'POST /api/v1/identities/:id/apns-check',
-  'POST /api/v1/identities/:id/renew',
-  'POST /api/v1/identities/:id/rotate',
   'POST /api/v1/orgs/invitations/accept',
   'POST /api/v1/orgs/invitations/preview',
-  'PUT /api/v1/identities/:id/push-key',
 ];
 
 const toRegex = (path: string) =>
@@ -367,39 +357,14 @@ function platformKeyRoutes(): {
 /**
  * Every `platform` route has a written decision about keys: here it takes a Platform key, takes one unless the
  * request needs a person (`key: { unless }`), or is person-only (403 PERSON_REQUIRED). The lists are exact, so a new
- * `platform` route fails until it is put on one. Router-level `requireAdmin` routes are not `platform` declarations
- * yet, so they are not here and a Bearer key gets 401 on them (`REQUIRE_ADMIN_ROUTER_ROUTES`): PK-6 converts each
- * to `auth: { platform, key? }` and lists it here.
+ * `platform` route fails until it is put on one. No router-level `requireAdmin` guards a platform route any more: a
+ * route that needs one writes `auth: { platform, key? }` and is listed here.
  */
 const PLATFORM_KEY_ROUTES: string[] = [
-  'GET /api/v1/platform/idp/setup',
-  'GET /api/v1/platform/settings',
-  'GET /api/v1/platform/wallet-release',
-  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
-  'POST /api/v1/platform/idp/scim-token/rotate',
-  'POST /api/v1/platform/idp/setup',
-];
-const PLATFORM_KEY_CONDITIONAL: string[] = [
-  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
-  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
-  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
-  'PUT /api/v1/platform/settings',
-];
-/** Person-only: no `key`. Each stays so until a package decides it takes keys (the platform-keys design, §2.3). */
-const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'DELETE /api/v1/platform/idp/groups/:key',
   'DELETE /api/v1/platform/idp/groups/:key/members/:id',
   'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
   'DELETE /api/v1/platform/invitations/:id',
-  'DELETE /api/v1/users/:id/holds/:role',
-  'GET /api/v1/audit/platform',
-  'GET /api/v1/audit/platform/export',
-  'GET /api/v1/metrics/platform/developer',
-  'GET /api/v1/platform/apple-calls',
-  'GET /api/v1/platform/apple/identities',
-  'GET /api/v1/platform/apple/identity-moves',
-  'GET /api/v1/platform/apple/identity-moves/preview',
-  'GET /api/v1/platform/entitlement-presets',
   'GET /api/v1/platform/idp',
   'GET /api/v1/platform/idp/calls',
   'GET /api/v1/platform/idp/drift',
@@ -407,49 +372,148 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'GET /api/v1/platform/idp/groups/:key/claims',
   'GET /api/v1/platform/idp/groups/:key/members',
   'GET /api/v1/platform/idp/groups/:key/rules',
+  'GET /api/v1/platform/idp/setup',
   'GET /api/v1/platform/invitations',
-  'GET /api/v1/platform/orgs/:id/entitlements',
-  'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/platform/settings',
+  'GET /api/v1/platform/wallet-release',
   'GET /api/v1/users/:id/access',
   'GET /api/v1/users/:id/claims',
   'PATCH /api/v1/platform/idp/groups/:key',
   'PATCH /api/v1/platform/idp/groups/:key/claims',
   'PATCH /api/v1/users/:id/claims',
-  // P3: irreversible, every pass the certificate signed stops updating.
-  'POST /api/v1/identities/:id/revoke-certificate',
-  'POST /api/v1/platform/apple/identities',
-  'POST /api/v1/platform/apple/identities/:id/default',
-  'POST /api/v1/platform/apple/identity-moves',
-  'POST /api/v1/platform/apple/identity-moves/:moveId/arm',
-  'POST /api/v1/platform/idp/freeze',
   'POST /api/v1/platform/idp/groups',
   'POST /api/v1/platform/idp/groups/:key/members',
   'POST /api/v1/platform/idp/groups/:key/rules',
   'POST /api/v1/platform/idp/groups/ensure',
   'POST /api/v1/platform/idp/reconcile',
-  'POST /api/v1/platform/idp/scim-breaker/clear',
+  // AS-4: setup only tightens PassBook's own app and connection; the freeze still stops it.
+  'POST /api/v1/platform/idp/scim-token/rotate',
+  'POST /api/v1/platform/idp/setup',
   'POST /api/v1/platform/invitations',
   'POST /api/v1/platform/invitations/:id/resend',
+  'POST /api/v1/users/:id/roles',
+];
+const PLATFORM_KEY_CONDITIONAL: string[] = [
+  // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
+  'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
+  // Refused to a key unless it is a dry run (P3: ends memberships, sponsorships, keys and sessions; a loop is a mass lockout).
+  'POST /api/v1/users/:id/offboard',
+  // Refused to a key when it names an auth.* or oidc.* setting (P4: it decides who gets in).
+  'PUT /api/v1/platform/settings',
+];
+/**
+ * Person-only by design (§2.3): no `key`, each with its criterion. A follow-up that adds keys never touches this list.
+ */
+const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  // P3: PassBook's own Apple signing identities: adding one or choosing the default decides who signs passes.
+  'POST /api/v1/platform/apple/identities',
+  'POST /api/v1/platform/apple/identities/:id/default',
+  // P3: moving orgs between signing identities re-signs their passes; the arm step is the go/no-go.
+  'POST /api/v1/platform/apple/identity-moves',
+  'POST /api/v1/platform/apple/identity-moves/:moveId/arm',
+  // P3: hard-deletes the identity, its credential and the team's last push key.
+  'DELETE /api/v1/identities/:id',
+  // P3: closes the org with platform authority, the act §2.3 lists as person-only.
+  'DELETE /api/v1/orgs/:id',
+  // P4: moves a person's sign-in identity.
+  'DELETE /api/v1/users/:id/emails/:email',
+  // P2: restores a role the Polaris ID owner paused.
+  'DELETE /api/v1/users/:id/holds/:role',
+  // P3: irreversible, every pass the certificate signed stops updating.
+  'POST /api/v1/identities/:id/revoke-certificate',
+  // P1: the emergency stop, lifted only in Polaris ID.
+  'POST /api/v1/platform/idp/freeze',
+  // P1: clearing the breaker is a decision about what tripped it.
+  'POST /api/v1/platform/idp/scim-breaker/clear',
   // P3: releasing a legal hold lets a purge run.
   'POST /api/v1/platform/orgs/:orgId/retention/holds/:holdId/release',
-  'POST /api/v1/users/:id/offboard',
-  'POST /api/v1/users/:id/roles',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES, SQL-fenced to a platform session.
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/hold',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES, SQL-fenced to a platform session.
+  'POST /api/v1/platform/orgs/:orgId/wallet-enrolments/:mode/:provider/release',
+  // P3: irreversible, a revoked credential stops issuing.
+  'POST /api/v1/platform/wallet-credentials/:id/revoke',
+  // P2/P3: PLATFORM_ADMIN_PURPOSES (migration resolve).
+  'POST /api/v1/platform/wallet-credentials/migrate/resolve',
+  // P4: moves a person's sign-in identity.
+  'POST /api/v1/users/:id/emails',
+  // P4: moves a person's sign-in identity.
+  'POST /api/v1/users/:id/emails/:email/primary',
+  // P2: removes a role the Polaris ID owner added in Polaris ID.
   'POST /api/v1/users/:id/roles/:role/remove-external',
+];
+
+/**
+ * Person-only today only because the route's service takes a session, not a decision about keys: PK-6b and PK-2a move each
+ * to `PLATFORM_KEY_ROUTES` (or `PLATFORM_KEY_CONDITIONAL`), emptying this list. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
+ */
+const PLATFORM_KEY_DEFERRED: string[] = [
+  'GET /api/v1/platform/apple/identities',
+  'GET /api/v1/platform/apple/identity-moves',
+  'GET /api/v1/platform/apple/identity-moves/preview',
+  'DELETE /api/v1/identities/:id/push-key',
+  'DELETE /api/v1/users/:id/sessions/:sessionId',
+  'GET /api/v1/audit/platform',
+  'GET /api/v1/audit/platform/export',
+  'GET /api/v1/identities/:id',
+  'GET /api/v1/metrics/platform/developer',
+  'GET /api/v1/metrics/platform/overview',
+  'GET /api/v1/orgs',
+  'GET /api/v1/orgs/:id',
+  'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/closed-orgs',
+  'GET /api/v1/platform/entitlement-presets',
+  'GET /api/v1/platform/orgs/:id/entitlements',
+  'GET /api/v1/platform/orgs/:orgId/retention/holds',
+  'GET /api/v1/platform/orgs/:orgId/retention/receipts',
+  'GET /api/v1/platform/orgs/:orgId/retention/receipts/:receiptId/download',
+  'GET /api/v1/platform/personal-org-labels',
+  'GET /api/v1/platform/retention/receipts',
+  'GET /api/v1/platform/retention/receipts/:receiptId/download',
+  'GET /api/v1/platform/wallet-credentials',
+  'GET /api/v1/platform/wallet-credentials/:id/checks/:checkId',
+  'GET /api/v1/platform/wallet-credentials/migrate',
+  'GET /api/v1/platform/wallet-enrolments',
+  'GET /api/v1/status',
+  'GET /api/v1/status/incidents',
+  'GET /api/v1/status/workflows',
+  'GET /api/v1/users',
+  'GET /api/v1/users/:id',
+  'GET /api/v1/users/:id/passes',
+  'PATCH /api/v1/identities/:id',
+  'PATCH /api/v1/users/:id',
+  'POST /api/v1/identities',
+  'POST /api/v1/identities/:id/apns-check',
+  'POST /api/v1/identities/:id/renew',
+  'POST /api/v1/identities/:id/rotate',
+  'POST /api/v1/orgs',
+  'POST /api/v1/orgs/:id/status',
+  'POST /api/v1/platform/orgs/:orgId/retention/holds',
+  'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed',
+  'POST /api/v1/platform/orgs/:orgId/wallet-accounts/google/managed/complete',
+  'POST /api/v1/platform/wallet-credentials/:id/check',
+  'POST /api/v1/platform/wallet-credentials/:id/rotate-key',
+  'POST /api/v1/platform/wallet-credentials/migrate',
+  'POST /api/v1/status/incidents',
+  'POST /api/v1/status/incidents/:id/resolve',
+  'POST /api/v1/users/:id/sessions/revoke',
+  'PUT /api/v1/identities/:id/push-key',
   'PUT /api/v1/platform/entitlement-presets',
   'PUT /api/v1/platform/orgs/:id/entitlements',
+  'PUT /api/v1/platform/wallet-credentials',
+  'PUT /api/v1/platform/wallet-credentials/:id/cards',
 ];
 
 it('pins which platform routes take a key and which are person-only', () => {
   const { modes } = platformKeyRoutes();
   expect(modes.key).toEqual(PLATFORM_KEY_ROUTES);
   expect(modes.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
-  expect(modes.person).toEqual(PERSON_ONLY_PLATFORM_ROUTES);
+  expect(modes.person).toEqual([...PERSON_ONLY_PLATFORM_ROUTES, ...PLATFORM_KEY_DEFERRED].sort());
+  expect(PERSON_ONLY_PLATFORM_ROUTES.filter((r) => PLATFORM_KEY_DEFERRED.includes(r))).toEqual([]);
 });
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {
   const { scopes } = platformKeyRoutes();
-  // `platform:status` is declared by GET /idp/setup for sessions but is not a key scope until PK-2a.
-  scopes.delete('platform:status');
   if (scopes.size > 0) scopes.add('platform:read');
   expect([...MINTABLE_PLATFORM_SCOPES].sort()).toEqual([...scopes].sort());
 });

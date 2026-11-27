@@ -203,9 +203,11 @@ describe('a Platform key', () => {
     return { id: key.id, headers: { ...key.headers, 'cf-connecting-ip': '198.51.100.7' } };
   };
 
-  it('needs platform:settings to start and platform:read to read, and no step-up', async () => {
+  it('needs platform:settings to start and platform:status or platform:read to read, and no step-up', async () => {
     const reader = await platformKey(['platform:read']);
     expect((await rig.h.call(SETUP, { headers: reader.headers })).status).toBe(200);
+    const status = await platformKey(['platform:status']);
+    expect((await rig.h.call(SETUP, { headers: status.headers })).status).toBe(200);
     await expectProblem(
       await start(SETUP, 'POST', reader.headers, { dryRun: false }),
       403,

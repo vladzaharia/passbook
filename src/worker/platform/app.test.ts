@@ -308,7 +308,7 @@ describe('api keys', () => {
       (await call('/api/v1/passes', { headers: { authorization: 'Bearer wlt_unknown_key' } }))
         .status,
     ).toBe(401);
-    expect((await call('/api/v1/users', { headers: auth.apiKey() })).status).toBe(401);
+    expect((await call('/api/v1/users', { headers: auth.apiKey() })).status).toBe(403);
   });
 
   it('allows template reads with templates:read and refuses template writes', async () => {

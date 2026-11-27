@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import {
   OrgEntitlementsParamsSchema,
   OrgEntitlementsSchema,
@@ -11,10 +12,11 @@ import {
 } from '../../../shared/contracts/entitlement-presets.ts';
 import { OrgPlanParamsSchema, OrgPlanSchema } from '../../../shared/contracts/org-plan.ts';
 import { modeOf } from '../../platform/auth.ts';
+import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { peekBody, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
 import { requireNotPersonal, requireNotPersonalFor } from './personal-guard.ts';
@@ -42,15 +44,12 @@ platformEntitlementsRoutes.use('/orgs/:id/entitlements', noStore);
 platformEntitlementsRoutes.use('/entitlement-presets', noStore);
 
 // An edit that changes values moves every organization on the preset: a fresh sign-in, once it reaches any.
-platformEntitlementsRoutes.put(
-  '/entitlement-presets',
-  requireStepUp(STEP_UP_SECONDS, async (c) => {
-    const { preset, values } = await peekBody(c);
-    if (typeof preset !== 'string' || values === null || typeof values !== 'object') return false;
-    if (Object.keys(values).length === 0) return false;
-    return (await orgsOnPreset(c.env.DB, preset)) > 0;
-  }),
-);
+const presetReachesOrgs = async (c: Context<AppBindings>) => {
+  const { preset, values } = await peekBody(c);
+  if (typeof preset !== 'string' || values === null || typeof values !== 'object') return false;
+  if (Object.keys(values).length === 0) return false;
+  return (await orgsOnPreset(c.env.DB, preset)) > 0;
+};
 
 register(
   platformEntitlementsRoutes,
@@ -123,7 +122,10 @@ register(
       'Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue)',
     body: SetEntitlementPresetSchema,
     response: SetEntitlementPresetResultSchema,
-    auth: { platform: 'platform:orgs' },
+    auth: {
+      platform: 'platform:orgs',
+      stepUp: { maxAgeSec: STEP_UP_SECONDS, when: presetReachesOrgs },
+    },
   },
   async (c) => {
     const auth = authOf(c);

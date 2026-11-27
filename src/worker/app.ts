@@ -39,6 +39,7 @@ import { marketingPageRoutes } from './modules/marketing/routes-pages.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
+import { metricsPlatformRoutes } from './modules/metrics/routes-platform.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
 import { operationsRoutes } from './modules/operations/routes.ts';
@@ -208,13 +209,14 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // ignores a Bearer key (walletPlatformRoutes, below it).
   app.route('/api/v1/platform', platformSettingsRoutes);
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
-  // Polaris ID routes are person-only (`{ platform }` with no `key`): a key is refused with PERSON_REQUIRED. PK-2a converts them.
+  // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
   app.route('/api/v1/platform', idpOperationRoutes);
   app.route('/api/v1/platform', idpSetupRoutes);
   app.route('/api/v1/platform', idpPlatformRoutes);
   app.route('/api/v1/platform', idpGroupsRoutes);
   app.route('/api/v1/platform', platformInvitationRoutes);
-  // Person-only too, and before `walletPlatformRoutes`' `requireAdmin`: a key gets PERSON_REQUIRED.
+  app.route('/api/v1/platform', groupClaimsRoutes);
+  // Person-only: a key gets PERSON_REQUIRED.
   app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
   app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
@@ -252,13 +254,13 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/users', userClaimsRoutes);
   app.route('/api/v1/users', userHoldRoutes);
   app.route('/api/v1/users', userAccessRoutes);
-  app.route('/api/v1/platform', groupClaimsRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
   app.route('/api/v1/settings', settingsRoutes);
   app.route('/api/v1/audit', auditRoutes);
   app.route('/api/v1/status', statusRoutes);
+  app.route('/api/v1/metrics', metricsPlatformRoutes);
   app.route('/api/v1/metrics', metricsRoutes);
   app.route('/api/v1/scan', scanPairRoutes);
   app.route('/api/v1/scan', scanRoutes);
