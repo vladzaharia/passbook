@@ -32,6 +32,8 @@ export interface BlueprintPreview {
   inputs: InputSchema;
   sample: InputValues;
   manifest: Record<string, unknown>;
+  /** The template's own pass.json, before the sample is bound: the live page plans from it. */
+  source: Record<string, unknown>;
   passJson: Record<string, unknown>;
   /** The files' own base: static, so the cards load them without the API. */
   assetBaseUrl: string;

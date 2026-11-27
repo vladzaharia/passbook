@@ -7,7 +7,6 @@ import type { AnonBlueprint } from './blueprint.ts';
 export interface AnonValue {
   blueprint: AnonBlueprint;
   values: InputValues;
-  edited: boolean;
   mode: InputMode;
   setValues: (next: InputValues) => void;
   setMode: (mode: InputMode) => void;

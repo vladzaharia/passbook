@@ -8,8 +8,10 @@ import {
 import { anonymousDesignerHost } from '../../../admin/templates/designer/hosts.tsx';
 import { ApiError } from '../../../lib/errors.ts';
 import { TemplateProvider } from '../template-context.tsx';
+import { useAnon } from './anon-context.tsx';
 import { ANON_EXTRAS } from './anon-extras.tsx';
 import type { AnonBlueprint } from './blueprint.ts';
+import { useLivePass } from './use-live-pass.ts';
 
 /**
  * A blueprint in the designer core with no session: the anonymous host reads it, loads its files
@@ -33,6 +35,9 @@ export function AnonDesign({ blueprint }: { blueprint: AnonBlueprint }) {
       extras: ANON_EXTRAS,
     };
   }, [folder]);
+  const { values } = useAnon();
+  const passJson = useLivePass(blueprint, values);
+  const readOnly = useMemo(() => ({ notice: null, passJson, issues: [] }), [passJson]);
   const open = useMemo(() => ({ id: template.id, name: template.name }), [template]);
   return (
     <DesignerHostProvider host={host}>
@@ -43,6 +48,7 @@ export function AnonDesign({ blueprint }: { blueprint: AnonBlueprint }) {
           draftKey={`anonymous:${template.id}`}
           base={{ version: '1', doc }}
           draft={null}
+          readOnly={readOnly}
           assetBase={() => folder}
         />
       </TemplateProvider>

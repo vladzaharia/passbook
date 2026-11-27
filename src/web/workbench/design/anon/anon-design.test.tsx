@@ -5,6 +5,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProviders } from '../../../lib/providers.tsx';
 import { createQueryClient } from '../../../lib/query-client.ts';
@@ -87,5 +88,19 @@ describe('Design signed out: a blueprint on the anonymous host', () => {
       expect(url, url).toMatch(/^\/templates\//);
       expect(init?.credentials, url).toBe('omit');
     }
+  });
+
+  it('plans the card from the edited values in the browser, with no request', async () => {
+    mount();
+    const name = await screen.findByRole('textbox', { name: /^Name/ });
+    await vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
+    expect(await screen.findAllByText('Alex Morgan')).not.toHaveLength(0);
+    const before = seen.length;
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Casey River');
+    await vi.waitFor(() => expect(screen.getAllByText('Casey River').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Alex Morgan')).toBeNull();
+    for (const { url } of seen.slice(before)) expect(url, url).toMatch(/^\/templates\//);
+    expect(seen.every((r) => !r.url.includes('/api/'))).toBe(true);
   });
 });

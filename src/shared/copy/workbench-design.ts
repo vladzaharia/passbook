@@ -42,7 +42,6 @@ export const WB_DESIGN = {
     share: 'Share as link',
     copied: 'Link copied',
     signIn: 'Sign in to design',
-    editsInCode: 'Edits show in the code. The previews update in your sandbox.',
     badLink: (name: string) => `That link did not match a blueprint. Showing ${name}.`,
     loadFailed: 'The blueprints did not load.',
     saving: 'Saving to your sandbox',
