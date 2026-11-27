@@ -31,7 +31,7 @@ export const outboundSetup = SetupGuideSchema.parse({
       title: 'Verify each request',
       parts: [
         { t: 'field', label: 'Signature header', value: 'x-passbook-signature' },
-        { t: 'field', label: 'Timestamp header', value: 'x-passbook-timestamp' },
+        { t: 'field', label: 'Timestamp', value: 'x-passbook-timestamp' },
         {
           t: 'text',
           text: 'Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Compare it with the `v1=` value in constant time.',

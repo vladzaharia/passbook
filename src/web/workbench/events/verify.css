@@ -25,6 +25,10 @@
 .wh-step:has(+ .wh-step.bad) {
   padding-right: 150px;
 }
+/* Nothing above the first failed step to seat the buddy on: its own room, on the card edge. */
+.wh-step.bad:first-child {
+  margin-top: 60px;
+}
 .wh-ic {
   width: 24px;
   height: 24px;

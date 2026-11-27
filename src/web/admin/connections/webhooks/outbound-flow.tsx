@@ -307,7 +307,6 @@ export function OutboundFlow({
                   host={host}
                   canSend={canManage}
                   title={false}
-                  hint="Done after one 2xx."
                   send={sendTest}
                 />
               </div>

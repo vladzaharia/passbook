@@ -11,8 +11,7 @@ import type { WizardModel } from './wizard-types.ts';
 
 /**
  * Cancel (ghost, pushed left) and the hint while Next is blocked, then Back and the primary.
- * Under 640 only Back and the primary show, one row of equal buttons, unless `keepCancel` (a page
- * has no X). Next is never hard-disabled for an incomplete step: it carries `aria-disabled` and its
+ * Under 640 one row: the "..." menu (a page has no X, so `keepCancel` gives it Cancel), Back and the primary. Next is never hard-disabled for an incomplete step: it carries `aria-disabled` and its
  * hint, and a press shows the errors. `busy` is the only hard-disabled state.
  */
 /** An action of the page beside Back and Next: inline on a wide screen, in the bar's menu on a phone. */
@@ -59,14 +58,13 @@ export function WizardButtons({
 }) {
   const hintId = useId();
   const why = blocked && hint ? hint : undefined;
+  const phoneMenu = menu ?? (keepCancel ? [] : undefined);
   return (
     <>
       <Button
         variant="ghost"
         disabled={working}
-        className={
-          keepCancel && !menu ? 'mr-auto max-sm:order-2 max-sm:w-full' : 'max-sm:hidden sm:mr-auto'
-        }
+        className="max-sm:hidden sm:mr-auto"
         onClick={onCancel}
       >
         Cancel
@@ -84,7 +82,7 @@ export function WizardButtons({
           </Button>
         ))}
       <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
-        {menu ? (
+        {phoneMenu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -95,7 +93,7 @@ export function WizardButtons({
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="top">
-              {menu.map((a) => (
+              {phoneMenu.map((a) => (
                 <DropdownMenuItem key={a.label} onSelect={a.onSelect}>
                   <a.icon aria-hidden />
                   {a.label}

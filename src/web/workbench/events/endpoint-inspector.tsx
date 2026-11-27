@@ -136,7 +136,13 @@ export function EndpointInspector({
       id={<IdChip id={endpoint.id} kind="id" />}
       actions={
         <>
-          <SendButton id={SEND_TEST_ID} types={TYPES} busy={busy} onSend={(t) => void send(t)} />
+          <SendButton
+            id={SEND_TEST_ID}
+            types={TYPES}
+            busy={busy}
+            disabled={endpoint.status !== 'active'}
+            onSend={(t) => void send(t)}
+          />
           {url ? (
             <button
               type="button"

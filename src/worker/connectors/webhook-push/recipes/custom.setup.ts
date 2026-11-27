@@ -26,7 +26,7 @@ export const customSetup = defineGuide({
       parts: [
         { t: 'field', label: 'URL', copy: 'endpointUrl' },
         { t: 'field', label: 'Signature header', copy: 'signatureHeader' },
-        { t: 'field', label: 'Timestamp header', copy: 'timestampHeader' },
+        { t: 'field', label: 'Timestamp', copy: 'timestampHeader' },
         {
           t: 'text',
           text: 'The timestamp is in seconds. Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Send the signature as `v1=<hex>`.',

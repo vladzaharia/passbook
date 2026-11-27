@@ -84,18 +84,9 @@ export function EventsTool({ className }: { className: string }) {
     <ToolEmpty
       tool="events"
       action={
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
-            <a href={addHref}>Add endpoint</a>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => void sendTest()}
-            iconStart={<Send aria-hidden />}
-          >
-            Send a test event
-          </Button>
-        </div>
+        <Button variant="outline" onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
+          Send a test event
+        </Button>
       }
     />
   );

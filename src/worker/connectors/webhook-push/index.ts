@@ -54,7 +54,7 @@ const config = z.object({
     .string()
     .refine(isAllowedHeaderName)
     .default(TIMESTAMP_HEADER)
-    .meta({ 'x-label': 'Timestamp header', 'x-group': 'Advanced' }),
+    .meta({ 'x-label': 'Timestamp', 'x-group': 'Advanced' }),
 });
 
 /** Records arrive in the signed webhook body; nothing is fetched. */

@@ -40,7 +40,7 @@
           },
           {
             "t": "field",
-            "label": "Timestamp header",
+            "label": "Timestamp",
             "copy": "timestampHeader",
             "choose": false
           },

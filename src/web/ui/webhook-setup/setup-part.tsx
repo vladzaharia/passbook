@@ -1,4 +1,3 @@
-import { Check } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { Callout } from '../callout.tsx';
@@ -25,7 +24,7 @@ function runs(parts: readonly SetupPart[]): (SetupPart | Field[])[] {
 
 function FieldGrid({ fields, values }: { fields: Field[]; values: SetupValues }) {
   return (
-    <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 @md:grid-cols-[7.5rem_minmax(0,1fr)]">
+    <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 @md:grid-cols-[8.5rem_minmax(0,1fr)]">
       {fields.map((f, i) => {
         const copy = f.copy ? values[f.copy] : undefined;
         const key = `${f.label}-${i}`;
@@ -42,8 +41,7 @@ function FieldGrid({ fields, values }: { fields: Field[]; values: SetupValues })
                   </span>
                 )
               ) : f.choose ? (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-accent bg-accent-subtle px-2.5 py-1 text-sm font-medium text-fg-strong">
-                  <Check aria-hidden className="size-3.5 text-accent-fg" />
+                <span className="inline-block py-1 text-sm font-medium text-fg-strong">
                   {f.value ? <Rich text={f.value} /> : null}
                   <span className="sr-only"> (choose this)</span>
                 </span>
