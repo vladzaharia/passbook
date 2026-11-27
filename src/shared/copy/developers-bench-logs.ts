@@ -5,9 +5,6 @@ const plural = (n: number, one: string, many: string) =>
 export const LOGS_BENCH_COPY = {
   list: 'Requests',
   count: (n: number, more: boolean) => (more ? `${n}+ requests` : plural(n, 'request', 'requests')),
-  retention: 'Test calls only. Kept 7 days; bodies 24 hours, redacted.',
-  /** The empty state's line: how long a call stays. */
-  kept: 'Calls are kept 7 days',
   views: { label: 'View', all: 'All', errors: 'Errors' },
   search: 'Search paths',
   toolbar: 'Filter requests',

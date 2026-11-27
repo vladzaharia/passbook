@@ -254,7 +254,10 @@ export function Wizard({
       <WizardBar
         {...bar}
         onNext={next}
-        onBlocked={onBlocked ?? (() => blocked.block(bar.nextHint))}
+        onBlocked={() => {
+          onBlocked?.();
+          blocked.block(bar.nextHint);
+        }}
       />
     </div>
   );

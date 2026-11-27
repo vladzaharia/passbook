@@ -11,7 +11,7 @@ import { GO_CHORD } from './keys.ts';
 import { contextFreePath, type NavGroup, PUBLIC_AREAS } from './nav-model.ts';
 
 const LINK =
-  'wb-nav-link relative flex min-h-8 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium pointer-coarse:min-h-11 transition-[color,background-color] duration-(--wl-dur-hover)';
+  'wb-nav-link relative flex min-h-8 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium max-lg:min-h-11 pointer-coarse:min-h-11 transition-[color,background-color] duration-(--wl-dur-hover)';
 
 /** The meta beside an item: a count, a ring, a dot. Its words are part of the link's name. */
 function Meta({ attention, known }: { attention: Attention | undefined; known: boolean }) {
@@ -48,12 +48,6 @@ function Meta({ attention, known }: { attention: Attention | undefined; known: b
         <span aria-hidden className="wb-meta">
           <LoaderCircle className="size-3 animate-spin" />
           {attention.value}
-        </span>
-      );
-    case 'live':
-      return (
-        <span aria-hidden className="wb-meta">
-          <span className="wb-live" />
         </span>
       );
     case 'warn':

@@ -28,7 +28,7 @@ function Loading() {
   );
 }
 
-function Empty({ line, action }: { line: string; action: ReactNode }) {
+function Empty({ line, action }: { line: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
       <p className="text-sm text-fg-muted">{line}</p>
@@ -56,17 +56,7 @@ export function RecentCalls({
 }) {
   let body: ReactNode;
   if (!rows) body = error ? <ToolFailed error={error} onRetry={onRetry} /> : <Loading />;
-  else if (rows.length === 0)
-    body = (
-      <Empty
-        line={C.calls.empty}
-        action={
-          <Button asChild variant="outline" size="sm">
-            <Link to={wbPath(orgId, 'console')}>{C.next.console}</Link>
-          </Button>
-        }
-      />
-    );
+  else if (rows.length === 0) body = <Empty line={C.calls.empty} />;
   else
     body = (
       <Rows>

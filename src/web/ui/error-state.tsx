@@ -25,6 +25,8 @@ export interface ErrorStateProps {
    * Defaults to true inside a Card (InCardContext), false elsewhere; pass it to override.
    */
   inline?: boolean;
+  /** Replaces the sentence's type (the Workbench sets one scale for its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -49,6 +51,7 @@ export function ErrorState({
   retryLabel = STATE_COPY.retry,
   action,
   inline: inlineProp,
+  titleClassName,
   className,
 }: ErrorStateProps) {
   const inCard = useInCard();
@@ -112,7 +115,7 @@ export function ErrorState({
           inline && 'sm:items-start',
         )}
       >
-        <p role="alert" className="max-w-[65ch] text-sm text-fg-strong">
+        <p role="alert" className={cn('max-w-[65ch]', titleClassName ?? 'text-sm text-fg-strong')}>
           {subject ? (
             <>
               <span className="block font-medium">Could not load {subject}.</span>

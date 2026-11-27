@@ -41,6 +41,7 @@ export function useLog(filters: LogFilters) {
   const query = JSON.stringify([queryOf(filters), filters.tab === 'errors']);
   const settled = useSettled(query, TYPE_MS);
   const [phase, setPhase] = useState<LogPhase>('loading');
+  const [error, setError] = useState<unknown>(null);
   const [items, setItems] = useState<RequestLogEntry[]>([]);
   const [cursor, setCursor] = useState<Cursor | null>(null);
   const [capped, setCapped] = useState<Page['capped']>(null);
@@ -84,10 +85,11 @@ export function useLog(filters: LogFilters) {
         quietSince.current = Date.now();
         if (pausedRef.current) wake.current();
       },
-      () => {
+      (failure: unknown) => {
         // The list says it did not load; Retry reads again. A gone session is the shell's banner.
         if (mine !== run.current) return;
         setBusy(false);
+        setError(failure);
         setPhase('failed');
       },
     );
@@ -179,6 +181,7 @@ export function useLog(filters: LogFilters) {
 
   return {
     phase,
+    error,
     items,
     capped,
     busy,

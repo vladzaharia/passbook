@@ -21,6 +21,15 @@ export const WB_DESIGN = {
     sandbox: "Installing from a sandbox isn't available yet. The pass is in Passes.",
   },
   bar: { save: 'Save version' },
+  /** The Design index: the context's templates and the blueprint picker. */
+  index: {
+    list: 'Templates',
+    pick: 'Start from a blueprint',
+    pickTitle: 'Choose a blueprint',
+    noBlueprints: 'No blueprints',
+    startFailed: 'Could not start from that blueprint.',
+    loadFailed: 'The blueprints did not load.',
+  },
   codeSheet: 'Code',
   phoneEdit: 'Edit on a larger screen',
   peek: (n: number) => `${n} ${n === 1 ? 'note' : 'notes'} from the wallets`,

@@ -1,5 +1,5 @@
 import { Link, useRouter } from '@tanstack/react-router';
-import { ArrowUpRight, KeyRound, RotateCcw, SquareTerminal } from 'lucide-react';
+import { ArrowUpRight, KeyRound, RefreshCw, SquareTerminal } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useCallback, useMemo } from 'react';
 import { WB_HOME_COPY as C } from '../../../shared/copy/workbench-home.ts';
 import { WB_SHELL_COPY } from '../../../shared/copy/workbench-shell.ts';
@@ -9,6 +9,7 @@ import { Button } from '../../ui/button.tsx';
 import { DropdownMenuItem } from '../../ui/dropdown-menu.tsx';
 import { MoreMenu } from '../../ui/more-menu.tsx';
 import { useNow } from '../../ui/rel-time.tsx';
+import { Skeleton } from '../../ui/skeleton.tsx';
 import { StatusChip } from '../bench/status-chip.tsx';
 import { adminLink, useToolHost } from '../host/tool-host.tsx';
 import { ToolPage } from '../shell/tool-page.tsx';
@@ -86,7 +87,7 @@ export function HomeView() {
 
   const sandbox = context.kind === 'sandbox';
   const menu = (
-    <MoreMenu>
+    <MoreMenu iconOnly>
       {sandbox ? (
         <>
           <DropdownMenuItem asChild>
@@ -97,7 +98,7 @@ export function HomeView() {
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to={wbPath(orgId, 'sandbox')}>
-              <RotateCcw aria-hidden />
+              <RefreshCw aria-hidden />
               {C.menu.reset}
             </Link>
           </DropdownMenuItem>
@@ -128,16 +129,26 @@ export function HomeView() {
           mood="sad"
           title={WB_STATES.sandboxClosed.title}
           action={
-            <Button asChild>
-              <Link to={wbPath(orgId, 'sandbox')}>{WB_STATES.sandboxClosed.reopen}</Link>
-            </Button>
+            <>
+              <Button asChild>
+                <Link to={wbPath(orgId, 'sandbox')}>{WB_STATES.sandboxClosed.reopen}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/workbench/quickstart">{WB_STATES.sandboxClosed.create}</Link>
+              </Button>
+            </>
           }
         />
       </ToolPage>
     );
 
-  const q = summary.data?.quickstart;
-  const showNext = sandbox && q && q.done < q.total;
+  const q = sandbox ? summary.data?.quickstart : undefined;
+  const next =
+    summary.data === undefined ? (
+      <Skeleton className="h-28 w-full" />
+    ) : (
+      <NextStep orgId={orgId} done={q?.done} total={q?.total} />
+    );
   const fan = (
     <PassesFan
       orgId={orgId}
@@ -155,11 +166,9 @@ export function HomeView() {
             <StatusChip tone="warning">{WB_SHELL_COPY.testDataOnly}</StatusChip>
           </p>
         )}
-        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
-          <div className="min-w-0 lg:col-span-8 [&>*]:h-full">
-            {showNext && q ? <NextStep orgId={orgId} done={q.done} total={q.total} /> : fan}
-          </div>
-          <div className="min-w-0 lg:col-span-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-12">
+          <div className="min-w-0 md:col-span-7 lg:col-span-8 [&>*]:h-full">{next}</div>
+          <div className="min-w-0 md:col-span-5 lg:col-span-4">
             <PhoneCard
               orgId={orgId}
               link={link.data?.publicUrl}
@@ -169,7 +178,7 @@ export function HomeView() {
           </div>
         </div>
         <Stats orgId={orgId} summary={summary.data} />
-        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           <RecentCalls
             orgId={orgId}
             rows={calls.data?.items}
@@ -190,7 +199,7 @@ export function HomeView() {
             seat={seatFor('webhook')}
           />
         </div>
-        {showNext ? fan : null}
+        {fan}
       </div>
     </ToolPage>
   );

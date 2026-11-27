@@ -77,7 +77,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -193,7 +196,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -273,7 +279,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -349,7 +358,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -429,7 +441,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -502,7 +517,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -578,7 +596,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -680,7 +701,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -790,7 +814,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -945,7 +972,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1056,7 +1086,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1146,7 +1179,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1255,7 +1291,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1340,7 +1379,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1423,7 +1465,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1520,7 +1565,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1596,7 +1644,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1664,7 +1715,10 @@
             ]
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [

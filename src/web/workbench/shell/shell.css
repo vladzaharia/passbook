@@ -101,35 +101,6 @@
   }
 }
 
-/* The live dot: solid, with one ping per beat while listening (a state indicator). */
-.wb-live {
-  position: relative;
-  display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--pk-success);
-}
-.wb-live::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--pk-success);
-  animation: wb-ping 2.4s var(--wl-ease-move) infinite;
-}
-@keyframes wb-ping {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  70%,
-  100% {
-    transform: scale(2.6);
-    opacity: 0;
-  }
-}
-
 /* The area button's attention dot: on the glyph tile's corner, ringed by the bar. */
 .wb-attn-dot {
   position: absolute;
@@ -181,15 +152,10 @@
   .wb-chord {
     animation: none;
   }
-  .wb-live::after {
-    animation: none;
-    opacity: 0;
-  }
 }
 
 @media (forced-colors: active) {
-  .wb-attn-dot,
-  .wb-live {
+  .wb-attn-dot {
     background: CanvasText;
     box-shadow: none;
   }
