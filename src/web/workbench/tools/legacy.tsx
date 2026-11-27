@@ -2,12 +2,11 @@ import { useLocation, useRouter } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import type { WbTool } from '@/shared/workbench.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
-import { BenchState } from '../bench/state.tsx';
 import { bindBenchRouter } from '../bench/url.ts';
 import { loadSession, onSession, type Sandbox, type Session } from '../console/session.ts';
 import { useOptionalToolHost } from '../host/tool-host.tsx';
 import { ToolPage } from '../shell/tool-page.tsx';
-import { NoSandboxState, SignInState, ToolFailed } from '../states/states.tsx';
+import { ClosedState, NoSandboxState, SignInState, ToolFailed } from '../states/states.tsx';
 import { ToolPlaceholder } from './placeholder.tsx';
 import '../bench/bench.css';
 import '../bench/pane.css';
@@ -72,7 +71,7 @@ export function LegacyTool({
   if (!session) body = <BenchSkeleton rows={6} />;
   else if (session.kind === 'out') body = <SignInState next={href} />;
   else if (session.kind === 'none') body = <NoSandboxState />;
-  else if (session.kind === 'closed') body = closed ?? <BenchState scene="closed" />;
+  else if (session.kind === 'closed') body = closed ?? <ClosedState />;
   else if (session.kind === 'failed')
     body = <ToolFailed error={new Error('sandbox')} onRetry={() => location.reload()} />;
   else body = children({ csrf: session.csrf, sandbox: session.sandbox });

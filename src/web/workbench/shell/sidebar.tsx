@@ -1,10 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowUpRight, BookOpen, Check } from 'lucide-react';
 import { lazy, Suspense } from 'react';
-import { countsFor, WB_SHELL_COPY, wbLabel } from '@/shared/copy/workbench-shell.ts';
+import { WB_SHELL_COPY, wbLabel } from '@/shared/copy/workbench-shell.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
+import { Kbd } from '../../ui/kbd.tsx';
 import { shortcutHint } from '../../ui/layout/menubar.tsx';
 import { adminLink } from '../host/tool-host.tsx';
 import { ContextSwitcher } from './context-switcher.tsx';
@@ -15,7 +16,7 @@ import { useWbShell } from './shell-context.ts';
 const SignInCard = lazy(() => import('./moments.tsx').then((m) => ({ default: m.SignInCard })));
 
 const FOOT_LINK =
-  'flex min-h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong pointer-coarse:min-h-11';
+  'flex min-h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong max-lg:min-h-11 pointer-coarse:min-h-11';
 
 /**
  * The navigation column: the context switcher, the grouped nav, then the foot (Go live or Open in
@@ -46,9 +47,6 @@ export function NavColumn({
             tool={tool}
             onNavigate={onNavigate}
           />
-          {inSheet ? (
-            <p className="mt-1.5 px-1 text-xs text-fg-muted">{countsFor(context.name)}</p>
-          ) : null}
         </div>
       ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -92,9 +90,7 @@ export function NavColumn({
             }}
             className={cn(FOOT_LINK, 'flex-1')}
           >
-            <kbd className="rounded-sm border border-border px-1 font-sans text-[0.6875rem]">
-              {shortcutHint()}
-            </kbd>
+            <Kbd className="text-[0.6875rem]">{shortcutHint()}</Kbd>
             {WB_SHELL_COPY.jump}
           </button>
           <button
@@ -104,9 +100,9 @@ export function NavColumn({
               onNavigate?.();
               openShortcuts();
             }}
-            className={cn(FOOT_LINK, 'w-8 justify-center px-0 pointer-coarse:w-11')}
+            className={cn(FOOT_LINK, 'w-8 justify-center px-0 pointer-coarse:hidden')}
           >
-            <kbd className="font-sans text-xs">?</kbd>
+            <Kbd className="border-0 text-xs">?</Kbd>
           </button>
         </div>
       </div>

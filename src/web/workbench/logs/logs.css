@@ -135,10 +135,6 @@
 .logs-cut {
   padding-block: 6px 0;
 }
-.logs-kept {
-  flex: 1 1 100%;
-  margin: 0;
-}
 
 /* The view tabs sit on the list they scope. */
 .logs-views {
