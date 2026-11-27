@@ -25,6 +25,7 @@ export function useLivePass(blueprint: AnonBlueprint, values: InputValues) {
   useEffect(() => {
     if (same(settled, blueprint.preview.sample)) {
       setShown({ id: blueprint.preview.id, pass: blueprint.preview.passJson });
+      setFailed(false);
       return;
     }
     let live = true;
