@@ -129,7 +129,7 @@ export const ownedPasses = (db: Db, userId: string, viewerId: string) =>
        AND o.status IN ('active', 'suspended')
        AND (o.personal_user_id IS NULL OR o.personal_user_id = ?)
      ORDER BY p.id DESC LIMIT 100`,
-    [userId, viewerId],
+    [userId, excludePersonal ? 1 : 0],
   );
 
 export async function ownedPassCount(db: Db, userId: string, viewerId: string): Promise<number> {
@@ -144,14 +144,13 @@ export async function ownedPassCount(db: Db, userId: string, viewerId: string): 
   return row?.n ?? 0;
 }
 
-/** Rows of a personal org stay with its owner (`viewerId`). */
-export const recentAudit = (db: Db, userId: string, viewerId = '') =>
+/** `excludePersonal`: a Platform key never sees a personal org's rows. */
+export const recentAudit = (db: Db, userId: string, excludePersonal = false) =>
   all<{ id: number; at: number; action: string; actor_type: string; actor_id: string | null }>(
     db,
     `SELECT id, at, action, actor_type, actor_id FROM audit_log
      WHERE target_type = 'user' AND target_id = ?
-       AND (org_id IS NULL OR org_id NOT IN (
-         SELECT id FROM orgs WHERE personal_user_id IS NOT NULL AND personal_user_id != ?))
+       AND (? = 0 OR org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))
      ORDER BY at DESC, id DESC LIMIT 20`,
     [userId, viewerId],
   );

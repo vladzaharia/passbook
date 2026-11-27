@@ -338,7 +338,7 @@ describe('metrics of a personal org', () => {
 });
 
 describe('audit rows of personal orgs, through the other reads a key has', () => {
-  it('leaves them out of the metrics recent feed and the user detail, for a key and a person', async () => {
+  it('leaves them out of the metrics recent feed and the user detail for a key, not for a person', async () => {
     const owner = await user();
     const personal = await makeOrg(f(), { personalUserId: owner });
     const regular = await makeOrg(f());
@@ -362,11 +362,13 @@ describe('audit rows of personal orgs, through the other reads a key has', () =>
           recentAudit: { action: string }[];
         }
       ).recentAudit.map((r) => r.action);
-    for (const headers of [key.headers, await person()]) {
-      expect(await recent(headers)).toContain('probe.regular');
-      expect(await recent(headers)).not.toContain('probe.personal');
-      expect(await detail(headers)).toContain('probe.regular');
-      expect(await detail(headers)).not.toContain('probe.personal');
-    }
+    expect(await recent(key.headers)).toContain('probe.regular');
+    expect(await recent(key.headers)).not.toContain('probe.personal');
+    expect(await detail(key.headers)).toContain('probe.regular');
+    expect(await detail(key.headers)).not.toContain('probe.personal');
+    // A platform-admin person sees another admin's personal-org rows, as before.
+    const admin = await person();
+    expect(await recent(admin)).toContain('probe.personal');
+    expect(await detail(admin)).toContain('probe.personal');
   });
 });

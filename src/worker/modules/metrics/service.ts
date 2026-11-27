@@ -168,6 +168,7 @@ export async function getOverview(
   query: MetricsQuery,
   mode: Mode = 'live',
   audience: 'tenant' | 'platform' = query.orgId ? 'tenant' : 'platform',
+  byKey = false,
 ): Promise<MetricsOverview> {
   if (query.orgId && !(await orgIsReadable(ctx.env.DB, query.orgId)))
     throw new ValidationError(
@@ -177,7 +178,7 @@ export async function getOverview(
     );
 
   const now = ctx.clock.now();
-  const key = JSON.stringify([audience, query.orgId, query.templateId, query.range, mode]);
+  const key = JSON.stringify([audience, query.orgId, query.templateId, query.range, mode, byKey]);
   const byKey = cache.get(ctx.env.DB) ?? new Map();
   cache.set(ctx.env.DB, byKey);
   const hit = byKey.get(key);
@@ -198,7 +199,7 @@ export async function getOverview(
     load(ctx, w, scope, now),
     platformDirectory
       ? Promise.resolve([])
-      : repo.recentAudit(ctx.env.DB, scope, 10, audience === 'tenant'),
+      : repo.recentAudit(ctx.env.DB, scope, 10, audience === 'tenant', byKey),
     repo.setupCounts(ctx.env.DB, scope, audience === 'tenant' ? mode : 'live', !platformDirectory),
     audience === 'platform' ? repo.directoryCounts(ctx.env.DB, query.orgId) : undefined,
   ]);
