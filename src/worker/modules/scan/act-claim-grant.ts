@@ -1,6 +1,7 @@
 import type { Grant } from '../../platform/authority.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { splitRaceTag } from '../../platform/race-tag.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   consumeSun,
@@ -121,5 +122,5 @@ export function keysetOnGrant(g: Grant, db: D1Database, commitment: string): voi
   const seen = capturedStatement(statement);
   if (!seen)
     throw new AuthorityError('GRANT_FOREIGN_STATEMENT', 'The keyset statement was not captured.');
-  g.include(writePart(partSql(seen.sql), seen.params));
+  g.include(writePart(partSql(seen.sql), seen.params, splitRaceTag(seen.sql).tag || undefined));
 }
