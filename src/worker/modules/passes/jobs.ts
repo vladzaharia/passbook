@@ -4,7 +4,6 @@ import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { requireCredentialRefKeyset } from './credential-keyset.ts';
 import { voidedKey } from './file.ts';
-import { referencedObjectKeys } from './repo-orphan-gc.ts';
 import { deleteIdempotencyBefore, markPurged, versionsToPurge } from './repo.ts';
 import {
   blockedDeletedPasses,
@@ -12,6 +11,7 @@ import {
   deletePassRows,
   expiredDeletedPasses,
 } from './repo-ops-retention.ts';
+import { referencedObjectKeys } from './repo-orphan-gc.ts';
 
 const DAY = 86_400_000;
 const PURGE_BATCH = 500;
