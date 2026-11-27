@@ -97,7 +97,7 @@ export function Quickstart({
   const current = done.indexOf(false);
   const stateOf = (i: number): StepState => (done[i] ? 'done' : i === current ? 'current' : 'todo');
   // Calls from a terminal and the webhook that follows tick on the server: read the home again while they are due.
-  useSinglePoll('home', open && finished !== true && done[2] === true, q.poll);
+  useSinglePoll('home', open && finished !== true && done[2] === true, q.poll, 6000);
   const elapsed = useRunTime(progress?.startedAt ?? null, q.skew, progress?.doneAt ?? null);
 
   const fix = useMemo(() => {

@@ -33,6 +33,20 @@ describe('useSinglePoll', () => {
     expect(Math.abs((calls.a ?? 0) - (calls.b ?? 0))).toBeLessThanOrEqual(1);
   });
 
+  it('lets the poll a person waits on go first, and still reads the slow one', async () => {
+    vi.useFakeTimers();
+    const fast = vi.fn();
+    const slow = vi.fn();
+    renderHook(() => {
+      useSinglePoll('fast', true, fast);
+      useSinglePoll('slow', true, slow, 6000);
+    });
+    await minute();
+    expect(fast.mock.calls.length).toBeGreaterThanOrEqual(18);
+    expect(slow.mock.calls.length).toBeGreaterThanOrEqual(8);
+    expect(fast.mock.calls.length + slow.mock.calls.length).toBeLessThanOrEqual(31);
+  });
+
   it('holds every poll after a 429 by Retry-After, then resumes at pace', async () => {
     vi.useFakeTimers();
     let n = 0;

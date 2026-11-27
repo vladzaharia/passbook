@@ -42,26 +42,31 @@ export function useCaught(
       live = false;
     };
   }, [client, id, version]);
-  useSinglePoll('caught', endpoint !== null && !over, async () => {
-    if (!client || !id || !endpoint) return;
-    if (Date.now() > until.current) return setOver(true);
-    try {
-      const page = await client.send<{ items: WebhookCaptureDto[] }>(
-        'GET',
-        `/webhook-endpoints/${encodeURIComponent(endpoint)}/captures?limit=20&type=${want}`,
-        undefined,
-        PORTAL_READ,
-      );
-      const hit = page.body?.items.find((c) => c.body.includes(id));
-      if (hit) {
-        setCaught((c) => ({ ...c, [want]: hit.createdAt }));
-        setEndpoint(null);
-      } else if (page.status === 429) {
-        throw new ApiError({ status: 429, code: 'rate_limited', retryAfter: page.retryAfter });
+  useSinglePoll(
+    'caught',
+    endpoint !== null && !over,
+    async () => {
+      if (!client || !id || !endpoint) return;
+      if (Date.now() > until.current) return setOver(true);
+      try {
+        const page = await client.send<{ items: WebhookCaptureDto[] }>(
+          'GET',
+          `/webhook-endpoints/${encodeURIComponent(endpoint)}/captures?limit=20&type=${want}`,
+          undefined,
+          PORTAL_READ,
+        );
+        const hit = page.body?.items.find((c) => c.body.includes(id));
+        if (hit) {
+          setCaught((c) => ({ ...c, [want]: hit.createdAt }));
+          setEndpoint(null);
+        } else if (page.status === 429) {
+          throw new ApiError({ status: 429, code: 'rate_limited', retryAfter: page.retryAfter });
+        }
+      } catch (error) {
+        if (isLimited(error)) throw error;
       }
-    } catch (error) {
-      if (isLimited(error)) throw error;
-    }
-  });
+    },
+    4000,
+  );
   return { caught, over };
 }

@@ -8,6 +8,7 @@ const KEY = 'quickstart';
 
 interface Entry {
   run: () => unknown;
+  every: number;
   last: number;
 }
 
@@ -17,13 +18,16 @@ let busy = false;
 let resumeAt = 0;
 let streak = 0;
 
-/** Runs the poll that has waited longest. A 429 holds the whole page back, by `Retry-After` or doubling to 60 s. */
+/** Runs the poll most overdue for its own pace, so the one a person waits on beats a background read. A 429 holds the whole page back, by `Retry-After` or doubling to 60 s. */
 async function tick(): Promise<void> {
   if (busy || document.visibilityState !== 'visible' || Date.now() < resumeAt) return;
   let next: Entry | undefined;
-  for (const e of entries.values()) if (!next || e.last < next.last) next = e;
+  const now = Date.now();
+  const late = (e: Entry) => now - e.last - e.every;
+  for (const e of entries.values())
+    if (late(e) >= -100 && (!next || late(e) > late(next))) next = e;
   if (!next) return;
-  next.last = Date.now();
+  next.last = now;
   busy = true;
   try {
     await next.run();
@@ -47,15 +51,21 @@ async function tick(): Promise<void> {
 
 /**
  * Registers a poll while `active`. All the page's polls (the listener, the sandbox's captures, the home read, the
- * caught-event read) share one loop, so the page makes one call at a time. `run` throws to report a failure: a 429
+ * caught-event read) share one loop, so the page makes one call at a time; `every` is how often one wants a turn,
+ * and a poll that is more overdue goes first. `run` throws to report a failure: a 429
  * slows the loop, anything else is a missed poll.
  */
-export function useSinglePoll(id: string, active: boolean, run: () => unknown): void {
+export function useSinglePoll(
+  id: string,
+  active: boolean,
+  run: () => unknown,
+  every = QS_TICK_MS,
+): void {
   const fn = useRef(run);
   fn.current = run;
   useEffect(() => {
     if (!active) return;
-    entries.set(id, { run: () => fn.current(), last: 0 });
+    entries.set(id, { run: () => fn.current(), every, last: 0 });
     timer ??= setInterval(() => void tick(), QS_TICK_MS);
     return () => {
       entries.delete(id);
@@ -67,5 +77,5 @@ export function useSinglePoll(id: string, active: boolean, run: () => unknown): 
       resumeAt = 0;
       holdPoll(KEY, null);
     };
-  }, [id, active]);
+  }, [id, active, every]);
 }
