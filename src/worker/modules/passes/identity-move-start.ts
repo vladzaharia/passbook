@@ -1,7 +1,9 @@
+import { assertCanSign } from '../../../passkit/index.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { intermediatePem } from '../identities/env-identity.ts';
 import { sendOperationRun } from '../operations/jobs.ts';
 import { startOperation } from '../operations/start.ts';
 import { depsOf } from './deps.ts';
@@ -16,6 +18,56 @@ export interface MoveInput {
   toIdentityId?: string | null;
   /** A caller-derived operation id (`operationIdFor`): a repeat of the same start answers the same operation. */
   id?: string;
+}
+
+/**
+ * Runs the checks `signPass` makes on the target's certificate, for the pass type and team it signs as, so a target
+ * that cannot sign is refused before a row is planned instead of failing the first replacement. Only the
+ * certificate is read, never the key. An identity with no certificate to read cannot sign either.
+ */
+async function assertTargetSigns(
+  ctx: ServiceContext,
+  target: {
+    certificate?: string | null | undefined;
+    passTypeIdentifier?: string | undefined;
+    teamIdentifier?: string | undefined;
+  },
+) {
+  if (!target.certificate)
+    throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
+  const { passTypeIdentifier, teamIdentifier } = target;
+  try {
+    await assertCanSign(
+      { certificate: target.certificate, intermediate: intermediatePem(ctx.env) },
+      {
+        now: new Date(ctx.clock.now()),
+        ...(passTypeIdentifier && teamIdentifier
+          ? { expectedIdentity: { passTypeIdentifier, teamIdentifier } }
+          : {}),
+      },
+    );
+  } catch (error) {
+    const why = (error as { code?: unknown }).code;
+    if (why === 'SIGN_CERT_NOT_VALID')
+      throw new ConflictError(
+        'The new identity has expired. Renew it, then try again.',
+        'IDENTITY_EXPIRED',
+      );
+    if (why === 'SIGN_INTERMEDIATE_EXPIRED')
+      throw new ConflictError(
+        'The Apple intermediate certificate has expired. Update it, then try again.',
+        'IDENTITY_INTERMEDIATE_EXPIRED',
+      );
+    if (why === 'SIGN_IDENTITY_MISMATCH')
+      throw new ConflictError(
+        "The new identity's certificate is for another pass type or team. Upload the right one.",
+        'IDENTITY_CERT_MISMATCH',
+      );
+    throw new ConflictError(
+      'The new identity does not chain to the Apple intermediate. Check it, then try again.',
+      'IDENTITY_CHAIN_INVALID',
+    );
+  }
 }
 
 /** The identities and the org of a move, refused early: a move to an identity that cannot issue never starts. */
@@ -34,6 +86,16 @@ async function checked(ctx: ServiceContext, input: MoveInput, keyless = false) {
   if (!from || !to) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
   if (from.id === to.id)
     throw new ConflictError('The passes are already on that identity.', 'IDENTITY_MOVE_SAME');
+  await assertTargetSigns(
+    ctx,
+    'material' in to
+      ? {
+          certificate: to.material.certificate,
+          passTypeIdentifier: to.passTypeIdentifier,
+          teamIdentifier: to.teamIdentifier,
+        }
+      : to,
+  );
   return { fromId: from.id, toId: to.id };
 }
 

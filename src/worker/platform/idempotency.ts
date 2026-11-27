@@ -159,8 +159,16 @@ export async function idempotentJson<T>(
   return c.json((replay ? await replay() : result.body) as never, result.status as 200);
 }
 
-/** Daily cron hook: drops expired responses. */
+const SWEEP_BATCH = 1000;
+const SWEEP_MAX_BATCHES = 50;
+
+/** Daily cron hook: drops expired responses, in bounded batches. */
 export async function sweepIdempotency(ctx: ServiceContext): Promise<void> {
-  const deleted = await deleteExpiredRequests(ctx.env.DB, ctx.clock.now());
+  let deleted = 0;
+  for (let i = 0; i < SWEEP_MAX_BATCHES; i++) {
+    const n = await deleteExpiredRequests(ctx.env.DB, ctx.clock.now(), SWEEP_BATCH);
+    deleted += n;
+    if (n < SWEEP_BATCH) break;
+  }
   ctx.log.info('idempotency.sweep', { deleted });
 }

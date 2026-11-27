@@ -160,4 +160,22 @@ describe('withIdempotency', () => {
     await sweepIdempotency(ctx);
     expect((await count())?.n).toBe(0);
   });
+
+  it('sweeps more than one batch, and only expired rows', async () => {
+    const { clock, ctx } = setup();
+    const now = clock.now();
+    const rows = Array.from({ length: 2300 }, (_, i) =>
+      e.DB.prepare(
+        `INSERT INTO idempotent_requests (org_id, mode, principal, operation, key, request_hash, created_at, expires_at)
+         VALUES ('o', 'live', 'p', 'op', ?, 'h', ?, ?)`,
+      ).bind(`bulk-${i}`, now, i < 2200 ? now - 1 : now + 1000),
+    );
+    await e.DB.batch(rows);
+    await sweepIdempotency(ctx);
+    const left = await first<{ n: number }>(
+      e.DB,
+      "SELECT COUNT(*) AS n FROM idempotent_requests WHERE key LIKE 'bulk-%'",
+    );
+    expect(left?.n).toBe(100);
+  });
 });

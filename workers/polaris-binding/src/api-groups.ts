@@ -114,7 +114,7 @@ export function signupApi(s: Shared): SignupApi {
       const mm = { ...m, target: row.tokenId };
       // Withdrawing a token is harmless under an unsafe config, so only a freeze stops it.
       await assertNotFrozen(db, mm, deps.now());
-      return call.ledgered('deleteSignup', mm, async (req) => {
+      return call.ledgered(c.dryRun ? 'preview' : 'deleteSignup', mm, async (req) => {
         let usage: number | null = null;
         for (let page = 1; page <= LIST_PAGES && usage === null; page++) {
           const res = await req(
