@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
+import { useBlueprintWizard } from './helpers/blueprint-wizard.ts';
+import { logoPng } from './helpers/png.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
@@ -35,7 +37,6 @@ async function clean(page: Page, step: string) {
 }
 
 async function look(page: Page, name: string) {
-  await page.waitForTimeout(400);
   await shots(page, name);
   await clean(page, name);
 }
@@ -94,6 +95,12 @@ test('Use blueprint: Name, Look, Review, then the template opens', async ({ page
   await page.getByRole('button', { name: 'Next' }).waitFor();
   // A colour on the Look step reaches Review; the org's own brand is left alone.
   await page.getByLabel('Custom colour').fill('#0f766e');
+  // Stamps and currency show only where the blueprint offers them.
+  const currency = page.getByRole('combobox', { name: 'Currency' });
+  if (await currency.isVisible()) {
+    await currency.click();
+    await page.getByRole('option').last().click();
+  }
   const forAll = page.getByRole('switch', { name: 'Use for all passes' });
   if (await forAll.isVisible()) {
     if ((await forAll.getAttribute('aria-checked')) === 'true') await forAll.click();
@@ -109,4 +116,47 @@ test('Use blueprint: Name, Look, Review, then the template opens', async ({ page
   await page.getByRole('button', { name: 'Create template' }).click();
   await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
   await expect(page.getByText('From Balance card')).toBeVisible();
+});
+
+test('Use blueprint: logo, Edit from Review, Open designer', async ({ page }) => {
+  const seed = readSeed();
+  const name = `Wizard logo ${uid('l')}`;
+  await page.goto(`/admin/blueprints?orgId=${encodeURIComponent(seed.org.id)}`);
+  await page.getByRole('button', { name: 'Use Balance card' }).click();
+  await expect(page.getByRole('heading', { name: 'Name the template' })).toBeVisible();
+  await page.getByRole('textbox', { name: /^Name/ }).fill(name);
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Logo and colour' })).toBeVisible();
+
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'brand.png',
+    mimeType: 'image/png',
+    buffer: logoPng(256, 256, [15, 118, 110]),
+  });
+  await expect(page.getByRole('button', { name: 'Remove logo' })).toBeVisible();
+  // Nothing reaches the org's brand when the switch is off, so Review says so.
+  const forAll = page.getByRole('switch', { name: 'Use for all passes' });
+  if ((await forAll.isVisible()) && (await forAll.getAttribute('aria-checked')) === 'true')
+    await forAll.click();
+  await page.getByRole('button', { name: /^(Next|Review)$/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'Check and create' })).toBeVisible();
+  const lookSection = page.getByRole('region', { name: 'Look' });
+  await expect(lookSection.getByText('brand.png')).toBeVisible();
+  await expect(page.getByText("Your choices here won't carry over to the designer.")).toBeVisible();
+
+  // Edit from Review goes back to the step; Open designer carries the name.
+  await page.getByRole('button', { name: 'Edit name' }).click();
+  await expect(page.getByRole('heading', { name: 'Name the template' })).toBeVisible();
+  await page.getByRole('textbox', { name: /^Name/ }).fill(`${name} 2`);
+  await page.getByRole('button', { name: 'Open designer' }).click();
+  await page.waitForURL((u) => /\/templates\/new$/.test(u.pathname));
+});
+
+test('Use blueprint: the shared helper makes the template', async ({ page }) => {
+  const seed = readSeed();
+  await page.goto(`/admin/blueprints?orgId=${encodeURIComponent(seed.org.id)}`);
+  await page.getByRole('button', { name: 'Use Balance card' }).click();
+  await useBlueprintWizard(page, `Wizard helper ${uid('h')}`);
+  await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
 });

@@ -92,12 +92,17 @@ function Loaded({
   const orgSetsColors = orgBrand?.passColors.source === 'org';
   const bg = orgBrand?.passColors.value?.background;
   // What the organization already sets stays the organization's; the rest goes to it only on "Use for all passes".
+  // Whether the switch would change anything: nothing reaches the brand without a logo or colour of its own.
+  const reaches =
+    canBrand &&
+    ((!orgSetsLogo && quick.logo !== null) || (!orgSetsColors && quick.color !== undefined));
   const toOrg = {
     logo: canBrand && brandAll && !orgSetsLogo && quick.logo !== null,
     colors: canBrand && brandAll && !orgSetsColors && quick.color !== undefined,
   };
   const orgName = useOrgScope().membership?.orgName;
   const phone = useMediaQuery(PHONE);
+  const coarse = useMediaQuery('(pointer: coarse)');
   const wide = useMediaQuery('(min-width: 1024px)');
   const router = useRouter();
   const canGoBack = useCanGoBack();
@@ -142,6 +147,8 @@ function Loaded({
       });
     },
   });
+  const designerNote =
+    quick.touched && !phone ? "Your choices here won't carry over to the designer." : undefined;
   const stage = <UseStage preview={preview} quick={quick} orgName={orgName} />;
   const cancel = () =>
     canGoBack ? router.history.back() : void navigate({ to: '/admin/o/$orgId', params: { orgId } });
@@ -187,7 +194,7 @@ function Loaded({
               {(c) => (
                 <Input
                   {...c}
-                  data-autofocus
+                  {...(coarse ? {} : { 'data-autofocus': true })}
                   value={name}
                   maxLength={120}
                   onChange={(e) => setName(e.target.value)}
@@ -219,16 +226,13 @@ function Loaded({
                   onCheckedChange={setForAll}
                 />
               ) : null}
-              {quick.touched && !phone ? (
-                <p className="text-xs text-fg-muted">
-                  Your choices here won't carry over to the designer.
-                </p>
-              ) : null}
+              {designerNote ? <p className="text-xs text-fg-muted">{designerNote}</p> : null}
             </>
           ) : null}
           {w.id === 'review' ? (
             <WizardReview
               level={3}
+              note={designerNote}
               onEdit={w.go}
               preview={wide ? undefined : stage}
               sections={[
@@ -246,7 +250,7 @@ function Loaded({
                       ? [{ label: 'Stamps for a reward', value: String(goal) }]
                       : []),
                     ...(currency !== undefined ? [{ label: 'Currency', value: currency }] : []),
-                    ...(canBrand
+                    ...(reaches
                       ? [{ label: 'Use for all passes', value: brandAll ? 'Yes' : 'No' }]
                       : []),
                   ],
