@@ -82,7 +82,10 @@
     // "1" stores the hardware summary devices report. On since the release after the tolerant
     // reader shipped. Rollback: set "0" and deploy; stored summaries are ignored by readers, not
     // dropped. Do not roll the Worker back past the tolerant reader (044cfe11d) while rows exist.
-    "DEVICE_REPORT_HARDWARE": "1"
+    "DEVICE_REPORT_HARDWARE": "1",
+    // "1" turns on Workbench device passes (a developer's sandbox pass on their phone). Off until the owner has
+    // provisioned the device-test identity and the security review is signed off. Off is also the kill switch.
+    "DEVICE_PASS_ENABLED": "0"
   },
 
   "secrets": {

@@ -21,7 +21,8 @@
     "PLATFORM_TEAM_ID": "48H7CLBV8Y",
     "TURNSTILE_SITE_KEY": "wallet-test-turnstile",
     "SSRF_DENY_HOSTS": "",
-    "SCAN_ENABLED": "1"
+    "SCAN_ENABLED": "1",
+    "DEVICE_PASS_ENABLED": "0"
   },
   "assets": {
     "binding": "ASSETS",
