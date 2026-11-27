@@ -68,7 +68,9 @@ describe('the hand-off from the signed-out page', () => {
     const target = handoffTarget(state({}));
     const hash = target.slice(target.indexOf('#'));
     expect(ownsHandoff(hash)).toBe(true);
-    expect(ownsHandoff(`${hash.replace(/s=[^&]+/, 's=1')}`)).toBe(false);
+    const params = new URLSearchParams(hash.slice(1));
+    params.set('s', '1');
+    expect(ownsHandoff(`#${params}`)).toBe(false);
     expect(ownsHandoff('#t=x')).toBe(false);
     spendHandoff();
     expect(ownsHandoff(hash)).toBe(false);
