@@ -82,6 +82,8 @@ export type Loop =
       /** From here a different code replaces the verdict (T0 + NEXT_SCAN_AFTER_VERDICT). */
       openFrom: number;
       next: ScanInput | null;
+      /** The request this verdict answers: a late answer replaces it only under the same key. */
+      key?: string;
       /** What was sent, so a Manager's PIN can re-send the same draft (`needs_approval`). */
       draft?: Draft;
       /** The last PIN was refused: the tries the lockout leaves, or locked. */

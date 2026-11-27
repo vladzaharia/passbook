@@ -181,6 +181,7 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
       outcome,
       resumeCamera: l.s === 'checking',
       next: l.next,
+      key: l.key,
     },
     env,
   );
@@ -226,7 +227,8 @@ function late(s: MachineState, ev: Answer, env: Env): Out {
   const drop: Cmd = { c: 'unsure.drop', key: ev.key };
   const l = base.loop;
   const shown = (l.s === 'verdict' || l.s === 'member') && l.input.sig === entry.sig;
-  if (shown && l.s === 'verdict') {
+  // A verdict of a newer request for the same pass is not this answer's to replace.
+  if (shown && l.s === 'verdict' && l.key === ev.key) {
     const v = enterVerdict(
       base,
       {
@@ -236,6 +238,7 @@ function late(s: MachineState, ev: Answer, env: Env): Out {
         inPlace: true,
         next: l.next,
         replaceRecentAt: entry.at,
+        key: ev.key,
       },
       env,
     );
