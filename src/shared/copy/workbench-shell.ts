@@ -5,23 +5,10 @@ import { WB_AREA_WORDS } from './workbench-areas.ts';
  * The Workbench's own words: area names, groups, the bar, the switcher, attention and keys
  * (design §1.4, §1.6, §5.4). States live in workbench-states.ts.
  */
-const WB_LABEL: Record<WbTool, string> = {
-  home: 'Home',
-  quickstart: 'Quickstart',
-  design: 'Design',
-  passes: 'Passes',
-  console: 'Console',
-  logs: 'Logs',
-  events: 'Events',
-  inbox: 'Inbox',
-  activity: 'Activity',
-  keys: 'Keys',
-  sandbox: 'Sandbox',
-};
+export const WB_AREA = WB_AREA_WORDS;
 
-export const WB_AREA = Object.fromEntries(
-  (Object.keys(WB_LABEL) as WbTool[]).map((t) => [t, { label: WB_LABEL[t], ...WB_AREA_WORDS[t] }]),
-) as Record<WbTool, { label: string; title: string; keywords: readonly string[] }>;
+/** The nav label: the title, bar the Test inbox, which reads "Inbox" there. */
+export const wbLabel = (t: WbTool): string => (t === 'inbox' ? 'Inbox' : WB_AREA[t].title);
 
 /** The tab title when it says more than the h1: Events is where webhooks live. */
 export const WB_TAB_TITLE: Partial<Record<WbTool, string>> = { events: 'Events and webhooks' };
