@@ -1956,6 +1956,15 @@
       ]
     },
     {
+      "code": "IDENTITY_CERT_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_CERT_NOT_FOUND",
       "statuses": [
         404
@@ -2065,6 +2074,15 @@
       ]
     },
     {
+      "code": "IDENTITY_INTERMEDIATE_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_IN_USE",
       "statuses": [
         409
@@ -2124,7 +2142,8 @@
         404
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {

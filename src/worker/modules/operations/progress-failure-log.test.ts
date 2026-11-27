@@ -91,6 +91,13 @@ describe('a failed operation logs its cause', () => {
     expect(JSON.stringify(line)).not.toContain('holder@example.com');
   });
 
+  it('never takes a site from a line of a multi-line message', async () => {
+    const [line] = await failWith(
+      new Error('first\n    at fake (somewhere/else.ts:1:2)\nlast.ts:3:4'),
+    );
+    expect(String(line?.data.site)).toMatch(/progress-failure-log\.test\.ts:\d+:\d+$/);
+  });
+
   it('logs an AppError at warn with its own code and the step', async () => {
     const [line] = await failWith(new AppError('IDENTITY_MOVE_PARTIAL', 502, 'Retry. a@b.example'));
     expect(line).toMatchObject({

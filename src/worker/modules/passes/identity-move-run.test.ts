@@ -1,6 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { fixtureIdentity } from '../../../../test/helpers/env.ts';
 import { deviceToken, makeApiKey } from '../../../../test/helpers/index.ts';
+import {
+  createFixtureIdentity,
+  FIXTURE_IDENTITY,
+} from '../../../passkit/testing/fixture-identity.ts';
 import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
@@ -97,6 +100,13 @@ describe('starting a move', () => {
 
   it('previews against a root whose key cannot be decrypted; starting still refuses', async () => {
     const { org } = await orgWithPasses(kit, 2);
+    // A root whose certificate chains to the intermediate this run is given, so only its key is bad.
+    const root = await createFixtureIdentity(
+      { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' },
+      { now: new Date('2026-01-01T00:00:00.000Z'), days: 3650, caDays: 3650 },
+    );
+    const base = job();
+    const ctx = { ...base, env: { ...base.env, SIGNER_PLATFORM_INTERMEDIATE: root.intermediate } };
     await run(
       kit.env.DB,
       "INSERT OR IGNORE INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-bad', 'pass_signer', 1, x'00', x'00', x'00', 1)",
@@ -106,21 +116,25 @@ describe('starting a move', () => {
       `INSERT INTO signing_identities
          (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
           provenance, purpose, apns_health, is_default, issuing, created_at)
-       VALUES ('slot-bad', NULL, 'Root', 'pass.mobile.passbook', 'TEAM123456', 'db', 'cred-bad', ?, ?,
+       VALUES ('slot-bad', NULL, 'Root', ?, ?, 'db', 'cred-bad', ?, ?,
          'platform', 'passes', 'healthy', 0, 1, 1)`,
-      // A certificate under the Worker's own intermediate, so only the key is bad.
-      [(await fixtureIdentity()).certificate, kit.clock.now() + 90 * DAY],
+      [
+        'pass.mobile.passbook',
+        FIXTURE_IDENTITY.teamIdentifier,
+        root.certificate,
+        kit.clock.now() + 90 * DAY,
+      ],
     );
     const input = { orgId: org.id, fromIdentityId: 'platform', toIdentityId: 'slot-bad' };
-    expect(await previewIdentityMove(job(), input)).toMatchObject({
+    expect(await previewIdentityMove(ctx, input)).toMatchObject({
       passes: 2,
       toIdentityId: 'slot-bad',
     });
-    await expect(startIdentityMove(job(), ADMIN, input)).rejects.toMatchObject({
+    await expect(startIdentityMove(ctx, ADMIN, input)).rejects.toMatchObject({
       code: 'IDENTITY_KEY_UNREADABLE',
     });
     await run(kit.env.DB, "UPDATE signing_identities SET issuing = 0 WHERE id = 'slot-bad'");
-    await expect(previewIdentityMove(job(), input)).rejects.toMatchObject({
+    await expect(previewIdentityMove(ctx, input)).rejects.toMatchObject({
       code: 'IDENTITY_RETIRED',
     });
   });

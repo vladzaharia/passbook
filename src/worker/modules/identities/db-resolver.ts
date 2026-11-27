@@ -1,11 +1,12 @@
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
-import { type AppEnv, envString } from '../../platform/env.ts';
+import type { AppEnv } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import { createLogger } from '../../platform/log.ts';
 import {
   envIdentityPresent,
   type IdentityResolver,
   intermediatePem,
+  type PeekedIdentity,
   PLATFORM_IDENTITY_ID,
   type ResolvedIdentity,
   readEnvIdentity,
@@ -180,38 +181,54 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
   /** The row an id names, without its key: the legacy id stands for the env identity when it has no row. */
   const peekRow = async (
     id: string,
-  ): Promise<{ id: string; orgId: string | null; purpose: string; certificate: string | null }> => {
+  ): Promise<PeekedIdentity & { orgId: string | null; purpose: string }> => {
     const row = await getIdentityRow(env.DB, id);
     const legacy =
-      id === PLATFORM_IDENTITY_ID ? (envString(env, 'SIGNER_PLATFORM_CERTIFICATE') ?? null) : null;
+      id === PLATFORM_IDENTITY_ID && envIdentityPresent(env) ? readEnvIdentity(env) : null;
     if (row) {
       if (row.source !== 'env' && !row.cert_pem) throw notFound();
       return {
         id: row.id,
         orgId: row.org_id,
         purpose: row.purpose,
-        certificate: row.source === 'env' ? legacy : row.cert_pem,
+        // The legacy row signs with the env material; any other env row is not configured, as `resolveRow` says.
+        certificate: row.source === 'env' ? (legacy?.material.certificate ?? null) : row.cert_pem,
+        passTypeIdentifier: row.pass_type_identifier,
+        teamIdentifier: row.team_identifier,
       };
     }
-    if (id === PLATFORM_IDENTITY_ID && envIdentityPresent(env))
-      return { id, orgId: null, purpose: 'passes', certificate: legacy };
+    if (legacy)
+      return {
+        id,
+        orgId: null,
+        purpose: 'passes',
+        certificate: legacy.material.certificate,
+        passTypeIdentifier: legacy.passTypeIdentifier,
+        teamIdentifier: legacy.teamIdentifier,
+      };
     throw notFound();
   };
+
+  const peeked = (meta: Awaited<ReturnType<typeof peekRow>>): PeekedIdentity => ({
+    id: meta.id,
+    certificate: meta.certificate ?? null,
+    ...(meta.passTypeIdentifier ? { passTypeIdentifier: meta.passTypeIdentifier } : {}),
+    ...(meta.teamIdentifier ? { teamIdentifier: meta.teamIdentifier } : {}),
+  });
 
   return {
     platform,
     byId,
     byRow: (row) => resolveRow(env, row),
     async peekById(id) {
-      const { certificate } = await peekRow(id);
-      return { id, certificate };
+      return peeked(await peekRow(id));
     },
     async peekForOrg(orgId, identityId, now) {
       const scoped = async (id: string) => {
         const meta = await peekRow(id);
         if (meta.purpose !== 'passes') throw notFound();
         if (meta.orgId !== null && meta.orgId !== orgId) throw notFound();
-        return { id: meta.id, certificate: meta.certificate };
+        return peeked(meta);
       };
       if (identityId) {
         const found = await scoped(identityId);
@@ -232,14 +249,13 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
       if (fallback && fallback.purpose !== 'passes') throw notFound();
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
         if (!(await refusal(env, fallback.id, now))) {
-          const { id, certificate } = await peekRow(fallback.id);
-          return { id, certificate };
+          return peeked(await peekRow(fallback.id));
         }
       }
-      const { id, certificate } = await peekRow(PLATFORM_IDENTITY_ID);
-      const refused = await refusal(env, id, now);
+      const platformRow = await peekRow(PLATFORM_IDENTITY_ID);
+      const refused = await refusal(env, platformRow.id, now);
       if (refused) throw refused;
-      return { id, certificate };
+      return peeked(platformRow);
     },
     async forOrg(orgId, identityId, now) {
       // An org may use its own identities and global ones, never another org's.

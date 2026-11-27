@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { fixtureIdentity } from '../../../../test/helpers/env.ts';
 import {
   createFixtureIdentity,
   FIXTURE_IDENTITY,
@@ -119,6 +120,42 @@ describe('a target identity that cannot sign', () => {
     );
   });
 
+  it('is refused when its certificate is for another pass type or team', async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    await run(
+      kit.env.DB,
+      "INSERT OR IGNORE INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-other', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
+          provenance, purpose, is_default, issuing, created_at)
+       VALUES ('identity-other', NULL, 'Other', 'pass.test.other', ?, 'db', 'cred-other', ?, ?, 'platform', 'passes', 0, 1, 1)`,
+      [
+        FIXTURE_IDENTITY.teamIdentifier,
+        (await fixtureIdentity()).certificate,
+        kit.clock.now() + 365 * DAY,
+      ],
+    );
+    const error = await previewIdentityMove(jobCtxOf(kit), {
+      orgId: org.id,
+      fromIdentityId: 'platform',
+      toIdentityId: 'identity-other',
+    }).catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 'IDENTITY_CERT_MISMATCH', status: 409 });
+  });
+
+  it('is refused when there is no certificate to check', async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    const error = await previewIdentityMove(jobCtxOf(kit), {
+      orgId: org.id,
+      fromIdentityId: 'platform',
+      toIdentityId: SECOND_ID,
+    }).catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 'IDENTITY_NOT_CONFIGURED' });
+  });
+
   it("is not reported for the Worker's own certificate", async () => {
     const { org } = await orgWithPasses(kit, 1);
     await expect(
@@ -166,5 +203,34 @@ describe('a move whose identity stops signing after it started', () => {
     });
     expect(String(failed[0]?.data.site)).toContain('sign/index.ts');
     expect(JSON.stringify(lines)).not.toMatch(/@example\.com/);
+  });
+});
+
+describe('a Worker whose Apple intermediate has expired', () => {
+  it('reports it as expired, not as a broken chain', async () => {
+    const { org } = await orgWithPasses(kit, 1);
+    const short = await createFixtureIdentity(
+      { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.test.short' },
+      { now: new Date('2026-01-01T00:00:00.000Z'), days: 3650, caDays: 1 },
+    );
+    await run(
+      kit.env.DB,
+      "INSERT OR IGNORE INTO credentials (id, kind, kek_version, iv, wrapped_dek, ciphertext, created_at) VALUES ('cred-short', 'pass_signer', 1, x'00', x'00', x'00', 1)",
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, not_after,
+          provenance, purpose, is_default, issuing, created_at)
+       VALUES ('identity-short', NULL, 'Short', 'pass.test.short', ?, 'db', 'cred-short', ?, ?, 'platform', 'passes', 0, 1, 1)`,
+      [FIXTURE_IDENTITY.teamIdentifier, short.certificate, kit.clock.now() + 3000 * DAY],
+    );
+    kit.clock.advance(3 * DAY);
+    const ctx = jobCtxOf(kit);
+    const error = await previewIdentityMove(
+      { ...ctx, env: { ...ctx.env, SIGNER_PLATFORM_INTERMEDIATE: short.intermediate } },
+      { orgId: org.id, fromIdentityId: 'platform', toIdentityId: 'identity-short' },
+    ).catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 'IDENTITY_INTERMEDIATE_EXPIRED', status: 409 });
   });
 });

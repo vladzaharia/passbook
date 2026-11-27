@@ -30,8 +30,12 @@ function causeCodeOf(error: unknown, depth = 0): string | null {
 
 function siteOf(error: unknown): string | null {
   if (!(error instanceof Error) || !error.stack) return null;
-  for (const line of error.stack.split('\n').slice(1))
-    if (FRAME.test(line.trim())) return FRAME.exec(line.trim())?.[1] ?? null;
+  // `stack` opens with `Name: message`, which can span lines: only what follows those lines is a frame.
+  const frames = error.stack.split('\n').slice(error.message.split('\n').length);
+  for (const line of frames) {
+    const frame = line.trim();
+    if (frame.startsWith('at ')) return FRAME.exec(frame)?.[1] ?? null;
+  }
   return null;
 }
 

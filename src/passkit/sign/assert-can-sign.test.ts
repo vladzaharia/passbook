@@ -29,4 +29,12 @@ describe('assertCanSign', () => {
     }).catch((e: unknown) => e);
     expect(mismatch).toMatchObject({ code: 'SIGN_IDENTITY_MISMATCH' });
   });
+
+  it('says an expired intermediate is expired, apart from one that did not issue the certificate', async () => {
+    const own = await createFixtureIdentity(FIXTURE_IDENTITY, { days: 5, caDays: 3 });
+    const later = new Date(Date.now() + 4 * 86_400_000);
+    expect(await assertCanSign(own, { now: later }).catch((e: unknown) => e)).toMatchObject({
+      code: 'SIGN_INTERMEDIATE_EXPIRED',
+    });
+  });
 });

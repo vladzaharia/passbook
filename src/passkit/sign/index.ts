@@ -162,13 +162,10 @@ export async function assertCanSign(
       'Pass signing certificate is not currently valid',
     );
   }
-  if (
-    intermediate.notBefore.value > now ||
-    intermediate.notAfter.value < now ||
-    !signer.issuer.isEqual(intermediate.subject)
-  ) {
+  if (intermediate.notBefore.value > now || intermediate.notAfter.value < now)
+    throw new SigningError('SIGN_INTERMEDIATE_EXPIRED', 'Incorrect or expired WWDR intermediate');
+  if (!signer.issuer.isEqual(intermediate.subject))
     throw new SigningError('SIGN_INTERMEDIATE_INVALID', 'Incorrect or expired WWDR intermediate');
-  }
   const expected = options.expectedIdentity;
   if (
     expected &&

@@ -27,6 +27,8 @@ const varsFile = resolve(root, '.dev.vars.e2e');
 rmSync(varsFile, { force: true });
 // The platform's root pass type is a sibling under the same CA, so a spec can seed a database identity
 // that signs with the Worker's own intermediate (e2e/helpers/platform-root.ts reads it from the state folder).
+// It keeps the real identifier because the platform slot policy requires it; the certificate is signed by this
+// throwaway test CA, lives only in the local e2e database and cannot sign a pass Apple would accept.
 const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
   siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
 });

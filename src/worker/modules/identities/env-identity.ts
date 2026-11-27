@@ -15,10 +15,13 @@ export interface ResolvedIdentity extends PassIdentity {
   material: SigningMaterial;
 }
 
-/** What a metadata read of an identity names: its id and certificate (never the key), when one is known. */
+/** What a metadata read of an identity names: its id and certificate (never the key), and the pass type and team it signs for. */
 export interface PeekedIdentity {
   id: string;
   certificate?: string | null;
+  /** What the certificate must be for: signing refuses any other pass type or team. */
+  passTypeIdentifier?: string;
+  teamIdentifier?: string;
 }
 
 export interface IdentityResolver {
