@@ -175,7 +175,9 @@ export function ToolEmpty({ tool, action }: { tool: WbTool; action?: ReactNode }
       title={empty.title}
       action={
         action ? (
-          <div className="flex justify-center [&>*]:justify-center">{action}</div>
+          <div className="flex flex-wrap justify-center gap-2 max-sm:w-full max-sm:flex-col [&>*]:justify-center">
+            {action}
+          </div>
         ) : undefined
       }
     />

@@ -76,11 +76,26 @@ export function EventsTool({ className }: { className: string }) {
     }
   }
 
-  // ⌘↵ is the visible action: Add endpoint while the empty state shows, else send a test event (design §5.4).
+  // ⌘↵ sends a test event; while the empty state shows it holds both ways on, so the head keeps neither (design §5.4).
   const [emptyNow, setEmptyNow] = useState(false);
-  useBenchKeys({ primary: () => (emptyNow ? openAdd() : void sendTest()) });
+  useBenchKeys({ primary: () => void sendTest() });
 
   const empty = <ToolEmpty tool="events" />;
+  const emptyFeed = (
+    <ToolEmpty
+      tool="events"
+      action={
+        <>
+          <Button onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
+            Send test event
+          </Button>
+          <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
+            <a href={addHref}>Add endpoint</a>
+          </Button>
+        </>
+      }
+    />
+  );
   const sendAction = (
     <Button variant="outline" onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
       Send test event
@@ -92,9 +107,11 @@ export function EventsTool({ className }: { className: string }) {
       tool="events"
       markSeen={!emptyNow}
       primary={
-        <Button asChild iconStart={<Plus aria-hidden />}>
-          <a href={addHref}>Add endpoint</a>
-        </Button>
+        emptyNow && params.tab === 'events' ? undefined : (
+          <Button asChild iconStart={<Plus aria-hidden />}>
+            <a href={addHref}>Add endpoint</a>
+          </Button>
+        )
       }
     >
       <div className={`${className} flex flex-col gap-3`}>
@@ -124,7 +141,7 @@ export function EventsTool({ className }: { className: string }) {
             params={params}
             endpoints={list}
             write={write}
-            empty={empty}
+            empty={emptyFeed}
             sendAction={sendAction}
             onEmpty={setEmptyNow}
           />

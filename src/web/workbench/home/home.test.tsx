@@ -153,28 +153,20 @@ describe('Home (sandbox)', () => {
     expect(screen.queryByText(/of 5 done/)).not.toBeInTheDocument();
   });
 
-  it("leaves the Workbench's own reads out of Recent calls", async () => {
-    await renderApp('/workbench/o/sbx', {
+  it("asks the log to leave out the Workbench's own reads", async () => {
+    const { fetchMock } = await renderApp('/workbench/o/sbx', {
       session: 'developer',
-      handlers: homeHandlers(SANDBOX, [
-        {
-          ...call('w1', 200),
-          method: 'GET',
-          path: '/api/v1/workbench/summary',
-          route: '/api/v1/workbench/summary',
-        },
-        {
-          ...call('w2', 200),
-          method: 'GET',
-          path: '/api/v1/operations',
-          route: '/api/v1/operations',
-        },
-        call('c1', 201),
-      ]),
+      handlers: homeHandlers(SANDBOX, [call('c1', 201)]),
     });
     expect(await screen.findByText('/api/v1/passes')).toBeInTheDocument();
-    expect(screen.queryByText('/api/v1/workbench/summary')).not.toBeInTheDocument();
-    expect(screen.queryByText('/api/v1/operations')).not.toBeInTheDocument();
+    const read = fetchMock.mock.calls.find(
+      ([url]) => new URL(String(url), 'http://localhost').pathname === '/api/v1/request-logs',
+    );
+    expect(new URL(String(read?.[0]), 'http://localhost').searchParams.get('portal')).toBe('hide');
+    // Its own reads carry the mark the log filters on.
+    expect(new Headers(((read?.[1] ?? {}) as RequestInit).headers).get('x-passbook-client')).toBe(
+      'portal',
+    );
   });
 });
 
