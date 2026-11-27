@@ -26,7 +26,7 @@ import { membershipRoutes } from './membership-routes.ts';
 import { adminOf, orgsPlatformRoutes } from './routes-platform.ts';
 import { getOrg, updateOrg } from './service.ts';
 
-export const orgsRoutes = createRouter();
+export const orgsRoutes = createRouter({ bodyLimit: false });
 // Membership endpoints have their own guards, including a public invitation landing page.
 orgsRoutes.route('/', membershipRoutes);
 // Directory and lifecycle are platform operations: each route declares its own `{ platform }` access, ahead of the

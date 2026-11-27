@@ -23,7 +23,7 @@ import { assertSharedWrite } from './shared-write.ts';
  * /api/v1/brand: the org's brand kit. A key needs `brand:manage`; a session needs `org:read` to
  * view and `org:manage` to change. An org-bound key may omit `orgId`.
  */
-export const brandRoutes = createRouter();
+export const brandRoutes = createRouter({ bodyLimit: false });
 guard(brandRoutes, requireTenantSessionOrApiKey(['brand:manage']));
 // One PNG of at most 512 KB, base64, plus JSON overhead.
 ownUse(brandRoutes, limitBody(1024 * 1024));

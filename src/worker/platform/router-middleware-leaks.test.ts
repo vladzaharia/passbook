@@ -38,3 +38,35 @@ describe('body caps stay on their own router', () => {
     expect(res.status).toBe(413);
   });
 });
+
+describe('routers with their own larger cap drop the 256 KB default', () => {
+  it('PATCH /orgs/:id takes 300 KB and caps at 1 MB', async () => {
+    const path = `/api/v1/orgs/${api.rig.orgId}`;
+    expect((await api.call('PATCH', path, big(300_000), admin)).status).not.toBe(413);
+    expect((await api.call('PATCH', path, big(1_100_000), admin)).status).toBe(413);
+  });
+
+  it('PUT /orgs/:id/branding/:slot takes 300 KB and caps at 1 MB', async () => {
+    const path = `/api/v1/orgs/${api.rig.orgId}/branding/logo`;
+    expect((await api.call('PUT', path, big(300_000), admin)).status).not.toBe(413);
+    expect((await api.call('PUT', path, big(1_100_000), admin)).status).toBe(413);
+  });
+
+  it('PUT /brand/web-logo takes 300 KB and caps at 1 MB', async () => {
+    const path = '/api/v1/brand/web-logo';
+    expect((await api.call('PUT', path, big(300_000), admin)).status).not.toBe(413);
+    expect((await api.call('PUT', path, big(1_100_000), admin)).status).toBe(413);
+  });
+
+  it('the identity provisioning route (default cap, no shared middleware) leaves its neighbours alone', async () => {
+    const path = `/api/v1/orgs/${api.rig.orgId}/identities/apple`;
+    expect((await api.call('POST', path, big(300_000), admin)).status).toBe(413);
+    const res = await api.call(
+      'POST',
+      `/api/v1/orgs/${api.rig.orgId}/brand-assets`,
+      big(300_000),
+      admin,
+    );
+    expect(res.status).not.toBe(413);
+  });
+});
