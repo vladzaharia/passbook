@@ -183,6 +183,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     passTypeIdentifier: identity.passTypeIdentifier,
     apnsBinding: identity.apnsBinding,
     teamIdentifier: identity.teamIdentifier,
+    collapseId: pass.id,
   };
   if (!(await deps.apns.isAvailable(target))) {
     if (!(await pushPassCurrent(db, fence))) {

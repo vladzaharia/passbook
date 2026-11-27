@@ -32,7 +32,8 @@ export async function checkKeys(ctx: ServiceContext): Promise<Draft> {
         problems.push(`MAC_ROOT_V${version} does not match KEK_V${version}.`);
       }
     }
-    if (kek.length > 0 && (await keysetInitialized(ctx.env.DB))) {
+    const keysetReady = kek.length > 0 && (await keysetInitialized(ctx.env.DB));
+    if (keysetReady) {
       try {
         await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
       } catch (error) {
@@ -65,6 +66,7 @@ export async function checkKeys(ctx: ServiceContext): Promise<Draft> {
       current,
       kekVersions: kek.join(','),
       macRoots: macRoot.join(','),
+      keysetReady,
       rewrapState: state,
       rewrapStamp: stamp,
       rewrapSweep: cursor?.stamp === stamp ? (cursor?.sweep ?? null) : null,

@@ -161,7 +161,7 @@ class PlatformAuditEntriesResource:
         created_before: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> httpx.Response:
-        """Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export`"""
+        """Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/platform/export`"""
         return self._core.request("GET", "/api/v1/audit/platform/export", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, raw=True, **opts)
 
     def list(

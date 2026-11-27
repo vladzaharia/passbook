@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import type { EntitlementPresetDto } from '@/shared/contracts/entitlement-presets.ts';
 import type { EntitlementKey } from '@/shared/contracts/entitlements.ts';
 import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '@/shared/entitlement-impact.ts';
 import { editPresetConfirm } from '@/web/lib/confirms-features.ts';
+import { UserMessageError } from '@/web/lib/errors.ts';
 import {
   Button,
   Callout,
   ConfirmDialog,
-  Dialog,
-  DialogContent,
   ErrorState,
+  FormDialog,
   FormField,
   Select,
   SkeletonRows,
@@ -36,28 +35,69 @@ export function PresetEditor({ current }: { current: string }) {
   );
 }
 
+const orgs = (n: number) => `${n} ${n === 1 ? 'organization' : 'organizations'}`;
+
+interface Edit {
+  /** The preset and revision the draft was made for: another one starts a new draft. */
+  id: string;
+  key: EntitlementKey;
+  draft: ValueDraft;
+}
+
 function PresetDialog({ current, onClose }: { current: string; onClose: () => void }) {
   const query = usePresets();
+  const save = useSetPreset();
   const [picked, setPicked] = useState(current);
+  const [confirming, setConfirming] = useState(false);
+  const [made, setMade] = useState<Edit>();
   const presets = query.data?.presets ?? [];
   const preset = presets.find((p) => p.preset === picked) ?? presets[0];
+  const id = preset ? `${preset.preset}:${preset.revision}` : '';
+  const first = KEYS[0] ?? 'api';
+  const edit: Edit | undefined =
+    made?.id === id
+      ? made
+      : preset && { id, key: first, draft: draftOf(first, preset.values[first] ?? 0) };
+  const parsed = edit ? valueFromDraft(edit.key, edit.draft) : undefined;
+  const before = (preset?.values ?? {}) as EntitlementValues;
+  const impact =
+    edit && parsed && 'value' in parsed
+      ? entitlementImpact(before, { ...before, [edit.key]: parsed.value })
+      : undefined;
+  const pending = preset !== undefined && preset.pendingOrgs > 0;
+
+  async function submit() {
+    if (!preset) return void (await query.refetch());
+    if (pending) {
+      const out = await save.mutateAsync({
+        preset: preset.preset,
+        expectedRevision: preset.revision,
+        values: {},
+      });
+      toast.success(`${orgs(out.moved)} moved`);
+      return;
+    }
+    if (!impact || impact.changes.length === 0) throw new UserMessageError('Change a value first.');
+    setConfirming(true);
+  }
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        size="md"
+    <>
+      <FormDialog
+        open
+        onOpenChange={(open) => !open && onClose()}
         title="Edit presets"
-        footer={
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        }
+        dirty={made !== undefined}
+        busy={query.isPending}
+        submitLabel={!preset ? 'Retry' : pending ? 'Move the rest' : 'Continue'}
+        onSubmit={submit}
       >
         {query.isPending ? (
           <SkeletonRows label="Loading presets" />
-        ) : !preset ? (
+        ) : !preset || !edit ? (
           <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
         ) : (
-          <div className="flex flex-col gap-4">
+          <>
             <FormField label="Preset">
               {(p) => (
                 <Select
@@ -68,92 +108,40 @@ function PresetDialog({ current, onClose }: { current: string; onClose: () => vo
                 />
               )}
             </FormField>
-            {preset.pendingOrgs > 0 ? (
-              <Resume preset={preset} />
+            {pending ? (
+              <Callout tone="warning" title={`${orgs(preset.pendingOrgs)} not moved yet`}>
+                Change {preset.label} again once they have.
+              </Callout>
             ) : (
-              <Change key={`${preset.preset}:${preset.revision}`} preset={preset} />
+              <>
+                <FormField label="Feature">
+                  {(p) => (
+                    <Select
+                      id={p.id}
+                      value={edit.key}
+                      onValueChange={(next) => {
+                        const k = next as EntitlementKey;
+                        setMade({ id, key: k, draft: draftOf(k, preset.values[k] ?? 0) });
+                      }}
+                      options={KEYS.map((k) => ({
+                        value: k,
+                        label: `${ENTITLEMENT_LABEL[k]}: ${formatValue(k, before[k])}`,
+                      }))}
+                    />
+                  )}
+                </FormField>
+                <ValueField
+                  featureKey={edit.key}
+                  draft={edit.draft}
+                  onChange={(draft) => setMade({ ...edit, draft })}
+                  error={parsed && 'error' in parsed ? parsed.error : undefined}
+                />
+              </>
             )}
-          </div>
+          </>
         )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-const orgs = (n: number) => `${n} ${n === 1 ? 'organization' : 'organizations'}`;
-
-/** An earlier change has not reached every organization: the same call with no values carries on. */
-function Resume({ preset }: { preset: EntitlementPresetDto }) {
-  const save = useSetPreset();
-  return (
-    <Callout
-      tone="warning"
-      title={`${orgs(preset.pendingOrgs)} not moved yet`}
-      actions={
-        <Button
-          size="sm"
-          loading={save.isPending}
-          onClick={async () => {
-            const out = await save.mutateAsync({
-              preset: preset.preset,
-              expectedRevision: preset.revision,
-              values: {},
-            });
-            toast.success(`${orgs(out.moved)} moved`);
-          }}
-        >
-          Move the rest
-        </Button>
-      }
-    >
-      Change {preset.label} again once they have.
-    </Callout>
-  );
-}
-
-function Change({ preset }: { preset: EntitlementPresetDto }) {
-  const save = useSetPreset();
-  const [key, setKey] = useState<EntitlementKey>(KEYS[0] ?? 'api');
-  const [draft, setDraft] = useState<ValueDraft>(() => draftOf(key, preset.values[key] ?? 0));
-  const [confirming, setConfirming] = useState(false);
-  const parsed = valueFromDraft(key, draft);
-  const before = preset.values as EntitlementValues;
-  const impact =
-    'value' in parsed ? entitlementImpact(before, { ...before, [key]: parsed.value }) : undefined;
-  return (
-    <div className="flex flex-col gap-4">
-      <FormField label="Feature">
-        {(p) => (
-          <Select
-            id={p.id}
-            value={key}
-            onValueChange={(next) => {
-              const k = next as EntitlementKey;
-              setKey(k);
-              setDraft(draftOf(k, preset.values[k] ?? 0));
-            }}
-            options={KEYS.map((k) => ({
-              value: k,
-              label: `${ENTITLEMENT_LABEL[k]}: ${formatValue(k, before[k])}`,
-            }))}
-          />
-        )}
-      </FormField>
-      <ValueField
-        featureKey={key}
-        draft={draft}
-        onChange={setDraft}
-        error={'error' in parsed ? parsed.error : undefined}
-      />
-      <div>
-        <Button
-          disabled={!impact || impact.changes.length === 0}
-          onClick={() => setConfirming(true)}
-        >
-          Continue
-        </Button>
-      </div>
-      {impact && 'value' in parsed ? (
+      </FormDialog>
+      {preset && edit && impact && parsed && 'value' in parsed ? (
         <ConfirmDialog
           open={confirming}
           onOpenChange={setConfirming}
@@ -162,7 +150,7 @@ function Change({ preset }: { preset: EntitlementPresetDto }) {
             const out = await save.mutateAsync({
               preset: preset.preset,
               expectedRevision: preset.revision,
-              values: { [key]: parsed.value },
+              values: { [edit.key]: parsed.value },
             });
             toast.success(
               out.preset.pendingOrgs > 0
@@ -172,6 +160,6 @@ function Change({ preset }: { preset: EntitlementPresetDto }) {
           }}
         />
       ) : null}
-    </div>
+    </>
   );
 }
