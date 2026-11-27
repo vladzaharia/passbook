@@ -3,7 +3,7 @@ import type { PlatformScope } from './api-scopes.ts';
 import { verifiedPlatformScopeOf } from './auth-capability.ts';
 import type { Check } from './authority-checks.ts';
 import type { Mode, Principal } from './authority-principal.ts';
-import type { AppBindings } from './context.ts';
+import type { AppBindings, Actor as AuditActor } from './context.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
 /**
@@ -80,3 +80,24 @@ export function platformActorOf(
     rateKey: `key:${auth.keyId}`,
   };
 }
+
+/**
+ * The caller of a platform grant: a signed-in admin's live session (the console's services), or a key's `Actor`. A key's
+ * `userId` is null, so a rule about "the admin's own" anything finds no match.
+ */
+export type PlatformCaller = Actor | { userId: string; sessionId: string };
+
+export const callerPrincipal = (who: PlatformCaller): Principal =>
+  'principal' in who
+    ? who.principal
+    : { kind: 'platform', userId: who.userId, sessionIdHash: who.sessionId };
+
+/** The audit actor of a caller: the person, or the key. */
+export const callerActor = (
+  who: PlatformCaller,
+): Extract<AuditActor, { type: 'user' | 'api_key' }> => {
+  if (!('principal' in who)) return { type: 'user', id: who.userId };
+  return who.actorType === 'user'
+    ? { type: 'user', id: who.actorId }
+    : { type: 'api_key', id: who.actorId };
+};

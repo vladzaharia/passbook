@@ -4040,6 +4040,22 @@
     "note": "Platform keys may hold platform:groups: list, create, rename and delete Polaris ID groups, their org rules and manual members."
   },
   {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:identities\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:identities\" added",
+    "note": "A new key scope, platform:identities, for the Apple identity routes. A Platform key holding it signs and rotates; deleting an identity stays a person's."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:orgs\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:orgs\" added",
+    "note": "Platform keys may hold platform:orgs: list, read, create and suspend orgs, features, holds, receipts. Personal orgs, org close and hold release are a person's."
+  },
+  {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:read\" added",
     "class": "additive",
     "operationId": "api-keys.postApiKeys",

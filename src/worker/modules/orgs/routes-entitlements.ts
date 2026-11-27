@@ -11,9 +11,10 @@ import {
   SetEntitlementPresetSchema,
 } from '../../../shared/contracts/entitlement-presets.ts';
 import { OrgPlanParamsSchema, OrgPlanSchema } from '../../../shared/contracts/org-plan.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { modeOf } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
@@ -60,13 +61,12 @@ register(
     summary: "Read an organization's features: preset, overrides and the presets to choose from",
     params: OrgEntitlementsParamsSchema,
     response: OrgEntitlementsSchema,
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
   },
   async (c) => {
-    const auth = authOf(c);
-    if (auth.kind !== 'session') throw new UnauthenticatedError();
     const { id } = c.req.valid('param');
-    await requireNotPersonalFor(c.env.DB, id, auth.userId);
+    // A key is nobody's owner: a personal org's features are its owner's.
+    await requireNotPersonalFor(c.env.DB, id, platformActorOf(c).userId ?? '');
     return c.json(await readOrgEntitlements(serviceContext(c), id));
   },
 );
@@ -81,11 +81,9 @@ register(
     params: OrgEntitlementsParamsSchema,
     body: SetOrgEntitlementsSchema,
     response: OrgEntitlementsSchema,
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
   },
   async (c) => {
-    const auth = authOf(c);
-    if (auth.kind !== 'session') throw new UnauthenticatedError();
     await requireNotPersonal(c.env.DB, c.req.valid('param').id);
     return c.json(
       await setOrgEntitlements(
@@ -93,7 +91,7 @@ register(
         requestActor(c),
         c.req.valid('param').id,
         c.req.valid('json'),
-        { userId: auth.userId, sessionId: auth.sessionId },
+        platformActorOf(c, { scope: 'platform:orgs' }),
       ),
     );
   },
@@ -107,7 +105,7 @@ register(
     path: '/entitlement-presets',
     summary: 'Read every preset with its values and the organizations on it',
     response: EntitlementPresetsSchema,
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
   },
   async (c) => c.json({ presets: await listPresets(serviceContext(c)) }),
 );
@@ -124,21 +122,19 @@ register(
     response: SetEntitlementPresetResultSchema,
     auth: {
       platform: 'platform:orgs',
+      key: true,
       stepUp: { maxAgeSec: STEP_UP_SECONDS, when: presetReachesOrgs },
     },
   },
-  async (c) => {
-    const auth = authOf(c);
-    if (auth.kind !== 'session') throw new UnauthenticatedError();
-    return c.json(
+  async (c) =>
+    c.json(
       await setPreset(
         serviceContext(c),
         requestActor(c),
-        { userId: auth.userId, sessionId: auth.sessionId },
+        platformActorOf(c, { scope: 'platform:orgs' }),
         c.req.valid('json'),
       ),
-    );
-  },
+    ),
 );
 
 /** Mount at /api/v1/orgs. An organization's admins and `org:read` keys see their own features, read-only. */

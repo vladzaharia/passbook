@@ -3,6 +3,7 @@ import {
   MetricsOverviewSchema,
   MetricsQuerySchema,
 } from '../../../shared/contracts/index.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -12,7 +13,7 @@ import { developerFunnel } from './developer-funnel.ts';
 import { templateUsableByOrg } from './repo.ts';
 import { getOverview } from './service.ts';
 
-/** Mount at /api/v1/metrics before `metricsRoutes`, whose console guard would turn a Bearer key away. Person-only. */
+/** Mount at /api/v1/metrics before `metricsRoutes`, whose console guard would turn a Bearer key away. */
 export const metricsPlatformRoutes = createRouter();
 
 register(
@@ -20,7 +21,7 @@ register(
   'metrics',
   {
     method: 'get',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/platform/overview',
     summary: 'Platform overview metrics (filtered results are aggregate-only)',
     query: MetricsQuerySchema,
@@ -29,9 +30,9 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
-    const auth = c.var.auth;
-    if (query.orgId && auth?.kind === 'session')
-      await requireNotPersonalFor(ctx.env.DB, query.orgId, auth.userId);
+    // A key is nobody's owner: no personal org's metrics, ever.
+    if (query.orgId)
+      await requireNotPersonalFor(ctx.env.DB, query.orgId, platformActorOf(c).userId ?? '');
     if (
       query.orgId &&
       query.templateId &&
@@ -50,7 +51,7 @@ register(
     method: 'get',
     path: '/platform/developer',
     summary: 'Developer quickstart funnel: sandboxes by step and time to first pass (30 days)',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     response: DeveloperFunnelSchema,
   },
   async (c) => c.json(await developerFunnel(serviceContext(c))),

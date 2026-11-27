@@ -1,8 +1,10 @@
+import { callerActor, callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { all, first } from '../../platform/db.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
-import type { SettingsAdmin, SettingsAuthority } from '../settings/repo.ts';
+import type { SettingsAuthority } from '../settings/repo.ts';
 import type { HoldKind } from './policy.ts';
 
 export interface HoldRow {
@@ -83,10 +85,22 @@ export async function passInOrg(db: D1Database, orgId: string, passId: string): 
 
 export type HoldBy =
   | { kind: 'org'; authority: SettingsAuthority }
-  | { kind: 'platform'; admin: SettingsAdmin };
+  /** `user` is the user a `placed_by` column names when `admin` is a key: its creator. */
+  | { kind: 'platform'; admin: PlatformCaller; user?: string };
 
-export const holderOf = (by: HoldBy): string =>
-  by.kind === 'org' ? by.authority.userId : by.admin.userId;
+export const holderOf = (by: HoldBy): string => {
+  if (by.kind === 'org') return by.authority.userId;
+  const user = by.user ?? by.admin.userId;
+  if (!user) throw new ForbiddenError();
+  return user;
+};
+
+/** Who the audit row names: the person, or the key. */
+const auditActorOfHold = (by: HoldBy) => {
+  if (by.kind === 'org') return { actorType: 'user' as const, actorId: by.authority.userId };
+  const actor = callerActor(by.admin);
+  return { actorType: actor.type, actorId: actor.id };
+};
 
 function holdGrant(ctx: ServiceContext, purpose: 'place' | 'release', orgId: string, by: HoldBy) {
   return by.kind === 'org'
@@ -98,7 +112,7 @@ function holdGrant(ctx: ServiceContext, purpose: 'place' | 'release', orgId: str
       })
     : grant(ctx, {
         purpose: `platform.retention.hold.${purpose}`,
-        principal: { kind: 'platform', userId: by.admin.userId, sessionIdHash: by.admin.sessionId },
+        principal: callerPrincipal(by.admin),
         target: orgId,
       });
 }
@@ -127,8 +141,7 @@ export async function insertHold(
   g.audit({
     at: row.now,
     orgId: row.orgId,
-    actorType: 'user',
-    actorId: holderOf(by),
+    ...auditActorOfHold(by),
     requestId: ctx.requestId ?? null,
     ipPrefix: null,
     targetType: 'retention_hold',
@@ -160,8 +173,7 @@ export async function closeHold(
   g.audit({
     at: row.now,
     orgId: row.orgId,
-    actorType: 'user',
-    actorId: holderOf(by),
+    ...auditActorOfHold(by),
     requestId: ctx.requestId ?? null,
     ipPrefix: null,
     targetType: 'retention_hold',

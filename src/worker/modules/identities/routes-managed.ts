@@ -12,14 +12,14 @@ import { listIdentityCertificates } from './cert-admin.ts';
 import { getIdentityRow } from './repo.ts';
 import { renewIdentity } from './runs-service.ts';
 
-/** Managed identity actions on /api/v1/identities. Platform admins, except the certificate list, which a member reads for their org. */
+/** Managed identity actions on /api/v1/identities. Platform admins and keys, except the certificate list, which a member reads for their org. */
 export function registerManagedRoutes(identitiesRoutes: ReturnType<typeof createRouter>): void {
   register(
     identitiesRoutes,
     'identities',
     {
       method: 'post',
-      auth: { platform: 'platform:identities' },
+      auth: { platform: 'platform:identities', key: true },
       path: '/{id}/renew',
       summary: 'Get a new certificate now (managed identities)',
       params: IdParamSchema,

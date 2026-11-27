@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import type { Actor } from '../../platform/actor.ts';
+import type { Actor, PlatformCaller } from '../../platform/actor.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { reportDenied } from '../../platform/denied.ts';
 import { AppError, ForbiddenError } from '../../platform/errors.ts';
@@ -23,6 +23,10 @@ export async function byUserOf(db: D1Database, actor: Actor): Promise<string> {
   if (!row) throw new ForbiddenError('The key has no active creator.', 'FORBIDDEN');
   return row.created_by;
 }
+
+/** `byUserOf` for a caller that may be a bare admin session (the console's services). */
+export const byUserOfCaller = (db: D1Database, who: PlatformCaller): Promise<string> =>
+  'principal' in who ? byUserOf(db, who) : Promise.resolve(who.userId);
 
 /** The audit actor of a call. */
 export const auditActorOf = (actor: Actor) => ({

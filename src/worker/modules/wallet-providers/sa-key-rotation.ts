@@ -53,7 +53,7 @@ const refOf = (run: RunRow): Ref => (run.external_ref ? (JSON.parse(run.external
 /** Starts a key rotation for a platform Google credential, or returns the open one. */
 export async function startKeyRotation(
   ctx: ServiceContext,
-  input: { credentialId: string; createdBy: string | null },
+  input: { credentialId: string; createdBy: string | null; keyId?: string },
 ): Promise<{ runId: string; created: boolean }> {
   const db = ctx.env.DB;
   const credential = await findCredential(db, input.credentialId, null);
@@ -83,6 +83,15 @@ export async function startKeyRotation(
     await finishRun(db, id, 'failed', 'WALLET_RUN_UNQUEUED', ctx.clock.now());
     throw error;
   }
+  await recordAudit(ctx, {
+    actorType: input.keyId ? 'api_key' : input.createdBy ? 'user' : 'system',
+    actorId: input.keyId ?? input.createdBy,
+    orgId: null,
+    action: 'wallet.google_key_rotation_requested',
+    targetType: 'wallet_credential',
+    targetId: credential.id,
+    detail: { runId: id, ...(input.keyId ? { via: 'api' } : {}) },
+  });
   return { runId: id, created: true };
 }
 

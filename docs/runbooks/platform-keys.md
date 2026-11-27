@@ -15,11 +15,13 @@ A Platform key is `kind = platform`, has no organization and starts `pbo_`. It h
 | --- | --- |
 | `platform:read` | every `GET` of a key-callable platform route |
 | `platform:settings` | read and write platform settings, except sign-in (`auth.*`, `oidc.*`) |
-| `platform:wallet` | the wallet release report and the enable-ready dry run |
-| `platform:users` | grant or revoke developer and support, start a Polaris ID check, invitations, access and drift reads, the offboard dry run |
+| `platform:identities` | Apple identities: list (`GET /identities` without `orgId`), upload, edit, rotate, renew, push key, APNs check, the Apple call ledger |
+| `platform:wallet` | platform wallet credentials, checks, key rotation, enrolment list, migration, managed Google issuers, the release report and the enable-ready dry run |
+| `platform:users` | grant or revoke developer and support, start a Polaris ID check, invitations, access and drift reads, the offboard dry run, list and read users, disable or enable one, revoke sessions (never an admin's) |
+| `platform:orgs` | list, read, create (`addMe` false) and suspend orgs (not a personal org), features and presets, holds and receipts |
 | `platform:groups` | Polaris ID groups, their org rules and manual members |
 | `platform:claims` | Polaris ID claims on users and groups (never a platform admin's) |
-| `platform:status` | the Polaris ID status |
+| `platform:status` | the Polaris ID status, component health, incidents, platform metrics |
 | `platform:audit` | the ledger of calls to Polaris ID |
 
 ## Prerequisites
@@ -134,7 +136,7 @@ Apply and the sign-in setting answer 403 `PERSON_REQUIRED`; the passes route ans
 HTTP 403
 ```
 
-Person-only, for any platform key: freeze Polaris ID, clear the SCIM breaker, offboard (a dry run is allowed), lift a hold, remove an external role, apply a wallet release, change sign-in settings, revoke a certificate, move a person's email, release a retention hold, mint or rotate a platform key. A key also never makes, promotes, demotes or removes an administrator. The list and reasons are in [security](../security.md).
+Person-only, for any platform key: freeze Polaris ID, clear the SCIM breaker, offboard (a dry run is allowed), lift a hold, remove an external role, apply a wallet release, change sign-in settings, revoke a certificate, move a person's email, release a retention hold, close an org, suspend or reactivate a personal org, mint or rotate a platform key, choose the default Apple identity, delete an identity, revoke a wallet credential, hold or release a wallet enrolment, resolve a wallet migration. A key also never makes, promotes, demotes or removes an administrator. The list and reasons are in [security](../security.md).
 
 ## 6. Rotate and revoke
 

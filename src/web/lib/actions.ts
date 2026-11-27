@@ -120,6 +120,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.asset.delete': a('Pass image removed', ImageMinus, 'neutral'),
   'pass.asset.put': a('Pass image added', ImagePlus, 'success'),
   'pass.bulk_reissue': a('Passes reissued', I.updateDevices, 'info'),
+  'wallet.google_key_rotation_requested': a('Google key rotation requested', I.rotate, 'info'),
   'wallet.reissue': a('Wallet passes reissued', I.updateDevices, 'info'),
   'pass.bind': a('Pass bound to connection', ENTITY.connection.icon, 'info'),
   'pass.create': a('Pass created', ENTITY.pass.icon, 'success'),

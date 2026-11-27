@@ -12,6 +12,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import { findCheck } from './repo-credential-checks.ts';
 import { findCredential } from './repo-credentials.ts';
 
@@ -22,11 +23,18 @@ type Scope = { orgId: string } | { orgId: null };
 /** The credential in its scope, or 404: an org reaches its own credentials of the session mode, never another's. */
 async function scoped(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | WalletPlatformCaller,
   scope: Scope,
   id: string,
   write: boolean,
 ) {
+  if (isActor(auth)) {
+    // A platform route's gate admitted it; an org's credential is never its scope.
+    if (scope.orgId !== null) throw new ForbiddenError();
+    const row = await findCredential(ctx.env.DB, id, null);
+    if (!row) throw new NotFoundError();
+    return row;
+  }
   if (auth?.kind !== 'session') throw new ForbiddenError();
   if (scope.orgId === null) {
     if (!auth.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
@@ -45,7 +53,7 @@ async function scoped(
 /** Queues a check of the credential's current version. `check_request` only enqueues: the job holds the write. */
 export async function requestCredentialCheck(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   scope: Scope,
   id: string,
 ): Promise<WalletCredentialCheckQueued> {
@@ -63,7 +71,7 @@ export async function requestCredentialCheck(
 
 export async function readCredentialCheck(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   scope: Scope,
   id: string,
   checkId: string,

@@ -10,6 +10,7 @@ import {
   OrgStatusSchema,
   PlatformOrgSummarySchema,
 } from '../../../shared/contracts/index.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { modeOf } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
@@ -25,8 +26,8 @@ import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus } from './service.
 const PlatformOrgListSchema = OrgListSchema.extend({ items: z.array(PlatformOrgSummarySchema) });
 
 /**
- * Mount inside `orgsRoutes`, ahead of its tenant guard. Person-only (`{ platform }` with no `key`): the services take
- * the signed-in admin, and a Platform key gets 403 PERSON_REQUIRED.
+ * Mount inside `orgsRoutes`, ahead of its tenant guard. A Platform key with `platform:orgs` may list, read, create and
+ * suspend or reactivate (not a personal org); closing an org (`DELETE`) is a person's (P3). Services take the caller.
  */
 export const orgsPlatformRoutes = createRouter();
 
@@ -41,7 +42,7 @@ register(
   orgsPlatformRoutes,
   'orgs',
   {
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     method: 'get',
     path: '/',
     summary: 'List organizations (personal organizations are never listed)',
@@ -58,7 +59,7 @@ register(
   orgsPlatformRoutes,
   'orgs',
   {
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     method: 'post',
     path: '/',
     summary: 'Create an organization',
@@ -68,7 +69,12 @@ register(
   },
   async (c) =>
     c.json(
-      await createOrg(serviceContext(c), requestActor(c), c.req.valid('json'), adminOf(c)),
+      await createOrg(
+        serviceContext(c),
+        requestActor(c),
+        c.req.valid('json'),
+        platformActorOf(c, { scope: 'platform:orgs' }),
+      ),
       201,
     ),
 );
@@ -77,7 +83,7 @@ register(
   orgsPlatformRoutes,
   'orgs',
   {
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     method: 'get',
     path: '/{id}',
     summary: 'Get an organization for platform provisioning',
@@ -87,7 +93,9 @@ register(
   async (c) =>
     c.json(
       PlatformOrgSummarySchema.parse(
-        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), adminOf(c)),
+        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), {
+          userId: platformActorOf(c).userId ?? '',
+        }),
       ),
     ),
 );
@@ -97,9 +105,10 @@ register(
   'orgs',
   {
     method: 'post',
-    // Suspending a personal org is the platform's break-glass: a fresh sign-in.
+    // Suspending a personal org is the platform's break-glass: a fresh sign-in, and never a key's (P3).
     auth: {
       platform: 'platform:orgs',
+      key: { unless: (c) => isPersonalOrg(c.env.DB, c.req.param('id') ?? '') },
       stepUp: {
         maxAgeSec: STEP_UP_SECONDS,
         when: (c) => isPersonalOrg(c.env.DB, c.req.param('id') ?? ''),
@@ -114,10 +123,14 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const id = c.req.valid('param').id;
-    await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
+    const caller = platformActorOf(c, { scope: 'platform:orgs' });
+    await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, caller);
     return c.json(
       PlatformOrgSummarySchema.parse(
-        await getOrg(ctx, id, modeOf(c.var.auth), { ...adminOf(c), afterStatus: true }),
+        await getOrg(ctx, id, modeOf(c.var.auth), {
+          userId: caller.userId ?? '',
+          afterStatus: true,
+        }),
       ),
     );
   },
