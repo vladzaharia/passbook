@@ -21,6 +21,8 @@ export interface AuthorityPredicate {
   anchor: string;
   /** The actor's checks all hold. Presence is never inferred from `ao.org_id IS NULL` (a platform key has no org). */
   ok: string;
+  /** A platform key's tenant: present and org-less. Never write `ao.org_id IS NULL` alone (an absent anchor row is NULL too). */
+  platform: string;
   /** The tenant predicate of `tenantFilter`, written against the one `ao` row; fails to prepare without the join. */
   tenant: (alias: string, table: string, scope?: Exclude<GrantScope, 'platform'>) => string;
 }
@@ -49,6 +51,7 @@ export function authorityPredicate(
     rows: 'actor_ok ao CROSS JOIN ',
     anchor: '(SELECT 1 AS one) AS one LEFT JOIN actor_ok ao ON 1 = 1',
     ok: 'ao.present = 1',
+    platform: 'ao.present = 1 AND ao.org_id IS NULL',
     tenant: (alias, table, scope = 'org_mode') =>
       tenantBody(alias, table, scope, {
         org: 'ao.org_id',
@@ -91,6 +94,7 @@ function tenantBody(
   const own =
     t.org === 'scope' ? `${alias}.scope = 'org:' || ${at.org}` : `${alias}.${t.org} = ${at.org}`;
   const tenant = scope === 'org_mode' && t.mode ? `${own} AND ${alias}.mode = ${at.mode}` : own;
+  // Never emit the key term without `own` first: an absent anchor row makes `ao.limit_key IS NULL` true.
   // A key limited to templates reads only rows of its templates, and none of a table with no template dimension.
   return hasTemplateRef(table)
     ? `${tenant}${restrictRow(table, alias, at.key)}`

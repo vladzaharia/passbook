@@ -25,10 +25,10 @@ function forms(actor: Actor, now: number, ids: { own: string; other: string }) {
     if (actor.platform) {
       if (table !== 'passes' && table !== 'scan_events') return null;
       const oldWhere = `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? 'x.org_id = (SELECT org_id FROM named) AND ' : ''}x.mode = (SELECT mode FROM actor_ok)`;
-      const newWhere = `ao.org_id IS NULL AND ${named ? 'x.org_id = nm.org_id AND ' : ''}x.mode = ao.mode`;
+      const newWhere = `${p.platform} AND ${named ? 'x.org_id = nm.org_id AND ' : ''}x.mode = ao.mode`;
       return {
         old: `WITH ${withNamed(p.ctes)} SELECT ${sel} FROM ${table} x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${oldWhere} ${tail}`,
-        new: `WITH ${withNamed(p.ctes)} SELECT ${sel} FROM ${p.rows}${named ? 'named nm CROSS JOIN ' : ''}${table} x WHERE ${p.ok} AND ${newWhere} ${tail}`,
+        new: `WITH ${withNamed(p.ctes)} SELECT ${sel} FROM ${p.rows}${named ? 'named nm CROSS JOIN ' : ''}${table} x WHERE ${newWhere} ${tail}`,
         params,
       };
     }

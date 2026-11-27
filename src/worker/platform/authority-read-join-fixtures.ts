@@ -1,5 +1,6 @@
 // Seed and actors of the join-once differential (authority-read-join.test.ts).
 import { makeApiKey, makeOrg, makePass, makeTemplate } from '../../../test/helpers/index.ts';
+import { makeJoinLink } from '../../../test/helpers/join.ts';
 import { db } from './authority-ext-fixtures.ts';
 import type { GrantScope, Principal } from './authority-principal.ts';
 import { world } from './authority-restrict-fixtures.ts';
@@ -241,6 +242,63 @@ export async function actors(s: Seed): Promise<Actor[]> {
     await key('another org key, named', { orgId: b.id }, a.id),
     await key('another org key, own', { orgId: b.id }),
   ];
+  // actors() runs more than once per seed; a template has one live link.
+  const link =
+    (
+      await all<{ id: string; generation: number }>(
+        db,
+        "SELECT id, generation FROM join_links WHERE org_id = ? AND mode = 'live' AND template_id = ?",
+        [a.id, tt.id],
+      )
+    )[0] ?? (await makeJoinLink(f, { orgId: a.id, templateId: tt.id }));
+  const held = (
+    await all<{ download_token: string; link_generation: number; credential_generation: number }>(
+      db,
+      'SELECT download_token, link_generation, credential_generation FROM passes WHERE id = ?',
+      [w.a.pass],
+    )
+  )[0];
+  if (!held) throw new Error('no pass');
+  out.push(
+    {
+      name: 'join link',
+      scope: 'org_mode',
+      principal: { kind: 'join', linkId: link.id, generation: link.generation },
+    },
+    {
+      name: 'join link, stale generation',
+      scope: 'org_mode',
+      principal: { kind: 'join', linkId: link.id, generation: link.generation + 1 },
+    },
+    {
+      name: 'holder link',
+      scope: 'org_mode',
+      principal: {
+        kind: 'holder',
+        passId: w.a.pass,
+        proof: {
+          via: 'link',
+          downloadToken: held.download_token,
+          linkGeneration: held.link_generation,
+          credentialGeneration: held.credential_generation,
+        },
+      },
+    },
+    {
+      name: 'holder link, wrong token',
+      scope: 'org_mode',
+      principal: {
+        kind: 'holder',
+        passId: w.a.pass,
+        proof: {
+          via: 'link',
+          downloadToken: 'nope',
+          linkGeneration: held.link_generation,
+          credentialGeneration: held.credential_generation,
+        },
+      },
+    },
+  );
   const revoked = await key('revoked', { orgId: a.id });
   if (revoked.principal.kind === 'api_key')
     await run(db, 'UPDATE api_keys SET revoked_at = 5 WHERE id = ?', [revoked.principal.keyId]);
