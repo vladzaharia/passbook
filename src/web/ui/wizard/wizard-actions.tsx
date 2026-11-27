@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react';
+import { type LucideIcon, MoreHorizontal, X } from 'lucide-react';
 import { useId } from 'react';
 import { Button } from '../button.tsx';
 import {
@@ -18,6 +18,7 @@ import type { WizardModel } from './wizard-types.ts';
 /** An action of the page beside Back and Next: inline on a wide screen, in the bar's menu on a phone. */
 export interface WizardBarAction {
   label: string;
+  icon: LucideIcon;
   onSelect: () => void;
   /** Only in the phone menu (a wide screen has the value in view). */
   phoneOnly?: boolean;
@@ -96,10 +97,14 @@ export function WizardButtons({
             <DropdownMenuContent align="start" side="top">
               {menu.map((a) => (
                 <DropdownMenuItem key={a.label} onSelect={a.onSelect}>
+                  <a.icon aria-hidden />
                   {a.label}
                 </DropdownMenuItem>
               ))}
-              <DropdownMenuItem onSelect={onCancel}>Cancel</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onCancel}>
+                <X aria-hidden />
+                Cancel
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}

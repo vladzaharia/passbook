@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { Copy, SkipForward } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { ConnectionSetup } from '@/shared/contracts/connection-setup.ts';
@@ -244,9 +245,16 @@ export function ProviderWizard({
         : 'Next';
   const barMenu =
     id === 'connect'
-      ? [{ label: 'Copy URL', phoneOnly: true, onSelect: () => void copyText(url, 'URL') }]
+      ? [
+          {
+            label: 'Copy URL',
+            icon: Copy,
+            phoneOnly: true,
+            onSelect: () => void copyText(url, 'URL'),
+          },
+        ]
       : id === 'test' && !verified
-        ? [{ label: 'Skip for now', onSelect: open }]
+        ? [{ label: 'Skip for now', icon: SkipForward, onSelect: open }]
         : [];
   return (
     <>
