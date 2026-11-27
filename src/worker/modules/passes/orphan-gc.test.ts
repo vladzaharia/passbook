@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { PASS_OBJECT_GRACE_MS, sweepPassObjects } from './orphan-gc.ts';
@@ -100,12 +100,54 @@ describe('pass object gc', () => {
     expect(await kit.env.BUCKET.head('sweep/pass-objects-cursor')).toBeNull();
   });
 
+  it('keeps source and target holds of an issuance delivery; logs wrapped only when the walk completes', async () => {
+    const kit = await setupKit();
+    const pass = await kit.pass();
+    const id = pass.id;
+    const source = pass.objectKey;
+    const target = `passes/${id}/v8-target.pkpass`;
+    await run(
+      kit.env.DB,
+      `INSERT INTO pass_issuance_deliveries
+       (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
+        source_lifecycle_generation, source_link_generation, source_object_key, template_id,
+        connection_id, connection_ref, connection_generation, context, state, outbox_id, created_at)
+       SELECT id, org_id, mode, holder_email, identity_id, owner_user_id, credential_generation,
+         lifecycle_generation, link_generation, object_key, template_id, connection_id, external_ref,
+         1, '{}', 'pending', NULL, ? FROM passes WHERE id = ?`,
+      [Date.now(), id],
+    );
+    // The head moves on, so the source object is held by the delivery alone.
+    await run(kit.env.DB, 'UPDATE passes SET object_key = ? WHERE id = ?', [
+      `passes/${id}/v9-new.pkpass`,
+      id,
+    ]);
+    await run(kit.env.DB, 'DROP TRIGGER pass_issuance_delivery_target_once');
+    await run(
+      kit.env.DB,
+      'UPDATE pass_issuance_deliveries SET target_object_key = ? WHERE pass_id = ?',
+      [target, id],
+    );
+    const orphan = `passes/${id}/v4-orphan.pkpass`;
+    for (const key of [source, target, orphan]) await put(kit, key);
+    age(kit);
+    const info = vi.spyOn(kit.ctx.log, 'info');
+    await sweepPassObjects(jobCtxOf(kit), 1);
+    expect(await has(kit, source)).toBe(true);
+    expect(await has(kit, target)).toBe(true);
+    expect(await has(kit, orphan)).toBe(false);
+    expect(info).toHaveBeenCalledWith(
+      'passes.object_gc',
+      expect.objectContaining({ code: 'PASS_OBJECT_GC', wrapped: true }),
+    );
+  });
+
   it('looks keys up through indexes, never a table scan', async () => {
     const kit = await setupKit();
     const plan = await all<{ detail: string }>(
       kit.env.DB,
       `EXPLAIN QUERY PLAN ${REFERENCED_KEYS_SQL}`,
-      ['["a"]'],
+      ['["a"]', '[]'],
     );
     const scans = plan
       .map((r) => r.detail)

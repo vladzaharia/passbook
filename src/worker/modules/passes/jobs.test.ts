@@ -78,6 +78,51 @@ describe('version retention', () => {
       expect(await kit.env.BUCKET.head(row.object_key ?? '')).not.toBeNull();
   });
 
+  it('keeps a purged version object a boundary, a removal claim or a delivery still holds', async () => {
+    const pass = await kit.pass({ memberName: 'v1' });
+    const [v1] = await rows(pass.id);
+    const bound = v1?.object_key ?? '';
+    await run(
+      kit.env.DB,
+      `INSERT INTO pass_issuance_deliveries
+       (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
+        source_lifecycle_generation, source_link_generation, source_object_key, template_id,
+        connection_id, connection_ref, connection_generation, context, state, outbox_id, created_at)
+       SELECT id, org_id, mode, holder_email, identity_id, owner_user_id, credential_generation,
+         lifecycle_generation, link_generation, object_key, template_id, connection_id, external_ref,
+         1, '{}', 'pending', NULL, ? FROM passes WHERE id = ?`,
+      [Date.now(), pass.id],
+    );
+    for (let i = 2; i <= 8; i++)
+      await updatePass(
+        jobCtxOf(kit),
+        actor,
+        pass.id,
+        { input: { memberName: `v${i}` } },
+        { scope: null },
+      );
+    const mid = await rows(pass.id);
+    const key = (v: number) => mid.find((r) => r.version === v)?.object_key ?? '';
+    await run(
+      kit.env.DB,
+      'INSERT INTO pass_boundaries (pass_id, version, object_key, due_at) VALUES (?, 2, ?, NULL)',
+      [pass.id, key(2)],
+    );
+    await run(kit.env.DB, 'UPDATE passes SET removal_claim_object_key = ? WHERE id = ?', [
+      key(3),
+      pass.id,
+    ]);
+    await dailyPasses(kit.ctx);
+    const after = await rows(pass.id);
+    for (const v of [1, 2, 3, 4])
+      expect(after.find((r) => r.version === v)?.purged_at).not.toBeNull();
+    expect(bound).toBe(key(1));
+    for (const v of [1, 2, 3]) expect(await kit.env.BUCKET.head(key(v)), `v${v}`).not.toBeNull();
+    expect(await kit.env.BUCKET.head(key(4))).toBeNull();
+    // The purged row drops its pointer; the holder keeps the object.
+    expect(after.every((r) => r.purged_at === null || r.object_key === null)).toBe(true);
+  });
+
   it('deletes the voided Apple variant of every purged version', async () => {
     const pass = await passWithVersions(8);
     const before = await rows(pass.id);
