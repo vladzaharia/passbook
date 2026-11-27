@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
+import { WB_STATES } from '../src/shared/copy/workbench-states.ts';
 import { type WbTool, wbPath } from '../src/shared/workbench.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -90,6 +91,12 @@ test.describe('signed out', () => {
   test('Design stays open as the playground', async ({ page }) => {
     await page.goto('/workbench/design');
     await expect(h1(page)).toBeVisible();
+    await expect(text(page, 'Organization')).toBeVisible();
+    const top = await page
+      .locator('.pc-stage')
+      .first()
+      .evaluate((el) => Math.round(el.getBoundingClientRect().top + scrollY));
+    expect(top, 'the preview starts above 250 px at 390').toBeLessThanOrEqual(250);
     await shot(page, 'state-signed-out-design');
   });
 });
@@ -113,6 +120,9 @@ test.describe('a developer without a sandbox', () => {
     );
     await page.goto('/workbench');
     await expect(text(page, 'No sandbox yet')).toBeVisible();
+    // The read-only Console sits beside Create sandbox: its index is searchable, with no Run.
+    await expect(page.getByPlaceholder('Find an operation')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Run/ })).toHaveCount(0);
     await shot(page, 'state-no-sandbox');
   });
 });
@@ -271,6 +281,28 @@ test.describe('a developer sandbox', () => {
     await page.goto(wbPath(org, 'home'));
     await expect(h1(page)).toBeVisible();
     await shot(page, 'state-sandbox-closed');
+  });
+
+  test('a Keys list that fails: ToolFailed gives a reason and Retry', async ({ page }) => {
+    test.setTimeout(240_000);
+    await signInToWorkbench(page, { key: true, desktop: false });
+    await page.setViewportSize(phone);
+    const org = await sandboxOrgId(page);
+    await page.route('**/api/v1/api-keys*', (route) =>
+      route.request().method() === 'GET' && !/api-keys\/[^/?]/.test(route.request().url())
+        ? route.fulfill({
+            status: 500,
+            contentType: 'application/problem+json',
+            body: JSON.stringify({ title: 'x', status: 500, code: 'X' }),
+          })
+        : route.fallback(),
+    );
+    await page.goto(wbPath(org, 'keys'));
+    const retry = page.getByRole('button', { name: 'Retry' }).first();
+    await expect(retry).toBeVisible();
+    await expect(page.getByText(WB_STATES.failed.server).first()).toBeVisible();
+    await expect(page.getByText('No keys')).toHaveCount(0);
+    await shot(page, 'state-failed-keys');
   });
 });
 
