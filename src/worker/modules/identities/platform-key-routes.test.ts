@@ -195,6 +195,47 @@ describe('a Platform key on the identity routes', () => {
   });
 });
 
+describe('the platform default identity', () => {
+  it("is a person's to choose: a key gets PERSON_REQUIRED on isDefault, and may patch the rest", async () => {
+    const { f: _f, ...body } = await pem('Default?');
+    const made = await call('', admin.headers, 'POST', body);
+    const dto = (await made.json()) as { id: string };
+    const key = await platformKey([...MINTABLE_PLATFORM_SCOPES]);
+    const defaults = () =>
+      all<{ id: string }>(env.DB, 'SELECT id FROM signing_identities WHERE is_default = 1');
+    const before = await defaults();
+    for (const patch of [
+      { isDefault: true },
+      { isDefault: false },
+      { label: 'x', isDefault: true },
+    ])
+      await expectProblem(
+        await call(`/${dto.id}`, key.headers, 'PATCH', patch),
+        403,
+        'PERSON_REQUIRED',
+      );
+    expect(await defaults()).toEqual(before);
+    const ok = await call(`/${dto.id}`, key.headers, 'PATCH', { label: 'Still ours' });
+    expect(ok.status).toBe(200);
+    // The service refuses a key too, should a route ever forward one.
+    const { updateIdentity } = await import('./service.ts');
+    const { createServiceContext } = await import('../../platform/service-context.ts');
+    await expect(
+      updateIdentity(createServiceContext(appEnv), { type: 'api_key', id: key.id }, dto.id, {
+        isDefault: true,
+      }),
+    ).rejects.toMatchObject({ code: 'PERSON_REQUIRED' });
+  });
+
+  it('a person still chooses it', async () => {
+    const { f: _f, ...body } = await pem('Person default');
+    const dto = (await (await call('', admin.headers, 'POST', body)).json()) as { id: string };
+    const res = await call(`/${dto.id}`, admin.headers, 'PATCH', { isDefault: true });
+    expect([200, 409, 422]).toContain(res.status);
+    expect(res.status === 403).toBe(false);
+  });
+});
+
 describe('a person on the identity routes', () => {
   it('still lists, uploads and reads', async () => {
     const { f: _f, ...body } = await pem('By person');

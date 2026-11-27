@@ -12,7 +12,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import { isActor, type PlatformCaller } from './platform-caller.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import { findCheck } from './repo-credential-checks.ts';
 import { findCredential } from './repo-credentials.ts';
 
@@ -23,7 +23,7 @@ type Scope = { orgId: string } | { orgId: null };
 /** The credential in its scope, or 404: an org reaches its own credentials of the session mode, never another's. */
 async function scoped(
   ctx: ServiceContext,
-  auth: SessionAuth | PlatformCaller,
+  auth: SessionAuth | WalletPlatformCaller,
   scope: Scope,
   id: string,
   write: boolean,
@@ -53,7 +53,7 @@ async function scoped(
 /** Queues a check of the credential's current version. `check_request` only enqueues: the job holds the write. */
 export async function requestCredentialCheck(
   ctx: ServiceContext,
-  auth: PlatformCaller,
+  auth: WalletPlatformCaller,
   scope: Scope,
   id: string,
 ): Promise<WalletCredentialCheckQueued> {
@@ -71,7 +71,7 @@ export async function requestCredentialCheck(
 
 export async function readCredentialCheck(
   ctx: ServiceContext,
-  auth: PlatformCaller,
+  auth: WalletPlatformCaller,
   scope: Scope,
   id: string,
   checkId: string,

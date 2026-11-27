@@ -81,6 +81,13 @@ describe('a Platform key with platform:wallet', () => {
     const rotate = await call(key.headers, 'POST', `/wallet-credentials/${saved.id}/rotate-key`);
     expect(rotate.status).toBe(202);
     const { runId } = (await rotate.json()) as { runId: string };
+    expect(
+      await all(
+        k.env.DB,
+        "SELECT actor_type, actor_id FROM audit_log WHERE target_id = ? AND action = 'wallet.google_key_rotation_requested'",
+        [saved.id],
+      ),
+    ).toEqual([{ actor_type: 'api_key', actor_id: key.id }]);
     const row = (
       await all<{ creator: string; minter: string }>(
         k.env.DB,

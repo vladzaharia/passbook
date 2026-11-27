@@ -385,7 +385,6 @@ const PLATFORM_KEY_ROUTES: string[] = [
   'GET /api/v1/platform/wallet-release',
   'GET /api/v1/users/:id/access',
   'GET /api/v1/users/:id/claims',
-  'PATCH /api/v1/identities/:id',
   'PATCH /api/v1/platform/idp/groups/:key',
   'PATCH /api/v1/platform/idp/groups/:key/claims',
   'PATCH /api/v1/users/:id/claims',
@@ -414,6 +413,8 @@ const PLATFORM_KEY_ROUTES: string[] = [
   'PUT /api/v1/platform/wallet-credentials/:id/cards',
 ];
 const PLATFORM_KEY_CONDITIONAL: string[] = [
+  // Refused to a key when it names isDefault (P3: choosing the default identity decides who signs passes).
+  'PATCH /api/v1/identities/:id',
   // Refused to a key unless it is a dry run (P3: the apply is the owner's go/no-go).
   'POST /api/v1/platform/wallet-release/:provider/:mode/enable-ready',
   // Refused to a key unless it is a dry run (P3: ends memberships, sponsorships, keys and sessions; a loop is a mass lockout).
@@ -464,8 +465,8 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
 ];
 
 /**
- * Person-only today only because the route's service takes a session, not a decision about keys: PK-6b and PK-2a move each
- * to `PLATFORM_KEY_ROUTES` (or `PLATFORM_KEY_CONDITIONAL`), emptying this list. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
+ * Person-only today only because nobody has decided about keys yet: reads outside the PK-6b list (apple identity and move
+ * lists, the platform audit log), for PK-6c to convert to `PLATFORM_KEY_ROUTES`. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
  */
 const PLATFORM_KEY_DEFERRED: string[] = [
   'GET /api/v1/platform/apple/identities',

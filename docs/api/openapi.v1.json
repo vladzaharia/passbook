@@ -142914,6 +142914,7 @@
             "session": []
           }
         ],
+        "x-human-only": "apply",
         "x-platform-scope": "platform:identities",
         "summary": "Update an Apple identity",
         "tags": [

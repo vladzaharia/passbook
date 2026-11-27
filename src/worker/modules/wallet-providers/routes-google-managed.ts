@@ -184,6 +184,7 @@ register(
     const { runId } = await startKeyRotation(serviceContext(c), {
       credentialId: c.req.valid('param').id,
       createdBy: by.createdBy,
+      ...keyOf(by),
     });
     return c.json({ runId }, 202);
   },

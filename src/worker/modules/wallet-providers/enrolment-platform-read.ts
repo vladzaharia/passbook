@@ -4,7 +4,7 @@ import type {
 } from '../../../shared/contracts/wallet-providers.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { isActor, type PlatformCaller } from './platform-caller.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import { type EnrolmentCursor, platformEnrolmentRows } from './repo-enrolments-platform.ts';
 
 function decodeCursor(raw: string | undefined): EnrolmentCursor | undefined {
@@ -22,7 +22,7 @@ function decodeCursor(raw: string | undefined): EnrolmentCursor | undefined {
 /** Every org's enrolment of one provider, both modes. */
 export async function listPlatformEnrolments(
   ctx: ServiceContext,
-  auth: PlatformCaller,
+  auth: WalletPlatformCaller,
   provider: WalletProvider,
   limit = 50,
   rawCursor?: string,

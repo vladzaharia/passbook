@@ -117,7 +117,11 @@ register(
   {
     method: 'patch',
     path: '/{id}',
-    auth: { platform: 'platform:identities', key: true },
+    auth: {
+      platform: 'platform:identities',
+      // Refused unless provably not choosing the default (P3: same act as POST /platform/apple/identities/:id/default).
+      key: { unless: (_c, body) => body === null || body.isDefault !== undefined },
+    },
     summary: 'Update an Apple identity',
     params: IdParamSchema,
     body: UpdateIdentitySchema,
