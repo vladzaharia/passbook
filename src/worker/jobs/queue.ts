@@ -3,9 +3,15 @@ import {
   retainLegacyQueuedWebhook,
 } from '../modules/connections/webhook-retention.ts';
 import { handleDeadLetter } from '../modules/delivery/jobs.ts';
+import {
+  failureCode,
+  type HookOutcome,
+  recordHookOutcomes,
+} from '../modules/status/hook-health.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { AppError } from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
+import { settleDroppedJob } from './dead-letter.ts';
 import { estimateQueries, QUEUE_QUERY_BUDGET } from './query-budget.ts';
 import { runJob } from './registry.ts';
 import { DLQ_QUEUE, retryDelaySeconds } from './retry.ts';
@@ -64,8 +70,10 @@ export async function handleQueue(
           if (parsed.data.kind === 'connection.webhook')
             await retainDeadLetterWebhook(base, parsed.data);
           else await handleDeadLetter(parsed.data, base);
+          await settleDroppedJob(base, parsed.data, message.id, 'DEAD_LETTER');
         } else if (!(await retainLegacyJob(base, message))) {
           base.log.error('queue.invalid_message', { id: message.id, code: 'INVALID_MESSAGE' });
+          await settleDroppedJob(base, null, message.id, 'INVALID_MESSAGE');
         }
         message.ack();
       } catch (error) {
@@ -82,6 +90,14 @@ export async function handleQueue(
             code,
             ...(webhook ? {} : { error }),
           });
+          try {
+            await settleDroppedJob(base, parsed.success ? parsed.data : null, message.id, code);
+          } catch (settleError) {
+            base.log.error('queue.dlq_settle_failed', {
+              id: message.id,
+              code: safeCode(settleError, 'DLQ_SETTLE_FAILED'),
+            });
+          }
           message.ack();
         } else {
           // A webhook's encrypted source is staged before enqueue. Never ACK a failed DLQ write early.
@@ -101,6 +117,7 @@ export async function handleQueue(
   // message always runs.
   let used = 0;
   let ran = 0;
+  const outcomes: HookOutcome[] = [];
   for (const message of batch.messages) {
     const parsed = JobSchema.safeParse(message.body);
     if (!parsed.success) {
@@ -130,7 +147,9 @@ export async function handleQueue(
     try {
       await dispatch(parsed.data, env, ctx);
       message.ack();
+      outcomes.push({ hook: parsed.data.kind, failure: null });
     } catch (error) {
+      outcomes.push({ hook: parsed.data.kind, failure: failureCode(error, 'JOB_FAILED') });
       if (parsed.data.kind === 'connection.webhook') {
         base.log.warn('queue.job_failed', {
           job: parsed.data.kind,
@@ -151,4 +170,5 @@ export async function handleQueue(
       message.retry({ delaySeconds: retryDelaySeconds(message.attempts) });
     }
   }
+  await recordHookOutcomes(base, 'queue', outcomes);
 }

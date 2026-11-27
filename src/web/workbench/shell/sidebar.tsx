@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowUpRight, BookOpen, Check } from 'lucide-react';
 import { lazy, Suspense } from 'react';
-import { countsFor, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { countsFor, WB_SHELL_COPY, wbLabel } from '@/shared/copy/workbench-shell.ts';
 import { PATHS } from '@/shared/developers.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
@@ -73,7 +73,7 @@ export function NavColumn({
         ) : null}
         {context && quickstartDone && context.kind === 'sandbox' ? (
           <Link to={wbPath(context.orgId, 'quickstart')} onClick={onNavigate} className={FOOT_LINK}>
-            {WB_AREA.quickstart.label}
+            {wbLabel('quickstart')}
             <Check aria-hidden className="ml-auto size-4 text-success" />
           </Link>
         ) : null}

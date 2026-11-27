@@ -93,6 +93,7 @@ export async function getUserDetail(
   id: string,
   currentSessionId = '',
   viewerId = '',
+  byKey = false,
 ): Promise<UserDetailDto> {
   const db = ctx.env.DB;
   const user = await requireUser(ctx, id);
@@ -102,7 +103,7 @@ export async function getUserDetail(
     repo.listRecentSessions(db, id),
     repo.ownedPasses(db, id, viewerId),
     repo.ownedPassCount(db, id, viewerId),
-    repo.recentAudit(db, id),
+    repo.recentAudit(db, id, byKey),
     repo.factsFor(db, [id], viewerId),
   ]);
   return {

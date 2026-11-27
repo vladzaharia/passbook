@@ -43,6 +43,12 @@ import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { sweepSessionHours } from '../modules/scan/session-hours-job.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import {
+  failureCode,
+  type HookOutcome,
+  recordHookOutcomes,
+} from '../modules/status/hook-health.ts';
+import { pruneDlqOutcomes } from '../modules/status/repo-hooks.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
@@ -122,6 +128,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'auth.retention', run: dailyAuth },
     { name: 'audit.retention', run: dailyAudit },
     { name: 'events.retention', run: dailyEvents },
+    { name: 'dlq.retention', run: async (ctx) => pruneDlqOutcomes(ctx.env.DB, ctx.clock.now()) },
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
@@ -163,6 +170,7 @@ export async function handleScheduled(
     });
   const failed = (hook: string, error: unknown) =>
     base.log.error('cron.hook_failed', { hook, code: 'CRON_HOOK_FAILED', error });
+  const outcomes: HookOutcome[] = [];
   if (controller.cron === DAILY_CRON) {
     // Sequential under one query budget: a hook that would start past it is skipped until tomorrow.
     const counter = countQueries(env);
@@ -177,7 +185,9 @@ export async function handleScheduled(
       }
       try {
         await hook.run({ ...hookCtx(counter.env, hook.name, counter.count), spent: counter.count });
+        outcomes.push({ hook: hook.name, failure: null });
       } catch (error) {
+        outcomes.push({ hook: hook.name, failure: failureCode(error, 'CRON_HOOK_FAILED') });
         failed(hook.name, error);
       }
     }
@@ -199,9 +209,16 @@ export async function handleScheduled(
       }),
     );
     results.forEach((result, i) => {
-      if (result.status === 'rejected') failed(hooks[i]?.name ?? 'unknown', result.reason);
+      const hook = hooks[i]?.name ?? 'unknown';
+      if (result.status === 'rejected') failed(hook, result.reason);
+      outcomes.push({
+        hook,
+        failure:
+          result.status === 'rejected' ? failureCode(result.reason, 'CRON_HOOK_FAILED') : null,
+      });
     });
   }
+  await recordHookOutcomes(base, controller.cron === DAILY_CRON ? 'daily' : 'minute', outcomes);
   if (controller.cron === MINUTE_CRON) {
     try {
       await recordCronRun(base, 'minute');

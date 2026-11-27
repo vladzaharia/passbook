@@ -37,4 +37,27 @@ describe('mtls apns transport', () => {
     expect(result?.status).toBe(200);
     expect(cancelled).toBe(true);
   });
+
+  it('sends the pass id as apns-collapse-id', async () => {
+    const env = await makeEnv();
+    let sent: Headers | undefined;
+    Object.assign(env, {
+      APNS_TEST: {
+        fetch: async (_url: string, init: RequestInit) => {
+          sent = new Headers(init.headers);
+          return new Response(null, { status: 200 });
+        },
+      },
+    });
+    const target = { passTypeIdentifier: 'pass.test', apnsBinding: 'APNS_TEST' };
+    const transport = createMtlsApnsTransport(env);
+    await transport.send({ ...target, collapseId: 'pass-1' }, ['tok'], 0);
+    expect(sent?.get('apns-collapse-id')).toBe('pass-1');
+    await transport.send(target, ['tok'], 0);
+    expect(sent?.has('apns-collapse-id')).toBe(false);
+    await transport.send({ ...target, collapseId: 'x'.repeat(65) }, ['tok'], 0);
+    expect(sent?.has('apns-collapse-id')).toBe(false);
+    await transport.send({ ...target, collapseId: 'x'.repeat(64) }, ['tok'], 0);
+    expect(sent?.get('apns-collapse-id')).toBe('x'.repeat(64));
+  });
 });

@@ -1,4 +1,3 @@
-import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 import { formatDayIn } from '../../shared/format-date.ts';
 import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
@@ -269,9 +268,7 @@ export function formatWeekdayTime(ms: number, timeZone: string): string {
   return `${formatWeekday(ms, timeZone)} ${formatTime(ms, timeZone)}`;
 }
 
-/** A person's label: the name, else the verified email, else a plain "no email" label. */
-export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
-  person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;
+export { personLabel } from './person-label.ts';
 
 /** The zone's short name ("EDT") at `ms`, to tell apart the two 1:00 AM hours of a clock change. */
 export function formatZoneAbbr(ms: number, timeZone: string): string {

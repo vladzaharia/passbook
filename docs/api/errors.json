@@ -1217,6 +1217,15 @@
       ]
     },
     {
+      "code": "DEAD_LETTER",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "jobs"
+      ]
+    },
+    {
       "code": "DELIVERY_PENDING",
       "statuses": [
         409

@@ -4,6 +4,7 @@
  */
 export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'branding_gc_queue',
+  'dlq_outcomes',
   'credentials',
   'signing_identities',
   'idempotency_keys',

@@ -58,7 +58,11 @@ test('signed in, every tool opens in the same frame and nothing scrolls sideways
   await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
   await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
+  // A track already done (an earlier spec's pass) opens on the Done page, with neither.
+  await create
+    .or(page.getByRole('radio', { name: 'Run here' }))
+    .or(page.locator('.qs-done'))
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);

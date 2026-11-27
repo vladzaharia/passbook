@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import {
   assignCmd,
   bindResultOf,
@@ -388,7 +389,7 @@ describe('failures', () => {
       at(800),
     );
     expect(assignOf(wrong.state)?.pin).toMatchObject({ open: true, note: { triesLeft: 2 } });
-    expect(JSON.stringify(assignOf(approved.state)?.retry)).not.toContain('123456');
+    expectSecretAbsent(JSON.stringify(assignOf(approved.state)?.retry), '123456');
   });
 
   it('an undo that comes too late says so and leaves the card', () => {
@@ -704,7 +705,7 @@ describe('the Manager approval of a pass picked by id', () => {
     const b = step(p.state, { type: 'assign.bind' }, at(700));
     const a = assignOf(b.state);
     expect(a?.approved).toBeNull();
-    expect(JSON.stringify(a?.retry)).not.toContain('123456');
+    expectSecretAbsent(JSON.stringify(a?.retry), '123456');
   });
   it('is wiped by Back and by a refusal, and gone with a cancel', () => {
     const p = approvedPreview();
@@ -773,7 +774,7 @@ describe('a move and a changed scope under a stored approval', () => {
         approval: { staffId: 'm1', pin: '123456' },
       });
       expect(assignOf(ok.state)).toMatchObject({ busy: 'bind', approved: null });
-      expect(JSON.stringify(assignOf(ok.state)?.retry)).not.toContain('123456');
+      expectSecretAbsent(JSON.stringify(assignOf(ok.state)?.retry), '123456');
       const done = step(
         ok.state,
         {

@@ -48,7 +48,7 @@ type AuditScope =
       orgId: string;
       authority: TenantPassWrite;
     }
-  | { kind: 'platform' };
+  | { kind: 'platform'; byKey?: boolean };
 
 // UUIDs are identifiers, not capability tokens. Other secret-looking values are omitted.
 function safeId(id: string | null): string | null {
@@ -147,8 +147,9 @@ export async function listTenantAudit(
   return page;
 }
 
-export async function listPlatformAudit(ctx: ServiceContext, query: Query) {
-  return listAudit(ctx, query, { kind: 'platform' });
+/** `byKey`: a Platform key never sees a personal org's rows, whichever `orgId` it asks for. */
+export async function listPlatformAudit(ctx: ServiceContext, query: Query, byKey = false) {
+  return listAudit(ctx, query, { kind: 'platform', byKey });
 }
 
 async function listAudit(
@@ -171,6 +172,7 @@ async function listAudit(
       from: query.createdAfter ?? query.from,
       to: query.createdBefore ?? query.to,
       before: decodeCursor(query.cursor),
+      excludePersonal: scope.kind === 'platform' && scope.byKey,
     },
     query.limit + 1,
   );
