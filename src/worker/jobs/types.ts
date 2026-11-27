@@ -110,6 +110,13 @@ export const JobSchema = z.discriminatedUnion('kind', [
     reason: z.string().min(1).max(500),
     userId: z.string().min(1),
   }),
+  /** An operator's recheck of a wallet's uncertain updates: settle the ones past the grace window. */
+  z.object({
+    kind: z.literal('wallet.uncertain_recheck'),
+    orgId: z.string().min(1).max(64),
+    mode: ModeSchema,
+    provider: z.enum(['google', 'samsung']),
+  }),
   /** A credential's health check: the provider probe and its server-clock row. `checkId` names the result. */
   z.object({
     kind: z.literal('wallet.credential_check'),

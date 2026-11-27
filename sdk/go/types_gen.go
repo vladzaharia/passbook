@@ -16922,6 +16922,27 @@ type WalletEnrollmentsUpdateResponsePrerequisites struct {
 	RoundTrip *bool `json:"roundTrip"`
 }
 
+type WalletHealthListResponse struct {
+	Items []WalletHealthListResponseItemsItem `json:"items"`
+}
+
+type WalletHealthListResponseItemsItem struct {
+	Provider         string `json:"provider"`
+	Mode             string `json:"mode"`
+	Tone             string `json:"tone"`
+	LastSuccessAt    *int64 `json:"lastSuccessAt"`
+	Queued           int64  `json:"queued"`
+	Failed24h        int64  `json:"failed24h"`
+	Uncertain        int64  `json:"uncertain"`
+	UncertainWaiting int64  `json:"uncertainWaiting"`
+	CallbackAt       *int64 `json:"callbackAt"`
+}
+
+type WalletHealthRetryResponse struct {
+	Queued  int64 `json:"queued"`
+	Waiting int64 `json:"waiting"`
+}
+
 type WalletIdentitiesListResponse struct {
 	Items      []WalletIdentitiesListResponseItemsItem `json:"items"`
 	NextCursor *string                                 `json:"nextCursor"`

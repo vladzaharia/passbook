@@ -20,6 +20,7 @@ import { COPY, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { blockerOf, gatesOf } from './gates.ts';
 import { useWalletActions } from './queries.ts';
+import { WalletHealthPanel } from './wallet-health.tsx';
 
 type Source = NonNullable<WalletEnrolment['source']>;
 
@@ -167,6 +168,7 @@ export function OrgProviderCard({
             ))}
           </ul>
         </div>
+        <WalletHealthPanel orgId={orgId} provider={e.provider} canOperate={canReissue} />
         <OperationSlot
           kind="wallet.reissue"
           orgId={orgId}

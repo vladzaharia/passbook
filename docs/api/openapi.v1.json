@@ -25980,6 +25980,106 @@
         ],
         "additionalProperties": false
       },
+      "WalletHealthListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "google",
+                    "samsung"
+                  ]
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "live",
+                    "test"
+                  ]
+                },
+                "tone": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "attention",
+                    "failing",
+                    "idle"
+                  ]
+                },
+                "lastSuccessAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "queued": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "failed24h": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertain": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertainWaiting": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "callbackAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "provider",
+                "mode",
+                "tone",
+                "lastSuccessAt",
+                "queued",
+                "failed24h",
+                "uncertain",
+                "uncertainWaiting",
+                "callbackAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "WalletHealthRetryResponse": {
+        "type": "object",
+        "properties": {
+          "queued": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "waiting": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "queued",
+          "waiting"
+        ],
+        "additionalProperties": false
+      },
       "WalletEnrollmentsListResponse": {
         "type": "object",
         "properties": {
@@ -104506,6 +104606,165 @@
         "x-sdk": {
           "resource": "walletCredentials.checks",
           "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health": {
+      "get": {
+        "summary": "Health of the wallets open to an organization, in the session mode",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "provider": "google",
+                      "mode": "live",
+                      "tone": "ok",
+                      "lastSuccessAt": 1795570500000,
+                      "queued": 27,
+                      "failed24h": 3,
+                      "uncertain": 26,
+                      "uncertainWaiting": 36,
+                      "callbackAt": 1795570500000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "list"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health/{provider}/recheck": {
+      "post": {
+        "summary": "Queue the settling of a wallet's uncertain updates that are past their grace window",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "samsung"
+              ]
+            },
+            "required": true,
+            "name": "provider",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthRetryResponse"
+                },
+                "example": {
+                  "queued": 27,
+                  "waiting": 11
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "retry"
         },
         "security": [
           {

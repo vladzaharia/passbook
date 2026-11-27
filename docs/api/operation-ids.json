@@ -574,6 +574,8 @@
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable",
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke",
   "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider",
+  "wallet-health.getOrgsByOrgIdWalletHealth",
+  "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
   "wallet-identities.getPlatformAppleCalls",
   "wallet-identities.getPlatformAppleIdentities",
   "wallet-identities.getPlatformAppleIdentityMoves",

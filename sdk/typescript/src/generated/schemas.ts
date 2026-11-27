@@ -14570,6 +14570,25 @@ export type WalletEnrollmentsUpdateResponse = {
   };
 };
 
+export type WalletHealthListResponse = {
+  items: Array<{
+    provider: "google" | "samsung";
+    mode: "live" | "test";
+    tone: "ok" | "attention" | "failing" | "idle";
+    lastSuccessAt: number | null;
+    queued: number;
+    failed24h: number;
+    uncertain: number;
+    uncertainWaiting: number;
+    callbackAt: number | null;
+  }>;
+};
+
+export type WalletHealthRetryResponse = {
+  queued: number;
+  waiting: number;
+};
+
 export type WalletIdentitiesListResponse = {
   items: Array<{
     id: string;

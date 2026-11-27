@@ -9604,6 +9604,22 @@
     "WALLET_IDENTITY_IMMUTABLE",
     "WORKBENCH_TEST_ONLY"
   ],
+  "wallet health get /{orgId}/wallet-health": [
+    "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
+  ],
+  "wallet health post /{orgId}/wallet-health/{provider}/recheck": [
+    "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "SANDBOX_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
+  ],
   "wallet identities get /": [
     "FORBIDDEN",
     "IDENTITY_NOT_CONFIGURED",

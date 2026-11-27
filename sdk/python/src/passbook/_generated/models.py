@@ -2303,6 +2303,9 @@ __all__ = [
     "WalletEnrollmentsUpdateResponseIssuance1",
     "WalletEnrollmentsUpdateResponseIssuance2",
     "WalletEnrollmentsUpdateResponsePrerequisites",
+    "WalletHealthListResponse",
+    "WalletHealthListResponseItemsItem",
+    "WalletHealthRetryResponse",
     "WalletIdentitiesListResponse",
     "WalletIdentitiesListResponseItemsItem",
     "WalletProviderAccountsRetrieveResponse",
@@ -16088,6 +16091,24 @@ class WalletEnrollmentsUpdateResponseIssuance2(_Model):
 class WalletEnrollmentsUpdateResponsePrerequisites(_Model):
     check: bool
     roundTrip: bool | None
+
+class WalletHealthListResponse(_Model):
+    items: _List[WalletHealthListResponseItemsItem]
+
+class WalletHealthListResponseItemsItem(_Model):
+    provider: _Literal["google", "samsung"] | str
+    mode: _Literal["live", "test"] | str
+    tone: _Literal["ok", "attention", "failing", "idle"] | str
+    lastSuccessAt: int | None
+    queued: int
+    failed24h: int
+    uncertain: int
+    uncertainWaiting: int
+    callbackAt: int | None
+
+class WalletHealthRetryResponse(_Model):
+    queued: int
+    waiting: int
 
 class WalletIdentitiesListResponse(_Model):
     items: _List[WalletIdentitiesListResponseItemsItem]

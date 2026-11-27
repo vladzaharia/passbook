@@ -2569,6 +2569,14 @@
     "resource": "walletEnrollments",
     "method": "update"
   },
+  "wallet-health.getOrgsByOrgIdWalletHealth": {
+    "resource": "walletHealth",
+    "method": "list"
+  },
+  "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck": {
+    "resource": "walletHealth",
+    "method": "retry"
+  },
   "wallet-identities.getPlatformAppleIdentities": {
     "resource": "platform.appleIdentities",
     "method": "list"
