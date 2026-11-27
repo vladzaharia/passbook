@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { syncGoogleClassReviews } from './google-review-sync.ts';
+import { REVIEW_TICK_BATCH, syncGoogleClassReviews } from './google-review-sync.ts';
 import { fixture, loyalty, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer, listWalletOffers } from './offers.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
@@ -117,6 +117,30 @@ describe('the review sync tick', () => {
     expect(due.map((d) => d.classIdHash)).toEqual(checked.map((c) => c.hash));
   });
 
+  it('selects at most REVIEW_TICK_BATCH classes per tick', async () => {
+    const { f } = await pending();
+    const limits: unknown[] = [];
+    const prepare = f.kit.env.DB.prepare.bind(f.kit.env.DB);
+    const spy = vi.spyOn(f.kit.env.DB, 'prepare').mockImplementation((sql: string) => {
+      const st = prepare(sql);
+      if (!sql.includes('review_checked_at') || !sql.includes('GROUP BY c.class_id_hash'))
+        return st;
+      const bind = st.bind.bind(st);
+      st.bind = (...args: unknown[]) => {
+        limits.push(args.at(-1));
+        return bind(...args);
+      };
+      return st;
+    });
+    try {
+      f.kit.clock.advance(61_000);
+      await tick(f);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(limits).toEqual([REVIEW_TICK_BATCH]);
+  });
+
   it('reads nothing while the provider is dark', async () => {
     const { f } = await pending();
     restore.push(setWalletProvidersEnabledForTest(false));
@@ -165,7 +189,7 @@ describe('the review sync tick', () => {
       [real?.hash ?? ''],
     );
     expect(ok?.status).toBe('APPROVED');
-    const due = await listDueGoogleClassReviews(f.kit.env.DB, f.kit.clock.now(), 25);
+    const due = await listDueGoogleClassReviews(f.kit.env.DB, f.kit.clock.now(), REVIEW_TICK_BATCH);
     expect(due.map((d) => d.classIdHash)).not.toContain(fake);
   });
 });
