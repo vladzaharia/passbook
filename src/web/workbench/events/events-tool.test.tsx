@@ -112,18 +112,19 @@ describe('Events', () => {
     expect(feed?.search).toContain('requestId=req-1');
   });
 
-  it('says it is listening when nothing has arrived, with Add endpoint and Send a test event', async () => {
+  it('says it is listening when nothing has arrived, with Add endpoint as its one way on', async () => {
     await open('/workbench/o/sbx/events', { ...world(), events: [] });
     expect(await screen.findByText('Listening for events')).toBeInTheDocument();
     const add = screen.getAllByRole('link', { name: 'Add endpoint' });
-    expect(add.length).toBeGreaterThan(0);
+    expect(add).toHaveLength(1);
     // One wizard: the admin Connections path, back here when it is done.
     expect(add[0]).toHaveAttribute(
       'href',
       expect.stringContaining('/connections/new?source=outbound'),
     );
     expect(add[0]?.getAttribute('href')).toContain('return=%2Fworkbench%2F');
-    expect(screen.getByRole('button', { name: 'Send a test event' })).toBeInTheDocument();
+    // One label for the action, and no second button for another one.
+    expect(screen.queryByRole('button', { name: /Send (a )?test event/ })).toBeNull();
   });
 });
 
@@ -167,5 +168,20 @@ describe('Endpoints', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     for (const c of calls) expect(c.headers.authorization, c.path).toBe('Bearer pbtry_sbx');
+  });
+  it('offers Mark seen only while there are events to mark', async () => {
+    const summary = { failedDeliveries: 2, listening: true };
+    await open('/workbench/o/sbx/events', { ...world(), events: [], summary });
+    await screen.findByText('Listening for events');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark seen' })).toBeNull());
+  });
+
+  it('keeps Mark seen once events have arrived', async () => {
+    await open('/workbench/o/sbx/events', {
+      ...world(),
+      summary: { failedDeliveries: 2, listening: true },
+    });
+    await list();
+    expect(await screen.findByRole('button', { name: 'Mark seen' })).toBeInTheDocument();
   });
 });

@@ -40,6 +40,8 @@ export function EventsPanel({
   endpoints,
   write,
   empty,
+  sendAction,
+  onEmpty,
 }: {
   orgId: string;
   params: EventsParams;
@@ -47,6 +49,10 @@ export function EventsPanel({
   write: (next: Record<string, string | null>, mode: 'push' | 'replace') => void;
   /** Nothing has arrived and nothing narrows the list. */
   empty: React.ReactNode;
+  /** The head's Send test event: not shown while the empty state offers the one way on. */
+  sendAction: React.ReactNode;
+  /** Whether the empty state is showing. */
+  onEmpty: (empty: boolean) => void;
 }) {
   const api = useEventsApi();
   const feed = useEventFeed(api, { type: params.type, request: params.request, pass: params.pass });
@@ -62,6 +68,11 @@ export function EventsPanel({
   // y copies the selected event's id.
   useBenchKeys({ copyId: () => selected && void copyWithFeedback(selected.id, null) });
   const filters = [params.type, params.request, params.pass].filter(Boolean).length;
+  const showingEmpty = feed.ready && !feed.failed && feed.events.length === 0 && filters === 0;
+  useEffect(() => {
+    onEmpty(showingEmpty);
+    return () => onEmpty(false);
+  }, [showingEmpty, onEmpty]);
   const set = (key: 'type' | 'request' | 'pass', value: string | null) =>
     write({ [key]: value }, 'replace');
   const clear = () => write({ type: null, request: null, pass: null }, 'replace');
@@ -89,6 +100,7 @@ export function EventsPanel({
   return (
     <>
       <LiveIndicator state={live} onResume={feed.resume} />
+      <BenchSlot name="action">{showingEmpty ? null : sendAction}</BenchSlot>
       <BenchSlot name="count">{feed.ready ? `${feed.events.length} events` : null}</BenchSlot>
       <Toolbar label="Filter events">
         <FilterBar active={filters} onClear={clear}>

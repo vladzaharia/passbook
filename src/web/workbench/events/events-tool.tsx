@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { Plus, Send } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { wbEventsPath } from '@/shared/workbench.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
@@ -9,7 +9,6 @@ import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useBenchKeys } from '../bench/keys.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
-import { BenchSlot } from '../bench/slots.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
 import { ToolPage } from '../shell/tool-page.tsx';
 import { ToolEmpty, ToolFailed } from '../states/states.tsx';
@@ -77,23 +76,21 @@ export function EventsTool({ className }: { className: string }) {
     }
   }
 
-  // ⌘↵ sends a test event, as the tool's one action (design §5.4).
-  useBenchKeys({ primary: () => void sendTest() });
+  // ⌘↵ is the visible action: Add endpoint while the empty state shows, else send a test event (design §5.4).
+  const [emptyNow, setEmptyNow] = useState(false);
+  useBenchKeys({ primary: () => (emptyNow ? openAdd() : void sendTest()) });
 
-  const empty = (
-    <ToolEmpty
-      tool="events"
-      action={
-        <Button variant="outline" onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
-          Send a test event
-        </Button>
-      }
-    />
+  const empty = <ToolEmpty tool="events" />;
+  const sendAction = (
+    <Button variant="outline" onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
+      Send test event
+    </Button>
   );
 
   return (
     <ToolPage
       tool="events"
+      markSeen={!emptyNow}
       primary={
         <Button asChild iconStart={<Plus aria-hidden />}>
           <a href={addHref}>Add endpoint</a>
@@ -122,24 +119,15 @@ export function EventsTool({ className }: { className: string }) {
             empty={empty}
           />
         ) : (
-          <>
-            <BenchSlot name="action">
-              <Button
-                variant="outline"
-                onClick={() => void sendTest()}
-                iconStart={<Send aria-hidden />}
-              >
-                Send test event
-              </Button>
-            </BenchSlot>
-            <EventsPanel
-              orgId={orgId}
-              params={params}
-              endpoints={list}
-              write={write}
-              empty={empty}
-            />
-          </>
+          <EventsPanel
+            orgId={orgId}
+            params={params}
+            endpoints={list}
+            write={write}
+            empty={empty}
+            sendAction={sendAction}
+            onEmpty={setEmptyNow}
+          />
         )}
       </div>
     </ToolPage>

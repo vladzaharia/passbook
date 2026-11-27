@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiKeySchema } from '@/shared/contracts/api-keys.ts';
+import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
 import { keyPrefix } from '../../admin/api-keys/key-columns.tsx';
 import {
   KeysHeader,
@@ -120,7 +121,7 @@ function ScopedKeys({
   const create = (variant: 'primary' | 'outline') =>
     canManage ? (
       <Button variant={variant} iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-        New API key
+        {WB_EMPTY.keys?.action}
       </Button>
     ) : null;
   const empty = !live.isPending && !live.isError && items.length === 0;
@@ -147,7 +148,7 @@ function ScopedKeys({
       row={(k) => ({
         title: (
           <>
-            {k.name}
+            <span className="wb-key-name">{k.name}</span>
             {host?.own?.(k) ? <span className="wb-keys-own"> In use</span> : null}
           </>
         ),
@@ -156,7 +157,13 @@ function ScopedKeys({
       })}
       tone={(k) => TONE[keyState(k, now)]}
       selection={selection}
-      empty={<EmptyState art="key" title="No API keys" action={create('primary')} />}
+      empty={
+        <EmptyState
+          art="key"
+          title={WB_EMPTY.keys?.title ?? 'No keys'}
+          action={create('primary')}
+        />
+      }
       footer={{
         count: `${items.length} ${items.length === 1 ? 'key' : 'keys'}`,
         onMore: live.hasNextPage ? () => void live.fetchNextPage() : undefined,

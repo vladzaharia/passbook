@@ -95,7 +95,7 @@ describe('Keys in the Workbench', () => {
     });
     expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Keys', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New key' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Ada Lovelace' })).toBeNull();
     expect(screen.getByRole('option', { name: /CI key/ })).toHaveAttribute(
       'aria-selected',
@@ -128,8 +128,8 @@ describe('Keys in the Workbench', () => {
       },
     });
     const user = userEvent.setup();
-    await screen.findByText('No API keys');
-    await user.click(screen.getByRole('button', { name: 'New API key' }));
+    await screen.findByText('No keys');
+    await user.click(screen.getByRole('button', { name: 'New key' }));
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     // No type choice, and only the cap's days.
     expect(within(dialog).queryByText('Personal')).toBeNull();
@@ -184,7 +184,7 @@ describe('Keys in the Workbench', () => {
       handlers: keysApi(),
     });
     expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'New key' })).toBeNull();
   });
 
   it('a sandbox lists and makes keys like an org: its person is its admin', async () => {
@@ -197,7 +197,7 @@ describe('Keys in the Workbench', () => {
       },
     });
     expect(await screen.findByRole('option', { name: /CI key/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New API key' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New key' })).toBeInTheDocument();
   });
 
   it("marks the sandbox's own key and offers no Revoke on its page", async () => {
