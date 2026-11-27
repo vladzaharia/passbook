@@ -681,6 +681,14 @@
     "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
   },
   {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals 200.items[].retentionId: field removed",
+    "class": "breaking",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "200.items[].retentionId: field removed",
+    "note": "The webhook arrival rows no longer carry retentionId."
+  },
+  {
     "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
     "class": "additive",
     "operationId": "connections.getConnectionsByIdWebhookArrivals",
@@ -3782,6 +3790,14 @@
     "op": "PATCH /api/v1/webhook-endpoints/{id}",
     "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
     "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "Platform keys: identity and audit reads",
+    "class": "notable",
+    "operationId": "",
+    "op": "Platform key",
+    "change": "platform identity, identity-move and platform audit reads take a key",
+    "note": "A Platform key reads the platform Apple identities, identity moves and platform audit log with its CSV export."
   },
   {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"logs:read\" added",
