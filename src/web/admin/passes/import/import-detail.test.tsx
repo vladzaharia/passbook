@@ -1,13 +1,16 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { body, open, setupImportDom } from './import-open-fixtures.ts';
 import { COUNTS, checked, finished, importDto, json } from './import-test-fixtures.ts';
 
 setupImportDom();
 
 describe('progress and results', () => {
+  afterEach(() => vi.useRealTimers());
+
   it('counts "120 of 160", then shows the results and stops polling', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     let calls = 0;
     let done = false;
     await open(importDto(), {
@@ -38,11 +41,12 @@ describe('progress and results', () => {
     const bar = screen.getByRole('progressbar', { name: 'Passes handled' });
     expect(bar.getAttribute('aria-valuenow')).toBe('120');
     done = true;
-    expect(await screen.findByText('172 done', undefined, { timeout: 5000 })).toBeTruthy();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(await screen.findByText('172 done')).toBeTruthy();
     const settled = calls;
-    await new Promise((r) => setTimeout(r, 2600));
+    await vi.advanceTimersByTimeAsync(6000);
     expect(calls).toBe(settled);
-  }, 15_000);
+  });
 
   it('shows the counts, the failed rows, and downloads the results', async () => {
     const user = userEvent.setup();

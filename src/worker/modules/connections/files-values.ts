@@ -1,6 +1,6 @@
 import { TABULAR_LIMITS, TabularError } from '../../../shared/tabular/index.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 
-export const DEFAULT_ZONE = 'America/Los_Angeles';
 const ZONELESS = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?$/;
 
 const formats = new Map<string, Intl.DateTimeFormat>();
@@ -65,7 +65,7 @@ function knows(zone: string): boolean {
 
 /** The zone, or the default when the runtime does not know it. */
 export function usableZone(zone: string | null): string {
-  return zone && knows(zone) ? zone : DEFAULT_ZONE;
+  return zone && knows(zone) ? zone : DEFAULT_TIME_ZONE;
 }
 
 /**
