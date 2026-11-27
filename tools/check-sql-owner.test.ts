@@ -55,6 +55,24 @@ describe('check-sql-owner', () => {
     expect(optionalBindPredicate(rel, "'WHERE (pass_id IS NULL OR pass_id = ?)'")).toEqual([]);
   });
 
+  it('flags a bind interpolated through a helper, not a column helper', () => {
+    const rel = 'src/worker/platform/a.ts';
+    const at = (text: string) => optionalBindPredicate(rel, text.replaceAll('@', '$'));
+    for (const text of [
+      'const s = `(@{p(destinationOrgId)} IS NULL OR NOT EXISTS (SELECT 1))`;',
+      'const s = `(k.org_id IS NULL OR @{b.bind(named)} IS NULL OR k.org_id = @{b.bind(named)})`;',
+      'const s = `@{bind(x)} IS NOT NULL`;',
+    ])
+      expect(at(text), text).toHaveLength(1);
+    for (const text of [
+      'const s = `(@{value} IS NULL OR @{exists})`;',
+      'const s = `(@{key} IS NULL OR @{rowBody(table, alias, key)})`;',
+      'const s = `(@{col} IS NULL OR @{renderCond(q, c, v, params)})`;',
+      'const s = `@{p(x)} = 1 AND (@{col} IS NULL OR y)`;',
+    ])
+      expect(at(text), text).toEqual([]);
+  });
+
   it('catches flag, subselect and NULLIF forms', () => {
     const rel = 'src/worker/modules/a/repo.ts';
     for (const sql of [
