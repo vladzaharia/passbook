@@ -64,6 +64,9 @@ const ICON: Record<string, LucideIcon> = {
   'tickettailor-tickets': Ticket,
 };
 
+/** The glyph of a sender, from its tile. */
+export const senderIcon = (id: string): LucideIcon => ICON[id] ?? Webhook;
+
 const KEYWORDS: Record<string, string> = {
   'file-upload': 'excel xlsx csv json ndjson spreadsheet',
   'csv-url': 'csv sheets google spreadsheet link',
@@ -102,7 +105,7 @@ export function buildTiles(connectors: readonly Connector[]): ConnectorTile[] {
         line: 'Webhook',
         category: r.category,
         order: 100 + i,
-        icon: ICON[r.id] ?? Webhook,
+        icon: senderIcon(r.id),
         keywords: `webhook ${r.id.replace(/-/g, ' ')}`,
       });
     });

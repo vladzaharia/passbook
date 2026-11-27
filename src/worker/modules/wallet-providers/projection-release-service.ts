@@ -98,6 +98,12 @@ export async function publish(
   if (!written) return failedWrite(ctx, authority);
   const row = await getRelease(db, id);
   if (!row) throw new Error('Committed wallet projection release was not found.');
+  // Objects already in wallets need no job here. Google applies class fields to every object itself; what is
+  // compiled into the object (a Generic class holds only its sharing mode, so the whole card) is resent
+  // because this insert marked every copy of the template dirty (0037 `wallet_provider_dirty_release`) and the
+  // minute drain sends each under the new release: 30 a minute, class rewrite behind one CAS row, Google's
+  // quota backoff in `sync-errors.ts`. A rollback is the same insert. Review (`reviewStatus`) changes no object
+  // field. Pinned by google-release-objects.test.ts. The job below only brings each class up, once.
   if (candidate.provider === 'google' && action === 'release')
     await queueGoogleReconcile(ctx, scope, row.version, row.generation);
   return releaseDto(row, candidate);

@@ -76,6 +76,18 @@ export const settleStatement = (
     )
     .bind(status, body, ...id);
 
-export async function deleteExpiredRequests(db: D1Database, now: number): Promise<number> {
-  return (await run(db, 'DELETE FROM idempotent_requests WHERE expires_at < ?', [now])).changes;
+export async function deleteExpiredRequests(
+  db: D1Database,
+  now: number,
+  limit: number,
+): Promise<number> {
+  return (
+    await run(
+      db,
+      `DELETE FROM idempotent_requests WHERE (org_id, mode, principal, operation, key) IN
+         (SELECT org_id, mode, principal, operation, key FROM idempotent_requests
+          WHERE expires_at < ? ORDER BY expires_at LIMIT ?)`,
+      [now, limit],
+    )
+  ).changes;
 }

@@ -28,6 +28,16 @@ export interface CertificateInfo {
 
 const encoder = new TextEncoder();
 
+/** A signing refusal with a stable code, so a caller can log which check failed without reading the message. */
+class SigningError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'SigningError';
+    this.code = code;
+  }
+}
+
 function derFromPem(pem: string): ArrayBuffer {
   const body = pem.replace(/-----[^-]+-----|\s/g, '');
   const bytes = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
@@ -75,7 +85,7 @@ const chainChecks = new Map<string, Promise<boolean>>();
 
 /** The RSA check of signer against WWDR is the same on every call; validity dates are not cached. */
 function chainIsValid(
-  material: SigningMaterial,
+  material: Pick<SigningMaterial, 'certificate' | 'intermediate'>,
   signer: pki.Certificate,
   intermediate: pki.Certificate,
   engine: pki.ICryptoEngine,
@@ -131,6 +141,47 @@ export async function buildManifest(
   return { manifest, bytes: encoder.encode(JSON.stringify(manifest)) };
 }
 
+/**
+ * Every check `signManifest` makes before it signs: the certificate and the WWDR intermediate are current, the
+ * intermediate issued the certificate, the certificate is for the identity the pass names (when given), and the
+ * RSA chain verifies. Throws a SigningError with a stable `code`; touches no private key.
+ */
+export async function assertCanSign(
+  material: Pick<SigningMaterial, 'certificate' | 'intermediate'>,
+  options: {
+    now?: Date;
+    expectedIdentity?: { passTypeIdentifier: string; teamIdentifier: string };
+  } = {},
+): Promise<{ signer: pki.Certificate; intermediate: pki.Certificate }> {
+  const now = options.now ?? new Date();
+  const signer = certificateFromPem(material.certificate);
+  const intermediate = certificateFromPem(material.intermediate);
+  if (signer.notBefore.value > now || signer.notAfter.value < now) {
+    throw new SigningError(
+      'SIGN_CERT_NOT_VALID',
+      'Pass signing certificate is not currently valid',
+    );
+  }
+  if (intermediate.notBefore.value > now || intermediate.notAfter.value < now)
+    throw new SigningError('SIGN_INTERMEDIATE_EXPIRED', 'Incorrect or expired WWDR intermediate');
+  if (!signer.issuer.isEqual(intermediate.subject))
+    throw new SigningError('SIGN_INTERMEDIATE_INVALID', 'Incorrect or expired WWDR intermediate');
+  const expected = options.expectedIdentity;
+  if (
+    expected &&
+    (subjectValue(signer, UID_OID) !== expected.passTypeIdentifier ||
+      subjectValue(signer, OU_OID) !== expected.teamIdentifier)
+  ) {
+    throw new SigningError(
+      'SIGN_IDENTITY_MISMATCH',
+      'Pass identity does not match signing certificate',
+    );
+  }
+  if (!(await chainIsValid(material, signer, intermediate, webCrypto())))
+    throw new SigningError('SIGN_CHAIN_INVALID', 'Invalid certificate chain');
+  return { signer, intermediate };
+}
+
 /** Detached CMS signature (SHA-256 digest, signingTime, signer + WWDR chain) over manifest.json. */
 export async function signManifest(
   manifestBytes: Uint8Array,
@@ -141,29 +192,8 @@ export async function signManifest(
   } = {},
 ): Promise<Uint8Array> {
   const now = options.now ?? new Date();
-  const signer = certificateFromPem(material.certificate);
-  const intermediate = certificateFromPem(material.intermediate);
-  if (signer.notBefore.value > now || signer.notAfter.value < now) {
-    throw new Error('Pass signing certificate is not currently valid');
-  }
-  if (
-    intermediate.notBefore.value > now ||
-    intermediate.notAfter.value < now ||
-    !signer.issuer.isEqual(intermediate.subject)
-  ) {
-    throw new Error('Incorrect or expired WWDR intermediate');
-  }
-  const expected = options.expectedIdentity;
-  if (
-    expected &&
-    (subjectValue(signer, UID_OID) !== expected.passTypeIdentifier ||
-      subjectValue(signer, OU_OID) !== expected.teamIdentifier)
-  ) {
-    throw new Error('Pass identity does not match signing certificate');
-  }
+  const { signer, intermediate } = await assertCanSign(material, { ...options, now });
   const engine = webCrypto();
-  if (!(await chainIsValid(material, signer, intermediate, engine)))
-    throw new Error('Invalid certificate chain');
 
   const data = manifestBytes.buffer.slice(
     manifestBytes.byteOffset,
