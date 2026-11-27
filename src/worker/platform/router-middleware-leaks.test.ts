@@ -80,6 +80,8 @@ describe('membership routes keep a body cap of their own', () => {
       ['POST', `/api/v1/orgs/${orgId}/invitations`, admin],
       ['POST', `/api/v1/orgs/${orgId}/invitations/x/resend`, admin],
       ['PATCH', `/api/v1/orgs/${orgId}/memberships/x`, admin],
+      ['DELETE', `/api/v1/orgs/${orgId}/memberships/x`, admin],
+      ['DELETE', `/api/v1/orgs/${orgId}/invitations/x`, admin],
     ];
     for (const [method, path, headers] of rows) {
       const res = await api.call(method, path, big(2_000_000), headers);

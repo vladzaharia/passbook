@@ -2,7 +2,14 @@ import { Hono } from 'hono';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
-import { isWholeMount, patternOf, scopedOwns, scopedRouter } from './router-scope.ts';
+import {
+  assertScopedPatterns,
+  isWholeMount,
+  ownUse,
+  patternOf,
+  scopedOwns,
+  scopedRouter,
+} from './router-scope.ts';
 
 type Block = { host: unknown; mount: string; start: number; end: number };
 
@@ -105,4 +112,11 @@ it('patternOf throws on a pattern it cannot read, so a route cannot silently los
   expect(() => patternOf('/a/:id{[0-9]+')).toThrow();
   expect(() => patternOf('/a/b?')).toThrow();
   expect(() => patternOf('/a/{x}')).toThrow();
+});
+
+it('a scoped router with a route patternOf cannot read fails when the app is built', () => {
+  const router = new Hono();
+  ownUse(router, (_c, next) => next());
+  router.get('/a/{x}', (c) => c.text('x'));
+  expect(() => assertScopedPatterns(new Hono().route('/m', router))).toThrow(/cannot read/);
 });

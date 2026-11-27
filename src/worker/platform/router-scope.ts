@@ -21,8 +21,9 @@ const esc = (text: string) => text.replace(/[.+?^$()|[\]{}\\*]/g, '\\$&');
 
 /**
  * A Hono route pattern as a regex; a trailing slash is optional. Handles `:id`, `:id{regex}`,
- * `:id?` and `*`; any other use of `{`, `}` or `?` throws, so a route this cannot read fails at
- * registration instead of silently losing its router's guard.
+ * `:id?` and `*`; any other use of `{`, `}` or `?` throws. `assertScopedPatterns` runs it over every
+ * scoped router when the app is built, so a route this cannot read fails at startup instead of
+ * silently losing its router's guard.
  */
 export const patternOf = (pattern: string): RegExp => {
   let out = '';
@@ -142,3 +143,9 @@ export const wholeMountUse = <E extends Env>(router: Hono<E>, mw: MiddlewareHand
 
 export const isWholeMount = (handler: unknown) =>
   typeof handler === 'function' && wholeMount.has(handler);
+
+/** Throws if a router with a scoped middleware has a route `patternOf` cannot read. */
+export const assertScopedPatterns = (app: { routes: ReadonlyArray<{ handler: unknown }> }) => {
+  for (const { handler } of app.routes)
+    for (const r of scopedRouter(handler)?.routes ?? []) patternOf(r.path);
+};
