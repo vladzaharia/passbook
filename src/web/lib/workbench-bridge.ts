@@ -122,13 +122,15 @@ export function useBridgeOrigin(): BridgeOrigin | null {
     const first = last.current === null;
     const previous = last.current;
     last.current = pathname;
-    const arrived = bridgeFromSearch(searchStr) ?? (first ? fromReferrer() : null);
+    const launched = bridgeFromSearch(searchStr);
+    const arrived = launched ?? (first ? fromReferrer() : null);
     if (arrived) {
       const next = { return: arrived, hops: 0 };
       write(next);
       setOrigin(next);
       const params = new URLSearchParams(searchStr);
-      if (params.has('from') || params.has('return')) {
+      // A referrer arrival has no launch params to take out: `return` may be a page's own (the wizard's).
+      if (launched) {
         params.delete('from');
         params.delete('return');
         const rest = params.toString();

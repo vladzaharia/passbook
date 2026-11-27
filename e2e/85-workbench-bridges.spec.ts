@@ -133,7 +133,7 @@ test.describe('admin, Live', () => {
     await page.goto(`/admin/o/${org}/passes`);
     await page.evaluate(() => localStorage.removeItem('passbook-mode'));
     await page.reload();
-    const entry = page.getByRole('link', { name: 'Workbench, opens Test' });
+    const entry = page.getByRole('link', { name: 'Workbench Test' });
     await expect(entry).toBeVisible();
     const href = (await entry.getAttribute('href')) ?? '';
     expect(href).toContain(`/workbench/o/${org}`);
@@ -211,7 +211,7 @@ test.describe('admin, Live', () => {
     await page.evaluate(() => sessionStorage.clear());
     await page.reload();
     await expect(chip).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Workbench, opens Test' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Workbench Test' })).toBeVisible();
 
     // Three navigations away turn the chip into a quiet "Workbench" link.
     await page.goto(launch);
