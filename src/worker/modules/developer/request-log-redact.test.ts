@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { BODY_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
 const S = 'SENTINEL';
@@ -181,7 +182,7 @@ describe('free-form maps are blanked whole', () => {
       [`user-${S}@example.com`]: { id: 'x' },
     });
     expect(out).not.toContain(S);
-    expect(out).not.toContain('998877');
+    expectSecretAbsent(out, '998877');
     expect(JSON.parse(out)).toMatchObject({ id: 'p1', input: '[redacted]', config: '[redacted]' });
   });
 
@@ -200,7 +201,7 @@ describe('free-form maps are blanked whole', () => {
     });
     expect(out).not.toContain(S);
     expect(out).not.toContain('Ada');
-    expect(out).not.toContain('315532800000');
+    expectSecretAbsent(out, '315532800000');
     expect(JSON.parse(out)).toMatchObject({ id: 'ok', Input: '[redacted]', scope: '[redacted]' });
   });
 
