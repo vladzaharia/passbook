@@ -169,4 +169,19 @@ describe('Endpoints', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     for (const c of calls) expect(c.headers.authorization, c.path).toBe('Bearer pbtry_sbx');
   });
+  it('offers Mark seen only while there are events to mark', async () => {
+    const summary = { failedDeliveries: 2, listening: true };
+    await open('/workbench/o/sbx/events', { ...world(), events: [], summary });
+    await screen.findByText('Listening for events');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark seen' })).toBeNull());
+  });
+
+  it('keeps Mark seen once events have arrived', async () => {
+    await open('/workbench/o/sbx/events', {
+      ...world(),
+      summary: { failedDeliveries: 2, listening: true },
+    });
+    await list();
+    expect(await screen.findByRole('button', { name: 'Mark seen' })).toBeInTheDocument();
+  });
 });

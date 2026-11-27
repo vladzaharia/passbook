@@ -90,6 +90,7 @@ export function EventsTool({ className }: { className: string }) {
   return (
     <ToolPage
       tool="events"
+      markSeen={!emptyNow}
       primary={
         <Button asChild iconStart={<Plus aria-hidden />}>
           <a href={addHref}>Add endpoint</a>

@@ -29,6 +29,8 @@ export interface ToolPageProps {
   primary?: ReactNode;
   /** Filters and search, one row under the head. */
   toolbar?: ReactNode;
+  /** False hides Mark seen where the view has nothing to mark (an empty feed). */
+  markSeen?: boolean;
   children: ReactNode;
 }
 
@@ -37,7 +39,14 @@ export interface ToolPageProps {
  * the area has attention, then the one primary. Sections rise in, 45 ms apart. The title keeps the
  * head's 40 px line, so a head that wraps its actions on a phone never moves the title.
  */
-export function ToolPage({ tool, count, primary, toolbar, children }: ToolPageProps) {
+export function ToolPage({
+  tool,
+  count,
+  primary,
+  toolbar,
+  markSeen: canMarkSeen = true,
+  children,
+}: ToolPageProps) {
   const { context, attention, seenAt } = useWbShell();
   const { title } = WB_AREA[tool];
   const [countEl, setCount] = useState<HTMLElement | null>(null);
@@ -81,7 +90,7 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
           </span>
         ) : null}
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {area && context && seenAt !== undefined ? (
+          {canMarkSeen && area && context && seenAt !== undefined ? (
             <Button
               variant="ghost"
               size="sm"

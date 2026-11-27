@@ -7,7 +7,7 @@ import '../../pass-card/barcode-loader.ts';
 import '../home/home.css';
 
 // Its own chunk: only a context with no sandbox reads the Console beside the state.
-const ReadOnlyConsole = lazy(() => import('../home/readonly-console.tsx'));
+const ReadOnlyConsole = lazy(() => import('../home/readonly-console-gate.tsx'));
 
 /** Home: the live surface (T1). With no sandbox yet, Create sandbox once. */
 export function HomePage() {
