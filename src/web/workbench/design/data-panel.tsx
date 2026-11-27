@@ -1,85 +1,17 @@
 import { lazy, type ReactNode, Suspense } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { useDesigner } from '../../admin/templates/designer/context.tsx';
-import { type InputSpec, readInputs } from '../../admin/templates/designer/inputs.ts';
+import { readInputs } from '../../admin/templates/designer/inputs.ts';
 import { useKept } from '../../admin/templates/designer/ui-keep.tsx';
 import { Button } from '../../ui/button.tsx';
 import { FormField } from '../../ui/field.tsx';
-import { Input, Textarea } from '../../ui/input.tsx';
-import { Select } from '../../ui/select.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
-import { Switch } from '../../ui/switch.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx';
 import { IssueTestPass } from './issue.tsx';
+import { Control } from './sample-control.tsx';
 
 /** The JSON editor loads when its toggle first turns on. */
 const SampleJson = lazy(() => import('./sample-json.tsx'));
-
-const HTML_TYPE: Partial<Record<InputSpec['type'], string>> = {
-  email: 'email',
-  url: 'url',
-  number: 'text',
-  datetime: 'text',
-};
-
-function Control({
-  spec,
-  id,
-  disabled,
-  onSet,
-}: {
-  spec: InputSpec;
-  id: string;
-  disabled: boolean;
-  onSet: (value: string) => void;
-}) {
-  if (spec.type === 'list')
-    return (
-      <span id={id} className="text-sm text-fg-muted">
-        {WB_DESIGN.list}
-      </span>
-    );
-  if (spec.type === 'boolean')
-    return (
-      <Switch
-        id={id}
-        aria-label={spec.label}
-        checked={spec.sample === 'true'}
-        disabled={disabled}
-        onCheckedChange={(on) => onSet(String(on))}
-      />
-    );
-  if (spec.type === 'choice')
-    return (
-      <Select
-        id={id}
-        value={spec.sample}
-        disabled={disabled}
-        options={(spec.options ?? []).map((o) => ({ value: o.value, label: o.label }))}
-        onValueChange={onSet}
-      />
-    );
-  if (spec.type === 'textarea')
-    return (
-      <Textarea
-        id={id}
-        rows={3}
-        value={spec.sample}
-        disabled={disabled}
-        onChange={(e) => onSet(e.target.value)}
-      />
-    );
-  return (
-    <Input
-      id={id}
-      type={HTML_TYPE[spec.type] ?? 'text'}
-      inputMode={spec.type === 'number' ? 'decimal' : undefined}
-      value={spec.sample}
-      disabled={disabled}
-      onChange={(e) => onSet(e.target.value)}
-    />
-  );
-}
 
 /** The sample as a form: one control per input, each edit a draft change like any other. */
 function SampleForm() {

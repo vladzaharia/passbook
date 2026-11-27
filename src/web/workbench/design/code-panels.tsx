@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { useDesigner } from '../../admin/templates/designer/context.tsx';
-import { isRecord } from '../../admin/templates/designer/model.ts';
+import { type Dict, isRecord } from '../../admin/templates/designer/model.ts';
 import { CodeBlock } from '../../ui/code-block.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx';
 import { snippetsFor } from '../playground/snippets.ts';
@@ -9,11 +9,11 @@ import { sampleOf } from './sample.ts';
 import { useOpenTemplate } from './template-context.tsx';
 
 /** The Code tab's panels: the snippet writers for each language live here, off the first load. */
-export default function CodePanels() {
+export default function CodePanels({ sample: shown }: { sample?: Dict }) {
   const { doc } = useDesigner();
   const { id } = useOpenTemplate();
   const [tab, setTab] = useState('ts');
-  const sample = sampleOf(doc);
+  const sample = shown ?? sampleOf(doc);
   const snippets = useMemo(
     () => snippetsFor(id, sample, `${location.origin}/api/v1`),
     [id, sample],
