@@ -98649,7 +98649,7 @@
                   "$ref": "#/components/schemas/WalletHealthRetryResponse"
                 },
                 "example": {
-                  "queued": 27,
+                  "due": 3,
                   "waiting": 1
                 }
               }
