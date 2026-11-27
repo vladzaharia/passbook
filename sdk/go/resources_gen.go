@@ -947,6 +947,15 @@ func newPlatformMetricsResource(c *core) *PlatformMetricsResource {
 	}
 }
 
+// RetrieveDeveloper Developer quickstart funnel: sandboxes by step and time to first pass (30 days) `GET /api/v1/metrics/platform/developer`
+func (r *PlatformMetricsResource) RetrieveDeveloper(ctx context.Context, opts ...RequestOption) (*PlatformMetricsRetrieveDeveloperResult, error) {
+	var out PlatformMetricsRetrieveDeveloperResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/metrics/platform/developer"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // RetrieveOverview Platform overview metrics (filtered results are aggregate-only) `GET /api/v1/metrics/platform/overview`
 func (r *PlatformMetricsResource) RetrieveOverview(ctx context.Context, query *PlatformMetricsRetrieveOverviewQuery, opts ...RequestOption) (*PlatformMetricsRetrieveOverviewResult, error) {
 	var out PlatformMetricsRetrieveOverviewResult

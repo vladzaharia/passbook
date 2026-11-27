@@ -710,6 +710,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.metrics.retrieveDeveloper", "GET", "/api/v1/metrics/platform/developer", false,
+		"", `{"windowDays":0,"sandboxes":0,"viewed":0,"called":0,"passed":0,"previewed":0,"completion":0,"ttfpP50Ms":0,"ttfpP90Ms":0,"ttfpSamples":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Metrics.RetrieveDeveloper(ctx)
+		},
+	},
+	{
 		"platform.metrics.retrieveOverview", "GET", "/api/v1/metrics/platform/overview", false,
 		"", `{"source":"analytics_engine","range":"24h","bucketMs":0,"unavailable":["x"],"totals":{"passes":0,"activePasses":0,"voidedPasses":0,"holders":0,"devices":0,"issued":0,"updated":0,"downloads":0,"registrations":0,"refreshes":0,"pushes":0,"pushFailures":0,"emails":0,"emailFailures":0,"syncRuns":0,"signIns":0,"scans":0,"scanRefused":0},"series":{"issued":[{"t":0,"v":0}],"updated":[{"t":0,"v":0}],"downloads":[{"t":0,"v":0}],"registrations":[{"t":0,"v":0}],"refreshes":[{"t":0,"v":0}],"pushes":[{"t":0,"v":0}],"pushFailures":[{"t":0,"v":0}],"emails":[{"t":0,"v":0}],"emailFailures":[{"t":0,"v":0}],"syncRuns":[{"t":0,"v":0}],"signIns":[{"t":0,"v":0}],"scans":[{"t":0,"v":0}]},"setup":{"orgs":0,"assignedTemplates":0,"passes":0,"approvedTemplates":0,"releasedTemplates":0,"walletPasses":0,"passEmailsSent":0,"latestPassId":"x","scanners":0},"live":[{"eventId":"x","name":"x","arrived":0,"expected":0,"ratePerMin":0}],"recent":[{"at":0,"action":"x","orgId":"x","targetId":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

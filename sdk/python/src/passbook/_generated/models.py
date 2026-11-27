@@ -1325,6 +1325,7 @@ __all__ = [
     "PlatformInvitationsResendResult",
     "PlatformInvitationsRevokeResponse",
     "PlatformInvitationsRevokeResult",
+    "PlatformMetricsRetrieveDeveloperResult",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -10283,6 +10284,18 @@ class PlatformInvitationsResendResponseCreatedBy(_Model):
 
 class PlatformInvitationsRevokeResponse(_Model):
     ok: _Literal[True]
+
+class PlatformMetricsRetrieveDeveloperResult(_Model):
+    windowDays: int
+    sandboxes: int
+    viewed: int
+    called: int
+    passed: int
+    previewed: int
+    completion: float | None
+    ttfpP50Ms: int | None
+    ttfpP90Ms: int | None
+    ttfpSamples: int
 
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str

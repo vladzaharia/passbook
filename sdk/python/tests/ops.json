@@ -3535,6 +3535,30 @@
   }
  },
  {
+  "id": "metrics.getMetricsPlatformDeveloper",
+  "call": "platform.metrics.retrieve_developer",
+  "http": "GET",
+  "path": "/api/v1/metrics/platform/developer",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "windowDays": 0,
+   "sandboxes": 0,
+   "viewed": 0,
+   "called": 0,
+   "passed": 0,
+   "previewed": 0,
+   "completion": 0,
+   "ttfpP50Ms": 0,
+   "ttfpP90Ms": 0,
+   "ttfpSamples": 0
+  }
+ },
+ {
   "id": "metrics.getMetricsPlatformOverview",
   "call": "platform.metrics.retrieve_overview",
   "http": "GET",

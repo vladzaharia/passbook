@@ -907,6 +907,13 @@ class PlatformMetricsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
+    def retrieve_developer(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformMetricsRetrieveDeveloperResult:
+        """Developer quickstart funnel: sandboxes by step and time to first pass (30 days) `GET /api/v1/metrics/platform/developer`"""
+        return self._core.request("GET", "/api/v1/metrics/platform/developer", result=m.PlatformMetricsRetrieveDeveloperResult, **opts)
+
     def retrieve_overview(
         self,
         *,

@@ -506,6 +506,20 @@ export type MessageRulesSendTestBody = MessageRulesSendTestParams;
 /** Response of `messageRules.sendTest`. */
 export type MessageRulesSendTestResult = Broadcast;
 
+/** Response of `platform.metrics.retrieveDeveloper`. */
+export type PlatformMetricsRetrieveDeveloperResult = {
+  windowDays: number;
+  sandboxes: number;
+  viewed: number;
+  called: number;
+  passed: number;
+  previewed: number;
+  completion: number | null;
+  ttfpP50Ms: number | null;
+  ttfpP90Ms: number | null;
+  ttfpSamples: number;
+};
+
 /** Query of `platform.metrics.retrieveOverview`. */
 export type PlatformMetricsRetrieveOverviewQuery = {
   templateId?: string;
