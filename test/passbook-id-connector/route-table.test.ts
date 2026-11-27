@@ -143,7 +143,8 @@ const SOURCES = import.meta.glob('../../workers/passbook-id-connector/src/*.ts',
   import: 'default',
   eager: true,
 }) as Record<string, string>;
-const source = (name: string) => SOURCES[`../../workers/passbook-id-connector/src/${name}.ts`] as string;
+const source = (name: string) =>
+  SOURCES[`../../workers/passbook-id-connector/src/${name}.ts`] as string;
 
 describe('the allow-list is exactly the list of design 2 5.7', () => {
   it.each(['v2', 'admin'] as const)('%s layout', (layout) => {
