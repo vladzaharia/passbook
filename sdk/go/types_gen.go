@@ -71,6 +71,7 @@ type ApiKeyDetail struct {
 	RateTier      *string        `json:"rateTier,omitempty"`
 	ParentKeyID   *string        `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string        `json:"rotatedFrom,omitempty"`
+	Origin        *string        `json:"origin,omitempty"`
 	LastIPPrefix  *string        `json:"lastIpPrefix"`
 	Parent        map[string]any `json:"parent"`
 	ReplacedBy    map[string]any `json:"replacedBy"`
@@ -100,6 +101,7 @@ type ApiKeyMinted struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        *string  `json:"secret,omitempty"`
 }
 
@@ -135,6 +137,7 @@ type ApiKeyRotationKey1 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        string   `json:"secret"`
 }
 
@@ -161,6 +164,7 @@ type ApiKeyRotationKey2 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeyRotationPrevious struct {
@@ -186,6 +190,7 @@ type ApiKeyRotationPrevious struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysActivityListQuery struct {
@@ -193,6 +198,8 @@ type ApiKeysActivityListQuery struct {
 }
 
 type ApiKeysActivityListResult = ApiKeyActivity
+
+type ApiKeysCliTokensRevokeResult = CliTokenEnded
 
 type ApiKeysCreateBody = ApiKeysCreateParams
 
@@ -235,6 +242,7 @@ type ApiKeysListItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysListQuery struct {
@@ -273,6 +281,7 @@ type ApiKeysListResponseItemsItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysRetireBody = ApiKeysRetireParams
@@ -1084,6 +1093,10 @@ type CapturedEmailDetail struct {
 type CapturedEmailPage struct {
 	Items      []CapturedEmail `json:"items"`
 	NextCursor *string         `json:"nextCursor"`
+}
+
+type CliTokenEnded struct {
+	Ok bool `json:"ok"`
 }
 
 type ConnectionPreview struct {
@@ -7065,10 +7078,12 @@ type PassInstalledEvent struct {
 }
 
 type PassInstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	FirstDevice bool    `json:"firstDevice"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	FirstDevice  bool    `json:"firstDevice"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassIssuedEvent struct {
@@ -7825,11 +7840,13 @@ type PassUninstalledEvent struct {
 }
 
 type PassUninstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	LastDevice  bool    `json:"lastDevice"`
-	Cause       string  `json:"cause"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	LastDevice   bool    `json:"lastDevice"`
+	Cause        string  `json:"cause"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassUnvoidedEvent struct {
@@ -8565,6 +8582,7 @@ type PassesDevicesListResponseDevicesItem struct {
 	Removal        *string        `json:"removal"`
 	Simulated      *bool          `json:"simulated,omitempty"`
 	DeviceID       *string        `json:"deviceId,omitempty"`
+	DevicePass     *bool          `json:"devicePass,omitempty"`
 }
 
 type PassesDevicesListResult = PassesDevicesListResponse
@@ -11891,10 +11909,12 @@ type PushFailedEvent struct {
 }
 
 type PushFailedEventData struct {
-	Version *int64  `json:"version,omitempty"`
-	Status  *int64  `json:"status,omitempty"`
-	Reason  *string `json:"reason,omitempty"`
-	Code    *string `json:"code,omitempty"`
+	Version      *int64  `json:"version,omitempty"`
+	Status       *int64  `json:"status,omitempty"`
+	Reason       *string `json:"reason,omitempty"`
+	Code         *string `json:"code,omitempty"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type ReleaseResponse = any

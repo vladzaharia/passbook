@@ -8,6 +8,7 @@ import {
   STEP_UP_REQUIRED_MESSAGE,
 } from '../../shared/copy/sign-in.ts';
 import {
+  CLI_TOKEN_NOT_ALLOWED_COPY,
   SANDBOX_TEST_ONLY_COPY,
   WORKBENCH_TEST_ONLY_COPY,
 } from '../../shared/copy/workbench-errors.ts';
@@ -84,6 +85,10 @@ export const orgTestOnly = (): ConflictError =>
 /** 403 `WORKBENCH_TEST_ONLY`: a Workbench token asked for Live, or for an operation outside its allowlist. */
 export const workbenchTestOnly = (message = WORKBENCH_TEST_ONLY_COPY): ForbiddenError =>
   new ForbiddenError(message, 'WORKBENCH_TEST_ONLY');
+
+/** 403 `CLI_TOKEN_NOT_ALLOWED`: a CLI token asked for a route outside its allowlist, a credential route or a step-up. */
+export const cliTokenNotAllowed = (): ForbiddenError =>
+  new ForbiddenError(CLI_TOKEN_NOT_ALLOWED_COPY, 'CLI_TOKEN_NOT_ALLOWED');
 
 /** Maps a classified grant refusal to the HTTP error. Unknown reasons are a plain 403. */
 export function authorityDenied(

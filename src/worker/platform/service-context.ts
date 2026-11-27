@@ -23,8 +23,8 @@ export interface ServiceContext {
   jobName?: string;
   /** Daily cron only: D1 queries the shared daily budget has spent so far, across every hook. */
   spent?: () => number;
-  /** The request came with a `pbtry_` token (a key's or a member's): its audit rows carry `via: 'try'`. */
-  via?: 'try';
+  /** The request came with a `pbtry_` token (a key's or a member's), or a CLI token: its audit rows carry `via`. */
+  via?: 'try' | 'cli';
   /** A cron invocation's D1 queries so far (D1 allows 1,000); only the daily cron sets it. */
   queries?: () => number;
   waitUntil(promise: Promise<unknown>): void;

@@ -1,59 +1,50 @@
-import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router';
+import { useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router';
+import { PenTool } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { errorMessage } from '../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
-  Button,
-  Card,
-  CardBody,
   detailError,
+  Form,
   FormField,
   Input,
   PageHeader,
   SkeletonDetail,
   SwitchRow,
   toast,
+  UnsavedChangesDialog,
+  useUnsavedChangesGuard,
+  useWizard,
+  Wizard,
+  WizardReview,
 } from '../../ui/index.ts';
 import { usePassSetup } from '../brand/api.ts';
 import { brandingUrl } from '../orgs/queries.ts';
-import { assetMap, PassPreviewPanel } from '../passes/pass-preview.tsx';
-import { parseColor, toHex, toRgbText } from '../templates/designer/contrast.ts';
+import { parseColor, toHex } from '../templates/designer/contrast.ts';
 import { useBlueprint, useBlueprintPreview, useBlueprintVersion, useUseBlueprint } from './api.ts';
-import { BlueprintStage } from './identity.tsx';
 import { saveOrgBrand, unbranded } from './org-brand.ts';
 import { QuickFields, useQuickFields } from './quick-fields.tsx';
-import { choicesOf, docOfVersion, textColors } from './quick-setup.ts';
+import { choicesOf, docOfVersion } from './quick-setup.ts';
 import { useBlueprintRequest } from './use-request.ts';
-import '../passes/passes.css';
+import { UseStage } from './use-stage.tsx';
 
 const crumbs = (orgId: string, name?: string) => [
   { label: 'Blueprints', to: `/admin/o/${orgId}/blueprints` },
   { label: name ?? 'Blueprint' },
 ];
 
-/** The blueprint's pass as the template will be: the org's name and the chosen colour. */
-function recolor(
-  passJson: Record<string, unknown>,
-  color: Parameters<typeof textColors>[0] | undefined,
-  orgName: string | undefined,
-) {
-  const named = orgName && typeof passJson.logoText === 'string' ? { logoText: orgName } : {};
-  if (!color) return { ...passJson, ...named };
-  const { foreground, label } = textColors(color);
-  return {
-    ...passJson,
-    ...named,
-    backgroundColor: toRgbText(color),
-    foregroundColor: toRgbText(foreground),
-    labelColor: toRgbText(label),
-  };
-}
+const STEPS = [
+  { id: 'name', title: 'Name', heading: 'Name the template' },
+  { id: 'look', title: 'Look', heading: 'Logo and colour' },
+  { id: 'review', title: 'Review', heading: 'Check and create' },
+] as const;
+type StepId = (typeof STEPS)[number]['id'];
 
 /**
- * Make it yours: a name, a logo and a colour beside the live pass (the logo included). Create makes the org's template
- * and opens it; Use for all passes also makes the colour and logo the organization's pass brand.
+ * Make it yours, as the page wizard: Name, Look (a logo and a colour) and Review, with the live
+ * pass beside the steps. Create makes the org's template and opens it; Use for all passes also
+ * makes the colour and logo the organization's pass brand.
  */
 export function UseBlueprintPage({ blueprintId, orgId }: { blueprintId: string; orgId: string }) {
   const query = useBlueprint(blueprintId);
@@ -82,7 +73,6 @@ function Loaded({
 }) {
   const navigate = useNavigate();
   const [name, setName] = useState(b.name);
-  const [error, setError] = useState<string>();
   const [forAll, setForAll] = useState<boolean | undefined>(undefined);
   const quick = useQuickFields();
   const create = useUseBlueprint(b.id);
@@ -107,32 +97,33 @@ function Loaded({
     colors: canBrand && brandAll && !orgSetsColors && quick.color !== undefined,
   };
   const orgName = useOrgScope().membership?.orgName;
-  const passJson = preview.data ? recolor(preview.data.passJson, quick.color, orgName) : undefined;
-  // A chosen logo shows at once: its local URL stands in for the logo files.
-  const logoUrl = quick.logo?.url;
-  const assetUrls = useMemo(
-    () =>
-      preview.data && logoUrl
-        ? {
-            ...assetMap(preview.data.assetBaseUrl, preview.data.assetNames),
-            'logo.png': logoUrl,
-            'logo@2x.png': logoUrl,
-            'logo@3x.png': logoUrl,
-          }
-        : undefined,
-    [preview.data, logoUrl],
-  );
   const phone = useMediaQuery(PHONE);
-  const coarse = useMediaQuery('(pointer: coarse)');
+  const wide = useMediaQuery('(min-width: 1024px)');
   const router = useRouter();
   const canGoBack = useCanGoBack();
+  const guard = useUnsavedChangesGuard(name !== b.name || quick.touched);
 
-  async function submit() {
-    const next = name.trim();
-    if (!next) return setError('Enter a name.');
-    setError(undefined);
-    try {
-      const made = await create.mutateAsync(await request(b, { orgId, name: next }, quick, toOrg));
+  const goal = choices.goal ? (quick.goal ?? choices.goal.value) : undefined;
+  const currency = choices.currency ? (quick.currency ?? choices.currency.value) : undefined;
+  const looks = [
+    quick.logo ? 'Logo' : '',
+    quick.color ? 'Colour' : '',
+    quick.goal !== undefined ? 'Stamps' : '',
+    quick.currency !== undefined ? 'Currency' : '',
+  ].filter(Boolean);
+  const w = useWizard<StepId>({
+    steps: STEPS.map((s) => ({
+      ...s,
+      ...(s.id === 'name' ? { summary: name.trim() || undefined } : {}),
+      ...(s.id === 'look' ? { summary: looks.join(', ') || 'Blueprint look' } : {}),
+    })),
+    errors: { name: name.trim() ? {} : { name: 'Enter a name.' } },
+    hints: { name: 'Name the template.' },
+    fieldStep: { name: 'name' },
+    onFinish: async () => {
+      const made = await create.mutateAsync(
+        await request(b, { orgId, name: name.trim() }, quick, toOrg),
+      );
       markMinted(`template:${made.id}`);
       if (toOrg.logo || toOrg.colors) {
         try {
@@ -147,115 +138,125 @@ function Loaded({
       void navigate({
         to: '/admin/o/$orgId/templates/$templateId',
         params: { orgId, templateId: made.id },
+        ignoreBlocker: true,
       });
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
+    },
+  });
+  const stage = <UseStage preview={preview} quick={quick} orgName={orgName} />;
+  const cancel = () =>
+    canGoBack ? router.history.back() : void navigate({ to: '/admin/o/$orgId', params: { orgId } });
 
   return (
     <>
       <PageHeader title="Make it yours" breadcrumbs={crumbs(orgId, b.name)} />
-      <form
-        className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
+      <Wizard
+        {...w.frame}
+        onCancel={cancel}
+        nextLabel={
+          w.primary === 'finish' ? 'Create template' : w.primary === 'review' ? 'Review' : 'Next'
+        }
+        busy={w.finishing || create.isPending}
+        aside={stage}
+        asideLabel="Preview"
+        asideQuiet
+        barMenu={
+          phone
+            ? undefined
+            : [
+                {
+                  label: 'Open designer',
+                  icon: PenTool,
+                  onSelect: () =>
+                    name.trim()
+                      ? void navigate({
+                          to: '/admin/o/$orgId/templates/new',
+                          params: { orgId },
+                          search: { blueprint: b.id, name: name.trim() },
+                          ignoreBlocker: true,
+                        })
+                      : w.id === 'name'
+                        ? w.next()
+                        : w.go('name'),
+                },
+              ]
+        }
       >
-        <Card>
-          <CardBody className="flex flex-col gap-5">
-            <FormField label="Name" required error={error}>
+        <Form {...w.form} className="flex min-w-0 flex-col gap-5">
+          {w.id === 'name' ? (
+            <FormField label="Name" required error={w.errors.name}>
               {(c) => (
                 <Input
                   {...c}
-                  {...(coarse ? {} : { 'data-autofocus': true })}
+                  data-autofocus
                   value={name}
                   maxLength={120}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setError(undefined);
-                  }}
+                  onChange={(e) => setName(e.target.value)}
                 />
               )}
             </FormField>
-            <QuickFields
-              state={quick}
-              choices={choices}
-              org={{
-                logoUrl:
-                  orgSetsLogo && orgBrand?.logo.value
-                    ? brandingUrl(orgId, 'logo', orgBrand.logo.value.sha)
-                    : null,
-                colors: orgSetsColors && bg ? (parseColor(bg) ?? null) : null,
-                // The switch below is how a choice reaches the organization.
-                canWrite: false,
-              }}
+          ) : null}
+          {w.id === 'look' ? (
+            <>
+              {wide ? null : stage}
+              <QuickFields
+                state={quick}
+                choices={choices}
+                org={{
+                  logoUrl:
+                    orgSetsLogo && orgBrand?.logo.value
+                      ? brandingUrl(orgId, 'logo', orgBrand.logo.value.sha)
+                      : null,
+                  colors: orgSetsColors && bg ? (parseColor(bg) ?? null) : null,
+                  // The switch below is how a choice reaches the organization.
+                  canWrite: false,
+                }}
+              />
+              {canBrand ? (
+                <SwitchRow
+                  label="Use for all passes"
+                  help="Also sets this logo and colour as your pass brand."
+                  checked={brandAll}
+                  onCheckedChange={setForAll}
+                />
+              ) : null}
+              {quick.touched && !phone ? (
+                <p className="text-xs text-fg-muted">
+                  Your choices here won't carry over to the designer.
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {w.id === 'review' ? (
+            <WizardReview
+              level={3}
+              onEdit={w.go}
+              preview={wide ? undefined : stage}
+              sections={[
+                { id: 'name', title: 'Name', items: [{ label: 'Name', value: name.trim() }] },
+                {
+                  id: 'look',
+                  title: 'Look',
+                  items: [
+                    { label: 'Logo', value: quick.logo?.name ?? 'From the blueprint' },
+                    {
+                      label: 'Colour',
+                      value: quick.color ? toHex(quick.color) : 'From the blueprint',
+                    },
+                    ...(goal !== undefined
+                      ? [{ label: 'Stamps for a reward', value: String(goal) }]
+                      : []),
+                    ...(currency !== undefined ? [{ label: 'Currency', value: currency }] : []),
+                    ...(canBrand
+                      ? [{ label: 'Use for all passes', value: brandAll ? 'Yes' : 'No' }]
+                      : []),
+                  ],
+                },
+              ]}
             />
-            {canBrand ? (
-              <SwitchRow
-                label="Use for all passes"
-                help="Also sets this logo and colour as your pass brand."
-                checked={brandAll}
-                onCheckedChange={setForAll}
-              />
-            ) : null}
-            <div className="flex justify-end gap-2 border-t border-border pt-4">
-              {phone ? null : (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const next = name.trim();
-                    if (!next) return setError('Enter a name.');
-                    void navigate({
-                      to: '/admin/o/$orgId/templates/new',
-                      params: { orgId },
-                      search: { blueprint: b.id, name: next },
-                    });
-                  }}
-                >
-                  Open designer
-                </Button>
-              )}
-              {canGoBack ? (
-                <Button variant="outline" onClick={() => router.history.back()}>
-                  Cancel
-                </Button>
-              ) : (
-                <Button asChild variant="outline">
-                  <Link to="/admin/o/$orgId" params={{ orgId }}>
-                    Cancel
-                  </Link>
-                </Button>
-              )}
-              <Button type="submit" loading={create.isPending}>
-                Create
-              </Button>
-            </div>
-            {quick.touched && !phone ? (
-              <p className="text-right text-xs text-fg-muted">
-                Your choices here won't carry over to the designer.
-              </p>
-            ) : null}
-          </CardBody>
-        </Card>
-        <div className="order-first min-w-0 lg:order-none lg:sticky lg:top-4">
-          {preview.data && passJson ? (
-            <BlueprintStage passJson={preview.data.passJson}>
-              <PassPreviewPanel
-                passJson={passJson}
-                assetBaseUrl={preview.data.assetBaseUrl}
-                assetNames={preview.data.assetNames}
-                assetUrls={assetUrls}
-                mint={`${quick.color ? toHex(quick.color) : ''}:${quick.logo?.name ?? ''}`}
-                enter={false}
-              />
-            </BlueprintStage>
-          ) : (
-            <SkeletonDetail label="Loading preview" />
-          )}
-        </div>
-      </form>
+          ) : null}
+        </Form>
+      </Wizard>
+      <UnsavedChangesDialog blocker={guard} />
     </>
   );
 }

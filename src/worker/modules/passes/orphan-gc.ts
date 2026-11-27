@@ -68,5 +68,10 @@ export async function sweepPassObjects(ctx: ServiceContext, pages = PAGES): Prom
   // A full pass starts over next time; a cut one carries on from where it stopped.
   if (cursor) await bucket.put(CURSOR_KEY, cursor);
   else await bucket.delete(CURSOR_KEY);
-  ctx.log.info('passes.object_gc', { code: 'PASS_OBJECT_GC', scanned, deleted });
+  ctx.log.info('passes.object_gc', {
+    code: 'PASS_OBJECT_GC',
+    scanned,
+    deleted,
+    wrapped: cursor === undefined,
+  });
 }

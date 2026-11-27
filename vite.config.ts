@@ -75,6 +75,8 @@ const VITE_DEV_PATHS = [
   '!/@id/*',
   '!/@vite/*',
   '!/@react-refresh',
+  // The Workbench Verify tab imports docs/api/webhook-vectors.json; /docs itself belongs to the Worker.
+  '!/docs/api/*',
   // The scanner is its own document (scan.html); Vite answers /scan with it.
   '!/scan',
 ];

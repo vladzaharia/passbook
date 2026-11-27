@@ -73,12 +73,16 @@ export async function writeProjectionRelease(
           AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}
           AND json_extract(c.projection_json, '$.schema') = 2
           AND (${currentSourceAndAccount('c')})
-          AND ((${p(input.action)} = 'release' AND ${p(input.targetReleaseId)} IS NULL
-              AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id))
-            OR (${p(input.action)} = 'rollback' AND EXISTS (SELECT 1 FROM template_releases r
+          AND (${
+            input.action === 'release'
+              ? input.targetReleaseId === null
+                ? 'NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id)'
+                : '0'
+              : `EXISTS (SELECT 1 FROM template_releases r
               WHERE r.id = ${p(input.targetReleaseId)} AND ${same} AND r.generation < ${p(input.expectedGeneration)}
                 AND r.candidate_id = c.id AND r.approval_id = ap.id AND r.candidate_hash = c.candidate_hash
-                AND r.credential_keyset_commitment = c.credential_keyset_commitment))))`,
+                AND r.credential_keyset_commitment = c.credential_keyset_commitment)`
+          }))`,
     ),
     check(
       'release',

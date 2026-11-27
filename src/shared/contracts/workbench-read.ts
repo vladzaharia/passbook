@@ -111,6 +111,9 @@ export const WorkbenchContextsSchema = z.object({
       slug: z.string(),
       closed: z.boolean(),
       timeZone: z.string().describe("The sandbox org's IANA zone; every time shows in it."),
+      devicePass: z
+        .boolean()
+        .describe('Device passes are on: a Test pass of the sandbox can go on your phone.'),
     })
     .nullable()
     .describe('Your developer sandbox, or null before you make one.'),

@@ -141,9 +141,12 @@ export async function idempotentJson<T>(
   execute: () => Promise<T>,
   /** Recomputes the body on a replay when the stored one can go stale (a send outcome, a superseded release). */
   replay?: () => Promise<T>,
+  /** What to store instead of the body, when the body holds a secret that must not rest in the table. */
+  stored?: (body: T) => unknown,
 ): Promise<Response> {
   const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
   if (key === undefined) return c.json((await execute()) as never, status);
+  let full: T | undefined;
   const result = await withIdempotency(
     ctx,
     {
@@ -152,9 +155,12 @@ export async function idempotentJson<T>(
       operation: `${c.req.method} ${c.req.routePath}`,
       request: { method: c.req.method, path: c.req.path, body: scope.body },
     },
-    async () => ({ status, body: await execute() }),
+    async () => {
+      full = await execute();
+      return { status, body: stored ? stored(full) : full };
+    },
   );
-  if (!result.replayed) return c.json(result.body as never, result.status as 200);
+  if (!result.replayed) return c.json((stored ? full : result.body) as never, result.status as 200);
   c.header('Idempotent-Replayed', 'true');
   return c.json((replay ? await replay() : result.body) as never, result.status as 200);
 }

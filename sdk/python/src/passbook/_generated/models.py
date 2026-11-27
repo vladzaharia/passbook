@@ -22,6 +22,7 @@ __all__ = [
     "ApiKeyRotationKey2",
     "ApiKeyRotationPrevious",
     "ApiKeysActivityListResult",
+    "ApiKeysCliTokensRevokeResult",
     "ApiKeysCreateBody",
     "ApiKeysCreateParams",
     "ApiKeysCreateResult",
@@ -164,6 +165,7 @@ __all__ = [
     "CapturedEmail",
     "CapturedEmailDetail",
     "CapturedEmailPage",
+    "CliTokenEnded",
     "ConnectionPreview",
     "ConnectionPreviewColumnsItem",
     "ConnectionPreviewColumnsItemValuesItem",
@@ -2460,6 +2462,7 @@ class ApiKeyDetail(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     lastIpPrefix: str | None
     parent: _Dict[str, _Any] | None
     replacedBy: _Dict[str, _Any] | None
@@ -2488,6 +2491,7 @@ class ApiKeyMinted(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str | None = None
 
 class ApiKeyRetired(_Model):
@@ -2520,6 +2524,7 @@ class ApiKeyRotationKey1(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str
 
 class ApiKeyRotationKey2(_Model):
@@ -2545,6 +2550,7 @@ class ApiKeyRotationKey2(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeyRotationPrevious(_Model):
     id: str
@@ -2569,6 +2575,7 @@ class ApiKeyRotationPrevious(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysCreateParams(_Model):
     orgId: str | None
@@ -2606,6 +2613,7 @@ class ApiKeysListItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysListResponse(_Model):
     items: _List[ApiKeysListResponseItemsItem]
@@ -2635,6 +2643,7 @@ class ApiKeysListResponseItemsItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysRetireParams(_Model):
     orgId: str | None
@@ -3217,6 +3226,9 @@ class CapturedEmailDetail(_Model):
 class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
     nextCursor: str | None
+
+class CliTokenEnded(_Model):
+    ok: _Literal[True]
 
 class ConnectionPreview(_Model):
     ok: bool
@@ -8177,6 +8189,8 @@ class PassInstalledEventData(_Model):
     device: str | None
     deviceCount: int
     firstDevice: bool
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassIssuedEvent(_Model):
     id: str
@@ -8842,6 +8856,8 @@ class PassUninstalledEventData(_Model):
     deviceCount: int
     lastDevice: bool
     cause: _Literal["wallet", "push_gone"] | str
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassUnvoidedEvent(_Model):
     id: str
@@ -9437,6 +9453,7 @@ class PassesDevicesListResponseDevicesItem(_Model):
     removal: _Literal["pending", "fetched", "deleted", None] | str
     simulated: bool | None = None
     deviceId: str | None = None
+    devicePass: _Literal[True] | None = None
 
 class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
@@ -11984,6 +12001,8 @@ class PushFailedEventData(_Model):
     status: int | None = None
     reason: str | None = None
     code: str | None = None
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class ReleaseResponse1(_Model):
     version: str
@@ -16517,6 +16536,8 @@ class UnknownWebhookEvent(_Model):
     data: _Dict[str, _Any] | None = None
 
 ApiKeysActivityListResult = ApiKeyActivity
+
+ApiKeysCliTokensRevokeResult = CliTokenEnded
 
 ApiKeysCreateBody = ApiKeysCreateParams
 

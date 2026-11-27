@@ -63,6 +63,7 @@ export type ApiKeyDetail = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   lastIpPrefix: string | null;
   parent: {
     id: string;
@@ -98,6 +99,7 @@ export type ApiKeyMinted = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   secret?: string;
 };
 
@@ -129,6 +131,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
     secret: string;
   } | {
     id: string;
@@ -153,6 +156,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
   previous: {
     id: string;
@@ -177,6 +181,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
 };
 
@@ -218,6 +223,7 @@ export type ApiKeysListResponse = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   }>;
   nextCursor: string | null;
   revokedCount?: number;
@@ -758,6 +764,10 @@ export type CapturedEmailDetail = {
 export type CapturedEmailPage = {
   items: Array<CapturedEmail>;
   nextCursor: string | null;
+};
+
+export type CliTokenEnded = {
+  ok: true;
 };
 
 export type ConnectionPreview = {
@@ -6145,6 +6155,8 @@ export type PassInstalledEvent = {
     device: string | null;
     deviceCount: number;
     firstDevice: boolean;
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;
@@ -6806,6 +6818,8 @@ export type PassUninstalledEvent = {
     deviceCount: number;
     lastDevice: boolean;
     cause: "wallet" | "push_gone";
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;
@@ -7372,6 +7386,7 @@ export type PassesDevicesListResponse = {
     removal: "pending" | "fetched" | "deleted" | null;
     simulated?: boolean;
     deviceId?: string;
+    devicePass?: true;
   }>;
   removal: {
     removedAt: number;
@@ -9812,6 +9827,8 @@ export type PushFailedEvent = {
     status?: number;
     reason?: string | null;
     code?: string | null;
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;

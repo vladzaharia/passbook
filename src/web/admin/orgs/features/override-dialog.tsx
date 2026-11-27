@@ -2,15 +2,7 @@ import { useState } from 'react';
 import type { EntitlementItemDto } from '@/shared/contracts/entitlement-admin.ts';
 import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { DateTimeField, type DateTimeValue } from '@/web/ui/date-time-field.tsx';
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  Form,
-  FormField,
-  Input,
-  useFormErrors,
-} from '@/web/ui/index.ts';
+import { FormDialog, FormField, Input, useFormErrors } from '@/web/ui/index.ts';
 import { isoToLocal, localToIso } from '../../passes/schema-form/datetime.ts';
 import { draftOf, type ValueDraft, ValueField, valueFromDraft } from './value-field.tsx';
 import { formatValue, type OverrideDraft } from './values.ts';
@@ -59,65 +51,46 @@ export function OverrideDialog({
         : undefined,
   });
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} dirty>
-      <DialogContent
-        size="md"
-        title={`Override ${label}`}
-        description={`Replaces the ${presetLabel} value, ${formatValue(key, item.presetValue)}.`}
-        footer={
-          <>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" form="feature-override">
-              Continue
-            </Button>
-          </>
-        }
-      >
-        <Form
-          id="feature-override"
-          className="flex flex-col gap-4"
-          {...check.form}
-          onValid={() => {
-            if ('error' in parsed) return;
-            onContinue({
-              value: parsed.value,
-              note: note.trim() || null,
-              expiresAt: expires && expiresAt !== null ? expiresAt : null,
-            });
-          }}
-        >
-          <ValueField
-            featureKey={key}
-            draft={value}
-            onChange={setValue}
-            error={check.errors.value}
+    <FormDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={`Override ${label}`}
+      description={`Replaces the ${presetLabel} value, ${formatValue(key, item.presetValue)}.`}
+      dirty
+      check={check}
+      submitLabel="Continue"
+      onSubmit={() => {
+        if ('error' in parsed) return;
+        onContinue({
+          value: parsed.value,
+          note: note.trim() || null,
+          expiresAt: expires && expiresAt !== null ? expiresAt : null,
+        });
+      }}
+    >
+      <ValueField featureKey={key} draft={value} onChange={setValue} error={check.errors.value} />
+      <FormField label="Note" help="Why. Only platform admins see it.">
+        {(p) => (
+          <Input
+            {...p}
+            maxLength={NOTE_MAX}
+            autoComplete="off"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
           />
-          <FormField label="Note" help="Why. Only platform admins see it.">
-            {(p) => (
-              <Input
-                {...p}
-                maxLength={NOTE_MAX}
-                autoComplete="off"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            )}
-          </FormField>
-          <FormField label="Expires" error={check.errors.expires}>
-            {(p) => (
-              <DateTimeField
-                {...p}
-                value={expires}
-                onChange={setExpires}
-                clearLabel="Never expires"
-                defaultZone={zone}
-              />
-            )}
-          </FormField>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        )}
+      </FormField>
+      <FormField label="Expires" error={check.errors.expires}>
+        {(p) => (
+          <DateTimeField
+            {...p}
+            value={expires}
+            onChange={setExpires}
+            clearLabel="Never expires"
+            defaultZone={zone}
+          />
+        )}
+      </FormField>
+    </FormDialog>
   );
 }

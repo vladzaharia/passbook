@@ -45,9 +45,9 @@ const HOUR = 3_600_000;
 /** New devices one pass may register per hour; the RL bindings only count per minute. */
 const NEW_REGISTRATIONS_PER_HOUR = 5;
 
-const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
+export const DEVICE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 /** APNs device tokens vary in length; APNs rejects bad ones (BadDeviceToken cleans them up). */
-const PUSH_TOKEN = /^(?:[0-9a-fA-F]{2}){8,200}$/;
+export const PUSH_TOKEN = /^(?:[0-9a-fA-F]{2}){8,200}$/;
 /** Compared when the pass is unknown so the response time does not reveal which part was wrong. */
 const DUMMY_STORED = `${MAC_PREFIX}${'0'.repeat(64)}`;
 const SCHEME = 'ApplePass ';
