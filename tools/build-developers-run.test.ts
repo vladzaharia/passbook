@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { RunFile, RunIndex } from '../src/web/workbench/console/types.ts';
 import { MOVED } from '../src/shared/developers.ts';
+import type { RunFile, RunIndex } from '../src/web/workbench/console/types.ts';
 import { buildDevelopers, type Manifest } from './build-developers.ts';
 
 const work = mkdtempSync(join(tmpdir(), 'developers-run-'));
