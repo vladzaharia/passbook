@@ -42,8 +42,12 @@ final class BridgeHandshakeTests: XCTestCase {
     }
 
     @MainActor func testV2HapticPatternsMapToFeedback() {
-        XCTAssertEqual(ScannerViewController.hapticKind([100]), .tap)
+        XCTAssertEqual(ScannerViewController.hapticKind([100]), .system)
         XCTAssertEqual(ScannerViewController.hapticKind([100, 50, 100]), .warning)
+        XCTAssertEqual(ScannerViewController.hapticKind([40]), .tap)
+        XCTAssertEqual(ScannerViewController.hapticKind([40, 70, 40]), .warning)
+        XCTAssertEqual(ScannerViewController.hapticKind([40, 70, 40, 70, 40]), .error)
+        XCTAssertEqual(ScannerViewController.hapticKind([200]), .system)
         XCTAssertNil(ScannerViewController.hapticKind([]))
     }
 
