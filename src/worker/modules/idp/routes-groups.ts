@@ -14,7 +14,7 @@ import {
   GroupRuleSchema,
   UpdateGroupSchema,
 } from '../../../shared/contracts/idp-access.ts';
-import { currentUserId } from '../../platform/auth.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
@@ -30,10 +30,13 @@ import {
 } from './service-groups.ts';
 
 const TAG = 'polaris groups';
-/** Reads need a platform admin. Writes also need a recent Polaris ID sign-in: the change reaches every app that trusts the group. */
-const READ = { platform: 'platform:groups' } as const;
+const actorOf = (c: Parameters<typeof platformActorOf>[0]) =>
+  platformActorOf(c, { scope: 'platform:groups' });
+/** A platform admin or a Platform key. A person's writes also need a recent Polaris ID sign-in: the change reaches every app that trusts the group. */
+const READ = { platform: 'platform:groups', key: true } as const;
 const WRITE = {
   platform: 'platform:groups',
+  key: true,
   signIn: 'oidc',
   stepUp: { maxAgeSec: STEP_UP_SECONDS },
 } as const;
@@ -52,7 +55,10 @@ register(
     response: GroupListSchema,
     auth: READ,
   },
-  async (c) => c.json({ items: await listGroups(serviceContext(c)), nextCursor: null }),
+  async (c) => {
+    platformActorOf(c);
+    return c.json({ items: await listGroups(serviceContext(c)), nextCursor: null });
+  },
 );
 
 register(
@@ -69,7 +75,7 @@ register(
   },
   (c) => {
     const body = c.req.valid('json');
-    return idpIdempotent(c, body, 201, (ctx) => createGroup(ctx, currentUserId(c), body));
+    return idpIdempotent(c, body, 201, (ctx) => createGroup(ctx, actorOf(c), body));
   },
 );
 
@@ -87,7 +93,7 @@ register(
   },
   (c) => {
     const body = c.req.valid('json');
-    return idpIdempotent(c, body, 201, (ctx) => ensureRoleGroup(ctx, currentUserId(c), body.role));
+    return idpIdempotent(c, body, 201, (ctx) => ensureRoleGroup(ctx, actorOf(c), body.role));
   },
 );
 
@@ -107,7 +113,7 @@ register(
     const body = c.req.valid('json');
     const { key } = c.req.valid('param');
     return idpIdempotent(c, body, 200, (ctx) =>
-      updateGroup(ctx, currentUserId(c), key, body.friendlyName),
+      updateGroup(ctx, actorOf(c), key, body.friendlyName),
     );
   },
 );
@@ -125,7 +131,7 @@ register(
   },
   (c) => {
     const { key } = c.req.valid('param');
-    return idpIdempotent(c, null, 200, (ctx) => deleteGroup(ctx, currentUserId(c), key));
+    return idpIdempotent(c, null, 200, (ctx) => deleteGroup(ctx, actorOf(c), key));
   },
 );
 
@@ -141,11 +147,13 @@ register(
     response: GroupRuleListSchema,
     auth: READ,
   },
-  async (c) =>
-    c.json({
+  async (c) => {
+    platformActorOf(c);
+    return c.json({
       items: await listRules(serviceContext(c), c.req.valid('param').key),
       nextCursor: null,
-    }),
+    });
+  },
 );
 
 register(
@@ -164,7 +172,7 @@ register(
   (c) => {
     const body = c.req.valid('json');
     const { key } = c.req.valid('param');
-    return idpIdempotent(c, body, 201, (ctx) => addRule(ctx, currentUserId(c), key, body));
+    return idpIdempotent(c, body, 201, (ctx) => addRule(ctx, actorOf(c), key, body));
   },
 );
 
@@ -182,7 +190,7 @@ register(
   (c) => {
     const { key, id } = c.req.valid('param');
     return idpIdempotent(c, null, 200, async (ctx) => {
-      await endRule(ctx, currentUserId(c), key, id);
+      await endRule(ctx, actorOf(c), key, id);
       return { ok: true as const };
     });
   },
@@ -200,11 +208,13 @@ register(
     response: GroupMemberListSchema,
     auth: READ,
   },
-  async (c) =>
-    c.json({
+  async (c) => {
+    platformActorOf(c);
+    return c.json({
       items: await listMembers(serviceContext(c), c.req.valid('param').key),
       nextCursor: null,
-    }),
+    });
+  },
 );
 
 register(
@@ -223,7 +233,7 @@ register(
   (c) => {
     const body = c.req.valid('json');
     const { key } = c.req.valid('param');
-    return idpIdempotent(c, body, 201, (ctx) => addMember(ctx, currentUserId(c), key, body));
+    return idpIdempotent(c, body, 201, (ctx) => addMember(ctx, actorOf(c), key, body));
   },
 );
 
@@ -241,7 +251,7 @@ register(
   (c) => {
     const { key, id } = c.req.valid('param');
     return idpIdempotent(c, null, 200, async (ctx) => {
-      await removeMember(ctx, currentUserId(c), key, id);
+      await removeMember(ctx, actorOf(c), key, id);
       return { ok: true as const };
     });
   },

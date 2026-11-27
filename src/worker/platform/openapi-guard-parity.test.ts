@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../test/helpers/index.ts';
-import { REQUIRE_ADMIN_ROUTER_ROUTES } from '../../../test/helpers/platform-routes.ts';
 import { PLATFORM_KEY_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { createApp } from '../app.ts';
 import { ManualClock } from './clock.ts';
@@ -38,6 +37,11 @@ const HANDLER_LEVEL_SESSION_ONLY = new Set([
   'post /api/v1/test-inbox/{id}/send-to-me',
 ]);
 
+/** A request a key may make on a conditional route: its refusal rule needs the safe shape, not an empty body. */
+const PROBE_BODY: Record<string, string> = {
+  'post /api/v1/users/{id}/offboard': '{"dryRun":true}',
+};
+
 async function setup() {
   const fake = fakeAuth();
   const app = createApp({ stores: fake.stores });
@@ -55,7 +59,7 @@ async function setup() {
     const init: RequestInit = { method: method.toUpperCase(), headers: send };
     if (!['get', 'head', 'delete'].includes(method)) {
       send['content-type'] = 'application/json';
-      init.body = '{}';
+      init.body = PROBE_BODY[`${method} ${path}`] ?? '{}';
     }
     const res = await app.fetch(new Request(url, init), env, ctx);
     const body = (await res.json().catch(() => ({}))) as { code?: string };
@@ -134,12 +138,8 @@ describe('OpenAPI document and guards agree', () => {
         }
         if (op['x-human-only'] === true) {
           const r = await call(method, path, every);
-          // PERSON_REQUIRED, except under a router-level requireAdmin, which answers 401 first (PK-6 removes those).
-          const behindRouter = REQUIRE_ADMIN_ROUTER_ROUTES.includes(
-            `${method.toUpperCase()} ${path.replace(/\{([^}]+)\}/g, ':$1')}`,
-          );
           const got = `${r.status} ${r.code}`;
-          if (got !== (behindRouter ? '401 UNAUTHENTICATED' : '403 PERSON_REQUIRED'))
+          if (got !== '403 PERSON_REQUIRED')
             wrong.push(`${name}: human-only, a Platform key got ${got}`);
         }
       }

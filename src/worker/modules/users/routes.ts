@@ -13,13 +13,13 @@ import {
   UserPassListSchema,
   UserSchema,
 } from '../../../shared/contracts/index.ts';
-import { currentUserId, requireAdmin, requireStrictSession } from '../../platform/auth.ts';
+import { currentUserId } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { assertStrictSignIn, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
 import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
@@ -30,11 +30,7 @@ type C = Context<AppBindings>;
 const ownSession = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
 export const usersRoutes = createRouter();
-guard(usersRoutes, requireAdmin);
-// Adding an email to someone's account is how it is taken over: a recent sign-in.
-usersRoutes.post('/:id/emails', requireStepUp(STEP_UP_SECONDS));
-// A support read across organizations: a strong sign-in, whatever the admin role's source.
-usersRoutes.get('/:id/passes', requireStrictSession);
+// Every route is person-only (`{ platform }` with no `key`): the services take the signed-in admin.
 usersRoutes.use('*', limitBody(64 * 1024));
 
 register(
@@ -42,6 +38,7 @@ register(
   'users',
   {
     method: 'get',
+    auth: { platform: 'platform:users' },
     path: '/',
     summary: 'List users',
     query: UserListQuerySchema,
@@ -54,6 +51,7 @@ register(
   'users',
   {
     method: 'get',
+    auth: { platform: 'platform:users' },
     path: '/{id}',
     summary: 'Get a user',
     params: IdParamSchema,
@@ -74,27 +72,32 @@ register(
   'users',
   {
     method: 'get',
+    auth: { platform: 'platform:users' },
     path: '/{id}/passes',
     summary: "List a user's passes in every organization",
     params: IdParamSchema,
     query: UserPassesQuerySchema,
     response: UserPassListSchema,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    // A support read across organizations: a strong sign-in, whatever the admin role's source.
+    if (c.var.auth?.kind === 'session') assertStrictSignIn(c, c.var.auth);
+    return c.json(
       await listPassesOfUser(
         serviceContext(c),
         currentUserId(c),
         c.req.valid('param').id,
         c.req.valid('query'),
       ),
-    ),
+    );
+  },
 );
 register(
   usersRoutes,
   'users',
   {
     method: 'patch',
+    auth: { platform: 'platform:users' },
     path: '/{id}',
     summary: 'Disable or enable a user',
     params: IdParamSchema,
@@ -121,6 +124,8 @@ register(
   'users',
   {
     method: 'post',
+    // Adding an email to someone's account is how it is taken over: a recent sign-in.
+    auth: { platform: 'platform:users', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     path: '/{id}/emails',
     summary: 'Send an email verification link',
     params: IdParamSchema,
@@ -142,6 +147,7 @@ register(
   'users',
   {
     method: 'delete',
+    auth: { platform: 'platform:users' },
     path: '/{id}/emails/{email}',
     summary: 'Remove an email',
     params: IdParamSchema.extend({ email: z.string() }),
@@ -163,6 +169,7 @@ register(
   'users',
   {
     method: 'post',
+    auth: { platform: 'platform:users' },
     path: '/{id}/emails/{email}/primary',
     summary: 'Make an email primary',
     params: IdParamSchema.extend({ email: z.string() }),
@@ -184,6 +191,7 @@ register(
   'users',
   {
     method: 'post',
+    auth: { platform: 'platform:users' },
     path: '/{id}/sessions/revoke',
     summary: 'Revoke all sessions',
     params: IdParamSchema,
@@ -199,6 +207,7 @@ register(
   'users',
   {
     method: 'delete',
+    auth: { platform: 'platform:users' },
     path: '/{id}/sessions/{sessionId}',
     summary: 'Revoke one session',
     params: IdParamSchema.extend({ sessionId: IdSchema }),

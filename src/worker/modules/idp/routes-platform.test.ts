@@ -18,15 +18,15 @@ const P = '/api/v1/platform/idp';
 describe('platform routes', () => {
   it('are for platform admins; freeze needs a Polaris ID sign-in', async () => {
     const key = await makeApiKey(f());
-    const routes: [string, string][] = [
-      ['GET', P],
-      ['GET', `${P}/drift`],
-      ['GET', `${P}/calls?since=0`],
-      ['POST', `${P}/freeze`],
+    const routes: [string, string, string][] = [
+      ['GET', P, 'MISSING_SCOPE'],
+      ['GET', `${P}/drift`, 'MISSING_SCOPE'],
+      ['GET', `${P}/calls?since=0`, 'MISSING_SCOPE'],
+      ['POST', `${P}/freeze`, 'PERSON_REQUIRED'],
     ];
-    for (const [method, path] of routes) {
+    for (const [method, path, keyCode] of routes) {
       expect((await start(path, method, {})).status).toBe(401);
-      await expectProblem(await start(path, method, key.headers), 403, 'PERSON_REQUIRED');
+      await expectProblem(await start(path, method, key.headers), 403, keyCode);
       await expectProblem(
         await start(path, method, (await admin(['user'])).headers),
         403,

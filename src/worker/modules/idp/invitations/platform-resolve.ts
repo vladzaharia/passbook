@@ -24,7 +24,7 @@ export function platformInviteOf(row: PlatformRow, now: number): PlatformInvite 
   const state: InviteState =
     row.accepted_at !== null
       ? 'accepted'
-      : row.revoked_at !== null
+      : row.revoked_at !== null || row.creator_dead === 1
         ? 'revoked'
         : now >= row.claim_until
           ? 'expired'
@@ -43,6 +43,6 @@ export async function resolvePlatform(
   ctx: ServiceContext,
   secret: string,
 ): Promise<PlatformInvite | null> {
-  const row = await platformByHash(ctx.env.DB, await sha256Hex(secret));
+  const row = await platformByHash(ctx.env.DB, await sha256Hex(secret), ctx.clock.now());
   return row ? platformInviteOf(row, ctx.clock.now()) : null;
 }

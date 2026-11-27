@@ -20,9 +20,8 @@ import {
   WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { PlatformWalletCredentialListSchema } from '../../../shared/contracts/wallet-release.ts';
-import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
@@ -39,11 +38,12 @@ import { listPlatformEnrolments } from './enrolment-platform-read.ts';
 import { googleManagedPlatformRoutes } from './routes-google-managed.ts';
 import { walletReleaseRoutes } from './routes-release.ts';
 
-/** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
+/**
+ * Mount at /api/v1/platform. Every route declares its own `{ platform }` access and is person-only: the services take
+ * a session. The pages show Live and Test together, so the mode is named.
+ */
 export const walletPlatformRoutes = createRouter();
-// First, ahead of the router guard below: it ignores a Bearer key, and the release routes declare their own access.
 walletPlatformRoutes.route('/', walletReleaseRoutes);
-guard(walletPlatformRoutes, requireAdmin);
 walletPlatformRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
@@ -62,6 +62,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials',
     summary: 'List the platform wallet credentials',
     query: CursorQuerySchema,
@@ -75,6 +76,7 @@ register(
   'wallet platform',
   {
     method: 'put',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials',
     summary: 'Create or rotate a platform wallet credential',
     body: SavePlatformWalletCredentialSchema,
@@ -89,6 +91,7 @@ register(
   'wallet platform',
   {
     method: 'put',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/{id}/cards',
     summary: 'Name the Samsung card of one more type on a platform credential',
     params: z.strictObject({ id: IdSchema }),
@@ -111,6 +114,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/{id}/revoke',
     summary: 'Revoke a platform wallet credential',
     params: z.strictObject({ id: IdSchema }),
@@ -133,6 +137,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/{id}/check',
     summary: 'Check a platform wallet credential with its provider',
     params: z.strictObject({ id: IdSchema }),
@@ -154,6 +159,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/{id}/checks/{checkId}',
     summary: 'Read the result of a platform wallet credential check',
     params: PlatformWalletCredentialCheckParamsSchema,
@@ -172,6 +178,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold',
     summary: 'Hold a wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
@@ -194,6 +201,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release',
     summary: 'Release a held wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
@@ -210,6 +218,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-enrolments',
     summary: 'List every organization enrollment of a wallet provider',
     query: PlatformWalletEnrolmentQuerySchema.extend(CursorQuerySchema.shape),
@@ -232,6 +241,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/migrate',
     summary: 'Report the legacy wallet accounts waiting for a credential source',
     query: WalletMigrationReportQuerySchema,
@@ -248,6 +258,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/migrate',
     summary: 'Queue the migration of legacy wallet accounts onto credential sources',
     response: WalletMigrationQueuedSchema,
@@ -260,6 +271,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/migrate/resolve',
     summary:
       'Resolve a refused legacy wallet account: assign the platform credential, merge or retire',

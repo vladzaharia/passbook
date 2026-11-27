@@ -119,7 +119,7 @@ describe('orgs api', () => {
   it('requires an admin', async () => {
     await expectProblem(await call('GET', '', undefined, orgAdmin.headers), 403, 'FORBIDDEN');
     expect((await call('GET', '', undefined, {})).status).toBe(401);
-    expect((await call('GET', '', undefined, apiKey.headers)).status).toBe(401);
+    expect((await call('GET', '', undefined, apiKey.headers)).status).toBe(403);
   });
 
   it('creates, reads, updates and soft-deletes with audit rows', async () => {

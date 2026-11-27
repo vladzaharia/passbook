@@ -13,7 +13,7 @@ import {
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { authOf } from '../passes/http.ts';
 import { managedIssuerStatus, requestManagedIssuer } from './google-managed-service.ts';
 import { completeManualIssuer, startManagedIssuer } from './issuer-provision.ts';
@@ -99,19 +99,15 @@ register(
     c.json(await sharedIssuerInfo(serviceContext(c), sessionOf(c), c.req.valid('param').orgId)),
 );
 
-/** Mounted inside the platform wallet routes (`/api/v1/platform`, platform admins). */
+/** Mounted inside the platform wallet routes (`/api/v1/platform`); person-only, each route declares it. */
 export const googleManagedPlatformRoutes = createRouter();
-// Rotating a service-account key replaces what signs for Google Wallet: a recent sign-in.
-googleManagedPlatformRoutes.post(
-  '/wallet-credentials/:id/rotate-key',
-  requireStepUp(STEP_UP_SECONDS),
-);
 
 register(
   googleManagedPlatformRoutes,
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-accounts/google/managed',
     summary: 'Start a managed Google issuer for an organization',
     params: GoogleManagedOrgParamsSchema,
@@ -136,6 +132,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-accounts/google/managed/complete',
     summary: 'Finish a parked managed Google issuer with an issuer id made in the console',
     params: GoogleManagedOrgParamsSchema,
@@ -159,6 +156,8 @@ register(
   'wallet platform',
   {
     method: 'post',
+    // Rotating a service-account key replaces what signs for Google Wallet: a recent sign-in.
+    auth: { platform: 'platform:wallet', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     path: '/wallet-credentials/{id}/rotate-key',
     summary: "Rotate a platform Google credential's service-account key now",
     params: WalletCredentialIdParamsSchema,
