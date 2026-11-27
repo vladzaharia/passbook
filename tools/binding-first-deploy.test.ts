@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { firstDeploy, type Wrangler } from './binding-first-deploy.ts';
 
 const KEY = 'test-key-not-real-0123456789';
-const ENV = { CLOUDFLARE_API_TOKEN: 't', CLOUDFLARE_ACCOUNT_ID: 'a', POCKET_ID_API_KEY: KEY };
+const ENV = { POCKET_ID_API_KEY: KEY };
 const CONFIG = 'workers/polaris-binding/wrangler.jsonc';
 const ID = '11111111-2222-3333-4444-555555555555';
 
@@ -18,8 +18,10 @@ function setup(existing: boolean) {
   );
   const calls: { args: string[]; stdin?: string }[] = [];
   let exists = existing;
+  let whoami = true;
   const wrangler: Wrangler = (args, stdin) => {
     calls.push({ args, stdin });
+    if (args[0] === 'whoami') return { status: whoami ? 0 : 1, stdout: '' };
     if (args[1] === 'list')
       return {
         status: 0,
@@ -31,15 +33,27 @@ function setup(existing: boolean) {
   const logs: string[] = [];
   const run = (env: Record<string, string | undefined> = ENV) =>
     firstDeploy({ root, env, wrangler, log: (l) => logs.push(l) });
-  return { root, calls, logs, run };
+  return { root, calls, logs, run, signOut: () => (whoami = false) };
 }
 
 describe('firstDeploy', () => {
-  it('refuses without the profile vars and runs nothing', () => {
+  it('requires only the key and runs nothing without it', () => {
     const s = setup(true);
-    expect(() => s.run({ ...ENV, POCKET_ID_API_KEY: undefined })).toThrow(/POCKET_ID_API_KEY/);
-    expect(() => s.run({})).toThrow(/CLOUDFLARE_API_TOKEN/);
+    expect(() => s.run({})).toThrow(/POCKET_ID_API_KEY/);
     expect(s.calls).toHaveLength(0);
+  });
+
+  it('stops before d1 list when not signed in to Cloudflare', () => {
+    const s = setup(true);
+    s.signOut();
+    expect(() => s.run()).toThrow(/Not signed in to Cloudflare: run `npx wrangler login`/);
+    expect(s.calls.map((c) => c.args[0])).toEqual(['whoami']);
+  });
+
+  it('runs every step with OAuth only, no Cloudflare variables', () => {
+    const s = setup(true);
+    s.run({ POCKET_ID_API_KEY: KEY });
+    expect(s.calls.map((c) => c.args[0])).toEqual(['whoami', 'd1', 'd1', 'secret', 'deploy']);
   });
 
   it('creates the D1 when absent, writes its id and deploys', () => {
@@ -47,6 +61,7 @@ describe('firstDeploy', () => {
     s.run();
     const verbs = s.calls.map((c) => c.args.slice(0, 2).join(' '));
     expect(verbs).toEqual([
+      'whoami',
       'd1 list',
       'd1 create',
       'd1 list',

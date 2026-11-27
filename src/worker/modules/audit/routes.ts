@@ -16,7 +16,7 @@ import {
 
 export const auditRoutes = createRouter();
 
-/** An org key reads its own org's log: a named scope, 90 days at a time. A platform log is a platform admin's session alone. */
+/** An org key reads its own org's log: a named scope, 90 days at a time. The platform log is a platform admin's, or a Platform key's with platform:audit. */
 const TENANT_AUTH = { scope: 'audit:read', capability: 'audit:read' } as const;
 
 register(
@@ -47,7 +47,7 @@ register(
     method: 'get',
     path: '/platform',
     summary: 'Query the platform audit log',
-    auth: { platform: 'platform:audit' },
+    auth: { platform: 'platform:audit', key: true },
     query: AuditQuerySchema,
     response: AuditListSchema,
   },
@@ -121,19 +121,35 @@ register(
     method: 'get',
     path: '/platform/export',
     summary: 'Export the platform audit log as CSV (10,000 entries at most; 6 an hour)',
-    auth: { platform: 'platform:audit' },
+    auth: { platform: 'platform:audit', key: true },
     query: ExportQuerySchema,
   },
   async (c) => {
     const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    if (auth?.kind !== 'session' && auth?.kind !== 'api_key') throw new UnauthenticatedError();
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
-    return csvResponse(
-      await auditCsv(
-        (cursor, limit) => listPlatformAudit(ctx, { ...query, cursor, limit }),
-        () => enforceExportLimit(ctx, [`user:${auth.userId}`]),
-      ),
+    const keyId = auth.kind === 'api_key' ? auth.keyId : null;
+    const out = await auditCsv(
+      (cursor, limit) => listPlatformAudit(ctx, { ...query, cursor, limit }),
+      () =>
+        enforceExportLimit(
+          ctx,
+          keyId
+            ? [{ key: `key:${keyId}`, limit: 2 }]
+            : [`user:${auth.kind === 'session' ? auth.userId : ''}`],
+        ),
     );
+    // A key's export is read by no one at the time: it leaves a trail.
+    if (keyId)
+      await recordAudit(ctx, {
+        orgId: null,
+        ...auditActor(requestActor(c)),
+        action: 'audit.export',
+        targetType: 'platform',
+        targetId: 'platform',
+        detail: { rows: out.rows, truncated: out.truncated },
+      });
+    return csvResponse(out);
   },
 );

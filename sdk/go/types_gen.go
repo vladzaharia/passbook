@@ -9030,9 +9030,36 @@ type PlatformAppleIdentitiesListResponseOpenRunsItem struct {
 	RunID string `json:"runId"`
 }
 
+type PlatformAppleIdentitiesListResult = PlatformAppleIdentitiesListResponse
+
 type PlatformAppleIdentitiesMakeDefaultResponse struct {
 	IdentityID string `json:"identityId"`
 	Changed    bool   `json:"changed"`
+}
+
+type PlatformAppleIdentityMovesListItem struct {
+	ID             string  `json:"id"`
+	OperationID    string  `json:"operationId"`
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   string  `json:"toIdentityId"`
+	OldPassID      string  `json:"oldPassId"`
+	NewPassID      string  `json:"newPassId"`
+	State          string  `json:"state"`
+	Reason         *string `json:"reason"`
+	ConflictCount  int64   `json:"conflictCount"`
+	RegisteredAt   *int64  `json:"registeredAt"`
+	VoidAt         *int64  `json:"voidAt"`
+	VoidedAt       *int64  `json:"voidedAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+}
+
+type PlatformAppleIdentityMovesListQuery struct {
+	Cursor      *string `json:"cursor,omitempty"`
+	Limit       *int64  `json:"limit,omitempty"`
+	OperationID *string `json:"operationId,omitempty"`
+	State       *string `json:"state,omitempty"`
+	Reason      *string `json:"reason,omitempty"`
 }
 
 type PlatformAppleIdentityMovesListResponse struct {
@@ -9057,6 +9084,11 @@ type PlatformAppleIdentityMovesListResponseItemsItem struct {
 	UpdatedAt      int64   `json:"updatedAt"`
 }
 
+type PlatformAppleIdentityMovesPreviewQuery struct {
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   *string `json:"toIdentityId,omitempty"`
+}
+
 type PlatformAppleIdentityMovesPreviewResponse struct {
 	ToIdentityID string           `json:"toIdentityId"`
 	Passes       int64            `json:"passes"`
@@ -9064,6 +9096,8 @@ type PlatformAppleIdentityMovesPreviewResponse struct {
 	Holders      int64            `json:"holders"`
 	Kept         map[string]int64 `json:"kept"`
 }
+
+type PlatformAppleIdentityMovesPreviewResult = PlatformAppleIdentityMovesPreviewResponse
 
 type PlatformAppleIdentityMovesStartParams struct {
 	OrgID          string  `json:"orgId"`
@@ -9118,6 +9152,48 @@ type PlatformAppleIdentityMovesStartResponseStepsItem struct {
 type PlatformAppleIdentityMovesStartTimerResponse struct {
 	MoveID string `json:"moveId"`
 	Armed  bool   `json:"armed"`
+}
+
+type PlatformAuditEntriesExportQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+}
+
+type PlatformAuditEntriesListItem struct {
+	ID          int64   `json:"id"`
+	At          int64   `json:"at"`
+	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
+	ActorType   string  `json:"actorType"`
+	ActorID     *string `json:"actorId"`
+	ActorLabel  *string `json:"actorLabel,omitempty"`
+	Action      string  `json:"action"`
+	TargetType  *string `json:"targetType"`
+	TargetID    *string `json:"targetId"`
+	TargetLabel *string `json:"targetLabel,omitempty"`
+	RequestID   *string `json:"requestId"`
+	Detail      any     `json:"detail,omitempty"`
+}
+
+type PlatformAuditEntriesListQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+	Cursor        *string `json:"cursor,omitempty"`
+	Limit         *int64  `json:"limit,omitempty"`
 }
 
 type PlatformAuditEntriesListResponse struct {

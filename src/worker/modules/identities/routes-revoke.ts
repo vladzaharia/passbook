@@ -11,7 +11,7 @@ import { requireOidcSession } from './access.ts';
 import { requestCertificateRevoke } from './cert-admin.ts';
 
 /**
- * Mount at /api/v1/identities before `identitiesRoutes`, whose `requireAdmin` ignores a Bearer key. Revoking a
+ * Mount at /api/v1/identities before `identitiesRoutes`. Revoking a
  * certificate is irreversible (every pass it signed stops updating): a person's call, so a Platform key gets
  * 403 PERSON_REQUIRED, and a person needs a recent sign-in.
  */

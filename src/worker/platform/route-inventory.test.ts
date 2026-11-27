@@ -367,12 +367,17 @@ const PLATFORM_KEY_ROUTES: string[] = [
   'DELETE /api/v1/platform/idp/groups/:key/rules/:id',
   'DELETE /api/v1/platform/invitations/:id',
   'DELETE /api/v1/users/:id/sessions/:sessionId',
+  'GET /api/v1/audit/platform',
+  'GET /api/v1/audit/platform/export',
   'GET /api/v1/identities/:id',
   'GET /api/v1/metrics/platform/developer',
   'GET /api/v1/metrics/platform/overview',
   'GET /api/v1/orgs',
   'GET /api/v1/orgs/:id',
   'GET /api/v1/platform/apple-calls',
+  'GET /api/v1/platform/apple/identities',
+  'GET /api/v1/platform/apple/identity-moves',
+  'GET /api/v1/platform/apple/identity-moves/preview',
   'GET /api/v1/platform/closed-orgs',
   'GET /api/v1/platform/entitlement-presets',
   'GET /api/v1/platform/idp',
@@ -497,24 +502,11 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   'POST /api/v1/users/:id/roles/:role/remove-external',
 ];
 
-/**
- * Person-only today only because nobody has decided about keys yet: reads outside the PK-6b list (apple identity and move
- * lists, the platform audit log), for PK-6c to convert to `PLATFORM_KEY_ROUTES`. Never put a `PERSON_ONLY_PLATFORM_ROUTES` entry here.
- */
-const PLATFORM_KEY_DEFERRED: string[] = [
-  'GET /api/v1/platform/apple/identities',
-  'GET /api/v1/platform/apple/identity-moves',
-  'GET /api/v1/platform/apple/identity-moves/preview',
-  'GET /api/v1/audit/platform',
-  'GET /api/v1/audit/platform/export',
-];
-
 it('pins which platform routes take a key and which are person-only', () => {
   const { modes } = platformKeyRoutes();
   expect(modes.key).toEqual(PLATFORM_KEY_ROUTES);
   expect(modes.conditional).toEqual(PLATFORM_KEY_CONDITIONAL);
-  expect(modes.person).toEqual([...PERSON_ONLY_PLATFORM_ROUTES, ...PLATFORM_KEY_DEFERRED].sort());
-  expect(PERSON_ONLY_PLATFORM_ROUTES.filter((r) => PLATFORM_KEY_DEFERRED.includes(r))).toEqual([]);
+  expect(modes.person).toEqual([...PERSON_ONLY_PLATFORM_ROUTES].sort());
 });
 
 it('makes a platform scope mintable exactly when a route accepts it by key', () => {

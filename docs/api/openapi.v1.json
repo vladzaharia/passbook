@@ -110308,10 +110308,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "The platform's own Apple identities, with their setup runs",
         "tags": [
@@ -110404,9 +110413,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
@@ -110599,10 +110611,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Dry run of an identity move: what would move and what stays, by reason",
         "tags": [
@@ -110679,6 +110700,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_CERT_MISMATCH",
           "IDENTITY_CHAIN_INVALID",
@@ -110689,6 +110711,8 @@
           "IDENTITY_NOT_FOUND",
           "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -110700,10 +110724,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Move rows with their state and reason, including kept_both and unarmed",
         "tags": [
@@ -110830,9 +110863,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_PERSONAL",
@@ -150426,10 +150462,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:audit"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:audit",
         "summary": "Query the platform audit log",
         "tags": [
@@ -150608,9 +150653,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -150783,10 +150831,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:audit"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:audit",
         "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour)",
         "tags": [
@@ -150917,9 +150974,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
