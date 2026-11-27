@@ -1,5 +1,11 @@
 import * as Primitive from '@radix-ui/react-dropdown-menu';
-import { type ComponentProps, type PointerEvent, useCallback, useRef } from 'react';
+import {
+  type ComponentProps,
+  type MouseEvent,
+  type PointerEvent,
+  useCallback,
+  useRef,
+} from 'react';
 import { cn } from '../lib/cn.ts';
 import { inertOutside } from './inert-outside.ts';
 import { nameWrapper } from './popper-region.ts';
@@ -44,38 +50,105 @@ const ITEM =
 
 /**
  * The menu opens on pointer down, so on a phone's bottom action sheet an item can land under the
- * finger and the same tap's pointer up would activate it. Touch, pen and coarse-pointer devices (whose taps can report as mouse) ignore a pointer up
- * this soon after they mount; mouse press-drag-release and keyboard select immediately.
+ * finger and the gesture that opened it would activate it: its pointer up, or the click the browser
+ * sends to whatever is under the finger afterwards (a touch's pointer up stays on the trigger, its
+ * click does not). Touch, pen and coarse-pointer devices (whose taps can report as mouse) ignore
+ * the opening gesture's pointer up (matched by `pointerId`) and its click. A fresh press on an
+ * item ends the guard, so a deliberate tap always selects; mouse press-drag-release and keyboard
+ * select immediately.
  */
 const OPENING_GESTURE_MS = 350;
+/** A click follows its pointer up within a frame or two; this bounds how late one still counts as the same gesture. */
+const CLICK_AFTER_UP_MS = 400;
 
+interface Press {
+  id: number;
+  /** Touch or pen: Safari and Firefox send a MouseEvent for the click, so the press says what it was. */
+  touch: boolean;
+  up: number | null;
+}
+let lastPress: Press | null = null;
+let tracking = false;
+
+function track() {
+  if (tracking || typeof document === 'undefined') return;
+  tracking = true;
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      lastPress = {
+        id: e.pointerId,
+        touch: e.pointerType === 'touch' || e.pointerType === 'pen',
+        up: null,
+      };
+    },
+    true,
+  );
+  const end = (e: globalThis.PointerEvent) => {
+    if (lastPress && lastPress.id === e.pointerId) lastPress.up = performance.now();
+  };
+  document.addEventListener('pointerup', end, true);
+  document.addEventListener('pointercancel', end, true);
+}
+
+const coarse = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;
+const isTouchLike = (event: PointerEvent) =>
+  event.pointerType === 'touch' || event.pointerType === 'pen' || coarse();
+
+/** Handlers for an item: compose them with your own on every menu item that activates on pointer up or click. */
 export function useIgnoreOpeningGesture() {
-  const mountedAt = useRef<number | null>(null);
-  if (mountedAt.current === null) mountedAt.current = performance.now();
-  const opened = mountedAt.current;
-  return (event: PointerEvent) => {
-    const touchLike =
-      event.pointerType === 'touch' ||
-      event.pointerType === 'pen' ||
-      window.matchMedia?.('(pointer: coarse)').matches;
-    if (!touchLike) return;
-    if (performance.now() - opened < OPENING_GESTURE_MS) event.preventDefault();
+  track();
+  const mounted = useRef<{ at: number; press: Press | null } | null>(null);
+  if (mounted.current === null) mounted.current = { at: performance.now(), press: lastPress };
+  const pressed = useRef(false);
+  const { at, press } = mounted.current;
+  return {
+    onPointerDown: () => {
+      pressed.current = true;
+    },
+    onPointerUp: (event: PointerEvent) => {
+      if (pressed.current || !isTouchLike(event)) return;
+      const opener = press
+        ? event.pointerId === press.id
+        : performance.now() - at < OPENING_GESTURE_MS;
+      if (opener) event.preventDefault();
+    },
+    onClick: (event: MouseEvent) => {
+      // detail 0 is the keyboard, or Radix's own click from a pointer up that the guard let through.
+      if (pressed.current || event.detail === 0) return;
+      if (!(press?.touch || coarse())) return;
+      const now = performance.now();
+      const same = press
+        ? lastPress === press && (press.up === null || now - press.up < CLICK_AFTER_UP_MS)
+        : now - at < OPENING_GESTURE_MS;
+      if (same) event.preventDefault();
+    },
   };
 }
 
 export function DropdownMenuItem({
   className,
   destructive,
+  onPointerDown,
   onPointerUp,
+  onClick,
   ...props
 }: ComponentProps<typeof Primitive.Item> & { destructive?: boolean }) {
-  const ignoreOpening = useIgnoreOpeningGesture();
+  const opening = useIgnoreOpeningGesture();
   return (
     <Primitive.Item
       className={cn(ITEM, destructive && 'text-danger [&_svg]:text-danger', className)}
+      onPointerDown={(e) => {
+        onPointerDown?.(e);
+        opening.onPointerDown();
+      }}
       onPointerUp={(e) => {
         onPointerUp?.(e);
-        ignoreOpening(e);
+        opening.onPointerUp(e);
+      }}
+      onClick={(e) => {
+        onClick?.(e);
+        opening.onClick(e);
       }}
       {...props}
     />
@@ -85,16 +158,26 @@ export function DropdownMenuItem({
 export function DropdownMenuRadioItem({
   className,
   children,
+  onPointerDown,
   onPointerUp,
+  onClick,
   ...props
 }: ComponentProps<typeof Primitive.RadioItem>) {
-  const ignoreOpening = useIgnoreOpeningGesture();
+  const opening = useIgnoreOpeningGesture();
   return (
     <Primitive.RadioItem
       className={cn(ITEM, 'pl-7 relative', className)}
+      onPointerDown={(e) => {
+        onPointerDown?.(e);
+        opening.onPointerDown();
+      }}
       onPointerUp={(e) => {
         onPointerUp?.(e);
-        ignoreOpening(e);
+        opening.onPointerUp(e);
+      }}
+      onClick={(e) => {
+        onClick?.(e);
+        opening.onClick(e);
       }}
       {...props}
     >

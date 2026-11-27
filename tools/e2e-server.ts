@@ -9,6 +9,7 @@ import {
 } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
 import { E2E_KEK_V1 } from './lib/e2e-kek.ts';
+import { e2eKeysetCommitment } from './lib/e2e-keyset.ts';
 import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
 import { E2E_RELEASE_SQL } from './lib/e2e-release.ts';
 
@@ -32,8 +33,9 @@ rmSync(varsFile, { force: true });
 const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
   siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
 });
+const kek = E2E_KEK_V1;
 writeDevVars(varsFile, {
-  KEK_V1: E2E_KEK_V1,
+  KEK_V1: kek,
   OIDC_CLIENT_ID: 'wallet-e2e',
   OIDC_ISSUER: oidcIssuer,
   PUBLIC_BASE_URL: e2eOrigin,
@@ -115,6 +117,23 @@ execFileSync(
     state,
     '--command',
     "INSERT INTO settings (scope, key, value, updated_at) VALUES ('platform', 'oidc.trustEmail', 'true', 0)",
+  ],
+  { cwd: root, stdio: 'inherit' },
+);
+// The credential-reference keyset dev and prod already hold: retained-webhook reads refuse without it, and
+// it is otherwise created only by the first retained credential. It commits to this run's KEK.
+execFileSync(
+  'npx',
+  [
+    'wrangler',
+    'd1',
+    'execute',
+    'wallet-platform',
+    '--local',
+    '--persist-to',
+    state,
+    '--command',
+    `INSERT INTO credential_ref_keyset (id, commitment) VALUES (1, '${await e2eKeysetCommitment(kek)}')`,
   ],
   { cwd: root, stdio: 'inherit' },
 );

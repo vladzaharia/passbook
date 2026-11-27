@@ -30,7 +30,6 @@ export function WizardBody(p: {
   serverFields: Record<string, string>;
   test: TestOutcome | undefined;
   onTested: (outcome: TestOutcome) => void;
-  secretError: string | undefined;
   life: Lifecycle;
   setLife: Dispatch<SetStateAction<Lifecycle>>;
   lifeError: string | undefined;
@@ -48,12 +47,14 @@ export function WizardBody(p: {
   createError: unknown;
   setStep: (step: number) => void;
   isUpload: boolean;
+  /** A webhook goes on to the sender's side after Create: its name. */
+  after?: string | undefined;
   upload: UploadDraft;
   /** The REST sample's fields, for the Mapping step. */
   onSample: (fields: SampleField[]) => void;
 }) {
   const { step, info, connector, orgId, orgName, draft, setDraft, showErrors, serverFields } = p;
-  const { test, onTested, secretError, life, setLife, lifeError, templateOrg } = p;
+  const { test, onTested, life, setLife, lifeError, templateOrg } = p;
   const { rows, setRows, mapped, sample, targets, defaultMinutes, cfgErrors } = p;
   const { blockCreate, createFailed, createError, setStep, isUpload, upload, onSample } = p;
   return (
@@ -78,12 +79,10 @@ export function WizardBody(p: {
             serverErrors={{
               config: prefixed(serverFields, 'config.'),
               secrets: prefixed(serverFields, 'secrets.'),
-              signing: serverFields.webhookSecret,
             }}
             test={test}
             onTest={onTested}
             onSample={onSample}
-            secretError={secretError}
           />
         ) : connector.isError ? (
           <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />
@@ -131,6 +130,11 @@ export function WizardBody(p: {
             upload={isUpload}
             onEdit={setStep}
           />
+          {p.after ? (
+            <p className="text-sm text-fg-muted">
+              Next: add the webhook in {p.after}. Nothing is issued until its first event.
+            </p>
+          ) : null}
           {blockCreate ? (
             <p className="text-sm text-danger">
               Creating passes needs a template and mappings. Turn it off or add them.
@@ -139,7 +143,7 @@ export function WizardBody(p: {
           {createFailed ? (
             <p className="text-sm text-danger">
               {Object.keys(serverFields).length > 0
-                ? 'Fix the highlighted fields on Configuration.'
+                ? 'Fix the highlighted fields on Setup.'
                 : errorMessage(createError)}
             </p>
           ) : null}

@@ -63,6 +63,8 @@ export interface Arrival {
   /** Only a topic in the recipe's list, or "other". */
   topic: string | null;
   contentClass?: 'json' | 'xml' | 'form' | 'other' | null | undefined;
+  /** The retained work of an accepted delivery: matches a failed or blocked item's id. */
+  retentionId?: string | null | undefined;
   /** Signed with the secret that rotation replaced. */
   usedPrevious?: boolean | undefined;
   /** Rejects of one kind in one minute coalesce into a row. */

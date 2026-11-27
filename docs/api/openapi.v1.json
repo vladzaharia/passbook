@@ -55748,6 +55748,14 @@
                   ],
                   "maxLength": 200
                 },
+                "retentionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
                 "usedPrevious": {
                   "type": "boolean"
                 },
@@ -55765,6 +55773,7 @@
                 "topic",
                 "contentClass",
                 "eventRef",
+                "retentionId",
                 "usedPrevious",
                 "count"
               ]
@@ -135884,6 +135893,7 @@
                       "topic": null,
                       "contentClass": "json",
                       "eventRef": null,
+                      "retentionId": "0193a1b2-7c00-7000-8000-a8139303a64a",
                       "usedPrevious": false,
                       "count": 2
                     }
