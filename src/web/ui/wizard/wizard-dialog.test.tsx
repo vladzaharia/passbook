@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../lib/errors.ts';
+import { toast } from '../toaster.tsx';
 import '../../lib/test-utils.tsx';
 import { FormField } from '../field.tsx';
 import { Input } from '../input.tsx';
@@ -314,5 +315,53 @@ describe('WizardDialog', () => {
     await screen.findByRole('dialog');
     act(() => setOpenFromOutside(false));
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(2));
+  });
+  it('toasts a hint-only block on a phone, and a field error stays inline', async () => {
+    const user = userEvent.setup();
+    const info = vi.spyOn(toast, 'info').mockImplementation(() => '');
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width: 639'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    function Quiet({ field }: { field: boolean }) {
+      const w = useWizard<Id>({
+        open: true,
+        steps: STEPS,
+        errors: { name: { name: 'Required.' } },
+        hints: { name: 'Send a test first.' },
+        fieldStep: { name: 'name' },
+        onFinish: () => undefined,
+      });
+      return (
+        <WizardDialog
+          open
+          onOpenChange={() => undefined}
+          title="New thing"
+          wizard={w}
+          finishLabel="Create thing"
+        >
+          {field ? (
+            <FormField label="Name" required error={w.errors.name}>
+              {(p) => <Input {...p} />}
+            </FormField>
+          ) : (
+            <p>Waiting on a test</p>
+          )}
+        </WizardDialog>
+      );
+    }
+    const quiet = render(<Quiet field={false} />);
+    await user.click(button('Next'));
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info).toHaveBeenCalledWith('Send a test first.');
+    quiet.unmount();
+    info.mockClear();
+    render(<Quiet field />);
+    await user.click(button('Next'));
+    await waitFor(() => expect(screen.getByLabelText(/Name/)).toHaveFocus());
+    expect(info).not.toHaveBeenCalled();
+    info.mockRestore();
   });
 });
