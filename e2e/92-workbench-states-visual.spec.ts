@@ -21,8 +21,8 @@ const FULL = [
 async function shot(page: Page, name: string, widths: 'phone' | 'all' | 'current' = 'phone') {
   if (!DIR) return;
   mkdirSync(DIR, { recursive: true });
-  // The buddy's props (the lock beside it) play in on mount: shoot once they have.
-  await page.waitForTimeout(900);
+  // The art's lazy chunks (the lock beside the buddy) arrive after the heading: wait for the network.
+  await page.waitForLoadState('networkidle');
   const before = page.viewportSize();
   const views =
     widths === 'all'
@@ -35,6 +35,10 @@ async function shot(page: Page, name: string, widths: 'phone' | 'all' | 'current
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
       await page.evaluate(async () => {
+        // Art images decode, then every finite animation is taken to its end state.
+        await Promise.all(
+          [...document.images].map((img) => (img.complete ? null : img.decode().catch(() => null))),
+        );
         const finite = document
           .getAnimations()
           .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity);
