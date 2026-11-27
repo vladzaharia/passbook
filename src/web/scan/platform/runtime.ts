@@ -156,7 +156,7 @@ export async function createRuntime(
     session: () => session,
     emit,
     held: () => held,
-    idle,
+    idle: () => Boolean(idle()),
     notice,
     snapshot: store.getSnapshot,
     nfcReader: () => scanner?.settings.reader === 'nfc',
