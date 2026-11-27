@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeScanStaff, TEST_NOW } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { first } from '../../platform/db.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
@@ -89,7 +90,7 @@ describe('a Manager PIN with no one named', () => {
       );
       const logged = lines.find((line) => line.includes('scan.pin_ambiguous'));
       expect(logged).toContain(kit.org.id);
-      expect(logged).not.toContain('111222');
+      expectSecretAbsent(logged, '111222');
     } finally {
       warn.mockRestore();
       log.mockRestore();
