@@ -172,7 +172,7 @@ describe('Home (sandbox)', () => {
         call('c1', 201),
       ]),
     });
-    expect(await screen.findByText('/api/v1/passes')).toBeInTheDocument();
+    expect(await screen.findByText('/passes')).toBeInTheDocument();
     expect(screen.queryByText('/api/v1/workbench/summary')).not.toBeInTheDocument();
     expect(screen.queryByText('/api/v1/operations')).not.toBeInTheDocument();
   });

@@ -36,7 +36,12 @@ export const WB_HOME_COPY = {
     empty: 'Listening for events',
     add: 'Add endpoint',
   },
-  passes: { title: 'Test passes', all: 'All passes', empty: 'No passes', action: 'Make one in Design' },
+  passes: {
+    title: 'Test passes',
+    all: 'All passes',
+    empty: 'No passes',
+    action: 'Make one in Design',
+  },
   celebrate: {
     firstCall: 'First successful call',
     onPhone: 'First pass saved on a phone',

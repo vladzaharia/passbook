@@ -153,7 +153,7 @@ test.describe('contexts', () => {
       if (await el.isVisible())
         expect(
           (await el.boundingBox())?.height ?? 0,
-          `${await el.innerText()} is 44 px on touch`,
+          `${await el.textContent()} is 44 px on touch`,
         ).toBeGreaterThanOrEqual(43.5);
     }
     await shot(page, 'touch-home');
