@@ -20,24 +20,41 @@ const shard = process.argv
 rmSync(corpusDir, { recursive: true, force: true });
 mkdirSync(corpusDir, { recursive: true });
 
+// Tapped before reporters filter anything, so the corpus is collected whatever `silent` is (agent runs
+// hide passed-test logs) and what a run prints does not change. The marked lines are not printed.
+type Log = { content: string };
+type Report = (name: string, ...args: unknown[]) => Promise<void>;
+const takeCorpusLines = (log: Log): boolean => {
+  const lines = log.content.split('\n').filter((line) => line.length > 0);
+  const marked = lines.filter((line) => line.startsWith('@@SQL@@'));
+  if (marked.length === 0) return false;
+  appendFileSync(
+    `${corpusDir}${shard ?? 'local'}.jsonl`,
+    marked.map((line) => `${line.slice(7)}\n`).join(''),
+  );
+  log.content = lines.filter((line) => !line.startsWith('@@SQL@@')).join('\n');
+  return log.content.length === 0;
+};
+
 export default defineConfig({
   // Not under node_modules, which worktrees share (see vite.config.ts).
   cacheDir: new URL('./.cache/vite', import.meta.url).pathname,
   resolve: { alias },
-  test: {
-    // Agent runs default to 'passed-only', which would hide the corpus lines of passing tests.
-    silent: false,
-    onConsoleLog(log) {
-      // One chunk may hold several console lines, so take every marked line out of it.
-      const lines = log.split('\n').filter((line) => line.length > 0);
-      const marked = lines.filter((line) => line.startsWith('@@SQL@@'));
-      if (marked.length === 0) return undefined;
-      appendFileSync(
-        `${corpusDir}${shard ?? 'local'}.jsonl`,
-        marked.map((line) => `${line.slice(7)}\n`).join(''),
-      );
-      return marked.length === lines.length ? false : undefined;
+  plugins: [
+    {
+      name: 'sql-corpus',
+      // `report` is internal to vitest and absent from its types.
+      configureVitest: ({ vitest }) => {
+        const target = vitest as unknown as { report: Report };
+        const report = target.report.bind(vitest);
+        target.report = (name, ...args) =>
+          name === 'onUserConsoleLog' && takeCorpusLines(args[0] as Log)
+            ? Promise.resolve()
+            : report(name, ...args);
+      },
     },
+  ],
+  test: {
     projects: [
       {
         extends: true,

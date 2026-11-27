@@ -275,6 +275,15 @@ jobs:
       # The shard's own corpus (.wrangler/sql-corpus), no second test run: SQLite 3.54.1 with D1's limits.
       - name: SQL depth oracle
         run: npm run check:sql-depth
+      # The corpus is what `--write-allowlist` reads (see tools/check-sql-depth.ts).
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: sql-corpus-${{ matrix.shard }}
+          path: .wrangler/sql-corpus
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: worker-coverage-${{ matrix.shard }}

@@ -3,6 +3,7 @@
 // Corpus: .wrangler/sql-corpus/*.jsonl, written by the worker project (test/setup/sql-corpus.ts).
 // Known failures are pinned in tools/sql-depth-allowlist.json; P2 to P4 of the workerd-sql-limit plan empty it.
 // Usage: node tools/check-sql-depth.ts [corpus dir] [--write-allowlist]
+// Refresh the allowlist from CI: gh run download <run> -p 'sql-corpus-*' -D /tmp/corpus && node tools/check-sql-depth.ts /tmp/corpus --write-allowlist
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -46,12 +47,20 @@ export interface AllowEntry {
 export const fingerprint = (sql: string) =>
   createHash('sha256').update(sql.replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 12);
 
+function* corpusFiles(dir: string): Generator<string> {
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    if (entry.isDirectory()) yield* corpusFiles(join(dir, entry.name));
+    else if (entry.name.endsWith('.jsonl')) yield join(dir, entry.name);
+  }
+}
+
+/** Reads every .jsonl under `dir`, so a folder of downloaded CI artifacts works as it is. */
 export function readCorpus(dir: string): CorpusEntry[] {
   const seen = new Map<string, CorpusEntry>();
-  for (const name of readdirSync(dir)
-    .filter((n) => n.endsWith('.jsonl'))
-    .sort()) {
-    for (const line of readFileSync(join(dir, name), 'utf8').split('\n')) {
+  for (const file of corpusFiles(dir)) {
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
       if (!line) continue;
       const entry = JSON.parse(line) as Partial<CorpusEntry>;
       if (typeof entry.sql === 'string' && !seen.has(entry.sql))
