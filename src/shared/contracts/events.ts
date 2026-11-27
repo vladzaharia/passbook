@@ -20,6 +20,7 @@ export const EVENT_KINDS = [
   'pass.channels_changed',
   'pass.printed',
   'pass.print_voided',
+  'pass.replaced',
   'email.queued',
   'email.sent',
   'email.failed',
@@ -112,6 +113,7 @@ export const EVENT_GROUPS = {
     'pass.channels_changed',
     'pass.printed',
     'pass.print_voided',
+    'pass.replaced',
     'message.applied',
     'schedule.applied',
   ],
@@ -170,6 +172,9 @@ export const PassSyncDeviceSchema = z.object({
     .nullable(),
   /** Only after a remove: fetched the removal version, deleted by the holder, or still waiting. */
   removal: z.enum(['pending', 'fetched', 'deleted']).nullable(),
+  /** Set on a device made by Simulate (Test passes only), with the id Simulate returned for it. */
+  simulated: z.boolean().optional(),
+  deviceId: z.string().optional(),
 });
 export type PassSyncDeviceDto = z.infer<typeof PassSyncDeviceSchema>;
 
@@ -193,3 +198,27 @@ export const RemovePassSchema = z.object({
   /** Shown to holders on the lock screen; omit for a silent removal. */
   message: z.string().trim().max(REMOVE_MESSAGE_MAX).optional(),
 });
+
+export const SIMULATE_EVENTS = [
+  'installed',
+  'uninstalled',
+  'scanned',
+  'scan_refused',
+  'push_failed',
+  'updated_on_device',
+  'email_failed',
+] as const;
+export const SimulatePassSchema = z.object({
+  event: z.enum(SIMULATE_EVENTS),
+  platform: z.literal('apple').optional(),
+  /** The device an `uninstalled`, `push_failed` or `updated_on_device` event is about; default the newest. */
+  deviceId: IdSchema.optional(),
+});
+export type SimulatePassInput = z.infer<typeof SimulatePassSchema>;
+export const SimulatePassResponseSchema = z.object({
+  eventId: IdSchema,
+  requestId: IdSchema,
+  /** For `installed`: pass it back in `uninstalled`. */
+  deviceId: IdSchema.optional(),
+});
+export type SimulatePassResponse = z.infer<typeof SimulatePassResponseSchema>;

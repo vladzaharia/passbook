@@ -143,13 +143,34 @@
     { "name": "RL_API_ORG", "namespace_id": "2022", "simple": { "limit": 6000, "period": 60 } },
     { "name": "RL_API_TRY", "namespace_id": "2023", "simple": { "limit": 60, "period": 60 } },
     {
+      "name": "RL_API_TRY_ASSET",
+      "namespace_id": "2033",
+      "simple": { "limit": 600, "period": 60 }
+    },
+    {
       "name": "RL_TEMPLATE_UPLOAD",
       "namespace_id": "2024",
       "simple": { "limit": 60, "period": 60 }
     },
     { "name": "RL_SESSION", "namespace_id": "2025", "simple": { "limit": 1200, "period": 60 } },
     { "name": "RL_ACCESS", "namespace_id": "2027", "simple": { "limit": 5, "period": 60 } },
-    { "name": "RL_ACCESS_ALL", "namespace_id": "2028", "simple": { "limit": 30, "period": 60 } }
+    { "name": "RL_ACCESS_ALL", "namespace_id": "2028", "simple": { "limit": 30, "period": 60 } },
+    {
+      "name": "RL_PLATFORM_WRITE",
+      "namespace_id": "2029",
+      "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      "name": "RL_WEBHOOK_LEDGER",
+      "namespace_id": "2030",
+      "simple": { "limit": 30, "period": 60 }
+    },
+    { "name": "RL_SIMULATE", "namespace_id": "2032", "simple": { "limit": 60, "period": 60 } },
+    {
+      "name": "RL_SANDBOX_DELIVERY",
+      "namespace_id": "2031",
+      "simple": { "limit": 60, "period": 60 }
+    }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_vitest_events" }],
   "version_metadata": { "binding": "CF_VERSION" }

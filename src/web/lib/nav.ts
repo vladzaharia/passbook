@@ -13,6 +13,13 @@ export interface NavSection {
   entity?: EntityKind;
   /** Extra search terms for the command palette. */
   keywords?: string[];
+  /** Hidden until the platform feature is on: Polaris ID is off while its binding is absent. */
+  requires?: 'polaris';
+}
+
+/** What the deployment has, for sections that depend on it. */
+export interface NavFeatures {
+  polaris?: boolean;
 }
 
 export interface NavItem extends NavSection {
@@ -79,7 +86,14 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
 /** The platform console. */
 export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   [overview],
-  [page('Organizations', '/orgs', 'org', ['tenants']), page('Users', '/users', 'user')],
+  [
+    page('Organizations', '/orgs', 'org', ['tenants']),
+    page('Users', '/users', 'user'),
+    {
+      ...page('Groups', '/groups', 'group', ['polaris id', 'claims', 'rules', 'access']),
+      requires: 'polaris',
+    },
+  ],
   [page('Status', '/status', 'status', ['health']), audit, retention],
   [
     page('Wallet accounts', '/wallet-accounts', 'identity', [
@@ -91,6 +105,12 @@ export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
     settings,
   ],
 ];
+
+/** The All-organizations scope: one page. */
+export const ALL_NAV: readonly (readonly NavSection[])[] = [[page('Passes', '/passes', 'pass')]];
+
+const navFor = (scope: AdminScope) =>
+  scope.kind === 'platform' ? PLATFORM_NAV : scope.kind === 'all' ? ALL_NAV : ORG_NAV;
 
 /** A developer sandbox has no Live, so no stored connections: the entry is its webhook endpoints. */
 const webhooksOnly = (item: NavItem): NavItem => ({
@@ -105,14 +125,16 @@ export function adminNavGroups(
   scope: AdminScope | undefined,
   platformAdmin: boolean,
   membership?: OrgMembership,
+  features: NavFeatures = {},
+  memberships: readonly OrgMembership[] = [],
 ): NavItem[][] {
   if (!scope) return [];
-  const groups = scope.kind === 'platform' ? PLATFORM_NAV : ORG_NAV;
-  return groups
+  return navFor(scope)
     .map((group) =>
       group
         .map((item): NavItem => ({ ...item, to: scopePath(scope, item.section) }))
-        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
+        .filter((item) => item.requires !== 'polaris' || features.polaris === true)
+        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership, memberships))
         .map((item) =>
           membership?.testOnly && item.section === '/connections' ? webhooksOnly(item) : item,
         ),
@@ -125,8 +147,9 @@ export function firstAllowedPath(
   scope: AdminScope,
   platformAdmin: boolean,
   membership?: OrgMembership,
+  memberships: readonly OrgMembership[] = [],
 ): string | undefined {
-  return adminNavGroups(scope, platformAdmin, membership).flat()[0]?.to;
+  return adminNavGroups(scope, platformAdmin, membership, {}, memberships).flat()[0]?.to;
 }
 
 /** The console section a path belongs to ("Templates"), for words about what it needs. */
@@ -134,7 +157,7 @@ export function sectionLabel(pathname: string): string | undefined {
   const { scope, rest } = parseAdminPath(pathname);
   if (!scope) return undefined;
   const section = sectionOf(rest);
-  return (scope.kind === 'platform' ? PLATFORM_NAV : ORG_NAV)
+  return navFor(scope)
     .flat()
     .find((item) => item.section === section)?.label;
 }

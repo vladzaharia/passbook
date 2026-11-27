@@ -31,6 +31,21 @@ export interface SessionAuth {
    * never read it (holders see all their passes).
    */
   mode: Mode;
+  /** A Workbench token standing for this session in one org's Test mode (`auth-workbench.ts`). */
+  workbench?: WorkbenchPin;
+  /** Presented as a Workbench token (`pbtry_`): its audit rows carry `via: 'try'`. */
+  via?: 'try';
+}
+
+/** The org and subject a Workbench token is bound to. Its mode is always Test. */
+export interface WorkbenchPin {
+  orgId: string;
+  /** `sandbox_key`: the person's sandbox key. `member`: their membership in a regular org. */
+  subject: 'sandbox_key' | 'member';
+  /** The sandbox key the token stands for (also on the person's session below), which the key routes never touch (404). */
+  keyId?: string;
+  /** `sandbox_key` only: the sandbox person's own Test session, which the key routes act as (`api-keys/routes.ts`). */
+  person?: SessionAuth;
 }
 
 export interface ApiKeyAuth {
@@ -39,6 +54,11 @@ export interface ApiKeyAuth {
   /** null = platform-wide key. */
   orgId: string | null;
   scopes: ApiScope[];
+  /**
+   * From api_keys.kind (`keyAuthOf`). Absent is never a platform key: the route gate treats it as one only when it
+   * reads `platform` here and `orgId` is null.
+   */
+  keyKind?: 'service' | 'personal' | 'platform';
   /** From api_keys.mode. */
   mode: Mode;
   /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
@@ -51,6 +71,8 @@ export interface ApiKeyAuth {
   sessionAmr?: Amr;
   /** The key's org is a developer org (the sandbox); absent for every other org. */
   orgKind?: 'developer';
+  /** Set when a Workbench token (`/workbench/token`) stands for the key. */
+  workbench?: WorkbenchPin;
 }
 
 export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.ts';
@@ -86,9 +108,24 @@ export interface ScannerStore {
   ): Promise<ScannerAuth | null>;
 }
 
+/**
+ * Implemented by modules/workbench. Resolves a `pbtry_` token to the sandbox key it stands for, or to a
+ * Test-mode session pinned to one org. Throws 403 `WORKBENCH_TEST_ONLY` for a Live request or a route
+ * the token may not call; null when the token is unknown or no longer holds.
+ */
+export interface WorkbenchStore {
+  resolve(
+    raw: string,
+    caller: KeyCaller,
+    options?: { limited?: 'ok' },
+  ): Promise<ApiKeyAuth | SessionAuth | null>;
+}
+
 export interface AuthStores {
   sessions: SessionStore;
   apiKeys: ApiKeyStore;
+  /** `pbtry_` bearers on `auth` routes; without it they go to `apiKeys`. */
+  workbench?: WorkbenchStore;
   scanners: ScannerStore;
   /** Audits a refused principal. Platform never imports a module; stores.ts wires this. */
   onDenied?(event: DeniedEvent): Promise<void> | void;

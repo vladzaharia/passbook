@@ -6,13 +6,20 @@ import { adoptByPubkey } from '../modules/identities/cert-history.ts';
 import { passTypeOf } from '../modules/identities/handles.ts';
 import { assertIssueBudget, failRun, postCheck } from '../modules/identities/provision-finish.ts';
 import { stepHandle } from '../modules/identities/provision-handle.ts';
-import { beginStep } from '../modules/identities/provision-run.ts';
 import {
   identifierOf,
-  issueInput,
   orgNameOf,
-  recordIssued,
   recordPassType,
+} from '../modules/identities/provision-pass-type.ts';
+import {
+  isPlatformRun,
+  resolvePlatformPassType,
+  stepOpen,
+} from '../modules/identities/provision-platform.ts';
+import { beginStep } from '../modules/identities/provision-run.ts';
+import {
+  issueInput,
+  recordIssued,
   stepActivate,
   stepDefault,
   stepKey,
@@ -25,7 +32,13 @@ import { stepRevoke } from '../modules/identities/revoke-run.ts';
 import type { IdentityProvisionParams } from '../modules/identities/run-start.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { AppError, ConflictError, NotFoundError, UnavailableError } from '../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnavailableError,
+} from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 
 export type { IdentityProvisionParams };
@@ -49,7 +62,7 @@ function permanent(error: unknown): error is AppError {
 
 /**
  * Apple certificates for an identity: `provision` creates the managed pass type and identity for an
- * org, `rotate` replaces the certificate of an existing one (design 5.1). Every step reads its inputs
+ * org (or, with a platform slot, one of the platform's own), `rotate` replaces the certificate of an existing one (design 5.1). Every step reads its inputs
  * from the run row and is safe to run twice, so a retry after a crash adopts what the first attempt
  * left. The App Store Connect key is behind the `APPLE` binding: only this file and `asc-client.ts`
  * may reach it.
@@ -106,14 +119,16 @@ export async function runIdentityProvision(
     if (start.kind === 'revoke') {
       await viaApple('revoke', (rpc) => stepRevoke(ctx, rpc, runId));
     } else {
-      if (start.kind === 'provision') await guarded('handle', () => stepHandle(ctx, runId));
+      if (start.kind === 'provision' && !start.platform)
+        await guarded('handle', () => stepHandle(ctx, runId));
       await viaApple('pass-type', (rpc) => resolvePassType(ctx, rpc, runId));
       await guarded('key', () => stepKey(ctx, runId));
       await viaApple('issue', (rpc) => issue(ctx, rpc, runId));
       await guarded('validate', () => stepValidate(ctx, runId));
       await guarded('activate', () => stepActivate(ctx, runId));
       await viaApple('report', (rpc) => reportActive(ctx, rpc, runId));
-      if (start.kind === 'provision') await guarded('default', () => stepDefault(ctx, runId));
+      if (start.platform) await guarded('open', () => stepOpen(ctx, runId));
+      else if (start.kind === 'provision') await guarded('default', () => stepDefault(ctx, runId));
       await guarded('post-check', () => postCheck(ctx, runId));
     }
     await guarded('finish', async () => {
@@ -132,7 +147,9 @@ export async function runIdentityProvision(
 
 /** Provision: find the pass type (a retry adopts one an earlier attempt created), else create it. Rotate: look up Apple's id. */
 async function resolvePassType(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise<void> {
-  const { run, ref } = await beginStep(ctx, runId, 'pass-type');
+  const loaded = await beginStep(ctx, runId, 'pass-type');
+  const { run, ref } = loaded;
+  if (isPlatformRun(run)) return resolvePlatformPassType(ctx, rpc, loaded);
   if (run.kind === 'rotate') {
     const row = await getManagedState(ctx.env.DB, run.target_id);
     if (row?.asc_pass_type_id)
@@ -170,8 +187,18 @@ async function issue(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise
   const adopted = await adoptByPubkey(listed, input.pubkeySha256, ctx.log);
   if (!adopted) await assertIssueBudget(ctx, runId);
   const cert =
-    adopted ?? (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId));
+    adopted ??
+    (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId).catch((e) => {
+      throw csrRefusal(e) ?? e;
+    }));
   await recordIssued(ctx, runId, cert);
+}
+
+/** Apple answered 400 or 422 to the order: the CSR is bad for good, so the run stops and `failRun` discards its key. */
+function csrRefusal(error: unknown): AppError | null {
+  if (!(error instanceof AppError) || error.code !== 'ASC_UPSTREAM') return null;
+  if (!/Apple answered (400|422)\b/.test(error.message)) return null;
+  return new ForbiddenError('Apple refused the certificate request.', 'ASC_REFUSED');
 }
 
 /** Tells the provisioner the new certificate is live: until then it refuses to revoke (it fails closed). Safe to repeat. */

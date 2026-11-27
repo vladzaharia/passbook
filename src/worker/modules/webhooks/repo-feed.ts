@@ -52,14 +52,17 @@ export interface FeedQuery {
   after: number;
   types?: readonly string[] | undefined;
   passId?: string | undefined;
+  requestId?: string | undefined;
   limit: number;
+  /** Newest first, for a first read of the latest rows. */
+  desc?: boolean | undefined;
 }
 
 /** Quarantined (sandbox-captured) passes never show in the feed. */
 const FENCED = `JOIN passes p ON p.id = f.pass_id AND p.org_id = f.org_id AND p.mode = f.mode
   AND p.test_data_quarantined = 0`;
 
-/** Ascending by seq, so a poller tails it. Asks for one extra row so the caller can set `hasMore`. */
+/** Ascending by seq (descending with `desc`), so a poller tails it. Asks for one extra row so the caller can set `hasMore`. */
 export function feedStmt(db: D1Database, fence: FeedFence, q: FeedQuery): D1PreparedStatement {
   const types = q.types ?? [];
   return stmt(
@@ -68,8 +71,17 @@ export function feedStmt(db: D1Database, fence: FeedFence, q: FeedQuery): D1Prep
      WHERE f.org_id = ? AND f.mode = ? AND f.seq > ?
        ${types.length > 0 ? `AND f.type IN (${placeholders(types.length)})` : ''}
        ${q.passId ? 'AND f.pass_id = ?' : ''}
-     ORDER BY f.seq LIMIT ?`,
-    [fence.orgId, fence.mode, q.after, ...types, ...(q.passId ? [q.passId] : []), q.limit + 1],
+       ${q.requestId ? "AND json_extract(f.data, '$.requestId') = ?" : ''}
+     ORDER BY f.seq ${q.desc ? 'DESC' : ''} LIMIT ?`,
+    [
+      fence.orgId,
+      fence.mode,
+      q.after,
+      ...types,
+      ...(q.passId ? [q.passId] : []),
+      ...(q.requestId ? [q.requestId] : []),
+      q.limit + 1,
+    ],
   );
 }
 

@@ -7,88 +7,68 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
-One-time setup of `workers/passbook-id-connector`, the separate Worker that holds the Polaris ID API key and is the only place PassBook writes to Polaris ID. It has no route and no `workers.dev` host. Its D1 (`passbook-id-connector`) holds minted signup tokens, known accounts, role grants, health cache, freezes and the append-only call ledger. It starts in dry run (`WRITE_MODE` `dry_run`): reads happen, writes are computed and ledgered, nothing is sent. Policy and budgets are in [docs/operations.md](../operations.md#passbook-id-connector).
+One-time turn-on of `workers/passbook-id-connector`, the separate Worker that holds the Polaris ID API key and is the only place PassBook writes to Polaris ID. It has no route and no `workers.dev` host. It starts in dry run (`WRITE_MODE` `dry_run`): reads happen, writes are computed and ledgered, nothing is sent. Policy and budgets: [docs/operations.md](../operations.md#polaris-id-binding).
 
-The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and comes in a later change. For the SCIM receiver, see [[SCIM Receiver Setup]] after this note. Cloudflare fails a deploy whose binding names a missing Worker, so this Worker goes live first.
+Your part is five steps. Set up (step 4) creates the groups, restricts the client, sets the logo and the SCIM push; none of that is manual any more.
 
-On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of the user that made it. Treat the key as identity provider access, and never give CI a Cloudflare token that can deploy `passbook-id-connector`.
+On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of the user that made it. Treat it as identity provider access, and never give CI a Cloudflare token that can deploy `passbook-id-connector`.
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `POCKET_ID_API_KEY` (the key from step 4 below).
+- Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile), and the profile defines `POCKET_ID_API_KEY` (the key from step 2).
+- Set up needs PassBook's Client ID Metadata Document client: `PASSBOOK_CLIENT_ID` in `workers/passbook-id-connector/wrangler.jsonc` is the metadata URL (`https://passbook.mobile/auth/oidc/client-metadata.json`). It refuses a plain registered client id, so a registered client must be moved to the metadata URL first ([[Go-Live Polaris ID Client]]).
+- You are in the platform admin group (`wallet_admins`). PassBook never writes it.
 
-## 1. Configure Polaris ID (UI)
+## 1. Polaris ID settings (UI)
 
-Polaris ID v2.19.3 or later. In Application Configuration set:
+Skip if PassBook sign-in already works; Set up shows any miss. In Application Configuration set:
 
 - Enable User Signups: **Signup with token**
 - Email verification: **Required**
 - Require user email: **on**
-- Signup default groups: **none**
+- Signup default groups: **none**, and no `passbook_*` default custom claims
 - Emails verified: **off**
 - Email login code for unauthenticated users: **off**
+- Client ID Metadata Documents: the PassBook metadata URL is allowed ([[Go-Live Polaris ID Client]], step 1)
 
-## 2. Groups and client (UI)
-
-Create the groups `passbook_console`, `passbook_developers`, `passbook_platform_admins` and `passbook_users` (rename the old `wallet_*` groups; ids and members stay). Note each group's id (the UUID in its URL). Do not create `passbook_support` yet.
-
-The PassBook client in Polaris ID is group-restricted with allowed groups exactly those four. Note the client's id.
-
-## 3. Binding user and key (UI)
+## 2. Binding user and key (UI)
 
 Create a Polaris ID admin user `passbook-binding` with a verified address you control, sign in as it once, and create an API key `passbook-binding` with a 90-day expiry. Add it to the profile as `POCKET_ID_API_KEY`.
 
-## 4. Create the database
+## 3. First deploy
 
-Put the printed id in `workers/passbook-id-connector/wrangler.jsonc` (it holds a placeholder).
+One command. It creates the D1 `passbook-id-connector` only if it does not exist, writes its id into `workers/passbook-id-connector/wrangler.jsonc`, applies the migrations, puts the key over stdin and deploys the Worker. It never prints the key and writes only to the binding Worker's own database, secret, config and deployment. It stops without running anything if `POCKET_ID_API_KEY` is missing or Wrangler is not signed in to Cloudflare, and it is safe to run again.
 
-```sh name=d1-create confirm="Create the passbook-id-connector D1 database in the production account?"
-npx wrangler d1 create passbook-id-connector
+```sh name=check-profile confirm=no
+[ -n "$POCKET_ID_API_KEY" ] && echo "POCKET_ID_API_KEY set" || echo "POCKET_ID_API_KEY MISSING"; npx wrangler whoami
 ```
 
-## 5. Apply its migration
-
-```sh name=d1-migrate confirm="Apply migrations to the passbook-id-connector D1 database?"
-npx wrangler d1 migrations apply passbook-id-connector --config workers/passbook-id-connector/wrangler.jsonc --remote
+```sh name=first-deploy confirm="Create the passbook-id-connector D1 if absent, apply its migrations, set POCKET_ID_API_KEY and deploy the passbook-id-connector Worker to production?"
+npm run binding:first-deploy
 ```
 
-## 6. Configure the Worker (edit)
+Commit the D1 id it wrote, then ask an agent to merge it. CI never deploys this Worker.
 
-In `workers/passbook-id-connector/wrangler.jsonc` set:
-
-- `POCKET_ID_ORIGIN`: the https origin of Polaris ID, no path
-- `PASSBOOK_CLIENT_ID`: the client id from step 2
-- `GROUPS`: names and ids from step 2; keep `"protected": true` on `platform_admin` and `users`
-- Keep `WRITE_MODE` `dry_run`, `CLAIM_KEYS` `[]` and `ADOPT_GROUPS` `{}` unless an app needs otherwise.
-
-In Polaris ID's application configuration check that signup default custom claims hold no `passbook_*` key (health warns `default_claims_managed`).
-
-## 7. Set the API key
-
-```sh name=put-api-key confirm="Set POCKET_ID_API_KEY on the passbook-id-connector Worker?"
-: "${POCKET_ID_API_KEY:?add it to the profile}" && printf %s "$POCKET_ID_API_KEY" | npx wrangler secret put POCKET_ID_API_KEY --config workers/passbook-id-connector/wrangler.jsonc
+```sh name=show-config-change confirm=no
+git diff --stat -- workers/passbook-id-connector/wrangler.jsonc
 ```
 
-## 8. Deploy the binding
+### Does Wrangler create the D1 on deploy?
 
-```sh name=deploy-binding confirm="Deploy the passbook-id-connector Worker to production?"
-npx wrangler deploy --config workers/passbook-id-connector/wrangler.jsonc
-```
+Yes, on the pinned Wrangler (4.158.0). `wrangler deploy` provisions a D1 binding that has no `database_id`: it connects an existing database named `database_name`, or creates it. That is on by default (the hidden `--experimental-provision` flag). Two things keep the tool anyway: the shipped placeholder id counts as a set id, so provisioning would not run until it is removed, and `d1 migrations apply` needs the database before the first deploy. The tool also commits the id so every later deploy is explicit. If you drop the id from the config, deploy creates the database and you apply migrations after it.
 
-## 9. Service binding (already configured)
+## 4. Set up (UI)
 
-`workers/passbook-id-connector/wrangler.jsonc` binds `POLARIS` to the `pocket-id` Worker (Polaris ID, same Cloudflare account), so admin calls skip public HTTPS. `POCKET_ID_ORIGIN` stays the request URL and Host. The step 8 deploy applies it; Cloudflare fails the deploy if `pocket-id` does not exist in the account. To use public HTTPS instead, remove the `services` entry and deploy again.
+Settings, Polaris ID, Set up: **Preview**, then **Apply**. It places the role groups, allows them on the PassBook client, restricts the client, sets the logo and creates the SCIM push with a token it keeps in D1. Writes stay in dry run until [[Polaris Binding Go Live]], so Apply before then computes and ledgers each write without sending it.
 
-The key is still sent: the binding is not authentication. If a bound call fails, the Worker fails closed with `IDP_UPSTREAM` and logs `binding.upstream_unreachable`; it never falls back to HTTPS.
+## 5. Check the card
 
-## 10. Check health
-
-Check that `health()` reports `ok: true`, `mode: "dry_run"`, `transport: "binding"` (`https` only if the `services` entry was removed), the group names, no warnings and the key expiry. If every group read answers 404, `layoutSuspect` is set: `POCKET_ID_API` does not match the Polaris ID release.
+Settings, Polaris ID shows the binding healthy: dry run, transport `binding`, the group names, no warnings and the key expiry. If every group read answers 404, `POCKET_ID_API` does not match the Polaris ID release.
 
 Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`, `binding.upstream_unreachable`.
 
 ## Next
 
-After a week of dry run: [[Polaris Binding Go Live]]. Key rotation every 90 days: [[Polaris Binding Key Rotation]].
+Acknowledge the residual risks with the coordinator, then after a week of dry run: [[Polaris Binding Go Live]]. Key rotation every 90 days: [[Polaris Binding Key Rotation]]. SCIM: [[SCIM Receiver Setup]].
 
-The next Polaris ID release moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy. Both layouts are covered by `test/passbook-id-connector`.
+The next Polaris ID release moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy.

@@ -8,6 +8,7 @@ import type {
 import type { Actor } from '../../platform/context.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { PersonRequiredError } from '../../platform/errors-denial.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { dropTeamApnsTokens } from '../delivery/apns-jwt.ts';
@@ -18,6 +19,7 @@ import { clearIdentityKeyCache } from './db-resolver.ts';
 import { toDto, toDtos, toOrgDtos } from './dto.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
 import { readPkcs12 } from './pkcs12.ts';
+import { assertDeletable, assertPatchable, assertUploadable } from './platform-guards.ts';
 import { clearPushKeyCache } from './push-key-store.ts';
 import {
   deleteIdentityRows,
@@ -62,7 +64,8 @@ export async function listOrgIdentities(
   ctx: ServiceContext,
   query: { cursor?: string | undefined; limit: number; orgId: string },
 ) {
-  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1, query.orgId);
+  const { cursor, limit, orgId } = query;
+  const rows = await pageIdentityRows(ctx.env.DB, cursor, limit + 1, orgId, undefined, 'passes');
   const page = rows.slice(0, query.limit);
   return {
     items: await toOrgDtos(ctx, page),
@@ -110,6 +113,7 @@ export async function uploadIdentity(
   });
   const { details } = checked;
   const passTypeIdentifier = details.passTypeIdentifier ?? '';
+  assertUploadable(passTypeIdentifier);
   if (await findByPassType(ctx.env.DB, passTypeIdentifier))
     throw new ConflictError(
       'An identity with this pass type ID already exists.',
@@ -171,7 +175,10 @@ export async function updateIdentity(
   id: string,
   patch: Patch,
 ): Promise<IdentityDto> {
+  // P3: the default signs every org's passes (as POST /platform/apple/identities/:id/default).
+  if (patch.isDefault !== undefined && actor.type === 'api_key') throw new PersonRequiredError();
   const row = await requireRow(ctx, id);
+  assertPatchable(row, patch);
   if (patch.apnsBinding !== undefined) {
     if (row.source === 'env')
       throw new ValidationError(
@@ -220,6 +227,7 @@ export async function deleteIdentity(ctx: ServiceContext, actor: Actor, id: stri
   const row = await requireRow(ctx, id);
   if (row.source === 'env' || id === PLATFORM_IDENTITY_ID)
     throw new ConflictError('The platform identity cannot be deleted.', 'IDENTITY_PROTECTED');
+  assertDeletable(row);
   if (await identityInUse(ctx.env.DB, id))
     throw new ConflictError(
       'Passes still use this identity. Delete them first, or rotate its certificate to renew it.',

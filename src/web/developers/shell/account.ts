@@ -1,7 +1,8 @@
 import { canUseSpace, type SignInMethod, SPACE_HOME, SPACES } from '../../../shared/spaces.ts';
-import { loadSession } from '../console/session.ts';
+import { loadSession } from '../../workbench/console/session.ts';
 import type { MountedUser } from './account-island.tsx';
 import { fillMenuSheet, POLARIS_START } from './menu-sheet.ts';
+import { pointWorkbenchLink } from './workbench-link.ts';
 
 interface SessionBody {
   authenticated?: boolean;
@@ -33,6 +34,7 @@ async function get(url: string): Promise<Record<string, unknown> | null> {
 export async function mountAccount(host: HTMLElement): Promise<() => void> {
   const me = (await get('/api/v1/session')) as SessionBody | null;
   if (!me?.authenticated || !me.user || !me.amr || !me.csrfToken) return () => {};
+  pointWorkbenchLink(true);
   const roles = me.roles ?? [];
   let orgMember = false;
   // Only Polaris ID reaches Admin, so the lookup waits on that.

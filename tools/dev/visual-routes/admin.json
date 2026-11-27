@@ -61,8 +61,18 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/connections/{connectionId}/setup",
+    "name": "admin-connection-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}",
     "name": "admin-webhook-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}/setup",
+    "name": "admin-webhook-setup"
   },
   {
     "role": "org",
@@ -236,6 +246,16 @@
   },
   {
     "role": "platform",
+    "path": "/admin/platform/groups",
+    "name": "admin-platform-groups"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/groups/{groupKey}",
+    "name": "admin-platform-group-detail"
+  },
+  {
+    "role": "platform",
     "path": "/admin/platform/status",
     "name": "admin-status"
   },
@@ -311,8 +331,18 @@
   },
   {
     "role": "org",
+    "path": "/admin/connections/{connectionId}/setup",
+    "name": "legacy-connection-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/connections/webhooks/{endpointId}?orgId={northwindId}",
     "name": "legacy-webhook-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/{endpointId}/setup?orgId={northwindId}",
+    "name": "legacy-webhook-setup"
   },
   {
     "role": "org",
@@ -501,5 +531,15 @@
     "path": "/admin/o/{northwindId}/passes",
     "name": "admin-passes-bulk-print",
     "click": "[role=checkbox][aria-label^=\"Select \"]:not([aria-label^=\"Select all\"])"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all",
+    "name": "admin-all"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/all/passes",
+    "name": "admin-all-passes"
   }
 ]

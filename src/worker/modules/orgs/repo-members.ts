@@ -1,3 +1,6 @@
+import type { Check } from '../../platform/authority-checks.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 
@@ -12,6 +15,8 @@ export interface MembershipRow {
   user_name: string | null;
   /** Null for an account whose primary email is the no-verified-email placeholder. */
   user_email: string | null;
+  /** 1 when the Polaris ID owner took the console role PassBook added. */
+  access_paused?: number;
   roles: string;
   created_at: number;
   revoked_at: number | null;
@@ -82,7 +87,8 @@ export function orgMembers(
     db,
     `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
        CASE WHEN (${f.sql}) THEN ${knownEmailSql('u.primary_email')}
-         ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email
+         ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email,
+       EXISTS (SELECT 1 FROM idp_target_state s WHERE s.user_id = m.user_id AND s.target = 'console' AND s.held_at IS NOT NULL) AS access_paused
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active' AND ${m.sql} ORDER BY m.created_at, m.id`,
     [...f.params, orgId, ...m.params],
@@ -127,7 +133,8 @@ export function memberRowById(db: D1Database, orgId: string, id: string) {
   return first<MembershipRow>(
     db,
     `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
-       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
+       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email,
+       EXISTS (SELECT 1 FROM idp_target_state s WHERE s.user_id = m.user_id AND s.target = 'console' AND s.held_at IS NOT NULL) AS access_paused
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND m.id = ?`,
     [orgId, id],
@@ -164,5 +171,45 @@ export function pendingInvitationFor(db: D1Database, orgId: string, email: strin
     `SELECT 1 AS found FROM org_invitations
      WHERE org_id = ? AND email = ? AND revoked_at IS NULL AND accepted_at IS NULL AND expires_at > ?`,
     [orgId, email, now],
+  );
+}
+
+/** A key's read of its own org: the grant's actor checks, re-run inside the query, name the org (never the request). */
+const keyReadGuard = (principal: Principal, checks: Check[], now: number) => {
+  const { ctes, params } = authorityPredicate(principal, { scope: 'org', now, checks });
+  return { head: `WITH ${ctes}`, params, sql: 'm.org_id = (SELECT org_id FROM actor_ok)' };
+};
+/** The org's members for a key: the invitation's address, never an account's primary email. */
+export function keyOrgMembers(
+  db: D1Database,
+  orgId: string,
+  principal: Principal,
+  checks: Check[],
+  now: number,
+) {
+  const g = keyReadGuard(principal, checks, now);
+  return all<MembershipRow>(
+    db,
+    `${g.head} SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
+       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
+     FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
+     WHERE m.org_id = ? AND ${g.sql} AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
+     ORDER BY m.created_at, m.id`,
+    [...g.params, orgId],
+  );
+}
+export function keyOrgInvitations(
+  db: D1Database,
+  orgId: string,
+  principal: Principal,
+  checks: Check[],
+  now: number,
+) {
+  const g = keyReadGuard(principal, checks, now);
+  return all<InvitationRow>(
+    db,
+    `${g.head} SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
+     FROM org_invitations m WHERE m.org_id = ? AND ${g.sql} ORDER BY m.created_at, m.id`,
+    [...g.params, orgId],
   );
 }

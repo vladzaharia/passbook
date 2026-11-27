@@ -274,7 +274,7 @@ describe('session device authorization and live configuration', () => {
       (
         await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
           name: 'Renamed device',
-          revision: made.updatedAt,
+          revision: made.configRevision,
         })
       ).status,
     ).toBe(200);
@@ -282,7 +282,7 @@ describe('session device authorization and live configuration', () => {
       (
         await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
           name: 'Stale device',
-          revision: made.updatedAt,
+          revision: made.configRevision,
         })
       ).status,
     ).toBe(409);

@@ -1,5 +1,6 @@
 // Standalone mock Pocket ID for Playwright: node test/mock-oidc/server.ts [port]
 import { createServer } from 'node:http';
+import { createMockPolaris } from './admin-api.ts';
 import { createMockOidc } from './index.ts';
 
 const port = Number(process.argv[2] ?? process.env.MOCK_OIDC_PORT ?? 5174);
@@ -63,6 +64,14 @@ oidc.addUser({
 });
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
+// Polaris ID's admin API and controls (admin-api.ts) share this server; the binding's key and the SCIM bearer are the run's own.
+const polaris = createMockPolaris({
+  oidc,
+  apiKey: process.env.E2E_POLARIS_KEY ?? 'e2e-polaris-key',
+  appOrigin: process.env.PUBLIC_BASE_URL ?? 'http://localhost:5173',
+  scimToken: process.env.SCIM_BEARER_TOKEN ?? '',
+});
+
 createServer(async (req, res) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
@@ -77,14 +86,13 @@ createServer(async (req, res) => {
       name: 'Journey Admin',
       groups: ['wallet_users'],
     });
-  const response = await oidc.handle(
-    new Request(`${issuer}${req.url}`, {
-      method: req.method,
-      headers: req.headers as Record<string, string>,
-      body,
-      redirect: 'manual',
-    }),
-  );
+  const request = new Request(`${issuer}${req.url}`, {
+    method: req.method,
+    headers: req.headers as Record<string, string>,
+    body,
+    redirect: 'manual',
+  });
+  const response = (await polaris.handle(request.clone())) ?? (await oidc.handle(request));
   res.writeHead(response.status, Object.fromEntries(response.headers));
   res.end(Buffer.from(await response.arrayBuffer()));
 }).listen(port, () => console.log(`mock oidc on ${issuer}`));

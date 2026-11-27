@@ -123,6 +123,7 @@ export function FrontPass(props: FrontPassProps) {
                 publicUrl={off ? null : publicUrl}
                 inWallet={pass.inWallet}
                 showQr={!qr}
+                help={!off}
                 {...(onRemoved ? { onRemoved } : {})}
                 {...(off ? {} : { refresh })}
               />

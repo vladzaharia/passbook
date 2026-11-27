@@ -1,4 +1,5 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { WORKBENCH_ROUTES } from '../../shared/contracts/workbench.ts';
 import { API_VERSIONS } from './api-version.ts';
 import type { AppBindings } from './context.ts';
 import { sunsetLabel } from './deprecation.ts';
@@ -18,6 +19,7 @@ type Op = {
   'x-sunset'?: string;
   'x-deprecated'?: string;
   'x-operation-key'?: string;
+  'x-workbench'?: 'test';
   parameters?: Param[];
   requestBody?: { content?: Record<string, { schema?: { properties?: Record<string, object> } }> };
 };
@@ -102,6 +104,18 @@ export function withDeprecationNotes(doc: Doc): Doc {
   return doc;
 }
 
+/** `x-workbench: test` on the operations a member's Workbench token may call (`WORKBENCH_ROUTES`). */
+export function withWorkbench(doc: Doc): Doc {
+  const allowed = new Set(WORKBENCH_ROUTES);
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    const route = path.replace(/\{(\w+)\}/g, ':$1');
+    for (const [method, op] of Object.entries(item)) {
+      if (op && allowed.has(`${method.toUpperCase()} ${route}`)) op['x-workbench'] = 'test';
+    }
+  }
+  return doc;
+}
+
 /** The full document (every operation, with ids and security). The route filters it per caller. */
 export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   registerWebhookEvents(app);
@@ -114,7 +128,9 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
     app,
     withNamedBodies(
       withDeprecationNotes(
-        withReference(withSdkNames(withParamMarks(withOperationIds(withKebabTags(doc))))) as never,
+        withReference(
+          withSdkNames(withWorkbench(withParamMarks(withOperationIds(withKebabTags(doc))))),
+        ) as never,
       ) as never,
     ) as never,
   );

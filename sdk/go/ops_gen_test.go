@@ -102,6 +102,20 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.auditEntries.list", "GET", "/api/v1/audit/platform", false,
+		"", `{"items":[{"id":0,"at":0,"orgId":"x","actorType":"user","actorId":"x","action":"x","targetType":"x","targetId":"x","requestId":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AuditEntries.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.auditEntries.export", "GET", "/api/v1/audit/platform/export", false,
+		"", "",
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return downloaded(c.Platform.AuditEntries.Export(ctx, nil))
+		},
+	},
+	{
 		"brand.retrieve", "GET", "/api/v1/brand", false,
 		"", `{"orgId":"x","name":"x","accent":"x","webLogo":{"url":"x","w":0,"h":0},"supportEmail":"x","supportUrl":"x","mark":"full","markChosen":"full","markAllowed":["full"],"configRevision":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -282,14 +296,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.list", "GET", "/api/v1/connections", false,
-		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"connections.create", "POST", "/api/v1/connections", false,
-		`{"orgId":"x","connectorType":"x","name":"x","config":{}}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		`{"orgId":"x","connectorType":"x","name":"x","config":{}}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ConnectionsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -365,14 +379,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.retrieve", "GET", "/api/v1/connections/id1", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0,"runs":[{"id":"x","trigger":"schedule","startedAt":0,"finishedAt":0,"outcome":"running","recordsSeen":0,"passesChanged":0,"passesCreated":0,"passesVoided":0,"recordsFailed":0,"errorCode":"x","httpStatus":0,"durationMs":0}],"metrics":{"p50Ms":0,"p95Ms":0,"errorRate":0,"passCount":0}}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0,"runs":[{"id":"x","trigger":"schedule","startedAt":0,"finishedAt":0,"outcome":"running","recordsSeen":0,"passesChanged":0,"passesCreated":0,"passesVoided":0,"recordsFailed":0,"errorCode":"x","httpStatus":0,"durationMs":0}],"metrics":{"p50Ms":0,"p95Ms":0,"errorRate":0,"passCount":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"connections.update", "PATCH", "/api/v1/connections/id1", false,
-		`{}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		`{}`, `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ConnectionsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -422,9 +436,13 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.preview", "POST", "/api/v1/connections/id1/preview", false,
-		"", `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
-		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Connections.Preview(ctx, "id1")
+		`{}`, `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsPreviewBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Preview(ctx, "id1", &b)
 		},
 	},
 	{
@@ -446,8 +464,15 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.setup.retrieve", "GET", "/api/v1/connections/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{},"values":{"endpointUrl":"x","signatureHeader":"x","timestampHeader":"x","hasSecret":false}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Setup.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"connections.sync", "POST", "/api/v1/connections/id1/sync", false,
-		"", `{"runId":"x","workflowInstanceId":"x"}`,
+		"", `{"runId":"x","workflowInstanceId":"x","operationId":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Sync(ctx, "id1")
 		},
@@ -457,6 +482,13 @@ var generatedOps = []opCase{
 		"", `{"ok":false,"durationMs":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Test(ctx, "id1")
+		},
+	},
+	{
+		"connections.webhookArrivals.list", "GET", "/api/v1/connections/id1/webhook-arrivals", false,
+		"", `{"items":[{"id":"x","receivedAt":0,"lastAt":0,"outcome":"accepted","reason":"signature_missing","topic":"x","contentClass":"json","eventRef":"x","retentionId":"x","usedPrevious":false,"count":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.WebhookArrivals.List(ctx, "id1", nil).All(ctx)
 		},
 	},
 	{
@@ -482,14 +514,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.rotateWebhookSecret", "POST", "/api/v1/connections/id1/webhook-secret", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.RotateWebhookSecret(ctx, "id1", nil)
 		},
 	},
 	{
 		"connections.revokePreviousWebhookSecret", "DELETE", "/api/v1/connections/id1/webhook-secret/previous", false,
-		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
+		"", `{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.RevokePreviousWebhookSecret(ctx, "id1")
 		},
@@ -499,6 +531,13 @@ var generatedOps = []opCase{
 		"", `{"items":[{"type":"x","version":0,"displayName":"x","capabilities":{"poll":false,"delta":false,"webhook":false,"import":false,"snapshot":false},"outputFields":{},"defaults":{"intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"timeoutMs":0},"entitled":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connectors.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"connectors.recipeSetup.retrieve", "GET", "/api/v1/connectors/webhook-push/recipes/id1/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connectors.RecipeSetup.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -527,6 +566,13 @@ var generatedOps = []opCase{
 		"", `{"id":"x","type":"pass.issued","apiVersion":"2026-12-01","createdAt":0,"orgId":"x","mode":"live","pass":{"id":"x","externalId":"x","templateId":"x"},"data":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Events.Retrieve(ctx, "id1", nil)
+		},
+	},
+	{
+		"events.listDeliveries", "GET", "/api/v1/events/id1/deliveries", false,
+		"", `{"items":[{"eventId":"x","type":"pass.issued","passId":"x","externalId":"x","state":"pending","attempts":0,"nextAt":0,"lastStatus":0,"lastError":"x","lastAttemptAt":0,"finishedAt":0,"replays":0,"endpointId":"x","target":"url"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Events.ListDeliveries(ctx, "id1")
 		},
 	},
 	{
@@ -596,6 +642,78 @@ var generatedOps = []opCase{
 		"", `{"passId":"x","state":"unassigned","email":"x","ownerUserId":"x","ownerName":"x","blockedUserIds":["x"],"transfer":{"transferId":"x","state":"pending"},"reissueRequired":false,"updatedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Holders.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"identities.create", "POST", "/api/v1/identities", false,
+		`{"label":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Create(ctx, &b)
+		},
+	},
+	{
+		"identities.retrieve", "GET", "/api/v1/identities/id1", false,
+		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"identities.update", "PATCH", "/api/v1/identities/id1", false,
+		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"identities.checkApns", "POST", "/api/v1/identities/id1/apns-check", false,
+		"", `{"health":"healthy","status":0,"reason":"x","checkedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.CheckApns(ctx, "id1")
+		},
+	},
+	{
+		"identities.pushKey.upload", "PUT", "/api/v1/identities/id1/push-key", false,
+		`{"keyId":"x","p8":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesPushKeyUploadBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.PushKey.Upload(ctx, "id1", &b)
+		},
+	},
+	{
+		"identities.pushKey.delete", "DELETE", "/api/v1/identities/id1/push-key", false,
+		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.PushKey.Delete(ctx, "id1")
+		},
+	},
+	{
+		"identities.renew", "POST", "/api/v1/identities/id1/renew", false,
+		"", `{"id":"x","orgId":"x","kind":"provision","targetType":"identity","targetId":"x","state":"queued","step":"x","attempt":0,"waitingFor":"x","errorCode":"x","createdAt":0,"updatedAt":0,"finishedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Identities.Renew(ctx, "id1")
+		},
+	},
+	{
+		"identities.rotate", "POST", "/api/v1/identities/id1/rotate", false,
+		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b IdentitiesRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Identities.Rotate(ctx, "id1", &b)
 		},
 	},
 	{
@@ -675,6 +793,20 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.MessageRules.SendTest(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.metrics.retrieveDeveloper", "GET", "/api/v1/metrics/platform/developer", false,
+		"", `{"windowDays":0,"sandboxes":0,"viewed":0,"called":0,"passed":0,"previewed":0,"completion":0,"ttfpP50Ms":0,"ttfpP90Ms":0,"ttfpSamples":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Metrics.RetrieveDeveloper(ctx)
+		},
+	},
+	{
+		"platform.metrics.retrieveOverview", "GET", "/api/v1/metrics/platform/overview", false,
+		"", `{"source":"analytics_engine","range":"24h","bucketMs":0,"unavailable":["x"],"totals":{"passes":0,"activePasses":0,"voidedPasses":0,"holders":0,"devices":0,"issued":0,"updated":0,"downloads":0,"registrations":0,"refreshes":0,"pushes":0,"pushFailures":0,"emails":0,"emailFailures":0,"syncRuns":0,"signIns":0,"scans":0,"scanRefused":0},"series":{"issued":[{"t":0,"v":0}],"updated":[{"t":0,"v":0}],"downloads":[{"t":0,"v":0}],"registrations":[{"t":0,"v":0}],"refreshes":[{"t":0,"v":0}],"pushes":[{"t":0,"v":0}],"pushFailures":[{"t":0,"v":0}],"emails":[{"t":0,"v":0}],"emailFailures":[{"t":0,"v":0}],"syncRuns":[{"t":0,"v":0}],"signIns":[{"t":0,"v":0}],"scans":[{"t":0,"v":0}]},"setup":{"orgs":0,"assignedTemplates":0,"passes":0,"approvedTemplates":0,"releasedTemplates":0,"walletPasses":0,"passEmailsSent":0,"latestPassId":"x","scanners":0},"live":[{"eventId":"x","name":"x","arrived":0,"expected":0,"ratePerMin":0}],"recent":[{"at":0,"action":"x","orgId":"x","targetId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Metrics.RetrieveOverview(ctx, nil)
 		},
 	},
 	{
@@ -889,6 +1021,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"platform.orgs.list", "GET", "/api/v1/orgs", false,
+		"", `{"items":[{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.create", "POST", "/api/v1/orgs", false,
+		`{"slug":"x","name":"x"}`, `{"id":"x","slug":"x","name":"x","status":"active","defaultIdentityId":"x","branding":{},"createdAt":0,"updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.orgs.retrieve", "GET", "/api/v1/orgs/id1", false,
+		"", `{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.Retrieve(ctx, "id1")
+		},
+	},
+	{
 		"developerInvitations.list", "GET", "/api/v1/orgs/id1/developer-invitations", false,
 		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"state":"pending","createdAt":0,"expiresAt":0,"revokedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -935,10 +1092,78 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"invitations.list", "GET", "/api/v1/orgs/id1/invitations", false,
+		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"invitations.create", "POST", "/api/v1/orgs/id1/invitations", false,
+		`{"email":"x","roles":["org_admin"]}`, `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b InvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Invitations.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"invitations.revoke", "DELETE", "/api/v1/orgs/id1/invitations/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
+		"invitations.resend", "POST", "/api/v1/orgs/id1/invitations/id2/resend", false,
+		"", `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"createdAt":0,"expiresAt":0,"revokedAt":0,"acceptedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Invitations.Resend(ctx, "id1", "id2")
+		},
+	},
+	{
+		"memberships.list", "GET", "/api/v1/orgs/id1/memberships", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"memberships.updateRoles", "PATCH", "/api/v1/orgs/id1/memberships/id2", false,
+		`{"roles":["org_admin"]}`, `{"id":"x","orgId":"x","orgName":"x","orgSlug":"x","userId":"x","roles":["org_admin"],"capabilities":["org:read"],"createdAt":0,"revokedAt":0,"userName":"x","userEmail":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b MembershipsUpdateRolesBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Memberships.UpdateRoles(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"memberships.revoke", "DELETE", "/api/v1/orgs/id1/memberships/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Memberships.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
 		"orgs.plan.retrieve", "GET", "/api/v1/orgs/id1/plan", false,
 		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Orgs.Plan.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.setStatus", "POST", "/api/v1/orgs/id1/status", false,
+		`{"status":"active"}`, `{"id":"x","slug":"x","name":"x","status":"active","createdAt":0,"counts":{"passes":0,"templates":0,"connections":0,"apiKeys":0},"countsCapped":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsSetStatusBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.SetStatus(ctx, "id1", &b)
 		},
 	},
 	{
@@ -1123,7 +1348,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"printJobs.create", "POST", "/api/v1/passes/bulk-print", false,
-		`{"ids":["x"],"orgId":"x"}`, `{"jobId":"x","count":0,"skipped":[{"id":"x","code":"x"}]}`,
+		`{"ids":["x"],"orgId":"x"}`, `{"jobId":"x","count":0,"skipped":[{"id":"x","code":"x"}],"operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PrintJobsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1148,7 +1373,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.bulkReissue", "POST", "/api/v1/passes/bulk-reissue", false,
-		`{}`, `{"workflowInstanceId":"x"}`,
+		`{}`, `{"workflowInstanceId":"x","operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesBulkReissueBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1497,6 +1722,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.simulate", "POST", "/api/v1/passes/id1/simulate", false,
+		`{"event":"installed"}`, `{"eventId":"x","requestId":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassesSimulateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Passes.Simulate(ctx, "id1", &b)
+		},
+	},
+	{
 		"passes.stamps.apply", "POST", "/api/v1/passes/id1/stamps", false,
 		`{"action":"add"}`, `{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0,"reissueRequired":false,"ownerName":"x","ownerEmail":"x","personalization":{},"fieldSources":{},"passJson":{},"assetBaseUrl":"x","assetNames":["x"],"blockedUsers":[{"id":"x","name":"x"}],"downloadUrl":"x","publicUrl":"x","registrations":0,"lastRefreshedAt":0,"versions":[{"version":0,"templateVersion":"x","cause":"create","actorType":"x","actorId":"x","createdAt":0,"purged":false}],"deliveries":[{"id":"x","kind":"push","state":"pending","attempts":0,"errorCode":"x","createdAt":0,"finishedAt":0}],"warnings":[{"severity":"error","code":"x","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1526,6 +1762,481 @@ var generatedOps = []opCase{
 		"", `{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Void(ctx, "id1")
+		},
+	},
+	{
+		"platform.appleCalls.list", "GET", "/api/v1/platform/apple-calls", false,
+		"", `{"items":[{"id":0,"callId":"x","phase":"x","method":"x","target":"x","caller":"x","status":"x","durationMs":0,"at":0}],"available":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleCalls.List(ctx, nil)
+		},
+	},
+	{
+		"platform.appleIdentities.list", "GET", "/api/v1/platform/apple/identities", false,
+		"", `{"items":[{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0,"slot":"root","purpose":"passes","managed":"connector","registrationCount":0,"openRunId":"x","dormant":false,"readiness":{"eligible":false,"certificate":false,"issuing":false,"pushHealthy":false,"pushProbeAt":0,"pushProbeFresh":false,"deviceTest":false,"ready":false}}],"openRuns":[{"slot":"root","runId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentities.List(ctx)
+		},
+	},
+	{
+		"platform.appleIdentityMoves.list", "GET", "/api/v1/platform/apple/identity-moves", false,
+		"", `{"items":[{"id":"x","operationId":"x","orgId":"x","fromIdentityId":"x","toIdentityId":"x","oldPassId":"x","newPassId":"x","state":"planned","reason":"x","conflictCount":0,"registeredAt":0,"voidAt":0,"voidedAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentityMoves.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.appleIdentityMoves.preview", "GET", "/api/v1/platform/apple/identity-moves/preview", false,
+		"", `{"toIdentityId":"x","passes":0,"registered":0,"holders":0,"kept":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.AppleIdentityMoves.Preview(ctx, nil)
+		},
+	},
+	{
+		"platform.orgs.listClosed", "GET", "/api/v1/platform/closed-orgs", false,
+		"", `{"items":[{"id":"x","slug":"x","name":"x","closedAt":0,"purgeAfter":0,"purging":false,"held":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.ListClosed(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.entitlementPresets.list", "GET", "/api/v1/platform/entitlement-presets", false,
+		"", `{"presets":[{"preset":"x","label":"x","revision":0,"updatedAt":0,"orgCount":0,"pendingOrgs":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.EntitlementPresets.List(ctx)
+		},
+	},
+	{
+		"platform.entitlementPresets.update", "PUT", "/api/v1/platform/entitlement-presets", false,
+		`{"preset":"x","expectedRevision":0,"values":{}}`, `{"preset":{"preset":"x","label":"x","revision":0,"updatedAt":0,"orgCount":0,"pendingOrgs":0,"values":{}},"moved":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformEntitlementPresetsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.EntitlementPresets.Update(ctx, &b)
+		},
+	},
+	{
+		"platform.idp.retrieve", "GET", "/api/v1/platform/idp", false,
+		"", `{"connected":false,"mode":"dry_run","frozen":false,"keyExpiresAt":0,"problems":["x"],"budget":{},"lastScimAt":0,"drift":{},"breakerOpen":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.idp.calls.list", "GET", "/api/v1/platform/idp/calls", false,
+		"", `{"items":[{"id":0,"phase":"x","method":"x","target":"x","actor":"x","reason":"x","status":"x","at":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Calls.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.idp.drift.list", "GET", "/api/v1/platform/idp/drift", false,
+		"", `{"items":[{"id":"x","userId":"x","target":"x","kind":"x","foundAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Drift.List(ctx)
+		},
+	},
+	{
+		"platform.groups.list", "GET", "/api/v1/platform/idp/groups", false,
+		"", `{"items":[{"key":"x","kind":"role","name":"x","friendlyName":"x","members":0,"claims":["x"],"otherClients":0,"flags":["x"],"rules":0,"manual":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.create", "POST", "/api/v1/platform/idp/groups", false,
+		`{"key":"x","friendlyName":"x"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.groups.ensure", "POST", "/api/v1/platform/idp/groups/ensure", false,
+		`{"role":"console"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsEnsureBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Ensure(ctx, &b)
+		},
+	},
+	{
+		"platform.groups.update", "PATCH", "/api/v1/platform/idp/groups/id1", false,
+		`{"friendlyName":"x"}`, `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.delete", "DELETE", "/api/v1/platform/idp/groups/id1", false,
+		"", `{"key":"x","dryRun":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Delete(ctx, "id1")
+		},
+	},
+	{
+		"platform.groups.claims.retrieve", "GET", "/api/v1/platform/idp/groups/id1/claims", false,
+		"", `{"claims":{},"otherKeys":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Claims.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.groups.claims.update", "PATCH", "/api/v1/platform/idp/groups/id1/claims", false,
+		`{"set":{}}`, `{"set":["x"],"removed":["x"],"dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsClaimsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Claims.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.members.list", "GET", "/api/v1/platform/idp/groups/id1/members", false,
+		"", `{"items":[{"id":"x","subject":"x","userId":"x","source":"manual","createdAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Members.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.members.create", "POST", "/api/v1/platform/idp/groups/id1/members", false,
+		`{"userId":"x"}`, `{"id":"x","subject":"x","userId":"x","source":"manual","createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsMembersCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Members.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.members.delete", "DELETE", "/api/v1/platform/idp/groups/id1/members/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Members.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.groups.rules.list", "GET", "/api/v1/platform/idp/groups/id1/rules", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgRoles":["org_admin"],"createdAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Rules.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.groups.rules.create", "POST", "/api/v1/platform/idp/groups/id1/rules", false,
+		`{"orgId":"x"}`, `{"id":"x","orgId":"x","orgRoles":["org_admin"],"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformGroupsRulesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Groups.Rules.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.groups.rules.delete", "DELETE", "/api/v1/platform/idp/groups/id1/rules/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Groups.Rules.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.idp.check", "POST", "/api/v1/platform/idp/reconcile", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpCheckBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.Check(ctx, &b)
+		},
+	},
+	{
+		"platform.idp.scimToken.rotate", "POST", "/api/v1/platform/idp/scim-token/rotate", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpScimTokenRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.ScimToken.Rotate(ctx, &b)
+		},
+	},
+	{
+		"platform.idp.setup.retrieve", "GET", "/api/v1/platform/idp/setup", false,
+		"", `{"mode":"dry_run","items":[{"key":"binding","status":"done"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Idp.Setup.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.idp.setup.start", "POST", "/api/v1/platform/idp/setup", false,
+		`{}`, `{"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformIdpSetupStartBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Idp.Setup.Start(ctx, &b)
+		},
+	},
+	{
+		"platform.invitations.list", "GET", "/api/v1/platform/invitations", false,
+		"", `{"items":[{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.invitations.create", "POST", "/api/v1/platform/invitations", false,
+		`{"email":"x"}`, `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformInvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Invitations.Create(ctx, &b)
+		},
+	},
+	{
+		"platform.invitations.revoke", "DELETE", "/api/v1/platform/invitations/id1", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.Revoke(ctx, "id1")
+		},
+	},
+	{
+		"platform.invitations.resend", "POST", "/api/v1/platform/invitations/id1/resend", false,
+		"", `{"id":"x","email":"x","groups":["x"],"developer":false,"state":"pending","createdAt":0,"expiresAt":0,"acceptedAt":0,"revokedAt":0,"createdBy":{"kind":"user","id":"x","name":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Invitations.Resend(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.entitlements.retrieve", "GET", "/api/v1/platform/orgs/id1/entitlements", false,
+		"", `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.Entitlements.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.orgs.entitlements.update", "PUT", "/api/v1/platform/orgs/id1/entitlements", false,
+		`{"expectedRevision":0,"preset":"x","overrides":{}}`, `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsEntitlementsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.Entitlements.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.orgs.legalHolds.list", "GET", "/api/v1/platform/orgs/id1/retention/holds", false,
+		"", `{"items":[{"id":"x","passId":"x","passLabel":"x","placedByKind":"org","placedByLabel":"x","reason":"x","createdAt":0,"releasedAt":0,"releasedByLabel":"x","canRelease":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.LegalHolds.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.legalHolds.create", "POST", "/api/v1/platform/orgs/id1/retention/holds", false,
+		`{"reason":"x"}`, `{"ok":true}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformOrgsLegalHoldsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Orgs.LegalHolds.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.orgs.retentionReceipts.list", "GET", "/api/v1/platform/orgs/id1/retention/receipts", false,
+		"", `{"items":[{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.RetentionReceipts.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.orgs.retentionReceipts.download", "GET", "/api/v1/platform/orgs/id1/retention/receipts/id2/download", false,
+		"", `{"receipt":{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false,"orgId":"x","seq":0,"prevMac":"x","mac":"x","refsDigest":"x","requestId":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.RetentionReceipts.Download(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.walletAccounts.googleManaged.create", "POST", "/api/v1/platform/orgs/id1/wallet-accounts/google/managed", false,
+		`{"mode":"live"}`, `{"runId":"x","state":"queued","step":"x","waitingFor":"x","errorCode":"x","issuerId":"x","updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletAccountsGoogleManagedCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletAccounts.GoogleManaged.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.walletAccounts.googleManaged.complete", "POST", "/api/v1/platform/orgs/id1/wallet-accounts/google/managed/complete", false,
+		`{"issuerId":"x"}`, `{"runId":"x","state":"queued","step":"x","waitingFor":"x","errorCode":"x","issuerId":"x","updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletAccountsGoogleManagedCompleteBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletAccounts.GoogleManaged.Complete(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.orgs.personalLabels.list", "GET", "/api/v1/platform/personal-org-labels", false,
+		"", `{"items":[{"orgId":"x","label":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Orgs.PersonalLabels.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.retentionReceipts.list", "GET", "/api/v1/platform/retention/receipts", false,
+		"", `{"items":[{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.RetentionReceipts.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.retentionReceipts.download", "GET", "/api/v1/platform/retention/receipts/id1/download", false,
+		"", `{"receipt":{"id":"x","cls":"x","kind":"sweep","ranAt":0,"cutoffAt":0,"policyDays":0,"deleted":0,"anonymised":0,"verified":false,"orgId":"x","seq":0,"prevMac":"x","mac":"x","refsDigest":"x","requestId":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.RetentionReceipts.Download(ctx, "id1")
+		},
+	},
+	{
+		"platform.settings.retrieve", "GET", "/api/v1/platform/settings", false,
+		"", `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Settings.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.settings.update", "PUT", "/api/v1/platform/settings", false,
+		`{"values":{}}`, `{"items":[{"scope":"platform","key":"x","source":"org","updatedAt":0,"updatedBy":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformSettingsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Settings.Update(ctx, &b)
+		},
+	},
+	{
+		"platform.walletCredentials.list", "GET", "/api/v1/platform/wallet-credentials", false,
+		"", `{"items":[{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}],"nextCursor":null,"release":{"google":{"live":{"state":"disabled","reason":"not_released"},"test":{"state":"disabled","reason":"not_released"}},"samsung":{"live":{"state":"disabled","reason":"not_released"},"test":{"state":"disabled","reason":"not_released"}}}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.upsert", "PUT", "/api/v1/platform/wallet-credentials", false,
+		`{"provider":"google","expectedRevision":0,"credentials":{"issuerId":"x","serviceAccountEmail":"x","privateKeyPem":"x","scopes":["https://www.googleapis.com/auth/wallet_object.issuer"]},"mode":"live"}`, `{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletCredentialsUpsertBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletCredentials.Upsert(ctx, &b)
+		},
+	},
+	{
+		"platform.walletCredentials.retrieveMigration", "GET", "/api/v1/platform/wallet-credentials/migrate", false,
+		"", `{"pending":0,"migrated":0,"items":[{"accountId":"x","orgId":"x","mode":"live","provider":"google","state":"ready","reason":"identity_shared","identityShared":[{"orgId":"x","mode":"live","provider":"google"}]}],"nextCursor":null,"next":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.RetrieveMigration(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.migrate", "POST", "/api/v1/platform/wallet-credentials/migrate", false,
+		"", `{"queued":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Migrate(ctx)
+		},
+	},
+	{
+		"platform.walletCredentials.setSamsungCard", "PUT", "/api/v1/platform/wallet-credentials/id1/cards", false,
+		`{"type":"loyalty","cardId":"x","expectedRevision":0}`, `{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletCredentialsSetSamsungCardBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletCredentials.SetSamsungCard(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.walletCredentials.checks.create", "POST", "/api/v1/platform/wallet-credentials/id1/check", false,
+		"", `{"checkId":"x","status":"queued"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Checks.Create(ctx, "id1")
+		},
+	},
+	{
+		"platform.walletCredentials.checks.retrieve", "GET", "/api/v1/platform/wallet-credentials/id1/checks/id2", false,
+		"", `{"checkId":"x","status":"pending","code":"x","checkedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.Checks.Retrieve(ctx, "id1", "id2")
+		},
+	},
+	{
+		"platform.walletCredentials.rotateKey", "POST", "/api/v1/platform/wallet-credentials/id1/rotate-key", false,
+		"", `{"runId":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletCredentials.RotateKey(ctx, "id1")
+		},
+	},
+	{
+		"platform.walletEnrollments.list", "GET", "/api/v1/platform/wallet-enrolments", false,
+		"", `{"items":[{"orgId":"x","orgName":"x","mode":"live","provider":"google","source":"platform","state":"off","hold":{"at":0,"reason":"x"},"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletEnrollments.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.walletRelease.retrieve", "GET", "/api/v1/platform/wallet-release", false,
+		"", `{"releases":[{"provider":"google","mode":"live","state":"dark","credentials":[{"id":"x","scope":"platform","orgId":"x","mode":"live","provider":"google","identityHint":"x","provenance":"platform","revision":0,"verifiedAt":0,"revokedAt":0,"createdAt":0,"updatedAt":0,"cardTypes":["x"],"lastCheck":{"ok":true,"code":null,"at":0}}],"enrolments":[{"orgId":"x","orgName":"x","status":"issuing","blocks":["plan"]}],"templates":{"ready":0,"withOmissions":0,"awaitingReview":0,"none":0},"instances":{"open":0,"retired":0}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.WalletRelease.Retrieve(ctx)
+		},
+	},
+	{
+		"platform.walletRelease.enableReady", "POST", "/api/v1/platform/wallet-release/id1/id2/enable-ready", false,
+		`{}`, `{"applied":false,"enrolments":[{"orgId":"x","orgName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformWalletReleaseEnableReadyBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.WalletRelease.EnableReady(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"requestLogs.list", "GET", "/api/v1/request-logs", false,
+		"", `{"items":[{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false}}],"nextCursor":null,"capped":"hour","bodiesRecorded":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"requestLogs.retrieve", "GET", "/api/v1/request-logs/id1", false,
+		"", `{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false},"requestBody":"x","responseBody":"x","bodiesExpireAt":0,"bodiesRecorded":false,"bodiesTruncated":false,"headers":{"req":{},"res":{}}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.RequestLogs.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -1846,14 +2557,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.retrieve", "GET", "/api/v1/scanning-sessions/id1", false,
-		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.ScanningSessions.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"scanningSessions.update", "PATCH", "/api/v1/scanning-sessions/id1", false,
-		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1864,7 +2575,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.devices.create", "POST", "/api/v1/scanning-sessions/id1/devices", false,
-		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x","pairing":{"code":"x","url":"x","expiresAt":0}}`,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x","pairing":{"code":"x","url":"x","expiresAt":0}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsDevicesCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1875,7 +2586,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.devices.update", "PATCH", "/api/v1/scanning-sessions/id1/devices/id2", false,
-		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}`,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsDevicesUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1886,7 +2597,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"scanningSessions.overrideHours", "POST", "/api/v1/scanning-sessions/id1/hold", false,
-		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"configRevision":0,"signIn":"paired","adminName":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsOverrideHoursBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1900,6 +2611,45 @@ var generatedOps = []opCase{
 		"", `{"items":[{"id":"x","at":0,"outcome":"ok","reason":"not_found","kind":"check_in","actionId":"x","actionLabel":"x","direction":"in","passId":"x","passTitle":"x","templateId":"x","templateName":"x","eventId":"x","eventName":"x","scannerId":"x","scannerName":"x","staffId":"x","staffName":"x","approvedBy":"x","method":"camera","amount":0,"passVersion":0,"override":false,"offline":false,"actor":{"type":"scanner","id":"x"},"undoneAt":0,"undoneBy":"x","undoes":"x"}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Scans.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.status.retrieve", "GET", "/api/v1/status", false,
+		"", `{"overall":"failing","build":{"id":"x","tag":"x","timestamp":"x"},"components":[{"id":"x","kind":"database","label":"x","state":"failing","detail":"x","checkedAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.Retrieve(ctx, nil)
+		},
+	},
+	{
+		"platform.status.listIncidents", "GET", "/api/v1/status/incidents", false,
+		"", `{"items":[{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ListIncidents(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.status.openIncident", "POST", "/api/v1/status/incidents", false,
+		`{"title":"x","note":"x","impact":"notice"}`, `{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformStatusOpenIncidentBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Status.OpenIncident(ctx, &b)
+		},
+	},
+	{
+		"platform.status.resolveIncident", "POST", "/api/v1/status/incidents/id1/resolve", false,
+		"", `{"id":"x","title":"x","note":"x","component":"api","impact":"notice","startedAt":0,"resolvedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ResolveIncident(ctx, "id1")
+		},
+	},
+	{
+		"platform.status.listWorkflowRuns", "GET", "/api/v1/status/workflows", false,
+		"", `{"items":[{"instanceId":"x","kind":"template_import","orgId":"x","targetId":"x","status":"queued","startedAt":0,"finishedAt":0,"errorCode":"x"}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Status.ListWorkflowRuns(ctx, nil).All(ctx)
 		},
 	},
 	{
@@ -2143,16 +2893,109 @@ var generatedOps = []opCase{
 	},
 	{
 		"testEmails.list", "GET", "/api/v1/test-inbox", false,
-		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0}],"nextCursor":null}`,
+		"", `{"items":[{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.List(ctx, nil).All(ctx)
 		},
 	},
 	{
 		"testEmails.retrieve", "GET", "/api/v1/test-inbox/id1", false,
-		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
+		"", `{"id":"x","orgId":"x","kind":"pass","passId":"x","bundleId":"x","to":"x","subject":"x","attached":false,"failed":false,"createdAt":0,"html":"x","text":"x","forwarding":"none"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.TestEmails.Retrieve(ctx, "id1", nil)
+		},
+	},
+	{
+		"platform.users.list", "GET", "/api/v1/users", false,
+		"", `{"items":[{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"platform.users.retrieve", "GET", "/api/v1/users/id1", false,
+		"", `{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0,"signInMethods":["oidc"],"emails":[{"email":"x","verifiedVia":"magic_link","verifiedAt":0}],"identities":[{"provider":"x","subject":"x","emailClaim":"x","emailVerified":false,"groups":["x"],"lastUsedAt":0}],"sessions":[{"id":"x","amr":"oidc","roles":["admin"],"createdAt":0,"lastSeenAt":0,"expiresAt":0,"revokedAt":0,"userAgent":"x","current":false,"method":"x"}],"passes":[{"id":"x","templateName":"x","orgName":"x","status":"active"}],"passCount":0,"recentAudit":[{"id":0,"at":0,"action":"x","actorType":"x","actorId":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.update", "PATCH", "/api/v1/users/id1", false,
+		`{"status":"active"}`, `{"id":"x","name":"x","primaryEmail":"x","status":"active","lastRoles":["admin"],"createdAt":0,"lastLoginAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.access.retrieve", "GET", "/api/v1/users/id1/access", false,
+		"", `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Access.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.claims.retrieve", "GET", "/api/v1/users/id1/claims", false,
+		"", `{"claims":{},"otherKeys":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Claims.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.claims.update", "PATCH", "/api/v1/users/id1/claims", false,
+		`{"set":{}}`, `{"set":["x"],"removed":["x"],"dryRun":false}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersClaimsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Claims.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.offboard", "POST", "/api/v1/users/id1/offboard", false,
+		`{}`, `{"plan":{"userId":"x","memberships":[{"org":{"id":"x","name":"x"},"membershipId":"x"}],"kept":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grants":["developer"],"personalKeys":0,"platformKeys":["x"],"sessions":0,"sandboxOrgId":"x","removes":["console"],"external":["console"],"blockers":[{"org":{"id":"x","name":"x"},"code":"LAST_ORG_ADMIN"}]},"operation":{"id":"x","kind":"x","status":"queued","title":"x","text":"x","orgId":"x","mode":"live","target":{"type":"x","id":"x"},"step":"x","steps":[{"key":"x","label":"x","state":"pending","done":0,"total":0,"detail":"x","until":0,"waitingReason":"blocked","group":"x","startedAt":0,"finishedAt":0}],"attempt":0,"cancelable":false,"cancelRequested":false,"startedBy":{"type":"user","id":"x"},"createdAt":0,"startedAt":0,"updatedAt":0,"finishedAt":0,"error":{"code":"x","message":"x","step":"x","retryable":false},"result":{"href":"x","ids":{}},"revision":0,"pollAfterMs":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersOffboardBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Offboard(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.passes.list", "GET", "/api/v1/users/id1/passes", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","orgStatus":"active","timeZone":"x","templateName":"x","status":"active","holding":"owned","channels":["mobile"],"issuedAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Passes.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"platform.users.roles.set", "POST", "/api/v1/users/id1/roles", false,
+		`{"role":"developer","grant":false}`, `{"userId":"x","connected":false,"platformAdmin":false,"disabled":false,"linked":false,"account":{"class":"created","disabledInIdp":false},"roles":[{"role":"console","wanted":false,"present":false,"presence":"none","held":false,"memberships":[{"org":{"id":"x","name":"x"}}],"sponsorships":[{"org":{"id":"x","name":"x"}}],"grantedAt":0,"error":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PlatformUsersRolesSetBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Platform.Users.Roles.Set(ctx, "id1", &b)
+		},
+	},
+	{
+		"platform.users.sessions.revokeAll", "POST", "/api/v1/users/id1/sessions/revoke", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Sessions.RevokeAll(ctx, "id1")
+		},
+	},
+	{
+		"platform.users.sessions.revoke", "DELETE", "/api/v1/users/id1/sessions/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Platform.Users.Sessions.Revoke(ctx, "id1", "id2")
 		},
 	},
 	{
@@ -2164,7 +3007,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.resendProviderCopies", "POST", "/api/v1/wallet-providers/reissue", false,
-		`{"provider":"google"}`, `{"reissueId":"x","instances":0}`,
+		`{"provider":"google"}`, `{"reissueId":"x","instances":0,"operationId":"x"}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesResendProviderCopiesBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -2200,6 +3043,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.WebhookEndpoints.EnsureCapture(ctx, &b)
+		},
+	},
+	{
+		"webhookEndpoints.setup.retrieve", "GET", "/api/v1/webhook-endpoints/setup", false,
+		"", `{"direction":"inbound","recipe":"custom","version":"x","checkedAt":"x","provider":{"name":"x","consoleUrl":"x","docs":[{"label":"x","url":"x"}]},"secret":{"origin":"provider","allowPaste":false,"prefix":"x","minLength":0,"whereStep":"x"},"subscriptions":{"perWebhook":"one","topics":[{"id":"x","label":"x","required":false,"verified":false}]},"steps":[{"id":"x","side":"provider","title":"x","parts":[{"t":"text","text":"x"}]}],"test":{"kind":"button","text":"x","command":"x","issues":false},"troubleshooting":{}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WebhookEndpoints.Setup.Retrieve(ctx)
 		},
 	},
 	{

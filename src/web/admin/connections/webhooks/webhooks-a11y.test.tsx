@@ -63,15 +63,20 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
       'https://hooks.example.com/x',
     );
     expect((await axe(document.body)).violations).toEqual([]);
+    for (const step of ['Choose events', 'Review']) {
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await screen.findByRole('heading', { name: step });
+      expect((await axe(document.body)).violations).toEqual([]);
+    }
     await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
-    await screen.findByRole('heading', { name: 'Signing secret' });
+    await screen.findByRole('heading', { name: 'Copy the secret' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 
   it('detail with its sheet and dialogs', async () => {
     viewport(width, theme);
     const user = userEvent.setup();
-    await open('/admin/connections/webhooks/we1', [], {
+    await open('/admin/connections/webhooks/we1?tab=deliveries', [], {
       endpoints: [endpoint({ status: 'disabled', failingSince: NOW - 80 * HOUR, disabledAt: NOW })],
     });
     await screen.findByRole('table', { name: 'Deliveries' });
@@ -95,25 +100,12 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
   it('detail as a reader', async () => {
     viewport(width, theme);
     await open(
-      '/admin/connections/webhooks/we1',
+      '/admin/connections/webhooks/we1?tab=deliveries',
       [],
       { endpoints: [endpoint({ url: null })] },
       reader,
     );
     await screen.findByRole('table', { name: 'Deliveries' });
     expect((await axe(document.body)).violations).toEqual([]);
-  });
-});
-
-describe('reduced motion', () => {
-  it('runs the test lane with no travelling dot rule outside no-preference', async () => {
-    const { readFileSync } = await import('node:fs');
-    const css = readFileSync('src/web/admin/connections/webhooks/webhooks.css', 'utf8');
-    const outside = css.replace(
-      /@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*\}\s*$/,
-      '',
-    );
-    expect(outside).not.toMatch(/animation:/);
-    expect(css).toMatch(/prefers-reduced-motion: no-preference/);
   });
 });

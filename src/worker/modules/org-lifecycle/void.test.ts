@@ -5,10 +5,11 @@ import { serialsSince } from '../apple/repo.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { removePass } from '../passes/remove.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
+import { requestExport } from './export-start.ts';
 import { fakeStep, populateOrg } from './lifecycle-test-fixtures.ts';
 import { beginPurge, deletePassesPage, GRACE_MS, leftovers, runRows } from './purge.ts';
 import { PURGE_STEPS } from './repo-plan.ts';
-import { closeOrg, requestExport } from './service.ts';
+import { closeOrg } from './service.ts';
 
 const DAY = 86_400_000;
 const actor = { type: 'system' as const, id: null };
@@ -17,6 +18,12 @@ let kit: RetentionKit['kit'];
 beforeAll(async () => {
   rk = await retentionKit();
   kit = rk.kit;
+  // requestExport starts a workflow that would outlive the test; the purge is driven directly.
+  (kit.env as { ORG_EXPORT: unknown }).ORG_EXPORT = {
+    async create(o: { id: string }) {
+      return { id: o.id };
+    },
+  };
 }, 30_000);
 
 const close = async (orgId: string) =>

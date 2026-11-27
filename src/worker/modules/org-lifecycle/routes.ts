@@ -7,7 +7,7 @@ import {
   OrgExportLinkSchema,
   OrgExportListSchema,
   OrgExportParamsSchema,
-  OrgExportSchema,
+  OrgExportStartedSchema,
   OrgLifecycleParamsSchema,
   OrgLifecycleSchema,
 } from '../../../shared/contracts/org-lifecycle.ts';
@@ -19,6 +19,7 @@ import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts'
 import { requestActor } from '../audit/http.ts';
 import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { requestExport } from './export-start.ts';
 import type { LifecycleActor } from './repo.ts';
 import {
   closeOrg,
@@ -28,7 +29,6 @@ import {
   openExport,
   readLifecycle,
   reopenOrg,
-  requestExport,
 } from './service.ts';
 
 type C = Parameters<typeof authOf>[0];
@@ -163,7 +163,7 @@ register(
     path: '/{orgId}/exports',
     summary: 'Export everything the organization holds',
     params: OrgLifecycleParamsSchema,
-    response: OrgExportSchema,
+    response: OrgExportStartedSchema,
     status: 202,
   },
   async (c) =>
@@ -173,6 +173,7 @@ register(
         requestActor(c),
         c.req.valid('param').orgId,
         callerOf(c),
+        authOf(c).mode,
       ),
       202,
     ),
@@ -226,12 +227,12 @@ register(
 
 /** Mount at /api/v1/platform: the closed organizations, soonest purge first. */
 export const orgClosedRoutes = createRouter();
-orgClosedRoutes.use('*', requireAdmin);
 register(
   orgClosedRoutes,
   'org-lifecycle',
   {
     method: 'get',
+    auth: { platform: 'platform:orgs', key: true },
     path: '/closed-orgs',
     summary: 'List closed organizations',
     query: CursorQuerySchema,

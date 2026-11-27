@@ -8,7 +8,7 @@ Procedures are Ledge runbooks in [`docs/runbooks/`](runbooks/): runnable notes, 
 | Go-live | [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md), [Go-Live Apple Signing and APNs](runbooks/go-live-apple-signing.md), [Go-Live Secrets](runbooks/go-live-secrets.md), [Go-Live Provision](runbooks/go-live-provision.md), [Deploy First](runbooks/deploy-first.md), [First Admin and Device Test](runbooks/first-admin-and-device-test.md) |
 | Deploy | [Deploy](runbooks/deploy.md), [Deploy Promote and Baked Sync](runbooks/deploy-promote.md), [Automatic Deploys Setup](runbooks/automatic-deploys-setup.md), [Rollback](runbooks/rollback.md), [Rollback Move Deploy Tag](runbooks/rollback-move-deploy-tag.md), [Worker Rename](runbooks/worker-rename.md), [Worker Rename Cleanup](runbooks/worker-rename-cleanup.md) |
 | Database | [D1 Manual Migrations](runbooks/d1-manual-migrations.md), [D1 Time Travel Restore](runbooks/d1-time-travel-restore.md), [Pre-Migration 0202 Check](runbooks/pre-migration-0202-check.md), [R2 Receipt Lock Remove](runbooks/r2-receipt-lock-remove.md) |
-| Keys | [KEK Rotation](runbooks/kek-rotation.md), [KEK Retire](runbooks/kek-retire.md), [MAC Key Rotation](runbooks/mac-key-rotation.md), [Platform Certificate Renewal](runbooks/platform-certificate-renewal.md), [Google Wallet Key Rotation](runbooks/google-key-rotation.md) |
+| Keys | [KEK Rotation](runbooks/kek-rotation.md), [KEK Retire](runbooks/kek-retire.md), [MAC Key Rotation](runbooks/mac-key-rotation.md), [Platform Certificate Renewal](runbooks/platform-certificate-renewal.md) (legacy identity), [Platform Identity Switch](runbooks/platform-identity-switch.md), [Switch Rollback](runbooks/platform-identity-switch-rollback.md), [Platform Identity Retire](runbooks/platform-identity-retire.md), [Google Wallet Key Rotation](runbooks/google-key-rotation.md) |
 | Sign-in | [Polaris ID Group Rename](runbooks/polaris-id-group-rename.md), [Polaris ID Pin Platform Admins](runbooks/polaris-id-pin-platform-admins.md), [Polaris ID Console Group Required](runbooks/polaris-id-console-group-required.md), [Break-Glass Token](runbooks/breakglass-token.md), [Break-Glass Off](runbooks/breakglass-off.md) |
 | Polaris binding | [Polaris Binding Turn On](runbooks/passbook-id-connector-turn-on.md), [Polaris Binding Go Live](runbooks/passbook-id-connector-go-live.md), [Polaris Binding Key Rotation](runbooks/passbook-id-connector-key-rotation.md), [Polaris Binding Thaw](runbooks/passbook-id-connector-thaw.md), [Polaris Binding Compromise](runbooks/passbook-id-connector-compromise.md) |
 | Apple provisioner | [Apple Provisioner Setup](runbooks/passbook-apple-connector-setup.md), [Apple Provisioner Key Rotation](runbooks/passbook-apple-connector-key-rotation.md) |
@@ -34,7 +34,7 @@ Runbook: [Local Dev Setup](runbooks/local-dev-setup.md) (`npm ci`, `dev:vars`, `
 
 Owner only; agents never deploy. Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangler.jsonc`.
 
-1. [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md)
+1. [Go-Live Polaris ID Client](runbooks/go-live-polaris-id.md) (allow the metadata URL, sign in once; [Polaris Binding Turn On](runbooks/passbook-id-connector-turn-on.md) then sets up groups, client and SCIM)
 2. [Go-Live Apple Signing and APNs](runbooks/go-live-apple-signing.md)
 3. [Go-Live Secrets](runbooks/go-live-secrets.md) (Turnstile, KEK, signer, break-glass hash)
 4. [Go-Live Provision](runbooks/go-live-provision.md) (D1, queues, R2, the receipt lock, Analytics Engine)
@@ -72,7 +72,7 @@ Owner only; agents never deploy. Do in order. `npm run deploy:check` lists what 
 
 Setup (owner, once): [Apple Provisioner Setup](runbooks/passbook-apple-connector-setup.md). Deploy the provisioner before the main Worker: Cloudflare fails a main Worker deploy if the `APPLE` service binding names a Worker that does not exist yet. Until then `ascClient` reports `ASC_UNAVAILABLE`.
 
-Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>`. Order and renew those yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
+Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>` and the two platform slots (`pass.mobile.passbook`, `pass.mobile.passbook.devtest`). Order and renew the legacy one yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
 
 Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any platform certificate (revoke those by hand in the developer portal). It revokes a certificate only when a newer one of the same pass type was ordered at least 24 hours earlier and the main Worker has since called `reportCertificateActive` for it, and at most once per pass type in 7 days. The main Worker calls `reportCertificateActive` after it activates a new certificate.
 
@@ -101,6 +101,10 @@ On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of th
 - **Routes.** Only the routes the RPCs need (`routes.ts`): group, config, API key and OIDC client reads, the key's own user, user search, user and group-id reads, `PUT` of one user and of one user's groups, and signup tokens. Anything else, such as creating or deleting users, one-time tokens, custom claims, group, client, config or key writes, is refused in code.
 - HTTP: origin pinned to `POCKET_ID_ORIGIN`, header `X-API-KEY`, no redirects, 5 s, 256 KB; Polaris ID's text is never forwarded. The key, token values, setup links and email addresses are not logged or stored.
 
+- **Client id.** `PASSBOOK_CLIENT_ID` is PassBook's metadata URL (`https:`, path `/auth/oidc/client-metadata.json`, no query or fragment, at most 512 characters) or a plain registered id. Set up needs the metadata URL and refuses a plain id. In the admin path the URL is encoded as `~` plus base64url, and the allow-list matches that one literal; `~` is refused in every other segment.
+- **Client and SCIM writes.** Only for client `C`: `PUT` of the client (restrict, logo) and its allowed groups (union only, never removes), `POST`/`PUT`/sync of that client's SCIM service provider. Never client create or delete, secrets, any other client, SCIM delete, configuration or key writes. Budgets a minute and a day: `client_write` 3 and 9, `scim_write` 1 and 4, `scim_sync` 1 and 10, `setup_read` 6 and 200.
+- **`setupStatus`.** Reads the client, its provider and unplaced group names; reports which of up to two caller hashes equals the SHA-256 of the live SCIM token, never the token.
+
 Alert on these error codes in Workers Logs: `binding.unsafe_config`, `binding.drift`, `binding.idp_auth`, `binding.budget_high`, `binding.breaker`, `binding.proof_ambiguous`.
 
 Runbooks (owner): [Polaris Binding Turn On](runbooks/passbook-id-connector-turn-on.md) (setup in dry run), [Polaris Binding Go Live](runbooks/passbook-id-connector-go-live.md) (after a week of dry run), [Polaris Binding Key Rotation](runbooks/passbook-id-connector-key-rotation.md) (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys), [Polaris Binding Thaw](runbooks/passbook-id-connector-thaw.md) and [Polaris Binding Compromise](runbooks/passbook-id-connector-compromise.md). The SCIM receiver is set up with [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). The main Worker's `IDP` service binding is not in `wrangler.jsonc` yet and follows in a later change.
@@ -117,11 +121,22 @@ Polaris ID pushes users and groups to `https://<PUBLIC_BASE_URL host>/scim/v2` (
 - A member removed from a group, or in a deleted group: queued for the drain (at most 100 a push and 300 an hour; a subject already backing off keeps its backoff). The drain reads the account and decides.
 - A platform admin removed from a group: Polaris ID is asked about each of their accounts (`lookup`); with none in the admin group their admin sessions end within the push and `admin_changed` is filed. More than five at once, a failed lookup or dry run changes nothing here; the daily reconcile decides.
 
-Setup (owner): [SCIM Receiver Setup](runbooks/scim-receiver-setup.md). Token rotation is in the same note.
+Setup: Settings, Polaris ID, Set up creates the service provider and keeps the bearer token in D1 (hash and secret, never in `wrangler.jsonc`); rotate it from the same card. Right after a rotation a push with the old token is accepted for a short pending window. Fallback check: [SCIM Receiver Setup](runbooks/scim-receiver-setup.md).
 
 Limits: a right token gets 600 requests a minute and is never refused for other callers' misses; a wrong token is charged to the `RL_PUBLIC` limiter by network prefix (429 past its limit); user bodies 16 KB, group bodies 256 KB; group pages 100.
 
-Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends what is owed. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
+Breaker: more than 20 session endings in ten minutes latches it for 24 hours: nothing more ends, rows go `revoke_pending`, and `IDP_SCIM_BREAKER` is logged once. After you have checked the feed, clear it with the `idp.breaker_clear` operation (`POST /api/v1/platform/idp/scim-breaker/clear`, a platform admin signed in with Polaris ID), as in [SCIM Breaker Clear](runbooks/scim-breaker-clear.md); the next minute's sweep ends up to about 20 of what is owed, then it latches again. A row whose confirming lookup keeps failing waits 10 minutes, then 20, doubling to about 5 hours, and does not hold other rows back.
+
+## Platform default identity
+
+New passes sign with the default platform identity: the `signing_identities` row with `is_default=1` and no org. It starts as the env-sourced row `platform` (`pass.im.plrs.wallet`). After a platform setup run, `pass.mobile.passbook` is a second row, issuing but not default.
+
+- **Switch** (`setPlatformDefault`, in `modules/identities/platform-default.ts`). It refuses with `IDENTITY_NOT_READY` unless the target has an active certificate, `issuing=1`, `apns_health='healthy'` and at least one device registered on a pass signed by it (the device test). Then, in one guarded batch: the old default is cleared, the target becomes default, row `platform` gets `issuing=0`, and `identity.platform_default_changed` is audited. A repeat changes nothing.
+- **Reverse:** the same call with `platform` as the target. It needs the legacy env material to still sign, and sets `issuing=1` again.
+- **Legacy row:** never deleted. It keeps signing and pushing for passes already issued on it, by mTLS (`APNS`). Once its env secrets are removed, `ensurePlatformIdentity` does nothing, the daily check treats it as retired, and a sign on it refuses `IDENTITY_RETIRED` (logged as `identity.platform_retired`).
+- **`PLATFORM_PASS_TYPE_ID` stays `pass.im.plrs.wallet`.** The row's pass type is immutable and a changed value stops all legacy signing (`IDENTITY_PLATFORM_ENV_MISMATCH`). `npm run deploy:check` fails if it differs. `PLATFORM_TEAM_ID` stays too.
+- **Readers:** setup's shared pass type and the template dry run and previews read the default platform row, not the env vars.
+- **Before removing `SIGNER_PLATFORM_*` or the `APNS` binding:** the legacy row is dormant or expired and no pass is registered on it. Both are owner steps.
 
 ## Managed identity runs
 
@@ -303,6 +318,20 @@ Redirects are uncached, so no browser loops. Everyone signs in again. A pass add
 between keeps calling passbook.mobile's web service, and Wallet does not follow redirects: its
 holder re-adds it from a new link.
 
+## Platform keys
+
+Runbook: [Platform Keys](runbooks/platform-keys.md). A Platform key (`pbo_`, no organization) holds `platform:*` scopes and reaches the key-callable `/api/v1/platform/*` routes for the owner's automation. It never reaches organization routes. The other flavour, All organizations, holds organization scopes only and never reaches a platform route; the two are never mixed on one key.
+
+- Scopes today: `platform:read` (every `GET` of a key-callable platform route), `platform:settings` (platform settings except `auth.*` and `oidc.*`), `platform:identities` (Apple identities: list, upload, edit, rotate, renew, push key, APNs check, call ledger), `platform:wallet` (wallet credentials, checks, key rotation, enrolment list, migration, managed Google issuers, the release report and the enable-ready dry run), `platform:users` (platform roles, Polaris ID check, invitations, access and drift reads, the offboard plan), `platform:groups`, `platform:claims`, `platform:status` (also component health, incidents and platform metrics), `platform:audit` (the Polaris ID calls), `platform:orgs` (orgs, features, holds, receipts, closed orgs). Person-only for Polaris ID: freeze, clearing the SCIM breaker, restoring a hold, removing an external role, and a real offboard. Person-only for orgs and users: closing an org, releasing a hold, a personal org's status, a user's emails, choosing the default Apple identity, deleting an identity, revoking a wallet credential, and enrolment hold, release and migration resolve.
+- Mint: a platform admin in a Polaris ID session (not break-glass) with a sign-in in the last 10 minutes. Live only, standard rate tier, an IP range (no wider than a /8), expiry at most 30 days (90 with `platform:read` alone). A key never mints or rotates a platform key.
+- Live only while its creator is an active user: disabling the creator stops it at once, and offboarding revokes it.
+- Rotate and revoke are a person's, in Platform > API keys. Rotate with an overlap so the automation swaps its secret first.
+- Limits: 60 writes a minute per key on platform routes (`RL_PLATFORM_WRITE`, 429 `RATE_LIMITED`) on top of the standard tier. Platform writes accept `Idempotency-Key`.
+- Refusals: outside the range, expired, revoked or creator disabled is 401 `INVALID_API_KEY` with no reason; a missing scope is 403 `MISSING_SCOPE`; an organization key on a platform route is 403 `PLATFORM_KEY_REQUIRED`; a route a key never calls is 403 `PERSON_REQUIRED`. Each refusal is audited as `auth.denied`.
+- Audit: every write records `api_key`, the key id and no organization. Filter the platform audit log by key to see what a key changed.
+- Demo: `node tools/seed-demo.ts` seeds "Ops status" into the local database and prints the file holding its secret, never the secret.
+- Organization member routes (invite, resend, revoke, change role) take an organization key with `members:write` (or `members:read` to list) for roles that do not administer. A key never makes, promotes, demotes or removes an administrator (403 `KEY_CANNOT_ADMINISTER`).
+
 ## Break-glass admin
 
 Admin sign-in for when Polaris ID is down.
@@ -452,14 +481,14 @@ with only this statement (any other way of writing the table fails check-migrati
 UPDATE wallet_provider_releases SET state = 'released', changed_at = <ms> WHERE provider = 'google' AND mode = 'test';
 ```
 
-Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin): a platform credential with a
+Before it merges, read `GET /api/v1/platform/wallet-release` (platform admin, or a Platform key with `platform:read` or `platform:wallet`): a platform credential with a
 passing check, no `legacy` enrolment, the intended orgs `issuing` or `ready`, templates released. The deploy
 prints `Wallet release: google test -> released (<migration>)` and runs the wallet migration gate before it
 migrates, and again before it serves for as long as any wallet is released. It refuses when it cannot read the
 pending migrations. It migrates before it serves, and both sides must say `released`, so every step in between
 is dark.
 
-**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list; the route is:
+**After the flip**, turn on the orgs that set up before it (a recent sign-in is required). The Release card on Platform > Wallet accounts runs the dry run and the apply with exactly this list. A Platform key with `platform:wallet` may run the dry run; the apply is a person's (403 `PERSON_REQUIRED` for a key). The route is:
 `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready` lists the Off enrolments that were never
 On and would turn On (plan, source, fresh check, Live round trip, no hold, channel not blocked). An enrolment the
 org switched Off (`org_off`) or a released hold cleared (`hold_released`) stays Off: only the org turns it back
@@ -576,7 +605,7 @@ gap; turning it back on does not backfill.
 
 ### Request log and status notes
 
-`request_log` holds one row per Test call of a developer org (sandboxes only; Live and real orgs write nothing): metadata for 7 days, request and response bodies for 24 hours (a trigger refuses a body or a query value anywhere else). A sandbox keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
+`request_log` holds one row per Test call of any org (a Live call is never written; a trigger refuses it): metadata for 7 days (route, status, code, resource id, version date, header presence flags, and a fixed allowlist of non-secret request and response header values, redacted: never Authorization, cookies or signatures). Redacted request and response bodies, at most 8 KB each, are kept 24 hours only in a sandbox or in an org whose admin turned on `requestLog.bodies`; turning it off blanks the bodies already stored. An org keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
 
 Public status incident notes are rows of `status_incidents`. Platform admins open and resolve them on Admin > Status ("Public incident notes") or with `POST /api/v1/status/incidents` and `POST /api/v1/status/incidents/{id}/resolve`; each is audited.
 

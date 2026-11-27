@@ -95,6 +95,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -219,6 +222,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -328,6 +334,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -433,6 +442,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -539,6 +551,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -638,6 +653,113 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.replaced",
+      "summary": "The pass was replaced by another pass, which now carries its state.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.replaced"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01",
+              "2026-11-20"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "replacedBy": {
+                "type": "string",
+                "maxLength": 300
+              }
+            },
+            "required": [
+              "replacedBy"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -761,6 +883,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -892,6 +1017,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1100,6 +1228,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1260,6 +1391,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1387,6 +1521,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1521,6 +1658,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1633,6 +1773,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1745,6 +1888,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1871,6 +2017,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1976,6 +2125,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2045,6 +2197,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [

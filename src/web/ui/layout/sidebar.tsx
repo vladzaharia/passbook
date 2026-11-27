@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Fragment, lazy, Suspense } from 'react';
+import { useIdpConnected } from '../../admin/idp/status-queries.ts';
 import { cn } from '../../lib/cn.ts';
 import { adminNavGroups, isActivePath } from '../../lib/nav.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
@@ -23,7 +24,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const membership = ready
     ? scope.memberships.find((m) => shown?.kind === 'org' && m.orgId === shown.orgId)
     : undefined;
-  const groups = adminNavGroups(shown, isAdmin, membership);
+  const polaris = useIdpConnected();
+  const groups = adminNavGroups(
+    shown,
+    isAdmin,
+    membership,
+    { polaris },
+    ready ? scope.memberships : [],
+  );
   const reviews = useTemplateReviews(
     shown?.kind === 'org' ? shown.orgId : undefined,
     Boolean(membership?.capabilities.includes('templates:review')),

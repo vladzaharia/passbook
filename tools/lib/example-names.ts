@@ -48,6 +48,7 @@ export const TABLES: Record<string, string[]> = {
   keyset: ['Gym doors', 'Lockers', 'Cafe fobs', 'Staff cards'],
   identity: ['Northwind signing identity', 'Northwind staging identity'],
   sandbox: ['Northwind sandbox', 'Integration test sandbox'],
+  group: ['Front desk staff', 'Route setters', 'Youth coaches', 'Beta testers'],
   preset: ['Standard', 'Day-pass gym', 'Membership club', 'Events only'],
   recipe: ['Booking sheet', 'Shop orders', 'Class bookings', 'Webhook push'],
   field: ['Plan', 'Valid until', 'Holder email', 'Member ID', 'Visits left'],
@@ -75,8 +76,9 @@ const KEYED: [RegExp, RegExp, string][] = [
   [/^(scan|scans)$/, /^title$/, 'pass'],
   [/^(scan|scans)$/, /^name$/, 'holder'],
   [/^(scan|scans)$/, /^label$/, 'action'],
-  [/^developer$/, /^label$/, 'key'],
+  [/^(developer|workbench)$/, /^label$/, 'key'],
   [/^(identities|wallet|identity)$/, /^label$/, 'identity'],
+  [/^(identities|wallet|identity)$/, /^title$/, 'operation'],
   [/^entitlements$/, /^label$/, 'feature'],
   [/^metrics$/, /^name$/, 'org'],
   [/^(users|me)$/, /^name$/, 'person'],
@@ -87,6 +89,9 @@ const KEYED: [RegExp, RegExp, string][] = [
 
 /** Segment word patterns, nearest ancestor first; the first that matches names the entity. */
 const RULES: [RegExp, string][] = [
+  // An operation a start answers (`.operation.title`, `.operation.steps[].label`), whatever the area.
+  [/^(steps)$/, 'operationStep'],
+  [/^(operation)$/, 'operation'],
   [/^(sandbox)$/, 'sandbox'],
   [/^(tagtype|types?)$/, 'tagType'],
   [/^(tags?)$/, 'tag'],
@@ -125,6 +130,7 @@ const RULES: [RegExp, string][] = [
   [/^(keys?)$/, 'key'],
   [/^(imports?)$/, 'import'],
   [/^(rules?)$/, 'rule'],
+  [/^(groups?)$/, 'group'],
   [/^(broadcasts?)$/, 'broadcast'],
   [/^(presets?)$/, 'preset'],
   [/^(recipes?|connectors?)$/, 'recipe'],

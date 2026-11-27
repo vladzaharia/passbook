@@ -27,6 +27,32 @@ export function declareOidcOnly<T extends object>(guard: T): T {
 }
 export const isOidcOnly = (guard: object): boolean => oidcOnly.has(guard);
 
+/** How a `platform` route treats a key: `key` (any request), `conditional` (`key.unless`), `person` (never). */
+export type PlatformKeyMode = 'key' | 'conditional' | 'person';
+const platformKeys = new WeakMap<object, { mode: PlatformKeyMode; scope: string }>();
+
+/** Declares a `platform` route's key access and scope, so the route inventory and the OpenAPI document read one answer. */
+export function declarePlatformKey<T extends object>(
+  guard: T,
+  mode: PlatformKeyMode,
+  scope: string,
+): T {
+  platformKeys.set(guard, { mode, scope });
+  return guard;
+}
+export const platformKeyOf = (
+  guard: object,
+): { mode: PlatformKeyMode; scope: string } | undefined => platformKeys.get(guard);
+
+const platformKeysOwn = new WeakSet<object>();
+
+/** Marks a `scope` guard a Platform key may pass for reads (`platformKeys: 'own'`), so the route inventory lists it. */
+export function declarePlatformKeysOwn<T extends object>(guard: T): T {
+  platformKeysOwn.add(guard);
+  return guard;
+}
+export const isPlatformKeysOwn = (guard: object): boolean => platformKeysOwn.has(guard);
+
 /** The level a guard enforces, or undefined when it is no session guard. */
 export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(guard);
 
@@ -159,12 +185,27 @@ export async function peekBody(c: Context<AppBindings>): Promise<Record<string, 
 }
 
 /**
+ * The one exemption from the console group (Workbench v2, Phase 3): a developer acting on their own open
+ * sandbox. `ownSandbox` is the id of the session user's open sandbox org, looked up by the caller (null: none).
+ */
+export const ownSandboxExempt = (
+  session: SessionAuth,
+  orgId: string,
+  ownSandbox: string | null,
+): boolean => ownSandbox !== null && ownSandbox === orgId && hasDeveloperAccess(session.roles);
+
+/**
  * With `OIDC_CONSOLE_GROUP_REQUIRED` on, an org console needs the admin group (`console`) or platform
  * admin. Polaris ID sessions only: an email-link session keeps the console grace rules, and break-glass
- * carries the admin role.
+ * carries the admin role. `sandbox` names the org and the caller's own sandbox when the exemption applies.
  */
-export function assertConsoleGroup(c: Context<AppBindings>, session: SessionAuth): void {
+export function assertConsoleGroup(
+  c: Context<AppBindings>,
+  session: SessionAuth,
+  sandbox?: { orgId: string; ownSandbox: string | null },
+): void {
   if (consoleGroupOk(c, session)) return;
+  if (sandbox && ownSandboxExempt(session, sandbox.orgId, sandbox.ownSandbox)) return;
   reportDenied(c, 'FORBIDDEN', session);
   throw new ForbiddenError(
     "You don't have console access. Ask an administrator.",

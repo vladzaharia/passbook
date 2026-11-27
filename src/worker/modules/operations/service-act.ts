@@ -1,7 +1,9 @@
 import type { OperationDto, OperationStep } from '../../../shared/contracts/operations.ts';
-import type { AuthContext } from '../../platform/auth.ts';
+import { type Amr, type AuthContext, isOwnOnly } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, ForbiddenError } from '../../platform/errors.ts';
+import { workbenchTestOnly } from '../../platform/errors-denial.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -32,6 +34,25 @@ const notCancelable = () =>
   new AppError('OPERATION_NOT_CANCELABLE', 409, 'This cannot be stopped. Wait for it to finish.');
 const notRetryable = () => new AppError('OPERATION_NOT_RETRYABLE', 409, 'This cannot be retried.');
 
+/** The route's step-up bound to its request: throws `STEP_UP_REQUIRED` when the sign-in is stale. */
+export type TokenStepUp = (session: { authTime: number | null; amr: Amr }) => void;
+
+/**
+ * A Workbench token acts only on a kind that declares `tokenActs`: its retry never writes state Live uses.
+ * A sandbox token passes a step-up kind's step-up exactly when its session would: the route's own
+ * step-up never sees a key, so it is asked here, fail-closed when the route gave no way to ask.
+ */
+function assertTokenMayAct(auth: AuthContext, kind: string, stepUp?: TokenStepUp): void {
+  if (!workbenchPinOf(auth)) return;
+  const def = kindOf(kind);
+  if (!def?.tokenActs)
+    throw workbenchTestOnly('A Workbench token cannot stop or retry this. Use the admin console.');
+  if (def.stepUp && auth.kind === 'api_key') {
+    if (!stepUp) throw new ForbiddenError();
+    stepUp({ authTime: auth.sessionAuthTime ?? null, amr: auth.sessionAmr ?? 'oidc' });
+  }
+}
+
 /**
  * Stops it. Every write is one guarded UPDATE: a queued stop only takes a row still `queued`, a running stop
  * only a kind whose policy allows it and only the attempt we read. Nothing changed means no audit row and no
@@ -41,8 +62,11 @@ export async function cancelOperation(
   ctx: ServiceContext,
   auth: AuthContext,
   id: string,
+  stepUp?: TokenStepUp,
 ): Promise<OperationDto> {
+  if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
+  assertTokenMayAct(auth, row.kind, stepUp);
   const dto = toDto(row);
   const policy = kindOf(row.kind)?.cancel ?? 'never';
   if (policy === 'never') throw notCancelable();
@@ -113,8 +137,11 @@ export async function retryOperation(
   auth: AuthContext,
   id: string,
   idempotencyKey?: string,
+  stepUp?: TokenStepUp,
 ): Promise<OperationDto> {
+  if (isOwnOnly(auth)) throw new ForbiddenError();
   const { row } = await readable(ctx, auth, id, 'write');
+  assertTokenMayAct(auth, row.kind, stepUp);
   // The key is kept as a hash on the row, per principal.
   const retryKey =
     idempotencyKey === undefined ? null : await sha256Hex(`${principalOf(auth)}:${idempotencyKey}`);
@@ -139,6 +166,9 @@ export async function retryOperation(
       steps: JSON.stringify(stepsForRetry(parseSteps(row.steps))),
       stepKey: null,
       retryKey,
+      // The retrying session takes the row over: a step-up revoked the one that started it.
+      actorSession:
+        row.audience === 'starter' && auth.kind === 'session' ? auth.sessionId : row.actor_session,
       expiresAt: row.audience === 'starter' ? now + KEEP_MS.starter : null,
     });
   } catch (error) {
@@ -160,11 +190,16 @@ export async function retryOperation(
   const next = row.attempt + 1;
   const fresh = toDto((await rowById(ctx.env.DB, id)) as OperationRow);
   try {
-    const launched = runner.relaunch ? await runner.relaunch(ctx, fresh) : undefined;
+    const launched = runner.relaunch
+      ? await runner.relaunch(ctx, fresh, { instanceId: row.workflow_instance_id }, auth)
+      : undefined;
     if (!runner.relaunch) await sendOperationRun(ctx, id, next);
     if (launched?.workflowInstanceId)
       await setWorkflowInstance(ctx.env.DB, id, next, launched.workflowInstanceId);
   } catch (error) {
+    // The refused retry leaves the earlier purge named on the row, so the next retry still sees it.
+    if (row.workflow_instance_id)
+      await setWorkflowInstance(ctx.env.DB, id, next, row.workflow_instance_id);
     await progressOf(ctx, id, next).fail(error);
     throw error;
   }

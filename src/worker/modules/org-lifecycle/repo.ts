@@ -156,6 +156,18 @@ export async function claimExport(db: D1Database, id: string): Promise<boolean> 
   return (r.meta.changes ?? 0) === 1;
 }
 
+/** A retry starts the failed (or stalled) export over, unless another one is open. */
+export async function requeueExport(db: D1Database, orgId: string, id: string): Promise<boolean> {
+  const r = await stmt(
+    db,
+    `UPDATE org_exports SET state = 'queued', error_code = NULL, finished_at = NULL
+     WHERE id = ? AND org_id = ? AND state IN ('failed', 'running')
+       AND NOT EXISTS (SELECT 1 FROM org_exports e WHERE e.org_id = ? AND e.id <> ? AND e.state IN ('queued', 'running'))`,
+    [id, orgId, orgId, id],
+  ).run();
+  return (r.meta.changes ?? 0) === 1;
+}
+
 export async function finishExport(
   db: D1Database,
   id: string,

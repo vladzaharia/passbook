@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { getMode } from '@/web/lib/mode.ts';
+import { useToolMode } from '@/web/lib/tool-api.tsx';
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { isIpOrCidr, splitIps } from './cidr.ts';
-import { SHORT_EXPIRY } from './key-kind-fields.ts';
+import {
+  EXPIRY,
+  offeredPlatformScopes,
+  PLATFORM_WRITE_EXPIRY,
+  SHORT_EXPIRY,
+} from './key-kind-fields.ts';
+import { useKeysHost } from './keys-host.tsx';
 import { useKeyScopes } from './use-key-scopes.ts';
 
 /** The least a key can do; more is ticked on purpose. */
@@ -44,11 +50,17 @@ export function useKeyForm(
   orgId: string | null,
   capabilities: readonly OrgCapability[] | null,
   developerOrg: boolean,
+  idpSession = true,
 ) {
+  const cap = useKeysHost()?.cap;
+  const toolMode = useToolMode();
+  const dflt = cap ? String(cap.maxDays) : '90';
   const picked = useKeyScopes(DEFAULT_SCOPES, orgId, capabilities, developerOrg);
   const { scopes } = picked;
   const [name, setName] = useState('');
-  const [expiry, setExpiry] = useState('90');
+  const [expiry, setExpiry] = useState(dflt);
+  // A platform page's key reaches the control plane (Platform) or every organization (All organizations).
+  const [flavour, setFlavour] = useState<'platform' | 'all'>('all');
   const [kind, setKind] = useState<'service' | 'personal'>('service');
   const [access, setAccess] = useState('scopes');
   const [custom, setCustom] = useState(false);
@@ -57,16 +69,30 @@ export function useKeyForm(
   const [draft, setDraft] = useState('');
   // An organization key takes the console's mode, shown without a choice. Platform pages ignore
   // mode, so a platform key's mode is chosen here.
-  const [keyMode, setKeyMode] = useState<Mode>(getMode);
+  const [keyMode, setKeyMode] = useState<Mode>(toolMode);
   useEffect(() => {
-    if (open) setKeyMode(getMode());
-  }, [open]);
+    if (open) setKeyMode(toolMode);
+  }, [open, toolMode]);
 
   const role = ROLES.find((r) => r === access);
   const scansWrite = scopes.includes('scans:write') && !role;
+  const onPlatform = orgId === null && flavour === 'platform' && offeredPlatformScopes().length > 0;
+  const platformWrite = onPlatform && scopes.some((s) => s !== 'platform:read');
   const short = orgId === null || kind === 'personal';
-  // A short-lived kind falls back to 90 days when the longer choice was picked first.
-  const days = short && !SHORT_EXPIRY.some((o) => o.value === expiry) ? '90' : expiry;
+  // A host's cap keeps the choices within its days; a platform write key within its own; a short-lived kind within 90.
+  const expiryOptions = cap
+    ? EXPIRY.filter((o) => o.value !== 'never' && Number(o.value) <= cap.maxDays)
+    : platformWrite
+      ? PLATFORM_WRITE_EXPIRY
+      : short
+        ? SHORT_EXPIRY
+        : EXPIRY;
+  // A choice the options no longer offer falls back: a platform key to its longest, the rest to the default.
+  const days = expiryOptions.some((o) => o.value === expiry)
+    ? expiry
+    : platformWrite
+      ? (expiryOptions.at(-1)?.value ?? '30')
+      : dflt;
   const drafted = splitIps(draft);
   const badDraft = drafted.some((t) => !isIpOrCidr(t));
   const ipAllow = [...ips, ...(badDraft ? [] : drafted.filter((t) => !ips.includes(t)))];
@@ -74,11 +100,13 @@ export function useKeyForm(
   const errors = {
     basics: name.trim() ? undefined : { name: 'Required.' },
     access:
-      role || scopes.length
-        ? scansWrite && orgId !== null && !terminalIds.length
-          ? { terminalIds: 'Pick at least one terminal.' }
-          : undefined
-        : { scopes: 'Pick at least one scope.' },
+      onPlatform && !idpSession
+        ? { scopes: 'Sign in with Polaris ID to make a platform key.' }
+        : role || scopes.length
+          ? scansWrite && orgId !== null && !terminalIds.length
+            ? { terminalIds: 'Pick at least one terminal.' }
+            : undefined
+          : { scopes: 'Pick at least one scope.' },
     limits: badDraft
       ? { ipAllow: 'Not an IP address or range.' }
       : orgId === null && !ipAllow.length
@@ -89,14 +117,15 @@ export function useKeyForm(
   function reset() {
     picked.reset();
     setName('');
-    setExpiry('90');
+    setExpiry(dflt);
     setKind('service');
+    setFlavour('all');
     setAccess('scopes');
     setCustom(false);
     setTerminalIds([]);
     setIps([]);
     setDraft('');
-    setKeyMode(getMode());
+    setKeyMode(toolMode);
   }
 
   return {
@@ -104,7 +133,20 @@ export function useKeyForm(
     name,
     setName,
     expiry: days,
+    expiryOptions,
+    cap,
     setExpiry,
+    flavour,
+    onPlatform,
+    idpSession,
+    changeFlavour(next: 'platform' | 'all') {
+      setFlavour(next);
+      setAccess('scopes');
+      setCustom(false);
+      setTerminalIds([]);
+      if (next === 'platform') setKeyMode('live');
+      picked.switchFlavour(next === 'platform');
+    },
     kind,
     changeKind(next: 'service' | 'personal') {
       setKind(next);
@@ -133,8 +175,9 @@ export function useKeyForm(
     dirty:
       name.trim() !== '' ||
       scopes.join() !== DEFAULT_SCOPES.join() ||
-      expiry !== '90' ||
+      expiry !== dflt ||
       kind !== 'service' ||
+      flavour !== 'all' ||
       access !== 'scopes' ||
       ips.length > 0 ||
       draft !== '',

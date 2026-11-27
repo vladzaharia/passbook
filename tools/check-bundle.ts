@@ -1,9 +1,11 @@
 // Runs after `vite build`: the initial load (entry plus modulepreloads) stays under budget and
 // carries no admin-only library, and the Worker carries no e2e provider release.
-import { readFileSync } from 'node:fs';
+
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { e2eReleaseProblems } from './lib/e2e-release.ts';
+import { markedAssets, namedAssets } from './lib/marked-assets.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
@@ -22,11 +24,6 @@ export const SCAN_BUDGET_BYTES = 140_000;
  */
 export const DEV_BUDGET_BYTES = 60_000;
 /**
- * The Try it island, everything its loader pulls (React, the console, its stylesheet), in gzip
- * bytes: 96.3 kB measured (W35: Try it fill, sandbox run). It loads only for a signed-in visitor, so it sits outside the 60 kB.
- */
-export const DEV_ISLAND_BUDGET_BYTES = 98_000;
-/**
  * The ⌘K search island (palette, kit dialog, cmdk, React): loads on the first ⌘K or click of the
  * search button, so it sits outside the 60 kB: 130 kB measured, of which React and Radix are 90 kB
  * (shared with every other island). The index it fetches has its own 150 kB budget
@@ -34,14 +31,72 @@ export const DEV_ISLAND_BUDGET_BYTES = 98_000;
  */
 export const DEV_SEARCH_BUDGET_BYTES = 135_000;
 /**
- * A Workbench island (developers/bench), on top of the portal's initial load, in gzip bytes: React
- * (67.5 kB), the bench primitives (about 32 kB: 21.5 kB script, 10.6 kB styles) and one tool's own
- * code. Measured (WB2): the strip island (`mount`: bench/mount.tsx, with the sandbox chip's OP-2 ring,
- * the bench keys and the shortcuts sheet) 81.0 kB; the Logs island today 92.5 kB. WB3 adds Logs to
- * this line when it moves onto React. Webhooks (140.2 kB) and Keys (127.8 kB) measure above it today:
- * WB4 and WB5 bring them under it as they swap their own pieces for the primitives.
+ * The Workbench's shell (workbench/shell/**: its chrome, nav, switcher, palette sources and keys),
+ * on top of the SPA entry, in gzip bytes: the lazy chunk carrying its `wb-shell` class, the chunks
+ * it imports that the entry does not, and its stylesheet. Workbench v2 §4.6.
  */
-export const BENCH_BUDGET_BYTES = 125_000;
+export const WB_SHELL_BUDGET_BYTES = 45_000;
+/**
+ * The bench primitives (workbench/bench/**: list, inspector, split, toolbar, id chip, trace), counted
+ * once on top of the entry and the shell, in gzip bytes: the chunk the build names `wb-bench`
+ * (vite.config.ts), the chunks it imports and its stylesheet. 24.9 kB measured; Workbench v2 §4.6
+ * sets 35 kB.
+ */
+export const WB_BENCH_BUDGET_BYTES = 35_000;
+/** The build names the bench's chunk after this (the `codeSplitting` group in vite.config.ts). */
+export const WB_BENCH_CHUNK = 'wb-bench';
+/**
+ * The host and tool-api (workbench/host/**, lib/tool-api): the chunk the build names `wb-host`, the
+ * chunks it imports past the entry. The shell imports it, so the shell's 45 kB already holds it:
+ * this line keeps it from growing unseen. 10.8 kB measured with the inbox and events tools merged.
+ */
+export const WB_HOST_BUDGET_BYTES = 15_000;
+/** The build names the host's chunk after this. */
+export const WB_HOST_CHUNK = 'wb-host';
+/**
+ * What every tool route shares (workbench/shell/tool-page, states, the legacy stylesheets, the tool
+ * placeholder), counted once on top of the entry, the shell and the bench: the chunk the build names
+ * `wb-kit`, the kit controls it imports and its stylesheet. 21.6 kB measured.
+ */
+export const WB_KIT_BUDGET_BYTES = 25_000;
+/** The build names the kit's chunk after this. */
+export const WB_KIT_CHUNK = 'wb-kit';
+/** The shared Workbench chunks: no entry (SPA, scanner, docs, site) loads one. */
+const WB_CHUNK = new RegExp(`/(${[WB_BENCH_CHUNK, WB_HOST_CHUNK, WB_KIT_CHUNK].join('|')})-`);
+/**
+ * One tool route (workbench/tools/tool-<name>.tsx), on top of the entry, the shell, the bench and the
+ * kit, in gzip bytes: its chunk, the chunks and stylesheets its loader lists. Dynamic imports (the wallet
+ * compilers, the barcode encoder) stay out. Workbench v2 §4.6.
+ */
+export const WB_TOOL_BUDGET_BYTES = 75_000;
+/**
+ * The Design route (workbench/design on the designer core), on top of the entry, the shell, the bench
+ * and the kit, in gzip bytes. The core loads Scan, Wallets, Paper, the stamps compositor, the Code
+ * tab, the JSON editor, the local validators and every section but Template and Style on demand
+ * (the note atop admin/templates/designer/designer-body.tsx names what stays eager). 210 kB measured.
+ */
+export const WB_DESIGN_BUDGET_BYTES = 230_000;
+/**
+ * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
+ * anonymous Design route (the blueprints in the designer core, `wb-tool-playground`), which shares the
+ * design budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
+ */
+export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
+  logs: WB_TOOL_BUDGET_BYTES,
+  console: WB_TOOL_BUDGET_BYTES,
+  events: WB_TOOL_BUDGET_BYTES,
+  home: WB_TOOL_BUDGET_BYTES,
+  keys: WB_TOOL_BUDGET_BYTES,
+  passes: WB_TOOL_BUDGET_BYTES,
+  sandbox: WB_TOOL_BUDGET_BYTES,
+  quickstart: WB_TOOL_BUDGET_BYTES,
+  design: WB_DESIGN_BUDGET_BYTES,
+  playground: WB_DESIGN_BUDGET_BYTES,
+};
+/** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
+export const WB_TOOL_MARKER = 'wb-tool-';
+/** The class only the Workbench shell renders: it marks the shell's chunk and keeps it out of entries. */
+export const WB_SHELL_MARKER = 'wb-shell';
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -49,6 +104,7 @@ export const FORBIDDEN = [
   'measureElement',
   'scan-display:render',
   'SCAN_DISPLAY_DENSITY',
+  WB_SHELL_MARKER,
 ] as const;
 /** The scan entry also never pulls the SPA router tree or the e2e hook. */
 export const SCAN_FORBIDDEN = [...FORBIDDEN, 'routeTree', '__passbookScan'] as const;
@@ -68,20 +124,6 @@ export const MARKETING_FORBIDDEN = [
   'react.element',
   '@tanstack',
 ] as const;
-
-/**
- * The playground island: what it loads on top of the portal's initial load (its entry, the page it
- * opens, their static imports and styles), in gzip bytes. The wallet compilers and the barcode
- * encoder are dynamic imports and stay out; react, the card renderers and the kit pieces are in.
- * 197 kB measured.
- */
-export const PLAYGROUND_BUDGET_BYTES = 215_000;
-
-/**
- * The quickstart island, on top of the portal's initial load: React, the steps, and the playground's card renderers
- * and compilers' loader (the barcode encoder and the wallet compilers stay lazy). Signed-in visitors only. 197 kB measured: the cards carry FacePair and FitBox (Front / Back, whole paper); W35 first-run steps add to it.
- */
-export const QUICKSTART_BUDGET_BYTES = 198_000;
 
 export function initialAssets(html: string, stylesheets = false): string[] {
   const urls = [
@@ -141,6 +183,39 @@ export function staticIslandAssets(
   return [...seen];
 }
 
+/**
+ * A tool route's own weight: the chunk carrying its `wb-tool-<stem>` class, and everything the
+ * route's loader lists for it (`__vite__mapDeps`: the chunk, its static imports, its stylesheets; the
+ * loader may pick a renamed export with `.then(e=>e.t)` when other chunks import the same one),
+ * minus what `skip` (the entry, the shell and the bench) already loads.
+ */
+export function toolAssets(
+  read: (url: string) => string,
+  files: readonly string[],
+  skip: ReadonlySet<string>,
+  stem: string,
+): { files: string[]; errors: string[] } {
+  const marker = `${WB_TOOL_MARKER}${stem}`;
+  const scripts = files.filter((f) => f.endsWith('.js') && read(f).includes(marker));
+  if (scripts.length !== 1)
+    return { files: [], errors: [`${marker}: ${scripts.length} chunks carry it, want 1`] };
+  const base = (scripts[0] as string).replace(/^\/assets\//, '');
+  const loader = new RegExp(
+    `import\\(["'\`]\\./${base.replace('.', '\\.')}["'\`]\\)(?:\\.then\\([^)]*\\))?,__vite__mapDeps\\(\\[([\\d,]+)\\]\\)`,
+  );
+  for (const f of files) {
+    if (!f.endsWith('.js')) continue;
+    const text = read(f);
+    const indexes = loader.exec(text)?.[1];
+    const deps = /m\.f=(\[[^\]]*\])/.exec(text)?.[1];
+    if (!indexes || !deps) continue;
+    const list = JSON.parse(deps) as string[];
+    const urls = indexes.split(',').map((i) => `/${list[Number(i)]}`);
+    return { files: urls.filter((u) => !skip.has(u)), errors: [] };
+  }
+  return { files: [], errors: [`${marker}: no loader lists ${base}`] };
+}
+
 export function checkBundle(
   read: (url: string) => string,
   html: string,
@@ -156,6 +231,7 @@ export function checkBundle(
     for (const marker of forbidden) {
       if (body.includes(marker)) errors.push(`${url} contains ${marker}`);
     }
+    if (WB_CHUNK.test(url)) errors.push(`${url} is a Workbench chunk`);
   }
   if (budget > 0 && total > budget)
     errors.push(`initial gzip ${total} B exceeds budget ${budget} B`);
@@ -212,7 +288,6 @@ if (import.meta.main) {
     /** The island imports its pieces statically (no dynamic imports of its own to read them from). */
     statics?: boolean;
   }[] = [
-    { label: 'playground island', name: 'playground', budget: PLAYGROUND_BUDGET_BYTES },
     {
       label: 'developers search island',
       name: 'palette-island',
@@ -221,9 +296,6 @@ if (import.meta.main) {
       // The palette is cmdk; everything else the portal keeps out stays out.
       forbidden: DEV_FORBIDDEN.filter((m) => m !== 'cmdk-'),
     },
-    { label: 'quickstart island', name: 'quickstart', budget: QUICKSTART_BUDGET_BYTES },
-    { label: 'developers run island', name: 'run-entry', budget: DEV_ISLAND_BUDGET_BYTES },
-    { label: 'bench strip island', name: 'mount', budget: BENCH_BUDGET_BYTES, statics: true },
   ];
   for (const { label, name, budget, forbidden = DEV_FORBIDDEN, statics } of islands) {
     const files = (statics ? staticIslandAssets : islandAssets)(read, initial, name);
@@ -246,6 +318,55 @@ if (import.meta.main) {
       );
       failed = true;
     }
+  }
+  const assets = readdirSync(join(dist, 'assets')).map((f) => `/assets/${f}`);
+  const entry = initialAssets(readFileSync(join(dist, 'index.html'), 'utf8'), true);
+  const shell = markedAssets(read, assets, entry, WB_SHELL_MARKER);
+  const shellTotal = shell.files.reduce((sum, url) => sum + gzipSync(read(url)).length, 0);
+  process.stdout.write(`workbench shell gzip: ${shellTotal} B (${shell.files.length} files)\n`);
+  const shellErrors = [...shell.errors];
+  if (shellTotal > WB_SHELL_BUDGET_BYTES)
+    shellErrors.push(
+      `workbench shell gzip ${shellTotal} B exceeds budget ${WB_SHELL_BUDGET_BYTES} B`,
+    );
+  if (shellErrors.length > 0) {
+    process.stderr.write(`${shellErrors.join('\n')}\n`);
+    failed = true;
+  }
+  const gz = (urls: readonly string[]) =>
+    urls.reduce((sum, url) => sum + gzipSync(read(url)).length, 0);
+  const host = namedAssets(read, assets, entry, WB_HOST_CHUNK);
+  const hostTotal = gz(host.files);
+  process.stdout.write(`workbench host gzip: ${hostTotal} B (${host.files.length} files)\n`);
+  const benchErrors = [...host.errors];
+  if (hostTotal > WB_HOST_BUDGET_BYTES)
+    benchErrors.push(`workbench host gzip ${hostTotal} B exceeds budget ${WB_HOST_BUDGET_BYTES} B`);
+  const loaded = new Set([...entry, ...shell.files]);
+  const bench = namedAssets(read, assets, [...loaded], WB_BENCH_CHUNK);
+  const benchTotal = gz(bench.files);
+  process.stdout.write(`workbench bench gzip: ${benchTotal} B (${bench.files.length} files)\n`);
+  benchErrors.push(...bench.errors);
+  if (benchTotal > WB_BENCH_BUDGET_BYTES)
+    benchErrors.push(
+      `workbench bench gzip ${benchTotal} B exceeds budget ${WB_BENCH_BUDGET_BYTES} B`,
+    );
+  const kit = namedAssets(read, assets, [...loaded, ...bench.files], WB_KIT_CHUNK);
+  const kitTotal = gz(kit.files);
+  process.stdout.write(`workbench kit gzip: ${kitTotal} B (${kit.files.length} files)\n`);
+  benchErrors.push(...kit.errors);
+  if (kitTotal > WB_KIT_BUDGET_BYTES)
+    benchErrors.push(`workbench kit gzip ${kitTotal} B exceeds budget ${WB_KIT_BUDGET_BYTES} B`);
+  for (const [stem, limit] of Object.entries(WB_TOOLS_MEASURED)) {
+    const tool = toolAssets(read, assets, new Set([...loaded, ...bench.files, ...kit.files]), stem);
+    const total = gz(tool.files);
+    process.stdout.write(`workbench tool ${stem} gzip: ${total} B (${tool.files.length} files)\n`);
+    benchErrors.push(...tool.errors);
+    if (total > limit)
+      benchErrors.push(`workbench tool ${stem} gzip ${total} B exceeds budget ${limit} B`);
+  }
+  if (benchErrors.length > 0) {
+    process.stderr.write(`${benchErrors.join('\n')}\n`);
+    failed = true;
   }
   // Google and Samsung stay dark in every deployable Worker (docs/design/wallet-providers/e2e-release.md).
   const release = e2eReleaseProblems(join(root, 'dist/passbook'));

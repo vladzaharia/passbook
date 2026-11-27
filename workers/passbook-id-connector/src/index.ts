@@ -1,6 +1,7 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
 import { createApi } from './api.ts';
 import type { Deps } from './pocket-http.ts';
+import type { SetupRpc } from './setup-types.ts';
 import type { BindingEnv, IdpRpc } from './types.ts';
 
 /** The origin stays the request URL and Host, so Polaris ID routes a bound request as it routes a public one. The key header is kept either way: the binding is not authentication. */
@@ -18,7 +19,7 @@ export const depsFor = (env: BindingEnv): Deps => {
 const api = (env: BindingEnv) => createApi(env, depsFor(env));
 
 /** Exactly the RPC methods of design 5.3: every public method here is callable by the main Worker. There is no thaw. */
-export class PolarisBinding extends WorkerEntrypoint<BindingEnv> implements IdpRpc {
+export class PolarisBinding extends WorkerEntrypoint<BindingEnv> implements IdpRpc, SetupRpc {
   health() {
     return api(this.env).health();
   }
@@ -69,6 +70,27 @@ export class PolarisBinding extends WorkerEntrypoint<BindingEnv> implements IdpR
   }
   freeze(...a: Parameters<IdpRpc['freeze']>) {
     return api(this.env).freeze(...a);
+  }
+  setupStatus(...a: Parameters<SetupRpc['setupStatus']>) {
+    return api(this.env).setupStatus(...a);
+  }
+  placeRoleGroups(...a: Parameters<SetupRpc['placeRoleGroups']>) {
+    return api(this.env).placeRoleGroups(...a);
+  }
+  allowClientGroups(...a: Parameters<SetupRpc['allowClientGroups']>) {
+    return api(this.env).allowClientGroups(...a);
+  }
+  restrictClient(...a: Parameters<SetupRpc['restrictClient']>) {
+    return api(this.env).restrictClient(...a);
+  }
+  setClientLogo(...a: Parameters<SetupRpc['setClientLogo']>) {
+    return api(this.env).setClientLogo(...a);
+  }
+  ensureScim(...a: Parameters<SetupRpc['ensureScim']>) {
+    return api(this.env).ensureScim(...a);
+  }
+  syncScim(...a: Parameters<SetupRpc['syncScim']>) {
+    return api(this.env).syncScim(...a);
   }
   calls(...a: Parameters<IdpRpc['calls']>) {
     return api(this.env).calls(...a);

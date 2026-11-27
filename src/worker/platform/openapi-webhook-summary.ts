@@ -15,6 +15,7 @@ export const SUMMARY: Record<WebhookEventType, string> = {
   'pass.channels_changed': 'A delivery channel of the pass turned on or off.',
   'pass.printed': 'A printed ticket was issued.',
   'pass.print_voided': 'A printed ticket was voided.',
+  'pass.replaced': 'The pass was replaced by another pass, which now carries its state.',
   'push.failed': 'A Wallet push for the pass failed.',
   'email.failed': 'An email for the pass failed.',
   'webhook.test': 'Sent on request to test an endpoint.',

@@ -21,7 +21,7 @@ The key's mode decides what it may change:
 | Key | Image and colours | Name, support, email, channels |
 | --- | --- | --- |
 | Test, in a sandbox | Yes | Yes: a sandbox has no live side |
-| Test, in an organization | Yes | `403` [MODE_LIVE_REQUIRED](/developers/errors/MODE_LIVE_REQUIRED) |
+| Test, in an organization | `403` [MODE_LIVE_REQUIRED](/developers/errors/MODE_LIVE_REQUIRED) | `403` [MODE_LIVE_REQUIRED](/developers/errors/MODE_LIVE_REQUIRED) |
 | Live | Yes | Yes |
 
 {{run current-key}}

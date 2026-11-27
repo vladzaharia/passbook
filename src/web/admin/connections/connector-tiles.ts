@@ -3,6 +3,7 @@ import {
   CreditCard,
   type LucideIcon,
   Repeat,
+  Send,
   ShoppingBag,
   ShoppingCart,
   Ticket,
@@ -23,11 +24,18 @@ type Connector = z.infer<typeof ConnectorInfoSchema>;
 export const GROUPS_AT = 8;
 export const SEARCH_AT = 10;
 
-export const GROUPS: readonly { id: ConnectorCategory; label: string }[] = [
+/** The tiles' groups: the server's categories, and the one PassBook adds for sending out. */
+export type TileCategory = ConnectorCategory | 'outbound';
+
+/** The tile that sets up an endpoint PassBook posts to; it is not a stored connection. */
+export const OUTBOUND = 'outbound';
+
+export const GROUPS: readonly { id: TileCategory; label: string }[] = [
   { id: 'files', label: 'Files and sheets' },
   { id: 'apis', label: 'APIs' },
   { id: 'commerce', label: 'Commerce' },
   { id: 'bookings', label: 'Bookings and tickets' },
+  { id: 'outbound', label: 'Send from PassBook' },
   { id: 'try', label: 'Try it' },
 ];
 
@@ -39,7 +47,7 @@ export interface ConnectorTile {
   recipe?: RecipeId;
   label: string;
   line: string;
-  category: ConnectorCategory;
+  category: TileCategory;
   icon: LucideIcon;
   /** Search terms beyond the label and group. */
   keywords: string;
@@ -55,6 +63,9 @@ const ICON: Record<string, LucideIcon> = {
   'calcom-bookings': CalendarCheck,
   'tickettailor-tickets': Ticket,
 };
+
+/** The glyph of a sender, from its tile. */
+export const senderIcon = (id: string): LucideIcon => ICON[id] ?? Webhook;
 
 const KEYWORDS: Record<string, string> = {
   'file-upload': 'excel xlsx csv json ndjson spreadsheet',
@@ -94,11 +105,21 @@ export function buildTiles(connectors: readonly Connector[]): ConnectorTile[] {
         line: 'Webhook',
         category: r.category,
         order: 100 + i,
-        icon: ICON[r.id] ?? Webhook,
+        icon: senderIcon(r.id),
         keywords: `webhook ${r.id.replace(/-/g, ' ')}`,
       });
     });
   }
+  out.push({
+    key: OUTBOUND,
+    type: OUTBOUND,
+    label: 'Send to your server',
+    line: 'Webhook out',
+    category: 'outbound',
+    order: 0,
+    icon: Send,
+    keywords: 'webhook endpoint outbound send events server notify',
+  });
   const rank = (t: ConnectorTile) => GROUPS.findIndex((g) => g.id === t.category);
   return out.sort((a, b) => rank(a) - rank(b) || a.order - b.order).map(({ order: _, ...t }) => t);
 }

@@ -14,10 +14,17 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as WorkbenchRouteRouteImport } from './routes/workbench/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
+import { Route as AdminAllRouteRouteImport } from './routes/admin/all/route'
 import { Route as AdminPlatformRouteRouteImport } from './routes/admin/platform/route'
 import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
+import { Route as WorkbenchIndexRouteImport } from './routes/workbench/index'
+import { Route as WorkbenchToolRouteImport } from './routes/workbench/$tool'
+import { Route as WorkbenchDesignRouteImport } from './routes/workbench/design'
+import { Route as WorkbenchQuickstartRouteImport } from './routes/workbench/quickstart'
+import { Route as AdminAllIndexRouteImport } from './routes/admin/all/index'
 import { Route as AdminApiKeysIndexRouteImport } from './routes/admin/api-keys/index'
 import { Route as AdminAuditIndexRouteImport } from './routes/admin/audit/index'
 import { Route as AdminBlueprintsIndexRouteImport } from './routes/admin/blueprints/index'
@@ -48,6 +55,9 @@ import { Route as AdminTemplatesUploadRouteImport } from './routes/admin/templat
 import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inbox/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as WorkbenchOOrgIdRouteRouteImport } from './routes/workbench/o/$orgId/route'
+import { Route as AdminAllPassesIndexRouteImport } from './routes/admin/all/passes/index'
+import { Route as AdminConnectionsConnectionIdSetupRouteImport } from './routes/admin/connections/$connectionId_.setup'
 import { Route as AdminConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/connections/webhooks.$endpointId'
 import { Route as AdminConnectionsWebhooksNewRouteImport } from './routes/admin/connections/webhooks.new'
 import { Route as AdminOOrgIdIndexRouteImport } from './routes/admin/o/$orgId/index'
@@ -57,6 +67,8 @@ import { Route as AdminPassesImportImportIdRouteImport } from './routes/admin/pa
 import { Route as AdminPlatformApiKeysIndexRouteImport } from './routes/admin/platform/api-keys/index'
 import { Route as AdminPlatformApiKeysKeyIdRouteImport } from './routes/admin/platform/api-keys/$keyId'
 import { Route as AdminPlatformAuditIndexRouteImport } from './routes/admin/platform/audit/index'
+import { Route as AdminPlatformGroupsIndexRouteImport } from './routes/admin/platform/groups/index'
+import { Route as AdminPlatformGroupsKeyRouteImport } from './routes/admin/platform/groups/$key'
 import { Route as AdminPlatformOrgsIndexRouteImport } from './routes/admin/platform/orgs/index'
 import { Route as AdminPlatformOrgsOrgIdRouteImport } from './routes/admin/platform/orgs/$orgId'
 import { Route as AdminPlatformRetentionIndexRouteImport } from './routes/admin/platform/retention/index'
@@ -71,6 +83,16 @@ import { Route as AdminScanningScannersScannerIdRouteImport } from './routes/adm
 import { Route as AdminScanningSessionsSessionIdRouteImport } from './routes/admin/scanning/sessions.$sessionId'
 import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
 import { Route as AdminTemplatesTemplateIdJoinSignRouteImport } from './routes/admin/templates/$templateId_.join-sign'
+import { Route as WorkbenchOOrgIdIndexRouteImport } from './routes/workbench/o/$orgId/index'
+import { Route as WorkbenchOOrgIdActivityRouteImport } from './routes/workbench/o/$orgId/activity'
+import { Route as WorkbenchOOrgIdConsoleRouteImport } from './routes/workbench/o/$orgId/console'
+import { Route as WorkbenchOOrgIdEventsRouteImport } from './routes/workbench/o/$orgId/events'
+import { Route as WorkbenchOOrgIdInboxRouteImport } from './routes/workbench/o/$orgId/inbox'
+import { Route as WorkbenchOOrgIdKeysRouteImport } from './routes/workbench/o/$orgId/keys'
+import { Route as WorkbenchOOrgIdLogsRouteImport } from './routes/workbench/o/$orgId/logs'
+import { Route as WorkbenchOOrgIdPassesRouteImport } from './routes/workbench/o/$orgId/passes'
+import { Route as WorkbenchOOrgIdSandboxRouteImport } from './routes/workbench/o/$orgId/sandbox'
+import { Route as AdminConnectionsWebhooksEndpointIdSetupRouteImport } from './routes/admin/connections/webhooks.$endpointId_.setup'
 import { Route as AdminOOrgIdApiKeysIndexRouteImport } from './routes/admin/o/$orgId/api-keys/index'
 import { Route as AdminOOrgIdApiKeysKeyIdRouteImport } from './routes/admin/o/$orgId/api-keys/$keyId'
 import { Route as AdminOOrgIdAuditIndexRouteImport } from './routes/admin/o/$orgId/audit/index'
@@ -100,7 +122,10 @@ import { Route as AdminOOrgIdTemplatesUploadRouteImport } from './routes/admin/o
 import { Route as AdminOOrgIdTestInboxIndexRouteImport } from './routes/admin/o/$orgId/test-inbox/index'
 import { Route as AdminOOrgIdVisitorsIndexRouteImport } from './routes/admin/o/$orgId/visitors/index'
 import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
+import { Route as WorkbenchOOrgIdDesignIndexRouteImport } from './routes/workbench/o/$orgId/design.index'
+import { Route as WorkbenchOOrgIdDesignTemplateIdRouteImport } from './routes/workbench/o/$orgId/design.$templateId'
 import { Route as AdminOOrgIdBlueprintsBlueprintIdUseRouteImport } from './routes/admin/o/$orgId/blueprints/$blueprintId_.use'
+import { Route as AdminOOrgIdConnectionsConnectionIdSetupRouteImport } from './routes/admin/o/$orgId/connections/$connectionId_.setup'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
 import { Route as AdminOOrgIdPassesChangeIndexRouteImport } from './routes/admin/o/$orgId/passes/change/index'
@@ -112,6 +137,7 @@ import { Route as AdminOOrgIdScanningScannersScannerIdRouteImport } from './rout
 import { Route as AdminOOrgIdScanningSessionsSessionIdRouteImport } from './routes/admin/o/$orgId/scanning/sessions.$sessionId'
 import { Route as AdminOOrgIdTemplatesTemplateIdDesignRouteImport } from './routes/admin/o/$orgId/templates/$templateId_.design'
 import { Route as AdminOOrgIdTemplatesTemplateIdJoinSignRouteImport } from './routes/admin/o/$orgId/templates/$templateId_.join-sign'
+import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId_.setup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -138,6 +164,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkbenchRouteRoute = WorkbenchRouteRouteImport.update({
+  id: '/workbench',
+  path: '/workbench',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -146,6 +177,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAccountRoute = AdminAccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAllRouteRoute = AdminAllRouteRouteImport.update({
+  id: '/all',
+  path: '/all',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPlatformRouteRoute = AdminPlatformRouteRouteImport.update({
@@ -157,6 +193,31 @@ const PassesPassIdRoute = PassesPassIdRouteImport.update({
   id: '/passes/$passId',
   path: '/passes/$passId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WorkbenchIndexRoute = WorkbenchIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const WorkbenchToolRoute = WorkbenchToolRouteImport.update({
+  id: '/$tool',
+  path: '/$tool',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const WorkbenchDesignRoute = WorkbenchDesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const WorkbenchQuickstartRoute = WorkbenchQuickstartRouteImport.update({
+  id: '/quickstart',
+  path: '/quickstart',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const AdminAllIndexRoute = AdminAllIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAllRouteRoute,
 } as any)
 const AdminApiKeysIndexRoute = AdminApiKeysIndexRouteImport.update({
   id: '/api-keys/',
@@ -313,6 +374,22 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const WorkbenchOOrgIdRouteRoute = WorkbenchOOrgIdRouteRouteImport.update({
+  id: '/o/$orgId',
+  path: '/o/$orgId',
+  getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const AdminAllPassesIndexRoute = AdminAllPassesIndexRouteImport.update({
+  id: '/passes/',
+  path: '/passes/',
+  getParentRoute: () => AdminAllRouteRoute,
+} as any)
+const AdminConnectionsConnectionIdSetupRoute =
+  AdminConnectionsConnectionIdSetupRouteImport.update({
+    id: '/connections/$connectionId_/setup',
+    path: '/connections/$connectionId/setup',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminConnectionsWebhooksEndpointIdRoute =
   AdminConnectionsWebhooksEndpointIdRouteImport.update({
     id: '/connections/webhooks/$endpointId',
@@ -361,6 +438,17 @@ const AdminPlatformApiKeysKeyIdRoute =
 const AdminPlatformAuditIndexRoute = AdminPlatformAuditIndexRouteImport.update({
   id: '/audit/',
   path: '/audit/',
+  getParentRoute: () => AdminPlatformRouteRoute,
+} as any)
+const AdminPlatformGroupsIndexRoute =
+  AdminPlatformGroupsIndexRouteImport.update({
+    id: '/groups/',
+    path: '/groups/',
+    getParentRoute: () => AdminPlatformRouteRoute,
+  } as any)
+const AdminPlatformGroupsKeyRoute = AdminPlatformGroupsKeyRouteImport.update({
+  id: '/groups/$key',
+  path: '/groups/$key',
   getParentRoute: () => AdminPlatformRouteRoute,
 } as any)
 const AdminPlatformOrgsIndexRoute = AdminPlatformOrgsIndexRouteImport.update({
@@ -442,6 +530,57 @@ const AdminTemplatesTemplateIdJoinSignRoute =
   AdminTemplatesTemplateIdJoinSignRouteImport.update({
     id: '/templates/$templateId_/join-sign',
     path: '/templates/$templateId/join-sign',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const WorkbenchOOrgIdIndexRoute = WorkbenchOOrgIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdActivityRoute = WorkbenchOOrgIdActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdConsoleRoute = WorkbenchOOrgIdConsoleRouteImport.update({
+  id: '/console',
+  path: '/console',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdEventsRoute = WorkbenchOOrgIdEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdInboxRoute = WorkbenchOOrgIdInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdKeysRoute = WorkbenchOOrgIdKeysRouteImport.update({
+  id: '/keys',
+  path: '/keys',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdLogsRoute = WorkbenchOOrgIdLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdPassesRoute = WorkbenchOOrgIdPassesRouteImport.update({
+  id: '/passes',
+  path: '/passes',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const WorkbenchOOrgIdSandboxRoute = WorkbenchOOrgIdSandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
+  getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+} as any)
+const AdminConnectionsWebhooksEndpointIdSetupRoute =
+  AdminConnectionsWebhooksEndpointIdSetupRouteImport.update({
+    id: '/connections/webhooks/$endpointId_/setup',
+    path: '/connections/webhooks/$endpointId/setup',
     getParentRoute: () => AdminRouteRoute,
   } as any)
 const AdminOOrgIdApiKeysIndexRoute = AdminOOrgIdApiKeysIndexRouteImport.update({
@@ -606,10 +745,28 @@ const AdminOOrgIdWalletAccountsIndexRoute =
     path: '/wallet-accounts/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const WorkbenchOOrgIdDesignIndexRoute =
+  WorkbenchOOrgIdDesignIndexRouteImport.update({
+    id: '/design/',
+    path: '/design/',
+    getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+  } as any)
+const WorkbenchOOrgIdDesignTemplateIdRoute =
+  WorkbenchOOrgIdDesignTemplateIdRouteImport.update({
+    id: '/design/$templateId',
+    path: '/design/$templateId',
+    getParentRoute: () => WorkbenchOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdBlueprintsBlueprintIdUseRoute =
   AdminOOrgIdBlueprintsBlueprintIdUseRouteImport.update({
     id: '/blueprints/$blueprintId_/use',
     path: '/blueprints/$blueprintId/use',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
+const AdminOOrgIdConnectionsConnectionIdSetupRoute =
+  AdminOOrgIdConnectionsConnectionIdSetupRouteImport.update({
+    id: '/connections/$connectionId_/setup',
+    path: '/connections/$connectionId/setup',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
 const AdminOOrgIdConnectionsWebhooksEndpointIdRoute =
@@ -678,18 +835,31 @@ const AdminOOrgIdTemplatesTemplateIdJoinSignRoute =
     path: '/templates/$templateId/join-sign',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute =
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport.update({
+    id: '/connections/webhooks/$endpointId_/setup',
+    path: '/connections/webhooks/$endpointId/setup',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/workbench': typeof WorkbenchRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/admin/all': typeof AdminAllRouteRouteWithChildren
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
+  '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/design': typeof WorkbenchDesignRoute
+  '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin/': typeof AdminIndexRoute
+  '/workbench/': typeof WorkbenchIndexRoute
   '/admin/o/$orgId': typeof AdminOOrgIdRouteRouteWithChildren
+  '/workbench/o/$orgId': typeof WorkbenchOOrgIdRouteRouteWithChildren
   '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
@@ -704,6 +874,7 @@ export interface FileRoutesByFullPath {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all/': typeof AdminAllIndexRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -719,10 +890,12 @@ export interface FileRoutesByFullPath {
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/connections/$connectionId/setup': typeof AdminConnectionsConnectionIdSetupRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -731,17 +904,29 @@ export interface FileRoutesByFullPath {
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/workbench/o/$orgId/activity': typeof WorkbenchOOrgIdActivityRoute
+  '/workbench/o/$orgId/console': typeof WorkbenchOOrgIdConsoleRoute
+  '/workbench/o/$orgId/events': typeof WorkbenchOOrgIdEventsRoute
+  '/workbench/o/$orgId/inbox': typeof WorkbenchOOrgIdInboxRoute
+  '/workbench/o/$orgId/keys': typeof WorkbenchOOrgIdKeysRoute
+  '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
+  '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
+  '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes/': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups/': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
+  '/workbench/o/$orgId/': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -755,6 +940,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
+  '/workbench/o/$orgId/design/$templateId': typeof WorkbenchOOrgIdDesignTemplateIdRoute
   '/admin/o/$orgId/api-keys/': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
@@ -771,7 +957,9 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/workbench/o/$orgId/design/': typeof WorkbenchOOrgIdDesignIndexRoute
   '/admin/o/$orgId/blueprints/$blueprintId/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
+  '/admin/o/$orgId/connections/$connectionId/setup': typeof AdminOOrgIdConnectionsConnectionIdSetupRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -783,6 +971,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -791,7 +980,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
+  '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/design': typeof WorkbenchDesignRoute
+  '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin': typeof AdminIndexRoute
+  '/workbench': typeof WorkbenchIndexRoute
   '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
@@ -806,6 +999,7 @@ export interface FileRoutesByTo {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all': typeof AdminAllIndexRoute
   '/admin/api-keys': typeof AdminApiKeysIndexRoute
   '/admin/audit': typeof AdminAuditIndexRoute
   '/admin/blueprints': typeof AdminBlueprintsIndexRoute
@@ -821,10 +1015,12 @@ export interface FileRoutesByTo {
   '/admin/templates': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox': typeof AdminTestInboxIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/admin/connections/$connectionId/setup': typeof AdminConnectionsConnectionIdSetupRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -833,17 +1029,29 @@ export interface FileRoutesByTo {
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/workbench/o/$orgId/activity': typeof WorkbenchOOrgIdActivityRoute
+  '/workbench/o/$orgId/console': typeof WorkbenchOOrgIdConsoleRoute
+  '/workbench/o/$orgId/events': typeof WorkbenchOOrgIdEventsRoute
+  '/workbench/o/$orgId/inbox': typeof WorkbenchOOrgIdInboxRoute
+  '/workbench/o/$orgId/keys': typeof WorkbenchOOrgIdKeysRoute
+  '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
+  '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
+  '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts': typeof AdminPlatformWalletAccountsIndexRoute
+  '/workbench/o/$orgId': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -857,6 +1065,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
+  '/workbench/o/$orgId/design/$templateId': typeof WorkbenchOOrgIdDesignTemplateIdRoute
   '/admin/o/$orgId/api-keys': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints': typeof AdminOOrgIdBlueprintsIndexRoute
@@ -873,7 +1082,9 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/test-inbox': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/workbench/o/$orgId/design': typeof WorkbenchOOrgIdDesignIndexRoute
   '/admin/o/$orgId/blueprints/$blueprintId/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
+  '/admin/o/$orgId/connections/$connectionId/setup': typeof AdminOOrgIdConnectionsConnectionIdSetupRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -885,19 +1096,27 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/workbench': typeof WorkbenchRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/admin/all': typeof AdminAllRouteRouteWithChildren
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
+  '/workbench/$tool': typeof WorkbenchToolRoute
+  '/workbench/design': typeof WorkbenchDesignRoute
+  '/workbench/quickstart': typeof WorkbenchQuickstartRoute
   '/admin/': typeof AdminIndexRoute
+  '/workbench/': typeof WorkbenchIndexRoute
   '/admin/o/$orgId': typeof AdminOOrgIdRouteRouteWithChildren
+  '/workbench/o/$orgId': typeof WorkbenchOOrgIdRouteRouteWithChildren
   '/admin/blueprints/$blueprintId': typeof AdminBlueprintsBlueprintIdRoute
   '/admin/connections/$connectionId': typeof AdminConnectionsConnectionIdRoute
   '/admin/connections/new': typeof AdminConnectionsNewRoute
@@ -912,6 +1131,7 @@ export interface FileRoutesById {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all/': typeof AdminAllIndexRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -927,10 +1147,12 @@ export interface FileRoutesById {
   '/admin/templates/': typeof AdminTemplatesIndexRoute
   '/admin/test-inbox/': typeof AdminTestInboxIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/connections/$connectionId_/setup': typeof AdminConnectionsConnectionIdSetupRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
+  '/admin/platform/groups/$key': typeof AdminPlatformGroupsKeyRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -939,17 +1161,29 @@ export interface FileRoutesById {
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId_/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/workbench/o/$orgId/activity': typeof WorkbenchOOrgIdActivityRoute
+  '/workbench/o/$orgId/console': typeof WorkbenchOOrgIdConsoleRoute
+  '/workbench/o/$orgId/events': typeof WorkbenchOOrgIdEventsRoute
+  '/workbench/o/$orgId/inbox': typeof WorkbenchOOrgIdInboxRoute
+  '/workbench/o/$orgId/keys': typeof WorkbenchOOrgIdKeysRoute
+  '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
+  '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
+  '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes/': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
+  '/admin/platform/groups/': typeof AdminPlatformGroupsIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
   '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
+  '/workbench/o/$orgId/': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId_/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -963,6 +1197,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
+  '/workbench/o/$orgId/design/$templateId': typeof WorkbenchOOrgIdDesignTemplateIdRoute
   '/admin/o/$orgId/api-keys/': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
@@ -979,7 +1214,9 @@ export interface FileRoutesById {
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/workbench/o/$orgId/design/': typeof WorkbenchOOrgIdDesignIndexRoute
   '/admin/o/$orgId/blueprints/$blueprintId_/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
+  '/admin/o/$orgId/connections/$connectionId_/setup': typeof AdminOOrgIdConnectionsConnectionIdSetupRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -991,20 +1228,28 @@ export interface FileRoutesById {
   '/admin/o/$orgId/templates/$templateId_/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId_/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
+    | '/workbench'
     | '/account'
     | '/invite'
     | '/login'
+    | '/admin/all'
     | '/admin/platform'
     | '/admin/account'
     | '/passes/$passId'
+    | '/workbench/$tool'
+    | '/workbench/design'
+    | '/workbench/quickstart'
     | '/admin/'
+    | '/workbench/'
     | '/admin/o/$orgId'
+    | '/workbench/o/$orgId'
     | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
@@ -1019,6 +1264,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all/'
     | '/admin/api-keys/'
     | '/admin/audit/'
     | '/admin/blueprints/'
@@ -1034,10 +1280,12 @@ export interface FileRouteTypes {
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/connections/$connectionId/setup'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1046,17 +1294,29 @@ export interface FileRouteTypes {
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
+    | '/workbench/o/$orgId/activity'
+    | '/workbench/o/$orgId/console'
+    | '/workbench/o/$orgId/events'
+    | '/workbench/o/$orgId/inbox'
+    | '/workbench/o/$orgId/keys'
+    | '/workbench/o/$orgId/logs'
+    | '/workbench/o/$orgId/passes'
+    | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes/'
     | '/admin/o/$orgId/'
     | '/admin/passes/change/'
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
+    | '/admin/platform/groups/'
     | '/admin/platform/orgs/'
     | '/admin/platform/retention/'
     | '/admin/platform/settings/'
     | '/admin/platform/status/'
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
+    | '/workbench/o/$orgId/'
+    | '/admin/connections/webhooks/$endpointId/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1070,6 +1330,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
+    | '/workbench/o/$orgId/design/$templateId'
     | '/admin/o/$orgId/api-keys/'
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
@@ -1086,7 +1347,9 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox/'
     | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
+    | '/workbench/o/$orgId/design/'
     | '/admin/o/$orgId/blueprints/$blueprintId/use'
+    | '/admin/o/$orgId/connections/$connectionId/setup'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1098,6 +1361,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId/join-sign'
     | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1106,7 +1370,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/account'
     | '/passes/$passId'
+    | '/workbench/$tool'
+    | '/workbench/design'
+    | '/workbench/quickstart'
     | '/admin'
+    | '/workbench'
     | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
@@ -1121,6 +1389,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all'
     | '/admin/api-keys'
     | '/admin/audit'
     | '/admin/blueprints'
@@ -1136,10 +1405,12 @@ export interface FileRouteTypes {
     | '/admin/templates'
     | '/admin/test-inbox'
     | '/admin/users'
+    | '/admin/connections/$connectionId/setup'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1148,17 +1419,29 @@ export interface FileRouteTypes {
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
+    | '/workbench/o/$orgId/activity'
+    | '/workbench/o/$orgId/console'
+    | '/workbench/o/$orgId/events'
+    | '/workbench/o/$orgId/inbox'
+    | '/workbench/o/$orgId/keys'
+    | '/workbench/o/$orgId/logs'
+    | '/workbench/o/$orgId/passes'
+    | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes'
     | '/admin/o/$orgId'
     | '/admin/passes/change'
     | '/admin/passes/import'
     | '/admin/platform/api-keys'
     | '/admin/platform/audit'
+    | '/admin/platform/groups'
     | '/admin/platform/orgs'
     | '/admin/platform/retention'
     | '/admin/platform/settings'
     | '/admin/platform/status'
     | '/admin/platform/users'
     | '/admin/platform/wallet-accounts'
+    | '/workbench/o/$orgId'
+    | '/admin/connections/webhooks/$endpointId/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1172,6 +1455,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
+    | '/workbench/o/$orgId/design/$templateId'
     | '/admin/o/$orgId/api-keys'
     | '/admin/o/$orgId/audit'
     | '/admin/o/$orgId/blueprints'
@@ -1188,7 +1472,9 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox'
     | '/admin/o/$orgId/visitors'
     | '/admin/o/$orgId/wallet-accounts'
+    | '/workbench/o/$orgId/design'
     | '/admin/o/$orgId/blueprints/$blueprintId/use'
+    | '/admin/o/$orgId/connections/$connectionId/setup'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1200,18 +1486,26 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId/join-sign'
     | '/admin/o/$orgId/passes/change'
     | '/admin/o/$orgId/passes/import'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/workbench'
     | '/account'
     | '/invite'
     | '/login'
+    | '/admin/all'
     | '/admin/platform'
     | '/admin/account'
     | '/passes/$passId'
+    | '/workbench/$tool'
+    | '/workbench/design'
+    | '/workbench/quickstart'
     | '/admin/'
+    | '/workbench/'
     | '/admin/o/$orgId'
+    | '/workbench/o/$orgId'
     | '/admin/blueprints/$blueprintId'
     | '/admin/connections/$connectionId'
     | '/admin/connections/new'
@@ -1226,6 +1520,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all/'
     | '/admin/api-keys/'
     | '/admin/audit/'
     | '/admin/blueprints/'
@@ -1241,10 +1536,12 @@ export interface FileRouteTypes {
     | '/admin/templates/'
     | '/admin/test-inbox/'
     | '/admin/users/'
+    | '/admin/connections/$connectionId_/setup'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
     | '/admin/platform/api-keys/$keyId'
+    | '/admin/platform/groups/$key'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1253,17 +1550,29 @@ export interface FileRouteTypes {
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId_/design'
     | '/admin/templates/$templateId_/join-sign'
+    | '/workbench/o/$orgId/activity'
+    | '/workbench/o/$orgId/console'
+    | '/workbench/o/$orgId/events'
+    | '/workbench/o/$orgId/inbox'
+    | '/workbench/o/$orgId/keys'
+    | '/workbench/o/$orgId/logs'
+    | '/workbench/o/$orgId/passes'
+    | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes/'
     | '/admin/o/$orgId/'
     | '/admin/passes/change/'
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
+    | '/admin/platform/groups/'
     | '/admin/platform/orgs/'
     | '/admin/platform/retention/'
     | '/admin/platform/settings/'
     | '/admin/platform/status/'
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
+    | '/workbench/o/$orgId/'
+    | '/admin/connections/webhooks/$endpointId_/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1277,6 +1586,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
+    | '/workbench/o/$orgId/design/$templateId'
     | '/admin/o/$orgId/api-keys/'
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
@@ -1293,7 +1603,9 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox/'
     | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
+    | '/workbench/o/$orgId/design/'
     | '/admin/o/$orgId/blueprints/$blueprintId_/use'
+    | '/admin/o/$orgId/connections/$connectionId_/setup'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1305,11 +1617,13 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId_/join-sign'
     | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId_/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  WorkbenchRouteRoute: typeof WorkbenchRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
   InviteRoute: typeof InviteRoute
   LoginRoute: typeof LoginRoute
@@ -1353,6 +1667,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workbench': {
+      id: '/workbench'
+      path: '/workbench'
+      fullPath: '/workbench'
+      preLoaderRoute: typeof WorkbenchRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -1365,6 +1686,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/admin/account'
       preLoaderRoute: typeof AdminAccountRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/all': {
+      id: '/admin/all'
+      path: '/all'
+      fullPath: '/admin/all'
+      preLoaderRoute: typeof AdminAllRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/platform': {
@@ -1380,6 +1708,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/passes/$passId'
       preLoaderRoute: typeof PassesPassIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/workbench/': {
+      id: '/workbench/'
+      path: '/'
+      fullPath: '/workbench/'
+      preLoaderRoute: typeof WorkbenchIndexRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/workbench/$tool': {
+      id: '/workbench/$tool'
+      path: '/$tool'
+      fullPath: '/workbench/$tool'
+      preLoaderRoute: typeof WorkbenchToolRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/workbench/design': {
+      id: '/workbench/design'
+      path: '/design'
+      fullPath: '/workbench/design'
+      preLoaderRoute: typeof WorkbenchDesignRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/workbench/quickstart': {
+      id: '/workbench/quickstart'
+      path: '/quickstart'
+      fullPath: '/workbench/quickstart'
+      preLoaderRoute: typeof WorkbenchQuickstartRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/admin/all/': {
+      id: '/admin/all/'
+      path: '/'
+      fullPath: '/admin/all/'
+      preLoaderRoute: typeof AdminAllIndexRouteImport
+      parentRoute: typeof AdminAllRouteRoute
     }
     '/admin/api-keys/': {
       id: '/admin/api-keys/'
@@ -1591,6 +1954,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/workbench/o/$orgId': {
+      id: '/workbench/o/$orgId'
+      path: '/o/$orgId'
+      fullPath: '/workbench/o/$orgId'
+      preLoaderRoute: typeof WorkbenchOOrgIdRouteRouteImport
+      parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/admin/all/passes/': {
+      id: '/admin/all/passes/'
+      path: '/passes'
+      fullPath: '/admin/all/passes/'
+      preLoaderRoute: typeof AdminAllPassesIndexRouteImport
+      parentRoute: typeof AdminAllRouteRoute
+    }
+    '/admin/connections/$connectionId_/setup': {
+      id: '/admin/connections/$connectionId_/setup'
+      path: '/connections/$connectionId/setup'
+      fullPath: '/admin/connections/$connectionId/setup'
+      preLoaderRoute: typeof AdminConnectionsConnectionIdSetupRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/connections/webhooks/$endpointId': {
       id: '/admin/connections/webhooks/$endpointId'
       path: '/connections/webhooks/$endpointId'
@@ -1652,6 +2036,20 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/admin/platform/audit/'
       preLoaderRoute: typeof AdminPlatformAuditIndexRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
+    '/admin/platform/groups/': {
+      id: '/admin/platform/groups/'
+      path: '/groups'
+      fullPath: '/admin/platform/groups/'
+      preLoaderRoute: typeof AdminPlatformGroupsIndexRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
+    '/admin/platform/groups/$key': {
+      id: '/admin/platform/groups/$key'
+      path: '/groups/$key'
+      fullPath: '/admin/platform/groups/$key'
+      preLoaderRoute: typeof AdminPlatformGroupsKeyRouteImport
       parentRoute: typeof AdminPlatformRouteRoute
     }
     '/admin/platform/orgs/': {
@@ -1750,6 +2148,76 @@ declare module '@tanstack/react-router' {
       path: '/templates/$templateId/join-sign'
       fullPath: '/admin/templates/$templateId/join-sign'
       preLoaderRoute: typeof AdminTemplatesTemplateIdJoinSignRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/workbench/o/$orgId/': {
+      id: '/workbench/o/$orgId/'
+      path: '/'
+      fullPath: '/workbench/o/$orgId/'
+      preLoaderRoute: typeof WorkbenchOOrgIdIndexRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/activity': {
+      id: '/workbench/o/$orgId/activity'
+      path: '/activity'
+      fullPath: '/workbench/o/$orgId/activity'
+      preLoaderRoute: typeof WorkbenchOOrgIdActivityRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/console': {
+      id: '/workbench/o/$orgId/console'
+      path: '/console'
+      fullPath: '/workbench/o/$orgId/console'
+      preLoaderRoute: typeof WorkbenchOOrgIdConsoleRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/events': {
+      id: '/workbench/o/$orgId/events'
+      path: '/events'
+      fullPath: '/workbench/o/$orgId/events'
+      preLoaderRoute: typeof WorkbenchOOrgIdEventsRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/inbox': {
+      id: '/workbench/o/$orgId/inbox'
+      path: '/inbox'
+      fullPath: '/workbench/o/$orgId/inbox'
+      preLoaderRoute: typeof WorkbenchOOrgIdInboxRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/keys': {
+      id: '/workbench/o/$orgId/keys'
+      path: '/keys'
+      fullPath: '/workbench/o/$orgId/keys'
+      preLoaderRoute: typeof WorkbenchOOrgIdKeysRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/logs': {
+      id: '/workbench/o/$orgId/logs'
+      path: '/logs'
+      fullPath: '/workbench/o/$orgId/logs'
+      preLoaderRoute: typeof WorkbenchOOrgIdLogsRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/passes': {
+      id: '/workbench/o/$orgId/passes'
+      path: '/passes'
+      fullPath: '/workbench/o/$orgId/passes'
+      preLoaderRoute: typeof WorkbenchOOrgIdPassesRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/sandbox': {
+      id: '/workbench/o/$orgId/sandbox'
+      path: '/sandbox'
+      fullPath: '/workbench/o/$orgId/sandbox'
+      preLoaderRoute: typeof WorkbenchOOrgIdSandboxRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/admin/connections/webhooks/$endpointId_/setup': {
+      id: '/admin/connections/webhooks/$endpointId_/setup'
+      path: '/connections/webhooks/$endpointId/setup'
+      fullPath: '/admin/connections/webhooks/$endpointId/setup'
+      preLoaderRoute: typeof AdminConnectionsWebhooksEndpointIdSetupRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/o/$orgId/api-keys/': {
@@ -1955,11 +2423,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdWalletAccountsIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/workbench/o/$orgId/design/': {
+      id: '/workbench/o/$orgId/design/'
+      path: '/design'
+      fullPath: '/workbench/o/$orgId/design/'
+      preLoaderRoute: typeof WorkbenchOOrgIdDesignIndexRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
+    '/workbench/o/$orgId/design/$templateId': {
+      id: '/workbench/o/$orgId/design/$templateId'
+      path: '/design/$templateId'
+      fullPath: '/workbench/o/$orgId/design/$templateId'
+      preLoaderRoute: typeof WorkbenchOOrgIdDesignTemplateIdRouteImport
+      parentRoute: typeof WorkbenchOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/blueprints/$blueprintId_/use': {
       id: '/admin/o/$orgId/blueprints/$blueprintId_/use'
       path: '/blueprints/$blueprintId/use'
       fullPath: '/admin/o/$orgId/blueprints/$blueprintId/use'
       preLoaderRoute: typeof AdminOOrgIdBlueprintsBlueprintIdUseRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/o/$orgId/connections/$connectionId_/setup': {
+      id: '/admin/o/$orgId/connections/$connectionId_/setup'
+      path: '/connections/$connectionId/setup'
+      fullPath: '/admin/o/$orgId/connections/$connectionId/setup'
+      preLoaderRoute: typeof AdminOOrgIdConnectionsConnectionIdSetupRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
     '/admin/o/$orgId/connections/webhooks/$endpointId': {
@@ -2039,17 +2528,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdTemplatesTemplateIdJoinSignRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/connections/webhooks/$endpointId_/setup': {
+      id: '/admin/o/$orgId/connections/webhooks/$endpointId_/setup'
+      path: '/connections/webhooks/$endpointId/setup'
+      fullPath: '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
+      preLoaderRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
   }
 }
+
+interface AdminAllRouteRouteChildren {
+  AdminAllIndexRoute: typeof AdminAllIndexRoute
+  AdminAllPassesIndexRoute: typeof AdminAllPassesIndexRoute
+}
+
+const AdminAllRouteRouteChildren: AdminAllRouteRouteChildren = {
+  AdminAllIndexRoute: AdminAllIndexRoute,
+  AdminAllPassesIndexRoute: AdminAllPassesIndexRoute,
+}
+
+const AdminAllRouteRouteWithChildren = AdminAllRouteRoute._addFileChildren(
+  AdminAllRouteRouteChildren,
+)
 
 interface AdminPlatformRouteRouteChildren {
   AdminPlatformIndexRoute: typeof AdminPlatformIndexRoute
   AdminPlatformApiKeysKeyIdRoute: typeof AdminPlatformApiKeysKeyIdRoute
+  AdminPlatformGroupsKeyRoute: typeof AdminPlatformGroupsKeyRoute
   AdminPlatformOrgsOrgIdRoute: typeof AdminPlatformOrgsOrgIdRoute
   AdminPlatformUsersUserIdRoute: typeof AdminPlatformUsersUserIdRoute
   AdminPlatformWalletAccountsIdentityIdRoute: typeof AdminPlatformWalletAccountsIdentityIdRoute
   AdminPlatformApiKeysIndexRoute: typeof AdminPlatformApiKeysIndexRoute
   AdminPlatformAuditIndexRoute: typeof AdminPlatformAuditIndexRoute
+  AdminPlatformGroupsIndexRoute: typeof AdminPlatformGroupsIndexRoute
   AdminPlatformOrgsIndexRoute: typeof AdminPlatformOrgsIndexRoute
   AdminPlatformRetentionIndexRoute: typeof AdminPlatformRetentionIndexRoute
   AdminPlatformSettingsIndexRoute: typeof AdminPlatformSettingsIndexRoute
@@ -2061,12 +2573,14 @@ interface AdminPlatformRouteRouteChildren {
 const AdminPlatformRouteRouteChildren: AdminPlatformRouteRouteChildren = {
   AdminPlatformIndexRoute: AdminPlatformIndexRoute,
   AdminPlatformApiKeysKeyIdRoute: AdminPlatformApiKeysKeyIdRoute,
+  AdminPlatformGroupsKeyRoute: AdminPlatformGroupsKeyRoute,
   AdminPlatformOrgsOrgIdRoute: AdminPlatformOrgsOrgIdRoute,
   AdminPlatformUsersUserIdRoute: AdminPlatformUsersUserIdRoute,
   AdminPlatformWalletAccountsIdentityIdRoute:
     AdminPlatformWalletAccountsIdentityIdRoute,
   AdminPlatformApiKeysIndexRoute: AdminPlatformApiKeysIndexRoute,
   AdminPlatformAuditIndexRoute: AdminPlatformAuditIndexRoute,
+  AdminPlatformGroupsIndexRoute: AdminPlatformGroupsIndexRoute,
   AdminPlatformOrgsIndexRoute: AdminPlatformOrgsIndexRoute,
   AdminPlatformRetentionIndexRoute: AdminPlatformRetentionIndexRoute,
   AdminPlatformSettingsIndexRoute: AdminPlatformSettingsIndexRoute,
@@ -2110,6 +2624,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdVisitorsIndexRoute: typeof AdminOOrgIdVisitorsIndexRoute
   AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
   AdminOOrgIdBlueprintsBlueprintIdUseRoute: typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
+  AdminOOrgIdConnectionsConnectionIdSetupRoute: typeof AdminOOrgIdConnectionsConnectionIdSetupRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
   AdminOOrgIdPassesChangeRunIdRoute: typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -2121,6 +2636,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdTemplatesTemplateIdJoinSignRoute: typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   AdminOOrgIdPassesChangeIndexRoute: typeof AdminOOrgIdPassesChangeIndexRoute
   AdminOOrgIdPassesImportIndexRoute: typeof AdminOOrgIdPassesImportIndexRoute
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 
 const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
@@ -2157,6 +2673,8 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdWalletAccountsIndexRoute: AdminOOrgIdWalletAccountsIndexRoute,
   AdminOOrgIdBlueprintsBlueprintIdUseRoute:
     AdminOOrgIdBlueprintsBlueprintIdUseRoute,
+  AdminOOrgIdConnectionsConnectionIdSetupRoute:
+    AdminOOrgIdConnectionsConnectionIdSetupRoute,
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute:
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,
   AdminOOrgIdConnectionsWebhooksNewRoute:
@@ -2174,12 +2692,15 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
     AdminOOrgIdTemplatesTemplateIdJoinSignRoute,
   AdminOOrgIdPassesChangeIndexRoute: AdminOOrgIdPassesChangeIndexRoute,
   AdminOOrgIdPassesImportIndexRoute: AdminOOrgIdPassesImportIndexRoute,
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute:
+    AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute,
 }
 
 const AdminOOrgIdRouteRouteWithChildren =
   AdminOOrgIdRouteRoute._addFileChildren(AdminOOrgIdRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
+  AdminAllRouteRoute: typeof AdminAllRouteRouteWithChildren
   AdminPlatformRouteRoute: typeof AdminPlatformRouteRouteWithChildren
   AdminAccountRoute: typeof AdminAccountRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -2212,6 +2733,7 @@ interface AdminRouteRouteChildren {
   AdminTemplatesIndexRoute: typeof AdminTemplatesIndexRoute
   AdminTestInboxIndexRoute: typeof AdminTestInboxIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminConnectionsConnectionIdSetupRoute: typeof AdminConnectionsConnectionIdSetupRoute
   AdminConnectionsWebhooksEndpointIdRoute: typeof AdminConnectionsWebhooksEndpointIdRoute
   AdminConnectionsWebhooksNewRoute: typeof AdminConnectionsWebhooksNewRoute
   AdminPassesImportImportIdRoute: typeof AdminPassesImportImportIdRoute
@@ -2222,9 +2744,11 @@ interface AdminRouteRouteChildren {
   AdminTemplatesTemplateIdJoinSignRoute: typeof AdminTemplatesTemplateIdJoinSignRoute
   AdminPassesChangeIndexRoute: typeof AdminPassesChangeIndexRoute
   AdminPassesImportIndexRoute: typeof AdminPassesImportIndexRoute
+  AdminConnectionsWebhooksEndpointIdSetupRoute: typeof AdminConnectionsWebhooksEndpointIdSetupRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAllRouteRoute: AdminAllRouteRouteWithChildren,
   AdminPlatformRouteRoute: AdminPlatformRouteRouteWithChildren,
   AdminAccountRoute: AdminAccountRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -2257,6 +2781,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminTemplatesIndexRoute: AdminTemplatesIndexRoute,
   AdminTestInboxIndexRoute: AdminTestInboxIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminConnectionsConnectionIdSetupRoute:
+    AdminConnectionsConnectionIdSetupRoute,
   AdminConnectionsWebhooksEndpointIdRoute:
     AdminConnectionsWebhooksEndpointIdRoute,
   AdminConnectionsWebhooksNewRoute: AdminConnectionsWebhooksNewRoute,
@@ -2268,15 +2794,69 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminTemplatesTemplateIdJoinSignRoute: AdminTemplatesTemplateIdJoinSignRoute,
   AdminPassesChangeIndexRoute: AdminPassesChangeIndexRoute,
   AdminPassesImportIndexRoute: AdminPassesImportIndexRoute,
+  AdminConnectionsWebhooksEndpointIdSetupRoute:
+    AdminConnectionsWebhooksEndpointIdSetupRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
   AdminRouteRouteChildren,
 )
 
+interface WorkbenchOOrgIdRouteRouteChildren {
+  WorkbenchOOrgIdActivityRoute: typeof WorkbenchOOrgIdActivityRoute
+  WorkbenchOOrgIdConsoleRoute: typeof WorkbenchOOrgIdConsoleRoute
+  WorkbenchOOrgIdEventsRoute: typeof WorkbenchOOrgIdEventsRoute
+  WorkbenchOOrgIdInboxRoute: typeof WorkbenchOOrgIdInboxRoute
+  WorkbenchOOrgIdKeysRoute: typeof WorkbenchOOrgIdKeysRoute
+  WorkbenchOOrgIdLogsRoute: typeof WorkbenchOOrgIdLogsRoute
+  WorkbenchOOrgIdPassesRoute: typeof WorkbenchOOrgIdPassesRoute
+  WorkbenchOOrgIdSandboxRoute: typeof WorkbenchOOrgIdSandboxRoute
+  WorkbenchOOrgIdIndexRoute: typeof WorkbenchOOrgIdIndexRoute
+  WorkbenchOOrgIdDesignTemplateIdRoute: typeof WorkbenchOOrgIdDesignTemplateIdRoute
+  WorkbenchOOrgIdDesignIndexRoute: typeof WorkbenchOOrgIdDesignIndexRoute
+}
+
+const WorkbenchOOrgIdRouteRouteChildren: WorkbenchOOrgIdRouteRouteChildren = {
+  WorkbenchOOrgIdActivityRoute: WorkbenchOOrgIdActivityRoute,
+  WorkbenchOOrgIdConsoleRoute: WorkbenchOOrgIdConsoleRoute,
+  WorkbenchOOrgIdEventsRoute: WorkbenchOOrgIdEventsRoute,
+  WorkbenchOOrgIdInboxRoute: WorkbenchOOrgIdInboxRoute,
+  WorkbenchOOrgIdKeysRoute: WorkbenchOOrgIdKeysRoute,
+  WorkbenchOOrgIdLogsRoute: WorkbenchOOrgIdLogsRoute,
+  WorkbenchOOrgIdPassesRoute: WorkbenchOOrgIdPassesRoute,
+  WorkbenchOOrgIdSandboxRoute: WorkbenchOOrgIdSandboxRoute,
+  WorkbenchOOrgIdIndexRoute: WorkbenchOOrgIdIndexRoute,
+  WorkbenchOOrgIdDesignTemplateIdRoute: WorkbenchOOrgIdDesignTemplateIdRoute,
+  WorkbenchOOrgIdDesignIndexRoute: WorkbenchOOrgIdDesignIndexRoute,
+}
+
+const WorkbenchOOrgIdRouteRouteWithChildren =
+  WorkbenchOOrgIdRouteRoute._addFileChildren(WorkbenchOOrgIdRouteRouteChildren)
+
+interface WorkbenchRouteRouteChildren {
+  WorkbenchToolRoute: typeof WorkbenchToolRoute
+  WorkbenchDesignRoute: typeof WorkbenchDesignRoute
+  WorkbenchQuickstartRoute: typeof WorkbenchQuickstartRoute
+  WorkbenchIndexRoute: typeof WorkbenchIndexRoute
+  WorkbenchOOrgIdRouteRoute: typeof WorkbenchOOrgIdRouteRouteWithChildren
+}
+
+const WorkbenchRouteRouteChildren: WorkbenchRouteRouteChildren = {
+  WorkbenchToolRoute: WorkbenchToolRoute,
+  WorkbenchDesignRoute: WorkbenchDesignRoute,
+  WorkbenchQuickstartRoute: WorkbenchQuickstartRoute,
+  WorkbenchIndexRoute: WorkbenchIndexRoute,
+  WorkbenchOOrgIdRouteRoute: WorkbenchOOrgIdRouteRouteWithChildren,
+}
+
+const WorkbenchRouteRouteWithChildren = WorkbenchRouteRoute._addFileChildren(
+  WorkbenchRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  WorkbenchRouteRoute: WorkbenchRouteRouteWithChildren,
   AccountRoute: AccountRoute,
   InviteRoute: InviteRoute,
   LoginRoute: LoginRoute,

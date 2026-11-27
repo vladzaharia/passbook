@@ -13,12 +13,19 @@ import {
   verifiedScopes,
 } from './auth-capability.ts';
 import type { AuthContext, SessionAuth } from './auth-types.ts';
-import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
+import { admitTokenSession, assertWorkbenchOrg, resolveBearer } from './auth-workbench.ts';
+import { type KeyCaller, keyCallerOf, TRY_TOKEN_PREFIX } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
-import { ForbiddenError, IdpSignInRequiredError, UnauthenticatedError } from './errors.ts';
+import {
+  ForbiddenError,
+  IdpSignInRequiredError,
+  orgTestOnly,
+  UnauthenticatedError,
+} from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
+import { admitOwnPlatformRead, holdsPlatformScope, platformKeyGate } from './platform-key-gate.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
   isRead,
@@ -34,6 +41,8 @@ import {
   assertSignIn,
   assertStepUp,
   declareOidcOnly,
+  declarePlatformKey,
+  declarePlatformKeysOwn,
   declareSignIn,
   declareStepUp,
   hasConsoleAccess,
@@ -46,7 +55,9 @@ export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
 export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
-
+/** `requireCaller` guards that take a bearer (a `scope` route): the Workbench route tests read them. */
+const bearerGuards = new WeakSet<object>();
+export const takesBearer = (handler: object): boolean => bearerGuards.has(handler);
 export const API_SCOPES = ApiScopeSchema.options;
 
 export const SESSION_COOKIE = '__Host-wallet_sid';
@@ -78,6 +89,9 @@ export const apiKeyMissing = (): UnauthenticatedError =>
   );
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
+  // A Workbench call never falls back to the cookie: a `pbtry_` anywhere in Authorization, parsed or not, refuses it.
+  if (c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX))
+    throw new UnauthenticatedError();
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
   // A person's browser calls have a budget too; API keys are metered by tier.
@@ -139,9 +153,11 @@ export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(asy
 declareSignIn(requireAdmin, 'idp');
 knownGuards.add(requireAdmin);
 
+const modeHeaderOf = (c: Context) => c.req.header(MODE_HEADER)?.trim().toLowerCase();
+
 /** The mode an admin session works in. Only the exact value `test` selects test mode. */
 export function modeFromRequest(c: Context): Mode {
-  if (c.req.header(MODE_HEADER)?.trim().toLowerCase() === 'test') return 'test';
+  if (modeHeaderOf(c) === 'test') return 'test';
   // A browser opens the staff print page, its PDF and its images by URL, so it cannot send the header.
   // These paths alone read `?mode=test`; the route still proves org access and the pass's mode.
   return PRINT_PAGE_PATH.test(new URL(c.req.url).pathname) && c.req.query('mode') === 'test'
@@ -175,7 +191,8 @@ export { authorityUnproven, isMarkedOwnOnly, isOwnOnly, proveCapability, verifie
  * 2. Otherwise a cookie session (401 without one) that passes CSRF. `scope` routes take any tenant
  *    session, or an admin one with `session: 'admin'`; `human` routes take any session; `platform`
  *    routes take an admin session. Admin and tenant sessions adopt the request mode.
- * 3. `human` and `platform` routes ignore a Bearer header: a key is never a person.
+ * 3. `human` routes ignore a Bearer header: a key is never a person. A `platform` route with a Bearer header takes a
+ *    Platform key alone (`platformKeyGate`): a person-only route refuses it, an org key never reaches one.
  */
 export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const rule = 'scope' in auth ? auth.scope : null;
@@ -184,28 +201,50 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const developer = 'human' in auth && auth.developer === true;
+  const platformDecl = 'platform' in auth ? auth : null;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
   const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
   const level: SignInLevel = 'human' in auth || 'scope' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const ownOnlyAdmitted = 'scope' in auth && auth.signIn === 'any';
+  const platformKeysOwn = 'scope' in auth && auth.platformKeys === 'own';
   if (
     ownOnlyAdmitted &&
     ('capability' in auth || 'session' in auth || 'stepUp' in auth || 'tillKey' in auth)
   )
     throw new Error("signIn: 'any' cannot combine with capability, session, stepUp or tillKey");
   const guard = createMiddleware<AppBindings>(async (c, next) => {
-    const sent = rule ? bearerOf(c) : null;
+    const sent = rule || platformDecl ? bearerOf(c) : null;
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token ?? null;
+    // A Bearer header decides alone: a bad key with a good cookie is 401, never a fallback to the cookie.
+    if (platformDecl && token) {
+      await platformKeyGate(c, platformDecl, token, keyCaller(c));
+      return next();
+    }
     if (rule && token) {
-      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
+      const key = await resolveBearer(c, token, keyCaller(c), limited);
       if (!key) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       }
+      // A member token is its session in one org's Test mode: the session rules below, without the cookie.
+      if (key.kind === 'session') {
+        await admitTokenSession(c, key, {
+          sessionKind,
+          capability,
+          feature,
+          stepUp,
+          ownOnlyAdmitted,
+        });
+        return next();
+      }
+      if (platformKeysOwn && admitOwnPlatformRead(c, key)) return next();
+      // A sandbox never holds Live: a key that asks for it is told, not quietly served Test.
+      if (key.orgKind === 'developer' && modeHeaderOf(c) === 'live') throw orgTestOnly();
       const needed = neededScope(rule, c, key.scopes);
-      if (!needed || !key.scopes.includes(needed)) {
+      // Platform scopes never open a tenant route, even on a row that also holds a tenant scope.
+      if (!needed || !key.scopes.includes(needed) || holdsPlatformScope(key)) {
         reportDenied(c, 'MISSING_SCOPE', key);
         noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: needed ?? null });
         throw new ForbiddenError(
@@ -214,8 +253,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
         );
       }
       const scoped = { ...key };
-      // Admin-session routes are not tenant routes: their keys carry no verified scope, so
-      // tenantAuthorityOf refuses them, as it always has.
+      // Admin-session routes carry no verified scope, so tenantAuthorityOf refuses their keys.
       if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
       if (capability) capabilityState.set(scoped, { capability, proven: false });
       // An org-bound key needs the `api` level (read for GET and HEAD, full for the rest). Exempt: a platform
@@ -228,7 +266,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
           : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
       );
       c.set('auth', scoped);
-      // An org-bound key names its org; a platform key's declared feature is checked per org in tenantAuthorityOf.
+      // A platform key's feature is checked per org in tenantAuthorityOf.
       if (key.orgId !== null) await enforceFeatures(serviceContext(c), scoped, key.orgId);
       return next();
     }
@@ -254,9 +292,17 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
+  if (rule) bearerGuards.add(guard);
   if (stepUp)
     declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   if (oidcOnly) declareOidcOnly(guard);
+  if (platformKeysOwn) declarePlatformKeysOwn(guard);
+  if (platformDecl)
+    declarePlatformKey(
+      guard,
+      !platformDecl.key ? 'person' : platformDecl.key === true ? 'key' : 'conditional',
+      platformDecl.platform,
+    );
   return declareSignIn(guard, level);
 }
 
@@ -268,6 +314,7 @@ export function requireApiKeyOrAdmin(scope: ScopeRule): MiddlewareHandler<AppBin
 /** Org-scoped API keys may only touch their own org; platform keys and admins may touch any. */
 export function assertOrgAccess(auth: AuthContext | undefined, orgId: string): void {
   if (!auth) throw new UnauthenticatedError();
+  assertWorkbenchOrg(auth, orgId);
   if (auth.kind === 'api_key' && auth.orgId !== null && auth.orgId !== orgId) {
     throw new ForbiddenError('The API key cannot access this organization.', 'ORG_FORBIDDEN');
   }

@@ -8,6 +8,7 @@ import { idpClient } from '../client.ts';
 import { claimsOfInvitation } from '../repo-invite-claims.ts';
 import { challengedInvite, ledgerOf } from './challenge.ts';
 import { signupSpecOf, targetsOfSpec } from './groups.ts';
+import { INVITE_REASON } from './reasons.ts';
 import { insertClaim } from './repo-writes.ts';
 import type { Invite } from './resolve.ts';
 
@@ -59,7 +60,7 @@ export async function claimAccount(
   await idpClient(ctx.env, ctx.log).apply(
     subject,
     { add: targetsOfSpec(spec) },
-    ledgerOf(invite, 'invitation.claim'),
+    ledgerOf(invite, INVITE_REASON.claim),
   );
 }
 
@@ -96,7 +97,7 @@ export async function claimExisting(
     throw noAccount();
   const found = await idpClient(ctx.env, ctx.log).findByVerifiedEmail(
     invite.row.email,
-    ledgerOf(invite, 'invitation.find'),
+    ledgerOf(invite, INVITE_REASON.find),
   );
   if (!found) {
     await bump(db, `invclaim:none:${invite.row.id}`, minuteOf(now));

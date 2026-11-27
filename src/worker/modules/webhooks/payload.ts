@@ -135,6 +135,8 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
       return pick(d, { printId: 'string', generation: 'number', voided: 'number' });
     case 'pass.print_voided':
       return pick(d, { printId: 'string', cause: 'string' });
+    case 'pass.replaced':
+      return pick(d, { replacedBy: 'string' });
     case 'push.failed':
       return pick(d, { ...VERSION, status: 'number', reason: 'string', code: 'string' });
     case 'email.failed':
@@ -142,6 +144,11 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
     case 'webhook.test':
       return {};
   }
+}
+
+/** Set by the Workbench simulator; real events carry no flag. */
+function simulatedOf(raw: string): { simulated?: true } {
+  return parse(raw).simulated === true ? { simulated: true } : {};
 }
 
 /** The API request that caused the event, when the ledger kept it. */
@@ -170,6 +177,7 @@ export function buildEnvelope(
     pass: { id: row.passId, externalId: row.externalId, templateId: row.templateId },
     data: dataOf(row, type),
     ...requestIdOf(row.data),
+    ...simulatedOf(row.data),
     ...(sample ? { sample: true } : {}),
   } as WebhookEvent;
 }

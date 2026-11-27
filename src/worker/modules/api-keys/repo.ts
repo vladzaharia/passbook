@@ -5,6 +5,7 @@ import { gte, inList, orNull } from '../../platform/authority-expr.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { all, first, run, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
+import { creatorLiveSql } from '../../platform/repo-api-key-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -147,9 +148,11 @@ export interface KeyFilter {
   mine?: string | undefined;
   /** Only the children of this key. */
   parent?: string | undefined;
+  /** Only keys of this mode (a Workbench token lists Test keys). */
+  mode?: 'test' | undefined;
 }
 
-function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent'>) {
+function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent' | 'mode'>) {
   const where: string[] = [];
   const params: SqlValue[] = [f.orgId];
   where.push('k.org_id IS ?');
@@ -162,6 +165,10 @@ function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine' | 'parent'>) {
   if (f.parent !== undefined) {
     where.push('k.parent_key_id = ?');
     params.push(f.parent);
+  }
+  if (f.mode !== undefined) {
+    where.push('k.mode = ?');
+    params.push(f.mode);
   }
   return { where, params };
 }
@@ -191,8 +198,9 @@ export async function countRevoked(
   orgId: string | null,
   mine?: string,
   parent?: string,
+  mode?: 'test',
 ): Promise<number> {
-  const { where, params } = keyWhere({ orgId, state: 'revoked', mine, parent });
+  const { where, params } = keyWhere({ orgId, state: 'revoked', mine, parent, mode });
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM api_keys k WHERE ${where.join(' AND ')}`,
@@ -227,6 +235,8 @@ export type ResolvedKeyRow = ApiKeyRow & {
   /** A personal key's member still keeps console access by email: `auth.consoleEmailUntil`, else null. */
   owner_grace_until: number | null;
   parent: string | null;
+  /** 1 while the creator is still the admin who made the key (`creatorLiveSql`), else 0: a platform key lives only so long. */
+  creator_active: number | null;
 };
 
 /** The columns of a `ResolvedKeyRow`, over `api_keys k` and `orgs o`: also read by the try-token resolver. */
@@ -240,7 +250,8 @@ export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status, o.kind AS org_
           JOIN console_email_grace g ON g.user_id = m.user_id, settings st
         WHERE m.id = k.membership_id AND st.scope = 'platform' AND st.key = 'auth.consoleEmailUntil') AS owner_grace_until,
        (SELECT json_object('revoked_at', q.revoked_at, 'expires_at', q.expires_at, 'retire_at', q.retire_at)
-        FROM api_keys q WHERE q.id = k.parent_key_id) AS parent`;
+        FROM api_keys q WHERE q.id = k.parent_key_id) AS parent,
+       (SELECT ${creatorLiveSql('k')}) AS creator_active`;
 
 export const findByPrefix = (db: Db, prefix: string) =>
   first<ResolvedKeyRow>(

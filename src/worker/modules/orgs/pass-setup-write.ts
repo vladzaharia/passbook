@@ -6,7 +6,6 @@ import type { Actor } from '../../platform/context.ts';
 import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { isDeveloperOrg } from '../passes/repo-authority.ts';
 import { checkValues } from '../settings/service.ts';
 import { planEnable } from '../wallet-providers/enrolment-service.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
@@ -17,6 +16,7 @@ import { impactOf } from './pass-setup-impact.ts';
 import type { LoadedSetup } from './pass-setup-load.ts';
 import { planOf, touchesBeyondBrandKit } from './pass-setup-plan.ts';
 import { resolveStaged } from './pass-setup-stage.ts';
+import { assertSharedWrite } from './shared-write.ts';
 
 const isEmpty = (patch: PassSetupPatch) =>
   Object.keys(patch.brand ?? {}).length === 0 && Object.keys(patch.channels ?? {}).length === 0;
@@ -124,18 +124,8 @@ export async function patchPassSetup(
     touchesBeyondBrandKit(patch)
   )
     throw lacks('org:write');
-  // A Test key changes brand-kit fields only, unless the org is a sandbox with no Live side to hurt.
-  if (
-    authority.kind === 'api_key' &&
-    authority.mode === 'test' &&
-    !walletOnly &&
-    touchesBeyondBrandKit(patch) &&
-    !(await isDeveloperOrg(ctx.env.DB, orgId))
-  )
-    throw new ForbiddenError(
-      'Use a live key to change channels, support, email or the name.',
-      'MODE_LIVE_REQUIRED',
-    );
+  // Only the wallet accounts are per mode: every other field is shared with Live.
+  if (!walletOnly) await assertSharedWrite(ctx, authority, orgId, 'the brand kit or setup');
   const { view, loaded } = await getPassSetup(ctx, auth, orgId);
   if (patch.expectedRevision !== view.revision)
     throw new ConflictError('The setup changed. Reload and retry.', 'PASS_SETUP_CHANGED');

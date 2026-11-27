@@ -7,6 +7,7 @@ import type {
 } from '../../src/worker/modules/idp/types.ts';
 import { accountMethods } from './fake-idp-accounts.ts';
 import { type FakeAccount, groupMethods } from './fake-idp-groups.ts';
+import { newFakeSetup, setupMethods } from './fake-idp-setup.ts';
 import type { FakeIdp, FakeIdpOptions } from './fake-idp-types.ts';
 
 export type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
@@ -104,8 +105,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   const account = (subject: string): FakeAccount =>
     accounts.get(subject) ?? refuse('IDP_NOT_FOUND');
   /** A dry run computes and ledgers the write in the `preview` bucket; it sends nothing. */
-  const dry = (flag: boolean | undefined, bucket: string): boolean => {
-    const isDry = flag === true || idp.mode !== 'live';
+  const dry = (flag: boolean | undefined, bucket: string, ignoreMode = false): boolean => {
+    const isDry = flag === true || (!ignoreMode && idp.mode !== 'live');
     const charged = isDry ? 'preview' : bucket;
     const count = (spent.get(charged) ?? 0) + 1;
     spent.set(charged, count);
@@ -164,14 +165,28 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     isAdopted: (t) => groups.get(t.replace(/^g:/, ''))?.kind === 'adopted' && t.startsWith('g:'),
   });
 
+  const setup = newFakeSetup();
+  const signInRoles = ['console', 'developer', 'support', 'platform_admin'];
+  const setupApi = setupMethods({
+    setup,
+    groups,
+    now,
+    enter,
+    dry: (flag, bucket) => dry(flag, bucket, true),
+    write,
+  });
+
   const idp: FakeIdp = {
     binding: undefined as unknown as IdpRpc,
+    setup,
     signups,
     accounts,
     groupStore: groups,
+    canSignIn: (subject) => signInRoles.some((r) => accounts.get(subject)?.roles.has(r as never)),
     log,
     writes: 0,
     frozen: false,
+    freezeReason: null,
     mode: options.mode ?? 'live',
     holdLease: (key) => void leases.add(key),
     releaseLease: (key) => void leases.delete(key),
@@ -194,6 +209,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     },
     ...groupsApi,
     ...accountsApi,
+    ...setupApi,
     addAccount: (subject, init = {}) => {
       const { roles = [], ...rest } = init;
       accounts.set(subject, {
@@ -234,7 +250,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     async createSignup(spec, ctx) {
       enter('createSignup', true);
       const keys = spec.groups ?? [];
-      if (keys.length > 5 || (spec.kind === 'platform' && keys.length === 0)) refuse('IDP_REFUSED');
+      if (keys.length > 5) refuse('IDP_REFUSED');
       const targets: Target[] = [...KIND_ROLES[spec.kind], ...keys.map((k): Target => `g:${k}`)];
       groupsApi.assertTargets(targets);
       if (dry(ctx.dryRun, 'createSignup')) return { dryRun: true };
@@ -285,8 +301,11 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
               : ('mismatch' as const);
       return { ...first, matches, ...(emailMatch ? { emailMatch } : {}) };
     },
-    async freeze() {
+    async freeze(reason) {
       enter('freeze');
+      // The binding's policy (assertReason): a code, so free text is refused.
+      if (!/^[a-z][a-z0-9_]{0,39}$/.test(reason)) refuse('IDP_REFUSED');
+      idp.freezeReason = reason;
       if (idp.frozen) return 'already';
       idp.frozen = true;
       return 'frozen';

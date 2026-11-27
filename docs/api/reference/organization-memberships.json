@@ -56,13 +56,13 @@
   "organization-memberships.postOrgsByIdInvitations": {
     "request": {
       "email": "priya@example.com",
-      "roles": ["org_admin"]
+      "roles": ["pass_operator"]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-9be99f782636",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "email": "priya@example.com",
-      "roles": ["org_admin"],
+      "roles": ["pass_operator"],
       "createdAt": 1795572000000,
       "expiresAt": 1796176800000,
       "revokedAt": null,
@@ -127,7 +127,7 @@
   },
   "organization-memberships.patchOrgsByIdMembershipsByMembershipId": {
     "request": {
-      "roles": ["org_admin"]
+      "roles": ["read_only"]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-c28e83793089",
@@ -142,7 +142,8 @@
       "createdAt": 1794362400000,
       "revokedAt": null,
       "userName": "Sam Rivera",
-      "userEmail": "sam@example.com"
+      "userEmail": "sam@example.com",
+      "accessPaused": false
     }
   },
   "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend": {

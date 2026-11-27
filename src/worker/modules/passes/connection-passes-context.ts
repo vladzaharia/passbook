@@ -2,12 +2,13 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireApprovedRelease, type TemplateRelease } from '../templates/releases.ts';
 import { requireCredentialRefKeyset } from './credential-keyset.ts';
+import { assertNotReplaced } from './pass-replaced.ts';
 import {
   type ConnectionPassContext,
   validConnectionPassContext,
 } from './repo-connection-context.ts';
 import type { Pass } from './repo-map.ts';
-import { matchesConnectionPass } from './repo-read-connection.ts';
+import { connectionPassState } from './repo-read-connection.ts';
 import { getPass } from './repo-read-pass.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
 
@@ -63,6 +64,9 @@ export async function checkedPass(ctx: ServiceContext, context: ConnectionPassCo
     throw stalePass();
   const pass = await getPass(ctx.env.DB, context.passId);
   if (!pass) throw stalePass();
+  // One read answers both the move check and, below, the link fences.
+  const state = await connectionPassState(ctx.env.DB, context);
+  await assertNotReplaced(ctx.env.DB, pass.id, state.replacedBy);
   if (
     pass.orgId !== context.orgId ||
     pass.mode !== context.mode ||
@@ -79,6 +83,6 @@ export async function checkedPass(ctx: ServiceContext, context: ConnectionPassCo
       pass.templateVersion !== context.retainedReleaseProof.version)
   )
     throw stalePass();
-  if (!(await matchesConnectionPass(ctx.env.DB, context))) throw stalePass();
+  if (!state.matches) throw stalePass();
   return pass;
 }

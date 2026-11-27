@@ -1,3 +1,5 @@
+import { POLL_PAUSED } from './workbench-poll.ts';
+
 /** Words on the Workbench frame: the tool switcher, the context strip and the sandbox chip. Terse. */
 export const BENCH_COPY = {
   /** The switcher's name; the tools' labels are DEV_COPY.workbench, the same in the tree, tab, h1 and title. */
@@ -16,6 +18,7 @@ export const BENCH_COPY = {
     create: 'Create sandbox',
     closed: 'Sandbox closed',
     key: 'Key',
+    keyCalls: (name: string) => `Calls with ${name}`,
     runHere: 'Run here',
     runHereHint: 'Console runs use a short-lived token for this sandbox. No key is stored.',
   },
@@ -59,7 +62,13 @@ export const BENCH_COPY = {
       passEvents: 'Events of this pass',
     },
   },
-  live: { listening: 'Listening', paused: 'Paused', offline: 'Offline', resume: 'Resume' },
+  live: {
+    listening: 'Listening',
+    paused: 'Paused',
+    limited: POLL_PAUSED,
+    offline: 'Offline',
+    resume: 'Resume',
+  },
   loading: 'Loading',
   state: {
     noSandbox: 'No sandbox yet',

@@ -96,7 +96,10 @@ export const ApiScopeSchema = z.enum([
   'members:read',
   'members:write',
   'audit:read',
-  /** Platform scopes: only a platform admin acts on them, never an org member or an org key. */
+  /** The org's Test request log. Test keys only. */
+  'logs:read',
+  /** Platform scopes: only a platform admin acts on them, never an org member or an org key. `platform:read` covers every GET of a key-callable platform route. */
+  'platform:read',
   'platform:orgs',
   'platform:users',
   'platform:identities',
@@ -107,6 +110,8 @@ export const ApiScopeSchema = z.enum([
   'platform:audit',
   /** Reads and edits custom claims on Polaris ID users and groups. */
   'platform:claims',
+  /** Creates and edits Polaris ID groups, their org rules and manual members. */
+  'platform:groups',
   /** Reads and edits the org's brand kit: web logo, accent, mark level. */
   'brand:manage',
 ]);

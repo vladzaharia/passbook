@@ -28,7 +28,7 @@ const COLUMN_ROWS = 3;
 const MAX_VALUES = 20;
 const CELL = 80;
 
-interface Found {
+export interface Found {
   ref: string;
   record: UpstreamRecord;
 }
@@ -110,7 +110,7 @@ async function readRecords(
   return { records: out, excluded };
 }
 
-interface Plan {
+export interface Plan {
   orgId: string;
   /** Null for an unsaved configuration: it has no passes yet. */
   connectionId: string | null;
@@ -148,8 +148,7 @@ export async function previewSync(
       autoCreate: conn.autoCreate,
       defaultTemplateId: conn.defaultTemplateId,
     },
-    loaded.def,
-    loaded.cc,
+    (since) => readRecords(loaded.def, loaded.cc, since),
     startedAt,
     conn.id,
   );
@@ -172,12 +171,12 @@ export async function previewUnsaved(
     autoCreate: input.autoCreate ?? false,
     defaultTemplateId: input.defaultTemplateId ?? null,
   };
-  return runPreview(sctx, plan, def, cc, startedAt, null);
+  return runPreview(sctx, plan, (since) => readRecords(def, cc, since), startedAt, null);
 }
 
 const zero = { create: 0, update: 0, unchanged: 0, skipped: 0, errors: 0, waiting: 0 };
 
-function failed(
+export function failed(
   sctx: ServiceContext,
   startedAt: number,
   error: unknown,
@@ -204,11 +203,11 @@ function failed(
   };
 }
 
-async function runPreview(
+/** Runs the dry run over the records `source` gives (those on or after `since`). */
+export async function runPreview(
   sctx: ServiceContext,
   conn: Plan,
-  def: AnyConnector,
-  cc: ConnectorContext<unknown, unknown>,
+  source: (since: number) => Promise<{ records: Found[]; excluded: number }>,
   startedAt: number,
   id: string | null,
 ): Promise<Result> {
@@ -216,7 +215,7 @@ async function runPreview(
   const since = startedAt - WINDOW_DAYS * 864e5;
   let read: Awaited<ReturnType<typeof readRecords>>;
   try {
-    read = await readRecords(def, cc, since);
+    read = await source(since);
   } catch (error) {
     return failed(sctx, startedAt, error, id);
   }

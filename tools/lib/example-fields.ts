@@ -25,6 +25,18 @@ const RULES: Rule[] = [
   // A result link is an app path; its ids are plain id words.
   [/^operations\./, /(^|\.)result\.href$/, '/admin/passes'],
   [/^operations\./, /(^|\.)result\.ids\.\w+$/, 'northwind'],
+  // A start that answers 202 carries the same operation (a sandbox action, in the developer area).
+  [/^wallet-identities\.postPlatformAppleIdentityMoves$/, /(^|\.)kind$/, 'identity.move'],
+  [/^developer\./, /(^|\.)operation\.kind$/, 'sandbox.delete'],
+  // A Polaris ID start answers the same operation (platform area).
+  [/^polaris-operations\./, /(^|\.)operation\.kind$/, 'idp.check'],
+  [/^polaris-access\./, /(^|\.)operation\.kind$/, 'idp.offboard'],
+  [/^polaris-setup\./, /(^|\.)operation\.kind$/, 'idp.setup'],
+  // The binding's ledger: who made a call, and the open difference it found.
+  [/^polaris-platform\./, /\.items\[\d+\]\.actor$/, 'idp_sync'],
+  [/^polaris-platform\./, /\.items\[\d+\]\.kind$/, 'unknown_member'],
+  [/^developer\./, /(^|\.)operation\.result\.href$/, '/developers/quickstart'],
+  [/^developer\./, /(^|\.)operation\.result\.ids\.\w+$/, 'northwind'],
   // Scan answers. A tag's passes and a group's members carry a scan reason only when refused (scan/tag-choose.ts,
   // scan/group.ts); the everyday answer admits them.
   [/^scans?\./, /\.tag\.passes\[\d+\]\.reason$/, null],
@@ -83,6 +95,7 @@ const RULES: Rule[] = [
     'done',
   ],
   [/^developer\./, /^\.signInUrl$/, 'https://passbook.mobile/login'],
+  [/^developer\./, /^\.invitedBy$/, ['Northwind Climbing']],
   [/^developer\./, /^\.href$/, 'https://passbook.mobile/developers/logs'],
   [/^wallet-platform\..*Release$/, /^\.status$/, 'released'],
   // A print that is not voided has no void cause.
@@ -114,6 +127,8 @@ const RULES: Rule[] = [
   // A staff user is Sam: one world record for the name and every email on it.
   [/^users\./, /(^|\.items\[\d+\])\.name$/, 'Sam Rivera'],
   [/^users\./, /\.(primaryEmail|email|emailClaim)$/, 'sam@example.com'],
+  // A platform invitation's creator is named by its id; the name is optional.
+  [ANY, /\.createdBy\.name$/, null],
   // A sweep the receipt calls ok was verified against the policy (retention/receipt-service.ts).
   [/^retention\./, /\.verified$/, true],
   // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).

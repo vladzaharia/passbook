@@ -88,3 +88,23 @@ export function enableReadyConfirm(wallet: string, mode: string, count: number):
     typed: false,
   };
 }
+
+/** Switching the identity new passes sign with; passes already issued keep theirs. */
+export function makeDefaultConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Make ${name} the default?`,
+    confirmLabel: 'Make default',
+    description: 'New passes sign with it. Passes already issued keep their identity.',
+    typed: false,
+  };
+}
+
+/** Arming a move row: the old pass voids 24 hours from now, whatever the replacement's age. */
+export function armMoveConfirm(): ConfirmCopy {
+  return {
+    title: 'Arm this move now?',
+    confirmLabel: 'Arm now',
+    description: 'The old pass voids in 24 hours. Check the replacement is on the same phone.',
+    typed: false,
+  };
+}

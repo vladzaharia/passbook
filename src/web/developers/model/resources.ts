@@ -46,8 +46,11 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   apiKeys: 'Organization',
   operations: 'Organization',
   auditEntries: 'Organization',
+  requestLogs: 'Organization',
   developerInvitations: 'Organization',
   developers: 'Organization',
+  memberships: 'Organization',
+  invitations: 'Organization',
 };
 
 const LABELS: Record<string, string> = {
@@ -55,6 +58,7 @@ const LABELS: Record<string, string> = {
   apiKeys: 'API keys',
   nfc: 'NFC',
   orgs: 'Organizations',
+  requestLogs: 'Request log',
   terminal: 'Till API',
   testEmails: 'Test inbox',
   webhookEndpoints: 'Webhook endpoints',

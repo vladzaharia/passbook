@@ -9,6 +9,7 @@ import {
   ResolveQuerySchema,
 } from '../../../shared/contracts/index.ts';
 import { apiKeyMissing, bearerOf, keyCaller, requireSession } from '../../platform/auth.ts';
+import { admitTokenSession, resolveBearer } from '../../platform/auth-workbench.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { noteKeyRefused } from '../../platform/denied.ts';
@@ -24,14 +25,23 @@ import { resolveId } from './resolve-service.ts';
  * names its org and a session finds the person's sandbox; neither takes an org from the request. A real API key is
  * not accepted. Declared with no key scopes, so the public document lists no key for these operations.
  */
-const logCaller = declareKeyAccess(
+const guarded = new WeakSet<Request>();
+export const logCaller = declareKeyAccess(
   createMiddleware<AppBindings>(async (c, next) => {
+    // `/logs` and `/logs/*` both match `/logs`: the guard runs, and charges the try budget, once per request.
+    if (guarded.has(c.req.raw)) return next();
+    guarded.add(c.req.raw);
     const sent = bearerOf(c);
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token;
     if (token?.startsWith(TRY_TOKEN_PREFIX)) {
-      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
-      if (key?.via !== 'try' || key.orgId === null) {
+      const key = await resolveBearer(c, token, keyCaller(c), undefined);
+      // A member token is its person's Test session in one org (the Workbench shell and Home read this way).
+      if (key?.kind === 'session' && key.workbench) {
+        await admitTokenSession(c, key, { sessionKind: 'tenant', ownOnlyAdmitted: false });
+        return next();
+      }
+      if (key?.kind !== 'api_key' || key.via !== 'try' || key.orgId === null) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The try token is invalid or expired.', 'INVALID_API_KEY');
       }
@@ -103,13 +113,14 @@ register(
   {
     method: 'get',
     path: '/resolve',
-    summary: 'What a pasted id is in your sandbox: a request, a pass, a template or the sandbox',
+    summary: 'What a pasted id is in your sandbox. An alias of GET /resolve',
     operationId: 'developer.getResolve',
     query: ResolveQuerySchema,
     response: ResolvedSchema,
   },
   async (c) => {
     c.header('cache-control', 'no-store');
-    return c.json(await resolveId(serviceContext(c), c.var.auth, c.req.valid('query').id));
+    const { id, orgId } = c.req.valid('query');
+    return c.json(await resolveId(serviceContext(c), c.var.auth, id, { orgId, style: 'portal' }));
   },
 );

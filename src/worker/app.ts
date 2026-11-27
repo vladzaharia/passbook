@@ -19,10 +19,18 @@ import { developerRoutes } from './modules/developer/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { offboardRoutes } from './modules/holders/routes-offboard.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
+import { platformIdentityRoutes } from './modules/identities/routes-platform.ts';
+import { identityRevokeRoutes } from './modules/identities/routes-revoke.ts';
 import { identityProvisionRoutes, identityRunsRoutes } from './modules/identities/routes-runs.ts';
 import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identities/routes-wallet.ts';
+import { platformInvitationRoutes } from './modules/idp/invitations/platform-routes.ts';
 import { invitationRoutes } from './modules/idp/invitations/routes.ts';
 import { groupClaimsRoutes, userClaimsRoutes } from './modules/idp/routes-claims.ts';
+import { idpGroupsRoutes } from './modules/idp/routes-groups.ts';
+import { idpOperationRoutes, userHoldRoutes } from './modules/idp/routes-ops.ts';
+import { idpPlatformRoutes } from './modules/idp/routes-platform.ts';
+import { idpSetupRoutes } from './modules/idp/routes-setup.ts';
+import { userAccessRoutes } from './modules/idp/routes-users.ts';
 import { scimRoutes } from './modules/idp/scim-routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
@@ -31,6 +39,7 @@ import { marketingPageRoutes } from './modules/marketing/routes-pages.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
+import { metricsPlatformRoutes } from './modules/metrics/routes-platform.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
 import { operationsRoutes } from './modules/operations/routes.ts';
@@ -50,10 +59,12 @@ import {
 } from './modules/orgs/routes-entitlements.ts';
 import { platformPersonalLabelsRoutes } from './modules/orgs/routes-personal-labels.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
+import { identityMoveRoutes } from './modules/passes/routes-identity-moves.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { previewRoutes } from './modules/public/routes-preview.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
+import { retentionPlatformReleaseRoutes } from './modules/retention/routes-platform-release.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
@@ -69,6 +80,7 @@ import { scanShellSwRoutes } from './modules/scan/routes-shell-sw.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
 import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
+import { platformSettingsRoutes } from './modules/settings/routes-platform.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { templateReviewsRoutes } from './modules/templates/routes-reviews.ts';
@@ -86,6 +98,9 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { workbenchRoutes } from './modules/workbench/routes.ts';
+import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
+import { resolveRoutes, workbenchReadRoutes } from './modules/workbench/routes-read.ts';
 import { apiVersionGate } from './platform/api-version.ts';
 import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
@@ -173,6 +188,10 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
+  app.route('/api/v1/workbench', workbenchRoutes);
+  app.route('/api/v1', resolveRoutes);
+  app.route('/api/v1/workbench', workbenchReadRoutes);
+  app.route('/api/v1/request-logs', requestLogRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
@@ -186,6 +205,19 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', retentionRoutes);
   app.route('/api/v1/orgs', orgLifecycleRoutes);
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
+  // Platform routes that declare their own key access.
+  app.route('/api/v1/platform', platformSettingsRoutes);
+  app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
+  // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
+  app.route('/api/v1/platform', idpOperationRoutes);
+  app.route('/api/v1/platform', idpSetupRoutes);
+  app.route('/api/v1/platform', idpPlatformRoutes);
+  app.route('/api/v1/platform', idpGroupsRoutes);
+  app.route('/api/v1/platform', platformInvitationRoutes);
+  app.route('/api/v1/platform', groupClaimsRoutes);
+  // Person-only: a key gets PERSON_REQUIRED.
+  app.route('/api/v1/platform/apple/identities', platformIdentityRoutes);
+  app.route('/api/v1/platform/apple/identity-moves', identityMoveRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', platformPersonalLabelsRoutes);
@@ -208,6 +240,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/connectors', connectorsRoutes);
   app.route('/api/v1/webhook-endpoints', webhookEndpointsRoutes);
   app.route('/api/v1/events', eventFeedRoutes);
+  app.route('/api/v1/identities', identityRevokeRoutes);
   app.route('/api/v1/identities', identitiesRoutes);
   app.route('/api/v1/identity-runs', identityRunsRoutes);
   app.route('/api/v1/wallet-identities', walletIdentitiesRoutes);
@@ -218,13 +251,15 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-providers/reissue', walletReissueRoutes);
   // Before usersRoutes: its admin-session guard would otherwise run first on `/{id}/claims`.
   app.route('/api/v1/users', userClaimsRoutes);
-  app.route('/api/v1/platform', groupClaimsRoutes);
+  app.route('/api/v1/users', userHoldRoutes);
+  app.route('/api/v1/users', userAccessRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
   app.route('/api/v1/settings', settingsRoutes);
   app.route('/api/v1/audit', auditRoutes);
   app.route('/api/v1/status', statusRoutes);
+  app.route('/api/v1/metrics', metricsPlatformRoutes);
   app.route('/api/v1/metrics', metricsRoutes);
   app.route('/api/v1/scan', scanPairRoutes);
   app.route('/api/v1/scan', scanRoutes);

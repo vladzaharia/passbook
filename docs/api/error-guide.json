@@ -149,6 +149,12 @@
     "fix": "Send a version from GET /api/v1/versions, or omit the header.",
     "retryable": false
   },
+  "APNS_BINDING_MANAGED": {
+    "title": "APNs binding is managed",
+    "when": "The identity comes from the deployment, so its APNs binding is not editable.",
+    "fix": "Leave apnsBinding out of the request.",
+    "retryable": false
+  },
   "ARCHIVE_TOO_LARGE": {
     "title": "Archive too large",
     "when": "The uploaded template archive is over 15 MB.",
@@ -829,7 +835,7 @@
   },
   "IDEMPOTENCY_KEY_REQUIRED": {
     "title": "Idempotency-Key required",
-    "when": "A release without dryRun came without an Idempotency-Key header.",
+    "when": "A release without dryRun, or a platform identity write, came without an Idempotency-Key header.",
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
     "retryable": false
   },
@@ -857,6 +863,12 @@
     "fix": "Revoke an old certificate, then send the request again.",
     "retryable": false
   },
+  "IDENTITY_CERT_MISMATCH": {
+    "title": "Certificate for another identity",
+    "when": "The certificate is for a different pass type or team than the identity it is set on.",
+    "fix": "Upload the certificate for this pass type and team, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_CERT_NOT_FOUND": {
     "title": "Certificate not found",
     "when": "No certificate with that id belongs to the identity.",
@@ -869,6 +881,12 @@
     "fix": "Pick a superseded certificate from the identity's history.",
     "retryable": false
   },
+  "IDENTITY_CHAIN_INVALID": {
+    "title": "Identity chain invalid",
+    "when": "The signing identity's certificate does not verify against the Apple intermediate, so it cannot sign passes.",
+    "fix": "Upload the identity's certificate again, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_CHANGED": {
     "title": "Identity changed",
     "when": "The identity changed while its certificate was being activated.",
@@ -879,6 +897,12 @@
     "title": "Confirmation does not match",
     "when": "The confirmation does not match the pass type ID.",
     "fix": "Send the pass type ID exactly as shown.",
+    "retryable": false
+  },
+  "IDENTITY_EXISTS": {
+    "title": "Identity already exists",
+    "when": "An identity for this pass type ID is already stored.",
+    "fix": "Rotate the stored identity with POST /api/v1/identities/{id}/rotate instead of uploading again.",
     "retryable": false
   },
   "IDENTITY_EXPIRED": {
@@ -917,6 +941,18 @@
     "fix": "Choose another handle.",
     "retryable": false
   },
+  "IDENTITY_INTERMEDIATE_EXPIRED": {
+    "title": "Apple intermediate expired",
+    "when": "The Apple intermediate certificate that identities chain to has expired.",
+    "fix": "Contact support to update it, then send the request again.",
+    "retryable": false
+  },
+  "IDENTITY_MOVE_SAME": {
+    "title": "Same identity",
+    "when": "The move's source and target are the same signing identity.",
+    "fix": "Choose a different target identity, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_NOT_CONFIGURED": {
     "title": "Identity not set up",
     "when": "The organization has no signing identity for this pass type.",
@@ -931,8 +967,8 @@
   },
   "IDENTITY_NOT_READY": {
     "title": "Identity not ready",
-    "when": "The identity has no certificate yet.",
-    "fix": "Wait for provisioning to finish, then send the request again.",
+    "when": "The identity has no certificate yet, or as a platform default it is not issuing, has no healthy push or has no device that registered one of its passes.",
+    "fix": "Wait for provisioning to finish, or run the push check and the device test, then send the request again.",
     "retryable": true
   },
   "IDENTITY_NOT_ROTATABLE": {
@@ -945,6 +981,12 @@
     "title": "Platform identity mismatch",
     "when": "The platform identity row does not match the deployed signing identity.",
     "fix": "Ask the platform owner to align the deployed identity with the database.",
+    "retryable": false
+  },
+  "IDENTITY_PROTECTED": {
+    "title": "Identity is protected",
+    "when": "The change touches a platform pass type or the platform default identity, which only a platform run or another default may change.",
+    "fix": "Make another identity the default first, or change the slot through its platform run.",
     "retryable": false
   },
   "IDENTITY_PTI_TAKEN": {
@@ -1175,6 +1217,12 @@
     "fix": "Wait for the undo to finish, then read the result from GET /api/v1/pass-imports/{id}.",
     "retryable": false
   },
+  "INCIDENT_NOT_FOUND": {
+    "title": "Incident not found",
+    "when": "No incident note with this id exists.",
+    "fix": "List them with GET /api/v1/status/incidents.",
+    "retryable": false
+  },
   "INVALID_API_KEY": {
     "title": "Invalid API key",
     "when": "The key is unknown, revoked or expired.",
@@ -1391,6 +1439,12 @@
     "fix": "Use a template that defines a message field, or add one to it.",
     "retryable": false
   },
+  "METRICS_NOT_FOUND": {
+    "title": "Metrics not found",
+    "when": "The template is not usable by that organization.",
+    "fix": "Leave templateId out, or pick a template the organization can use.",
+    "retryable": false
+  },
   "MISSING_SCOPE": {
     "title": "Missing scope",
     "when": "The key lacks a scope this operation needs.",
@@ -1399,7 +1453,7 @@
   },
   "MODE_LIVE_REQUIRED": {
     "title": "Live key required",
-    "when": "A Test key tried to change channels, support, email or the name of an organization that also has Live passes. A Test key may change the brand kit only.",
+    "when": "A Test key tried to change state that Live also reads (the brand kit, setup, zones, tag types, saved import mappings or members) in an organization that also has Live passes. A sandbox organization allows it. Template authoring is the exception: a Test key may clone and request review of templates, which changes no Live pass.",
     "fix": "Use a live key for this change.",
     "retryable": false
   },
@@ -1525,7 +1579,7 @@
   },
   "OPERATION_NOT_RETRYABLE": {
     "title": "Operation cannot be retried",
-    "when": "The operation has not failed, or its failure cannot be retried.",
+    "when": "The operation has not failed, or its failure cannot be retried. A run id that does not name a repeatable run is 404.",
     "fix": "Read it with GET /api/v1/operations/{id}. Start the action again instead.",
     "retryable": false
   },
@@ -1540,6 +1594,12 @@
     "when": "The caller's membership or key access changed while the request ran.",
     "fix": "Check access with GET /api/v1/api-keys/me, then send the request again.",
     "retryable": true
+  },
+  "ORG_ADD_ME_NEEDS_PERSON": {
+    "title": "addMe needs a person",
+    "when": "A platform key sent addMe true; a key is nobody's member.",
+    "fix": "Send addMe false, or leave it out.",
+    "retryable": false
   },
   "ORG_CONFLICT": {
     "title": "Organization changed",
@@ -1589,6 +1649,12 @@
     "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
+  "ORG_SCOPE_TOO_WIDE": {
+    "title": "Too many organizations",
+    "when": "A pass list with orgId=all covers more than 50 organizations.",
+    "fix": "Send orgIds with up to 50 organization ids.",
+    "retryable": false
+  },
   "ORG_SLUG_RESERVED": {
     "title": "Slug reserved",
     "when": "The slug starts with personal-, which belongs to personal organizations.",
@@ -1605,12 +1671,6 @@
     "title": "Status change must be alone",
     "when": "The update changes the status and other fields together.",
     "fix": "Send the status change in its own request, then the other edits.",
-    "retryable": false
-  },
-  "ORG_TEST_ONLY": {
-    "title": "Organization is test-only",
-    "when": "A Live request named a developer sandbox organization, which never holds Live.",
-    "fix": "Send the request in Test mode, or use an organization with live access.",
     "retryable": false
   },
   "PAIRING_INVALID": {
@@ -1685,6 +1745,12 @@
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
     "retryable": false
   },
+  "PASS_REPLACED": {
+    "title": "Pass was replaced",
+    "when": "The pass was replaced by a pass on another Apple identity, and this call would write to the old one, for example a connection bind or sync.",
+    "fix": "Use the replacement pass id from the message, then send the request again. API writes by the old id to a replaced pass are forwarded; connector syncs are refused.",
+    "retryable": false
+  },
   "PASS_SETUP_CHANGED": {
     "title": "Setup changed",
     "when": "Another request changed the organization's setup, or its wallet account, after your read.",
@@ -1745,6 +1811,18 @@
     "fix": "Name a manager in the request.",
     "retryable": false
   },
+  "PRESET_MOVING": {
+    "title": "Preset still moving",
+    "when": "Organizations are still moving to the last change of this preset.",
+    "fix": "Send the same request with no values to carry the move on, then change it again.",
+    "retryable": false
+  },
+  "PRESET_NOT_FOUND": {
+    "title": "Preset not found",
+    "when": "No preset with this name exists.",
+    "fix": "Read the names with GET /api/v1/platform/entitlement-presets.",
+    "retryable": false
+  },
   "PRINTING_OFF": {
     "title": "Printing is off",
     "when": "Printing is turned off for this template or organization.",
@@ -1781,11 +1859,23 @@
     "fix": "List the prints and use an id from the list.",
     "retryable": false
   },
+  "PUSH_KEY_NONE": {
+    "title": "No push key",
+    "when": "The identity team has no push key to remove.",
+    "fix": "Upload one with PUT /api/v1/identities/{id}/push-key if you need one.",
+    "retryable": false
+  },
   "RATE_LIMITED": {
     "title": "Rate limited",
     "when": "The key went over its request limit.",
     "fix": "Wait for Retry-After seconds, then retry. Back off on repeats.",
     "retryable": true
+  },
+  "RECEIPT_NOT_FOUND": {
+    "title": "Receipt not found",
+    "when": "No retention receipt with this id exists.",
+    "fix": "List them with GET /api/v1/platform/retention/receipts.",
+    "retryable": false
   },
   "RECIPIENT_NOT_HOLDER": {
     "title": "Recipient is not the holder",
@@ -2405,12 +2495,6 @@
     "fix": "Use a new key for a different setup.",
     "retryable": false
   },
-  "SCAN_ZONE_LIVE_ONLY": {
-    "title": "Live key needed",
-    "when": "Zones are shared with live mode, so a test key cannot make or change them.",
-    "fix": "Use a live key.",
-    "retryable": false
-  },
   "SCAN_MODE_LIVE_ONLY": {
     "title": "Live key needed",
     "when": "Moving a scanner between live and test changes its mode for everyone, so a test key cannot do it.",
@@ -2517,6 +2601,12 @@
     "title": "Serial in use",
     "when": "Another pass already has this serial.",
     "fix": "Send a different serial, or leave it out to have one generated.",
+    "retryable": false
+  },
+  "SESSION_NOT_FOUND": {
+    "title": "Session not found",
+    "when": "The user has no session with this id.",
+    "fix": "Read the user with GET /api/v1/users/{id} for its sessions.",
     "retryable": false
   },
   "SESSION_OPEN_FORBIDDEN": {
@@ -3281,6 +3371,12 @@
     "fix": "Replace the image with one at the size shown in issues.",
     "retryable": false
   },
+  "WALLET_CARD_SET": {
+    "title": "Card already named",
+    "when": "This type already has a different card on the credential.",
+    "fix": "Keep the existing card, or name the card for another type.",
+    "retryable": false
+  },
   "WALLET_CREDENTIALS_INVALID": {
     "title": "Wallet credentials invalid",
     "when": "The provider credentials failed validation.",
@@ -3853,8 +3949,92 @@
   },
   "IDP_REFUSED": {
     "title": "Polaris ID refused the change",
-    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID.",
+    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID. Answers 409 when a role or adopted group is deleted, or an account cannot be added to a group here; 403 when Polaris ID itself refuses.",
     "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_CLIENT": {
+    "title": "Polaris ID app needs a change",
+    "when": "PassBook's app in Polaris ID is missing, is not PassBook's, has callbacks that are not PassBook's, is still open to everyone, or would lock admins out of PassBook if restricted.",
+    "fix": "Open setup and follow the reason it shows, or ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SCIM_FOREIGN": {
+    "title": "User sync points elsewhere",
+    "when": "The owner pointed Polaris ID's user sync at a different address, so PassBook will not change or push to it.",
+    "fix": "Ask the PassBook owner to point it back at PassBook.",
+    "retryable": false
+  },
+  "IDP_SETUP_BINDING_ABSENT": {
+    "title": "Polaris ID connector not deployed",
+    "when": "PassBook's Polaris ID connector is not deployed, so setup has nothing to talk to.",
+    "fix": "Ask the PassBook owner to deploy it.",
+    "retryable": false
+  },
+  "IDP_SETUP_AUTH": {
+    "title": "Polaris ID refused PassBook's key",
+    "when": "Polaris ID did not accept the key the connector uses.",
+    "fix": "Ask the PassBook owner to replace the key.",
+    "retryable": false
+  },
+  "IDP_SETUP_LAYOUT": {
+    "title": "Polaris ID layout looks wrong",
+    "when": "The connector reports a Polaris ID layout it does not recognise, so setup stops.",
+    "fix": "Ask the PassBook owner to check the connector's settings.",
+    "retryable": false
+  },
+  "IDP_SETUP_SETTINGS": {
+    "title": "Polaris ID settings need a change",
+    "when": "Polaris ID or connector settings are unsafe for setup.",
+    "fix": "Open setup, read the reason and ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SETUP_CLIENT_MISSING": {
+    "title": "PassBook app not in Polaris ID",
+    "when": "Polaris ID has not seen PassBook's app yet. It is created on the first sign-in.",
+    "fix": "Sign in to PassBook with Polaris ID once, then run setup again.",
+    "retryable": false
+  },
+  "IDP_SETUP_CLIENT_WRONG": {
+    "title": "PassBook app not set up as expected",
+    "when": "PassBook's app in Polaris ID is not the one PassBook registers, or its callbacks are not PassBook's.",
+    "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_SETUP_GROUP_IN_USE": {
+    "title": "Role group used by another app",
+    "when": "A group PassBook needs for a role also belongs to another app or carries other claims.",
+    "fix": "Ask the PassBook owner to free it or choose another group.",
+    "retryable": false
+  },
+  "IDP_SETUP_GROUP_MISSING": {
+    "title": "Required group missing",
+    "when": "The platform admin or user group does not exist in Polaris ID.",
+    "fix": "Ask the PassBook owner to create it.",
+    "retryable": false
+  },
+  "IDP_SETUP_SCIM_PUSH": {
+    "title": "No user sync arrived",
+    "when": "Ten minutes after setup asked for a sync, Polaris ID had not pushed to PassBook.",
+    "fix": "Check the connection in Polaris ID, then retry.",
+    "retryable": true
+  },
+  "IDP_SETUP_MIRROR_EMPTY": {
+    "title": "No users or groups arrived",
+    "when": "A sync arrived but carried no users or no groups.",
+    "fix": "Check the connection in Polaris ID, then retry.",
+    "retryable": true
+  },
+  "IDP_SETUP_TOKEN": {
+    "title": "SCIM token not switched",
+    "when": "Polaris ID took the new SCIM token, but PassBook could not switch to it after two tries.",
+    "fix": "Retry.",
+    "retryable": true
+  },
+  "IDP_SCIM_MISSING": {
+    "title": "User sync not set up",
+    "when": "Polaris ID has no user sync connection for PassBook yet, so there is nothing to push or sync.",
+    "fix": "Run setup to create the connection, then try again.",
     "retryable": false
   },
   "IDP_IN_USE": {
@@ -3879,6 +4059,198 @@
     "title": "Admin roles need the console",
     "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
     "fix": "Do it from the console with a recent sign-in.",
+    "retryable": false
+  },
+  "IDP_DRY_RUN": {
+    "title": "Polaris ID changes are in dry run",
+    "when": "The binding to Polaris ID only records what it would change, so a platform invitation cannot be created or sent.",
+    "fix": "Ask the owner to turn dry run off, then try again.",
+    "retryable": false
+  },
+  "INVITATION_EMAIL_UNVERIFIED": {
+    "title": "Email not confirmed",
+    "when": "The Polaris ID made from the invitation has not confirmed the invited address.",
+    "fix": "Confirm the email in Polaris ID, then try again.",
+    "retryable": true
+  },
+  "INVITATION_NOT_STARTED": {
+    "title": "No Polaris ID made yet",
+    "when": "Nobody has finished creating a Polaris ID from this invitation's link.",
+    "fix": "Create the Polaris ID from the invitation page, then confirm.",
+    "retryable": true
+  },
+  "PLATFORM_INVITE_CONFLICT": {
+    "title": "Invitation has ended",
+    "when": "The platform invitation was accepted or revoked already.",
+    "fix": "Send a new invitation if the person still needs access.",
+    "retryable": false
+  },
+  "PLATFORM_INVITE_PENDING": {
+    "title": "Invitation already pending",
+    "when": "This address already has an open platform invitation.",
+    "fix": "Revoke it or use Resend, then invite again.",
+    "retryable": false
+  },
+  "REQUEST_LOG_NOT_FOUND": {
+    "title": "Request not found",
+    "when": "The log id or request id is not one of this organization's Test calls from the last 7 days.",
+    "fix": "List the calls with GET /request-logs and use an id from the list. Calls older than 7 days are gone.",
+    "retryable": false
+  },
+  "SANDBOX_ENDPOINT_LIMIT": {
+    "title": "Sandbox endpoint limit",
+    "when": "The sandbox already holds 3 webhook endpoints, the capture endpoint included.",
+    "fix": "Delete one with DELETE /api/v1/webhook-endpoints/{id}, then retry.",
+    "retryable": false
+  },
+  "SANDBOX_TEST_ONLY": {
+    "title": "Sandbox is Test only",
+    "when": "A request asked for Live in a developer sandbox, which never holds Live: a session or key that sent X-PassBook-Mode: live.",
+    "fix": "Send the request in Test mode, or use an organization with Live access.",
+    "retryable": false
+  },
+  "WORKBENCH_TEST_ONLY": {
+    "title": "Workbench is Test only",
+    "when": "A Workbench token asked for Live (a mode header, Live in modes, a Live key), or called an operation not marked x-workbench: test.",
+    "fix": "Stay in Test, or do it in admin or from your server with a key.",
+    "retryable": false
+  },
+  "SIMULATE_DEVICE_NOT_FOUND": {
+    "title": "Simulated device not found",
+    "when": "The deviceId is not a simulated device of this pass.",
+    "fix": "Use the deviceId returned by an installed event, or omit it for the newest device.",
+    "retryable": false
+  },
+  "SIMULATE_NO_DEVICE": {
+    "title": "No simulated device",
+    "when": "The event needs an installed simulated device and the pass has none, or the device is already removed.",
+    "fix": "Send an installed event first.",
+    "retryable": false
+  },
+  "SIMULATE_NO_EMAIL": {
+    "title": "No Test email",
+    "when": "The Test inbox holds no message for this pass.",
+    "fix": "Send the pass by email first, then simulate email_failed.",
+    "retryable": false
+  },
+  "SIMULATE_RATE_LIMITED": {
+    "title": "Too many simulated events",
+    "when": "The organization sent more than 60 simulated events in a minute.",
+    "fix": "Wait for the Retry-After seconds, then retry.",
+    "retryable": true
+  },
+  "SIMULATE_TEST_ONLY": {
+    "title": "Simulate is Test only",
+    "when": "The pass is a Live pass.",
+    "fix": "Simulate on a Test pass.",
+    "retryable": false
+  },
+  "KEY_CANNOT_ADMINISTER": {
+    "title": "Key cannot administer",
+    "when": "An API key tried to give, change or remove an organization admin role.",
+    "fix": "Give or remove admin roles in the console.",
+    "retryable": false
+  },
+  "WALLET_RELEASE_READY_CHANGED": {
+    "title": "Ready list changed",
+    "when": "The ready enrollments changed since the dry run, or an earlier apply committed part of them.",
+    "fix": "Run the dry run again: it lists what is still Off. Then apply those orgs.",
+    "retryable": true
+  },
+  "API_KEY_PLATFORM_LIVE": {
+    "title": "Platform key is Live only",
+    "when": "A platform key was requested in Test mode.",
+    "fix": "Make the platform key in Live mode.",
+    "retryable": false
+  },
+  "API_KEY_PLATFORM_SCOPES_ALONE": {
+    "title": "Platform and organization scopes mixed",
+    "when": "A key was asked to hold platform scopes and organization scopes together.",
+    "fix": "Make two keys: one with platform scopes, one with organization scopes.",
+    "retryable": false
+  },
+  "API_KEY_PLATFORM_SCOPE_KIND": {
+    "title": "Platform scope on another kind of key",
+    "when": "A platform scope was requested for a key that is not a platform key.",
+    "fix": "Make a platform key (no organization) for platform scopes, or drop the platform scopes.",
+    "retryable": false
+  },
+  "PERSON_REQUIRED": {
+    "title": "A person is required",
+    "when": "An API key called a platform route, or made a request, that only a person signed in with Polaris ID may make.",
+    "fix": "Do it in the console as a platform admin signed in with Polaris ID.",
+    "retryable": false
+  },
+  "PLATFORM_KEY_REQUIRED": {
+    "title": "Platform key required",
+    "when": "A platform route was called with an API key that is not a platform key.",
+    "fix": "Call it with a platform key that holds the route's scope.",
+    "retryable": false
+  },
+  "IDP_GROUP_LIMIT": {
+    "title": "Group limit reached",
+    "when": "PassBook manages at most 50 custom groups.",
+    "fix": "Delete a group you no longer use.",
+    "retryable": false
+  },
+  "IDP_RULE_EXISTS": {
+    "title": "Rule exists",
+    "when": "The org already has a rule on the group.",
+    "fix": "End the existing rule, or leave it.",
+    "retryable": false
+  },
+  "IDP_RULE_LIMIT": {
+    "title": "Rule limit reached",
+    "when": "A group takes at most 5 org rules.",
+    "fix": "End a rule you no longer need.",
+    "retryable": false
+  },
+  "IDP_RULE_ORG_REFUSED": {
+    "title": "Org cannot feed a group",
+    "when": "A personal org, sandbox or closed org cannot feed a group.",
+    "fix": "Pick a standard, active org.",
+    "retryable": false
+  },
+  "GROUP_NOT_FOUND": {
+    "title": "Group not found",
+    "when": "No live group has this key.",
+    "fix": "List the groups and use one of their keys.",
+    "retryable": false
+  },
+  "IDP_MEMBER_EXISTS": {
+    "title": "Already a member",
+    "when": "The account is already a member of the group.",
+    "fix": "Nothing to do.",
+    "retryable": false
+  },
+  "IDP_MULTIPLE_ACCOUNTS": {
+    "title": "Several Polaris ID accounts",
+    "when": "The user has more than one Polaris ID account.",
+    "fix": "Remove the extra account in Polaris ID, then retry.",
+    "retryable": false
+  },
+  "IDP_NO_ACCOUNT": {
+    "title": "No Polaris ID account",
+    "when": "The user is not in Polaris ID.",
+    "fix": "Invite the user to Polaris ID first.",
+    "retryable": false
+  },
+  "MEMBER_NOT_FOUND": {
+    "title": "Member not found",
+    "when": "No live member has this id on the group.",
+    "fix": "List the group's members and use one of their ids.",
+    "retryable": false
+  },
+  "IDP_PLATFORM_ADMIN": {
+    "title": "Platform admin",
+    "when": "The user is a platform admin. A key never changes a platform admin.",
+    "fix": "Change it in Polaris ID.",
+    "retryable": false
+  },
+  "SELF_DISABLE": {
+    "title": "Cannot disable yourself",
+    "when": "The account making the request is the one being disabled.",
+    "fix": "Ask another platform admin.",
     "retryable": false
   }
 }

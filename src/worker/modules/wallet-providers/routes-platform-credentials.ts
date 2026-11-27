@@ -20,9 +20,9 @@ import {
   WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { PlatformWalletCredentialListSchema } from '../../../shared/contracts/wallet-release.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
@@ -39,16 +39,19 @@ import { listPlatformEnrolments } from './enrolment-platform-read.ts';
 import { googleManagedPlatformRoutes } from './routes-google-managed.ts';
 import { walletReleaseRoutes } from './routes-release.ts';
 
-/** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
+/**
+ * Mount at /api/v1/platform. Every route declares its own `{ platform }` access: a Platform key reaches all but the
+ * revoke, the enrolment hold and release and the migration resolve, which are person-only. The pages show Live and Test
+ * together, so the mode is named.
+ */
 export const walletPlatformRoutes = createRouter();
-guard(walletPlatformRoutes, requireAdmin);
+walletPlatformRoutes.route('/', walletReleaseRoutes);
 walletPlatformRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });
 
 walletPlatformRoutes.route('/', googleManagedPlatformRoutes);
-walletPlatformRoutes.route('/', walletReleaseRoutes);
 
 const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   const auth = authOf(c);
@@ -61,12 +64,13 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials',
     summary: 'List the platform wallet credentials',
     query: CursorQuerySchema,
     response: PlatformWalletCredentialListSchema,
   },
-  async (c) => c.json(await listPlatformCredentials(serviceContext(c), sessionOf(c))),
+  async (c) => c.json(await listPlatformCredentials(serviceContext(c), platformActorOf(c))),
 );
 
 register(
@@ -74,13 +78,20 @@ register(
   'wallet platform',
   {
     method: 'put',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials',
     summary: 'Create or rotate a platform wallet credential',
     body: SavePlatformWalletCredentialSchema,
     response: WalletCredentialSchema,
   },
   async (c) =>
-    c.json(await savePlatformCredential(serviceContext(c), sessionOf(c), c.req.valid('json'))),
+    c.json(
+      await savePlatformCredential(
+        serviceContext(c),
+        platformActorOf(c, { scope: 'platform:wallet' }),
+        c.req.valid('json'),
+      ),
+    ),
 );
 
 register(
@@ -88,6 +99,7 @@ register(
   'wallet platform',
   {
     method: 'put',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials/{id}/cards',
     summary: 'Name the Samsung card of one more type on a platform credential',
     params: z.strictObject({ id: IdSchema }),
@@ -98,7 +110,7 @@ register(
     c.json(
       await setPlatformSamsungCard(
         serviceContext(c),
-        sessionOf(c),
+        platformActorOf(c, { scope: 'platform:wallet' }),
         c.req.valid('param').id,
         c.req.valid('json'),
       ),
@@ -110,6 +122,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/{id}/revoke',
     summary: 'Revoke a platform wallet credential',
     params: z.strictObject({ id: IdSchema }),
@@ -132,6 +145,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials/{id}/check',
     summary: 'Check a platform wallet credential with its provider',
     params: z.strictObject({ id: IdSchema }),
@@ -141,7 +155,7 @@ register(
     c.json(
       await requestCredentialCheck(
         serviceContext(c),
-        sessionOf(c),
+        platformActorOf(c, { scope: 'platform:wallet' }),
         { orgId: null },
         c.req.valid('param').id,
       ),
@@ -153,6 +167,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials/{id}/checks/{checkId}',
     summary: 'Read the result of a platform wallet credential check',
     params: PlatformWalletCredentialCheckParamsSchema,
@@ -161,7 +176,13 @@ register(
   async (c) => {
     const { id, checkId } = c.req.valid('param');
     return c.json(
-      await readCredentialCheck(serviceContext(c), sessionOf(c), { orgId: null }, id, checkId),
+      await readCredentialCheck(
+        serviceContext(c),
+        platformActorOf(c),
+        { orgId: null },
+        id,
+        checkId,
+      ),
     );
   },
 );
@@ -171,6 +192,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold',
     summary: 'Hold a wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
@@ -193,6 +215,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release',
     summary: 'Release a held wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
@@ -209,6 +232,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-enrolments',
     summary: 'List every organization enrollment of a wallet provider',
     query: PlatformWalletEnrolmentQuerySchema.extend(CursorQuerySchema.shape),
@@ -218,7 +242,7 @@ register(
     c.json(
       await listPlatformEnrolments(
         serviceContext(c),
-        sessionOf(c),
+        platformActorOf(c),
         c.req.valid('query').provider,
         c.req.valid('query').limit,
         c.req.valid('query').cursor,
@@ -231,6 +255,7 @@ register(
   'wallet platform',
   {
     method: 'get',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials/migrate',
     summary: 'Report the legacy wallet accounts waiting for a credential source',
     query: WalletMigrationReportQuerySchema,
@@ -238,7 +263,7 @@ register(
   },
   async (c) => {
     const { after, cursor } = c.req.valid('query');
-    return c.json(await migrationReport(serviceContext(c), sessionOf(c), cursor ?? after));
+    return c.json(await migrationReport(serviceContext(c), platformActorOf(c), cursor ?? after));
   },
 );
 
@@ -247,11 +272,18 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet', key: true },
     path: '/wallet-credentials/migrate',
     summary: 'Queue the migration of legacy wallet accounts onto credential sources',
     response: WalletMigrationQueuedSchema,
   },
-  async (c) => c.json({ queued: await queueMigration(serviceContext(c), sessionOf(c)) }),
+  async (c) =>
+    c.json({
+      queued: await queueMigration(
+        serviceContext(c),
+        platformActorOf(c, { scope: 'platform:wallet' }),
+      ),
+    }),
 );
 
 register(
@@ -259,6 +291,7 @@ register(
   'wallet platform',
   {
     method: 'post',
+    auth: { platform: 'platform:wallet' },
     path: '/wallet-credentials/migrate/resolve',
     summary:
       'Resolve a refused legacy wallet account: assign the platform credential, merge or retire',

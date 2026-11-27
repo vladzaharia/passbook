@@ -476,6 +476,26 @@ describe('organization memberships', () => {
     );
   });
 
+  it('flags a member whose console access Polaris ID paused, and no one else', async () => {
+    const { f, org } = await setup();
+    const held = await makeUser(f, { primaryEmail: 'held@example.test' });
+    const clear = await makeUser(f, { primaryEmail: 'clear@example.test' });
+    await join(org.id, held);
+    await join(org.id, clear);
+    await run(
+      env.DB,
+      `INSERT INTO idp_target_state (subject, target, user_id, observed, presence, held_at)
+       VALUES ('sub-held', 'console', ?, 0, 'passbook', 1)`,
+      [held.id],
+    );
+    const members = OrgMemberListSchema.parse(
+      await (await call('GET', `/${org.id}/memberships`)).json(),
+    );
+    const flag = (id: string) => members.items.find((m) => m.userId === id)?.accessPaused;
+    expect(flag(held.id)).toBe(true);
+    expect(flag(clear.id)).toBeUndefined();
+  });
+
   it('opens the invitation page from the old landing address and requires CSRF on acceptance', async () => {
     const { org, person } = await setup();
     const issued = await invite(org.id, person.primaryEmail);
@@ -621,7 +641,13 @@ describe('organization memberships', () => {
     const ctx = createServiceContext(env, { clock });
     const grants: Record<OrgRole, OrgCapability[]> = {
       org_admin: [...OrgCapabilitySchema.options],
-      integration_admin: ['org:read', 'integrations:read', 'integrations:manage', 'templates:read'],
+      integration_admin: [
+        'org:read',
+        'integrations:read',
+        'integrations:manage',
+        'templates:read',
+        'logs:read',
+      ],
       template_author: ['org:read', 'templates:read', 'templates:author'],
       template_reviewer: ['org:read', 'templates:read', 'templates:review'],
       template_publisher: ['org:read', 'templates:read', 'templates:publish'],
@@ -643,6 +669,7 @@ describe('organization memberships', () => {
         'messages:read',
         'scanning:read',
         'audit:read',
+        'logs:read',
       ],
     };
     await join(org.id, await makeUser(f), ['org_admin']);

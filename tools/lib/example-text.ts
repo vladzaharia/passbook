@@ -120,8 +120,21 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   connections: {
     // connectors/csv-url: what a test read.
     detail: ['3 rows. Columns: Booking ID, Name, Email, Plan, Valid until'],
+    // connectors/webhook-push/recipes: a setup guide's step and test lines.
+    text: [
+      'Shopify signs every webhook made in admin with one secret for the store.',
+      'Row menu, **Send test**. The sample may not be a real record, so no pass is issued.',
+    ],
+    // shared/copy/connection-warnings.ts
+    'warning.text': ['Your provider is sending old events. Check its clock and retries.'],
   },
-  webhooks: {},
+  webhooks: {
+    // webhooks/setup-guide.ts: the receiving server's steps and test line.
+    text: [
+      'Use the raw bytes, not re-serialized JSON.',
+      'Send a test from PassBook. Done after one 2xx.',
+    ],
+  },
   messages: {
     'broadcast.message': [
       'The gym closes at 18:00 on 24 December.',
@@ -136,6 +149,8 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
       'Insurance claim after a fall on 12 November.',
     ],
     note: ['Pilot pricing through March.', 'Two extra scanners for the league season.'],
+    // Pausing Polaris ID changes, and the ledger's reason for a call.
+    reason: ['Unexpected role changes in Polaris ID.'],
     // shared/copy/pass-setup.ts: the setup checks.
     message: ["Apple passes sign with PassBook's shared ID."],
     // An operation's current line and a waiting step's words (shared/operations/text.ts).
@@ -144,6 +159,10 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
   },
   identities: {
     'hold.reason': ['Issuer account under review by Google.'],
+    // modules/passes/identity-move*: a move row's reason and the operation's current line.
+    'move.reason': ['A connection owns this pass.'],
+    'move.text': ['Issuing replacements · 40 of 120'],
+    'step.detail': ['Waiting for the connector'],
   },
   status: {
     note: [

@@ -58,6 +58,13 @@ describe('registry', () => {
     // Every method's parameters are subjects, kinds, roles, token ids, an email or a context.
     expect(Object.keys(api).sort()).toEqual(
       [
+        'allowClientGroups',
+        'ensureScim',
+        'placeRoleGroups',
+        'restrictClient',
+        'setClientLogo',
+        'setupStatus',
+        'syncScim',
         'apply',
         'claims',
         'createGroup',

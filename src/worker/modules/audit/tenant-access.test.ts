@@ -204,7 +204,7 @@ describe('tenant audit access', () => {
     const user = await makeUser(f);
     await addMember(f, sandbox.id, user.id);
     const live = fake.user(user.id);
-    await expectProblem(await get(`?orgId=${sandbox.id}`, live), 409, 'ORG_TEST_ONLY');
+    await expectProblem(await get(`?orgId=${sandbox.id}`, live), 409, 'SANDBOX_TEST_ONLY');
     const test = fake.session({ userId: user.id, mode: 'test' });
     expect((await get(`?orgId=${sandbox.id}`, test)).status).toBe(200);
     await run(appEnv.DB, 'UPDATE sessions SET revoked_at = ? WHERE user_id = ?', [
@@ -268,7 +268,8 @@ describe('tenant audit access', () => {
     expect((await get(`?orgId=${north.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
     expect((await get(`?orgId=${south.id}`, fake.apiKey({ orgId: north.id }))).status).toBe(403);
     expect((await get(`?orgId=${north.id}`, fake.apiKey({ scopes: [] }))).status).toBe(403);
-    expect((await get('', fake.apiKey(), true)).status).toBe(401);
+    // The platform log takes a Platform key holding platform:audit (PK-6c); a key without it gets 403, never the log.
+    await expectProblem(await get('', fake.apiKey(), true), 403, 'MISSING_SCOPE');
   });
 
   it('masks foreign actors and targets, and does not turn ID filters into association oracles', async () => {

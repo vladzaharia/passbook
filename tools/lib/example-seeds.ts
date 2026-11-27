@@ -32,6 +32,7 @@ import {
 } from './example-canon.ts';
 import { DEV_ACCESS_SEEDS } from './example-seeds-dev-access.ts';
 import { IDP_SEEDS } from './example-seeds-idp.ts';
+import { SETUP_SEEDS } from './example-seeds-setup.ts';
 import { API, hex, IDS, IMPORT, IMPORT_PLAN, PASS, T, TEMPLATE } from './example-world.ts';
 
 const uuid = (seed: string): string => `0193a1b2-7c00-7000-8000-${hex(seed, 12)}`;
@@ -162,6 +163,7 @@ const READY = {
 export const SEEDS: Record<string, unknown> = {
   ...IDP_SEEDS,
   ...DEV_ACCESS_SEEDS,
+  ...SETUP_SEEDS,
   'pass-imports.postPassImports response': READY,
   'pass-imports.postPassImportsByIdCheck response': READY,
   'pass-imports.postPassImportsByIdCommit request': { skipInvalid: true, email: true },
@@ -349,6 +351,7 @@ export const SEEDS: Record<string, unknown> = {
     message: 'Your day pass was replaced by a monthly membership.',
     selection: { filter: { templateId: IDS.template, status: 'active' }, expectCount: 128 },
   },
+  'passes.postPassesByIdSimulate request': { event: 'installed' },
   'passes.postPassesByIdRemove request': {
     message: 'Your day pass was replaced by a monthly membership.',
   },
@@ -669,6 +672,23 @@ export const SEEDS: Record<string, unknown> = {
     ],
     durationMs: 1650,
   },
+  'connections.getConnectionsByIdWebhookArrivals response': {
+    items: [
+      {
+        id: uuid('webhook-arrival'),
+        receivedAt: T.updated,
+        lastAt: T.updated,
+        outcome: 'rejected',
+        reason: 'signature_mismatch',
+        topic: null,
+        contentClass: 'json',
+        eventRef: null,
+        usedPrevious: false,
+        count: 2,
+      },
+    ],
+    nextCursor: null,
+  },
   'connections.getConnectionsByIdWebhookFailures response': {
     items: [
       {
@@ -929,15 +949,19 @@ export const SEEDS: Record<string, unknown> = {
     versions: [{ ...KEYSET.versions[0], state: 'retired', stateAt: T.now }],
   },
   'nfc-keysets.postNfcKeysetsByIdReenrol response': { moved: 12, ownKey: 0, keyset: KEYSET },
+  // A key never gives or changes an admin role (KEY_CANNOT_ADMINISTER), so the examples a key runs use another.
   'organization-memberships.postOrgsByIdInvitations request': {
     email: 'priya@example.com',
-    roles: ['org_admin'],
+    roles: ['pass_operator'],
+  },
+  'organization-memberships.patchOrgsByIdMembershipsByMembershipId request': {
+    roles: ['read_only'],
   },
   'organization-memberships.postOrgsByIdInvitations response': {
     id: uuid('invitation-priya'),
     orgId: IDS.org,
     email: 'priya@example.com',
-    roles: ['org_admin'],
+    roles: ['pass_operator'],
     createdAt: T.now,
     expiresAt: T.now + 7 * 24 * 3_600_000,
     revokedAt: null,

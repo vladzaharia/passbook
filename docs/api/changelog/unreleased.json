@@ -32,6 +32,30 @@
     "note": "Discard a pending revision and its stored file."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+    "op": "DELETE /api/v1/connections/{id}/webhook-secret/previous",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsUploadsByFileId",
@@ -40,20 +64,21 @@
     "note": "Discard a draft upload and its stored file."
   },
   {
-    "key": "DELETE /api/v1/developer/sandbox 200.timeZone: field added",
-    "class": "additive",
-    "operationId": "developer.deleteSandbox",
-    "op": "DELETE /api/v1/developer/sandbox",
-    "change": "200.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
-  },
-  {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
     "class": "breaking",
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "behavior changed",
     "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
+  },
+  {
+    "key": "DELETE /api/v1/developer/sandbox response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.deleteSandbox",
+    "op": "DELETE /api/v1/developer/sandbox",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.delete); follow it at GET /operations/{id}. A browser session calls it: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -104,6 +129,22 @@
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
   },
   {
+    "key": "DELETE /api/v1/me/passes/{id} 200.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "200.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "DELETE /api/v1/me/passes/{id} 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.deleteMePassesById",
+    "op": "DELETE /api/v1/me/passes/{id}",
+    "change": "202.operationId: field added",
+    "note": "The removal is an operation: follow it at GET /operations/{id}. It waits until the wallets let go. Only the holder's own session reads it."
+  },
+  {
     "key": "DELETE /api/v1/nfc/bindings/{bindingId} callable by nfc:write key",
     "class": "additive",
     "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
@@ -152,6 +193,38 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKey",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/members/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/members/{id}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
+    "op": "DELETE /api/v1/platform/idp/groups/{key}/rules/{id}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "DELETE /api/v1/platform/invitations/{id} new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.deletePlatformInvitationsById",
+    "op": "DELETE /api/v1/platform/invitations/{id}",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
     "key": "DELETE /api/v1/scan/draft new operation",
     "class": "additive",
     "operationId": "scan.deleteScanDraft",
@@ -190,6 +263,14 @@
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
@@ -232,6 +313,30 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "DELETE /api/v1/users/{id}/holds/{role} new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.deleteUsersByIdHoldsByRole",
+    "op": "DELETE /api/v1/users/{id}/holds/{role}",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
+    "key": "DELETE /api/v1/workbench/token new operation",
+    "class": "additive",
+    "operationId": "workbench.deleteToken",
+    "op": "DELETE /api/v1/workbench/token",
+    "change": "new operation",
+    "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
+  },
+  {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeys",
@@ -240,12 +345,60 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysById",
     "op": "GET /api/v1/api-keys/{id}",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
@@ -262,6 +415,22 @@
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -392,6 +561,54 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "GET /api/v1/connections 200.items[].firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections 200.items[].warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "200.items[].warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
+    "key": "GET /api/v1/connections param query:health: enum value \"awaiting\" added",
+    "class": "additive",
+    "operationId": "connections.getConnections",
+    "op": "GET /api/v1/connections",
+    "change": "param query:health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsById",
@@ -414,6 +631,14 @@
     "op": "GET /api/v1/connections/{id}",
     "change": "200.runs[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "GET /api/v1/connections/{id}/files new operation",
@@ -446,6 +671,38 @@
     "op": "GET /api/v1/connections/{id}/runs",
     "change": "200.items[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/setup new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdSetup",
+    "op": "GET /api/v1/connections/{id}/setup",
+    "change": "new operation",
+    "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals 200.items[].retentionId: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "200.items[].retentionId: field added",
+    "note": "Accepted arrivals carry retentionId, their retained work in webhook-failures, so a delivery that issued nothing can be told."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "new operation",
+    "note": "List what the webhook ingress saw for a connection: outcome and reason, never the body."
+  },
+  {
+    "key": "GET /api/v1/connections/summary 200.attention[].health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.getConnectionsSummary",
+    "op": "GET /api/v1/connections/summary",
+    "change": "200.attention[].health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
   },
   {
     "key": "GET /api/v1/connections/uploads/{fileId} new operation",
@@ -504,6 +761,30 @@
     "note": "Each sender recipe carries entitled; with an org the list keeps only the recipes the plan allows."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
@@ -552,6 +833,46 @@
     "note": "Each recipe lists whether the plan allows it for new connections. Always true without an org."
   },
   {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].line: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].line: field added",
+    "note": "Each sender recipe carries line, the picker line for what its record becomes."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].secretOrigin: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].secretOrigin: field added",
+    "note": "Each sender recipe carries secretOrigin: provider when the sender makes the signing secret, passbook when PassBook does."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].setupVersion: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].setupVersion: field added",
+    "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
+  },
+  {
+    "key": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup new operation",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
+    "op": "GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup",
+    "change": "new operation",
+    "note": "A sender's webhook setup guide as data: steps, topics, secret origin and fix lines. Steps with verified: false may differ at the sender."
+  },
+  {
+    "key": "GET /api/v1/developer/access 200.invitedBy: field added",
+    "class": "additive",
+    "operationId": "developer.getAccess",
+    "op": "GET /api/v1/developer/access",
+    "change": "200.invitedBy: field added",
+    "note": "Who invited the developer, when the invitation names them."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -560,12 +881,44 @@
     "note": "GET /developer/access answers yes, none or email, with signInUrl for an email session."
   },
   {
+    "key": "GET /api/v1/developer/home 200.calls[].apiVersion: field added",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.calls[].apiVersion: field added",
+    "note": "apiVersion is the PassBook-Version date the call pinned."
+  },
+  {
     "key": "GET /api/v1/developer/home 200.calls[].client: field added",
     "class": "additive",
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].client: field added",
     "note": "client names the tool that made the call (curl, an SDK), read from its user agent; null when it sent none."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.calls[].flags: field added",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.calls[].flags: field added",
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.calls[].resourceId: field added",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.calls[].resourceId: field added",
+    "note": "resourceId is the pass, template or key the call touched."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" added",
@@ -584,12 +937,76 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.quotas: field added",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.quotas: field added",
+    "note": "Quotas: what the sandbox holds against its plan caps (passes, templates, endpoints, keys)."
+  },
+  {
     "key": "GET /api/v1/developer/home new operation",
     "class": "additive",
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "new operation",
     "note": "GET /developer/home: your sandbox, quickstart track, usage, keys, calls, webhooks, passes, Live orgs. GET /developer/logs takes source and after."
+  },
+  {
+    "key": "GET /api/v1/developer/logs 200.bodiesRecorded: field added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "200.bodiesRecorded: field added",
+    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
+  },
+  {
+    "key": "GET /api/v1/developer/logs 200.items[].apiVersion: field added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "200.items[].apiVersion: field added",
+    "note": "apiVersion is the PassBook-Version date the call pinned."
+  },
+  {
+    "key": "GET /api/v1/developer/logs 200.items[].flags: field added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "200.items[].flags: field added",
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
+  },
+  {
+    "key": "GET /api/v1/developer/logs 200.items[].resourceId: field added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "200.items[].resourceId: field added",
+    "note": "resourceId is the pass, template or key the call touched."
+  },
+  {
+    "key": "GET /api/v1/developer/logs optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "optional parameter query:passId added",
+    "note": "passId filters to the calls that touched a pass, template or key."
   },
   {
     "key": "GET /api/v1/developer/logs optional parameter query:portal added",
@@ -600,12 +1017,92 @@
     "note": "hide leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/logs optional parameter query:version added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "optional parameter query:version added",
+    "note": "version filters to the calls that pinned a PassBook-Version date."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.apiVersion: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.apiVersion: field added",
+    "note": "apiVersion is the PassBook-Version date the call pinned."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.bodiesRecorded: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.bodiesRecorded: field added",
+    "note": "bodiesRecorded says whether the organization records request bodies in Test (a sandbox always does; other organizations by setting)."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.bodiesTruncated: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.bodiesTruncated: field added",
+    "note": "bodiesTruncated is true when a stored body was cut at 8 KB or was too large to keep. Bodies are shown only to a reader who can also read passes."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.flags: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.flags: field added",
+    "note": "flags say which of Idempotency-Key, If-Match and PassBook-Version the call carried. Values are only in the detail's allowlisted headers."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.headers: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.headers: field added",
+    "note": "headers holds the call's allowlisted request and response header values, redacted; null on older rows. Never Authorization or cookies."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} 200.resourceId: field added",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "200.resourceId: field added",
+    "note": "resourceId is the pass, template or key the call touched."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "developer.getRail",
     "op": "GET /api/v1/developer/rail",
     "change": "200.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "GET /api/v1/developer/rail 200.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "200.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "GET /api/v1/developer/rail 200.series: field added",
@@ -616,12 +1113,100 @@
     "note": "The rail carries the last hour in five-minute buckets; callsLastHour leaves out the portal's own background reads."
   },
   {
+    "key": "GET /api/v1/developer/resolve 200.id: field added",
+    "class": "additive",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.id: field added",
+    "note": "The id as stored. The lookup also takes ids of keys, events, endpoints, captures, delivery attempts and operations."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"capture\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"capture\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"delivery\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"delivery\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"device_pass\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"device_pass\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"endpoint\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"endpoint\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"event\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"event\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"key\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"key\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"live\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"live\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"operation\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"operation\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve 200.kind: enum value \"sandbox\" added",
+    "class": "notable",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "200.kind: enum value \"sandbox\" added",
+    "note": "New kind of object the id lookup names."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "new operation",
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
+  },
+  {
+    "key": "GET /api/v1/developer/resolve optional parameter query:orgId added",
+    "class": "additive",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "optional parameter query:orgId added",
+    "note": "orgId looks in an organization where you may use Test. Omit it for your own sandbox."
   },
   {
     "key": "GET /api/v1/developer/sandbox 200.sandbox.timeZone: field added",
@@ -640,12 +1225,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|0.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|0.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|1.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|1.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|1.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|1.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|10.requestId: field added",
@@ -656,12 +1257,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|10.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|10.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|11.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|11.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|11.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|11.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|12.requestId: field added",
@@ -672,12 +1289,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|12.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|12.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|13.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|13.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|13.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|13.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|14.requestId: field added",
@@ -688,12 +1321,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|14.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|14.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|15.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|15.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|15.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|15.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|16.requestId: field added",
@@ -704,12 +1353,36 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|16.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|16.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|17.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|17.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|2.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|2.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|2.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|2.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|3.requestId: field added",
@@ -720,12 +1393,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|3.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|3.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|4.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|4.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|4.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|4.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|5.requestId: field added",
@@ -736,6 +1425,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|5.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|5.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|6.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -744,12 +1441,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|6.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|6.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|7.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|7.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|7.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|7.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events 200.items[]|8.data.exit: field added",
@@ -776,12 +1489,44 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|8.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|8.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|9.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
     "op": "GET /api/v1/events",
     "change": "200.items[]|9.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|9.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|9.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events optional parameter query:order added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "optional parameter query:order added",
+    "note": "order=desc reads the newest events first in one page. Its nextCursor is the newest event's: pass it as after to read what comes next."
+  },
+  {
+    "key": "GET /api/v1/events optional parameter query:requestId added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "optional parameter query:requestId added",
+    "note": "requestId keeps the events that call caused: the x-request-id the response carried."
   },
   {
     "key": "GET /api/v1/events/{id} 200|0.requestId: field added",
@@ -792,12 +1537,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|0.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|0.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|1.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|1.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|1.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|1.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|10.requestId: field added",
@@ -808,12 +1569,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|10.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|10.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|11.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|11.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|11.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|11.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|12.requestId: field added",
@@ -824,12 +1601,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|12.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|12.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|13.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|13.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|13.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|13.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|14.requestId: field added",
@@ -840,12 +1633,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|14.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|14.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|15.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|15.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|15.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|15.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|16.requestId: field added",
@@ -856,12 +1665,36 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|16.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|16.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|17.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|17.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|2.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|2.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|2.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|2.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|3.requestId: field added",
@@ -872,12 +1705,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|3.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|3.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|4.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|4.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|4.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|4.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|5.requestId: field added",
@@ -888,6 +1737,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|5.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|5.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|6.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
@@ -896,12 +1753,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|6.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|6.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|7.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|7.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|7.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|7.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/events/{id} 200|8.data.exit: field added",
@@ -928,12 +1801,44 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|8.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|8.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|9.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
     "op": "GET /api/v1/events/{id}",
     "change": "200|9.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|9.simulated: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|9.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events/{id}/deliveries 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "events.getEventsByIdDeliveries",
+    "op": "GET /api/v1/events/{id}/deliveries",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/events/{id}/deliveries new operation",
+    "class": "additive",
+    "operationId": "events.getEventsByIdDeliveries",
+    "op": "GET /api/v1/events/{id}/deliveries",
+    "change": "new operation",
+    "note": "Where one event was sent: its delivery to each endpoint, with state and last attempt. Needs passes:read."
   },
   {
     "key": "GET /api/v1/identities 200|0.items[].handle: field added",
@@ -1304,6 +2209,22 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.getOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "200.items[].accessPaused: field added",
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/memberships 200.items[].capabilities[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "organization-memberships.getOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdPlan",
@@ -1376,6 +2297,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/orgs/memberships/me 200.items[].capabilities[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "organization-memberships.getOrgsMembershipsMe",
+    "op": "GET /api/v1/orgs/memberships/me",
+    "change": "200.items[].capabilities[]: enum value \"logs:read\" added",
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+  },
+  {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
     "class": "additive",
     "operationId": "pass-imports.getPassImportsById",
@@ -1440,6 +2369,30 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "GET /api/v1/passes 200.items[].orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].orgName: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].templateName: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].timeZone: field added",
+    "note": "Sent on lists across organizations (orgId=all)."
+  },
+  {
     "key": "GET /api/v1/passes optional parameter query:count added",
     "class": "additive",
     "operationId": "passes.getPasses",
@@ -1448,12 +2401,84 @@
     "note": "count=true adds the number of passes the filters match."
   },
   {
+    "key": "GET /api/v1/passes optional parameter query:orgIds added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "optional parameter query:orgIds added",
+    "note": "With orgId=all, only these organizations (comma-separated, up to 50)."
+  },
+  {
+    "key": "GET /api/v1/passes orgId=all",
+    "class": "notable",
+    "operationId": "",
+    "op": "GET /api/v1/passes",
+    "change": "orgId=all",
+    "note": "orgId=all lists every organization you can read passes in. A sign-in gets its memberships with passes:read; an All-organizations key gets all."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesById",
+    "op": "GET /api/v1/passes/{id}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
+  },
+  {
     "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "passes.getPassesByIdChannels",
     "op": "GET /api/v1/passes/{id}/channels",
     "change": "200.levels: field added",
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/devices 200.devices[].deviceId: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdDevices",
+    "op": "GET /api/v1/passes/{id}/devices",
+    "change": "200.devices[].deviceId: field added",
+    "note": "Devices made by Simulate carry deviceId, the id the simulate call returned."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/devices 200.devices[].simulated: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdDevices",
+    "op": "GET /api/v1/passes/{id}/devices",
+    "change": "200.devices[].simulated: field added",
+    "note": "Devices made by Simulate carry simulated: true."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdEvents",
+    "op": "GET /api/v1/passes/{id}/events",
+    "change": "200.items[].kind: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
@@ -1478,6 +2503,38 @@
     "op": "GET /api/v1/passes/{id}/prints",
     "change": "200.prints[].stale: field added",
     "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/versions/{version} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdVersionsByVersion",
+    "op": "GET /api/v1/passes/{id}/versions/{version}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
@@ -1512,6 +2569,38 @@
     "note": "Lists recorded Apple provisioning calls."
   },
   {
+    "key": "GET /api/v1/platform/apple/identities 200.items[].readiness: field added",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentities",
+    "op": "GET /api/v1/platform/apple/identities",
+    "change": "200.items[].readiness: field added",
+    "note": "Each platform identity reports the checks Make default runs: certificate, issuing, push, probe within 24 hours, device test."
+  },
+  {
+    "key": "GET /api/v1/platform/apple/identities new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentities",
+    "op": "GET /api/v1/platform/apple/identities",
+    "change": "new operation",
+    "note": "Platform admins read the platform Apple identities with registration counts and open setup runs. Session only."
+  },
+  {
+    "key": "GET /api/v1/platform/apple/identity-moves new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentityMoves",
+    "op": "GET /api/v1/platform/apple/identity-moves",
+    "change": "new operation",
+    "note": "Platform admins list identity move rows with state and reason, including kept_both and unarmed. Session only."
+  },
+  {
+    "key": "GET /api/v1/platform/apple/identity-moves/preview new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleIdentityMovesPreview",
+    "op": "GET /api/v1/platform/apple/identity-moves/preview",
+    "change": "new operation",
+    "note": "Dry run of an identity move: pass, device and holder counts, kept passes by reason. 409 IDENTITY_CHAIN_INVALID if the target cannot sign. Session only."
+  },
+  {
     "key": "GET /api/v1/platform/entitlement-presets new operation",
     "class": "additive",
     "operationId": "entitlements.getPlatformEntitlementPresets",
@@ -1520,12 +2609,84 @@
     "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
+    "key": "GET /api/v1/platform/idp new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdp",
+    "op": "GET /api/v1/platform/idp",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/calls new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpCalls",
+    "op": "GET /api/v1/platform/idp/calls",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/drift new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.getPlatformIdpDrift",
+    "op": "GET /api/v1/platform/idp/drift",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroups",
+    "op": "GET /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
     "key": "GET /api/v1/platform/idp/groups/{key}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
     "op": "GET /api/v1/platform/idp/groups/{key}/claims",
     "change": "new operation",
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
+    "op": "GET /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.getPlatformIdpGroupsByKeyRules",
+    "op": "GET /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "GET /api/v1/platform/idp/setup new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.getPlatformIdpSetup",
+    "op": "GET /api/v1/platform/idp/setup",
+    "change": "new operation",
+    "note": "Read what Polaris ID setup has done and what is left, item by item."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations 200.items[].createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "200.items[].createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -1560,6 +2721,14 @@
     "note": "Platform admins read the names of personal organizations, which are not listed, to label them in views that show an org by id."
   },
   {
+    "key": "GET /api/v1/platform/settings new operation",
+    "class": "additive",
+    "operationId": "settings.getPlatformSettings",
+    "op": "GET /api/v1/platform/settings",
+    "change": "new operation",
+    "note": "Read the platform settings. A Platform key reads them with platform:read or platform:settings."
+  },
+  {
     "key": "GET /api/v1/platform/wallet-credentials 200.items[].lastCheck: field added",
     "class": "additive",
     "operationId": "wallet-platform.getPlatformWalletCredentials",
@@ -1582,6 +2751,38 @@
     "op": "GET /api/v1/platform/wallet-release",
     "change": "new operation",
     "note": "Platform admins read the Google and Samsung release per mode: state, credentials, enrollments by readiness, templates and provider copies."
+  },
+  {
+    "key": "GET /api/v1/request-logs new operation",
+    "class": "additive",
+    "operationId": "workbench.listRequestLogs",
+    "op": "GET /api/v1/request-logs",
+    "change": "new operation",
+    "note": "Lists an organization's Test calls for 7 days, with filters and an after cursor to tail."
+  },
+  {
+    "key": "GET /api/v1/request-logs/{id} 200.headers: field added",
+    "class": "additive",
+    "operationId": "workbench.getRequestLog",
+    "op": "GET /api/v1/request-logs/{id}",
+    "change": "200.headers: field added",
+    "note": "headers holds the call's allowlisted request and response header values, redacted; null on older rows. Never Authorization or cookies."
+  },
+  {
+    "key": "GET /api/v1/request-logs/{id} new operation",
+    "class": "additive",
+    "operationId": "workbench.getRequestLog",
+    "op": "GET /api/v1/request-logs/{id}",
+    "change": "new operation",
+    "note": "Reads one Test call, with redacted bodies for 24 hours where the organization records them."
+  },
+  {
+    "key": "GET /api/v1/resolve new operation",
+    "class": "additive",
+    "operationId": "workbench.getResolve",
+    "op": "GET /api/v1/resolve",
+    "change": "new operation",
+    "note": "What an id is in your Test data. kind live means it exists in Live; open it in admin. Browser and try token only, no key."
   },
   {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
@@ -1688,6 +2889,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "GET /api/v1/scan/visitors operation removed",
     "class": "breaking",
     "operationId": "scan.getScanVisitors",
@@ -1734,6 +2943,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -1888,6 +3105,22 @@
     "note": "Google and Samsung candidate lists carry current: the Apple release's version and id, and the wallet's report compiled now."
   },
   {
+    "key": "GET /api/v1/templates/{id}/candidates 200.items[].selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.items[].selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/candidates 200.wallet: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdCandidates",
+    "op": "GET /api/v1/templates/{id}/candidates",
+    "change": "200.wallet: field added",
+    "note": "Google and Samsung candidate lists carry wallet (on, off or not_released) for a caller who can review the template."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -1984,6 +3217,22 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/test-inbox 200.items[].failed: field added",
+    "class": "additive",
+    "operationId": "sandbox.getTestInbox",
+    "op": "GET /api/v1/test-inbox",
+    "change": "200.items[].failed: field added",
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+  },
+  {
+    "key": "GET /api/v1/test-inbox/{id} 200.failed: field added",
+    "class": "additive",
+    "operationId": "sandbox.getTestInboxById",
+    "op": "GET /api/v1/test-inbox/{id}",
+    "change": "200.failed: field added",
+    "note": "Test inbox messages carry failed: true after Simulate sends email_failed."
+  },
+  {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.getUsers",
@@ -2040,6 +3289,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id}/access new operation",
+    "class": "additive",
+    "operationId": "polaris-access.getUsersByIdAccess",
+    "op": "GET /api/v1/users/{id}/access",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
     "key": "GET /api/v1/users/{id}/claims new operation",
     "class": "additive",
     "operationId": "polaris-claims.getUsersByIdClaims",
@@ -2080,6 +3337,30 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints 200.items[].eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpoints",
+    "op": "GET /api/v1/webhook-endpoints",
+    "change": "200.items[].eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id} 200.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsById",
+    "op": "GET /api/v1/webhook-endpoints/{id}",
+    "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/captures optional parameter query:passId added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
@@ -2094,6 +3375,30 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/captures",
     "change": "optional parameter query:requestId added",
     "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures param query:type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures",
+    "change": "param query:type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId} 200.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/captures/{captureId}",
+    "change": "200.type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries optional parameter query:passId added",
@@ -2112,12 +3417,28 @@
     "note": "Capture and delivery lists filter by requestId (the x-request-id of the causing call) and passId."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries param query:type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries",
+    "change": "param query:type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|0.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|0.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|0.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|1.requestId: field added",
@@ -2128,12 +3449,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|1.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|1.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|10.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|10.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|10.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|10.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|11.requestId: field added",
@@ -2144,12 +3481,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|11.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|11.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|12.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|12.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|12.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|12.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|13.requestId: field added",
@@ -2160,12 +3513,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|13.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|13.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|14.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|14.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|14.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|14.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.requestId: field added",
@@ -2176,12 +3545,36 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|15.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|16.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|16.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|16.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|16.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|17.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|17.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|2.requestId: field added",
@@ -2192,12 +3585,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|2.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|2.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|3.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|3.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|3.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|3.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|4.requestId: field added",
@@ -2208,12 +3617,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|4.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|4.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|5.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|5.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|5.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|5.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.requestId: field added",
@@ -2224,12 +3649,28 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|6.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|7.requestId: field added",
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|7.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.data.exit: field added",
@@ -2256,6 +3697,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|8.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|8.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|9.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
@@ -2264,12 +3713,76 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|9.simulated: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|9.simulated: field added",
+    "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/tests 200.items[].type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.getWebhookEndpointsByIdTests",
+    "op": "GET /api/v1/webhook-endpoints/{id}/tests",
+    "change": "200.items[].type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdTests",
     "op": "GET /api/v1/webhook-endpoints/{id}/tests",
     "change": "new operation",
     "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/setup new operation",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsSetup",
+    "op": "GET /api/v1/webhook-endpoints/setup",
+    "change": "new operation",
+    "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts 200.orgs[].timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.orgs[].timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts new operation",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "new operation",
+    "note": "The sandbox and organizations where you may use Test, with the tools your roles read in each. Browser only."
+  },
+  {
+    "key": "GET /api/v1/workbench/summary new operation",
+    "class": "additive",
+    "operationId": "workbench.getSummary",
+    "op": "GET /api/v1/workbench/summary",
+    "change": "new operation",
+    "note": "Navigation counts for one Test context: errors, failed deliveries, emails, expiring keys, quickstart and sandbox quotas. Browser only."
   },
   {
     "key": "GET /b/{token}/{passId} new operation",
@@ -2439,6 +3952,30 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "PATCH /api/v1/connections/{id} 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "PATCH /api/v1/connections/{id} 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.patchConnectionsUploadsByFileId",
@@ -2527,6 +4064,22 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "200.accessPaused: field added",
+    "note": "A member whose Polaris ID access PassBook paused reads accessPaused: true."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.capabilities[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
+    "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
+    "change": "200.capabilities[]: enum value \"logs:read\" added",
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+  },
+  {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} new operation",
     "class": "additive",
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
@@ -2541,6 +4094,46 @@
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
     "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PATCH /api/v1/passes/{id} 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.patchPassesById",
+    "op": "PATCH /api/v1/passes/{id}",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
+  },
+  {
+    "key": "PATCH /api/v1/platform/idp/groups/{key} new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.patchPlatformIdpGroupsByKey",
+    "op": "PATCH /api/v1/platform/idp/groups/{key}",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
   },
   {
     "key": "PATCH /api/v1/platform/idp/groups/{key}/claims new operation",
@@ -2623,6 +4216,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -2661,6 +4262,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -2727,12 +4336,52 @@
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
   },
   {
+    "key": "PATCH /api/v1/webhook-endpoints/{id} 200.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.patchWebhookEndpointsById",
+    "op": "PATCH /api/v1/webhook-endpoints/{id}",
+    "change": "200.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "PATCH /api/v1/webhook-endpoints/{id} body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.patchWebhookEndpointsById",
+    "op": "PATCH /api/v1/webhook-endpoints/{id}",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "201.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
@@ -2757,6 +4406,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "422: code API_KEY_SCOPE_TEST_ONLY added",
     "note": "A Live key is refused templates:review and templates:publish, named or through a role; they work with Test keys only, and a Live role key leaves them out."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"logs:read\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:read\" added",
@@ -2791,6 +4448,86 @@
     "note": "Keys may hold nfc:read or nfc:write, named on the key and never from a role; not for platform keys."
   },
   {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:audit\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:audit\" added",
+    "note": "Platform keys may hold platform:audit: read the ledger of calls to Polaris ID."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:claims\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:claims\" added",
+    "note": "Platform keys may hold platform:claims: read and set Polaris ID claims on users and groups. A platform admin's claims are a person's (409 IDP_PLATFORM_ADMIN)."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:groups\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:groups\" added",
+    "note": "Platform keys may hold platform:groups: list, create, rename and delete Polaris ID groups, their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:identities\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:identities\" added",
+    "note": "A new key scope, platform:identities, for the Apple identity routes. A Platform key holding it signs and rotates; deleting an identity stays a person's."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:orgs\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:orgs\" added",
+    "note": "Platform keys may hold platform:orgs: list, read, create and suspend orgs, features, holds, receipts. Personal orgs, org close and hold release are a person's."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:read\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:settings\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:settings\" added",
+    "note": "Platform keys may hold platform:settings: read and write the platform settings, except sign-in (auth.*, oidc.*), which is a person's (403 PERSON_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:status\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:status\" added",
+    "note": "Platform keys may hold platform:status: read the Polaris ID status."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:users\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:users\" added",
+    "note": "Platform keys may hold platform:users: platform roles, Polaris ID checks, invitations, access reads and the offboard plan."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:wallet\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:wallet\" added",
+    "note": "Platform keys may hold platform:wallet: the wallet release report and the enable-ready dry run. An apply is a person's (403 PERSON_REQUIRED)."
+  },
+  {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -2823,12 +4560,44 @@
     "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
@@ -2839,12 +4608,60 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:claims\" added",
@@ -2855,6 +4672,30 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
@@ -2863,12 +4704,52 @@
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"logs:read\" added",
+    "note": "A new scope, logs:read, reads the Test request log. Test keys only; a member with integrations:read holds it through the same roles."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:claims\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:claims\" added",
     "note": "New scope platform:claims. Only a platform admin session acts on it; no key can hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:groups\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:groups\" added",
+    "note": "A new key scope, platform:groups, for the Polaris ID groups routes."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"platform:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.scopes[]: enum value \"platform:read\" added",
+    "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -3285,6 +5166,38 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections 201.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "POST /api/v1/connections 201.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "201.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
+  },
+  {
+    "key": "POST /api/v1/connections behavior changed",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "behavior changed",
+    "note": "Shopify, Stripe and Ticket Tailor connections start with no secret when webhookSecret is omitted; PATCH sets it. Shopify secrets may be shared in one org."
+  },
+  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -3314,7 +5227,7 @@
     "operationId": "connections.postConnectionsByIdPreview",
     "op": "POST /api/v1/connections/{id}/preview",
     "change": "new operation",
-    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
+    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Send arrivalId to preview a kept webhook arrival. Writes nothing."
   },
   {
     "key": "POST /api/v1/connections/{id}/probe new operation",
@@ -3323,6 +5236,38 @@
     "op": "POST /api/v1/connections/{id}/probe",
     "change": "new operation",
     "note": "Probe a saved REST connection, with its stored secrets or a config override. Stored secrets never go to a new host. Same limits as the unsaved probe."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/sync 202.operationId: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdSync",
+    "op": "POST /api/v1/connections/{id}/sync",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the sync; null when the sync joined a run that was already open. Read it with GET /api/v1/operations/{id}."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.firstVerifiedArrivalAt: field added",
+    "note": "Connections carry firstVerifiedArrivalAt: when the first correctly signed webhook arrived, or null."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.health: enum value \"awaiting\" added",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.health: enum value \"awaiting\" added",
+    "note": "A webhook connection with no verified delivery yet reports health awaiting instead of unknown."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/webhook-secret 200.warning: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdWebhookSecret",
+    "op": "POST /api/v1/connections/{id}/webhook-secret",
+    "change": "200.warning: field added",
+    "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
     "key": "POST /api/v1/connections/probe new operation",
@@ -3437,12 +5382,13 @@
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
   },
   {
-    "key": "POST /api/v1/developer/sandbox 201.timeZone: field added",
-    "class": "additive",
+    "key": "POST /api/v1/developer/sandbox response 201 removed",
+    "class": "breaking",
     "operationId": "developer.postSandbox",
     "op": "POST /api/v1/developer/sandbox",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.create); mint the key after with POST /developer/sandbox/key. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/close 200.timeZone: field added",
@@ -3461,12 +5407,12 @@
     "note": "Close your developer sandbox: keys stop, read-only, 30 days to reopen. This was DELETE /developer/sandbox."
   },
   {
-    "key": "POST /api/v1/developer/sandbox/recreate 201.timeZone: field added",
+    "key": "POST /api/v1/developer/sandbox/key new operation",
     "class": "additive",
-    "operationId": "developer.postSandboxRecreate",
-    "op": "POST /api/v1/developer/sandbox/recreate",
-    "change": "201.timeZone: field added",
-    "note": "Sandboxes carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+    "operationId": "developer.postSandboxKey",
+    "op": "POST /api/v1/developer/sandbox/key",
+    "change": "new operation",
+    "note": "Mints the sandbox API key once, after create or recreate finishes. Browser session only."
   },
   {
     "key": "POST /api/v1/developer/sandbox/recreate new operation",
@@ -3475,6 +5421,15 @@
     "op": "POST /api/v1/developer/sandbox/recreate",
     "change": "new operation",
     "note": "Delete your developer sandbox and make a new one in one call; the new key is shown once. Counts as a delete."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/recreate response 201 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxRecreate",
+    "op": "POST /api/v1/developer/sandbox/recreate",
+    "change": "response 201 removed",
+    "note": "Answers 202 with an operation (sandbox.recreate); the key is minted after. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen 200.timeZone: field added",
@@ -3507,6 +5462,15 @@
     "op": "POST /api/v1/developer/sandbox/reset",
     "change": "new operation",
     "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset response 200 removed",
+    "class": "breaking",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "response 200 removed",
+    "note": "Answers 202 with an operation (sandbox.reset); no time budget or `more`. Browser session only: no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -3637,6 +5601,22 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
+    "key": "POST /api/v1/invitations/accept 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
+  },
+  {
+    "key": "POST /api/v1/invitations/accept 200.membership.capabilities[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsAccept",
+    "op": "POST /api/v1/invitations/accept",
+    "change": "200.membership.capabilities[]: enum value \"logs:read\" added",
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
+  },
+  {
     "key": "POST /api/v1/invitations/accept new operation",
     "class": "additive",
     "operationId": "invitations.postInvitationsAccept",
@@ -3653,6 +5633,30 @@
     "note": "Give the Polaris ID account that has the invited address the invitation's groups."
   },
   {
+    "key": "POST /api/v1/invitations/confirm new operation",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsConfirm",
+    "op": "POST /api/v1/invitations/confirm",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.groups: field added",
+    "class": "additive",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.groups: field added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
+  },
+  {
+    "key": "POST /api/v1/invitations/preview 200.kind: enum value \"platform\" added",
+    "class": "notable",
+    "operationId": "invitations.postInvitationsPreview",
+    "op": "POST /api/v1/invitations/preview",
+    "change": "200.kind: enum value \"platform\" added",
+    "note": "Platform invitations: the preview names the groups, and the kind can be platform."
+  },
+  {
     "key": "POST /api/v1/invitations/preview new operation",
     "class": "additive",
     "operationId": "invitations.postInvitationsPreview",
@@ -3667,6 +5671,38 @@
     "op": "POST /api/v1/invitations/setup",
     "change": "new operation",
     "note": "Create a Polaris ID from an invitation: a one-hour signup link that already carries the invitation's groups."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhone",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone",
+    "change": "202.operationId: field added",
+    "note": "Lost phone is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone/confirmation new operation",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdLostPhoneConfirmation",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone/confirmation",
+    "change": "new operation",
+    "note": "Emails a sign-in link back to the pass. Lost phone then needs an email-link session under 10 minutes old (409 EMAIL_CONFIRMATION_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/refresh 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdRefresh",
+    "op": "POST /api/v1/me/passes/{id}/refresh",
+    "change": "202.operationId: field added",
+    "note": "The refresh is an operation: follow it at GET /operations/{id}. Absent when an earlier refresh covers the click. Only the holder's own session reads it."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/resend 202.operationId: field added",
+    "class": "additive",
+    "operationId": "me.postMePassesByIdResend",
+    "op": "POST /api/v1/me/passes/{id}/resend",
+    "change": "202.operationId: field added",
+    "note": "The email is an operation: follow it at GET /operations/{id}. A second request while one runs answers 409 OPERATION_RUNNING with its id."
   },
   {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
@@ -3925,6 +5961,14 @@
     "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/exports 202.operationId: field added",
+    "class": "additive",
+    "operationId": "org-lifecycle.postOrgsByOrgIdExports",
+    "op": "POST /api/v1/orgs/{orgId}/exports",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the export. The download stays a separate call: POST /api/v1/orgs/{orgId}/exports/{exportId}/link."
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
     "class": "additive",
     "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
@@ -3987,6 +6031,14 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.capabilities[]: enum value \"logs:read\" added",
+    "class": "notable",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.capabilities[]: enum value \"logs:read\" added",
+    "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
@@ -4061,6 +6113,38 @@
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
   },
   {
+    "key": "POST /api/v1/passes 201.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes 201.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes 201.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes 201.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "201.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
+  },
+  {
     "key": "POST /api/v1/passes idempotency-key reserved prefixes",
     "class": "notable",
     "operationId": "passes.postPasses",
@@ -4117,12 +6201,132 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/remove 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/remove 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/remove 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/renew 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPassesByIdRenew",
+    "op": "POST /api/v1/passes/{id}/renew",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
     "class": "additive",
     "operationId": "passes.postPassesByIdRestore",
     "op": "POST /api/v1/passes/{id}/restore",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/simulate new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdSimulate",
+    "op": "POST /api/v1/passes/{id}/simulate",
+    "change": "new operation",
+    "note": "Simulate sends a real Test event for a Test pass; its signed webhooks carry the returned requestId. Live passes answer 409 SIMULATE_TEST_ONLY."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/stamps 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.postPassesByIdStamps",
+    "op": "POST /api/v1/passes/{id}/stamps",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
   },
   {
     "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
@@ -4133,12 +6337,76 @@
     "note": "Passes carry matched (input, value) when the list has a match filter."
   },
   {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
     "key": "POST /api/v1/passes/{id}/void 200.matched: field added",
     "class": "additive",
     "operationId": "passes.postPassesByIdVoid",
     "op": "POST /api/v1/passes/{id}/void",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-print 202.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkPrint",
+    "op": "POST /api/v1/passes/bulk-print",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the print job; null when nothing was printed. The PDF stays at GET /api/v1/passes/bulk-print/{jobId}/pdf."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-reissue 202.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkReissue",
+    "op": "POST /api/v1/passes/bulk-reissue",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the rebuild; null for a platform-wide run or a branding run."
   },
   {
     "key": "POST /api/v1/passes/bulk-runs new operation",
@@ -4155,6 +6423,150 @@
     "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
     "change": "new operation",
     "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk/channels 200.operationId: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkChannels",
+    "op": "POST /api/v1/passes/bulk/channels",
+    "change": "200.operationId: field added",
+    "note": "operationId names the operation that shows the code replacements; null when none is to be replaced."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identities new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentities",
+    "op": "POST /api/v1/platform/apple/identities",
+    "change": "new operation",
+    "note": "Starts the setup run for a platform identity slot (202). Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identities/{id}/default new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentitiesByIdDefault",
+    "op": "POST /api/v1/platform/apple/identities/{id}/default",
+    "change": "new operation",
+    "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+    "op": "POST /api/v1/platform/apple/identity-moves",
+    "change": "new operation",
+    "note": "Starts the identity.move operation (202). Session only, recent sign-in, Idempotency-Key. 409 IDENTITY_CHAIN_INVALID if the target cannot sign."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMovesByMoveIdArm",
+    "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
+    "change": "new operation",
+    "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/freeze new operation",
+    "class": "additive",
+    "operationId": "polaris-platform.postPlatformIdpFreeze",
+    "op": "POST /api/v1/platform/idp/freeze",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroups",
+    "op": "POST /api/v1/platform/idp/groups",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/members new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
+    "op": "POST /api/v1/platform/idp/groups/{key}/members",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/{key}/rules new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsByKeyRules",
+    "op": "POST /api/v1/platform/idp/groups/{key}/rules",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/groups/ensure new operation",
+    "class": "additive",
+    "operationId": "polaris-groups.postPlatformIdpGroupsEnsure",
+    "op": "POST /api/v1/platform/idp/groups/ensure",
+    "change": "new operation",
+    "note": "Polaris ID groups: list, create, rename, delete, and manage their org rules and manual members."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/reconcile new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpReconcile",
+    "op": "POST /api/v1/platform/idp/reconcile",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-breaker/clear new operation",
+    "class": "additive",
+    "operationId": "polaris-operations.postPlatformIdpScimBreakerClear",
+    "op": "POST /api/v1/platform/idp/scim-breaker/clear",
+    "change": "new operation",
+    "note": "Polaris ID status, drift, calls ledger, checks, freeze and the SCIM breaker clear."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/scim-token/rotate new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.postPlatformIdpScimTokenRotate",
+    "op": "POST /api/v1/platform/idp/scim-token/rotate",
+    "change": "new operation",
+    "note": "Replace the SCIM token without a gap. A dry run unless dryRun is false. Starts the idp.scim_rotate operation."
+  },
+  {
+    "key": "POST /api/v1/platform/idp/setup new operation",
+    "class": "additive",
+    "operationId": "polaris-setup.postPlatformIdpSetup",
+    "op": "POST /api/v1/platform/idp/setup",
+    "change": "new operation",
+    "note": "Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless dryRun is false. Starts the idp.setup operation."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "new operation",
+    "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -4333,6 +6745,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/device body.capabilities.draftFailures: optional input field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -4389,6 +6809,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
     "class": "additive",
     "operationId": "scan.postScanPairPreview",
@@ -4427,6 +6855,14 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
@@ -4493,12 +6929,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.capabilities.draftFailures: field added",
     "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.configRevision: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -4621,6 +7073,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -4651,6 +7111,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -4691,6 +7159,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].configRevision: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].configRevision: field added",
+    "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
@@ -4859,6 +7335,22 @@
     "op": "POST /api/v1/templates/{id}/archive",
     "change": "200.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/candidates 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidates",
+    "op": "POST /api/v1/templates/{id}/candidates",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/candidates/promote 201.selfAuthored: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdCandidatesPromote",
+    "op": "POST /api/v1/templates/{id}/candidates/promote",
+    "change": "201.selfAuthored: field added",
+    "note": "Google and Samsung candidate lists carry selfAuthored for a signed-in person: approving the candidate would be their own work."
   },
   {
     "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",
@@ -5173,6 +7665,30 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/users/{id}/offboard new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdOffboard",
+    "op": "POST /api/v1/users/{id}/offboard",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRoles",
+    "op": "POST /api/v1/users/{id}/roles",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/roles/{role}/remove-external new operation",
+    "class": "additive",
+    "operationId": "polaris-access.postUsersByIdRolesByRoleRemoveExternal",
+    "op": "POST /api/v1/users/{id}/roles/{role}/remove-external",
+    "change": "new operation",
+    "note": "A user's Polaris ID access: roles, restore, remove an external role and offboarding."
+  },
+  {
     "key": "POST /api/v1/visitors operation removed",
     "class": "breaking",
     "operationId": "visitors.postVisitors",
@@ -5205,6 +7721,14 @@
     "note": "Removed; host arrival emails are no longer sent. Action: email the host from your system on pass.scanned."
   },
   {
+    "key": "POST /api/v1/wallet-providers/reissue 202.operationId: field added",
+    "class": "additive",
+    "operationId": "wallet-providers.postWalletProvidersReissue",
+    "op": "POST /api/v1/wallet-providers/reissue",
+    "change": "202.operationId: field added",
+    "note": "operationId names the operation that shows the update; null when there is nothing to update."
+  },
+  {
     "key": "POST /api/v1/wallet-providers/reissue new operation",
     "class": "additive",
     "operationId": "wallet-providers.postWalletProvidersReissue",
@@ -5213,12 +7737,68 @@
     "note": "POST /wallet-providers/reissue sends every active Google or Samsung copy of an org's passes again. A key needs passes:write."
   },
   {
+    "key": "POST /api/v1/webhook-endpoints 201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpoints",
+    "op": "POST /api/v1/webhook-endpoints",
+    "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpoints",
+    "op": "POST /api/v1/webhook-endpoints",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay 201.type: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+    "op": "POST /api/v1/webhook-endpoints/{id}/captures/{captureId}/replay",
+    "change": "201.type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
     "key": "POST /api/v1/webhook-endpoints/{id}/secret body.overlapHours: values 1 and 168 added",
     "class": "additive",
     "operationId": "webhooks.postWebhookEndpointsByIdSecret",
     "op": "POST /api/v1/webhook-endpoints/{id}/secret",
     "change": "body.overlapHours: values 1 and 168 added",
     "note": "The old signing secret may now stay valid for 1 hour or 7 days (168) as well as 0, 24 or 72 hours."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/{id}/test body.type: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsByIdTest",
+    "op": "POST /api/v1/webhook-endpoints/{id}/test",
+    "change": "body.type: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/capture 201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "notable",
+    "operationId": "webhooks.postWebhookEndpointsCapture",
+    "op": "POST /api/v1/webhook-endpoints/capture",
+    "change": "201.endpoint.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/webhook-endpoints/capture body.eventTypes[]: enum value \"pass.replaced\" added",
+    "class": "additive",
+    "operationId": "webhooks.postWebhookEndpointsCapture",
+    "op": "POST /api/v1/webhook-endpoints/capture",
+    "change": "body.eventTypes[]: enum value \"pass.replaced\" added",
+    "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
+  },
+  {
+    "key": "POST /api/v1/workbench/token new operation",
+    "class": "additive",
+    "operationId": "workbench.postToken",
+    "op": "POST /api/v1/workbench/token",
+    "change": "new operation",
+    "note": "A 15-minute Test-only token for one org, bound to your session: your sandbox key, or you on x-workbench: test operations. Live: 403 WORKBENCH_TEST_ONLY."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
@@ -5341,6 +7921,38 @@
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
   },
   {
+    "key": "PUT /api/v1/passes/{id}/connection 200.orgName: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.orgName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.templateName: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.templateName: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.timeZone: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.timeZone: field added",
+    "note": "Passes may carry orgName, templateName and timeZone. Only lists across organizations send them."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/connection 200.versions[].source: enum value \"move\" added",
+    "class": "notable",
+    "operationId": "passes.putPassesByIdConnection",
+    "op": "PUT /api/v1/passes/{id}/connection",
+    "change": "200.versions[].source: enum value \"move\" added",
+    "note": "A version written by an identity move has source move."
+  },
+  {
     "key": "PUT /api/v1/passes/views new operation",
     "class": "additive",
     "operationId": "passes.putPassesViews",
@@ -5379,6 +7991,14 @@
     "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "PUT /api/v1/platform/settings new operation",
+    "class": "additive",
+    "operationId": "settings.putPlatformSettings",
+    "op": "PUT /api/v1/platform/settings",
+    "change": "new operation",
+    "note": "Change platform settings: an admin session (sign-in settings need a recent sign-in) or a platform:settings key that never names auth.* or oidc.*."
   },
   {
     "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field added",
@@ -5509,6 +8129,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",
+    "class": "notable",
+    "operationId": "",
+    "op": "Test key",
+    "change": "403 MODE_LIVE_REQUIRED: added",
+    "note": "A Test key outside a sandbox can no longer change brand, setup, zones, tag types or saved mappings: 403 MODE_LIVE_REQUIRED. SCAN_ZONE_LIVE_ONLY is retired."
+  },
+  {
     "key": "webhook pass.removed data.runId: field added",
     "class": "additive",
     "operationId": "webhook.pass.removed",
@@ -5539,5 +8167,13 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "Workbench token: file reads rate limit",
+    "class": "notable",
+    "operationId": "",
+    "op": "Workbench token",
+    "change": "template file reads: own rate limit",
+    "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
   }
 ]

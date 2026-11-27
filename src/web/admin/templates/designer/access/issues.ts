@@ -3,14 +3,9 @@ import type { AccessPlan, TemplateManifest, ValidationIssue } from '@/passkit/ty
 import { DAY_NAME, DAYS, weekProblems } from '../../../../ui/week-grid/hours.ts';
 import type { DesignDoc } from '../model.ts';
 import { readAccess } from './model.ts';
+import { planIndexOf } from './plan-path.ts';
 
-const PLAN_PATH = /^scan\.access\.plans\[(\d+)\]/;
 const GRANT_HOURS = /\.zones\[(\d+)\]\.hours/;
-
-export const planIndexOf = (path: string | undefined): number | null => {
-  const m = PLAN_PATH.exec(path ?? '');
-  return m ? Number(m[1]) : null;
-};
 
 /** The issue's copy, in the plan's own words. */
 function friendly(code: string, label: string, fallback: string): string {

@@ -4,11 +4,18 @@ import type {
   OperationListQuerySchema,
 } from '../../../shared/contracts/operations.ts';
 import { type AuthContext, isOwnOnly } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgFenceFor, platformFenceFor, readFenceFor, starterFenceFor } from './authz.ts';
-import { toDto } from './dto.ts';
-import { orgKinds } from './registry.ts';
+import {
+  orgFenceFor,
+  platformFenceFor,
+  platformKeyFenceFor,
+  readFenceFor,
+  starterFenceFor,
+} from './authz.ts';
+import { forCaller, toDto } from './dto.ts';
+import { orgKinds } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 import { rowById } from './repo.ts';
 import type { Fence } from './repo-fence.ts';
@@ -24,7 +31,7 @@ export async function getOperation(
   auth: AuthContext,
   id: string,
 ): Promise<OperationDto> {
-  return toDto((await readable(ctx, auth, id)).row);
+  return forCaller(toDto((await readable(ctx, auth, id)).row), auth);
 }
 
 export async function readable(
@@ -92,7 +99,8 @@ export async function listOperations(
   const own = isOwnOnly(auth);
   if (own && (query.mine !== true || query.orgId || query.kind || query.target))
     throw new ForbiddenError();
-  const orgId = query.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+  const orgId =
+    query.orgId ?? (auth.kind === 'api_key' ? auth.orgId : (workbenchPinOf(auth)?.orgId ?? null));
   const actor =
     query.mine === true && auth.kind !== 'scanner'
       ? auth.kind === 'session'
@@ -107,11 +115,16 @@ export async function listOperations(
     limit: query.limit + 1,
   };
   const fences: { fence: Fence; kinds: string[] | null }[] = [];
-  const starter = starterFenceFor(ctx, auth);
-  if (starter) fences.push({ fence: starter, kinds: null });
-  const platform = own ? null : platformFenceFor(ctx, auth);
-  if (platform) fences.push({ fence: platform, kinds: null });
-  for (const org of own ? [] : await orgFences(ctx, auth, orgId)) fences.push(org);
+  // A Platform key lists only what it started: its fence is its whole audience.
+  const keyFence = platformKeyFenceFor(ctx, auth);
+  if (keyFence) fences.push({ fence: keyFence, kinds: null });
+  else {
+    const starter = starterFenceFor(ctx, auth);
+    if (starter) fences.push({ fence: starter, kinds: null });
+    const platform = own ? null : platformFenceFor(ctx, auth);
+    if (platform) fences.push({ fence: platform, kinds: null });
+    for (const org of own ? [] : await orgFences(ctx, auth, orgId)) fences.push(org);
+  }
   const rows: OperationRow[] = [];
   for (const { fence, kinds } of fences)
     rows.push(...(await listFenced(ctx.env.DB, fence, { ...base, actor, kinds })));
@@ -119,7 +132,7 @@ export async function listOperations(
   const page = rows.slice(0, query.limit);
   const last = page[page.length - 1];
   return {
-    items: page.map(toDto),
+    items: page.map((row) => forCaller(toDto(row), auth)),
     nextCursor: rows.length > query.limit && last ? `${last.created_at}.${last.id}` : null,
   };
 }

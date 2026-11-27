@@ -41,7 +41,7 @@ describe('access', () => {
     const s = await makeSession(f(), { userId: user.id, roles: ['user'] });
     await expectProblem(await get('/api/v1/users', s.headers), 403, 'FORBIDDEN');
     const key = await makeApiKey(f());
-    expect((await get('/api/v1/users', key.headers)).status).toBe(401);
+    expect((await get('/api/v1/users', key.headers)).status).toBe(403);
   });
 
   it('requires CSRF for writes', async () => {

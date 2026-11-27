@@ -1,0 +1,87 @@
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const m = vi.hoisted(() => ({
+  loadIndex: vi.fn(),
+  loadFile: vi.fn(),
+  retain: vi.fn(() => () => undefined),
+}));
+vi.mock('../data.ts', () => ({ loadIndex: m.loadIndex, loadFile: m.loadFile }));
+vi.mock('../token.ts', () => ({ retain: m.retain, tokenHeld: () => false }));
+vi.mock('./console.tsx', () => ({
+  OpConsole: ({ op, mode, prefill }: { op: { id: string }; mode: string; prefill?: unknown }) => (
+    <p>
+      console {op.id} {mode} {prefill ? 'prefilled' : 'plain'}
+    </p>
+  ),
+}));
+vi.mock('./index-pane.tsx', () => ({
+  idOfOp: (o: { id: string }) => o.id,
+  OpIndex: ({
+    items,
+    selection,
+  }: {
+    items: { id: string }[];
+    selection: { selectedId: string | null; select: (id: string, o: { open: boolean }) => void };
+  }) => (
+    <div>
+      <span>current {selection.selectedId}</span>
+      {items.map((i) => (
+        <button key={i.id} type="button" onClick={() => selection.select(i.id, { open: true })}>
+          pick {i.id}
+        </button>
+      ))}
+    </div>
+  ),
+}));
+
+import { RunApp } from './run-app.tsx';
+
+const sandbox = { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: 't' };
+const ready = { kind: 'ready', csrf: 'c', sandbox, siteKey: 'k' } as const;
+const index = {
+  codes: ['X'],
+  groups: [
+    {
+      label: 'Passes',
+      items: [
+        { id: 'a', title: 'First', slug: 'passes', anchor: 'a', method: 'get', path: '/a' },
+        { id: 'b', title: 'Second', slug: 'passes', anchor: 'b', method: 'post', path: '/b' },
+      ],
+    },
+  ],
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  m.loadIndex.mockResolvedValue(index);
+  m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }] });
+  location.hash = '';
+});
+
+describe('RunApp with a sandbox', () => {
+  it('says a closed sandbox is closed, and offers Start over', async () => {
+    render(<RunApp session={{ kind: 'closed', csrf: 'c', siteKey: '' }} mode="op" />);
+    expect(await screen.findByText('Your sandbox is closed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Start over' })).toHaveAttribute(
+      'href',
+      '/developers/quickstart#start-over',
+    );
+  });
+
+  it('loads the operation of an operation page, and keeps the token', async () => {
+    render(<RunApp session={ready} mode="op" slug="passes" opId="a" />);
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+    expect(await screen.findByText('console a op plain')).toBeInTheDocument();
+    expect(m.retain).toHaveBeenCalledWith('c');
+  });
+
+  it('says so when the operation is not in the file or the file did not load', async () => {
+    const { unmount } = render(<RunApp session={ready} mode="op" slug="passes" opId="zzz" />);
+    expect(await screen.findByText('Could not load this operation')).toBeInTheDocument();
+    unmount();
+    m.loadFile.mockRejectedValue(new Error('x'));
+    render(<RunApp session={ready} mode="sheet" slug="passes" opId="a" />);
+    expect(await screen.findByText('Could not load this operation')).toBeInTheDocument();
+  });
+});

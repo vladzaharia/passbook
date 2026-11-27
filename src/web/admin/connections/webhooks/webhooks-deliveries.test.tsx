@@ -7,7 +7,7 @@ import { type Calls, delivery, endpoint, hooks, manager, reader } from './test-f
 
 const PATH = '/api/v1/webhook-endpoints/we1';
 const open = (calls: Calls[], handlers = hooks(calls), as = manager) =>
-  renderApp('/admin/connections/webhooks/we1', {
+  renderApp('/admin/connections/webhooks/we1?tab=deliveries', {
     session: 'admin',
     memberships: [as],
     selectedOrg: 'org1',

@@ -19,6 +19,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -41,6 +42,7 @@ test.describe('admin', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Developers',
       'Sign out',
     ]);
@@ -75,25 +77,25 @@ test.describe('admin', () => {
       [390, false],
     ] as const) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto('/developers/quickstart');
+      await page.goto('/developers/guides');
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
       await expect(nav).toBeVisible({ visible: inline });
       await expect(nav.getByRole('link')).toHaveText(
-        inline ? ['Quickstart', 'Guides', 'Reference', 'Playground', 'Workbench'] : [],
+        inline ? ['Quickstart', 'Guides', 'Reference', 'Playground'] : [],
       );
     }
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     const sheet = page.locator('#dev-menu');
     await expect(sheet.getByRole('link', { name: 'Reference', exact: true })).toBeVisible();
-    // The bar's five sections are the chips at the top of the sheet.
+    // The companion link first, then the bar's sections, as chips at the top of the sheet.
     await expect(sheet.locator('.menu-sections').getByRole('link')).toHaveText([
+      'Workbench',
       'Quickstart',
       'Guides',
       'Reference',
       'Playground',
-      'Workbench',
     ]);
     const spaces = sheet.locator('[data-menu-spaces]');
     await expect(spaces.getByRole('link', { name: 'Developers' })).toHaveAttribute(
@@ -146,6 +148,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
     await expect(menu.getByRole('menuitem', { name: 'My passes' })).toHaveAttribute(
@@ -159,6 +162,7 @@ test.describe('organization member', () => {
       'My passes',
       'Account',
       'Admin',
+      'Workbench',
       'Sign out',
     ]);
   });

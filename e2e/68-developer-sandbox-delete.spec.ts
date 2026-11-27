@@ -4,55 +4,57 @@ import { shots } from './helpers/shots.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The developer role's sandbox is made here if no earlier spec made it; a spec that deletes it leaves none. */
-test('Delete sandbox from the chip menu while on the quickstart opens the confirm, works, and leaves no sandbox', async ({
+test("Delete sandbox from the switcher's Danger group confirms, runs through the tray, and leaves no sandbox", async ({
   page,
 }) => {
   test.setTimeout(150_000);
   await stubTurnstile(page);
-  await startOidcAs(page, 'developer', '/developers/quickstart');
-  await page.waitForURL((u) => u.pathname === '/developers/quickstart');
-  await expect(page.getByRole('heading', { level: 1, name: 'Your first pass' })).toBeVisible();
+  await startOidcAs(page, 'developer', '/workbench/quickstart');
+  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  // The bar's sandbox chip (bench/sandbox-chip.tsx, the `bar` variant on docs pages).
-  const chip = page.locator('[data-menubar]').getByRole('button', { name: 'Sandbox menu' });
-  await expect(create.or(chip)).toBeVisible();
+  const switcher = page.getByRole('button', { name: /Sandbox · Test\s*, Switch context$/ });
+  await expect(create.or(switcher).first()).toBeVisible();
   if (await create.isVisible()) await create.click();
-  await expect(chip).toBeVisible();
-  // The confirm is far down the page: hold the scroll at the top to prove the menu brings it into view.
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // Making it is an operation: its steps run, the key is minted, and the switcher names the sandbox when it ends.
+  await expect(switcher).toBeVisible({ timeout: 60_000 });
 
-  await chip.click();
+  await switcher.click();
+  await expect(page.getByRole('menu').getByText('Danger')).toBeVisible();
   await page.getByRole('menuitem', { name: 'Delete sandbox' }).click();
-  const confirm = page.getByRole('region', { name: 'Delete this sandbox?' });
+  const confirm = page.getByRole('alertdialog', { name: 'Delete this sandbox?' });
   await expect(confirm).toBeVisible();
-  await expect(confirm).toBeInViewport();
-  await expect(confirm).toBeFocused();
-  await expect(chip).toHaveAttribute('aria-expanded', 'false');
   await shots(page, 'sandbox-delete-1-confirm');
 
-  // Hold the delete so the working state can be seen.
-  let release: () => void = () => undefined;
-  const held = new Promise<void>((r) => {
-    release = r;
-  });
-  await page.route('**/api/v1/developer/sandbox', async (route) => {
-    if (route.request().method() !== 'DELETE') return route.fallback();
-    await held;
-    return route.fallback();
-  });
+  const started = page.waitForResponse(
+    (r) => r.url().endsWith('/api/v1/developer/sandbox') && r.request().method() === 'DELETE',
+  );
   await confirm.getByRole('button', { name: 'Delete sandbox' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Deleting your sandbox' })).toBeVisible();
-  await shots(page, 'sandbox-delete-2-working');
-  release();
 
-  // The page reloads on the signed-in, no-sandbox quickstart: nothing of the sandbox is left.
-  await expect(page.getByRole('button', { name: 'Create sandbox' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sandbox menu' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Delete sandbox' })).toHaveCount(0);
+  // The server answers 202 with an operation; the tray carries its steps: close, revoke, remove, erase.
+  const response = await started;
+  expect(response.status()).toBe(202);
+  const { operation } = (await response.json()) as { operation: { id: string; kind: string } };
+  expect(operation.kind).toBe('sandbox.delete');
+  await expect(confirm).toBeHidden();
+
+  // It ends and the Workbench reloads on the chooser: nothing of the sandbox is left.
+  await page.waitForURL((u) => u.pathname === '/workbench', { timeout: 60_000 });
+  await expect(
+    page.getByRole('button', { name: /Sandbox · Test\s*, Switch context$/ }),
+  ).toHaveCount(0);
   const read = await page.evaluate(async () => {
     const res = await fetch('/api/v1/developer/sandbox');
     return ((await res.json()) as { sandbox: unknown }).sandbox;
   });
   expect(read).toBeNull();
-  await shots(page, 'sandbox-delete-3-gone');
+  const ended = await page.evaluate(async (id) => {
+    const res = await fetch(`/api/v1/operations/${id}`);
+    return (await res.json()) as { steps: { key: string; state: string }[] };
+  }, operation.id);
+  expect(ended.steps.map((x) => [x.key, x.state])).toEqual([
+    ['close', 'done'],
+    ['keys', 'done'],
+    ['passes', 'done'],
+    ['erase', 'waiting'],
+  ]);
 });

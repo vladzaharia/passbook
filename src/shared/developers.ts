@@ -1,6 +1,8 @@
 /** The developer portal's paths, shared by the generator, the Worker route and the tests. */
 export const PATHS = {
   home: '/developers',
+  /** The Workbench's own space. */
+  workbench: '/workbench',
   quickstart: '/developers/quickstart',
   guides: '/developers/guides',
   playground: '/developers/playground',
@@ -27,6 +29,16 @@ export const PATHS = {
   assets: '/developers/assets',
   openapi: '/api/v1/openapi.json',
 } as const;
+
+/** The pages that moved into the Workbench: the Worker answers 301 from each, keeping query and hash. */
+export const MOVED: Readonly<Record<string, string>> = {
+  [PATHS.console]: `${PATHS.workbench}/console`,
+  [PATHS.webhooks]: `${PATHS.workbench}/events`,
+  [PATHS.logs]: `${PATHS.workbench}/logs`,
+  [PATHS.keys]: `${PATHS.workbench}/keys`,
+  [PATHS.playground]: `${PATHS.workbench}/design`,
+  [PATHS.quickstart]: `${PATHS.workbench}/quickstart`,
+};
 
 /**
  * The portal stays out of search until it is linked (W5). One switch: the pages' robots meta,

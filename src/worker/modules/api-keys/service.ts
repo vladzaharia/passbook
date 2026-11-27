@@ -17,8 +17,10 @@ import { ipAllowed } from '../../platform/ip-allow.ts';
 import { createLogger } from '../../platform/log.ts';
 import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { revokePlatformOfKey } from '../idp/invitations/repo-platform.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
+import { auditPlatformKeyRefusal } from './refusal-audit.ts';
 import * as repo from './repo.ts';
 import { selfSuccessors } from './repo-family.ts';
 import { invalid, MAX_LIFETIME_MS } from './service-create.ts';
@@ -65,13 +67,15 @@ export async function listApiKeys(
       : undefined;
   // A key lists its own children, whatever else it asks for.
   const parent = authority.kind === 'api_key' ? authority.keyId : query.parentKeyId;
+  // A Workbench token lists Test keys only.
+  const mode = ctx.via === 'try' ? ('test' as const) : undefined;
   const [rows, revokedCount] = await Promise.all([
     repo.listKeys(
       ctx.env.DB,
-      { ...query, orgId, limit: query.limit + 1, mine, parent },
+      { ...query, orgId, limit: query.limit + 1, mine, parent, mode },
       seesAccountEmails(authority),
     ),
-    repo.countRevoked(ctx.env.DB, orgId, mine, parent),
+    repo.countRevoked(ctx.env.DB, orgId, mine, parent, mode),
   ]);
   const page = rows.slice(0, query.limit);
   const resources = await repo.keyResources(
@@ -143,6 +147,8 @@ export async function revokeApiKey(
     },
     successors,
   );
+  // A Platform key's pending invitations end with it: a deferred grant must not outlive the operator.
+  if (key.kind === 'platform') await revokePlatformOfKey(ctx.env.DB, id, ctx.clock.now());
 }
 
 /** Ends a key at an instant before it would otherwise end. Once only: a second call is a conflict. */
@@ -182,12 +188,23 @@ export async function keyAuthOf(
   options: { limited?: 'ok' } | undefined,
 ): Promise<ApiKeyAuth | null> {
   const now = clock.now();
+  // Past the matching secret a Platform key's refusal is audited as the key; the caller sees the same 401.
+  const refused = async (reason: string): Promise<null> => {
+    if (row.kind === 'platform')
+      await auditPlatformKeyRefusal(env, clock, {
+        keyId: row.id,
+        orgId: null,
+        ipPrefix: ipPrefix(caller?.ip),
+        detail: { reason },
+      });
+    return null;
+  };
+  if (row.revoked_at !== null) return refused('revoked');
   if (
-    row.revoked_at !== null ||
     (row.expires_at !== null && row.expires_at <= now) ||
     (row.retire_at !== null && row.retire_at <= now)
   )
-    return null;
+    return refused('expired');
   if (row.org_id !== null && row.org_status !== 'active') return null;
   // A child ends with its parent: revoked, expired or retired, or gone.
   if (row.parent_key_id !== null) {
@@ -197,11 +214,13 @@ export async function keyAuthOf(
     const ends = parent ? [parent.expires_at, parent.retire_at].filter((t) => t !== null) : [];
     if (!parent || parent.revoked_at !== null || ends.some((t) => t <= now)) return null;
   }
+  // A platform key dies with its creator: disabled, deleted or never recorded.
+  if (row.kind === 'platform' && row.creator_active !== 1) return refused('creator');
   // A personal key dies with its membership or user; its reach is capped by the member's roles now.
   if (row.kind === 'personal' && row.member_roles === null) return null;
   // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
   const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
-  if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
+  if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return refused('ip');
   // After the address check, so a caller outside the list learns nothing about the owner.
   // A personal key acts for a person, so it needs the person's strong sign-in to exist: a Polaris ID identity,
   // or the console grace the member was given when this rule started.
@@ -220,7 +239,12 @@ export async function keyAuthOf(
       'KEY_OWNER_NEEDS_IDP',
     );
   }
-  const tier = await enforceApiKeyRate(env, { keyId: row.id, orgId: row.org_id }, row.rate_tier);
+  // A platform scope never raises the tier: the control plane stays on the standard budget, whatever the default.
+  const tier = await enforceApiKeyRate(
+    env,
+    { keyId: row.id, orgId: row.org_id },
+    parseScopes(row.scopes).some((s) => s.startsWith('platform:')) ? 'standard' : row.rate_tier,
+  );
   // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
   // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
   if (row.restricted === 1 && options?.limited !== 'ok')
@@ -249,6 +273,7 @@ export async function keyAuthOf(
     kind: 'api_key',
     keyId: row.id,
     orgId: row.org_id,
+    keyKind: row.kind,
     scopes: memberRoles
       ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
       : held,

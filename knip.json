@@ -7,8 +7,10 @@
     "src/web/marketing/pages/*.ts!",
     "src/web/developers/render.tsx!",
     "src/web/scan/camera/decode-worker.ts!",
-    "src/web/ui/operation/{index,story-main}.ts*",
+    "src/web/ui/operation/{index,story-main,story-jobs-main}.ts*",
+    "src/web/ui/webhook-setup/{index,story-main}.ts*",
     "tools/dev/operation-story/vite.config.ts",
+    "tools/dev/webhook-setup-story/vite.config.ts",
     "tools/*.ts",
     "tools/dev/visual-sweep.ts",
     "tools/dev/visual-scan-devices.ts",
@@ -43,6 +45,7 @@
     "src/web/ui/{dropdown-menu,dialog,sheet,popover}.tsx": ["exports"],
     "src/web/ui/art/index.ts": ["types"],
     "src/web/ui/operation/**": ["exports", "types"],
+    "src/web/ui/webhook-setup/**": ["exports", "types"],
     "src/web/pass-card/index.tsx": ["types"],
     "src/web/admin/passes/schema-form/index.ts": ["types"]
   }

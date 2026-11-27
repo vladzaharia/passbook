@@ -11,6 +11,7 @@ import {
 import { PlatformChannelsCards } from '../channels/settings-channels.tsx';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 import type { SaveGuard } from './form-values.ts';
+import { IdpSection } from './idp/idp-section.tsx';
 import { MagicLinkImpact } from './magic-link-impact.tsx';
 import { useSettings } from './queries.ts';
 import { SettingsForm } from './settings-form.tsx';
@@ -81,6 +82,7 @@ export function SettingsPage() {
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} guard={guardMagicLink} />
         <PlatformChannelsCards />
         <OidcSection />
+        <IdpSection />
       </div>
     </>
   );

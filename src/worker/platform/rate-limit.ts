@@ -66,6 +66,19 @@ export async function enforceRateLimit(
   });
 }
 
+/** Writes a Platform key makes on platform routes per window, on top of its tier; keep equal to wrangler.jsonc. */
+export const PLATFORM_WRITE_LIMIT = 60;
+
+/** Charges a Platform key's write budget (429 RATE_LIMITED past it). Reads are not charged. */
+export async function chargePlatformWrite(env: AppEnv, keyId: string): Promise<void> {
+  if (await checkRateLimit(env, 'RL_PLATFORM_WRITE', `key:${keyId}`)) return;
+  const now = Date.now();
+  throw new RateLimitedError(Math.max(secondsToReset(now), 1), undefined, {
+    ...policyHeaders(PLATFORM_WRITE_LIMIT, now),
+    'ratelimit-remaining': '0',
+  });
+}
+
 export type ApiRateTier = 'standard' | 'high' | 'bulk';
 
 /** Per-key budget per tier; keep equal to the wrangler.jsonc bindings. */

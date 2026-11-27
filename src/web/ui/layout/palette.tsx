@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Globe, RefreshCw, Search, User } from 'lucide-react';
+import { Globe, Layers, RefreshCw, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useIdpConnected } from '@/web/admin/idp/status-queries.ts';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { api } from '../../lib/api.ts';
@@ -10,6 +11,7 @@ import { personLabel } from '../../lib/format.ts';
 import { canAccessAdminPath } from '../../lib/guards.ts';
 import { adminNavGroups } from '../../lib/nav.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
+import { canUseAllScope } from '../../lib/org-lists.ts';
 import { orgPath, platformPath } from '../../lib/scope.ts';
 import {
   matchesWords,
@@ -58,7 +60,8 @@ export function AdminPalette({
   const memberships = ready ? scope.choices : [];
   const membership = ready ? scope.membership : undefined;
   const orgId = membership?.orgId;
-  const { switchScope } = scope;
+  const { switchScope, switchAll } = scope;
+  const allScope = ready && canUseAllScope(scope.memberships);
   const { setPref } = useTheme();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'all' | 'orgs'>('all');
@@ -93,7 +96,14 @@ export function AdminPalette({
     enabled: searching && platformReady && term.length >= 2,
     staleTime: 15_000,
   });
-  const nav = adminNavGroups(adminScope, platformReady, membership).flat();
+  const polaris = useIdpConnected();
+  const nav = adminNavGroups(
+    adminScope,
+    platformReady,
+    membership,
+    { polaris },
+    ready ? scope.memberships : [],
+  ).flat();
   const orgName = new Map(memberships.map((item) => [item.orgId, item.orgName]));
   const go = (to: string, search?: Record<string, string>) => () => void navigate({ to, search });
   const here = (rest: string) => (orgId ? orgPath(orgId, rest) : rest);
@@ -141,6 +151,17 @@ export function AdminPalette({
                 icon: Globe,
                 hint: adminScope?.kind === 'platform' ? 'Current' : undefined,
                 onSelect: () => switchScope(undefined),
+              },
+            ]
+          : []),
+        ...(allScope
+          ? [
+              {
+                id: 'scope:all',
+                label: 'All organizations · Passes',
+                icon: Layers,
+                hint: adminScope?.kind === 'all' ? 'Current' : undefined,
+                onSelect: switchAll,
               },
             ]
           : []),

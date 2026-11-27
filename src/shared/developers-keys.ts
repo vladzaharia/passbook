@@ -1,6 +1,7 @@
 import {
   auditScopeAllowed,
   MINTABLE_SCOPES,
+  PLATFORM_KEY_SCOPES,
   TEMPLATE_ACT_AS_SCOPES,
   TEST_ONLY_SCOPES,
 } from './contracts/api-keys.ts';
@@ -84,18 +85,24 @@ export function fullAccess(mode: Mode) {
   } as const;
 }
 
+const isPlatformKeyScope = (s: string): s is (typeof PLATFORM_KEY_SCOPES)[number] =>
+  (PLATFORM_KEY_SCOPES as readonly string[]).includes(s);
 const isTestOnly = (s: string) => (TEST_ONLY_SCOPES as readonly string[]).includes(s);
 const ORG_ONLY: readonly string[] = [
   'org:write',
   'wallet:write',
   'audit:read',
+  'logs:read',
   'nfc:read',
   'nfc:write',
   ...TEMPLATE_ACT_AS_SCOPES,
 ];
 
 /** The capability each mintable scope exercises (`scopeCapability` in the Worker; a test keeps them equal). */
-export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number], OrgCapability> = {
+export const MINTABLE_SCOPE_CAPABILITY: Record<
+  Exclude<(typeof MINTABLE_SCOPES)[number], (typeof PLATFORM_KEY_SCOPES)[number]>,
+  OrgCapability
+> = {
   'passes:read': 'passes:read',
   'passes:write': 'passes:operate',
   'holders:write': 'passes:operate',
@@ -121,6 +128,7 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'nfc:write': 'passes:operate',
   'api-keys:write': 'integrations:manage',
   'audit:read': 'audit:read',
+  'logs:read': 'logs:read',
   'members:read': 'members:read',
   'members:write': 'members:manage',
 };
@@ -138,6 +146,8 @@ export function holdableScopes(
 ): string[] {
   return MINTABLE_SCOPES.filter(
     (s) =>
+      // The key dialog offers organization scopes only; a Platform key is made through the API until it learns the other flavour.
+      !isPlatformKeyScope(s) &&
       (kind === 'service' || s !== 'scans:write') &&
       (kind !== 'platform' || !ORG_ONLY.includes(s)) &&
       (mode === 'test' || !isTestOnly(s)) &&

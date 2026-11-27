@@ -29,9 +29,11 @@ export class FakeApple {
   /** Throw after the next create succeeds, as a dropped response would. */
   /** The provisioner refuses the next certificate order, permanently. */
   refuse = false;
+  /** What the refused order throws. */
+  refusal = 'ASC_REFUSED: refused';
   /** Answer createPassType with this identifier instead of the requested one. */
   wrongIdentifier: string | null = null;
-  dropNext: 'createPassType' | 'createCertificate' | null = null;
+  dropNext: 'createPassType' | 'createPlatformPassType' | 'createCertificate' | null = null;
 
   readonly ca: FakeWwdr;
   readonly now: () => number;
@@ -41,7 +43,7 @@ export class FakeApple {
     this.now = now;
   }
 
-  private drop(method: 'createPassType' | 'createCertificate') {
+  private drop(method: 'createPassType' | 'createPlatformPassType' | 'createCertificate') {
     if (this.dropNext !== method) return;
     this.dropNext = null;
     throw new Error('socket closed');
@@ -67,6 +69,19 @@ export class FakeApple {
     return { ...ref, outcome: 'created' };
   }
 
+  async createPlatformPassType(slot: 'root' | 'devtest'): Promise<CreatedPassType> {
+    this.calls.push('createPlatformPassType');
+    const identifier =
+      this.wrongIdentifier ??
+      (slot === 'root' ? 'pass.mobile.passbook' : 'pass.mobile.passbook.devtest');
+    const held = this.passTypes.get(identifier);
+    if (held) return { ...held, outcome: 'existing' };
+    const ref = { ascId: `asc-pt-${slot}`, identifier, name: `PassBook ${slot}` };
+    this.passTypes.set(identifier, ref);
+    this.drop('createPlatformPassType');
+    return { ...ref, outcome: 'created' };
+  }
+
   async listCertificates(passTypeAscId: string): Promise<CertificateInfo[]> {
     this.calls.push('listCertificates');
     return this.certs.filter((c) => c.passTypeAscId === passTypeAscId);
@@ -79,7 +94,7 @@ export class FakeApple {
 
   async createCertificate(passTypeAscId: string, csrDer: Uint8Array): Promise<CertificateInfo> {
     this.calls.push('createCertificate');
-    if (this.refuse) throw new Error('ASC_REFUSED: refused');
+    if (this.refuse) throw new Error(this.refusal);
     const pt = [...this.passTypes.values()].find((p) => p.ascId === passTypeAscId);
     if (!pt) throw new Error('ASC_NOT_FOUND: no pass type');
     const der = await issueFromCsr(

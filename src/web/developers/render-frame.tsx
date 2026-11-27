@@ -3,8 +3,6 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY, DEV_GUIDES } from '../../shared/copy/developers.ts';
 import { PATHS } from '../../shared/developers.ts';
-import { BenchFrame } from './bench/frame.tsx';
-import type { BenchTool } from './bench/switcher.tsx';
 import { groupByStep } from './guide/group.ts';
 import type { Guide } from './guide/model.ts';
 import { shortDate } from './model/dates.ts';
@@ -88,9 +86,6 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
   });
   const html = (node: ReactElement) => renderToStaticMarkup(node);
   return {
-    /** A page that carries its own Shell (the playground): only the context is given. */
-    provide: (path: string, node: ReactElement, o: FrameOpts = {}) =>
-      html(<Frame.Provider value={data(path, o)}>{node}</Frame.Provider>),
     shell: (path: string, active: NavKey | undefined, child: ReactElement, o: FrameOpts = {}) => {
       return html(
         <Frame.Provider value={data(path, o)}>
@@ -100,15 +95,6 @@ export function framer(site: Site, guides: readonly NavGuide[]) {
         </Frame.Provider>,
       );
     },
-    /** A Workbench tool: the bar, the bench frame around the tool, the footer. */
-    bench: (path: string, tool: BenchTool, child: ReactElement) =>
-      html(
-        <Frame.Provider value={data(path, {})}>
-          <Shell site={site} active="workbench" bench>
-            <BenchFrame tool={tool}>{child}</BenchFrame>
-          </Shell>
-        </Frame.Provider>,
-      ),
   };
 }
 

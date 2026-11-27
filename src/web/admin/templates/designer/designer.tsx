@@ -1,38 +1,23 @@
-import {
-  type KeyboardEvent,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
+import { type ReactNode, useCallback, useMemo, useReducer, useRef, useState } from 'react';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
-import {
-  Button,
-  Callout,
-  SaveBar,
-  toast,
-  UnsavedChangesDialog,
-  useUnsavedChangesGuard,
-} from '../../../ui/index.ts';
+import { SaveBar, toast, UnsavedChangesDialog, useUnsavedChangesGuard } from '../../../ui/index.ts';
 import { type Template, versionNumber } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
 import { type CreateDesign, useCreateFlow } from './create-flow.ts';
+import { DesignerModeView, RestoredNotice } from './designer-body.tsx';
+import { undoKeys, useFocusOnAdd } from './designer-effects.ts';
 import { DesignerHeader } from './designer-header.tsx';
 import { type DesignerMode, ModeSwitch, useDesignerModes } from './designer-modes.tsx';
 import { clearDraft } from './drafts.ts';
 import { useGoalFlow } from './goal-flow.tsx';
+import { useDesignerHost } from './host.tsx';
 import { Issues } from './issues.tsx';
-import { DesignerLayout } from './layout.tsx';
-import { type DesignDoc, findField, previewTargetOf, type Selection } from './model.ts';
+import type { DesignDoc, Selection } from './model.ts';
 import { useOrgBrandedPass } from './org-logo-text.ts';
-import { Outline } from './outline.tsx';
 import {
   canRedo,
   canUndo,
@@ -42,14 +27,12 @@ import {
   validSelection,
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
-import { ScanModeSafe } from './scan/scan-mode-safe.tsx';
-import { DesignerStage } from './stage.tsx';
 import { useStampsPreview } from './stamp-preview.ts';
+import { KeepProvider } from './ui-keep.tsx';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import type { WalletName } from './wallets/roles-model.ts';
 import { useWalletChannels } from './wallets/use-wallet-channels.ts';
-import { WalletsMode } from './wallets/wallets-mode.tsx';
 import './designer.css';
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */
@@ -63,7 +46,6 @@ export interface ReadOnlyDesign {
 
 export interface DesignerProps {
   template: Template;
-  selectedOrg: string | undefined;
   /** Where drafts of this template are kept (person, organisation, template). */
   draftKey: string;
   /** The version the draft starts from. */
@@ -84,12 +66,11 @@ export interface DesignerProps {
 
 export function Designer({
   template,
-  selectedOrg,
   draftKey,
   base,
   draft,
   assetBase,
-  readOnly,
+  readOnly: lockedByPage,
   prompt,
   create,
   view,
@@ -98,6 +79,14 @@ export function Designer({
   const templateId = template.id;
   const name = template.name;
   const phone = useMediaQuery(PHONE);
+  const { orgId: selectedOrg, allows, extras } = useDesignerHost();
+  // A host that cannot edit gets a read-only designer whatever the page asked for.
+  const readOnly = useMemo<ReadOnlyDesign | undefined>(
+    () =>
+      lockedByPage ??
+      (allows.edit ? undefined : { notice: null, passJson: base.doc.passJson, issues: [] }),
+    [lockedByPage, allows.edit, base.doc.passJson],
+  );
   const [version, setVersion] = useState(base.version);
   const [state, dispatch] = useReducer(designerReducer, undefined, () =>
     initialState(draft ?? base.doc, base.doc),
@@ -137,45 +126,38 @@ export function Designer({
   });
   const { mode, setMode, focusTarget, openWallets } = modes;
 
-  // A new field opens its editor and takes focus, once per add.
-  const handled = useRef(0);
-  const added = state.added;
-  useEffect(() => {
-    if (!added || added.n === handled.current) return;
-    handled.current = added.n;
-    if (added.kind === 'input') return focusTarget({ section: 'inputs', key: added.key });
-    const at = findField(state.doc.passJson, added.key, state.doc.target);
-    if (at) focusTarget({ section: at.group, key: added.key });
-  }, [added, state.doc.passJson, state.doc.target, focusTarget]);
+  useFocusOnAdd(state, focusTarget);
 
-  useDraftPersistence(draftKey, version, state.doc, dirty);
+  useDraftPersistence(readOnly ? null : draftKey, version, state.doc, dirty);
 
-  function onKeyDown(e: KeyboardEvent) {
-    if (phone || readOnly) return;
-    if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-    const k = e.key.toLowerCase();
-    if (k !== 'z' && k !== 'y') return;
-    e.preventDefault(); // Text fields share the designer's history: one undo model, not a browser one per field.
-    dispatch({ type: k === 'y' || e.shiftKey ? 'redo' : 'undo' });
-  }
-
-  const { issues, blocking } = useDesignerIssues(state.doc, readOnly, check.data?.report.issues);
+  const { issues, blocking, ready, loadFailed } = useDesignerIssues(
+    state.doc,
+    readOnly,
+    check.data?.report.issues,
+  );
+  const checking = (readOnly ? false : check.checking) || !ready;
   const blocked = () =>
-    check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
+    !ready || check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
-  const live = useRef({ blocked, checking: check.checking });
-  live.current = { blocked, checking: check.checking };
+  const live = useRef({ blocked, checking: check.checking || !ready });
+  live.current = { blocked, checking: check.checking || !ready };
   const issuesList = (
     <Issues
       issues={issues}
-      checking={readOnly ? false : check.checking}
-      failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+      checking={checking}
+      failed={
+        check.isError && !readOnly
+          ? errorMessage(check.error)
+          : loadFailed
+            ? 'The checks did not load. Reload the page.'
+            : undefined
+      }
     />
   );
   const created = useCreateFlow(create, blocked);
   // A new template is unsaved until Create template, edits or not.
-  const guard = useUnsavedChangesGuard(create ? created.made === null : dirty);
+  const guard = useUnsavedChangesGuard(!readOnly && (create ? created.made === null : dirty));
   const flow = useSaveFlow({
     templateId,
     draftKey,
@@ -223,103 +205,76 @@ export function Designer({
 
   return (
     <DesignerProvider value={api}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
-      <div ref={root} data-designer="" onKeyDown={onKeyDown}>
-        <DesignerHeader
-          templateId={templateId}
-          name={name}
-          orgId={selectedOrg}
-          create={create}
-          template={template}
-          undoRedo={
-            phone || readOnly
-              ? null
-              : { canUndo: canUndo(state), canRedo: canRedo(state), dispatch }
-          }
-        />
-        {readOnly?.notice}
-        {prompt}
-        <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
-        {restored && !phone && !readOnly ? (
-          <Callout
-            className="mb-4"
-            tone="info"
-            actions={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  dispatch({ type: 'reset', doc: state.saved });
-                  clearDraft(draftKey);
-                  setRestored(false);
-                }}
-              >
-                Discard draft
-              </Button>
-            }
-          >
-            Restored your unsaved draft.
-          </Callout>
-        ) : null}
-        {mode === 'wallets' ? (
-          <WalletsMode
+      <KeepProvider>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
+        <div ref={root} data-designer="" onKeyDown={undoKeys(phone || Boolean(readOnly), dispatch)}>
+          <DesignerHeader
             templateId={templateId}
-            passJson={readOnly ? readOnly.passJson : shownPass}
-            checking={readOnly ? false : check.checking}
+            name={name}
+            create={create}
+            template={template}
+            undoRedo={
+              phone || readOnly
+                ? null
+                : { canUndo: canUndo(state), canRedo: canRedo(state), dispatch }
+            }
+          />
+          {readOnly?.notice}
+          {prompt}
+          <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
+          {restored && !phone && !readOnly ? (
+            <RestoredNotice
+              onDiscard={() => {
+                dispatch({ type: 'reset', doc: state.saved });
+                clearDraft(draftKey);
+                setRestored(false);
+              }}
+            />
+          ) : null}
+          <DesignerModeView
+            mode={mode}
+            onPass={() => setMode('pass')}
+            templateId={templateId}
+            creating={Boolean(create)}
+            orgId={selectedOrg}
+            readOnly={readOnly}
+            phone={phone}
+            doc={state.doc}
+            passJson={shownPass}
+            checking={check.checking}
             issues={issues}
-            channels={wallets}
+            issuesList={issuesList}
+            wallets={wallets}
             wallet={modes.wallet}
             onWallet={modes.setWallet}
-            onPass={() => setMode('pass')}
+            edit={edit}
+            assetBase={base_}
+            stripUrl={stamps.stripUrl}
           />
-        ) : mode === 'scan' ? (
-          <ScanModeSafe
-            onBack={() => setMode('pass')}
-            templateId={templateId}
-            orgId={selectedOrg ?? null}
-            issues={issuesList}
-          />
-        ) : (
-          <DesignerLayout
-            templateId={templateId}
-            orgId={selectedOrg}
-            readOnly={Boolean(readOnly)}
-            structure={<Outline />}
-            preview={
-              <DesignerStage
-                manifest={state.doc.manifest}
-                templateId={create ? undefined : templateId}
-                orgId={selectedOrg}
-                onPaper={
-                  readOnly || phone ? undefined : (patch) => edit({ op: 'paper', patch }, 'paper')
-                }
-                passJson={readOnly ? readOnly.passJson : shownPass}
-                target={previewTargetOf(state.doc.passJson, state.doc.target)}
-                assets={state.doc.assets}
-                assetBase={base_}
-                checking={readOnly ? false : check.checking}
-                stripUrl={stamps.stripUrl}
-              />
-            }
-            issues={issuesList}
-          />
-        )}
-        {phone || readOnly ? null : (
-          <SaveBar
-            dirty={create ? created.made === null : dirty}
-            saving={create ? created.saving : flow.saving}
-            saveLabel={create ? 'Create template' : 'Save version'}
-            onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
-            onDiscard={() => {
-              dispatch({ type: 'reset', doc: state.saved });
-              clearDraft(draftKey);
-              setRestored(false);
-            }}
-          />
-        )}
-        {goalFlow.dialog}
-        <UnsavedChangesDialog blocker={guard} />
-      </div>
+          {extras && phone ? (
+            <extras.PhoneBar
+              dirty={create ? created.made === null : dirty}
+              saving={create ? created.saving : flow.saving}
+              onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
+            />
+          ) : null}
+          {phone || readOnly || !allows.save ? null : (
+            <SaveBar
+              dirty={create ? created.made === null : dirty}
+              saving={create ? created.saving : flow.saving}
+              saveLabel={create ? 'Create template' : 'Save version'}
+              onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
+              onDiscard={() => {
+                dispatch({ type: 'reset', doc: state.saved });
+                clearDraft(draftKey);
+                setRestored(false);
+              }}
+            />
+          )}
+          {goalFlow.dialog}
+          <UnsavedChangesDialog blocker={guard} />
+        </div>
+      </KeepProvider>
     </DesignerProvider>
   );
 }

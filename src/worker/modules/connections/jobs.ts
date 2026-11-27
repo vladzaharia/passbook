@@ -2,6 +2,7 @@ import type { JobOf } from '../../jobs/types.ts';
 import { claim, prune } from '../../platform/counters.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { progressOf } from '../operations/progress.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getDeps } from './deps.ts';
 import { dailyConnectionFiles } from './files-retention.ts';
@@ -13,6 +14,7 @@ import { type RefreshSnapshot, refreshSnapshotCurrent } from './repo-pass-refres
 import { getPassById } from './repo-passes.ts';
 import { deleteIdleRefVersions } from './repo-ref-versions.ts';
 import { deleteOldRuns, deleteOldWebhookEvents, deleteOldWorkflowRuns } from './repo-sync.ts';
+import { clearOldArrivalRefs, deleteOldArrivals } from './repo-webhook-arrivals.ts';
 import { reconcileConnections as schedule } from './schedule.ts';
 import { dropExpiredPreviousSecrets } from './secret-sweep.ts';
 import { processWebhook } from './webhook-process.ts';
@@ -22,6 +24,7 @@ const DAY_MS = 86_400_000;
 export const RUN_RETENTION_MS = 30 * DAY_MS;
 export const RUNS_KEPT_PER_CONNECTION = 1000;
 export const WEBHOOK_RETENTION_MS = 7 * DAY_MS;
+export const ARRIVAL_RETENTION_MS = 7 * DAY_MS;
 /** A ref's source version is kept this long after its last write. */
 export const REF_VERSION_IDLE_MS = 30 * DAY_MS;
 /** Failed, blocked and ignored retained payloads expire after this, unless an item is unresolved. */
@@ -33,14 +36,15 @@ export async function handlePassRefresh(
   ctx: ServiceContext,
 ): Promise<void> {
   const db = ctx.env.DB;
-  if (!(await refreshSnapshotCurrent(db, job))) {
+  // The holder's operation, when a holder asked: the steps and where this stopped. An admin's refresh has none.
+  const progress = progressOf(ctx, job.operationId, 1);
+  const build = progress.step('build');
+  const stale = async () => {
     ctx.log.info('pass.refresh_stale', { passId: job.passId });
-    return;
-  }
-  if (!(await syncKeysetCurrent(ctx, job.credentialKeysetCommitment))) {
-    ctx.log.info('pass.refresh_stale', { passId: job.passId });
-    return;
-  }
+    await progress.fail(new AppError('PASS_CONFLICT', 409, 'The pass changed.'));
+  };
+  if (!(await refreshSnapshotCurrent(db, job))) return stale();
+  if (!(await syncKeysetCurrent(ctx, job.credentialKeysetCommitment))) return stale();
   const pass = await getPassById(db, job.passId);
   if (
     !pass ||
@@ -62,13 +66,11 @@ export async function handlePassRefresh(
     pass.releaseId !== job.releaseId ||
     pass.deletedAt !== null ||
     pass.removedAt !== null
-  ) {
-    ctx.log.info('pass.refresh_stale', { passId: job.passId });
-    return;
-  }
+  )
+    return stale();
   let snapshot: RefreshSnapshot | null = job;
   let finish: ConnectionRefresh['finish'] | undefined;
-  let stale = false;
+  let stalled = false;
   if (job.connectionId) {
     const conn = await getConnection(db, job.connectionId);
     if (
@@ -76,36 +78,37 @@ export async function handlePassRefresh(
       conn.orgId !== job.orgId ||
       conn.generation !== job.generation ||
       conn.mode !== job.connectionMode
-    ) {
-      ctx.log.info('pass.refresh_stale', { passId: job.passId });
-      return;
-    }
+    )
+      return stale();
     const result = await refreshFromConnection(ctx, job, pass, conn);
-    if (!result) {
-      ctx.log.info('pass.refresh_stale', { passId: job.passId });
-      return;
-    }
+    if (!result) return stale();
     snapshot = result.snapshot;
     finish = result.finish;
-    stale = result.stale;
+    stalled = result.stale;
   }
+  await build.done();
   if (!snapshot) {
-    if (finish) await finish(stale);
+    // The source has nothing new: the pass is as current as it can be.
+    if (finish) await finish(stalled);
+    await progress.step('wallets').skip();
+    await progress.succeed();
     return;
   }
+  const wallets = progress.step('wallets');
   try {
     if ((await requireCredentialRefKeyset(db, ctx.env)) !== snapshot.credentialKeysetCommitment) {
       if (finish) await finish(true);
-      ctx.log.info('pass.refresh_stale', { passId: job.passId });
-      return;
+      return stale();
     }
     const queued = await getDeps().enqueueRefreshPush(ctx, snapshot);
     if (finish) await finish(!queued);
-    if (!queued) ctx.log.info('pass.refresh_stale', { passId: job.passId });
+    if (!queued) return stale();
   } catch (error) {
     if (finish) await finish(false);
     throw error;
   }
+  await wallets.done();
+  await progress.succeed();
 }
 
 export async function handleConnectionWebhook(
@@ -146,11 +149,16 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
     deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
   );
   await step(ctx, 'files', () => dailyConnectionFiles(ctx));
+  const arrivals = await step(ctx, 'arrivals', async () => {
+    const before = now - ARRIVAL_RETENTION_MS;
+    await clearOldArrivalRefs(ctx.env.DB, before);
+    return deleteOldArrivals(ctx.env.DB, before);
+  });
   const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
   await step(ctx, 'prev_secret_counters', () =>
     prune(ctx.env.DB, 'webhook-prev-secret:%', now - DAY_MS),
   );
-  ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets });
+  ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets, arrivals });
 }
 
 /**

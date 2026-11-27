@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { ConnectorInfoSchema, RecipeId, RecipeInfo } from '@/shared/contracts/connections.ts';
 import type { MappingRow } from '../mapping/mapping.ts';
 import type { Lifecycle } from './lifecycle-fields.tsx';
-import { recipeSeed, signingSecretError } from './recipe-copy.ts';
+import { recipeSeed } from './recipe-copy.ts';
 import type { ConfigDraft } from './wizard-steps.tsx';
 
 /** The sender chosen in the wizard: picking one seeds the mapping, holder email and void rules. */
@@ -22,11 +22,6 @@ export function useWizardRecipe({
   const recipe = info?.recipes.find((r) => r.id === id);
   return {
     recipe,
-    /** Shopify and Stripe make the secret; it is pasted, so the created page has none to show. */
-    pasted: recipe?.pasteSecret === true,
-    secretError: recipe?.pasteSecret
-      ? signingSecretError(id, draft.signingSecret ?? '')
-      : undefined,
     /** A tile was picked: its sender seeds the mapping, holder email and void rules; none clears them. */
     seed(next: RecipeInfo | undefined) {
       const seed = recipeSeed(next);

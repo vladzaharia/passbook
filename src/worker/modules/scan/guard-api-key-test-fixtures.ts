@@ -69,12 +69,20 @@ export async function setupTillKit() {
     const prefix = kit.fx.ids.token(6);
     const secret = `wlt_${prefix}_${kit.fx.ids.token()}`;
     const orgId = options.orgId === undefined ? kit.org.id : options.orgId;
-    // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules.
+    // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules. It lives
+    // only while its creator is an active admin.
+    const creator = orgId === null ? `creator-${id}` : null;
+    if (creator)
+      await run(
+        kit.env.DB,
+        `INSERT INTO users (id, primary_email, created_at, last_roles) VALUES (?, ?, ?, '["admin"]')`,
+        [creator, `${creator}@key-creator.test`, kit.clock.now()],
+      );
     const insert = async () =>
       run(
         kit.env.DB,
-        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, expires_at, kind)
-       VALUES (?, ?, 'Till', ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, expires_at, kind, created_by, created_amr, creator_access_revision)
+       VALUES (?, ?, 'Till', ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT access_revision FROM users WHERE id = ?))`,
         [
           id,
           orgId,
@@ -85,6 +93,9 @@ export async function setupTillKit() {
           kit.clock.now(),
           options.expiresAt ?? null,
           orgId === null ? 'platform' : 'service',
+          creator,
+          creator ? 'oidc' : null,
+          creator,
         ],
       );
     await (orgId === null ? withoutTrigger(kit.env.DB, 'api_keys_kind_rules', insert) : insert());

@@ -81,9 +81,50 @@ export const OPERATIONS_KIT_SOURCES = [
   'node_modules/@polaris-key/brand/css/theme.css',
 ] as const;
 
-const words = (root: string, sources: readonly string[]): string[] => {
+/**
+ * The webhook-setup kit for the developer site (the Workbench's endpoints and verify tools, the
+ * "Set up a webhook source" docs): its parts and the controls they draw. Its own sheet, in px. The
+ * `.ts` sources count too: the buttons' variants live in button-variants.ts.
+ */
+export const WEBHOOK_SETUP_KIT_SOURCES = [
+  'src/web/ui/webhook-setup/copy-row.tsx',
+  'src/web/ui/webhook-setup/listen-check.tsx',
+  'src/web/ui/webhook-setup/live-check.tsx',
+  'src/web/ui/webhook-setup/live-panel.tsx',
+  'src/web/ui/webhook-setup/rich.tsx',
+  'src/web/ui/webhook-setup/rotate-secret-form.tsx',
+  'src/web/ui/webhook-setup/send-check.tsx',
+  'src/web/ui/webhook-setup/setup-part.tsx',
+  'src/web/ui/webhook-setup/setup-steps.tsx',
+  'src/web/ui/webhook-setup/topic-checklist.tsx',
+  'src/web/ui/webhook-setup/troubleshoot.tsx',
+  'src/web/ui/webhook-setup/two-sided.tsx',
+  'src/web/ui/webhook-setup/verify-guide.tsx',
+  'src/web/ui/art/buddy.tsx',
+  'src/web/ui/art/base.tsx',
+  'src/web/ui/art/buddy-art.tsx',
+  'src/web/ui/art/face.tsx',
+  'src/web/ui/button.tsx',
+  'src/web/ui/button-variants.ts',
+  'src/web/ui/callout.tsx',
+  'src/web/ui/checkbox.tsx',
+  'src/web/ui/code-block.tsx',
+  'src/web/ui/copy-button.tsx',
+  'src/web/ui/error-state.tsx',
+  'src/web/ui/icon-button.tsx',
+  'src/web/ui/label.tsx',
+  'src/web/ui/radio-group.tsx',
+  'src/web/ui/secret-reveal.tsx',
+  'src/web/ui/step-marker.tsx',
+  'src/web/ui/tabs.tsx',
+  'src/web/ui/operation/steps.ts',
+  'src/web/styles/utilities.css',
+  'node_modules/@polaris-key/brand/css/theme.css',
+] as const;
+
+const words = (root: string, sources: readonly string[], ts = false): string[] => {
   const out = new Set<string>();
-  for (const file of sources.filter((f) => f.endsWith('.tsx')))
+  for (const file of sources.filter((f) => f.endsWith('.tsx') || (ts && f.endsWith('.ts'))))
     for (const word of readFileSync(resolve(root, file), 'utf8').split(/[\s"'`]+/))
       if (word) out.add(word);
   return [...out].sort();
@@ -98,6 +139,7 @@ async function kitCss(
   sources: readonly string[],
   name: string,
   px = false,
+  ts = false,
 ): Promise<string> {
   const kit = parseCss(readFileSync(resolve(root, 'src/web/styles/utilities.css'), 'utf8'))
     .map(
@@ -113,7 +155,7 @@ ${kit}
     base: resolve(root, 'src/web/styles'),
     onDependency() {},
   });
-  const built = optimize(compiler.build(words(root, sources)), { minify: true })
+  const built = optimize(compiler.build(words(root, sources, ts)), { minify: true })
     .code.replace(/\/\*![^*]*\*\/\s*/, '')
     .trim();
   // The developer site's root font size is 14 px: its bar must not shrink with it, so type, radius
@@ -145,3 +187,5 @@ export const searchKitCss = (root: string) => kitCss(root, SEARCH_KIT_SOURCES, "
 export const menubarKitCss = (root: string) => kitCss(root, MENUBAR_KIT_SOURCES, "menubar's", true);
 export const operationsKitCss = (root: string) =>
   kitCss(root, OPERATIONS_KIT_SOURCES, "activity tray's", true);
+export const webhookSetupKitCss = (root: string) =>
+  kitCss(root, WEBHOOK_SETUP_KIT_SOURCES, "webhook-setup kit's", true, true);

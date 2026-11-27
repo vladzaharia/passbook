@@ -143,6 +143,938 @@ class AuditEntriesResource:
         return self._core.paginate("GET", "/api/v1/audit", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before, "cursor": cursor, "limit": limit}, result=m.AuditEntriesListResult, cursor_param="cursor", **opts)
 
 
+class PlatformAuditEntriesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def export(
+        self,
+        *,
+        actor_id: str | None = None,
+        action: str | None = None,
+        exclude_action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        from_: int | None | None = None,
+        to: int | None | None = None,
+        created_after: int | None | None = None,
+        created_before: int | None | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> httpx.Response:
+        """Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export`"""
+        return self._core.request("GET", "/api/v1/audit/platform/export", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, raw=True, **opts)
+
+    def list(
+        self,
+        *,
+        actor_id: str | None = None,
+        action: str | None = None,
+        exclude_action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        from_: int | None | None = None,
+        to: int | None | None = None,
+        created_after: int | None | None = None,
+        created_before: int | None | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformAuditEntriesListItem]:
+        """Query the platform audit log `GET /api/v1/audit/platform`"""
+        return self._core.paginate("GET", "/api/v1/audit/platform", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before, "cursor": cursor, "limit": limit}, result=m.PlatformAuditEntriesListResult, cursor_param="cursor", **opts)
+
+
+class PlatformMetricsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve_developer(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformMetricsRetrieveDeveloperResult:
+        """Developer quickstart funnel: sandboxes by step and time to first pass (30 days) `GET /api/v1/metrics/platform/developer`"""
+        return self._core.request("GET", "/api/v1/metrics/platform/developer", result=m.PlatformMetricsRetrieveDeveloperResult, **opts)
+
+    def retrieve_overview(
+        self,
+        *,
+        template_id: str | None = None,
+        range: _Literal["24h", "7d", "30d"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformMetricsRetrieveOverviewResult:
+        """Platform overview metrics (filtered results are aggregate-only) `GET /api/v1/metrics/platform/overview`"""
+        return self._core.request("GET", "/api/v1/metrics/platform/overview", query={"templateId": template_id, "range": range}, result=m.PlatformMetricsRetrieveOverviewResult, **opts)
+
+
+class PlatformOrgsEntitlementsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsEntitlementsRetrieveResult:
+        """Read an organization's features: preset, overrides and the presets to choose from `GET /api/v1/platform/orgs/{id}/entitlements`"""
+        return self._core.request("GET", f"/api/v1/platform/orgs/{_p(id)}/entitlements", result=m.PlatformOrgsEntitlementsRetrieveResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.PlatformOrgsEntitlementsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsEntitlementsUpdateResult:
+        """Set an organization's preset and overrides, against the revision the caller read `PUT /api/v1/platform/orgs/{id}/entitlements`"""
+        return self._core.request("PUT", f"/api/v1/platform/orgs/{_p(id)}/entitlements", body=body, result=m.PlatformOrgsEntitlementsUpdateResult, **opts)
+
+
+class PlatformOrgsLegalHoldsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        org_id: str,
+        body: m.PlatformOrgsLegalHoldsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsLegalHoldsCreateResult:
+        """Place a platform legal hold; only a platform administrator releases it `POST /api/v1/platform/orgs/{orgId}/retention/holds`"""
+        return self._core.request("POST", f"/api/v1/platform/orgs/{_p(org_id)}/retention/holds", body=body, result=m.PlatformOrgsLegalHoldsCreateResult, **opts)
+
+    def list(
+        self,
+        org_id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformOrgsLegalHoldsListItem]:
+        """List the legal holds of an organization `GET /api/v1/platform/orgs/{orgId}/retention/holds`"""
+        return self._core.paginate("GET", f"/api/v1/platform/orgs/{_p(org_id)}/retention/holds", query={"cursor": cursor}, result=m.PlatformOrgsLegalHoldsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformOrgsRetentionReceiptsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def download(
+        self,
+        org_id: str,
+        receipt_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsRetentionReceiptsDownloadResult:
+        """Download one retention receipt of an organization `GET /api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download`"""
+        return self._core.request("GET", f"/api/v1/platform/orgs/{_p(org_id)}/retention/receipts/{_p(receipt_id)}/download", result=m.PlatformOrgsRetentionReceiptsDownloadResult, **opts)
+
+    def list(
+        self,
+        org_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformOrgsRetentionReceiptsListItem]:
+        """List the retention receipts of an organization `GET /api/v1/platform/orgs/{orgId}/retention/receipts`"""
+        return self._core.paginate("GET", f"/api/v1/platform/orgs/{_p(org_id)}/retention/receipts", query={"cursor": cursor, "limit": limit}, result=m.PlatformOrgsRetentionReceiptsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformOrgsPersonalLabelsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformOrgsPersonalLabelsListItem]:
+        """Names of the personal organizations, which are not listed, for views that show an org by id `GET /api/v1/platform/personal-org-labels`"""
+        return self._core.paginate("GET", "/api/v1/platform/personal-org-labels", query={"cursor": cursor}, result=m.PlatformOrgsPersonalLabelsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformOrgsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.entitlements = PlatformOrgsEntitlementsResource(core)
+        self.legal_holds = PlatformOrgsLegalHoldsResource(core)
+        self.retention_receipts = PlatformOrgsRetentionReceiptsResource(core)
+        self.personal_labels = PlatformOrgsPersonalLabelsResource(core)
+
+    def create(
+        self,
+        body: m.PlatformOrgsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsCreateResult:
+        """Create an organization `POST /api/v1/orgs`"""
+        return self._core.request("POST", "/api/v1/orgs", body=body, result=m.PlatformOrgsCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        q: str | None = None,
+        sandboxes: _Literal["hide", "show", "only"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformOrgsListItem]:
+        """List organizations (personal organizations are never listed) `GET /api/v1/orgs`"""
+        return self._core.paginate("GET", "/api/v1/orgs", query={"cursor": cursor, "limit": limit, "q": q, "sandboxes": sandboxes}, result=m.PlatformOrgsListResult, cursor_param="cursor", **opts)
+
+    def list_closed(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformOrgsListClosedItem]:
+        """List closed organizations `GET /api/v1/platform/closed-orgs`"""
+        return self._core.paginate("GET", "/api/v1/platform/closed-orgs", query={"cursor": cursor}, result=m.PlatformOrgsListClosedResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsRetrieveResult:
+        """Get an organization for platform provisioning `GET /api/v1/orgs/{id}`"""
+        return self._core.request("GET", f"/api/v1/orgs/{_p(id)}", result=m.PlatformOrgsRetrieveResult, **opts)
+
+    def set_status(
+        self,
+        id: str,
+        body: m.PlatformOrgsSetStatusBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformOrgsSetStatusResult:
+        """Suspend or reactivate an organization `POST /api/v1/orgs/{id}/status`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/status", body=body, result=m.PlatformOrgsSetStatusResult, **opts)
+
+
+class PlatformAppleCallsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        since: int | None | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformAppleCallsListResult:
+        """Apple provisioner's call ledger `GET /api/v1/platform/apple-calls`"""
+        return self._core.request("GET", "/api/v1/platform/apple-calls", query={"since": since}, result=m.PlatformAppleCallsListResult, **opts)
+
+
+class PlatformAppleIdentitiesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformAppleIdentitiesListResult:
+        """The platform's own Apple identities, with their setup runs `GET /api/v1/platform/apple/identities`"""
+        return self._core.request("GET", "/api/v1/platform/apple/identities", result=m.PlatformAppleIdentitiesListResult, **opts)
+
+
+class PlatformAppleIdentityMovesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        operation_id: str | None = None,
+        state: _Literal["planned", "issued", "notified", "registered", "voided", "kept", "kept_both", "failed"] | None = None,
+        reason: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformAppleIdentityMovesListItem]:
+        """Move rows with their state and reason, including kept_both and unarmed `GET /api/v1/platform/apple/identity-moves`"""
+        return self._core.paginate("GET", "/api/v1/platform/apple/identity-moves", query={"cursor": cursor, "limit": limit, "operationId": operation_id, "state": state, "reason": reason}, result=m.PlatformAppleIdentityMovesListResult, cursor_param="cursor", **opts)
+
+    def preview(
+        self,
+        *,
+        from_identity_id: str,
+        to_identity_id: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformAppleIdentityMovesPreviewResult:
+        """Dry run of an identity move: what would move and what stays, by reason `GET /api/v1/platform/apple/identity-moves/preview`"""
+        return self._core.request("GET", "/api/v1/platform/apple/identity-moves/preview", query={"fromIdentityId": from_identity_id, "toIdentityId": to_identity_id}, result=m.PlatformAppleIdentityMovesPreviewResult, **opts)
+
+
+class PlatformEntitlementPresetsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformEntitlementPresetsListResult:
+        """Read every preset with its values and the organizations on it `GET /api/v1/platform/entitlement-presets`"""
+        return self._core.request("GET", "/api/v1/platform/entitlement-presets", result=m.PlatformEntitlementPresetsListResult, **opts)
+
+    def update(
+        self,
+        body: m.PlatformEntitlementPresetsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformEntitlementPresetsUpdateResult:
+        """Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue) `PUT /api/v1/platform/entitlement-presets`"""
+        return self._core.request("PUT", "/api/v1/platform/entitlement-presets", body=body, result=m.PlatformEntitlementPresetsUpdateResult, **opts)
+
+
+class PlatformIdpCallsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        since: int | None | None = None,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformIdpCallsListItem]:
+        """The binding's ledger of calls to Polaris ID from `since` (ms), a page at a time. `GET /api/v1/platform/idp/calls`"""
+        return self._core.paginate("GET", "/api/v1/platform/idp/calls", query={"since": since, "cursor": cursor}, result=m.PlatformIdpCallsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformIdpDriftResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpDriftListResult:
+        """Open differences between Polaris ID and PassBook. `GET /api/v1/platform/idp/drift`"""
+        return self._core.request("GET", "/api/v1/platform/idp/drift", result=m.PlatformIdpDriftListResult, **opts)
+
+
+class PlatformIdpScimTokenResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def rotate(
+        self,
+        body: m.PlatformIdpScimTokenRotateBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpScimTokenRotateResult:
+        """Replace the SCIM token: Polaris ID gets the new one first, then PassBook switches, with no gap. A dry run unless `dryRun` is false. Answers 202 with an operation (`idp.scim_rotate`). `POST /api/v1/platform/idp/scim-token/rotate`"""
+        return self._core.request("POST", "/api/v1/platform/idp/scim-token/rotate", body=body, result=m.PlatformIdpScimTokenRotateResult, **opts)
+
+
+class PlatformIdpSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpSetupRetrieveResult:
+        """What Polaris ID setup has done and what is left: each item is done, needed (`after:<item>` waits for another) or blocked with a reason. Costs one Polaris ID read. `GET /api/v1/platform/idp/setup`"""
+        return self._core.request("GET", "/api/v1/platform/idp/setup", result=m.PlatformIdpSetupRetrieveResult, **opts)
+
+    def start(
+        self,
+        body: m.PlatformIdpSetupStartBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpSetupStartResult:
+        """Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless `dryRun` is false; a dry run writes nothing. Stops at the first blocked item. Answers 202 with an operation (`idp.setup`). `POST /api/v1/platform/idp/setup`"""
+        return self._core.request("POST", "/api/v1/platform/idp/setup", body=body, result=m.PlatformIdpSetupStartResult, **opts)
+
+
+class PlatformIdpResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.calls = PlatformIdpCallsResource(core)
+        self.drift = PlatformIdpDriftResource(core)
+        self.scim_token = PlatformIdpScimTokenResource(core)
+        self.setup = PlatformIdpSetupResource(core)
+
+    def check(
+        self,
+        body: m.PlatformIdpCheckBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpCheckResult:
+        """Check now: compare every Polaris ID group with PassBook. `dryRun` records differences and changes nothing. Answers 202 with an operation (`idp.check` or `idp.dry_run`). `POST /api/v1/platform/idp/reconcile`"""
+        return self._core.request("POST", "/api/v1/platform/idp/reconcile", body=body, result=m.PlatformIdpCheckResult, **opts)
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformIdpRetrieveResult:
+        """Polaris ID status: connected, mode, paused, key expiry, budgets, the last SCIM change and open differences. `GET /api/v1/platform/idp`"""
+        return self._core.request("GET", "/api/v1/platform/idp", result=m.PlatformIdpRetrieveResult, **opts)
+
+
+class PlatformGroupsClaimsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        key: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsClaimsRetrieveResult:
+        """Read a Polaris ID group's claims (the ones PassBook manages) `GET /api/v1/platform/idp/groups/{key}/claims`"""
+        return self._core.request("GET", f"/api/v1/platform/idp/groups/{_p(key)}/claims", result=m.PlatformGroupsClaimsRetrieveResult, **opts)
+
+    def update(
+        self,
+        key: str,
+        body: m.PlatformGroupsClaimsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsClaimsUpdateResult:
+        """Set or remove a Polaris ID group's claims `PATCH /api/v1/platform/idp/groups/{key}/claims`"""
+        return self._core.request("PATCH", f"/api/v1/platform/idp/groups/{_p(key)}/claims", body=body, result=m.PlatformGroupsClaimsUpdateResult, **opts)
+
+
+class PlatformGroupsMembersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        key: str,
+        body: m.PlatformGroupsMembersCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsMembersCreateResult:
+        """Add a manual member, by user or Polaris ID subject `POST /api/v1/platform/idp/groups/{key}/members`"""
+        return self._core.request("POST", f"/api/v1/platform/idp/groups/{_p(key)}/members", body=body, result=m.PlatformGroupsMembersCreateResult, **opts)
+
+    def delete(
+        self,
+        key: str,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsMembersDeleteResult:
+        """Remove a manual member `DELETE /api/v1/platform/idp/groups/{key}/members/{id}`"""
+        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}/members/{_p(id)}", result=m.PlatformGroupsMembersDeleteResult, **opts)
+
+    def list(
+        self,
+        key: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformGroupsMembersListItem]:
+        """List a group's manual members `GET /api/v1/platform/idp/groups/{key}/members`"""
+        return self._core.paginate("GET", f"/api/v1/platform/idp/groups/{_p(key)}/members", query={"cursor": cursor}, result=m.PlatformGroupsMembersListResult, cursor_param="cursor", **opts)
+
+
+class PlatformGroupsRulesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        key: str,
+        body: m.PlatformGroupsRulesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsRulesCreateResult:
+        """Add an org rule: members of the org join the group `POST /api/v1/platform/idp/groups/{key}/rules`"""
+        return self._core.request("POST", f"/api/v1/platform/idp/groups/{_p(key)}/rules", body=body, result=m.PlatformGroupsRulesCreateResult, **opts)
+
+    def delete(
+        self,
+        key: str,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsRulesDeleteResult:
+        """End an org rule `DELETE /api/v1/platform/idp/groups/{key}/rules/{id}`"""
+        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}/rules/{_p(id)}", result=m.PlatformGroupsRulesDeleteResult, **opts)
+
+    def list(
+        self,
+        key: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformGroupsRulesListItem]:
+        """List a group's org rules `GET /api/v1/platform/idp/groups/{key}/rules`"""
+        return self._core.paginate("GET", f"/api/v1/platform/idp/groups/{_p(key)}/rules", query={"cursor": cursor}, result=m.PlatformGroupsRulesListResult, cursor_param="cursor", **opts)
+
+
+class PlatformGroupsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.claims = PlatformGroupsClaimsResource(core)
+        self.members = PlatformGroupsMembersResource(core)
+        self.rules = PlatformGroupsRulesResource(core)
+
+    def create(
+        self,
+        body: m.PlatformGroupsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsCreateResult:
+        """Create a custom Polaris ID group `POST /api/v1/platform/idp/groups`"""
+        return self._core.request("POST", "/api/v1/platform/idp/groups", body=body, result=m.PlatformGroupsCreateResult, **opts)
+
+    def delete(
+        self,
+        key: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsDeleteResult:
+        """Delete an empty custom group PassBook created `DELETE /api/v1/platform/idp/groups/{key}`"""
+        return self._core.request("DELETE", f"/api/v1/platform/idp/groups/{_p(key)}", result=m.PlatformGroupsDeleteResult, **opts)
+
+    def ensure(
+        self,
+        body: m.PlatformGroupsEnsureBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsEnsureResult:
+        """Create a configured role group in Polaris ID `POST /api/v1/platform/idp/groups/ensure`"""
+        return self._core.request("POST", "/api/v1/platform/idp/groups/ensure", body=body, result=m.PlatformGroupsEnsureResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformGroupsListItem]:
+        """List the Polaris ID groups PassBook manages `GET /api/v1/platform/idp/groups`"""
+        return self._core.paginate("GET", "/api/v1/platform/idp/groups", query={"cursor": cursor}, result=m.PlatformGroupsListResult, cursor_param="cursor", **opts)
+
+    def update(
+        self,
+        key: str,
+        body: m.PlatformGroupsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformGroupsUpdateResult:
+        """Rename a group's display name `PATCH /api/v1/platform/idp/groups/{key}`"""
+        return self._core.request("PATCH", f"/api/v1/platform/idp/groups/{_p(key)}", body=body, result=m.PlatformGroupsUpdateResult, **opts)
+
+
+class PlatformInvitationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.PlatformInvitationsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformInvitationsCreateResult:
+        """Invite a person to Polaris ID groups `POST /api/v1/platform/invitations`"""
+        return self._core.request("POST", "/api/v1/platform/invitations", body=body, result=m.PlatformInvitationsCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformInvitationsListItem]:
+        """List platform invitations `GET /api/v1/platform/invitations`"""
+        return self._core.paginate("GET", "/api/v1/platform/invitations", query={"cursor": cursor}, result=m.PlatformInvitationsListResult, cursor_param="cursor", **opts)
+
+    def resend(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformInvitationsResendResult:
+        """Send a platform invitation again with a new link `POST /api/v1/platform/invitations/{id}/resend`"""
+        return self._core.request("POST", f"/api/v1/platform/invitations/{_p(id)}/resend", result=m.PlatformInvitationsResendResult, **opts)
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformInvitationsRevokeResult:
+        """Revoke a platform invitation `DELETE /api/v1/platform/invitations/{id}`"""
+        return self._core.request("DELETE", f"/api/v1/platform/invitations/{_p(id)}", result=m.PlatformInvitationsRevokeResult, **opts)
+
+
+class PlatformWalletAccountsGoogleManagedResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def complete(
+        self,
+        org_id: str,
+        body: m.PlatformWalletAccountsGoogleManagedCompleteBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletAccountsGoogleManagedCompleteResult:
+        """Finish a parked managed Google issuer with an issuer id made in the console `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete`"""
+        return self._core.request("POST", f"/api/v1/platform/orgs/{_p(org_id)}/wallet-accounts/google/managed/complete", body=body, result=m.PlatformWalletAccountsGoogleManagedCompleteResult, **opts)
+
+    def create(
+        self,
+        org_id: str,
+        body: m.PlatformWalletAccountsGoogleManagedCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletAccountsGoogleManagedCreateResult:
+        """Start a managed Google issuer for an organization `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed`"""
+        return self._core.request("POST", f"/api/v1/platform/orgs/{_p(org_id)}/wallet-accounts/google/managed", body=body, result=m.PlatformWalletAccountsGoogleManagedCreateResult, **opts)
+
+
+class PlatformWalletAccountsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.google_managed = PlatformWalletAccountsGoogleManagedResource(core)
+
+
+class PlatformRetentionReceiptsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def download(
+        self,
+        receipt_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformRetentionReceiptsDownloadResult:
+        """Download one platform-scope retention receipt `GET /api/v1/platform/retention/receipts/{receiptId}/download`"""
+        return self._core.request("GET", f"/api/v1/platform/retention/receipts/{_p(receipt_id)}/download", result=m.PlatformRetentionReceiptsDownloadResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformRetentionReceiptsListItem]:
+        """List retention receipts of platform-scope deletions `GET /api/v1/platform/retention/receipts`"""
+        return self._core.paginate("GET", "/api/v1/platform/retention/receipts", query={"cursor": cursor, "limit": limit}, result=m.PlatformRetentionReceiptsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformSettingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsRetrieveResult:
+        """Read the platform settings `GET /api/v1/platform/settings`"""
+        return self._core.request("GET", "/api/v1/platform/settings", result=m.PlatformSettingsRetrieveResult, **opts)
+
+    def update(
+        self,
+        body: m.PlatformSettingsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformSettingsUpdateResult:
+        """Update the platform settings: a platform admin session (a sign-in setting, auth.* or oidc.*, needs a recent sign-in; break-glass included) or a Platform key with platform:settings that never names auth.* or oidc.* `PUT /api/v1/platform/settings`"""
+        return self._core.request("PUT", "/api/v1/platform/settings", body=body, result=m.PlatformSettingsUpdateResult, **opts)
+
+
+class PlatformWalletCredentialsChecksResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsChecksCreateResult:
+        """Check a platform wallet credential with its provider `POST /api/v1/platform/wallet-credentials/{id}/check`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-credentials/{_p(id)}/check", result=m.PlatformWalletCredentialsChecksCreateResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        check_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsChecksRetrieveResult:
+        """Read the result of a platform wallet credential check `GET /api/v1/platform/wallet-credentials/{id}/checks/{checkId}`"""
+        return self._core.request("GET", f"/api/v1/platform/wallet-credentials/{_p(id)}/checks/{_p(check_id)}", result=m.PlatformWalletCredentialsChecksRetrieveResult, **opts)
+
+
+class PlatformWalletCredentialsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.checks = PlatformWalletCredentialsChecksResource(core)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletCredentialsListItem]:
+        """List the platform wallet credentials `GET /api/v1/platform/wallet-credentials`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-credentials", query={"cursor": cursor}, result=m.PlatformWalletCredentialsListResult, cursor_param="cursor", **opts)
+
+    def migrate(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsMigrateResult:
+        """Queue the migration of legacy wallet accounts onto credential sources `POST /api/v1/platform/wallet-credentials/migrate`"""
+        return self._core.request("POST", "/api/v1/platform/wallet-credentials/migrate", result=m.PlatformWalletCredentialsMigrateResult, **opts)
+
+    def retrieve_migration(
+        self,
+        *,
+        after: str | None = None,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletCredentialsRetrieveMigrationItem]:
+        """Report the legacy wallet accounts waiting for a credential source `GET /api/v1/platform/wallet-credentials/migrate`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-credentials/migrate", query={"after": after, "cursor": cursor}, result=m.PlatformWalletCredentialsRetrieveMigrationResult, cursor_param="cursor", **opts)
+
+    def rotate_key(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsRotateKeyResult:
+        """Rotate a platform Google credential's service-account key now `POST /api/v1/platform/wallet-credentials/{id}/rotate-key`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-credentials/{_p(id)}/rotate-key", result=m.PlatformWalletCredentialsRotateKeyResult, **opts)
+
+    def set_samsung_card(
+        self,
+        id: str,
+        body: m.PlatformWalletCredentialsSetSamsungCardBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsSetSamsungCardResult:
+        """Name the Samsung card of one more type on a platform credential `PUT /api/v1/platform/wallet-credentials/{id}/cards`"""
+        return self._core.request("PUT", f"/api/v1/platform/wallet-credentials/{_p(id)}/cards", body=body, result=m.PlatformWalletCredentialsSetSamsungCardResult, **opts)
+
+    def upsert(
+        self,
+        body: m.PlatformWalletCredentialsUpsertBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletCredentialsUpsertResult:
+        """Create or rotate a platform wallet credential `PUT /api/v1/platform/wallet-credentials`"""
+        return self._core.request("PUT", "/api/v1/platform/wallet-credentials", body=body, result=m.PlatformWalletCredentialsUpsertResult, **opts)
+
+
+class PlatformWalletEnrollmentsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        provider: _Literal["google", "samsung"],
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformWalletEnrollmentsListItem]:
+        """List every organization enrollment of a wallet provider `GET /api/v1/platform/wallet-enrolments`"""
+        return self._core.paginate("GET", "/api/v1/platform/wallet-enrolments", query={"provider": provider, "cursor": cursor, "limit": limit}, result=m.PlatformWalletEnrollmentsListResult, cursor_param="cursor", **opts)
+
+
+class PlatformWalletReleaseResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def enable_ready(
+        self,
+        provider: _Literal["google", "samsung"],
+        mode: _Literal["live", "test"],
+        body: m.PlatformWalletReleaseEnableReadyBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseEnableReadyResult:
+        """Turn on the reviewed ready enrollments of a released provider (dry run unless apply; a key may only dry run) `POST /api/v1/platform/wallet-release/{provider}/{mode}/enable-ready`"""
+        return self._core.request("POST", f"/api/v1/platform/wallet-release/{_p(provider)}/{_p(mode)}/enable-ready", body=body, result=m.PlatformWalletReleaseEnableReadyResult, **opts)
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformWalletReleaseRetrieveResult:
+        """Read what Google and Samsung would issue once released, per mode `GET /api/v1/platform/wallet-release`"""
+        return self._core.request("GET", "/api/v1/platform/wallet-release", result=m.PlatformWalletReleaseRetrieveResult, **opts)
+
+
+class PlatformStatusResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list_incidents(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformStatusListIncidentsItem]:
+        """Incident notes on the public status page `GET /api/v1/status/incidents`"""
+        return self._core.paginate("GET", "/api/v1/status/incidents", query={"cursor": cursor}, result=m.PlatformStatusListIncidentsResult, cursor_param="cursor", **opts)
+
+    def list_workflow_runs(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformStatusListWorkflowRunsItem]:
+        """Recent workflow runs `GET /api/v1/status/workflows`"""
+        return self._core.paginate("GET", "/api/v1/status/workflows", query={"cursor": cursor}, result=m.PlatformStatusListWorkflowRunsResult, cursor_param="cursor", **opts)
+
+    def open_incident(
+        self,
+        body: m.PlatformStatusOpenIncidentBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformStatusOpenIncidentResult:
+        """Open an incident note on the public status page `POST /api/v1/status/incidents`"""
+        return self._core.request("POST", "/api/v1/status/incidents", body=body, result=m.PlatformStatusOpenIncidentResult, **opts)
+
+    def resolve_incident(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformStatusResolveIncidentResult:
+        """Resolve an incident note `POST /api/v1/status/incidents/{id}/resolve`"""
+        return self._core.request("POST", f"/api/v1/status/incidents/{_p(id)}/resolve", result=m.PlatformStatusResolveIncidentResult, **opts)
+
+    def retrieve(
+        self,
+        *,
+        fresh: _Literal["0", "1"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformStatusRetrieveResult:
+        """Component health `GET /api/v1/status`"""
+        return self._core.request("GET", "/api/v1/status", query={"fresh": fresh}, result=m.PlatformStatusRetrieveResult, **opts)
+
+
+class PlatformUsersAccessResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersAccessRetrieveResult:
+        """A user's Polaris ID access: per role what PassBook wants and why, what Polaris ID showed, and any pause. `GET /api/v1/users/{id}/access`"""
+        return self._core.request("GET", f"/api/v1/users/{_p(id)}/access", result=m.PlatformUsersAccessRetrieveResult, **opts)
+
+
+class PlatformUsersClaimsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersClaimsRetrieveResult:
+        """Read a user's Polaris ID claims (the ones PassBook manages) `GET /api/v1/users/{id}/claims`"""
+        return self._core.request("GET", f"/api/v1/users/{_p(id)}/claims", result=m.PlatformUsersClaimsRetrieveResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.PlatformUsersClaimsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersClaimsUpdateResult:
+        """Set or remove a user's Polaris ID claims `PATCH /api/v1/users/{id}/claims`"""
+        return self._core.request("PATCH", f"/api/v1/users/{_p(id)}/claims", body=body, result=m.PlatformUsersClaimsUpdateResult, **opts)
+
+
+class PlatformUsersPassesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformUsersPassesListItem]:
+        """List a user's passes in every organization `GET /api/v1/users/{id}/passes`"""
+        return self._core.paginate("GET", f"/api/v1/users/{_p(id)}/passes", query={"cursor": cursor, "limit": limit}, result=m.PlatformUsersPassesListResult, cursor_param="cursor", **opts)
+
+
+class PlatformUsersRolesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def set(
+        self,
+        id: str,
+        body: m.PlatformUsersRolesSetBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersRolesSetResult:
+        """Grant or revoke a platform role (developer or support). The sync adds or removes the Polaris ID group within a minute. `POST /api/v1/users/{id}/roles`"""
+        return self._core.request("POST", f"/api/v1/users/{_p(id)}/roles", body=body, result=m.PlatformUsersRolesSetResult, **opts)
+
+
+class PlatformUsersSessionsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        session_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersSessionsRevokeResult:
+        """Revoke one session `DELETE /api/v1/users/{id}/sessions/{sessionId}`"""
+        return self._core.request("DELETE", f"/api/v1/users/{_p(id)}/sessions/{_p(session_id)}", result=m.PlatformUsersSessionsRevokeResult, **opts)
+
+    def revoke_all(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersSessionsRevokeAllResult:
+        """Revoke all sessions `POST /api/v1/users/{id}/sessions/revoke`"""
+        return self._core.request("POST", f"/api/v1/users/{_p(id)}/sessions/revoke", result=m.PlatformUsersSessionsRevokeAllResult, **opts)
+
+
+class PlatformUsersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.access = PlatformUsersAccessResource(core)
+        self.claims = PlatformUsersClaimsResource(core)
+        self.passes = PlatformUsersPassesResource(core)
+        self.roles = PlatformUsersRolesResource(core)
+        self.sessions = PlatformUsersSessionsResource(core)
+
+    def list(
+        self,
+        *,
+        q: str | None = None,
+        status: _Literal["active", "disabled"] | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.PlatformUsersListItem]:
+        """List users `GET /api/v1/users`"""
+        return self._core.paginate("GET", "/api/v1/users", query={"q": q, "status": status, "cursor": cursor, "limit": limit}, result=m.PlatformUsersListResult, cursor_param="cursor", **opts)
+
+    def offboard(
+        self,
+        id: str,
+        body: m.PlatformUsersOffboardBody | _Dict[str, _Any] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersOffboardResult:
+        """Offboard a user: end their memberships, developer sponsorships, platform grants and keys, sign them out and disable them, then take their Polaris ID roles away. `dryRun` answers 200 with the plan and changes nothing. Otherwise 202 with the plan and an operation (`idp.offboard`). 409 `IDP_PLATFORM_ADMIN` for a platform admin, `LAST_ORG_ADMIN` when an org would lose its last admin. `POST /api/v1/users/{id}/offboard`"""
+        return self._core.request("POST", f"/api/v1/users/{_p(id)}/offboard", body=body, result=m.PlatformUsersOffboardResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersRetrieveResult:
+        """Get a user `GET /api/v1/users/{id}`"""
+        return self._core.request("GET", f"/api/v1/users/{_p(id)}", result=m.PlatformUsersRetrieveResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.PlatformUsersUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PlatformUsersUpdateResult:
+        """Disable or enable a user `PATCH /api/v1/users/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/users/{_p(id)}", body=body, result=m.PlatformUsersUpdateResult, **opts)
+
+
+class PlatformResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.audit_entries = PlatformAuditEntriesResource(core)
+        self.metrics = PlatformMetricsResource(core)
+        self.orgs = PlatformOrgsResource(core)
+        self.apple_calls = PlatformAppleCallsResource(core)
+        self.apple_identities = PlatformAppleIdentitiesResource(core)
+        self.apple_identity_moves = PlatformAppleIdentityMovesResource(core)
+        self.entitlement_presets = PlatformEntitlementPresetsResource(core)
+        self.idp = PlatformIdpResource(core)
+        self.groups = PlatformGroupsResource(core)
+        self.invitations = PlatformInvitationsResource(core)
+        self.wallet_accounts = PlatformWalletAccountsResource(core)
+        self.retention_receipts = PlatformRetentionReceiptsResource(core)
+        self.settings = PlatformSettingsResource(core)
+        self.wallet_credentials = PlatformWalletCredentialsResource(core)
+        self.wallet_enrollments = PlatformWalletEnrollmentsResource(core)
+        self.wallet_release = PlatformWalletReleaseResource(core)
+        self.status = PlatformStatusResource(core)
+        self.users = PlatformUsersResource(core)
+
+
 class BrandWebLogoResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -456,6 +1388,36 @@ class ConnectionsRunsResource:
         return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/runs", query={"cursor": cursor, "limit": limit}, result=m.ConnectionsRunsListResult, cursor_param="cursor", **opts)
 
 
+class ConnectionsSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsSetupRetrieveResult:
+        """A webhook connection's setup guide with its URL filled in; never the secret `GET /api/v1/connections/{id}/setup`"""
+        return self._core.request("GET", f"/api/v1/connections/{_p(id)}/setup", result=m.ConnectionsSetupRetrieveResult, **opts)
+
+
+class ConnectionsWebhookArrivalsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        since: int | None | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsWebhookArrivalsListItem]:
+        """List webhook arrivals `GET /api/v1/connections/{id}/webhook-arrivals`"""
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/webhook-arrivals", query={"cursor": cursor, "since": since, "limit": limit}, result=m.ConnectionsWebhookArrivalsListResult, cursor_param="cursor", **opts)
+
+
 class ConnectionsWebhookFailuresResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -495,6 +1457,8 @@ class ConnectionsResource:
         self.uploads = ConnectionsUploadsResource(core)
         self.files = ConnectionsFilesResource(core)
         self.runs = ConnectionsRunsResource(core)
+        self.setup = ConnectionsSetupResource(core)
+        self.webhook_arrivals = ConnectionsWebhookArrivalsResource(core)
         self.webhook_failures = ConnectionsWebhookFailuresResource(core)
 
     def create(
@@ -516,7 +1480,7 @@ class ConnectionsResource:
     def list(
         self,
         *,
-        health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | None = None,
+        health: _Literal["unknown", "awaiting", "healthy", "degraded", "failing", "paused", "disabled"] | None = None,
         q: str | None = None,
         cursor: str | None = None,
         limit: int | None = None,
@@ -528,10 +1492,11 @@ class ConnectionsResource:
     def preview(
         self,
         id: str,
+        body: m.ConnectionsPreviewBody | _Dict[str, _Any] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.ConnectionsPreviewResult:
-        """Preview a sync `POST /api/v1/connections/{id}/preview`"""
-        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
+        """Preview a sync, or what one received webhook made `POST /api/v1/connections/{id}/preview`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", body=body, result=m.ConnectionsPreviewResult, **opts)
 
     def probe(
         self,
@@ -619,9 +1584,23 @@ class ConnectionsResource:
         return self._core.request("PATCH", f"/api/v1/connections/{_p(id)}", body=body, result=m.ConnectionsUpdateResult, **opts)
 
 
+class ConnectorsRecipeSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        recipe: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectorsRecipeSetupRetrieveResult:
+        """A sender's webhook setup guide, with the URL and secret left for the console to fill `GET /api/v1/connectors/webhook-push/recipes/{recipe}/setup`"""
+        return self._core.request("GET", f"/api/v1/connectors/webhook-push/recipes/{_p(recipe)}/setup", result=m.ConnectorsRecipeSetupRetrieveResult, **opts)
+
+
 class ConnectorsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.recipe_setup = ConnectorsRecipeSetupResource(core)
 
     def list(
         self,
@@ -665,12 +1644,22 @@ class EventsResource:
         after: str | None = None,
         types: str | None = None,
         pass_id: str | None = None,
+        request_id: str | None = None,
         limit: int | None = None,
+        order: _Literal["asc", "desc"] | None = None,
         api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
-        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "limit": limit, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+        return self._core.paginate("GET", "/api/v1/events", query={"after": after, "types": types, "passId": pass_id, "requestId": request_id, "limit": limit, "order": order, "apiVersion": api_version}, result=m.EventsListResult, cursor_param="after", **opts)
+
+    def list_deliveries(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.EventsListDeliveriesResult:
+        """Where one event was sent: its deliveries across endpoints. `passes:read`, like the event `GET /api/v1/events/{id}/deliveries`"""
+        return self._core.request("GET", f"/api/v1/events/{_p(id)}/deliveries", result=m.EventsListDeliveriesResult, **opts)
 
     def retrieve(
         self,
@@ -754,6 +1743,84 @@ class HoldersResource:
     ) -> m.HoldersUnassignResult:
         """Stage removal of the holder `POST /api/v1/holders/unassign`"""
         return self._core.request("POST", "/api/v1/holders/unassign", body=body, result=m.HoldersUnassignResult, **opts)
+
+
+class IdentitiesPushKeyResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def delete(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesPushKeyDeleteResult:
+        """Remove the APNs push key of the identity team `DELETE /api/v1/identities/{id}/push-key`"""
+        return self._core.request("DELETE", f"/api/v1/identities/{_p(id)}/push-key", result=m.IdentitiesPushKeyDeleteResult, **opts)
+
+    def upload(
+        self,
+        id: str,
+        body: m.IdentitiesPushKeyUploadBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesPushKeyUploadResult:
+        """Set or replace the APNs push key (.p8) of the identity team `PUT /api/v1/identities/{id}/push-key`"""
+        return self._core.request("PUT", f"/api/v1/identities/{_p(id)}/push-key", body=body, result=m.IdentitiesPushKeyUploadResult, **opts)
+
+
+class IdentitiesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+        self.push_key = IdentitiesPushKeyResource(core)
+
+    def check_apns(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesCheckApnsResult:
+        """Probe APNs with the identity certificate using a dummy token `POST /api/v1/identities/{id}/apns-check`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/apns-check", result=m.IdentitiesCheckApnsResult, **opts)
+
+    def create(
+        self,
+        body: m.IdentitiesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesCreateResult:
+        """Upload an Apple identity `POST /api/v1/identities`"""
+        return self._core.request("POST", "/api/v1/identities", body=body, result=m.IdentitiesCreateResult, **opts)
+
+    def renew(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRenewResult:
+        """Get a new certificate now (managed identities) `POST /api/v1/identities/{id}/renew`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/renew", result=m.IdentitiesRenewResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRetrieveResult:
+        """Get an Apple identity `GET /api/v1/identities/{id}`"""
+        return self._core.request("GET", f"/api/v1/identities/{_p(id)}", result=m.IdentitiesRetrieveResult, **opts)
+
+    def rotate(
+        self,
+        id: str,
+        body: m.IdentitiesRotateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesRotateResult:
+        """Replace the certificate and key of an Apple identity `POST /api/v1/identities/{id}/rotate`"""
+        return self._core.request("POST", f"/api/v1/identities/{_p(id)}/rotate", body=body, result=m.IdentitiesRotateResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.IdentitiesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.IdentitiesUpdateResult:
+        """Update an Apple identity `PATCH /api/v1/identities/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/identities/{_p(id)}", body=body, result=m.IdentitiesUpdateResult, **opts)
 
 
 class MessageRulesRunsResource:
@@ -1216,6 +2283,82 @@ class OrgsResource:
     ) -> m.OrgsUpdatePassSetupResult:
         """Change an organization's brand and which channels it allows; dryRun answers with the impact (Idempotency-Key on an apply) `PATCH /api/v1/orgs/{orgId}/pass-setup`"""
         return self._core.request("PATCH", f"/api/v1/orgs/{_p(org_id)}/pass-setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.OrgsUpdatePassSetupResult, **opts)
+
+
+class InvitationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.InvitationsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsCreateResult:
+        """Invite an organization member `POST /api/v1/orgs/{id}/invitations`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations", body=body, result=m.InvitationsCreateResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.InvitationsListItem]:
+        """List organization invitations `GET /api/v1/orgs/{id}/invitations`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/invitations", query={"cursor": cursor}, result=m.InvitationsListResult, cursor_param="cursor", **opts)
+
+    def resend(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsResendResult:
+        """Resend an organization invitation `POST /api/v1/orgs/{id}/invitations/{invitationId}/resend`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}/resend", result=m.InvitationsResendResult, **opts)
+
+    def revoke(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.InvitationsRevokeResult:
+        """Revoke an organization invitation `DELETE /api/v1/orgs/{id}/invitations/{invitationId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/invitations/{_p(invitation_id)}", result=m.InvitationsRevokeResult, **opts)
+
+
+class MembershipsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.MembershipsListItem]:
+        """List organization memberships `GET /api/v1/orgs/{id}/memberships`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/memberships", query={"cursor": cursor}, result=m.MembershipsListResult, cursor_param="cursor", **opts)
+
+    def revoke(
+        self,
+        id: str,
+        membership_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsRevokeResult:
+        """Revoke an organization membership `DELETE /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", result=m.MembershipsRevokeResult, **opts)
+
+    def update_roles(
+        self,
+        id: str,
+        membership_id: str,
+        body: m.MembershipsUpdateRolesBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.MembershipsUpdateRolesResult:
+        """Change an organization member's roles `PATCH /api/v1/orgs/{id}/memberships/{membershipId}`"""
+        return self._core.request("PATCH", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", body=body, result=m.MembershipsUpdateRolesResult, **opts)
 
 
 class PassImportsMappingsResource:
@@ -1688,6 +2831,7 @@ class PassesResource:
     def list(
         self,
         *,
+        org_ids: str | None = None,
         template_id: str | None = None,
         connection_id: str | None = None,
         import_id: str | None = None,
@@ -1705,7 +2849,7 @@ class PassesResource:
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.PassSummary]:
         """List passes `GET /api/v1/passes`"""
-        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/passes", query={"orgIds": org_ids, "templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
 
     def match_photos(
         self,
@@ -1797,6 +2941,15 @@ class PassesResource:
     ) -> m.PassesSendEmailResult:
         """Email the pass to the holder (Idempotency-Key supported) `POST /api/v1/passes/{id}/resend-email`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/resend-email", body=body, idempotent=True, result=m.PassesSendEmailResult, **opts)
+
+    def simulate(
+        self,
+        id: str,
+        body: m.PassesSimulateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesSimulateResult:
+        """Send a real Test event for a Test pass: install, scan, push failure and more `POST /api/v1/passes/{id}/simulate`"""
+        return self._core.request("POST", f"/api/v1/passes/{_p(id)}/simulate", body=body, result=m.PassesSimulateResult, **opts)
 
     def unvoid(
         self,
@@ -1907,6 +3060,40 @@ class PassViewsResource:
     ) -> m.PassViewsReplaceResult:
         """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
         return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
+
+
+class RequestLogsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        key_id: str | None = None,
+        status: str | None = None,
+        code: str | None = None,
+        pass_id: str | None = None,
+        version: str | None = None,
+        path: str | None = None,
+        method: _Literal["GET", "POST", "PUT", "PATCH", "DELETE"] | None = None,
+        source: _Literal["key", "try", "all"] | None = None,
+        portal: _Literal["show", "hide"] | None = None,
+        after: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        key: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.RequestLogsListItem]:
+        """List an organization's Test calls, newest first `GET /api/v1/request-logs`"""
+        return self._core.paginate("GET", "/api/v1/request-logs", query={"keyId": key_id, "status": status, "code": code, "passId": pass_id, "version": version, "path": path, "method": method, "source": source, "portal": portal, "after": after, "cursor": cursor, "limit": limit, "key": key}, result=m.RequestLogsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.RequestLogsRetrieveResult:
+        """One Test call, with its redacted bodies for 24 hours where the organization records them `GET /api/v1/request-logs/{id}`"""
+        return self._core.request("GET", f"/api/v1/request-logs/{_p(id)}", result=m.RequestLogsRetrieveResult, **opts)
 
 
 class RollCallsResource:
@@ -2722,6 +3909,18 @@ class TestEmailsResource:
         return self._core.request("GET", f"/api/v1/test-inbox/{_p(id)}", query={"mode": mode}, result=m.TestEmailsRetrieveResult, **opts)
 
 
+class WebhookEndpointsSetupResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def retrieve(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WebhookEndpointsSetupRetrieveResult:
+        """The setup guide for the server that receives webhooks `GET /api/v1/webhook-endpoints/setup`"""
+        return self._core.request("GET", "/api/v1/webhook-endpoints/setup", result=m.WebhookEndpointsSetupRetrieveResult, **opts)
+
+
 class WebhookEndpointsCapturesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2732,7 +3931,7 @@ class WebhookEndpointsCapturesResource:
         *,
         cursor: str | None = None,
         limit: int | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
@@ -2787,7 +3986,7 @@ class WebhookEndpointsDeliveriesResource:
         cursor: str | None = None,
         limit: int | None = None,
         state: _Literal["pending", "delivered", "failed", "cancelled"] | None = None,
-        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
         request_id: str | None = None,
         pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
@@ -2830,6 +4029,7 @@ class WebhookEndpointsTestsResource:
 class WebhookEndpointsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.setup = WebhookEndpointsSetupResource(core)
         self.captures = WebhookEndpointsCapturesResource(core)
         self.deliveries = WebhookEndpointsDeliveriesResource(core)
         self.tests = WebhookEndpointsTestsResource(core)
@@ -2911,6 +4111,7 @@ class Resources:
     def __init__(self, core: Core) -> None:
         self.api_keys = ApiKeysResource(core)
         self.audit_entries = AuditEntriesResource(core)
+        self.platform = PlatformResource(core)
         self.brand = BrandResource(core)
         self.broadcasts = BroadcastsResource(core)
         self.bundles = BundlesResource(core)
@@ -2919,17 +4120,21 @@ class Resources:
         self.deliveries = DeliveriesResource(core)
         self.events = EventsResource(core)
         self.holders = HoldersResource(core)
+        self.identities = IdentitiesResource(core)
         self.message_rules = MessageRulesResource(core)
         self.nfc = NfcResource(core)
         self.operations = OperationsResource(core)
         self.developer_invitations = DeveloperInvitationsResource(core)
         self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)
+        self.invitations = InvitationsResource(core)
+        self.memberships = MembershipsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
+        self.request_logs = RequestLogsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)

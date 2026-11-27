@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
+import { runMinuteCron } from './helpers/cron.ts';
 import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
@@ -7,7 +8,7 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 test('Test mode marks a test pass, keeps its email in the Test inbox and out of live lists', async ({
   page,
 }) => {
-  // The inbox poll below may wait up to 90 s for the email.
+  // The capture poll below may wait up to 90 s for the email.
   test.setTimeout(150_000);
   const admin = await apiAs('admin');
   const orgId = readSeed().org.id;
@@ -54,19 +55,23 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   await expect(bar).toBeVisible();
 
   // The outbox dispatch starts under waitUntil when the pass is created, and a loaded server (CI) can leave it to the
-  // next scheduled tick: allow for that instead of a fixed 30 s.
-  await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
-  const mail = page.getByRole('listitem').filter({ hasText: `To ${to}` });
+  // next scheduled tick: run the minute cron (delivery sweep) on each poll until the capture is recorded. The inbox
+  // page shows its heading before the list has loaded, so it is read once, after the capture, with an auto-waiting
+  // assertion: counting right after the heading read the loading skeleton as an empty inbox.
   await expect
     .poll(
       async () => {
-        await page.reload();
-        await page.getByRole('heading', { name: 'Test inbox' }).waitFor();
-        return mail.count();
+        await runMinuteCron();
+        const events = await admin.get(`/api/v1/passes/${pass.id}/events?group=delivery`);
+        return events.items.map((e: { kind: string }) => e.kind);
       },
       { intervals: [1_000, 2_000], timeout: 90_000 },
     )
-    .toBe(1);
+    .toContain('email.captured');
+  await page.goto(`/admin/test-inbox?orgId=${encodeURIComponent(orgId)}`);
+  await expect(page.getByRole('heading', { name: 'Test inbox' })).toBeVisible();
+  const mail = page.getByRole('listitem').filter({ hasText: `To ${to}` });
+  await expect(mail).toHaveCount(1);
   await mail.getByRole('link').click();
   await expect(page.getByTitle('Email preview')).toBeVisible();
 
@@ -74,8 +79,6 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
     `/api/v1/passes?orgId=${encodeURIComponent(orgId)}&q=${encodeURIComponent(name)}`,
   );
   expect(live.items).toEqual([]);
-  const outbox = await admin.get(`/api/v1/passes/${pass.id}/events?group=delivery`);
-  expect(outbox.items.map((e: { kind: string }) => e.kind)).toContain('email.captured');
 
   await page.goto(search);
   await page.getByRole('radio', { name: 'Live' }).click();

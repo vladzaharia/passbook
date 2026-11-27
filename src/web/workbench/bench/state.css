@@ -1,0 +1,199 @@
+/* The bench's states (bench/state.tsx, skeleton.tsx), its live mark (live.tsx) and the shortcuts sheet
+   (shortcuts.tsx). The card is ui/state-card.css's; the buddy sits on its top edge. */
+
+/* ---------- BenchState ---------- */
+.bench-state {
+  margin-top: 48px;
+}
+/* The buddy's prop stands past the card's end edge (the cable most): the card leaves it room, so it
+   never clips at the phone's gutter or scrolls the page sideways. */
+.bench-state[data-prop] {
+  margin-inline-end: 28px;
+}
+/* In the list's column the card is centred at a reading width, not pushed to the column's left edge. */
+.bench-main .bench-state,
+.logs-solo .bench-state {
+  max-width: min(44rem, calc(100% - 28px));
+  margin-inline: auto;
+}
+/* A card with a prop (the cable) keeps its room on both sides, so the prop never scrolls the page sideways. */
+.bench-main .bench-state[data-prop],
+.logs-solo .bench-state[data-prop] {
+  max-width: min(44rem, calc(100% - 56px));
+}
+/* Inside a pane or a list the card keeps less air above it. */
+.bench-insp .bench-state,
+.bench-main > .bench-state:first-child {
+  margin-top: 40px;
+}
+
+/* ---------- BenchSkeleton ---------- */
+.bench-skel {
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  overflow: clip;
+}
+.bench-skel-r {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--wb-row);
+  padding: 0 16px 0 19px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.bench-skel-r:first-child {
+  border-top: 0;
+}
+.bench-skel-b {
+  display: block;
+  flex: none;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--pk-state-hover-tint);
+}
+/* The title bar gives way on a narrow list; the lead and the trail keep their width. */
+.bench-skel-b:nth-child(2) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bench-skel-b {
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in oklab, var(--pk-text-default) 9%, transparent) 50%,
+        transparent 100%
+      )
+      0 0 / 200% 100% no-repeat,
+      var(--pk-state-hover-tint);
+    animation: bench-shimmer 1.3s linear infinite;
+  }
+  .bench-skel-r:nth-child(2) .bench-skel-b {
+    animation-delay: 80ms;
+  }
+  .bench-skel-r:nth-child(3) .bench-skel-b {
+    animation-delay: 160ms;
+  }
+  .bench-skel-r:nth-child(4) .bench-skel-b {
+    animation-delay: 240ms;
+  }
+  .bench-skel-r:nth-child(5) .bench-skel-b {
+    animation-delay: 320ms;
+  }
+}
+@keyframes bench-shimmer {
+  from {
+    background-position:
+      150% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -50% 0,
+      0 0;
+  }
+}
+
+/* ---------- LiveIndicator ---------- */
+.bench-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.bench-live-d {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pk-success);
+}
+.bench-live[data-state="paused"] .bench-live-d,
+.bench-live[data-state="limited"] .bench-live-d {
+  background: var(--pk-text-subtle);
+}
+.bench-live[data-state="offline"] .bench-live-d {
+  background: var(--pk-warning);
+}
+.bench-live[data-state="listening"] .bench-live-t {
+  color: var(--pk-text-default);
+}
+/* While it polls a ring breathes out of the dot every 1.6 s; nothing moves when it does not. */
+@media (prefers-reduced-motion: no-preference) {
+  .bench-live[data-state="listening"] .bench-live-d::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--pk-success);
+    animation: bench-ping 1.6s var(--wl-ease-out) infinite;
+  }
+}
+@keyframes bench-ping {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+.bench-live-r {
+  color: var(--pk-accent-fg);
+  font-weight: 500;
+}
+.bench-live-r:hover {
+  text-decoration: underline;
+}
+@media (pointer: coarse) {
+  .bench-live-r {
+    min-height: 44px;
+    margin-block: -14px;
+  }
+}
+
+/* ---------- Shortcuts sheet ---------- */
+.bench-keys {
+  display: grid;
+  margin: 0;
+}
+.bench-keys-r {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.bench-keys-r:first-child {
+  border-top: 0;
+}
+.bench-keys dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bench-keys dd {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+  text-align: end;
+}
+.bench-keys kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--pk-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-strong);
+  font: 500 11.5px / 1 var(--pk-font-mono);
+}

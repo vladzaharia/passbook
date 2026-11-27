@@ -1,0 +1,222 @@
+/* The Webhooks tool's own pieces. The list, inspector, toolbar, chips and times are the bench's
+   (bench/*.css); this sheet holds only what is the tool's: the inspector's panes, the Manage sheet. */
+
+.wh-msg {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-danger);
+  background: var(--pk-danger-subtle);
+}
+
+/* The send button and the chevron beside it share one row; the chevron is a quiet control. */
+.wh-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wh-send .bench-mn-t {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-default);
+  cursor: pointer;
+}
+.wh-send .bench-mn-t:hover,
+.wh-send .bench-mn-t[aria-expanded="true"] {
+  background: var(--pk-state-hover-tint);
+}
+.wh-send .bench-mn-t:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 1px;
+}
+.wh-send .bench-mn-t svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The Test tag sits a word's space from the type it tags. */
+.bench-row-tt .bench-sc {
+  margin-inline-start: 8px;
+}
+
+/* ---------- Inspector panes ---------- */
+.wh-pane {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.wh-pane.muted {
+  padding: 12px 16px;
+}
+.wh-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font: 400 13px / 1.5 var(--pk-font-mono);
+}
+.wh-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pk-text-strong);
+}
+.wh-attempts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.wh-attempts li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wh-attempts li:first-child {
+  border-top: 0;
+}
+.wh-ms {
+  font-family: var(--pk-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.wh-pane .cmd {
+  width: 100%;
+  max-width: none;
+}
+.wh-pane .cmd code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Manage sheet ---------- */
+.wh-eps {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  overflow: clip;
+}
+.wh-eps li + li {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wh-ep {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wh-ep:hover {
+  background: var(--pk-state-hover-tint);
+}
+.wh-ep[aria-pressed="true"] {
+  background: var(--pk-state-selected-fill);
+  box-shadow: inset 0 0 0 1px var(--pk-accent-border);
+}
+.wh-ep:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.wh-ep-t {
+  font: 500 13px var(--pk-font-mono);
+  color: var(--pk-text-strong);
+  overflow-wrap: anywhere;
+}
+.wh-ep-s {
+  grid-column: 1;
+  font-size: 12px;
+  color: var(--pk-text-muted);
+}
+.wh-ep .bench-sc {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.wh-add {
+  width: 100%;
+}
+.wh-form,
+.wh-sec {
+  display: grid;
+  gap: 12px;
+}
+.wh-sec {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wh-field-l {
+  display: grid;
+  gap: 4px;
+}
+.wh-input {
+  min-height: 36px;
+  padding-inline: 12px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--wl-field, var(--pk-surface-raised));
+  color: var(--pk-text-default);
+  font: inherit;
+  width: 100%;
+}
+.wh-input:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 1px;
+}
+
+/* The toolbar keeps one row on a phone: the endpoint drops its word, Manage keeps only its icon. */
+@media (max-width: 719.98px) {
+  .wh-count {
+    display: none;
+  }
+  .wh-endpoint .bench-fs-l {
+    display: none;
+  }
+  .wh-endpoint {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .wh-endpoint .bench-fs-v {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wh-manage {
+    flex: none;
+    padding-inline: 8px;
+  }
+  .wh-manage-t {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  .wh-hide-s {
+    display: none;
+  }
+  .wh-step:has(+ .wh-step.bad) {
+    padding-right: 16px;
+  }
+  .wh-step.bad {
+    --wl-buddy-inset: 64px;
+    margin-top: 60px;
+  }
+}

@@ -1,0 +1,207 @@
+/* The toolbar (bench/toolbar.tsx) and its filters (bench/filter-select.tsx): 36 px controls (44 on touch),
+   radius md. A set filter fills with the accent's quiet tint and its value turns 500. */
+.bench-tb {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-block: 8px;
+}
+.bench-tb-n {
+  margin-inline-start: auto;
+  color: var(--pk-text-subtle);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+/* A link in a line of muted text needs more than its colour to be told apart. */
+.bench-tb-n a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Search ---------- */
+.bench-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 18rem;
+  min-width: 10rem;
+  height: 36px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-sunken);
+  transition: border-color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.bench-search:hover {
+  border-color: var(--pk-border-strong);
+}
+.bench-search:focus-within {
+  border-color: var(--pk-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--pk-accent) 18%, transparent);
+}
+.bench-search-i {
+  position: absolute;
+  inset-inline-start: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--pk-text-subtle);
+  pointer-events: none;
+}
+.bench-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 34px 0 32px;
+  border: 0;
+  background: none;
+  color: var(--pk-text-strong);
+  font: 400 13.5px / 1 var(--pk-font-mono);
+  outline: none;
+}
+.bench-search input::placeholder {
+  color: var(--pk-text-subtle);
+  font-family: var(--pk-font-sans);
+}
+.bench-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.bench-search-k {
+  position: absolute;
+  inset-inline-end: 8px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 4px;
+  color: var(--pk-text-subtle);
+  font: 500 11px / 1 var(--pk-font-mono);
+  pointer-events: none;
+}
+.bench-search:focus-within .bench-search-k {
+  opacity: 0;
+}
+
+/* ---------- Filters ---------- */
+.bench-fb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.bench-fs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--wl-dur-hover) var(--wl-ease-move),
+    background-color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.bench-fs:hover {
+  border-color: var(--pk-border-strong);
+}
+.bench-fs-v {
+  color: var(--pk-text-default);
+}
+.bench-fs[data-set] {
+  border-color: color-mix(in oklab, var(--pk-accent) 55%, transparent);
+  background: var(--pk-accent-subtle);
+}
+.bench-fs[data-set] .bench-fs-v {
+  color: var(--pk-accent-fg);
+  font-weight: 500;
+}
+.bench-fs-c {
+  width: 14px;
+  height: 14px;
+  color: var(--pk-text-subtle);
+}
+/* The native select lies over the label: the phone's picker and the keyboard are the platform's own. */
+.bench-fs-s {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+.bench-fs:has(.bench-fs-s:focus-visible) {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.bench-fb-open[data-set] {
+  border-color: color-mix(in oklab, var(--pk-accent) 55%, transparent);
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent-fg);
+}
+/* In the phone's sheet the filters stack, full width. */
+.bench-fb-sheet {
+  display: grid;
+  gap: 10px;
+}
+.bench-fb-sheet .bench-fs {
+  justify-content: space-between;
+  height: 44px;
+}
+.bench-fb-sheet .bench-fs-v {
+  margin-inline-start: auto;
+}
+
+/* ---------- Tablet: the note gives way and the search narrows, so the filters keep to two rows at most ---------- */
+@media (max-width: 1179.98px) {
+  .bench-search {
+    flex-basis: 14rem;
+  }
+  .bench-tb-n {
+    display: none;
+  }
+}
+
+/* ---------- Phone: the search takes the row, Filters (n) beside it ---------- */
+@media (max-width: 719.98px) {
+  .bench-tb {
+    flex-wrap: nowrap;
+  }
+  .bench-search {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+/* Touch: 44 px controls in the same 52 px row. */
+@media (pointer: coarse) {
+  .bench-tb {
+    padding-block: 4px;
+  }
+  .bench-search,
+  .bench-fs {
+    height: 44px;
+  }
+}
+
+/* What the tool keeps, and for how long: in the toolbar from 1180 px, under the list below it. */
+.bench-note {
+  margin: 12px 0 0;
+  color: var(--pk-text-subtle);
+  font-size: 12.5px;
+}
+.bench-note a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (min-width: 1180px) {
+  .bench-note {
+    display: none;
+  }
+}

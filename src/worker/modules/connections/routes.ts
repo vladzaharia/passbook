@@ -36,7 +36,9 @@ import { previewUnsaved } from './preview.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import { registerConnectionProbeRoutes } from './probe-routes.ts';
 import * as service from './service.ts';
+import { registerConnectionSetupRoute } from './setup-routes.ts';
 import { testConfig } from './test-config.ts';
+import { registerWebhookArrivalRoutes } from './webhook-arrivals-routes.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
 import { registerWebhookRetentionRoutes } from './webhook-retention-routes.ts';
 
@@ -91,7 +93,9 @@ const touchesTrust = async (c: Parameters<typeof peekBody>[0]) => {
 connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
+registerWebhookArrivalRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
+registerConnectionSetupRoute(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
 // A probe that brings its own config or secrets reads through the stored credential: it asks what PATCH asks.
 connectionsRoutes.post('/:id/probe', requireStepUp(STEP_UP_SECONDS, touchesTrust));
@@ -245,7 +249,7 @@ register(
     const ctx = sctx(c);
     const id = c.req.valid('param').id;
     const authority = await authorizeStoredConnection(c, ctx, id, 'integrations:manage');
-    return c.json(await actions.syncNow(ctx, actor(c), id, authority), 202);
+    return c.json(await actions.syncNowReported(ctx, actor(c), id, authority, c.var.auth), 202);
   },
 );
 register(

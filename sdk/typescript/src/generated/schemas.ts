@@ -30,7 +30,7 @@ export type ApiKeyCurrent = {
   orgId: string | null;
   name: string;
   prefix: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdAt: number;
   lastUsedAt: number | null;
@@ -46,7 +46,7 @@ export type ApiKeyDetail = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -81,7 +81,7 @@ export type ApiKeyMinted = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -112,7 +112,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -136,7 +136,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -160,7 +160,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "members:read" | "members:write">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write" | "platform:read" | "platform:users" | "platform:orgs" | "platform:groups" | "platform:claims" | "platform:identities" | "platform:status" | "platform:audit" | "platform:settings" | "platform:wallet">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -201,7 +201,7 @@ export type ApiKeysListResponse = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "logs:read" | "platform:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "platform:claims" | "platform:groups" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -735,6 +735,7 @@ export type CapturedEmail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
 };
 
@@ -747,6 +748,7 @@ export type CapturedEmailDetail = {
   to: string;
   subject: string;
   attached: boolean;
+  failed: boolean;
   createdAt: number;
   html: string;
   text: string;
@@ -858,7 +860,12 @@ export type ConnectionsCreateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1028,7 +1035,12 @@ export type ConnectionsListResponse = {
     maxConcurrency: number | null;
     requestsPerMinute: number | null;
     enabled: boolean;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    firstVerifiedArrivalAt: number | null;
+    warning: {
+      code: "stale_deliveries";
+      text: string;
+    } | null;
     consecutiveFailures: number;
     breakerOpenUntil: number | null;
     nextRunAt: number | null;
@@ -1042,6 +1054,10 @@ export type ConnectionsListResponse = {
     passCount?: number;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectionsPreviewParams = {
+  arrivalId?: string;
 };
 
 export type ConnectionsProbeConfigParams = {
@@ -1306,7 +1322,12 @@ export type ConnectionsRetrieveResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1348,7 +1369,7 @@ export type ConnectionsRetrieveSummaryResponse = {
     id: string;
     orgId: string;
     name: string;
-    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
     lastErrorCode: string | null;
     lastErrorAt: number | null;
   }>;
@@ -1386,7 +1407,12 @@ export type ConnectionsRevokePreviousWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1431,7 +1457,12 @@ export type ConnectionsRotateWebhookSecretResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1465,9 +1496,85 @@ export type ConnectionsRunsListResponse = {
   nextCursor: string | null;
 };
 
+export type ConnectionsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
+  values: {
+    endpointUrl: string | null;
+    signatureHeader: string | null;
+    timestampHeader: string | null;
+    hasSecret: boolean;
+  };
+};
+
 export type ConnectionsSyncResponse = {
   runId: string;
   workflowInstanceId: string;
+  operationId: string | null;
 };
 
 export type ConnectionsTestConfigParams = {
@@ -1607,7 +1714,12 @@ export type ConnectionsUpdateResponse = {
   maxConcurrency: number | null;
   requestsPerMinute: number | null;
   enabled: boolean;
-  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  health: "unknown" | "awaiting" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  firstVerifiedArrivalAt: number | null;
+  warning: {
+    code: "stale_deliveries";
+    text: string;
+  } | null;
   consecutiveFailures: number;
   breakerOpenUntil: number | null;
   nextRunAt: number | null;
@@ -1722,6 +1834,23 @@ export type ConnectionsUploadsUpdateResponse = {
   expiresAt: number | null;
 };
 
+export type ConnectionsWebhookArrivalsListResponse = {
+  items: Array<{
+    id: string;
+    receivedAt: number;
+    lastAt: number;
+    outcome: "accepted" | "duplicate" | "ignored" | "rejected";
+    reason: "signature_missing" | "signature_mismatch" | "signature_expired" | "payload" | "too_large" | "no_secret" | "unknown_type" | "thin_event" | "test_mode" | "unrecognized_shape" | "no_ref" | "ping" | "stale" | null;
+    topic: string | null;
+    contentClass: "json" | "xml" | "form" | "other";
+    eventRef: string | null;
+    retentionId: string | null;
+    usedPrevious: boolean;
+    count: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type ConnectionsWebhookFailuresListResponse = {
   items: Array<{
     id: string;
@@ -1780,6 +1909,9 @@ export type ConnectorsListResponse = {
       label: string;
       category?: "files" | "apis" | "commerce" | "bookings" | "try";
       pasteSecret: boolean;
+      line?: string;
+      secretOrigin?: "provider" | "passbook";
+      setupVersion?: string;
       entitled: boolean;
       outputFields: Record<string, {
         type: "string" | "number" | "boolean" | "date";
@@ -1802,6 +1934,75 @@ export type ConnectorsListResponse = {
     entitled: boolean;
   }>;
   nextCursor: string | null;
+};
+
+export type ConnectorsRecipeSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type ConnectorsRetrieveResponse = {
@@ -1836,6 +2037,9 @@ export type ConnectorsRetrieveResponse = {
     label: string;
     category?: "files" | "apis" | "commerce" | "bookings" | "try";
     pasteSecret: boolean;
+    line?: string;
+    secretOrigin?: "provider" | "passbook";
+    setupVersion?: string;
     entitled: boolean;
     outputFields: Record<string, {
       type: "string" | "number" | "boolean" | "date";
@@ -1916,6 +2120,7 @@ export type CreatedScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
   pairing: {
@@ -2005,12 +2210,32 @@ export type EmailFailedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type EventPage = {
   items: Array<WebhookEvent>;
   nextCursor: string;
   hasMore: boolean;
+};
+
+export type EventsListDeliveriesResponse = {
+  items: Array<{
+    eventId: string;
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    passId: string;
+    externalId: string | null;
+    state: "pending" | "delivered" | "failed" | "cancelled";
+    attempts: number;
+    nextAt: number;
+    lastStatus: number | null;
+    lastError: string | null;
+    lastAttemptAt: number | null;
+    finishedAt: number | null;
+    replays: number;
+    endpointId: string;
+    target: "url" | "capture";
+  }>;
 };
 
 export type HoldersAssignParams = {
@@ -2911,11 +3136,12 @@ export type MembershipsListResponse = {
     testOnly?: boolean;
     userId: string;
     roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
-    capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+    capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read" | "logs:read">;
     createdAt: number;
     revokedAt: number | null;
     userName: string | null;
     userEmail: string | null;
+    accessPaused?: boolean;
   }>;
   nextCursor: string | null;
 };
@@ -2937,11 +3163,12 @@ export type MembershipsUpdateRolesResponse = {
   testOnly?: boolean;
   userId: string;
   roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
-  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+  capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read" | "logs:read">;
   createdAt: number;
   revokedAt: number | null;
   userName: string | null;
   userEmail: string | null;
+  accessPaused?: boolean;
 };
 
 export type MessageRulesCountDueParams = {
@@ -4642,6 +4869,7 @@ export type OrgExportsCreateResponse = {
   bytes: number | null;
   entities: Record<string, number> | null;
   errorCode: string | null;
+  operationId: string | null;
 };
 
 export type OrgExportsListResponse = {
@@ -4825,6 +5053,7 @@ export type PassChannelsChangedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassDetail = {
@@ -4854,6 +5083,9 @@ export type PassDetail = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
   email?: {
     outcome: "queued" | "deferred" | "limited_org" | "limited_recipient" | "cancelled" | "none";
     cap?: "org" | "recipient";
@@ -5916,6 +6148,7 @@ export type PassInstalledEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassIssuedEvent = {
@@ -5932,6 +6165,7 @@ export type PassIssuedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassPage = {
@@ -5954,6 +6188,7 @@ export type PassPrintVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassPrintedEvent = {
@@ -5971,6 +6206,7 @@ export type PassPrintedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassRemovedEvent = {
@@ -5988,6 +6224,23 @@ export type PassRemovedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
+};
+
+export type PassReplacedEvent = {
+  id: string;
+  type: "pass.replaced";
+  apiVersion: "2026-12-01" | "2026-11-20";
+  createdAt: number;
+  orgId: string;
+  mode: "live" | "test";
+  pass: WebhookPassRef;
+  data: {
+    replacedBy: string;
+  };
+  requestId?: string;
+  sample?: true;
+  simulated?: boolean;
 };
 
 export type PassRestoredEvent = {
@@ -6003,6 +6256,7 @@ export type PassRestoredEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScanRefusedEvent = {
@@ -6023,6 +6277,7 @@ export type PassScanRefusedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScanUndoneEvent = {
@@ -6040,6 +6295,7 @@ export type PassScanUndoneEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScannedEvent = {
@@ -6067,6 +6323,7 @@ export type PassScannedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassSetup = {
@@ -6530,6 +6787,9 @@ export type PassSummary = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
 };
 
 export type PassUninstalledEvent = {
@@ -6549,6 +6809,7 @@ export type PassUninstalledEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassUnvoidedEvent = {
@@ -6564,6 +6825,7 @@ export type PassUnvoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassUpdatedEvent = {
@@ -6582,13 +6844,14 @@ export type PassUpdatedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassVersion = {
   version: number;
   templateVersion: string;
   cause: "create" | "admin" | "api" | "connection" | "user_refresh" | "template_upgrade" | "resign";
-  source?: "scan" | "broadcast" | "schedule" | "remove" | "restore" | "designer" | null;
+  source?: "scan" | "broadcast" | "schedule" | "remove" | "restore" | "designer" | "move" | null;
   actorType: string | null;
   actorId: string | null;
   createdAt: number;
@@ -6628,6 +6891,7 @@ export type PassVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassesActivityListResponse = {
@@ -6635,7 +6899,7 @@ export type PassesActivityListResponse = {
     id: string;
     passId: string;
     mode: "live" | "test";
-    kind: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.link_rotated" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "email.queued" | "email.sent" | "email.failed" | "email.captured" | "page.opened" | "pass.downloaded" | "bundle.opened" | "bundle.downloaded" | "device.registered" | "device.unregistered" | "device.fetched" | "device.log" | "wallet.saved" | "wallet.removed" | "wallet.messaged" | "push.queued" | "push.sent" | "push.failed" | "scan.checked_in" | "scan.redeemed" | "scan.adjusted" | "scan.rejected" | "scan.checked_out" | "scan.heads_up" | "scan.undone" | "message.applied" | "schedule.applied";
+    kind: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.link_rotated" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "pass.replaced" | "email.queued" | "email.sent" | "email.failed" | "email.captured" | "page.opened" | "pass.downloaded" | "bundle.opened" | "bundle.downloaded" | "device.registered" | "device.unregistered" | "device.fetched" | "device.log" | "wallet.saved" | "wallet.removed" | "wallet.messaged" | "push.queued" | "push.sent" | "push.failed" | "scan.checked_in" | "scan.redeemed" | "scan.adjusted" | "scan.rejected" | "scan.checked_out" | "scan.heads_up" | "scan.undone" | "message.applied" | "schedule.applied";
     device: string | null;
     actorType: "user" | "api_key" | "system" | "connection" | "device" | "holder" | "scanner" | null;
     actorId: string | null;
@@ -6701,6 +6965,7 @@ export type PassesBulkReissueParams = {
 
 export type PassesBulkReissueResponse = {
   workflowInstanceId: string;
+  operationId: string | null;
 };
 
 export type PassesBulkUpdateChannelsParams = {
@@ -6741,6 +7006,7 @@ export type PassesBulkUpdateChannelsResponse = {
       scheduled: boolean;
     }>;
   };
+  operationId?: string | null;
 };
 
 export type PassesChannelsRetrieveResponse = {
@@ -7104,6 +7370,8 @@ export type PassesDevicesListResponse = {
       reason: string | null;
     } | null;
     removal: "pending" | "fetched" | "deleted" | null;
+    simulated?: boolean;
+    deviceId?: string;
   }>;
   removal: {
     removedAt: number;
@@ -7306,6 +7574,18 @@ export type PassesSendEmailResponse = {
   ok: true;
 };
 
+export type PassesSimulateParams = {
+  event: "installed" | "uninstalled" | "scanned" | "scan_refused" | "push_failed" | "updated_on_device" | "email_failed";
+  platform?: "apple";
+  deviceId?: string;
+};
+
+export type PassesSimulateResponse = {
+  eventId: string;
+  requestId: string;
+  deviceId?: string;
+};
+
 export type PassesStampsApplyParams = {
   action: "add";
   count?: number;
@@ -7342,6 +7622,193 @@ export type PlatformAppleCallsListResponse = {
     at: number;
   }>;
   available: boolean;
+};
+
+export type PlatformAppleIdentitiesCreateParams = {
+  slot: "root" | "devtest";
+};
+
+export type PlatformAppleIdentitiesCreateResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type PlatformAppleIdentitiesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string | null;
+    label: string;
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    source: "env" | "db";
+    certSha256: string | null;
+    certSubject: string | null;
+    certSerial: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    daysRemaining: number | null;
+    apnsBinding: string | null;
+    apnsAvailable: boolean;
+    pushMethod?: "certificate" | "key" | "none";
+    pushKey?: {
+      keyId: string;
+      createdAt: number;
+      rotatedAt: number | null;
+      identityCount: number;
+      dependentCount: number;
+    } | null;
+    apnsHealth: "unknown" | "healthy" | "failing";
+    apnsCheckedAt?: number | null;
+    apnsReason?: string | null;
+    passCount?: number;
+    nfcEnabled: boolean;
+    nfcKeys?: Array<{
+      id: string;
+      identityId: string;
+      orgId: string;
+      keyId: string;
+      state: "active" | "retiring" | "retired";
+      createdAt: number;
+      activatedAt: number;
+      retiredAt: number | null;
+      passCount: number;
+      passesLeft: number | null;
+    }>;
+    isDefault: boolean;
+    createdAt: number;
+    kind?: "platform" | "managed" | "own";
+    status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+    rotation?: "auto" | "csr" | "manual";
+    issuing?: boolean;
+    nextRotationAt?: number | null;
+    handle?: string | null;
+    slot: "root" | "devtest" | null;
+    purpose: "passes" | "device_test";
+    managed: "connector" | "deployment";
+    registrationCount: number;
+    openRunId: string | null;
+    dormant: boolean;
+    readiness: {
+      eligible: boolean;
+      certificate: boolean;
+      issuing: boolean | null;
+      pushHealthy: boolean | null;
+      pushProbeAt: number | null;
+      pushProbeFresh: boolean | null;
+      deviceTest: boolean | null;
+      ready: boolean;
+    };
+  }>;
+  openRuns: Array<{
+    slot: "root" | "devtest";
+    runId: string;
+  }>;
+};
+
+export type PlatformAppleIdentitiesMakeDefaultResponse = {
+  identityId: string;
+  changed: boolean;
+};
+
+export type PlatformAppleIdentityMovesListResponse = {
+  items: Array<{
+    id: string;
+    operationId: string;
+    orgId: string;
+    fromIdentityId: string;
+    toIdentityId: string;
+    oldPassId: string;
+    newPassId: string;
+    state: "planned" | "issued" | "notified" | "registered" | "voided" | "kept" | "kept_both" | "failed";
+    reason: string | null;
+    conflictCount: number;
+    registeredAt: number | null;
+    voidAt: number | null;
+    voidedAt: number | null;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformAppleIdentityMovesPreviewResponse = {
+  toIdentityId: string;
+  passes: number;
+  registered: number;
+  holders: number;
+  kept: Record<string, number>;
+};
+
+export type PlatformAppleIdentityMovesStartParams = {
+  orgId: string;
+  fromIdentityId: string;
+  toIdentityId?: string | null;
+};
+
+export type PlatformAppleIdentityMovesStartResponse = {
+  id: string;
+  kind: string;
+  status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  title: string;
+  text: string;
+  orgId: string | null;
+  mode: "live" | "test" | null;
+  target: {
+    type: string;
+    id: string;
+  } | null;
+  step: string | null;
+  steps: Array<{
+    key: string;
+    label: string;
+    state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+    done: number | null;
+    total: number | null;
+    detail: string | null;
+    until: number | null;
+    waitingReason: "blocked" | "due" | null;
+    group: string | null;
+    startedAt: number | null;
+    finishedAt: number | null;
+  }>;
+  attempt: number;
+  cancelable: boolean;
+  cancelRequested: boolean;
+  startedBy: {
+    type: "user" | "api_key" | "system";
+    id: string | null;
+  };
+  createdAt: number;
+  startedAt: number | null;
+  updatedAt: number;
+  finishedAt: number | null;
+  error: {
+    code: string;
+    message: string;
+    step: string | null;
+    retryable: boolean;
+  } | null;
+  result: {
+    href: string | null;
+    ids: Record<string, string>;
+  } | null;
+  revision: number;
+  pollAfterMs: number;
+};
+
+export type PlatformAppleIdentityMovesStartTimerResponse = {
+  moveId: string;
+  armed: true;
 };
 
 export type PlatformAuditEntriesListResponse = {
@@ -7413,6 +7880,482 @@ export type PlatformGroupsClaimsUpdateResponse = {
   set: Array<string>;
   removed: Array<string>;
   dryRun: boolean;
+};
+
+export type PlatformGroupsCreateParams = {
+  key: string;
+  friendlyName: string;
+  rules?: Array<{
+    orgId: string;
+    orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  }>;
+};
+
+export type PlatformGroupsCreateResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsDeleteResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsEnsureParams = {
+  role: "console" | "developer" | "support";
+};
+
+export type PlatformGroupsEnsureResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformGroupsListResponse = {
+  items: Array<{
+    key: string;
+    kind: "role" | "custom" | "adopted";
+    name: string;
+    friendlyName: string | null;
+    members: number | null;
+    claims: Array<string>;
+    otherClients: number | null;
+    flags: Array<string>;
+    rules: number;
+    manual: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsMembersCreateParams = {
+  userId: string;
+} | {
+  subject: string;
+};
+
+export type PlatformGroupsMembersCreateResponse = {
+  id: string;
+  subject: string;
+  userId: string | null;
+  source: "manual" | "invitation";
+  createdAt: number;
+};
+
+export type PlatformGroupsMembersDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsMembersListResponse = {
+  items: Array<{
+    id: string;
+    subject: string;
+    userId: string | null;
+    source: "manual" | "invitation";
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsRulesCreateParams = {
+  orgId: string;
+  orgRoles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type PlatformGroupsRulesCreateResponse = {
+  id: string;
+  orgId: string;
+  orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+  createdAt: number;
+};
+
+export type PlatformGroupsRulesDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformGroupsRulesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgRoles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only"> | null;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformGroupsUpdateParams = {
+  friendlyName: string;
+};
+
+export type PlatformGroupsUpdateResponse = {
+  key: string;
+  dryRun: boolean;
+};
+
+export type PlatformIdpCallsListResponse = {
+  items: Array<{
+    id: number;
+    phase: string;
+    method: string;
+    target: string | null;
+    actor: string | null;
+    reason: string | null;
+    status: string | null;
+    at: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformIdpCheckParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformIdpCheckResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformIdpDriftListResponse = {
+  items: Array<{
+    id: string;
+    userId: string | null;
+    target: string;
+    kind: string;
+    foundAt: number;
+  }>;
+  nextCursor: null;
+};
+
+export type PlatformIdpPauseParams = {
+  reason: string;
+};
+
+export type PlatformIdpPauseResponse = {
+  result: "frozen" | "already";
+};
+
+export type PlatformIdpRetrieveResponse = {
+  connected: boolean;
+  mode: "dry_run" | "live" | null;
+  frozen: boolean | null;
+  keyExpiresAt: number | null;
+  problems: Array<string>;
+  budget: Record<string, {
+    day: number;
+    limit: number;
+  }>;
+  lastScimAt: number | null;
+  drift: Record<string, number>;
+  breakerOpen: boolean;
+};
+
+export type PlatformIdpScimBreakerClearResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformIdpScimTokenRotateParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformIdpScimTokenRotateResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformIdpSetupRetrieveResponse = {
+  mode: "dry_run" | "live" | null;
+  items: Array<{
+    key: "binding" | "polaris_settings" | "client" | "groups" | "client_groups" | "client_restricted" | "client_logo" | "scim_token" | "scim_provider" | "scim_sync" | "scim_mirror" | "write_mode";
+    status: "done" | "needed" | "blocked";
+    reason?: string;
+    owner?: boolean;
+    counts?: Record<string, number>;
+    rows?: Array<{
+      key: string;
+      state: "placed" | "allowed" | "needed";
+    }>;
+    note?: string;
+  }>;
+};
+
+export type PlatformIdpSetupStartParams = {
+  dryRun?: boolean;
+  items?: Array<"groups" | "client_groups" | "client_restricted" | "client_logo" | "scim_provider" | "scim_sync">;
+};
+
+export type PlatformIdpSetupStartResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
+export type PlatformInvitationsCreateParams = {
+  email: string;
+  groups?: Array<string>;
+  developer?: boolean;
+};
+
+export type PlatformInvitationsCreateResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  createdBy: {
+    kind: "user" | "key";
+    id: string;
+    name: string | null;
+  };
+  link?: string;
+};
+
+export type PlatformInvitationsListResponse = {
+  items: Array<{
+    id: string;
+    email: string;
+    groups: Array<string>;
+    developer: boolean;
+    state: "pending" | "accepted" | "expired" | "revoked";
+    createdAt: number;
+    expiresAt: number;
+    acceptedAt: number | null;
+    revokedAt: number | null;
+    createdBy: {
+      kind: "user" | "key";
+      id: string;
+      name: string | null;
+    };
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformInvitationsResendResponse = {
+  id: string;
+  email: string;
+  groups: Array<string>;
+  developer: boolean;
+  state: "pending" | "accepted" | "expired" | "revoked";
+  createdAt: number;
+  expiresAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+  createdBy: {
+    kind: "user" | "key";
+    id: string;
+    name: string | null;
+  };
+  link?: string;
+};
+
+export type PlatformInvitationsRevokeResponse = {
+  ok: true;
+};
+
+export type PlatformMetricsRetrieveDeveloperResponse = {
+  windowDays: number;
+  sandboxes: number;
+  viewed: number;
+  called: number;
+  passed: number;
+  previewed: number;
+  completion: number | null;
+  ttfpP50Ms: number | null;
+  ttfpP90Ms: number | null;
+  ttfpSamples: number;
 };
 
 export type PlatformMetricsRetrieveOverviewResponse = {
@@ -7810,6 +8753,71 @@ export type PlatformSettingsRetrieveImpactResponse = {
   emailOnlyUsers: number;
 };
 
+export type PlatformSettingsRetrieveResponse = {
+  items: Array<{
+    scope: "platform" | string;
+    key: string;
+    value?: unknown;
+    default?: unknown;
+    source: "org" | "default";
+    ceiling?: number;
+    blockedByPlatform?: boolean;
+    blockedByPlan?: boolean;
+    planBlocked?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    updatedAt: number | null;
+    updatedBy: string | null;
+  }>;
+  configRevision?: number;
+  oidc?: {
+    issuer: string;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
+    consoleGroupRequired: boolean;
+  };
+  released?: {
+    google: boolean;
+    samsung: boolean;
+  };
+};
+
+export type PlatformSettingsUpdateParams = {
+  values: Record<string, unknown>;
+  configRevision?: number;
+};
+
+export type PlatformSettingsUpdateResponse = {
+  items: Array<{
+    scope: "platform" | string;
+    key: string;
+    value?: unknown;
+    default?: unknown;
+    source: "org" | "default";
+    ceiling?: number;
+    blockedByPlatform?: boolean;
+    blockedByPlan?: boolean;
+    planBlocked?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    updatedAt: number | null;
+    updatedBy: string | null;
+  }>;
+  configRevision?: number;
+  oidc?: {
+    issuer: string;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
+    consoleGroupRequired: boolean;
+  };
+  released?: {
+    google: boolean;
+    samsung: boolean;
+  };
+};
+
 export type PlatformStatusListIncidentsResponse = {
   items: Array<{
     id: string;
@@ -7888,6 +8896,39 @@ export type PlatformTemplatesAssignParams = {
 
 export type PlatformTemplatesShareParams = {
   shared: boolean;
+};
+
+export type PlatformUsersAccessRetrieveResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
 };
 
 export type PlatformUsersClaimsRetrieveResponse = {
@@ -8068,6 +9109,59 @@ export type PlatformUsersEmailsMakePrimaryResponse = {
   }>;
 };
 
+export type PlatformUsersHoldsDeleteResponse = {
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  };
+};
+
 export type PlatformUsersListResponse = {
   items: Array<{
     id: string;
@@ -8081,6 +9175,99 @@ export type PlatformUsersListResponse = {
     signInMethods?: Array<"oidc" | "magic_link" | "breakglass">;
   }>;
   nextCursor: string | null;
+};
+
+export type PlatformUsersOffboardParams = {
+  dryRun?: boolean;
+};
+
+export type PlatformUsersOffboardResponse = {
+  plan: {
+    userId: string;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+      membershipId: string;
+    }>;
+    kept: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grants: Array<"developer" | "support">;
+    personalKeys: number;
+    platformKeys: Array<string>;
+    sessions: number;
+    sandboxOrgId: string | null;
+    removes: Array<"console" | "developer" | "support">;
+    external: Array<"console" | "developer" | "support">;
+    blockers: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+      code: "LAST_ORG_ADMIN";
+    }>;
+  };
+  operation: {
+    id: string;
+    kind: string;
+    status: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    title: string;
+    text: string;
+    orgId: string | null;
+    mode: "live" | "test" | null;
+    target: {
+      type: string;
+      id: string;
+    } | null;
+    step: string | null;
+    steps: Array<{
+      key: string;
+      label: string;
+      state: "pending" | "running" | "waiting" | "done" | "failed" | "skipped";
+      done: number | null;
+      total: number | null;
+      detail: string | null;
+      until: number | null;
+      waitingReason: "blocked" | "due" | null;
+      group: string | null;
+      startedAt: number | null;
+      finishedAt: number | null;
+    }>;
+    attempt: number;
+    cancelable: boolean;
+    cancelRequested: boolean;
+    startedBy: {
+      type: "user" | "api_key" | "system";
+      id: string | null;
+    };
+    createdAt: number;
+    startedAt: number | null;
+    updatedAt: number;
+    finishedAt: number | null;
+    error: {
+      code: string;
+      message: string;
+      step: string | null;
+      retryable: boolean;
+    } | null;
+    result: {
+      href: string | null;
+      ids: Record<string, string>;
+    } | null;
+    revision: number;
+    pollAfterMs: number;
+  } | null;
 };
 
 export type PlatformUsersPassesListResponse = {
@@ -8148,6 +9335,77 @@ export type PlatformUsersRetrieveResponse = {
     action: string;
     actorType: string;
     actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesRemoveExternalResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
+  }>;
+};
+
+export type PlatformUsersRolesSetParams = {
+  role: "developer" | "support";
+  grant: boolean;
+};
+
+export type PlatformUsersRolesSetResponse = {
+  userId: string;
+  connected: boolean;
+  platformAdmin: boolean;
+  disabled: boolean;
+  linked: boolean;
+  account: {
+    class: "created" | "linked" | "external" | null;
+    disabledInIdp: boolean | null;
+  };
+  roles: Array<{
+    role: "console" | "developer" | "support";
+    wanted: boolean;
+    present: boolean | null;
+    presence: "none" | "passbook" | "external";
+    held: boolean;
+    memberships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    sponsorships: Array<{
+      org: {
+        id: string;
+        name: string;
+      };
+    }>;
+    grantedAt: number | null;
+    error: string | null;
   }>;
 };
 
@@ -8511,6 +9769,7 @@ export type PrintJobsCreateResponse = {
     code: string;
     reason?: string;
   }>;
+  operationId: string | null;
 };
 
 export type PrintJobsRetrieveResponse = {
@@ -8556,6 +9815,7 @@ export type PushFailedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type ReleaseResponse = {
@@ -8724,6 +9984,70 @@ export type ReleaseTemplate = {
     test?: number;
   };
   request?: boolean;
+};
+
+export type RequestLogsListResponse = {
+  items: Array<{
+    id: string;
+    requestId: string;
+    at: number;
+    method: string;
+    route: string | null;
+    path: string;
+    query: string | null;
+    status: number;
+    code: string | null;
+    durationMs: number;
+    keyId: string | null;
+    mode: "live" | "test";
+    via: "try";
+    client: string | null;
+    hasBodies: boolean;
+    resourceId: string | null;
+    apiVersion: string | null;
+    flags: {
+      idempotencyKey: boolean;
+      ifMatch: boolean;
+      version: boolean;
+    };
+  }>;
+  nextCursor: string | null;
+  capped: "hour" | "total" | null;
+  bodiesRecorded: boolean;
+};
+
+export type RequestLogsRetrieveResponse = {
+  id: string;
+  requestId: string;
+  at: number;
+  method: string;
+  route: string | null;
+  path: string;
+  query: string | null;
+  status: number;
+  code: string | null;
+  durationMs: number;
+  keyId: string | null;
+  mode: "live" | "test";
+  via: "try";
+  client: string | null;
+  hasBodies: boolean;
+  resourceId: string | null;
+  apiVersion: string | null;
+  flags: {
+    idempotencyKey: boolean;
+    ifMatch: boolean;
+    version: boolean;
+  };
+  requestBody: string | null;
+  responseBody: string | null;
+  bodiesExpireAt: number | null;
+  bodiesRecorded: boolean;
+  bodiesTruncated: boolean;
+  headers: {
+    req: Record<string, string>;
+    res: Record<string, string>;
+  } | null;
 };
 
 export type RetentionReceiptsDownloadResponse = {
@@ -10637,6 +11961,7 @@ export type ScanWorkspace = {
     revoked: boolean;
     lastSeenAt: number | null;
     updatedAt: number;
+    configRevision: number;
     signIn: "paired" | "admin";
     adminName: string | null;
   };
@@ -11071,6 +12396,7 @@ export type ScanningDevice = {
   revoked: boolean;
   lastSeenAt: number | null;
   updatedAt: number;
+  configRevision: number;
   signIn: "paired" | "admin";
   adminName: string | null;
 };
@@ -11974,6 +13300,7 @@ export type TemplatesCandidatesCreateResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;
@@ -12010,6 +13337,7 @@ export type TemplatesCandidatesListResponse = {
     accountRevision?: number;
     providerIdentityHash?: string;
     projection?: unknown;
+    selfAuthored?: boolean;
     approvals: Array<{
       id: string;
       candidateId: string;
@@ -12051,6 +13379,7 @@ export type TemplatesCandidatesListResponse = {
       }>;
     };
   };
+  wallet?: "on" | "off" | "not_released";
 };
 
 export type TemplatesCandidatesPromoteParams = {
@@ -12084,6 +13413,7 @@ export type TemplatesCandidatesPromoteResponse = {
   accountRevision?: number;
   providerIdentityHash?: string;
   projection?: unknown;
+  selfAuthored?: boolean;
   approvals: Array<{
     id: string;
     candidateId: string;
@@ -13362,13 +14692,14 @@ export type WalletProviderAccountsVerifyResponse = {
 export type WalletReissue = {
   reissueId: string;
   instances: number;
+  operationId: string | null;
 };
 
 export type WebhookCapture = {
   id: string;
   endpointId: string;
   eventId: string;
-  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
   trigger: "event" | "replay" | "test";
   status: number;
   durationMs: number;
@@ -13384,7 +14715,7 @@ export type WebhookCapturePage = {
 
 export type WebhookDeliveryDetail = {
   eventId: string;
-  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
   passId: string;
   externalId: string | null;
   state: "pending" | "delivered" | "failed" | "cancelled";
@@ -13409,7 +14740,7 @@ export type WebhookDeliveryDetail = {
 export type WebhookDeliveryPage = {
   items: Array<{
     eventId: string;
-    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
     passId: string;
     externalId: string | null;
     state: "pending" | "delivered" | "failed" | "cancelled";
@@ -13431,7 +14762,7 @@ export type WebhookEndpoint = {
   url: string | null;
   urlMasked: string;
   description: string;
-  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds: Array<string> | null;
   apiVersion: "2026-12-01" | "2026-11-20";
   status: "active" | "paused" | "disabled";
@@ -13460,7 +14791,7 @@ export type WebhookEndpointsCreateParams = {
   orgId?: string;
   url: string;
   description?: string;
-  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
 };
 
@@ -13486,7 +14817,7 @@ export type WebhookEndpointsDeliveriesReplayResponse = {
 
 export type WebhookEndpointsEnsureCaptureParams = {
   orgId?: string;
-  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
 };
 
 export type WebhookEndpointsRotateSecretParams = {
@@ -13498,19 +14829,88 @@ export type WebhookEndpointsRotateSecretResponse = {
 };
 
 export type WebhookEndpointsSendTestParams = {
-  type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+};
+
+export type WebhookEndpointsSetupRetrieveResponse = {
+  direction: "inbound" | "outbound";
+  recipe: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets" | "outbound";
+  version: string;
+  checkedAt: string;
+  provider: {
+    name: string;
+    consoleUrl: string | null;
+    docs: Array<{
+      label: string;
+      url: string;
+    }>;
+  };
+  secret: {
+    origin: "provider" | "passbook";
+    allowPaste: boolean;
+    prefix: string | null;
+    minLength: number;
+    whereStep: string | null;
+  };
+  subscriptions: {
+    perWebhook: "one" | "many";
+    topics: Array<{
+      id: string;
+      label: string | null;
+      required: boolean;
+      verified: boolean;
+    }>;
+  };
+  steps: Array<{
+    id: string;
+    side: "provider" | "passbook";
+    title: string;
+    parts: Array<{
+      t: "text";
+      text: string;
+    } | {
+      t: "path";
+      items: Array<string>;
+    } | {
+      t: "field";
+      label: string;
+      value?: string;
+      copy?: "endpointUrl" | "secret" | "signatureHeader" | "timestampHeader";
+      choose?: boolean;
+    } | {
+      t: "topics";
+    } | {
+      t: "code";
+      lang: "sh" | "curl" | "ts" | "py" | "go";
+      code: string;
+    } | {
+      t: "note";
+      text: string;
+    } | {
+      t: "warn";
+      text: string;
+    }>;
+    verified?: boolean;
+  }>;
+  test: {
+    kind: "button" | "ping-on-save" | "cli" | "real-event" | "snippet" | "send";
+    text: string;
+    command: string | null;
+    issues: boolean;
+  };
+  troubleshooting: Record<string, string>;
 };
 
 export type WebhookEndpointsUpdateParams = {
   url?: string;
   description?: "" | string;
-  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
   status?: "active" | "paused";
   apiVersion?: "2026-12-01" | "2026-11-20";
 };
 
-export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
+export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PassReplacedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
 
 export type WebhookPassRef = {
   id: string;
@@ -13521,7 +14921,7 @@ export type WebhookPassRef = {
 export type WebhookTestAttemptPage = {
   items: Array<{
     id: string;
-    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
     ok: boolean;
     status: number | null;
     errorCode: string | null;
@@ -13541,6 +14941,7 @@ export type WebhookTestEvent = {
   data: Record<string, unknown>;
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type WebhookTestResult = {

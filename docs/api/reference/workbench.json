@@ -1,0 +1,159 @@
+{
+  "workbench.postToken": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "token": "pbtry_northwind-demo-wb.4a3e68bb208016ffcab957",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "test",
+      "expiresAt": 1795572900000,
+      "subject": "member"
+    }
+  },
+  "workbench.deleteToken": {
+    "response": {
+      "ok": true
+    }
+  },
+  "workbench.getResolve": {
+    "description": "What an id is in your Test data. `live` means it exists in Live: open it in admin.",
+    "response": {
+      "kind": "live",
+      "id": "0193a1b2-7c00-7000-8000-7b6a8ca3b670",
+      "label": "Server integration",
+      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+    }
+  },
+  "workbench.getSummary": {
+    "description": "The navigation counts of one Test context. A count is rows newer than the `since[...]` mark you send; omit a mark and every kept row counts.",
+    "response": {
+      "now": 1795570500000,
+      "quickstart": {
+        "done": 39,
+        "total": 128
+      },
+      "errors": 0,
+      "failedDeliveries": 17,
+      "listening": false,
+      "inboxNew": 8,
+      "keysExpiring": 4,
+      "quotas": {
+        "passes": {
+          "used": 128,
+          "limit": 25
+        },
+        "templates": {
+          "used": 128,
+          "limit": 25
+        },
+        "endpoints": {
+          "used": 128,
+          "limit": 25
+        },
+        "keys": {
+          "used": 128,
+          "limit": 25
+        }
+      }
+    }
+  },
+  "workbench.getContexts": {
+    "description": "Your sandbox and the organizations where you may use Test, with the tools your roles read in each.",
+    "response": {
+      "sandbox": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Northwind sandbox",
+        "slug": "northwind-climbing",
+        "closed": false,
+        "timeZone": "America/Los_Angeles"
+      },
+      "orgs": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Northwind Climbing",
+          "slug": "northwind-climbing",
+          "timeZone": "America/Los_Angeles",
+          "tools": ["home"]
+        }
+      ]
+    }
+  },
+  "workbench.listRequestLogs": {
+    "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. The detail adds a fixed allowlist of non-secret request and response header values, redacted; never Authorization or cookies. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+          "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+          "at": 1795570500000,
+          "method": "GET",
+          "route": "/api/v1/passes",
+          "path": "/api/v1/passes",
+          "query": "limit=25",
+          "status": 200,
+          "code": null,
+          "durationMs": 84,
+          "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+          "mode": "test",
+          "via": "try",
+          "client": "@passbook/sdk 1.4.2",
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
+        }
+      ],
+      "nextCursor": null,
+      "capped": null,
+      "bodiesRecorded": true
+    }
+  },
+  "workbench.getRequestLog": {
+    "description": "Bodies are redacted JSON, kept 24 hours, and only where the organization records them: always in a sandbox, elsewhere by the Record request bodies in Test setting. `bodiesRecorded` says which. Metadata is kept 7 days. The id is a log id or a request id.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+      "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+      "at": 1795570500000,
+      "method": "GET",
+      "route": "/api/v1/passes",
+      "path": "/api/v1/passes",
+      "query": "limit=25",
+      "status": 200,
+      "code": null,
+      "durationMs": 84,
+      "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+      "mode": "test",
+      "via": "try",
+      "client": "@passbook/sdk 1.4.2",
+      "hasBodies": true,
+      "resourceId": null,
+      "apiVersion": "2026-11-01",
+      "flags": {
+        "idempotencyKey": false,
+        "ifMatch": false,
+        "version": true
+      },
+      "requestBody": null,
+      "responseBody": "{\"items\":[],\"nextCursor\":null}",
+      "bodiesExpireAt": 1796175300000,
+      "bodiesRecorded": true,
+      "bodiesTruncated": false,
+      "headers": {
+        "req": {
+          "accept": "application/json",
+          "passbook-version": "2026-11-01",
+          "user-agent": "@passbook/sdk 1.4.2"
+        },
+        "res": {
+          "content-type": "application/json",
+          "etag": "\"3\""
+        }
+      }
+    }
+  }
+}

@@ -72,6 +72,7 @@ const CASES: [string, Partial<FeedRow>, Record<string, unknown>][] = [
     { version: 2, status: 410, reason: 'Unregistered', code: 'X', outcome: 'gone' },
   ],
   ['email.failed', {}, { code: 'EMAIL_OUTCOME_UNKNOWN' }],
+  ['pass.replaced', {}, { replacedBy: 'p2' }],
 ];
 
 const KIND: Record<string, string> = {
@@ -197,6 +198,17 @@ describe('payload allowlist', () => {
     );
     expect(event.data).toEqual({ status: 400, code: 'OK' });
     expect(WebhookEventSchema.safeParse(event).success).toBe(true);
+  });
+
+  it('marks a simulated event and leaves a real one unmarked', () => {
+    const sim = buildEnvelope(
+      row({ type: 'pass.updated', kind: 'pass.updated', data: '{"simulated":true,"version":2}' }),
+    );
+    expect(sim.simulated).toBe(true);
+    expect(sim.data).not.toHaveProperty('simulated');
+    expect(WebhookEventSchema.safeParse(sim).success).toBe(true);
+    const real = buildEnvelope(row({ type: 'pass.updated', kind: 'pass.updated', data: '{}' }));
+    expect(real).not.toHaveProperty('simulated');
   });
 
   it('is pure: a replay builds the identical event', () => {

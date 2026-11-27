@@ -4,7 +4,7 @@ import {
   EVENT_GROUPS,
   EVENT_LABEL,
   responseLabel,
-} from '../../web/admin/connections/webhooks/labels.ts';
+} from '../../web/ui/webhooks/labels.ts';
 import { ApiScopeSchema } from './common.ts';
 import {
   CreateWebhookEndpointSchema,
@@ -46,6 +46,7 @@ const DATA: Record<string, object> = {
   'pass.channels_changed': { channel: 'apple', from: 'on', to: 'off', source: 'template' },
   'pass.printed': { printId: 'pr1', generation: 2, voided: 1 },
   'pass.print_voided': { printId: 'pr1', cause: 'holder_change' },
+  'pass.replaced': { replacedBy: 'p2' },
   'push.failed': { version: 2, status: 410, reason: 'Unregistered', code: 'X' },
   'email.failed': { code: 'EMAIL_OUTCOME_UNKNOWN' },
   'webhook.test': {},
@@ -169,6 +170,8 @@ describe('API key scopes', () => {
       'members:read',
       'members:write',
       'audit:read',
+      'logs:read',
+      'platform:read',
       'platform:orgs',
       'platform:users',
       'platform:identities',
@@ -178,6 +181,7 @@ describe('API key scopes', () => {
       'platform:templates',
       'platform:audit',
       'platform:claims',
+      'platform:groups',
       'brand:manage',
     ]);
   });

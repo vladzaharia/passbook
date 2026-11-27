@@ -52,6 +52,115 @@ describe('dropdown menu items', () => {
   });
 });
 
+describe('the opening gesture', () => {
+  const touch = (pointerId: number) => ({ pointerType: 'touch', pointerId });
+  /** The press that opens the menu lands on the page before the items mount. */
+  const openedBy = (pointerId: number, onSelect: () => void) => {
+    fireEvent.pointerDown(document.body, touch(pointerId));
+    return open(onSelect);
+  };
+
+  it('ignores its pointer up by pointerId, however late', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(11, onSelect);
+    vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 5000);
+    fireEvent.pointerUp(item, touch(11));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('ignores the click that follows it', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(12, onSelect);
+    fireEvent.pointerUp(document.body, touch(12));
+    fireEvent.click(item, { detail: 1, ...touch(12) });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('ignores a click while the opening press is still down', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(13, onSelect);
+    fireEvent.click(item, { detail: 1, ...touch(13) });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('selects on a pointer up from another pointer', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(14, onSelect);
+    fireEvent.pointerUp(item, touch(15));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects a fresh press on the item, pointer up and click', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(16, onSelect);
+    fireEvent.pointerUp(document.body, touch(16));
+    fireEvent.pointerDown(item, touch(17));
+    fireEvent.pointerUp(item, touch(17));
+    fireEvent.click(item, { detail: 1 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects a click with no pointer, as the keyboard sends', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(18, onSelect);
+    fireEvent.click(item, { detail: 0 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects a click long after the opening press ended', () => {
+    const onSelect = vi.fn();
+    const item = openedBy(19, onSelect);
+    fireEvent.pointerUp(document.body, touch(19));
+    vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 2000);
+    fireEvent.click(item, { detail: 1, ...touch(19) });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the opening gesture in a sheet', () => {
+  const asSheet = (on: boolean) =>
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: on && q.includes('max-width'),
+      media: q,
+    }));
+  afterEach(() => vi.unstubAllGlobals());
+  let n = 100;
+
+  it.each(['mouse', 'pen', 'touch'])('ignores a %s opener pointer up and click', (pointerType) => {
+    asSheet(true);
+    const id = n++;
+    const p = { pointerType, pointerId: id };
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, p);
+    const item = open(onSelect);
+    fireEvent.pointerUp(item, p);
+    fireEvent.click(item, { detail: 1, ...p });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'pen', 'touch'])('selects a fresh %s press on the item', (pointerType) => {
+    asSheet(true);
+    const id = n++;
+    const p = { pointerType, pointerId: id };
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, p);
+    const item = open(onSelect);
+    fireEvent.pointerUp(document.body, p);
+    fireEvent.pointerDown(item, p);
+    fireEvent.pointerUp(item, p);
+    fireEvent.click(item, { detail: 1, ...p });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the desktop popover as before for a mouse', () => {
+    asSheet(false);
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, { pointerType: 'mouse', pointerId: n });
+    fireEvent.pointerUp(open(onSelect), { pointerType: 'mouse', pointerId: n++ });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('dropdown menu focus', () => {
   it('makes the rest of the page inert while open and restores it on close', () => {
     const page = document.createElement('div');

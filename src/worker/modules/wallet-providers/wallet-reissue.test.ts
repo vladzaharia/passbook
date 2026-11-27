@@ -2,11 +2,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { countQueries } from '../../jobs/query-counter.ts';
 import { first } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { toDto } from '../operations/dto.ts';
+import { rowById } from '../operations/repo.ts';
 import { fixture, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer } from './offers.ts';
 import { countReissueInstances } from './repo-wallet-reissue.ts';
 import { drainWalletProviderSync } from './sync.ts';
-import { handleWalletReissue, MAX_COPY_FAILURES, QUERIES_PER_COPY } from './wallet-reissue.ts';
+import {
+  handleWalletReissue,
+  MAX_COPY_FAILURES,
+  QUERIES_PER_COPY,
+  startWalletReissue,
+} from './wallet-reissue.ts';
 
 const failing = vi.hoisted(() => ({ ids: new Set<string>() }));
 vi.mock('./lifecycle.ts', async (original) => {
@@ -136,5 +143,47 @@ describe('a copy that fails mid-run', () => {
       expect.objectContaining({ code: 'WALLET_REISSUE_SKIPPED' }),
     );
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('wallet reissue as an operation', () => {
+  it('counts the copies it reaches and ends Done', async () => {
+    const { f, ctx, scope } = await tapped();
+    const started = await startWalletReissue(ctx, scope, { actor: { type: 'user', id: 'u1' } });
+    expect(started.operationId).not.toBeNull();
+    const queued = f.kit.queue.sent.at(-1) as Parameters<typeof handleWalletReissue>[0];
+    expect(queued).toMatchObject({
+      reissueId: started.operationId,
+      operationId: started.operationId,
+      total: 1,
+    });
+    const op = async () => toDto((await rowById(f.kit.env.DB, started.operationId ?? '')) as never);
+    expect((await op()).steps[0]).toMatchObject({ state: 'running', done: 0, total: 1 });
+    await handleWalletReissue(queued, ctx);
+    expect(await op()).toMatchObject({
+      status: 'succeeded',
+      kind: 'wallet.reissue',
+      target: { type: 'wallet-provider', id: 'google' },
+      result: { ids: { updated: '1', skipped: '0' } },
+    });
+  });
+
+  it('a copy skipped after its tries is counted as skipped, and the run still ends', async () => {
+    const { f, ctx, scope } = await tapped();
+    const started = await startWalletReissue(ctx, scope, { actor: { type: 'user', id: 'u1' } });
+    const first1 = f.kit.queue.sent.at(-1) as Parameters<typeof handleWalletReissue>[0];
+    const instance = await first<{ id: string }>(
+      f.kit.env.DB,
+      'SELECT id FROM wallet_provider_instances WHERE org_id = ? LIMIT 1',
+      [scope.orgId],
+    );
+    failing.ids.add(instance?.id ?? '');
+    let job = first1;
+    for (let i = 0; i < MAX_COPY_FAILURES; i++) {
+      await handleWalletReissue(job, ctx);
+      job = f.kit.queue.sent.at(-1) as typeof job;
+    }
+    const op = toDto((await rowById(f.kit.env.DB, started.operationId ?? '')) as never);
+    expect(op).toMatchObject({ status: 'succeeded', result: { ids: { skipped: '1' } } });
   });
 });

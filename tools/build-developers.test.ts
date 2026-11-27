@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS, twin } from '../src/shared/developers.ts';
+import {
+  DEVELOPERS_INDEXABLE,
+  MOVED,
+  NOT_FOUND_FILE,
+  PATHS,
+  twin,
+} from '../src/shared/developers.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
 import { INDEX_BUDGET_GZIP } from '../src/web/developers/search/build.ts';
@@ -68,10 +74,11 @@ describe('build-developers', () => {
     for (const [url, entry] of Object.entries(manifest))
       if (entry.type.startsWith('text/html') && url !== NOT_FOUND_FILE)
         expect(manifest[twin(url)], url).toBeDefined();
+    // The Workbench is its own space: its paths are not in the portal's manifest.
     for (const m of read('/developers/llms.txt').matchAll(
       /\]\(https:\/\/passbook\.mobile(\/[^)]+)\)/g,
     ))
-      expect(manifest[m[1] ?? ''], m[1]).toBeDefined();
+      if (!m[1]?.startsWith('/workbench')) expect(manifest[m[1] ?? ''], m[1]).toBeDefined();
   });
 
   it('keeps every old anchor: a row per operation on its resource page, the ids on its own page', () => {
@@ -98,6 +105,7 @@ describe('build-developers', () => {
     const served = new Set(Object.keys(manifest));
     const outside = [
       '/login',
+      '/workbench',
       '/auth/',
       '/api/v1/openapi.json',
       '/favicon',
@@ -114,8 +122,7 @@ describe('build-developers', () => {
         const [path, hash] = href.split('#') as [string, string | undefined];
         if (!path.startsWith('/') || outside.some((o) => path.startsWith(o))) continue;
         expect(served.has(path), `${url} -> ${href}`).toBe(true);
-        // The console's operation ids come from its island, not from the page.
-        if (hash && !path.endsWith('.md') && path !== '/developers/console') {
+        if (hash && !path.endsWith('.md')) {
           const asset = manifest[path]?.asset ?? '';
           const file = asset.endsWith('/') ? `${asset}index.html` : `${asset}.html`;
           expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
@@ -174,9 +181,8 @@ describe('build-developers', () => {
     }
   });
 
-  it('builds the playground page, the starters’ previews and one static paper image each, all served from the manifest', () => {
-    expect(manifest['/developers/playground']?.type).toMatch(/^text\/html/);
-    expect(read('/developers/playground.html')).toContain('data-island="playground"');
+  it('builds no page for the moved tools, and still the starters’ previews and one static paper image each, all served from the manifest', () => {
+    for (const from of Object.keys(MOVED)) expect(manifest[from], from).toBeUndefined();
     const entry = manifest['/developers/blueprint-previews.json'];
     expect(entry?.type).toBe('application/json; charset=utf-8');
     const data = JSON.parse(read('/developers/blueprint-previews.json')) as {
@@ -204,9 +210,11 @@ describe('build-developers', () => {
     ];
     expect(rows.length).toBeGreaterThan(500);
     for (const { href } of rows) {
-      const [path = '', anchor] = href.split('#');
-      // The admin app's own pages are not the portal's.
-      if (path.startsWith('/admin/')) continue;
+      const [target = '', anchor] = href.split('#');
+      // A query (an event's Webhooks filter) is the tool's own: the page is the path.
+      const path = target.split('?')[0] ?? '';
+      // The admin app's and the Workbench's own pages are not the portal's.
+      if (path.startsWith('/admin/') || path.startsWith('/workbench')) continue;
       const page = manifest[path];
       expect(page?.type, href).toMatch(/^text\/html/);
       if (!anchor) continue;

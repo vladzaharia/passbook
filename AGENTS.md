@@ -98,6 +98,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n8-ad | scanner: admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` |
 | n8-td | scanner: template designer | `src/web/admin/templates/designer/scan/**` |
 | dx | developer portal, SDKs | `src/web/developers/**`, `docs/developers/**`, `src/worker/modules/developer/**`, `sdk/**`, `tools/gen-sdk-{py,go}*`, `src/shared/sdk-names.ts`; `dev.*` analytics events carry the org id only |
+| wb | Workbench: Test-only token, shell, tools | `src/web/workbench/**`, `src/shared/workbench.ts`, `src/worker/modules/workbench/**`, `src/web/lib/tool-api.tsx` |
 | dx-access | developer invitations | `workers/idp-provisioner/**`, `src/worker/modules/dev-access/**`, `src/shared/contracts/developer-invitations.ts`, `src/shared/copy/developer-invite.ts`, `src/web/admin/orgs/developers/**`, `test/idp-provisioner/**`, `tools/check-idp-binding*.ts`, `migrations/0214_developer_invitations.sql` |
 | mk | marketing site | `marketing/**`, `src/web/marketing/**`, `src/worker/modules/marketing/**`, `src/worker/email/access-request*`, `src/shared/{marketing.ts,contracts/access-request.ts,copy/access.ts}` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |

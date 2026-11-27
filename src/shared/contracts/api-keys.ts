@@ -11,6 +11,42 @@ import { OrgRoleSchema } from './org-membership.ts';
 import { PassStyleSchema } from './templates.ts';
 
 /**
+ * The scopes of a Platform key, the only flavour that reaches `platform` routes. A key holds these alone (no org
+ * scope, `API_KEY_PLATFORM_SCOPES_ALONE`), and only a `platform` kind key holds them (`API_KEY_PLATFORM_SCOPE_KIND`).
+ */
+export const PLATFORM_KEY_SCOPES = [
+  'platform:read',
+  'platform:orgs',
+  'platform:users',
+  'platform:groups',
+  'platform:claims',
+  'platform:identities',
+  'platform:wallet',
+  'platform:settings',
+  'platform:status',
+  'platform:templates',
+  'platform:audit',
+] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
+
+/**
+ * The platform scopes some route accepts by key (`key` on a `platform` route). A scope joins this list in the change
+ * that opts its first route in, and `route-inventory.test.ts` keeps it equal to what the routes declare, so no key can
+ * hold authority no route has reviewed. Empty until the first route converts (PK-2).
+ */
+export const MINTABLE_PLATFORM_SCOPES = [
+  'platform:read',
+  'platform:users',
+  'platform:orgs',
+  'platform:groups',
+  'platform:claims',
+  'platform:identities',
+  'platform:status',
+  'platform:audit',
+  'platform:settings',
+  'platform:wallet',
+] as const satisfies readonly (typeof PLATFORM_KEY_SCOPES)[number][];
+
+/**
  * The scopes a key may be minted with: those some route accepts today. A scope joins this list in
  * the change that makes a route accept it, so no key holds authority nobody reviewed.
  */
@@ -40,8 +76,10 @@ export const MINTABLE_SCOPES = [
   'nfc:write',
   'api-keys:write',
   'audit:read',
+  'logs:read',
   'members:read',
   'members:write',
+  ...MINTABLE_PLATFORM_SCOPES,
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 /** Scopes that mint or reset device credentials, or invite people into developer access: named in `scopes` only, never through a role or a parent key, live and one org. */
 export const CREDENTIAL_SCOPES = [
@@ -53,6 +91,7 @@ export const CREDENTIAL_SCOPES = [
 export const TEST_ONLY_SCOPES = [
   'templates:review',
   'templates:publish',
+  'logs:read',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
 /** Template scopes act as the key's creator: a key with no human creator (a platform key, a child) never holds them. */
 export const TEMPLATE_ACT_AS_SCOPES = [

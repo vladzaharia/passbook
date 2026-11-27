@@ -202,6 +202,15 @@ export const IDP_SEEDS: Record<string, unknown> = {
     token: `pbtry_northwind-demo-try.${hex('try-mac', 22)}`,
     expiresAt: T.now + 15 * 60_000,
   },
+  // The Workbench token has the try token's shape; an org member's acts as them in the org's Test mode.
+  'workbench.postToken request': { orgId: IDS.org },
+  'workbench.postToken response': {
+    token: `pbtry_northwind-demo-wb.${hex('wb-mac', 22)}`,
+    orgId: IDS.org,
+    mode: 'test',
+    expiresAt: T.now + 15 * 60_000,
+    subject: 'member',
+  },
   'templates.postTemplatesByIdArchive response': {
     ...TEMPLATE_DETAIL,
     status: 'archived',
@@ -366,8 +375,20 @@ export const IDP_SEEDS: Record<string, unknown> = {
   'metrics.getMetricsPlatformOverview response': METRICS,
   'metrics.getMetricsActivity response': ACTIVITY,
   'developer.getHome response': DEVELOPER_HOME,
-  'developer.getLogs response': { items: [CALL], nextCursor: null, capped: null },
+  'developer.getLogs response': {
+    items: [CALL],
+    nextCursor: null,
+    capped: null,
+    bodiesRecorded: true,
+  },
   'developer.getLog response': CALL,
+  'workbench.listRequestLogs response': {
+    items: [CALL],
+    nextCursor: null,
+    capped: null,
+    bodiesRecorded: true,
+  },
+  'workbench.getRequestLog response': CALL,
   'developer.getRail response': {
     mode: 'test',
     scopes: DEVELOPER_HOME.keys[0]?.scopes,

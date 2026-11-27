@@ -1,4 +1,4 @@
-import { runOp } from '../console/run-spec.ts';
+import { runOp } from '../../workbench/console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
 import { errorStatuses, errorStatusLabels } from './error-status.ts';
 import { minimalExample } from './example.ts';
@@ -47,6 +47,7 @@ export const isPublished = (op: RawOp) =>
   accepts(op, 'apiKey') &&
   op['x-sdk'] !== undefined &&
   op['x-sdk'].sdk !== false &&
+  op['x-platform-scope'] === undefined &&
   !op['x-sdk'].resource.startsWith('platform');
 
 const isConsoleOnly = (op: RawOp) =>
@@ -54,6 +55,7 @@ const isConsoleOnly = (op: RawOp) =>
   !accepts(op, 'apiKey') &&
   op['x-sdk'] !== undefined &&
   op['x-sdk'].sdk !== false &&
+  op['x-platform-scope'] === undefined &&
   !op['x-sdk'].resource.startsWith('platform');
 
 function errorRows(

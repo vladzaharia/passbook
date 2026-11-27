@@ -150,9 +150,22 @@ export const CALL = {
   mode: 'test',
   client: '@passbook/sdk 1.4.2',
   hasBodies: true,
+  resourceId: null,
+  apiVersion: '2026-11-01',
+  flags: { idempotencyKey: false, ifMatch: false, version: true },
   requestBody: null,
   responseBody: '{"items":[],"nextCursor":null}',
   bodiesExpireAt: T.recent + 7 * DAY,
+  bodiesRecorded: true,
+  bodiesTruncated: false,
+  headers: {
+    req: {
+      accept: 'application/json',
+      'passbook-version': '2026-11-01',
+      'user-agent': '@passbook/sdk 1.4.2',
+    },
+    res: { 'content-type': 'application/json', etag: '"3"' },
+  },
 };
 /** The developer's day, by local hour of the last 24: work from 08:00 to 22:00, busiest after lunch. */
 const HOURS = Array.from({ length: 24 }, (_, i) =>

@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MINTABLE_SCOPES } from '../src/shared/contracts/api-keys.ts';
+import { MINTABLE_SCOPES, PLATFORM_KEY_SCOPES } from '../src/shared/contracts/api-keys.ts';
 import { SANDBOX_KEY_SCOPES } from '../src/shared/contracts/developer-home.ts';
 
 describe('the sandbox ceiling trigger', () => {
@@ -18,8 +18,11 @@ describe('the sandbox ceiling trigger', () => {
     const lists = [...sql.matchAll(/s\.value IN \(([^)]*)\)/g)].map((m) =>
       [...(m[1] ?? '').matchAll(/'([^']+)'/g)].map((x) => x[1]).sort(),
     );
+    // A platform scope is refused on any org-bound key by `api_keys_platform_scopes` (0231), so this list omits it.
     const left = MINTABLE_SCOPES.filter(
-      (s) => !(SANDBOX_KEY_SCOPES as readonly string[]).includes(s),
+      (s) =>
+        !(SANDBOX_KEY_SCOPES as readonly string[]).includes(s) &&
+        !(PLATFORM_KEY_SCOPES as readonly string[]).includes(s),
     ).sort();
     expect(lists).toHaveLength(latest?.startsWith('0183') ? 2 : 1);
     for (const l of lists) expect(l).toEqual(left);

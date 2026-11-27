@@ -10,6 +10,7 @@ import { Sheet, SheetContent } from '../sheet.tsx';
 import { useOperationParam } from './op-param.ts';
 import { OperationRow } from './operation-row.tsx';
 import { OperationSheet } from './operation-sheet.tsx';
+import { useOperationClaimed } from './store.ts';
 import type { Operation } from './types.ts';
 import { useTray } from './use-tray.ts';
 
@@ -18,11 +19,14 @@ function TrayList({
   recent,
   now,
   onOpen,
+  all,
 }: {
   active: readonly Operation[];
   recent: readonly Operation[];
   now: number;
   onOpen: (op: Operation) => void;
+  /** The full list, when the host has one: a link under the rows. */
+  all?: () => void;
 }): ReactNode {
   return (
     <div className="flex flex-col">
@@ -35,6 +39,15 @@ function TrayList({
       {recent.map((op) => (
         <OperationRow key={op.id} operation={op} now={now} onOpen={onOpen} />
       ))}
+      {all ? (
+        <button
+          type="button"
+          onClick={all}
+          className="mt-1 cursor-pointer rounded-md px-3 py-2 text-left text-sm font-medium text-accent-fg wl-colors hover:bg-state-hover-tint"
+        >
+          All activity
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -57,18 +70,26 @@ export function OperationTray({
   onNavigate = (href) => window.location.assign(href),
   zone,
   notify,
+  include,
+  allHref,
   className,
 }: {
   onNavigate?: (href: string) => void;
   zone?: string;
   /** Completion toasts; off where the host has no toaster. */
   notify?: boolean;
+  /** The operations this tray lists; the host's scope (the Workbench lists its context's Test ones). */
+  include?: (op: Operation) => boolean;
+  /** Where "All activity" goes: the host's full list. Omitted, no link. */
+  allHref?: string;
   className?: string;
 }) {
   const phone = useMediaQuery(PHONE);
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useOperationParam();
   const closeDetail = useCallback(() => setDetail(null), [setDetail]);
+  // A panel on the page that claimed this id shows it: the tray's sheet would double it.
+  const claimed = useOperationClaimed(detail);
   const openOp = (op: Operation) => {
     setOpen(false);
     // The server holds `result.href` to an app path; a client that is handed anything else opens the sheet.
@@ -76,7 +97,7 @@ export function OperationTray({
     if (href) onNavigate(href);
     else setDetail(op.id);
   };
-  const { active, recent, unseen, markSeen } = useTray({ notify, onOpen: openOp });
+  const { active, recent, unseen, markSeen } = useTray({ notify, onOpen: openOp, include });
   const now = useNow(1000, active.length > 0);
   const busy = active.length > 0;
   const visible = busy || unseen > 0 || open;
@@ -93,7 +114,13 @@ export function OperationTray({
       className={cn('wl-colors', busy && 'ring-2 ring-accent/40', className)}
     />
   );
-  const list = <TrayList active={active} recent={recent} now={now} onOpen={openOp} />;
+  const all = allHref
+    ? () => {
+        setOpen(false);
+        onNavigate(allHref);
+      }
+    : undefined;
+  const list = <TrayList active={active} recent={recent} now={now} onOpen={openOp} all={all} />;
   return (
     <>
       {visible ? (
@@ -130,7 +157,7 @@ export function OperationTray({
       <p role="status" aria-label="Activity" aria-live="polite" className="sr-only">
         {endedLine(recent)}
       </p>
-      <OperationSheet id={detail} onClose={closeDetail} zone={zone} />
+      <OperationSheet id={claimed ? null : detail} onClose={closeDetail} zone={zone} />
     </>
   );
 }

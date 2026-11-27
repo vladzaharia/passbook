@@ -1,5 +1,5 @@
 import { ChevronDown, Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { revokeKeyConfirm } from '@/web/lib/confirms.ts';
 import { formatDay } from '@/web/lib/format.ts';
@@ -10,30 +10,37 @@ import {
   EmptyState,
   ErrorState,
   LoadMore,
-  PageHeader,
   SkeletonRows,
   toast,
 } from '@/web/ui/index.ts';
 import './api-keys.css';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { CreateKeyDialog } from './create-key-dialog.tsx';
 import { keyColumns } from './key-columns.tsx';
+import { KeysHeader, useKeysHost } from './keys-host.tsx';
 import { type ApiKey, SCOPE_LABEL, useApiKeyPages, useRevokeKey } from './queries.ts';
-import { useKeyAccess } from './use-key-access.ts';
+import type { KeyAccess } from './use-key-access.ts';
 
 export { keyState } from './queries.ts';
+
+/** The wizard loads when it is first opened: a list that is only read never pays for it. */
+const CreateKeyDialog = lazy(() =>
+  import('./create-key-dialog.tsx').then((m) => ({ default: m.CreateKeyDialog })),
+);
 
 const flat = (q: { data?: { pages: { items: ApiKey[] }[] } | undefined }) =>
   q.data?.pages.flatMap((p) => p.items) ?? [];
 
-export function ApiKeysPage({
-  createRequested,
-  onCreateRequestHandled,
-}: {
+export interface ApiKeysViewProps {
   createRequested: boolean;
   onCreateRequestHandled: () => void;
-}) {
-  const access = useKeyAccess();
+}
+
+/** The list and its dialogs for a known access; the Workbench renders it with its own. */
+export function ApiKeysView({
+  access,
+  createRequested,
+  onCreateRequestHandled,
+}: ApiKeysViewProps & { access: KeyAccess }) {
   const canManage = access.state === 'ready' && access.canManage;
   useEffect(() => {
     if (createRequested && access.state !== 'loading' && access.state !== 'org-error' && !canManage)
@@ -56,6 +63,7 @@ export function ApiKeysPage({
       orgName={access.orgName}
       capabilities={access.capabilities}
       developerOrg={access.developerOrg}
+      idp={access.idp}
       canManage={canManage}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
@@ -69,6 +77,7 @@ function ScopedApiKeys({
   orgName,
   capabilities,
   developerOrg,
+  idp,
   canManage,
   createRequested,
   onCreateRequestHandled,
@@ -78,14 +87,20 @@ function ScopedApiKeys({
   orgName: string;
   capabilities: readonly OrgCapability[] | null;
   developerOrg: boolean;
+  idp: boolean;
   canManage: boolean;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
 }) {
+  const host = useKeysHost();
   const [creating, setCreating] = useState(false);
+  const [wizardLoaded, setWizardLoaded] = useState(false);
   const [revoking, setRevoking] = useState<ApiKey>();
   const [showRevoked, setShowRevoked] = useState(false);
   const [justRevoked, setJustRevoked] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    if (creating) setWizardLoaded(true);
+  }, [creating]);
   useEffect(() => {
     if (!createRequested || !canManage) return;
     setCreating(true);
@@ -114,8 +129,10 @@ function ScopedApiKeys({
         now,
         canRevoke: canManage,
         onRevoke: setRevoking,
+        creatorLink: !host,
+        isOwn: host?.own,
       }),
-    [orgId, justRevoked, now, canManage],
+    [orgId, justRevoked, now, canManage, host],
   );
 
   const create = (variant: 'primary' | 'outline') =>
@@ -127,7 +144,7 @@ function ScopedApiKeys({
 
   return (
     <>
-      <PageHeader title="API keys" actions={empty ? undefined : create('primary')} />
+      <KeysHeader title="API keys" actions={empty ? undefined : create('primary')} />
       {live.isError && liveRows.length === 0 ? (
         <ErrorState error={live.error} onRetry={() => live.refetch()} />
       ) : (
@@ -180,15 +197,20 @@ function ScopedApiKeys({
           ) : null}
         </div>
       )}
-      <CreateKeyDialog
-        open={creating}
-        onOpenChange={setCreating}
-        principal={principal}
-        orgId={orgId}
-        orgName={orgName}
-        capabilities={capabilities}
-        developerOrg={developerOrg}
-      />
+      {wizardLoaded ? (
+        <Suspense fallback={null}>
+          <CreateKeyDialog
+            open={creating}
+            onOpenChange={setCreating}
+            principal={principal}
+            orgId={orgId}
+            orgName={orgName}
+            capabilities={capabilities}
+            developerOrg={developerOrg}
+            idp={idp}
+          />
+        </Suspense>
+      ) : null}
       <ConfirmDialog
         open={revoking !== undefined}
         onOpenChange={(open) => !open && setRevoking(undefined)}

@@ -1,0 +1,183 @@
+/* Logs on the bench: what a request row and its inspector add to the primitives (bench/list.css,
+   inspector.css). Tokens only; nothing here moves. */
+
+.logs-main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  transition: opacity var(--wl-dur-hover) var(--wl-ease-move);
+}
+/* A refetch keeps the old rows; they dim while the new ones come. */
+.logs-main[data-busy] .bench-list {
+  opacity: 0.6;
+}
+.logs-full {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-warning-subtle);
+  color: var(--pk-text-default);
+  box-shadow: inset 0 0 0 1px var(--pk-warning-border);
+}
+
+/* The path: the head shrinks to an ellipsis, the last segment and the query stay; ids are dimmed. */
+.logs-path {
+  display: flex;
+  min-width: 0;
+}
+.logs-head {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logs-tail {
+  flex: none;
+  white-space: nowrap;
+}
+.logs-id {
+  color: var(--pk-text-muted);
+}
+.logs-err {
+  color: var(--pk-text-default);
+  font: 400 12px / 1 var(--pk-font-mono);
+}
+.logs-ms[data-slow] {
+  color: var(--pk-warning);
+}
+
+/* The inspector's facts are one wrapping line of muted mono. */
+.logs-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  color: var(--pk-text-muted);
+  font: 400 12px / 18px var(--pk-font-mono);
+}
+.logs-none {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+
+/* The first call, in the empty state's card. */
+.logs-first {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 36rem;
+  text-align: start;
+}
+.logs-solo {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+/* The card is a grid: its action row would take the code's full line length without these. */
+.logs-solo .pstate-a {
+  min-width: 0;
+  max-width: 100%;
+}
+.logs-solo .code {
+  max-width: 100%;
+}
+.logs-first-a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.logs-quiet {
+  margin: 0;
+  padding: 10px 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+
+/* A client chip: the tool that made the call, quiet beside the code. Dropped on narrow rows, where the inspector has it. */
+.logs-client {
+  display: inline-block;
+  max-width: 14ch;
+  padding: 0 6px;
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--pk-border-subtle);
+  color: var(--pk-text-muted);
+  font: 400 11px / 18px var(--pk-font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.logs-client[data-via="try"] {
+  color: var(--pk-text-default);
+}
+.bench-row-meta .logs-err + .logs-client {
+  margin-inline-start: 6px;
+}
+@media (max-width: 640px) {
+  .bench-row-meta .logs-client {
+    display: none;
+  }
+}
+
+/* Bodies off for this org: one line and, for an admin, the way to turn them on. */
+.logs-off {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 12px 0;
+}
+.logs-off p {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 13px;
+}
+.logs-cut {
+  padding-block: 6px 0;
+}
+.logs-kept {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* The view tabs sit on the list they scope. */
+.logs-views {
+  margin-bottom: 8px;
+}
+.logs-views .bench-tabs {
+  padding-inline: 0;
+}
+
+/* The Headers tab: two short lists of name and value in mono. */
+.logs-hdrs-w {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.logs-hdrs-t {
+  margin: 0 0 6px;
+  color: var(--pk-text-muted);
+  font: 600 12px / 18px var(--pk-font-sans);
+}
+.logs-hdrs-l {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font: 400 12px / 18px var(--pk-font-mono);
+}
+.logs-hdrs-r {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  min-width: 0;
+}
+.logs-hdrs-r dt {
+  flex: none;
+  color: var(--pk-text-muted);
+}
+.logs-hdrs-r dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--pk-text-default);
+  overflow-wrap: anywhere;
+}

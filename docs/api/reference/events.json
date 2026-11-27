@@ -44,5 +44,28 @@
         "source": "api"
       }
     }
+  },
+  "events.getEventsByIdDeliveries": {
+    "description": "Where one event was sent: one row per endpoint with its state and last attempt. Needs `passes:read`, like the event.",
+    "response": {
+      "items": [
+        {
+          "eventId": "0193a1b2-7c00-7000-8000-000000000033",
+          "type": "pass.issued",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "externalId": "booking_8841",
+          "state": "delivered",
+          "attempts": 1,
+          "nextAt": 1795570680000,
+          "lastStatus": 200,
+          "lastError": null,
+          "lastAttemptAt": 1795570380000,
+          "finishedAt": 1795570380240,
+          "replays": 0,
+          "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
+          "target": "url"
+        }
+      ]
+    }
   }
 }

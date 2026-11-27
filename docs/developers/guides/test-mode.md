@@ -12,8 +12,9 @@ Everything you run in the portal runs in test mode, in your sandbox. This page s
 - `downloadUrl` is the test preview page. It expires after 30 days, is hidden from search and has no Add button.
 - Pass detail carries `testPreview: true`. `GET /p/<token>/pass.pkpass` answers `409` [SANDBOX_PREVIEW_ONLY](/developers/errors/SANDBOX_PREVIEW_ONLY).
 - A sandbox never holds Live. A Live key or request is refused.
-- Your plan is 500 test passes, 10 templates, 3 webhook endpoints and 3 keys. A create past a limit is `403` [SANDBOX_QUOTA](/developers/errors/SANDBOX_QUOTA) with `feature`, `limit` and `used`.
-- Webhooks go to a capture endpoint that stores each signed request and sends nothing. [React to events](/developers/guides/react-to-events) uses it.
+- Your plan is 500 test passes, 10 templates, 3 webhook endpoints and 3 keys. A create past a limit is `403` [SANDBOX_QUOTA](/developers/errors/SANDBOX_QUOTA) with `feature`, `limit` and `used`. A fourth webhook endpoint, the capture endpoint included, is `409` [SANDBOX_ENDPOINT_LIMIT](/developers/errors/SANDBOX_ENDPOINT_LIMIT).
+- Webhook endpoints with a URL deliver signed Test events to it, as in Live. The capture endpoint also records each signed request. [React to events](/developers/guides/react-to-events) uses it.
+- Sandbox deliveries go through the same checks as Live: https on port 443, no private, loopback, link-local or metadata address, whether written in the URL, found by DNS when you save, or found again when sending, and no redirects. A refused URL is `UNSAFE_URL`. A sandbox sends 60 deliveries a minute; the rest wait.
 - In the browser, Try it signs requests with a 15-minute token tied to your session. A key sent from a browser is `403` [KEY_IN_BROWSER](/developers/errors/KEY_IN_BROWSER): keep keys on servers.
 
 ## Sandbox or Test mode
@@ -44,7 +45,7 @@ Newest first. Open one to read it. Nothing reaches the recipient.
 
 ## See your calls
 
-[Logs](/developers/logs) lists your key's calls for 7 days: method, path, status and `code`. Open one to see its redacted bodies for 24 hours.
+[Logs](/workbench/logs) lists your key's calls for 7 days: method, path, status and `code`. Open one to see its redacted bodies for 24 hours.
 
 ## Start over
 

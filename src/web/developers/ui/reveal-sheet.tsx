@@ -1,7 +1,9 @@
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { clock, maskSecret } from '../keys/model.ts';
-import { copyToClipboard } from '../playground/copy.ts';
+import { benchTimeText } from '../../workbench/bench/time.tsx';
+import { benchZone } from '../../workbench/bench/zone.ts';
+import { maskSecret } from '../../workbench/keys/model.ts';
+import { copyToClipboard } from '../../workbench/playground/copy.ts';
 import { Sheet } from './sheet.tsx';
 
 /** A secret the server just returned: the only copy there will be. */
@@ -148,7 +150,11 @@ export function RevealSheet({
         </div>
       ) : null}
       {stops === undefined ? null : (
-        <p className="sm muted">{stops <= now() ? c.stoppedNow : c.stops(clock(stops))}</p>
+        <p className="sm muted">
+          {stops <= now()
+            ? c.stoppedNow
+            : c.stops(benchTimeText(stops, benchZone(), 'auto', now()))}
+        </p>
       )}
     </Sheet>
   );

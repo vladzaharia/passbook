@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, normalize, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const WEB = join(process.cwd(), 'src/web');
@@ -72,12 +72,12 @@ describe('kit lint', () => {
 
   it('copies through CopyButton or copyText, never the clipboard directly', () => {
     // developers/shell/copy.ts: the portal's first load cannot carry React and the toaster.
-    // developers/playground/copy.ts: the island says "Copied" in place; the portal has no toaster.
+    // workbench/playground/copy.ts: the page says "Copied" in place; the portal has no toaster.
     const allowed = new Set([
       'ui/copy-button.tsx',
       'lib/clipboard.ts',
       'developers/shell/copy.ts',
-      'developers/playground/copy.ts',
+      'workbench/playground/copy.ts',
     ]);
     for (const { path, text } of files) {
       if (allowed.has(path)) continue;
@@ -103,20 +103,9 @@ describe('kit lint', () => {
   // One status vocabulary on the Workbench: bench/status-chip.tsx (and bench/list.tsx's tick). A
   // tool draws no pill, no `*-code` or `*-status` class and no data-tone of its own.
   it('shows status on the Workbench tools only through the bench StatusChip', () => {
-    // Moving onto the bench in WB3 (logs), WB4 (webhooks), WB5 (keys) and WB7 (home): each removes its own.
-    const pending = new Set([
-      'developers/keys/keys-page.tsx',
-      'developers/logs/rail.ts',
-      'developers/logs/row.ts',
-      'developers/webhooks/deliveries.tsx',
-      'developers/webhooks/endpoints.tsx',
-      'developers/webhooks/url-events.tsx',
-      'developers/workbench/calls.tsx',
-      'developers/workbench/cards.tsx',
-      'developers/workbench/stats.tsx',
-      'developers/workbench/workbench.tsx',
-    ]);
-    const tools = /^developers\/(console|webhooks|logs|keys|workbench)\//;
+    // Every tool is on the bench: a file that breaks the rule goes on this list only while it moves.
+    const pending = new Set<string>([]);
+    const tools = /^workbench\/(console|webhooks|logs|keys|home)\//;
     const classes = /\bclass(?:Name)?[=:]\s*\{?\s*[`'"][^`'"]*\b(?:pill|[a-z]+-(?:code|status))\b/;
     for (const { path, text } of files) {
       if (!tools.test(path) || pending.has(path)) continue;
@@ -151,5 +140,63 @@ describe('kit lint', () => {
       if (!gates.has(path)) expect(text, path).not.toMatch(/\bsearch:[^\n]*\borgId\b/);
       expect(text, path).not.toMatch(/Platform-wide/);
     }
+  });
+
+  // L12 (Workbench v2 §2.3): Workbench pages reach tenant data only through the token client
+  // (`useToolApi()`), never the admin session client or its Live/Test mode. The one exemption is
+  // the tool scope, `lib/tool-api.tsx`, which the Workbench's host always pins. The check walks the
+  // import graph (static and dynamic) from `workbench/**` and `routes/workbench/**`; the runtime
+  // test in `workbench/shell/boundary.test.tsx` is the real guard.
+  it('keeps the admin client and mode out of the Workbench', () => {
+    const byPath = new Map(files.map((f) => [f.path, f.text]));
+    const banned = new Set(['lib/api.ts', 'lib/mode.ts', 'lib/operations-client.ts']);
+    // Modules that may touch the session on purpose: its own read (`useSession`), the account menu,
+    // the tray body, whose session client is the admin default the Workbench replaces, and the lazy
+    // error pages every route shares (their portal layout holds the holder's own client).
+    const stop = new Set([
+      'ui/layout/lazy-error-pages.tsx',
+      'lib/tool-api.tsx',
+      'lib/session.ts',
+      'ui/layout/user-menu.tsx',
+      'ui/layout/activity-tray-body.tsx',
+    ]);
+    const resolve = (from: string, spec: string): string | undefined => {
+      const base = normalize(join(dirname(from), spec));
+      return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find(
+        (c) => byPath.has(c),
+      );
+    };
+    const importsOf = (path: string): string[] =>
+      [...(byPath.get(path) ?? '').matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]*)['"]/g)].flatMap(
+        (m) => resolve(path, m[1] as string) ?? [],
+      );
+    const reached = (starts: string[]): string[] => {
+      const seen = new Set(starts);
+      const hits: string[] = [];
+      const queue = [...starts];
+      while (queue.length > 0) {
+        const path = queue.shift() as string;
+        for (const dep of importsOf(path)) {
+          if (stop.has(dep)) continue;
+          if (banned.has(dep)) hits.push(`${path} -> ${dep}`);
+          else if (!seen.has(dep)) {
+            seen.add(dep);
+            queue.push(dep);
+          }
+        }
+      }
+      return hits;
+    };
+    const workbench = files
+      .map((f) => f.path)
+      .filter((p) => /^(workbench|routes\/workbench)\//.test(p) && !p.includes('test-fixtures'));
+    expect(workbench.length).toBeGreaterThan(0);
+    expect(reached(workbench)).toEqual([]);
+    // The walk itself: the tray's session default and a direct import are both seen when not stopped.
+    expect(reached(['ui/layout/activity-tray.tsx'])).toEqual([]);
+    stop.delete('ui/layout/activity-tray-body.tsx');
+    expect(reached(['ui/layout/activity-tray.tsx'])).toContain(
+      'ui/layout/activity-tray-body.tsx -> lib/operations-client.ts',
+    );
   });
 });

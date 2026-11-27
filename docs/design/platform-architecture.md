@@ -188,7 +188,7 @@ Conventions (layering, errors, clock and ids, logs, registries, file size, copy 
 - **Outbound webhooks** (`0090_webhooks.sql`): `event_feed` (append-only journal of catalog events, written by the `pass_events_feed` trigger; unique `(seq, org_id, mode)`), `webhook_endpoints` (per org and mode, cap 10 by trigger, status active|paused|disabled), `webhook_endpoint_secrets` (sealed, current plus one expiring), `webhook_deliveries` (PK `(endpoint_id, event_seq)`, composite FKs to the endpoint and the feed row, state pending|delivered|failed|cancelled, one lane per endpoint) and `webhook_attempts` (per attempt and test send). Module `modules/webhooks`, console `src/web/admin/connections/webhooks`. Retention: feed `min(30 d, events retention)`, delivered deliveries 7 d, attempts 30 d (test sends 7 d), secrets 1 d after expiry (daily `webhooks.retention`).
 Cron hooks (`src/worker/jobs/cron.ts`): the minute hooks include `tokens.remac`, `scan.reconcile` and `scan.backfill`; the daily ones include `authority.sweep` and `orgs.branding_gc`.
 
-Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 objects deleted in batches, `purged_at` set); revisions 7 d; outbox sent 30 d / failed 90 d; connection_runs 30 d or last 1 000; webhook_events, magic_links, oidc_flows, expired sessions 7 d; wallet_logs 7 d; audit_log 1 y.
+Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 objects deleted in batches, `purged_at` set); revisions 7 d; outbox sent 30 d / failed 90 d; connection_runs 30 d or last 1 000; connection_webhook_arrivals 7 d (the earliest verified row per connection stays); webhook_events, magic_links, oidc_flows, expired sessions 7 d; wallet_logs 7 d; audit_log 1 y.
 
 ---
 
@@ -366,6 +366,7 @@ Constant-time token comparison; all tokens ≥ 256-bit from `crypto.getRandomVal
 - `worker` (vitest-pool-workers): every route via `SELF.fetch`; Apple protocol suite (frozen); outbox/queue/DLQ/cron; CAS conflicts; tenant isolation suite; auth flows with a mock OIDC (jose-signed tokens, mocked discovery/JWKS fetch); magic link single use; CSRF; rate limits; webhook signatures; workflows via test helpers.
 - `web` (jsdom): components, forms, `<PassCard>` per style, axe checks.
 - `e2e` (Playwright, `vite dev`/`wrangler dev`, local D1 seeded by factories, mock OIDC server in `test/mock-oidc/`): admin sign-in, create pass, edit with conflict, upload template, delete uploaded template (baked delete refused), connection create + test + sync with `demo` connector, user magic-link sign-in → sees email-linked pass → force refresh, public link without sign-in, mobile layouts, dark/light screenshots.
+  Polaris ID in e2e: the real binding Worker runs as an auxiliary Worker (`test/idp-e2e/`, reached as `IDP`) over a mock Polaris ID admin API, signup and SCIM push served by the same mock server (`test/mock-oidc/{admin-api,signup,scim-push}.ts`). `e2e/75-polaris-access.spec.ts` is the journey. The binding allows one group-read sweep a minute, so Check now waits for its window, and Pause changes has no thaw: rerun on a fresh server.
 - `npm run check` = gen → biome ci → `check:rules` (log codes, file sizes, SQL ownership, authority scope, knip) → typecheck → test (all projects) → build (vite, bundle budget, wrangler dry-run). Must be green before any merge.
 
 ---

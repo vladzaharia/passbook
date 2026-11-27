@@ -11,12 +11,13 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { BadRequestError } from '../../platform/errors.ts';
+import { BadRequestError, ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
   assertStrictSignIn,
+  peekBody,
   requireStepUp,
   STEP_UP_SECONDS,
 } from '../../platform/sign-in-guard.ts';
@@ -26,6 +27,7 @@ import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
 import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
 import { createApiKey, listApiKeys, retireApiKey, revokeApiKey } from './service.ts';
+import { keyUnderToken } from './workbench-cap.ts';
 
 export const apiKeysRoutes = createRouter();
 // A signed-in member, or a key holding `api-keys:write` (it reaches its own children). `me` is the key route's.
@@ -37,6 +39,17 @@ guard(
     only: /^\/api\/v1\/api-keys(?!\/me$)/,
   }),
 );
+// A sandbox's token manages the keys of its org as the sandbox's person (their Test session), under the Workbench
+// cap, and never the key it stands for. `/me/rotate` stays the key's own call, which the cap refuses (404).
+apiKeysRoutes.use('*', async (c, next) => {
+  const auth = c.var.auth;
+  const pin = auth?.kind === 'api_key' ? auth.workbench : undefined;
+  if (pin?.subject === 'sandbox_key' && !c.req.path.endsWith('/me/rotate')) {
+    if (!pin.person) throw new ForbiddenError();
+    c.set('auth', pin.person);
+  }
+  await next();
+});
 // Making or rotating a key is a strong, recent sign-in with no email-link grace: a key outlives the grace.
 apiKeysRoutes.use('*', async (c, next) => {
   const auth = c.var.auth;
@@ -124,7 +137,9 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const input = c.req.valid('json');
+    // Under a Workbench token: Test, Test data scopes, 30 days at most (`workbench-cap.ts`).
+    const modeSent = (await peekBody(c)).mode !== undefined;
+    const input = keyUnderToken(c.var.auth, c.req.valid('json'), modeSent, ctx.clock.now());
     // A member makes their own personal key with any role; every other key needs `integrations:manage`.
     const capability = input.kind === 'personal' ? 'org:read' : 'integrations:manage';
     const authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, capability);

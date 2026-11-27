@@ -10,9 +10,11 @@ import type { Check } from '../../platform/authority-checks.ts';
 import type { Actor } from '../../platform/context.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import {
+  AppError,
   ConflictError,
   NotFoundError,
   RateLimitedError,
+  SandboxQuotaError,
   ValidationError,
 } from '../../platform/errors.ts';
 import { assertPublicHost, platformHostsOf } from '../../platform/safe-fetch.ts';
@@ -102,6 +104,14 @@ export async function commitEndpoint(g: Grant): Promise<D1Result[]> {
     return await g.commit();
   } catch (error) {
     if (authorityDenial(error) === 'lineage') throw notFound();
+    // A sandbox at its endpoint cap is a conflict, not the generic SANDBOX_QUOTA.
+    if (error instanceof SandboxQuotaError && error.feature === 'webhooks.endpoints')
+      throw new AppError(
+        'SANDBOX_ENDPOINT_LIMIT',
+        409,
+        `A sandbox holds ${error.limit} endpoints, the capture endpoint included. Delete one first.`,
+        { feature: error.feature, limit: error.limit, used: error.used },
+      );
     if (error instanceof Error && /webhook endpoint limit/.test(error.message))
       throw new ConflictError(
         'This mode already has 10 endpoints. Delete one first.',

@@ -1,7 +1,7 @@
-import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { Button, Callout } from '../../../ui/index.ts';
+import { useDesignerHost } from './host.tsx';
 
 /**
  * Desktop (1280 and up): structure and inspector, the card, the issues. Tablet: the inspector
@@ -9,34 +9,37 @@ import { Button, Callout } from '../../../ui/index.ts';
  */
 export function DesignerLayout({
   templateId,
-  orgId,
   structure,
   preview,
   issues,
+  below,
   readOnly = false,
   previewOnPhone = true,
 }: {
   templateId: string;
-  orgId?: string | undefined;
   structure: ReactNode;
   preview: ReactNode;
   issues: ReactNode;
+  /** Under the stage: what the host adds (the Workbench's code). */
+  below?: ReactNode;
   readOnly?: boolean;
   /** A preview that cannot be read at phone width leaves only the notice and the way back. */
   previewOnPhone?: boolean;
 }) {
   const phone = useMediaQuery(PHONE);
+  const { Link, extras } = useDesignerHost();
+  if (phone && extras) return <extras.Phone preview={preview} issues={issues} />;
   if (phone) {
     return (
       <div className="grid gap-4">
         <Callout tone="info" title={previewOnPhone ? 'Preview only' : 'Use a larger screen'}>
           The designer needs a tablet or desktop screen.
         </Callout>
-        <Button asChild variant="outline" className="justify-self-center">
-          <Link to="/admin/templates/$templateId" params={{ templateId }} search={{ orgId }}>
-            Back to template
-          </Link>
-        </Button>
+        {Link ? (
+          <Button asChild variant="outline" className="justify-self-center">
+            <Link place={{ to: 'template', templateId }}>Back to template</Link>
+          </Button>
+        ) : null}
         {previewOnPhone ? preview : null}
       </div>
     );
@@ -46,7 +49,10 @@ export function DesignerLayout({
       <div className="dz-structure min-w-0" inert={readOnly} data-readonly={readOnly || undefined}>
         {structure}
       </div>
-      <div className="dz-stage min-w-0">{preview}</div>
+      <div className="dz-stage min-w-0">
+        {preview}
+        {below}
+      </div>
       <div className="dz-issues min-w-0">{issues}</div>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
+import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import {
   CREATOR_ORG_PURPOSE,
@@ -150,6 +151,7 @@ export async function insertPersonalOrg(
 }
 
 export interface CreatorMembership {
+  userId: string;
   email: string;
   invitationId: string;
   membershipId: string;
@@ -163,13 +165,13 @@ export interface CreatorMembership {
 export async function insertOrgWithCreator(
   ctx: ServiceContext,
   row: Omit<OrgRow, 'config_revision' | 'personal_user_id'>,
-  admin: OrgAdmin,
+  admin: PlatformCaller,
   preset: EntitlementPreset,
   member: CreatorMembership,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: CREATOR_ORG_PURPOSE,
-    principal: { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
+    principal: callerPrincipal(admin),
     target: row.id,
     tables: PERSONAL_ORG_TABLES,
   });
@@ -206,7 +208,7 @@ export async function insertOrgWithCreator(
   g.insertSelect(
     'org_memberships',
     ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
-    [member.membershipId, row.id, admin.userId, member.invitationId, roles, row.created_at],
+    [member.membershipId, row.id, member.userId, member.invitationId, roles, row.created_at],
   );
   await g.commit();
 }

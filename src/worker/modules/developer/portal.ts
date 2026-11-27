@@ -5,7 +5,7 @@
  */
 import { type Context, Hono } from 'hono';
 import { SearchMissSchema } from '../../../shared/contracts/developer.ts';
-import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS } from '../../../shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, MOVED, NOT_FOUND_FILE, PATHS } from '../../../shared/developers.ts';
 import { missTerm } from '../../../shared/developers-search.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -114,6 +114,8 @@ developerPortalRoutes.get('/*', async (c) => {
   // One URL per page: a trailing slash is the page without it.
   if (reading && url.pathname !== key && url.pathname.endsWith('/'))
     return c.redirect(`${key}${url.search}`, 308);
+  // The tools live in the Workbench now: the old page goes there, query kept (a fragment survives a 3xx).
+  if (reading && Object.hasOwn(MOVED, key)) return c.redirect(`${MOVED[key]}${url.search}`, 301);
   let pending = manifests.get(c.env.ASSETS);
   if (!pending) {
     pending = indexOf(c.env.ASSETS, url.origin);
@@ -146,7 +148,7 @@ developerPortalRoutes.get('/*', async (c) => {
       'content-security-policy',
       developersContentSecurityPolicy({
         // The workbench on the home page resets a sandbox behind the same check that makes one.
-        turnstile: key === PATHS.console || key === PATHS.quickstart || key === PATHS.home,
+        turnstile: key === PATHS.home,
       }),
     );
   }

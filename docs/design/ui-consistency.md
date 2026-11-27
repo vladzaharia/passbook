@@ -97,8 +97,21 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
   space's own nav (the developer sections; the console's sidebar carries the mark from lg). Right:
   search, the space's controls (Test mode only in an organization's console), then the account
   menu. Never a link to another space in the bar: the account menu switches.
+- A space may carry one companion link: the developer site and the Workbench link each other. No
+  other cross-space links in a bar.
+- The Workbench (`/workbench`, `workbench/shell/`) is its own chrome on the same kit: `AppShell`
+  with its sidebar from 1024 and the nav sheet below, `Menubar`, `UserMenu`, `OperationTray` and
+  `CommandPalette`. Its own parts: the mark (the buddy's face and "Workbench"), the context
+  switcher, the grouped nav with attention meta, the area button below 1024, tool heads with
+  glyph tiles (`ToolPage`) and one announcement queue. An org's Test tones the bar as admin's
+  Test does; a sandbox keeps the plain bar. The shell never remounts when the context changes.
+  Its tray is `ActivityTray` given the token's operations client and a filter to the context's
+  Test operations (none without a context); `ToolHostProvider` always pins a tool scope, a
+  refusing client where there is no context. Signed out there is one Sign in (the sidebar card
+  or the stage state), never one in the bar too.
 - The account menu (`ui/layout/account-menu.tsx`): name and email; the spaces the session can use,
-  current one checked (My passes, Account, Admin, Developers); Theme; Sign out. Signed out: Sign
+  current one checked (My passes, Account, Admin, Workbench, Developers); a space's own items
+  (the Workbench's Keyboard shortcuts); Theme; Sign out. Signed out: Sign
   in in its place. `shared/spaces.ts` `canUseSpace` is the one rule: Admin and Developers need a
   Polaris ID sign-in; an email link opens only My passes and Account, and Admin shows it
   `Sign in with Polaris ID`. Developers is another document: a full page load.
@@ -455,6 +468,7 @@ A long action the server or the browser runs shows what it is doing, live. One k
 - **Live region.** One polite region per panel says a step starting, a wait and the end. Never a count or a tick.
 - **Steps.** `StepList` takes `meta` (`4 of 12`, `By Dec 2`), `group` headings and draws the tick of a step that finishes while it is on screen. `StepMarker` has `waiting`: a dashed clock with the word "waiting".
 - **Motion.** The buddy's `busy` scene loops while an operation runs and stops at its end; reduced motion holds the rest pose and the working spinner keeps turning. `RunBar` (the foil bar with the buddy riding it) is the kit's; `admin/passes/run-kit.tsx` re-exports it as `RunProgress`.
+- **Holder portal.** Refresh, Send it again, I lost my phone and Remove start `holder.*` operations (starter audience: read only by the session that started them, never by an org member or a key). `HolderOperationsProvider` (in `PortalLayout`) follows each start and draws the sheet; a refresh opens it only on a failure. A holder reaches no stop or retry route, so the sheet's Retry starts the kind's page action again (a lost phone that failed after the code was replaced sends the pass again instead). Lost phone needs an email-link session under 10 minutes old; otherwise the portal mails a link that lands back on the pass. Signing in on another device reads none of them.
 - **Story page.** `npx vite --config tools/dev/operation-story/vite.config.ts`, then `/tools/dev/operation-story/?state=running` (states in `STORY_STATES`).
 
 ## Tabbed detail pages
@@ -547,7 +561,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Action glyph | `ACTION_ICON.refresh`, `.rotate`, `.void`, `.delete`, `.signOut`… (`lib/action-icons.ts`); `THEME_ICON` |
 | Audit or activity line | `actionOf(code)` → `{ label, icon, tone }`; `actionLabel(code)` |
 | Status | `StatusPill status icon?`; `StatusIcon` for a state every row repeats (tooltip carries the hint) |
-| Empty | `EmptyState art title action? description? variant? inline? heading?`; `FilteredEmpty entity onClear`; `DetailNotFound entity to back? heading?` |
+| Empty | `EmptyState art title action? description? variant? inline? heading? surface?` (`surface="stage"`: the Workbench's dot-grid canvas); `FilteredEmpty entity onClear`; `DetailNotFound entity to back? heading?`; `NoAccessState title description? actions? heading?` (a place not open here: the lock on the stage, never a 403 page) |
 | Error | `ErrorState error? title? onRetry? retryLabel? inline?` (Retry spins `RefreshCw`; a failed retry shakes); `detailError(query, { entity, to, back?, header? })` for detail pages |
 | Feedback | `toast.success/info/sent/error(error, 'Could not …')/undo/action/dismiss`; `copyText(value, what)`; `CopyButton`; the confirm helpers in `lib/confirms.ts` |
 | Lists | `DataTable … loading fetching filtered empty emptyFiltered toolbar footer` (rows carry `data-row-id`, new rows `data-new`); `FilterBar search filters onClear` (`DATE_RANGES`, `rangeStart`); `LoadMore query={infiniteQuery} shown noun={['pass','passes']} scoped`; queries use `listQuery({...})`; `RowLink to params inactive?`, `CountLink count noun? icon? to search`, `MetaLink to icon?` |
@@ -578,7 +592,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 
 - Both themes from the same tokens; dark is the default. Check every page in both.
 - One theme setting for every page. The account menu (the same on every page) offers System /
-  Light / Dark, below the spaces (My passes, Account, Admin, Developers), the current one checked.
+  Light / Dark, below the spaces (My passes, Account, Admin, Workbench, Developers), the current one checked.
   The choice is saved in the `wallet-theme` cookie (`system|light|dark`, 1 year, read by
   `/theme-init.js` before first paint). SSR pages (`/p`, auth, error) read the cookie, stamp
   `data-theme` and one matching `theme-color`; without a choice they follow the system

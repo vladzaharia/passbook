@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RefObject } from 'react';
 import type { z } from 'zod';
 import {
-  ConnectionSchema,
+  ConnectionCreatedSchema,
   type CreateConnectionSchema,
   SyncNowResponseSchema,
 } from '@/shared/contracts/connections.ts';
@@ -14,7 +14,6 @@ import { connectionKeys } from './api.ts';
 import { nestValues } from './config-schema.ts';
 import { markApplyStarted } from './files/use-apply-watch.ts';
 import { type Lifecycle, lifecycleToPatch } from './lifecycle-fields.tsx';
-import { generateSecret } from './webhook.tsx';
 import type { ConfigDraft } from './wizard-steps.tsx';
 
 type CreateBody = z.input<typeof CreateConnectionSchema>;
@@ -49,9 +48,6 @@ export function useConnectionCreation({
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ orgId, scope }: { orgId: string; scope: WizardScope }) => {
-      const wantsWebhook = life.mode === 'webhook' || life.mode === 'hybrid';
-      const pasted = draft.signingSecret?.trim();
-      const webhookSecret = wantsWebhook ? pasted || generateSecret() : undefined;
       const body: CreateBody = {
         orgId,
         connectorType: type as string,
@@ -60,10 +56,9 @@ export function useConnectionCreation({
         ...(Object.keys(shownSecrets).length ? { secrets: shownSecrets } : {}),
         ...(Object.keys(mapping).length > 0 ? { mapping } : {}),
         ...lifecycleToPatch(life),
-        ...(webhookSecret ? { webhookSecret } : {}),
         ...(fileId ? { fileId } : {}),
       };
-      const connection = await api.post('/api/v1/connections', ConnectionSchema, body);
+      const connection = await api.post('/api/v1/connections', ConnectionCreatedSchema, body);
       let applyError: unknown;
       if (fileId) {
         // Review and Create confirmed the first file: apply it now. If the run cannot start, the new
@@ -75,7 +70,8 @@ export function useConnectionCreation({
           applyError = error;
         }
       }
-      return { connection, webhookSecret: pasted ? undefined : webhookSecret, scope, applyError };
+      // The server makes the secret when PassBook is its origin and returns it once; a sender's is pasted later.
+      return { connection, webhookSecret: connection.webhookSecret, scope, applyError };
     },
     onSuccess: async ({ connection, webhookSecret, scope, applyError }) => {
       if (applyError) toast.error(applyError, 'The first file did not start applying');

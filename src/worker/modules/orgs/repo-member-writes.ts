@@ -6,6 +6,7 @@ import { withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { KEY_GUARD_CODES, keyNotAdministering } from './repo-member-keyguard.ts';
 
 /**
  * Passes only while another active org_admin of the actor's org would remain: the target membership
@@ -46,7 +47,7 @@ export interface NewInvitation {
   expires: number;
 }
 
-/** `org.member.invite`: the manager's live session (or a platform admin's) and an active org. */
+/** `org.member.invite`: the manager's live session (or a platform admin's, or a Live key's) and an active org. */
 export async function insertInvitation(
   ctx: ServiceContext,
   principal: Principal,
@@ -54,7 +55,13 @@ export async function insertInvitation(
   row: NewInvitation,
   audit: AuditEntry,
 ): Promise<void> {
-  const g = grant(ctx, { purpose: 'org.member.invite', principal, checks, target: row.id });
+  const g = grant(ctx, {
+    purpose: 'org.member.invite',
+    principal,
+    checks: [...checks, ...keyNotAdministering(principal, { roles: row.roles })],
+    target: row.id,
+    codes: KEY_GUARD_CODES,
+  });
   g.insertSelect(
     'org_invitations',
     ['id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at'],
@@ -101,9 +108,13 @@ export async function revokeActiveMembership(
   const g = grant(ctx, {
     purpose: 'org.member.revoke',
     principal,
-    checks: [...checks, notLastOrgAdmin(id)],
+    checks: [
+      ...checks,
+      ...keyNotAdministering(principal, { table: 'org_memberships', id }),
+      notLastOrgAdmin(id),
+    ],
     target: id,
-    codes: { config: 'LAST_ORG_ADMIN' },
+    codes: { config: 'LAST_ORG_ADMIN', ...KEY_GUARD_CODES },
   });
   g.add(grantedAudit(g, ctx, audit, [exists('org_memberships', { id, revoked_at: null })]));
   g.update('org_memberships', {

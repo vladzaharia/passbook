@@ -33,15 +33,22 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/templates/previews',
   '/api/v1/delivery',
   '/api/v1/settings',
+  '/api/v1/platform/settings',
   '/api/v1/scan/passes/{passId}/notes',
   '/api/v1/scan/devices',
   '/api/v1/identities/{id}/certificates',
   '/api/v1/platform/apple-calls',
+  '/api/v1/platform/apple/identities',
   // Found once the filter read named schemas: each is a capped list, not a collection to page.
   '/api/v1/passes/views',
   '/api/v1/webhook-endpoints/{id}/tests',
+  // One row per endpoint of an event: capped by the endpoint limit.
+  '/api/v1/events/{id}/deliveries',
   '/api/v1/scan/activity',
   '/api/v1/scan/scans',
+  '/api/v1/platform/idp/drift',
+  // The setup checklist: a fixed list of items, not rows to page.
+  '/api/v1/platform/idp/setup',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);

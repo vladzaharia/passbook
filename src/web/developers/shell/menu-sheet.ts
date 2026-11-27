@@ -1,7 +1,7 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { POLARIS_ID_COPY } from '../../../shared/copy/sign-in.ts';
-import { PATHS } from '../../../shared/developers.ts';
 import type { Space } from '../../../shared/spaces.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 
 /** Email-link sessions: the way in to Developers, beside the menu (the sheet carries it on a phone). */
 export const POLARIS_START = `/auth/oidc/start?next=${encodeURIComponent('/developers')}`;
@@ -53,11 +53,7 @@ export function fillMenuSheet(
   const sandbox = root.querySelector<HTMLElement>('[data-menu-sandbox]');
   if (sandbox && opts.sandbox) {
     const c = DEV_COPY.sheet;
-    sandbox.replaceChildren(
-      heading(`${c.sandbox} ${opts.sandbox}`),
-      link(`${PATHS.home}#workbench`, c.workbench),
-      link(PATHS.keys, c.keys),
-    );
+    sandbox.replaceChildren(heading(`${c.sandbox} ${opts.sandbox}`), link(wbHref('keys'), c.keys));
     sandbox.hidden = false;
   }
   if (spaces && shown.length > 1) {

@@ -1,3 +1,5 @@
+import type { SetupRpc } from './setup-types.ts';
+
 /** Codes carried as the `CODE: ` prefix of an RPC error message (custom error fields do not cross RPC). */
 export const IDP_CODES = [
   'IDP_REFUSED',
@@ -13,6 +15,8 @@ export const IDP_CODES = [
   'IDP_BREAKER',
   'IDP_NOT_MANAGED',
   'IDP_IN_USE',
+  'IDP_CLIENT',
+  'IDP_SCIM_FOREIGN',
 ] as const;
 export type IdpCode = (typeof IDP_CODES)[number];
 
@@ -109,6 +113,10 @@ export const BUCKETS = [
   'apply_add_group',
   'apply_add_group_system',
   'snapshot_group',
+  'setup_read',
+  'client_write',
+  'scim_write',
+  'scim_sync',
 ] as const;
 export type Bucket = (typeof BUCKETS)[number];
 
@@ -234,7 +242,7 @@ export interface CallRow {
 }
 
 /** The RPC surface of the `passbook-id-connector` Worker, and nothing else. No method takes a Polaris ID group id or name. */
-export interface IdpRpc {
+export interface IdpRpc extends SetupRpc {
   health(): Promise<Health>;
   groups(): Promise<ManagedGroup[]>;
   createGroup(

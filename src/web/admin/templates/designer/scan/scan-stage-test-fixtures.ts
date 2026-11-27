@@ -12,6 +12,7 @@ import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { membershipsQuery, sessionQuery } from '@/web/lib/session.ts';
 import { json, membershipFixture, sessionFixture } from '@/web/lib/test-utils.tsx';
+import { AdminDesignerHost } from '../admin/host.tsx';
 import type { DesignDoc } from '../model.ts';
 import { ScanStage, type ScanStageAction } from './scan-stage.tsx';
 
@@ -166,7 +167,10 @@ export function renderInApp(node: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   client.setQueryData(sessionQuery.queryKey, sessionFixture('admin'));
   client.setQueryData(membershipsQuery.queryKey, { items: [membershipFixture('org1')] });
-  const route = createRootRoute({ component: () => node });
+  // As the app mounts it: under admin's host, which searches passes and loads files on the session.
+  const route = createRootRoute({
+    component: () => createElement(AdminDesignerHost, null, node),
+  });
   const router = createRouter({
     routeTree: route,
     history: createMemoryHistory({ initialEntries: ['/admin/o/org1/templates'] }),

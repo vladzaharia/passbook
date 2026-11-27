@@ -156,6 +156,33 @@
       ]
     },
     {
+      "code": "API_KEY_PLATFORM_LIVE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_PLATFORM_SCOPES_ALONE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_PLATFORM_SCOPE_KIND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_REQUIRED",
       "statuses": [
         401
@@ -351,7 +378,8 @@
         403
       ],
       "modules": [
-        "identities"
+        "identities",
+        "workflows"
       ]
     },
     {
@@ -733,6 +761,15 @@
       ]
     },
     {
+      "code": "BULK_REISSUE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "workflows"
+      ]
+    },
+    {
       "code": "BULK_RUN_ACTIVE",
       "statuses": [
         409
@@ -996,6 +1033,33 @@
       ]
     },
     {
+      "code": "CONNECTION_SYNC_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_SYNC_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_SYNC_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
       "code": "CONNECTION_TRANSFER_PENDING",
       "statuses": [
         409
@@ -1105,6 +1169,7 @@
         403
       ],
       "modules": [
+        "developer",
         "platform"
       ]
     },
@@ -1179,6 +1244,15 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "EMAIL_CONFIRMATION_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
       ]
     },
     {
@@ -1658,6 +1732,7 @@
         403
       ],
       "modules": [
+        "idp",
         "platform",
         "scan"
       ]
@@ -1714,6 +1789,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "GROUP_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -1824,6 +1908,8 @@
         400
       ],
       "modules": [
+        "identities",
+        "passes",
         "templates"
       ]
     },
@@ -1845,6 +1931,7 @@
       ],
       "modules": [
         "delivery",
+        "idp",
         "operations",
         "passes",
         "platform",
@@ -1870,6 +1957,15 @@
       ]
     },
     {
+      "code": "IDENTITY_CERT_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_CERT_NOT_FOUND",
       "statuses": [
         404
@@ -1885,6 +1981,15 @@
       ],
       "modules": [
         "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CHAIN_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -1920,7 +2025,8 @@
         409
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {
@@ -1969,6 +2075,15 @@
       ]
     },
     {
+      "code": "IDENTITY_INTERMEDIATE_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_IN_USE",
       "statuses": [
         409
@@ -1987,12 +2102,49 @@
       ]
     },
     {
+      "code": "IDENTITY_MOVE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARAMS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_PARTIAL",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IDENTITY_MOVE_SAME",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_NOT_CONFIGURED",
       "statuses": [
         404
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {
@@ -2003,7 +2155,8 @@
       ],
       "modules": [
         "identities",
-        "orgs"
+        "orgs",
+        "passes"
       ]
     },
     {
@@ -2030,6 +2183,7 @@
         409
       ],
       "modules": [
+        "identities",
         "workflows"
       ]
     },
@@ -2091,6 +2245,7 @@
       "code": "IDENTITY_RUN_INCOMPLETE",
       "statuses": [
         502,
+        409,
         503
       ],
       "modules": [
@@ -2117,9 +2272,63 @@
       ]
     },
     {
+      "code": "IDP_ADMIN_ENDED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_APPLY_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BREAKER_RETRIPPED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_BUDGET",
       "statuses": [
         429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_BUDGET_LOW",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_CLIENT",
+      "statuses": [
+        409
       ],
       "modules": [
         "idp"
@@ -2144,11 +2353,21 @@
       ]
     },
     {
+      "code": "IDP_DRY_RUN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_EMAIL_NOT_PRIMARY",
       "statuses": [
         403
       ],
       "modules": [
+        "platform",
         "sign-in"
       ]
     },
@@ -2162,7 +2381,34 @@
       ]
     },
     {
+      "code": "IDP_GROUP_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_HOLD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_MEMBER_EXISTS",
       "statuses": [
         409
       ],
@@ -2180,7 +2426,52 @@
       ]
     },
     {
+      "code": "IDP_NOT_APPLIED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_EXTERNAL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "IDP_NOT_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_READY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_NOT_WANTED",
       "statuses": [
         409
       ],
@@ -2198,9 +2489,173 @@
       ]
     },
     {
+      "code": "IDP_OFFBOARD_INCOMPLETE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_PLATFORM_ADMIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp",
+        "users"
+      ]
+    },
+    {
       "code": "IDP_REFUSED",
       "statuses": [
+        409,
         403
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_RULE_ORG_REFUSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_FOREIGN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SCIM_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_AUTH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_BINDING_ABSENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_CLIENT_WRONG",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_GROUP_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_LAYOUT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_MIRROR_EMPTY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SCIM_PUSH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_SETTINGS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "IDP_SETUP_TOKEN",
+      "statuses": [
+        502
       ],
       "modules": [
         "idp"
@@ -2212,7 +2667,17 @@
         403
       ],
       "modules": [
+        "idp",
         "platform"
+      ]
+    },
+    {
+      "code": "IDP_SYNC_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2607,6 +3072,15 @@
       ]
     },
     {
+      "code": "INVITATION_EMAIL_UNVERIFIED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
       "code": "INVITATION_INVALID",
       "statuses": [
         400
@@ -2614,6 +3088,15 @@
       "modules": [
         "idp",
         "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_NOT_STARTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -2735,6 +3218,15 @@
       ]
     },
     {
+      "code": "KEY_CANNOT_ADMINISTER",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "KEY_CREATOR_GONE",
       "statuses": [
         403
@@ -2795,6 +3287,7 @@
       ],
       "modules": [
         "dev-access",
+        "idp",
         "orgs"
       ]
     },
@@ -2906,6 +3399,15 @@
       ],
       "modules": [
         "orgs"
+      ]
+    },
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "idp"
       ]
     },
     {
@@ -3207,6 +3709,16 @@
       ]
     },
     {
+      "code": "OPERATION_LEASE_LOST",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer",
+        "idp"
+      ]
+    },
+    {
       "code": "OPERATION_NOT_CANCELABLE",
       "statuses": [
         409
@@ -3221,16 +3733,25 @@
         404
       ],
       "modules": [
-        "operations"
+        "connections",
+        "operations",
+        "passes",
+        "wallet-providers"
       ]
     },
     {
       "code": "OPERATION_NOT_RETRYABLE",
       "statuses": [
+        404,
+        409
+      ],
+      "primary": [
+        404,
         409
       ],
       "modules": [
-        "operations"
+        "operations",
+        "passes"
       ]
     },
     {
@@ -3257,6 +3778,8 @@
         409
       ],
       "modules": [
+        "developer",
+        "me",
         "operations"
       ]
     },
@@ -3289,6 +3812,15 @@
       ]
     },
     {
+      "code": "ORG_ADD_ME_NEEDS_PERSON",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "ORG_CONFLICT",
       "statuses": [
         409
@@ -3299,9 +3831,27 @@
       ]
     },
     {
+      "code": "ORG_EXPORT_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "workflows"
+      ]
+    },
+    {
       "code": "ORG_EXPORT_RUNNING",
       "statuses": [
         409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_EXPORT_START",
+      "statuses": [
+        500
       ],
       "modules": [
         "org-lifecycle"
@@ -3325,7 +3875,8 @@
       ],
       "modules": [
         "developer",
-        "org-lifecycle"
+        "org-lifecycle",
+        "workflows"
       ]
     },
     {
@@ -3373,7 +3924,8 @@
         "scan",
         "settings",
         "templates",
-        "wallet-providers"
+        "wallet-providers",
+        "workbench"
       ]
     },
     {
@@ -3393,6 +3945,15 @@
       "modules": [
         "dev-access",
         "orgs"
+      ]
+    },
+    {
+      "code": "ORG_PURGE_BLOCKED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workflows"
       ]
     },
     {
@@ -3429,6 +3990,15 @@
       ]
     },
     {
+      "code": "ORG_SCOPE_TOO_WIDE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "ORG_SLUG_RESERVED",
       "statuses": [
         400
@@ -3456,15 +4026,6 @@
       ]
     },
     {
-      "code": "ORG_TEST_ONLY",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
       "code": "PAIRING_INVALID",
       "statuses": [
         400
@@ -3479,6 +4040,7 @@
         403
       ],
       "modules": [
+        "platform",
         "sign-in"
       ]
     },
@@ -3632,6 +4194,15 @@
       ]
     },
     {
+      "code": "PASS_REPLACED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "PASS_SETUP_CHANGED",
       "statuses": [
         409
@@ -3722,6 +4293,15 @@
       ]
     },
     {
+      "code": "PERSON_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "PHOTO_PASS_INACTIVE",
       "statuses": [
         409
@@ -3776,6 +4356,33 @@
       ]
     },
     {
+      "code": "PLATFORM_INVITE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "PLATFORM_INVITE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "idp"
+      ]
+    },
+    {
+      "code": "PLATFORM_KEY_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "PRESET_MOVING",
       "statuses": [
         409
@@ -3805,6 +4412,24 @@
     },
     {
       "code": "PRINTING_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_BULK_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_BULK_VOIDED",
       "statuses": [
         409
       ],
@@ -3947,6 +4572,15 @@
       ],
       "modules": [
         "apple"
+      ]
+    },
+    {
+      "code": "REISSUE_PRINCIPAL_REVOKED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "workflows"
       ]
     },
     {
@@ -4163,6 +4797,7 @@
         404
       ],
       "modules": [
+        "idp",
         "message-rules"
       ]
     },
@@ -4239,6 +4874,15 @@
       ]
     },
     {
+      "code": "SANDBOX_ENDPOINT_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "SANDBOX_EXISTS",
       "statuses": [
         409
@@ -4249,6 +4893,16 @@
     },
     {
       "code": "SANDBOX_KEY_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer",
+        "workbench"
+      ]
+    },
+    {
+      "code": "SANDBOX_KEY_SHOWN",
       "statuses": [
         409
       ],
@@ -4280,7 +4934,17 @@
         409
       ],
       "modules": [
+        "developer",
         "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_PURGE_START",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {
@@ -4289,6 +4953,7 @@
         403
       ],
       "modules": [
+        "platform",
         "sandbox"
       ]
     },
@@ -4317,6 +4982,33 @@
       ],
       "modules": [
         "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_SESSION_ENDED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEMPLATE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {
@@ -5125,6 +5817,15 @@
       ]
     },
     {
+      "code": "SCAN_UNCONFIRMED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_UNDO_EXPIRED",
       "statuses": [
         403
@@ -5149,15 +5850,6 @@
       ],
       "modules": [
         "passes"
-      ]
-    },
-    {
-      "code": "SCAN_ZONE_LIVE_ONLY",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "scan"
       ]
     },
     {
@@ -5280,6 +5972,61 @@
       "modules": [
         "orgs",
         "settings"
+      ]
+    },
+    {
+      "code": "SIMULATE_DEVICE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_FAILED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_DEVICE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_NO_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SIMULATE_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery",
+        "passes"
       ]
     },
     {
@@ -5966,6 +6713,7 @@
         409
       ],
       "modules": [
+        "connections",
         "templates"
       ]
     },
@@ -6464,6 +7212,7 @@
         422
       ],
       "modules": [
+        "passes",
         "platform",
         "templates"
       ]
@@ -6731,6 +7480,24 @@
       ]
     },
     {
+      "code": "WALLET_PROVIDER_DISABLED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_REISSUE_KEYSET",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_RELEASE_READY_CHANGED",
       "statuses": [
         409
@@ -6976,6 +7743,24 @@
       ],
       "modules": [
         "connections"
+      ]
+    },
+    {
+      "code": "WORKBENCH_CONTEXT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "workbench"
+      ]
+    },
+    {
+      "code": "WORKBENCH_TEST_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {

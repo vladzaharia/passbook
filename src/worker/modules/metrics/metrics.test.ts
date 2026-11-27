@@ -281,7 +281,7 @@ describe('metrics api', () => {
     const platform = (headers = fake.admin(), q = '') =>
       app.request(`/api/v1/metrics/platform/overview${q}`, { headers }, base);
     await expectProblem(await platform(fake.user()), 403, 'FORBIDDEN');
-    expect((await platform(fake.apiKey())).status).toBe(401);
+    expect((await platform(fake.apiKey())).status).toBe(403);
     expect((await platform(fake.admin(), '?orgId=missing')).status).toBe(422);
     const ok = await platform(fake.admin(), '?range=24h');
     expect(ok.status).toBe(200);

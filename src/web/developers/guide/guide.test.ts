@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseHash } from '../console/prefill.ts';
 import { EDGES, lifecycleMermaid, lifecycleSvg } from './lifecycle.ts';
 import { consoleHref, prefillFromCurl } from './model.ts';
 import { GuideError, linksIn, parseGuide } from './parse.ts';
@@ -45,6 +44,7 @@ describe('parseGuide', () => {
     expect(() => parseGuide(HEAD.replace('ready', 'later'), 'a.md')).toThrow(/status must be/);
     expect(() => parseGuide(`${HEAD}\`\`\`json\n{}`, 'a.md')).toThrow(/unclosed/);
     expect(() => parseGuide(`${HEAD}# Top`, 'a.md')).toThrow(/## and ###/);
+    expect(() => parseGuide(`${HEAD}{{bogus}}\n`, 'x.md')).toThrow(/unknown directive/);
   });
 
   it('lists the links of an inline string', () => {
@@ -56,19 +56,11 @@ describe('parseGuide', () => {
 });
 
 describe('console links', () => {
-  it('round-trips a body and a query through the console hash, and leaves a bare operation alone', () => {
-    const body = { input: { attendee: 'Ada & Co ?' }, notify: true };
-    const href = consoleHref('passes.postPasses', { body, query: { externalId: 'a b+c' } });
-    const hash = href.slice(href.indexOf('#'));
-    expect(parseHash(hash)).toEqual({
-      id: 'passes.postPasses',
-      prefill: { body, query: { externalId: 'a b+c' } },
-    });
-    expect(consoleHref('passes.getPasses')).toBe('/developers/console#passes.getPasses');
-    expect(parseHash('#passes.getPasses')).toEqual({
-      id: 'passes.getPasses',
-      prefill: { query: {} },
-    });
+  it('opens the Workbench Console on the operation, naming the sample and never carrying a body', () => {
+    expect(consoleHref('passes.postPasses', 'create-pass')).toBe(
+      '/workbench/console?op=passes.postPasses&sample=create-pass',
+    );
+    expect(consoleHref('passes.getPasses')).toBe('/workbench/console?op=passes.getPasses');
   });
 
   it('takes the query and body from a curl snippet and never the path ids', () => {

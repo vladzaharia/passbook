@@ -5,7 +5,7 @@ import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
-import { scopePath } from '../../lib/scope.ts';
+import { allPath, scopePath } from '../../lib/scope.ts';
 import { ScopeCrumbContext } from '../../lib/scope-context.ts';
 import { useSession } from '../../lib/session.ts';
 import { IconButton } from '../icon-button.tsx';
@@ -24,16 +24,23 @@ import { Wordmark } from './wordmark.tsx';
 
 export function AdminLayout({ children }: { children?: ReactNode }) {
   const scope = useAdminScope();
-  // The wordmark opens the scope's overview; mode only exists inside an organization.
-  const home = scope ? scopePath(scope) : '/admin';
+  // The wordmark opens the scope's overview; Live and Test apply in an organization and across organizations.
+  // The All scope has no overview: its one page is Passes.
+  const home = scope?.kind === 'all' ? allPath('/passes') : scope ? scopePath(scope) : '/admin';
   const org = scope?.kind === 'org';
   const { membership } = useOrgScope();
   const { isAdmin } = useSession();
   const mode = useMode();
   // Only where Live and Test are a choice; a sandbox is always Test, so its bar does not change.
-  const switchable = org && !membership?.testOnly;
+  const switchable = scope?.kind === 'all' || (org && !membership?.testOnly);
   const scopeName =
-    scope?.kind === 'platform' ? (isAdmin ? 'Platform' : undefined) : membership?.orgName;
+    scope?.kind === 'all'
+      ? 'All organizations'
+      : scope?.kind === 'platform'
+        ? isAdmin
+          ? 'Platform'
+          : undefined
+        : membership?.orgName;
   const crumb = useMemo(
     () => (scopeName ? { label: scopeName, to: home } : undefined),
     [scopeName, home],

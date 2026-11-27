@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makePass, makeTemplate } from '../../../../test/helpers/index.ts';
-import { ResolvedSchema } from '../../../shared/contracts/developer.ts';
+import { ResolvedSchema } from '../../../shared/contracts/workbench-read.ts';
 import { logKit } from './request-log-test-fixtures.ts';
 import { bearer, fromPage } from './try-token-test-fixtures.ts';
 
@@ -42,6 +42,7 @@ describe('GET /developer/resolve', () => {
     const asPass = ResolvedSchema.parse(await (await resolve(a.browser, pass.id)).json());
     expect(asPass).toEqual({
       kind: 'pass',
+      id: pass.id,
       href: `/developers/logs#path=${encodeURIComponent(`/passes/${pass.id}`)}`,
       label: pass.serial,
     });

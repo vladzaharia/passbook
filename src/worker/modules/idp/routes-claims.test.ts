@@ -55,7 +55,12 @@ describe('access', () => {
     for (const [who, code] of cases)
       await expectProblem(await h.call(url(t.user.id), { headers: who.headers }), 403, code);
     const key = await makeApiKey(f());
-    expect((await h.call(url(t.user.id), { headers: key.headers })).status).toBe(401);
+    // A key without platform:claims is refused (design K4).
+    await expectProblem(
+      await h.call(url(t.user.id), { headers: key.headers }),
+      403,
+      'MISSING_SCOPE',
+    );
     expect((await h.call(url(t.user.id), { headers: admin.headers })).status).toBe(200);
     // The same rule for groups.
     expect((await h.call('/api/v1/platform/idp/groups/console/claims')).status).toBe(401);

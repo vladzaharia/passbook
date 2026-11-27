@@ -38,6 +38,7 @@ import {
   type ScanEventRow,
 } from './repo-scope.ts';
 import { readValidEventScopes } from './repo-scope-events.ts';
+import { hash53 } from './scan-epochs.ts';
 import { activeHold, sessionWindow, storedHours } from './session-hours.ts';
 
 /**
@@ -213,6 +214,10 @@ export function projectedDeviceSettings(
   return scope.restricted ? { ...settings, acceptAllTemplates: false } : settings;
 }
 
+/** A digest of what an admin edits (name, surface, overrides): a device's own writes (staff sign-in, heartbeat) never move it. */
+export const deviceConfigRevision = (row: ScanningDeviceRow): number =>
+  hash53(JSON.stringify([row.name, row.surface, row.overrides]));
+
 export const deviceDto = (row: ScanningDeviceRow, now: number, settings?: ScannerSettings) =>
   ScanningDeviceSchema.parse({
     id: row.scanner_id,
@@ -230,6 +235,7 @@ export const deviceDto = (row: ScanningDeviceRow, now: number, settings?: Scanne
     revoked: row.revoked_at !== null,
     lastSeenAt: row.last_seen_at,
     updatedAt: row.updated_at,
+    configRevision: deviceConfigRevision(row),
     signIn: row.admin_user_id ? 'admin' : 'paired',
     adminName: row.admin_user_id ? row.admin_name : null,
   });

@@ -59,6 +59,8 @@ export interface CallRow {
 /** The RPC surface of the `passbook-apple-connector` Worker, and nothing else. `runId` is the caller's workflow run, for the ledger. */
 export interface AppleRpc {
   createPassType(handle: string, name: string, runId?: string): Promise<CreatedPassType>;
+  /** Orders or adopts one of the two fixed platform pass types. No identifier crosses the RPC. */
+  createPlatformPassType(slot: 'root' | 'devtest', runId?: string): Promise<CreatedPassType>;
   createCertificate(
     passTypeAscId: string,
     csrDer: Uint8Array,

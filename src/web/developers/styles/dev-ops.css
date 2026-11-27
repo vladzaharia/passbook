@@ -1,5 +1,4 @@
-/* The request log's first paint (header, slots, the held skeleton) and the public status page. The log island's own
-   styles load with it: logs/logs.css. */
+/* The request log's held skeleton and the public status page. The log island's own styles load with it: logs/logs.css. */
 .pill.warning {
   color: var(--pk-warning);
   background: var(--pk-warning-subtle);
@@ -12,13 +11,6 @@
 }
 
 /* ---------- Request log: first paint ---------- */
-/* The strip's slot is an empty block until the rail island fills it: it has to stay in view to be mounted. */
-.logs-api:not(:empty) + .logs-main {
-  margin-top: 16px;
-}
-.logs-main {
-  min-width: 0;
-}
 /* Signed in, the log holds its signed-out card until the session is known (shell/islands.ts) and shows the shape
    of the list instead: a toolbar and five rows, coming in after 150 ms and pulsing in opacity only. */
 [data-island="logs"][data-hydrating] {

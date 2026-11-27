@@ -1,4 +1,5 @@
 import { HOUR_MS, ignored, isoMs, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { woocommerceOrdersSetup } from './woocommerce-orders.setup.ts';
 
 // Order payload and statuses: https://woocommerce.github.io/woocommerce-rest-api-docs/#order-properties
 // Webhook topics, headers and the signature: https://woocommerce.com/document/webhooks/
@@ -42,7 +43,11 @@ export const woocommerceOrders: Recipe = {
   windowMs: 48 * HOUR_MS,
   tolerateNonJson: true,
   topics: TOPICS,
-  pasteSecret: true,
+  pasteSecret: false,
+  secretOrigin: 'passbook',
+  secretScope: 'connection',
+  line: 'Order or line item to pass. Voids when cancelled or refunded.',
+  setup: woocommerceOrdersSetup,
   outputFields: {
     orderId: { type: 'string' },
     orderNumber: { type: 'string' },
@@ -70,7 +75,8 @@ export const woocommerceOrders: Recipe = {
     { from: '/refunded', op: 'in', values: [true] },
   ],
   adapt({ body, topic, config }) {
-    // A new webhook pings with a form body, and order.deleted or restored are not handled.
+    // A new webhook pings with a form body (not JSON), and order.deleted or restored are not handled.
+    if (body === undefined) return ignored('ping');
     if (topic !== null && !TOPICS.includes(topic)) return ignored('unknown_type');
     const o = obj(body);
     const id = typeof o?.id === 'number' && Number.isSafeInteger(o.id) ? String(o.id) : null;

@@ -1,9 +1,10 @@
 import { Menu } from 'lucide-react';
 import { type ReactNode, useContext } from 'react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
+import { BuddyFace } from '../../ui/art/face.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { Menubar, MenubarNav, MenubarSearch, SignInButton } from '../../ui/layout/menubar.tsx';
 import { Wordmark } from '../../ui/layout/wordmark.tsx';
@@ -14,21 +15,32 @@ import { Crumbs, Pager, Toc } from './toc.tsx';
 export const SIGN_IN = '/login?next=%2Fdevelopers';
 export type NavKey = (typeof DEV_COPY.nav)[number]['key'];
 
-/** Workbench links to the home's workbench until the bar's menu lands (the h0 hand-off). */
+/** Quickstart and the Playground are Workbench areas; the rest are docs. */
 export const NAV_PATH: Record<NavKey, string> = {
-  quickstart: PATHS.quickstart,
+  quickstart: wbHref('quickstart'),
   guides: PATHS.guides,
   reference: PATHS.reference,
-  playground: PATHS.playground,
-  workbench: `${PATHS.home}#workbench`,
+  playground: wbHref('design'),
 };
 
 /**
- * The bar. Its `controls` slot holds, left of the account menu, the activity tray (OP-3 mounts the
- * shared OperationTray first in it) and, on docs pages, the sandbox chip; on a Workbench page the
- * context strip carries the sandbox, so the bar does not.
+ * The companion link: signed out it opens Quickstart; shell/workbench-link.ts points it at the last
+ * context's Home for a signed-in reader, and says "Back to Workbench" when `from=workbench`.
  */
-export function TopBar({ active, bench = false }: { active?: NavKey; bench?: boolean }) {
+function CompanionLink() {
+  return (
+    <a className="btn outline sm dev-wb" href={wbHref('quickstart')} data-wb-link>
+      <BuddyFace size="sm" mood="neutral" className="dev-wb-face" />
+      <span data-wb-label>{DEV_COPY.companion.label}</span>
+    </a>
+  );
+}
+
+/**
+ * The bar. Its `controls` slot holds, left of the account menu, the activity tray (OP-3 mounts the
+ * shared OperationTray first in it) and the sandbox chip.
+ */
+export function TopBar({ active }: { active?: NavKey }) {
   return (
     <Menubar
       width="full"
@@ -65,11 +77,12 @@ export function TopBar({ active, bench = false }: { active?: NavKey; bench?: boo
         />
       }
       // The activity tray (OperationTray, `operations` island) on every page, then the sandbox chip
-      // (island) when there is one; on the bench the strip carries the chip instead.
+      // (island) when there is one.
       controls={
         <>
+          <CompanionLink />
           <span data-island="operations" />
-          {bench ? null : <span data-island="org-chip" />}
+          <span data-island="org-chip" />
         </>
       }
       account={
@@ -98,6 +111,9 @@ function SheetTop({ active, path }: { active?: NavKey; path: string }) {
   return (
     <div className="menu-only stack">
       <div className="menu-sections">
+        <a className="menu-wb" href={wbHref('quickstart')} data-wb-link>
+          <span data-wb-label>{DEV_COPY.companion.label}</span>
+        </a>
         {DEV_COPY.nav.map((n) => (
           <a key={n.key} href={NAV_PATH[n.key]} aria-current={chipCurrent(n.key, active, path)}>
             {n.label}
@@ -138,8 +154,7 @@ export function Footer({ site }: { site: Site }) {
 /**
  * One frame for every page. Docs pages: the tree, the content, "On this page". `app` pages keep the
  * full width with no tree from 1181 px; `bare` pages (home) are the bar, their own content and the
- * footer; `bench` pages (the four tools) are `bare` with the Workbench frame as their content, a second
- * skip link to the tool, and no sandbox chip in the bar. Below 1181 px the tree is the sheet.
+ * footer. Below 1181 px the tree is the sheet.
  */
 export function Shell({
   site,
@@ -147,7 +162,6 @@ export function Shell({
   children,
   app,
   bare,
-  bench = false,
 }: {
   site: Site;
   active?: NavKey;
@@ -156,8 +170,6 @@ export function Shell({
   app?: boolean;
   /** Home: no docs grid. */
   bare?: boolean;
-  /** A Workbench tool, in bench/frame.tsx. */
-  bench?: boolean;
 }) {
   const f = useContext(Frame);
   const hasToc = (f.toc?.length ?? 0) >= 2;
@@ -168,13 +180,8 @@ export function Shell({
       <a className="skip" href="#main">
         {DEV_COPY.skip}
       </a>
-      {bench ? (
-        <a className="skip" href="#tool">
-          {BENCH_COPY.skip}
-        </a>
-      ) : null}
-      <TopBar active={active} bench={bench} />
-      {bare || bench ? (
+      <TopBar active={active} />
+      {bare ? (
         <>
           <SideNav site={site} drawer top={<SheetTop active={active} path={f.path} />} />
           <main id="main">

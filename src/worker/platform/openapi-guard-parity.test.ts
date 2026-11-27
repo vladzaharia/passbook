@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../test/helpers/index.ts';
+import { PLATFORM_KEY_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { createApp } from '../app.ts';
 import { ManualClock } from './clock.ts';
 import { buildOpenApiDocument } from './openapi-document.ts';
 
-type Op = { security?: Record<string, string[]>[]; 'x-public'?: true; responses?: object };
+type Op = {
+  security?: Record<string, string[]>[];
+  'x-public'?: true;
+  'x-human-only'?: true | 'apply';
+  'x-platform-scope'?: string;
+  responses?: object;
+};
 type Doc = { paths: Record<string, Record<string, Op>> };
 
 /** Refusals that name the credential, not the request or the data. */
@@ -14,6 +21,8 @@ const AUTH_CODES = new Set([
   'INVALID_API_KEY',
   'MISSING_SCOPE',
   'SESSION_REQUIRED',
+  'PLATFORM_KEY_REQUIRED',
+  'PERSON_REQUIRED',
 ]);
 const ID = '0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5c';
 const TOKENISH = /token|code|serial|passTypeId|provider|offer|key/i;
@@ -27,6 +36,11 @@ const HANDLER_LEVEL_SESSION_ONLY = new Set([
   'get /api/v1/test-inbox/{id}/html',
   'post /api/v1/test-inbox/{id}/send-to-me',
 ]);
+
+/** A request a key may make on a conditional route: its refusal rule needs the safe shape, not an empty body. */
+const PROBE_BODY: Record<string, string> = {
+  'post /api/v1/users/{id}/offboard': '{"dryRun":true}',
+};
 
 async function setup() {
   const fake = fakeAuth();
@@ -45,7 +59,7 @@ async function setup() {
     const init: RequestInit = { method: method.toUpperCase(), headers: send };
     if (!['get', 'head', 'delete'].includes(method)) {
       send['content-type'] = 'application/json';
-      init.body = '{}';
+      init.body = PROBE_BODY[`${method} ${path}`] ?? '{}';
     }
     const res = await app.fetch(new Request(url, init), env, ctx);
     const body = (await res.json().catch(() => ({}))) as { code?: string };
@@ -100,6 +114,35 @@ describe('OpenAPI document and guards agree', () => {
           wrong.push(`${name}: session-only in the document, a key got ${r.status} ${r.code}`);
       }
     }
+    expect(wrong).toEqual([]);
+  }, 600_000);
+
+  it('lets a Platform key past every platform operation documented for keys, and refuses it on the human-only ones', async () => {
+    const { fake, doc, call } = await setup();
+    const every = fake.platformKey({
+      scopes: PLATFORM_KEY_SCOPES.filter((s) => s !== 'platform:read'),
+    });
+    const wrong: string[] = [];
+    for (const [path, item] of Object.entries(doc.paths))
+      for (const [method, op] of Object.entries(item)) {
+        const scope = op['x-platform-scope'];
+        if (NOT_ON_DOC.has(method) || !scope) continue;
+        const name = `${method} ${path}`;
+        const documented = (op.security ?? []).filter((s) => 'apiKey' in s);
+        for (const scheme of documented) {
+          const r = await call(method, path, fake.platformKey({ scopes: scheme.apiKey as never }));
+          if (refusesCredential(r))
+            wrong.push(
+              `${name}: documented for [${scheme.apiKey}], guard says ${r.status} ${r.code}`,
+            );
+        }
+        if (op['x-human-only'] === true) {
+          const r = await call(method, path, every);
+          const got = `${r.status} ${r.code}`;
+          if (got !== '403 PERSON_REQUIRED')
+            wrong.push(`${name}: human-only, a Platform key got ${got}`);
+        }
+      }
     expect(wrong).toEqual([]);
   }, 600_000);
 

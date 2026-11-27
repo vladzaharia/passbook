@@ -1,24 +1,15 @@
 import {
-  DeveloperFunnelSchema,
   IdSchema,
   MetricsOverviewSchema,
   MetricsQuerySchema,
   OrgActivitySchema,
 } from '../../../shared/contracts/index.ts';
-import {
-  type AuthContext,
-  modeFromRequest,
-  modeOf,
-  requireAdmin,
-  requireConsoleSession,
-} from '../../platform/auth.ts';
+import { type AuthContext, modeFromRequest, requireConsoleSession } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
-import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { getOrgActivity } from './activity.ts';
-import { developerFunnel } from './developer-funnel.ts';
 import { templateUsableByOrg } from './repo.ts';
 import { getOverview } from './service.ts';
 
@@ -45,7 +36,6 @@ async function requireMetricsReader(
 
 export const metricsRoutes = createRouter();
 guard(metricsRoutes, requireConsoleSession);
-metricsRoutes.use('/platform/*', requireAdmin);
 register(
   metricsRoutes,
   'metrics',
@@ -86,33 +76,6 @@ register(
   'metrics',
   {
     method: 'get',
-    path: '/platform/overview',
-    summary: 'Platform overview metrics (filtered results are aggregate-only)',
-    query: MetricsQuerySchema,
-    response: MetricsOverviewSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const query = c.req.valid('query');
-    const auth = c.var.auth;
-    if (query.orgId && auth?.kind === 'session')
-      await requireNotPersonalFor(ctx.env.DB, query.orgId, auth.userId);
-    if (
-      query.orgId &&
-      query.templateId &&
-      !(await templateUsableByOrg(ctx.env.DB, query.templateId, query.orgId))
-    ) {
-      throw new NotFoundError('Metrics not found.', 'METRICS_NOT_FOUND');
-    }
-    return c.json(await getOverview(ctx, query, modeOf(c.var.auth), 'platform'));
-  },
-);
-
-register(
-  metricsRoutes,
-  'metrics',
-  {
-    method: 'get',
     path: '/activity',
     summary: 'Organization activity by template',
     query: MetricsQuerySchema.extend({ orgId: IdSchema }).omit({ templateId: true }),
@@ -124,17 +87,4 @@ register(
     await requireMetricsReader(ctx, c.var.auth, query.orgId);
     return c.json(await getOrgActivity(ctx, query, modeFromRequest(c)));
   },
-);
-
-register(
-  metricsRoutes,
-  'metrics',
-  {
-    method: 'get',
-    path: '/platform/developer',
-    summary: 'Developer quickstart funnel: sandboxes by step and time to first pass (30 days)',
-    auth: { platform: 'platform:status' },
-    response: DeveloperFunnelSchema,
-  },
-  async (c) => c.json(await developerFunnel(serviceContext(c))),
 );

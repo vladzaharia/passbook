@@ -100,6 +100,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
   const samsungTemplates = new Map<string, MockSamsungTemplate>();
   const samsungRefs = new Map<string, { type: string; state: string; cardId: string }>();
   const samsungCancels: { cardId: string; eventId: string }[] = [];
+  let callbackKeys: Doc[] = [];
   let failures: (MockFailure & { left: number })[] = [];
   let requests: MockRequestLog[] = [];
   let counter = 0;
@@ -115,6 +116,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     samsungRefs.clear();
     samsungCancels.length = 0;
     notifications.clear();
+    callbackKeys = [];
     failures = [];
     requests = [];
   }
@@ -299,6 +301,12 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       samsungTemplates.set(cardId, template as MockSamsungTemplate);
       return json(200, { cardId, ...template });
     }
+    // The root keys Google's callback keys endpoint serves (the e2e signs callbacks with their private halves).
+    if (name === 'google-keys' && request.method === 'POST') {
+      if (!Array.isArray(body?.keys)) return json(400, { error: 'keys must be an array' });
+      callbackKeys = body.keys as Doc[];
+      return json(200, { keys: callbackKeys.length });
+    }
     if (name === 'reset' && request.method === 'POST') {
       reset();
       return json(200, { ok: true });
@@ -347,6 +355,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     else if (
       url.pathname === '/token' ||
       segments[0] === 'walletobjects' ||
+      url.pathname === '/gp/m/issuer/keys' ||
       url.pathname.startsWith('/gp/v/save/')
     )
       provider = 'google';
@@ -409,6 +418,8 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     else if (provider === 'google') {
       if (url.pathname === '/token' && request.method === 'POST')
         response = await oauth(form ?? new URLSearchParams());
+      else if (url.pathname === '/gp/m/issuer/keys' && request.method === 'GET')
+        response = json(200, { keys: callbackKeys });
       else if (url.pathname.startsWith('/gp/v/save/') && request.method === 'GET')
         response = savePage(decodeURIComponent(url.pathname.slice('/gp/v/save/'.length)));
       else if (segments[0] === 'walletobjects' && segments[1] === 'v1')

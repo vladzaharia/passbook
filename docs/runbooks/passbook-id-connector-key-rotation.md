@@ -7,11 +7,13 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
+Settings, Polaris ID shows the key expiry; rotate before it. First turn-on: [[Polaris Binding Turn On]].
+
 Rotate the Polaris ID API key every 90 days. `health().keyExpiresAt` is the nearest expiry among the binding user's keys. Order: create the new key, set it, check health, then revoke the old one.
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `POCKET_ID_API_KEY` (the new key).
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile), and the profile `passbook-polaris-binding` defines `POCKET_ID_API_KEY` (the new key).
 
 ## 1. Create the new key (UI)
 

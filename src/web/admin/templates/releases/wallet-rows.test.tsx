@@ -5,7 +5,7 @@ import { axe } from 'vitest-axe';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests } from '../../../lib/mode.ts';
 import { json } from '../../../lib/test-utils.tsx';
-import { mountPanel, release, releaseServer } from './test-fixtures.tsx';
+import { mountPanel, release, releaseServer, TEMPLATE } from './test-fixtures.tsx';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf-token'));
 afterEach(() => {
@@ -14,41 +14,34 @@ afterEach(() => {
   setCsrfProvider(async () => undefined);
 });
 
-const enrolment = (
-  provider: 'google' | 'samsung',
-  state: string,
-  issuance: { state: 'enabled' } | { state: 'disabled'; reason: 'not_released' },
-) => ({
-  mode: 'live',
-  provider,
-  accountId: null,
-  source: null,
-  platformAvailable: true,
-  state,
-  enrolmentRevision: 0,
-  prerequisites: { check: false, roundTrip: null },
-  hold: null,
-  issuance,
-});
+type Wallet = 'on' | 'off' | 'not_released';
 
-/** The release server plus the enrolment list the rows read. */
-function serve(items: unknown[]) {
+/** The release server plus the wallet state the candidate lists carry for a caller who can review. */
+function serve(wallets: Partial<Record<'google' | 'samsung', Wallet>>) {
   const server = releaseServer({ active: release() });
   const inner = globalThis.fetch;
-  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
-    new URL(String(input), 'http://localhost').pathname === '/api/v1/orgs/org-1/wallet-enrolments'
-      ? Promise.resolve(json({ items, nextCursor: null }))
-      : inner(input, init),
-  );
+  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input), 'http://localhost');
+    const provider = url.searchParams.get('provider');
+    if (
+      url.pathname === `/api/v1/templates/${TEMPLATE}/candidates` &&
+      (provider === 'google' || provider === 'samsung')
+    )
+      return Promise.resolve(
+        json({
+          items: [],
+          nextCursor: null,
+          ...(wallets[provider] ? { wallet: wallets[provider] } : {}),
+        }),
+      );
+    return inner(input, init);
+  });
   return server;
 }
 
 describe('wallet rows', () => {
   it('hides the wallets card while Google and Samsung are off', async () => {
-    serve([
-      enrolment('google', 'off', { state: 'disabled', reason: 'not_released' }),
-      enrolment('samsung', 'absent', { state: 'enabled' }),
-    ]);
+    serve({ google: 'not_released', samsung: 'off' });
     const { container } = mountPanel();
     await screen.findByRole('heading', { name: 'Versions' });
     await waitFor(() => expect(screen.queryByText('Checking.')).toBeNull());
@@ -58,7 +51,7 @@ describe('wallet rows', () => {
   });
 
   it('reads an enabled wallet release and opens its review', async () => {
-    serve([enrolment('google', 'on', { state: 'enabled' })]);
+    serve({ google: 'on', samsung: 'off' });
     mountPanel();
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Review Google Wallet' })).toBeEnabled(),
@@ -68,5 +61,13 @@ describe('wallet rows', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it('shows nothing when the lists carry no wallet state, as for a person who cannot review', async () => {
+    serve({});
+    mountPanel();
+    await screen.findByRole('heading', { name: 'Versions' });
+    await waitFor(() => expect(screen.queryByText('Checking.')).toBeNull());
+    expect(screen.queryByRole('list', { name: 'Wallets' })).toBeNull();
   });
 });

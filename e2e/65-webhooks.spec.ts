@@ -32,29 +32,31 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   await expect(page.getByRole('tab', { name: 'Webhook endpoints', selected: true })).toBeVisible();
   await expect(page.getByText('No webhooks')).toBeVisible();
   await page.getByRole('link', { name: 'Add endpoint' }).first().click();
+  await page.waitForURL(/\/connections\/new\?source=outbound/);
 
   await page.getByRole('textbox', { name: /URL/ }).fill(url);
   await page.getByRole('textbox', { name: /URL/ }).blur();
-  await page.getByRole('button', { name: 'Add endpoint' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByRole('button', { name: 'Add endpoint', exact: true }).click();
 
-  // The secret shows once, behind Show, and Done waits for "I saved the secret".
-  await expect(page.getByRole('heading', { name: 'Signing secret' })).toBeVisible();
+  // The secret shows once, behind Show, and Next waits for "I saved the secret".
+  await expect(page.getByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
   await page.getByRole('button', { name: 'Show Signing secret' }).click();
   // The field shows the start of the secret (whsec_ and a token) and an ellipsis.
   const field = page.getByRole('status').filter({ hasText: /^whsec_/ });
   await expect(field).toBeVisible();
   const secret = ((await field.textContent()) ?? '').trim().split('…')[0] ?? '';
   expect(secret).toMatch(/^whsec_[\w-]{6}/);
-  await expect(page.getByRole('button', { name: 'Done' })).toBeDisabled();
+  await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Test event: the lane reports delivered or the endpoint's answer, never a crash.
-  await page.getByRole('button', { name: 'Send test event' }).click();
-  await expect(page.getByRole('status').filter({ hasText: /Delivered|Failed/ })).toBeVisible({
-    timeout: 20_000,
-  });
-
-  await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
-  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('heading', { name: 'Send a test', level: 2 })).toBeVisible();
+  await page.getByRole('button', { name: 'Send test', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Send again' })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'hooks.example.com' })).toBeVisible();
   const endpointId = new URL(page.url()).pathname.split('/').pop() as string;
 
@@ -76,6 +78,7 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
     )
     .toBe(true);
   await page.reload();
+  await page.getByRole('tab', { name: 'Deliveries' }).click();
   await page
     .getByRole('button', { name: /^Issued,/ })
     .first()

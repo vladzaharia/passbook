@@ -1,0 +1,77 @@
+[
+  {
+    "role": "anon",
+    "path": "/workbench",
+    "name": "workbench-entry"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/{wbTool}",
+    "name": "workbench-entry-tool"
+  },
+  {
+    "role": "anon",
+    "path": "/workbench/design",
+    "name": "workbench-design-public"
+  },
+  {
+    "role": "anon",
+    "path": "/workbench/quickstart",
+    "name": "workbench-quickstart-public"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}",
+    "name": "workbench-home"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/activity",
+    "name": "workbench-activity"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/console",
+    "name": "workbench-console"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/design",
+    "name": "workbench-design"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/design/{templateId}",
+    "name": "workbench-design-template"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/events",
+    "name": "workbench-events"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/inbox",
+    "name": "workbench-inbox"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/keys",
+    "name": "workbench-keys"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/logs",
+    "name": "workbench-logs"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/passes",
+    "name": "workbench-passes"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/sandbox",
+    "name": "workbench-sandbox"
+  }
+]

@@ -7,13 +7,15 @@ profile: passbook-polaris-binding
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
+Settings, Polaris ID shows the dry-run ledger and Go live state. First turn-on: [[Polaris Binding Turn On]].
+
 Use after the binding has run in dry run for about a week ([[Polaris Binding Turn On]]). Switches `WRITE_MODE` to `live`, after which the binding really writes to Polaris ID. Dry-run rows (`idp_calls` with `dry_run`) show what it would have done; read them first.
 
 Budgets and the breaker still apply: one run removes at most 25 roles and disables 5 accounts, then the next call answers `IDP_BREAKER`.
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile `passbook-polaris-binding`).
 
 ## 1. Review the dry-run ledger
 

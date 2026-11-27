@@ -35,9 +35,10 @@ export async function failRun(ctx: ServiceContext, runId: string, cause: unknown
   const { run, ref } = await loadRun(ctx, runId);
   if (run.state !== 'queued' && run.state !== 'running' && run.state !== 'waiting') return;
   const code = failureCode(cause);
-  if (run.kind === 'rotate' && ref.certId) {
+  if ((run.kind === 'rotate' || code === 'ASC_REFUSED') && ref.certId) {
     const pending = await getCertificateRow(ctx.env.DB, ref.certId);
-    // Apple already issued this certificate: keep its key so the next run adopts it.
+    // A CSR Apple refused is never retried: the next run makes a fresh key. A certificate Apple already
+    // issued keeps its key, so the next run adopts it.
     if (pending?.state === 'pending' && !pending.asc_certificate_id)
       await abandonPendingCertificate(ctx, pending.id);
   }

@@ -1,0 +1,73 @@
+{
+  "platform-invitations.postPlatformInvitations": {
+    "request": {
+      "email": "ada@example.com",
+      "groups": ["northwind"],
+      "developer": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-3b86ce635676",
+      "email": "ada@example.com",
+      "groups": ["Access"],
+      "developer": false,
+      "state": "accepted",
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "acceptedAt": 1795570500000,
+      "revokedAt": null,
+      "createdBy": {
+        "kind": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011",
+        "name": null
+      },
+      "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+    }
+  },
+  "platform-invitations.getPlatformInvitations": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-6497f7759aeb",
+          "email": "ada@example.com",
+          "groups": ["Access"],
+          "developer": false,
+          "state": "accepted",
+          "createdAt": 1794362400000,
+          "expiresAt": 1798790399999,
+          "acceptedAt": 1795570500000,
+          "revokedAt": null,
+          "createdBy": {
+            "kind": "user",
+            "id": "0193a1b2-7c00-7000-8000-000000000011",
+            "name": null
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "platform-invitations.deletePlatformInvitationsById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "platform-invitations.postPlatformInvitationsByIdResend": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-613edac7b152",
+      "email": "ada@example.com",
+      "groups": ["Access"],
+      "developer": false,
+      "state": "accepted",
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "acceptedAt": 1795570500000,
+      "revokedAt": null,
+      "createdBy": {
+        "kind": "user",
+        "id": "0193a1b2-7c00-7000-8000-000000000011",
+        "name": null
+      },
+      "link": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+    }
+  }
+}

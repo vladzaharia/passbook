@@ -1,0 +1,232 @@
+/* The Try it console: tabs, header chips, form, editor and the Run bar. Loads with the island. */
+@import "./runbar.css";
+
+.run-root {
+  min-width: 0;
+}
+/* ---------- Header chips ---------- */
+.hchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px 8px;
+  flex: none;
+}
+.hchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-sunken);
+  font: 400 12px var(--pk-font-mono);
+  color: var(--pk-text-default);
+  max-width: 100%;
+}
+.hchip[data-off="true"] {
+  opacity: 0.55;
+}
+.hk {
+  color: var(--pk-text-muted);
+  white-space: nowrap;
+}
+.hin {
+  all: unset;
+  min-width: 6ch;
+  width: 14ch;
+  max-width: 100%;
+  field-sizing: content;
+  text-overflow: ellipsis;
+  font: inherit;
+  color: var(--pk-text-strong);
+  border-bottom: 1px dotted var(--pk-border-strong);
+}
+.hin:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.hnew {
+  width: 24px;
+  height: 24px;
+}
+.switch {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pk-border-strong);
+  cursor: pointer;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pk-surface-raised);
+  transition: transform var(--wl-dur-hover) var(--wl-ease-move);
+}
+.switch[aria-checked="true"] {
+  background: var(--pk-accent);
+}
+.switch[aria-checked="true"]::after {
+  transform: translateX(12px);
+}
+.switch:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Pane: form, editor, generated code ---------- */
+.pane {
+  flex: 1;
+  min-block-size: 9rem;
+  overflow: auto;
+  background: var(--pk-surface-sunken);
+  border-block: 1px solid var(--pk-border-subtle);
+}
+.pane > .region {
+  min-height: 100%;
+}
+.form {
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fset > legend {
+  padding: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pk-text-subtle);
+}
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fld-l {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.fld-d {
+  font-size: 12px;
+  color: var(--pk-text-muted);
+}
+.fld-e {
+  font-size: 12px;
+  color: var(--pk-danger);
+}
+.ctl,
+.picker input {
+  font-family: inherit;
+}
+.picker input {
+  flex: none;
+}
+.ctl {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--wl-field);
+  color: var(--pk-text-default);
+  font-size: 13px;
+}
+textarea.ctl {
+  resize: vertical;
+  font-size: 12.5px;
+}
+.ctl:focus-visible {
+  border-color: var(--pk-focus);
+  outline: 2px solid var(--pk-focus);
+}
+.ctl[aria-invalid="true"] {
+  border-color: var(--pk-danger);
+}
+@media (pointer: coarse) {
+  .ctl,
+  .hin {
+    font-size: max(16px, 1rem);
+  }
+}
+
+/* The text and its coloured copy share one cell, wrap at the same width and carry the same padding, so they
+   scroll and size together. The numbers are the copy's own (a counter on each line): a wrapped line keeps one. */
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100%;
+  font: 400 12.5px / 1.7 var(--pk-font-mono);
+  counter-reset: ln;
+}
+.editor > pre.src,
+.editor > textarea {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 14px 16px 14px 52px;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  tab-size: 2;
+}
+.editor pre.src {
+  overflow: visible;
+  pointer-events: none;
+}
+.editor pre.src .ln {
+  position: relative;
+  display: block;
+  min-height: 1.7em;
+  padding-inline: 0;
+  margin-inline: 0;
+  white-space: inherit;
+  counter-increment: ln;
+}
+.editor pre.src .ln::before {
+  content: counter(ln);
+  position: absolute;
+  inset-inline-start: -52px;
+  width: 36px;
+  text-align: right;
+  color: var(--pk-text-subtle);
+  user-select: none;
+}
+.editor textarea {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--pk-text-strong);
+  resize: none;
+  overflow: hidden;
+}
+.editor textarea::selection {
+  background: color-mix(in oklab, var(--pk-accent) 30%, transparent);
+}
+.editor textarea:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}

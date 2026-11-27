@@ -17,11 +17,19 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "nextCursor": null,
-      "capped": null
+      "capped": null,
+      "bodiesRecorded": true
     }
   },
   "developer.getLog": {
@@ -41,9 +49,29 @@
       "via": "try",
       "client": "@passbook/sdk 1.4.2",
       "hasBodies": true,
+      "resourceId": null,
+      "apiVersion": "2026-11-01",
+      "flags": {
+        "idempotencyKey": false,
+        "ifMatch": false,
+        "version": true
+      },
       "requestBody": null,
       "responseBody": "{\"items\":[],\"nextCursor\":null}",
-      "bodiesExpireAt": 1796175300000
+      "bodiesExpireAt": 1796175300000,
+      "bodiesRecorded": true,
+      "bodiesTruncated": false,
+      "headers": {
+        "req": {
+          "accept": "application/json",
+          "passbook-version": "2026-11-01",
+          "user-agent": "@passbook/sdk 1.4.2"
+        },
+        "res": {
+          "content-type": "application/json",
+          "etag": "\"3\""
+        }
+      }
     }
   },
   "developer.getRail": {
@@ -63,15 +91,17 @@
   },
   "developer.getResolve": {
     "response": {
-      "kind": "request",
-      "href": "https://passbook.mobile/developers/logs",
-      "label": "Server integration"
+      "kind": "live",
+      "id": "0193a1b2-7c00-7000-8000-e3816cf1ba1d",
+      "label": "Server integration",
+      "href": "https://passbook.mobile/developers/logs"
     }
   },
   "developer.getAccess": {
     "response": {
       "access": "yes",
-      "signInUrl": "https://passbook.mobile/login"
+      "signInUrl": "https://passbook.mobile/login",
+      "invitedBy": ["Northwind Climbing"]
     }
   },
   "developer.getHome": {
@@ -120,6 +150,24 @@
           "errors": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
         }
       },
+      "quotas": {
+        "passes": {
+          "used": 128,
+          "limit": 25
+        },
+        "templates": {
+          "used": 128,
+          "limit": 25
+        },
+        "endpoints": {
+          "used": 128,
+          "limit": 25
+        },
+        "keys": {
+          "used": 128,
+          "limit": 25
+        }
+      },
       "keys": [
         {
           "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
@@ -149,7 +197,14 @@
           "mode": "test",
           "via": "try",
           "client": "@passbook/sdk 1.4.2",
-          "hasBodies": true
+          "hasBodies": true,
+          "resourceId": null,
+          "apiVersion": "2026-11-01",
+          "flags": {
+            "idempotencyKey": false,
+            "ifMatch": false,
+            "version": true
+          }
         }
       ],
       "endpoints": [
@@ -193,22 +248,55 @@
       "viewedAt": 1795570500000
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-      "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-      "orgSlug": "northwind-sandbox",
-      "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-      "previewOnly": true,
-      "createdAt": 1794362400000,
-      "closedAt": null,
-      "timeZone": "America/Los_Angeles",
-      "key": {
-        "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
-        "name": "Sandbox key",
-        "secret": "pb_test_s4Ndb0xK_northwind-demo-key-do-not-use-4949b36517b4",
-        "mode": "test",
-        "expiresAt": 1796954400000
-      },
-      "previousKey": null
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-2b09c2384426",
+        "kind": "sandbox.delete",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-7713593a699e"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        "createdAt": 1794362400000,
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "/developers/quickstart",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
     }
   },
   "developer.getSandbox": {
@@ -228,14 +316,55 @@
   },
   "developer.deleteSandbox": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-      "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-      "orgSlug": "northwind-sandbox",
-      "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-      "previewOnly": true,
-      "createdAt": 1794362400000,
-      "closedAt": 1795572000000,
-      "timeZone": "America/Los_Angeles"
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-6a8053955efd",
+        "kind": "sandbox.delete",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-eacf4232eb2b"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        "createdAt": 1794362400000,
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "/developers/quickstart",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
     }
   },
   "developer.postSandboxReset": {
@@ -243,32 +372,55 @@
       "turnstileToken": "0.demo-turnstile-response-northwind"
     },
     "response": {
-      "sandbox": {
-        "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
-        "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
-        "orgSlug": "northwind-sandbox",
-        "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
-        "previewOnly": true,
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-4574298dee81",
+        "kind": "sandbox.delete",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-189853ce8561"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
         "createdAt": 1794362400000,
-        "closedAt": null,
-        "timeZone": "America/Los_Angeles"
-      },
-      "key": {
-        "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
-        "name": "Sandbox key",
-        "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
-        "mode": "test",
-        "expiresAt": 1796954400000
-      },
-      "deleted": {
-        "passes": 9,
-        "captures": 6,
-        "calls": 38,
-        "other": 2
-      },
-      "kept": 0,
-      "more": false,
-      "resetsLeft": 2
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "/developers/quickstart",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
     }
   },
   "developer.postSandboxReopen": {
@@ -323,22 +475,66 @@
       "viewedAt": 1795570500000
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ba4dfb1a0ac6",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgSlug": "northwind-climbing",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "previewOnly": true,
-      "createdAt": 1794362400000,
-      "closedAt": null,
-      "timeZone": "America/Los_Angeles",
+      "operation": {
+        "id": "0193a1b2-7c00-7000-8000-e5d024f6c11c",
+        "kind": "sandbox.delete",
+        "status": "succeeded",
+        "title": "Delete sandbox",
+        "text": "Removing Test passes · 4 of 12",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "target": {
+          "type": "generic",
+          "id": "0193a1b2-7c00-7000-8000-4cf677d96a71"
+        },
+        "step": "mapping",
+        "steps": [
+          {
+            "key": "tier",
+            "label": "Remove Test passes",
+            "state": "done",
+            "done": 39,
+            "total": 128,
+            "detail": "Waiting for Apple",
+            "until": 1795572600000,
+            "waitingReason": "due",
+            "group": "Access",
+            "startedAt": 1794362400000,
+            "finishedAt": 1795570500000
+          }
+        ],
+        "attempt": 1,
+        "cancelable": true,
+        "cancelRequested": true,
+        "startedBy": {
+          "type": "user",
+          "id": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        "createdAt": 1794362400000,
+        "startedAt": 1794362400000,
+        "updatedAt": 1795399200000,
+        "finishedAt": 1795570500000,
+        "error": null,
+        "result": {
+          "href": "/developers/quickstart",
+          "ids": {
+            "tier": "northwind"
+          }
+        },
+        "revision": 3,
+        "pollAfterMs": 1471
+      }
+    }
+  },
+  "developer.postSandboxKey": {
+    "response": {
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
-        "secret": "whsec_demo_northwind_53ec29",
+        "secret": "whsec_demo_northwind_f6888a",
         "mode": "test",
         "expiresAt": 1798790399999
-      },
-      "previousKey": null
+      }
     }
   }
 }

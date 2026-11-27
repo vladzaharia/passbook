@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isOperationActive } from '../../lib/status-operations.ts';
 import { toast } from '../toaster.tsx';
 import { useOperationsClient } from './client.ts';
@@ -56,13 +56,20 @@ export function useOperationActions(): {
 export function useTray({
   notify = true,
   onOpen,
+  include,
 }: {
   notify?: boolean;
   /** Where a Done toast's View goes. */
   onOpen?: (op: Operation) => void;
+  /** Which of the cached operations this tray lists (a host's own scope). Keep it stable. */
+  include?: (op: Operation) => boolean;
 }) {
   const client = useOperationsClient();
-  const all = useMineOperations();
+  const everything = useMineOperations();
+  const all = useMemo(
+    () => (include ? everything.filter(include) : everything),
+    [everything, include],
+  );
   const active = all.filter((op) => isOperationActive(op.status));
   const hasActive = active.length > 0;
   const [seenAt, setSeenAt] = useState(0);
@@ -121,10 +128,14 @@ export function useTray({
       if (op.status === 'succeeded')
         toast.action(op.text, { label: 'View', onClick: () => onOpen?.(op) });
       else if (op.status === 'failed')
-        toast.error(op.error?.message ?? 'Something went wrong.', op.text, {
-          label: 'Retry',
-          onClick: () => void retry(op),
-        });
+        toast.error(
+          op.error?.message ?? 'Something went wrong.',
+          op.text,
+          // A failure the server cannot retry (a holder's) offers View: Retry would only be refused.
+          op.error?.retryable === false
+            ? { label: 'View', onClick: () => onOpen?.(op) }
+            : { label: 'Retry', onClick: () => void retry(op) },
+        );
     }
   }, [all, notify, onOpen, retry]);
 

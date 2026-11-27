@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { AUTH_PAGE_COPY } from '@/shared/copy/sign-in.ts';
 import { personLabel } from '../../lib/format.ts';
 import { useSession } from '../../lib/session.ts';
@@ -13,8 +13,11 @@ const Menu = lazy(() =>
   import('./user-menu-body.tsx').then((m) => ({ default: m.SignedInUserMenu })),
 );
 
-/** The bar's last control in every space: the account menu, or Sign in when nobody is. */
-export function UserMenu() {
+/**
+ * The bar's last control in every space: the account menu, or Sign in when nobody is. `extra` is a
+ * space's own items after the spaces (the Workbench's Keyboard shortcuts).
+ */
+export function UserMenu({ extra }: { extra?: ReactNode } = {}) {
   const { authed, isPending } = useSession();
   const [asked, setAsked] = useState(false);
   if (!authed) {
@@ -37,7 +40,7 @@ export function UserMenu() {
         />
       }
     >
-      <Menu authed={authed} defaultOpen={asked} />
+      <Menu authed={authed} defaultOpen={asked} extra={extra} />
     </Suspense>
   );
 }

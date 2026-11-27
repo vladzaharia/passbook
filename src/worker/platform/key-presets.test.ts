@@ -6,12 +6,15 @@ import {
   MINTABLE_SCOPE_CAPABILITY,
 } from '../../shared/developers-keys.ts';
 import { delegableScopes } from '../modules/api-keys/access.ts';
-import { scopeCapability } from './api-scopes.ts';
+import { isPlatformScope, scopeCapability, type TenantScope } from './api-scopes.ts';
 import { ROLE_GRANTS } from './org-role-grants.ts';
 
 describe('the admin key presets', () => {
   it('map each mintable scope to the capability the Worker checks', () => {
-    for (const s of MINTABLE_SCOPES) expect(MINTABLE_SCOPE_CAPABILITY[s]).toBe(scopeCapability[s]);
+    for (const s of MINTABLE_SCOPES.filter((scope) => !isPlatformScope(scope)))
+      expect(MINTABLE_SCOPE_CAPABILITY[s as keyof typeof MINTABLE_SCOPE_CAPABILITY]).toBe(
+        scopeCapability[s as TenantScope],
+      );
   });
 
   it('are offered only for scopes the role may delegate', () => {

@@ -7,7 +7,7 @@ import { type OperationsClient, OperationsHttpError, OperationsProvider } from '
 import { fixtureOperation, NOW, SANDBOX_CREATE, STATE_FIXTURES } from './fixtures.test-support.ts';
 import { OperationProgress } from './operation-progress.tsx';
 import { OperationTray } from './operation-tray.tsx';
-import { resetOperationCache, trackOperation } from './store.ts';
+import { resetOperationCache, trackOperation, useClaimOperation } from './store.ts';
 
 const toasts = vi.hoisted(() => ({ action: vi.fn(), error: vi.fn() }));
 vi.mock('../toaster.tsx', () => ({ toast: toasts, Toaster: () => null }));
@@ -178,6 +178,33 @@ describe('OperationTray', () => {
       expect(window.location.hash).toBe('#top');
     });
 
+    it('opens no sheet for an id a panel on the page claimed, and opens it for an unclaimed one', async () => {
+      const running = STATE_FIXTURES.running();
+      const Panel = ({ id }: { id: string }) => {
+        useClaimOperation(id);
+        return <p>inline panel</p>;
+      };
+      window.history.replaceState(null, '', `/admin?op=${running.id}`);
+      const get = vi.fn(async () => ({ operation: running, etag: null }));
+      const claimed = mount(
+        client({ get }),
+        <>
+          <OperationTray />
+          <Panel id={running.id} />
+        </>,
+      );
+      act(() => trackOperation(running));
+      await settle();
+      // The tray still lists the row; no sheet opens over the panel.
+      expect(claimed.container.querySelector('[data-operation-tray]')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText('inline panel')).toBeInTheDocument();
+      claimed.unmount();
+      mount(client({ get }));
+      await settle();
+      expect(await screen.findByRole('dialog', { name: 'Delete sandbox' })).toBeInTheDocument();
+    });
+
     it('drops an unknown or foreign id (404) without showing an empty sheet', async () => {
       window.history.replaceState(null, '', '/admin?op=nope');
       const get = vi.fn(async () => {
@@ -187,6 +214,16 @@ describe('OperationTray', () => {
       await settle();
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(window.location.search).toBe('');
+    });
+
+    it('leaves an `op` that is not an operation id alone: the Console names API operations with it', async () => {
+      window.history.replaceState(null, '', '/workbench/o/org/console?op=passes.getPasses');
+      const get = vi.fn();
+      mount(client({ get }));
+      await settle();
+      expect(get).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(window.location.search).toBe('?op=passes.getPasses');
     });
   });
 
@@ -219,5 +256,24 @@ describe('OperationTray', () => {
       expect(onNavigate).not.toHaveBeenCalled();
       expect(await screen.findByRole('dialog', { name: 'Create sandbox' })).toBeInTheDocument();
     });
+  });
+
+  it('lists only what its host includes', async () => {
+    const mine = {
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'running', id: 'op_in' }),
+      text: 'In scope',
+      orgId: 'a',
+    };
+    const other = {
+      ...fixtureOperation(SANDBOX_CREATE, { status: 'running', id: 'op_out' }),
+      text: 'Out of scope',
+      orgId: 'b',
+    };
+    trackOperation(mine);
+    trackOperation(other);
+    const { container } = mount(client(), <OperationTray include={(op) => op.orgId === 'a'} />);
+    await settle();
+    expect(screen.getByLabelText('Activity, 1 running')).toBeInTheDocument();
+    expect(container.textContent).not.toContain('Out of scope');
   });
 });

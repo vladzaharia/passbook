@@ -15,6 +15,7 @@ export {
   upsertGoogleRuntimeObject,
 } from './runtime-google.ts';
 export { addGoogleRuntimeMessage, findGoogleRuntimeMessage } from './runtime-google-message.ts';
+export { googleRuntimeHasUsers } from './runtime-google-users.ts';
 export type { WalletRuntimeProviderResponse } from './runtime-response.ts';
 export {
   createSamsungRuntimeOffer,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ZOD_CONFIG_KEY } from '../playground/jitless.ts';
+import { ZOD_CONFIG_KEY } from '../model/jitless.ts';
 import { mountIslands } from './islands.ts';
 
 describe('mountIslands', () => {
@@ -12,45 +12,6 @@ describe('mountIslands', () => {
   });
 });
 
-describe('the signed-out markup of the quickstart and console', () => {
-  it('is held until the island has mounted, then shown whatever happened', async () => {
-    const { ISLANDS } = await import('./islands.ts');
-    const original = { ...ISLANDS };
-    let release: () => void = () => {};
-    ISLANDS.quickstart = async () => ({
-      mount: () =>
-        new Promise<void>((done) => {
-          release = done;
-        }),
-    });
-    ISLANDS.logs = async () => ({ mount: () => new Promise<void>(() => {}) });
-    class Seen {
-      fn: (e: unknown[]) => void;
-      constructor(fn: (e: unknown[]) => void) {
-        this.fn = fn;
-      }
-      observe(el: Element) {
-        this.fn([{ isIntersecting: true, target: el }]);
-      }
-      unobserve() {}
-    }
-    vi.stubGlobal('IntersectionObserver', Seen);
-    document.body.innerHTML =
-      '<div data-island="quickstart" id="q"></div><div data-island="run" data-mode="console" id="r"></div><div data-island="run" id="o"></div><div data-island="logs" id="l"></div>';
-    mountIslands();
-    const q = document.getElementById('q') as HTMLElement;
-    expect(q.hasAttribute('data-hydrating')).toBe(true);
-    expect(document.getElementById('l')?.hasAttribute('data-hydrating')).toBe(true);
-    expect(document.getElementById('r')?.hasAttribute('data-hydrating')).toBe(true);
-    expect(document.getElementById('o')?.hasAttribute('data-hydrating')).toBe(false);
-    await vi.waitFor(() => expect(release).not.toBe(undefined));
-    release();
-    await vi.waitFor(() => expect(q.hasAttribute('data-hydrating')).toBe(false));
-    Object.assign(ISLANDS, original);
-    vi.unstubAllGlobals();
-  });
-});
-
 describe('the account and sandbox slots', () => {
   it('are marked ready once their island ran, whatever happened, and without an observer', async () => {
     const { ISLANDS } = await import('./islands.ts');
@@ -60,7 +21,7 @@ describe('the account and sandbox slots', () => {
         throw new Error('boom');
       },
     });
-    ISLANDS.workbench = async () => ({ mount: () => {} });
+    ISLANDS.operations = async () => ({ mount: () => {} });
     class Seen {
       fn: (e: unknown[]) => void;
       constructor(fn: (e: unknown[]) => void) {
@@ -75,7 +36,7 @@ describe('the account and sandbox slots', () => {
     window.addEventListener('error', onError);
     vi.stubGlobal('IntersectionObserver', Seen);
     document.body.innerHTML =
-      '<span data-island="account" id="a"></span><div data-island="workbench" id="w"></div>';
+      '<span data-island="account" id="a"></span><div data-island="operations" id="w"></div>';
     mountIslands();
     // Held in CSS from the first paint, not by an attribute script sets late.
     await vi.waitFor(() => {

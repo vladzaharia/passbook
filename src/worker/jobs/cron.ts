@@ -13,6 +13,7 @@ import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-job
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { dailyRotationPlan } from '../modules/identities/rotation-plan.ts';
 import { drainIdp, reconcileIdp } from '../modules/idp/jobs.ts';
+import { dailyScimTokens } from '../modules/idp/scim-tokens.ts';
 import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
@@ -26,6 +27,7 @@ import { expireEntitlementOverrides } from '../modules/orgs/entitlement-expiry.t
 import { sweepBulkRuns } from '../modules/passes/bulk-run.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { claimBoundaries } from '../modules/passes/event-boundaries.ts';
+import { sweepIdentityMoves } from '../modules/passes/identity-move-sweep.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
@@ -95,6 +97,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
     { name: 'passes.import_stuck', run: sweepStuckImports },
     { name: 'passes.bulk_run_stuck', run: sweepBulkRuns },
+    { name: 'passes.identity_moves', run: sweepIdentityMoves },
     { name: 'operations.stalls', run: sweepStalledOperations },
     { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
@@ -130,6 +133,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'developer.idle_close', run: dailyDeveloperSandbox },
     { name: 'idp.reconcile', run: reconcileIdp },
+    { name: 'idp.scim_tokens', run: dailyScimTokens },
     { name: 'retention.receipts', run: dailyReceipts },
     // Near the end: it spends what the other daily hooks left of the query budget.
     { name: 'retention.guest_passes', run: dailyGuestPasses },

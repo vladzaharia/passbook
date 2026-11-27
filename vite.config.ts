@@ -7,6 +7,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { localSecrets } from './tools/lib/dev-secrets.ts';
+import { e2eKeepAlive } from './tools/lib/e2e-keep-alive.ts';
 import { e2eReleaseDefine, e2eReleaseOn } from './tools/lib/e2e-release.ts';
 import { DEV_MOCK_WALLETS_URL, mockWallets } from './tools/lib/mock-wallets-dev.ts';
 import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
@@ -171,6 +172,41 @@ export default defineConfig(({ command }) => ({
     client: {
       build: {
         rolldownOptions: {
+          // The Workbench groups below need it. The Worker environment keeps the Cloudflare plugin's
+          // `strict`, so they live here, not on `build`.
+          preserveEntrySignatures: 'allow-extension',
+          output: {
+            // The Workbench's shared code, one named chunk each (tools/check-bundle.ts measures them
+            // by name). Without them the bundler merges these modules by which tool routes import
+            // them, so each new tool moves code between the tool chunks and breaks their budgets.
+            // Nothing the SPA entry, the scanner or the docs portal loads may sit in one of them.
+            codeSplitting: {
+              groups: [
+                // The bench primitives. Their base stylesheets are the portal's own imports.
+                {
+                  name: 'wb-bench',
+                  test: /src[\\/]web[\\/]workbench[\\/]bench[\\/](?!(bench|pane|view-transition)\.css)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+                // The host client and tool-api, minus what the entry's routes import.
+                {
+                  name: 'wb-host',
+                  test: /src[\\/]web[\\/](workbench[\\/]host[\\/](?!(session-fetch|contexts|entry)\.)|lib[\\/]tool-api\.)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+                // What every tool route shares: its page frame, the shared states, the legacy
+                // stylesheets and the placeholder. The kit controls they import stay their own chunks.
+                {
+                  name: 'wb-kit',
+                  test: /src[\\/]web[\\/]workbench[\\/](shell[\\/]tool-page\.|states[\\/]states\.|styles[\\/]|tools[\\/](legacy|placeholder)\.)/,
+                  priority: 12,
+                  includeDependenciesRecursively: false,
+                },
+              ],
+            },
+          },
           input: {
             main: fileURLToPath(new URL('./index.html', import.meta.url)),
             scan: fileURLToPath(new URL('./scan.html', import.meta.url)),
@@ -258,6 +294,7 @@ export default defineConfig(({ command }) => ({
     devPublicAtSign(),
     mockWallets(),
     sonnerNoInlineCss(),
+    ...(e2e ? [e2eKeepAlive()] : []),
     radixNoInlineStyles(),
     // File-based routes under src/web/routes; generates src/web/routeTree.gen.ts.
     tanstackRouter({
@@ -275,6 +312,21 @@ export default defineConfig(({ command }) => ({
       remoteBindings: false,
       // tools/e2e-server.ts migrates a fresh database here on every start.
       ...(e2e ? { persistState: { path: '.wrangler/e2e-state' } } : {}),
+      // e2e only: the real Polaris ID binding over the mock Polaris ID (test/idp-e2e/worker.ts), reached as the IDP binding.
+      ...(e2e
+        ? {
+            auxiliaryWorkers: [
+              {
+                configPath: './test/idp-e2e/wrangler.jsonc',
+                config: {
+                  vars: {
+                    MOCK_POLARIS_URL: process.env.MOCK_POLARIS_URL ?? 'http://localhost:5174',
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
       // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
       config: (c: { vars?: Record<string, unknown>; ratelimits?: RateLimitConfig[] }) => ({
         // Local runs only see the .dev.vars secrets that `secrets.required` names (tools/lib/dev-secrets.ts).
@@ -286,8 +338,19 @@ export default defineConfig(({ command }) => ({
           : {}),
         ...(e2e
           ? {
+              // Appends to the file's services: the main Worker's IDP binding, to the aux Worker above (the plugin names it for the environment).
+              services: [
+                {
+                  binding: 'IDP',
+                  // The aux config's name (test/idp-e2e/wrangler.jsonc) plus the `-e2e` the plugin adds for the environment.
+                  service: 'passbook-id-connector-e2e-e2e',
+                  entrypoint: 'PolarisBinding',
+                },
+              ],
               vars: {
                 ...c.vars,
+                // Declared so the e2e vars file can set it: Polaris ID's SCIM push (test/mock-oidc/scim-push.ts).
+                SCIM_BEARER_TOKEN: '',
                 SIGNER_PLATFORM_INTERMEDIATE: '',
                 ADMIN_SYNC_BUCKET_MS: '',
                 // Declared so the e2e vars file can set it (resolver-memo.ts); empty everywhere else.

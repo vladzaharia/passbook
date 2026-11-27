@@ -1,6 +1,6 @@
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 
-export type EndpointState = 'active' | 'failing' | 'paused' | 'disabled';
+export type EndpointState = 'active' | 'untested' | 'failing' | 'paused' | 'disabled';
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -17,7 +17,8 @@ export function spanLabel(ms: number): string {
 export function endpointState(e: WebhookEndpointDto): EndpointState {
   if (e.status === 'disabled') return 'disabled';
   if (e.status === 'paused') return 'paused';
-  return e.failingSince === null ? 'active' : 'failing';
+  if (e.failingSince !== null) return 'failing';
+  return e.lastSuccessAt === null ? 'untested' : 'active';
 }
 
 /** The pill's words: "Failing for 3 h" counts from the first failure of the current run. */
@@ -25,12 +26,19 @@ export function stateLabel(e: WebhookEndpointDto, now: number): string {
   const state = endpointState(e);
   if (state === 'failing' && e.failingSince !== null)
     return `Failing for ${spanLabel(Math.max(0, now - e.failingSince))}`;
-  return { active: 'Active', failing: 'Failing', paused: 'Paused', disabled: 'Disabled' }[state];
+  return {
+    active: 'Active',
+    untested: 'Not tested',
+    failing: 'Failing',
+    paused: 'Paused',
+    disabled: 'Disabled',
+  }[state];
 }
 
 /** The kit status each endpoint state wears: failing is amber, never red (it may recover). */
 export const STATE_STATUS = {
   active: 'verified',
+  untested: 'not_configured',
   failing: 'degraded',
   paused: 'not_configured',
   disabled: 'disabled',

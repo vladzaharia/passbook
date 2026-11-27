@@ -57,11 +57,24 @@ export function operationSecurity(
   method: string,
 ): {
   security: unknown[];
-  'x-human-only'?: true;
+  'x-human-only'?: true | 'apply';
   'x-platform-scope'?: string;
   'x-feature'?: FeatureRule;
 } {
-  if ('platform' in auth) return { security: [{ session: [] }], 'x-platform-scope': auth.platform };
+  if ('platform' in auth) {
+    const scope = { 'x-platform-scope': auth.platform };
+    // No `key`: a person only. `key.unless`: a key may call it, but some requests (named in the description) need a person.
+    if (!auth.key) return { security: [{ session: [] }], 'x-human-only': true, ...scope };
+    return {
+      security: [
+        { apiKey: [auth.platform] },
+        ...(isRead(method) ? [{ apiKey: ['platform:read'] }] : []),
+        { session: [] },
+      ],
+      ...(auth.key === true ? {} : { 'x-human-only': 'apply' as const }),
+      ...scope,
+    };
+  }
   // The entitlement the organization must have: a key, or { key, atLeast } for a level.
   const feature = auth.feature === undefined ? {} : { 'x-feature': auth.feature };
   if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true, ...feature };
@@ -216,14 +229,16 @@ export function withStepUp(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
   return doc;
 }
 
-/** The operations an API key can call: what the public document lists. */
+/** The operations an API key can call, without the platform's own (`x-platform-scope`): what the public document lists. */
 export function keyCallableOnly(doc: Doc): Doc {
   const paths: NonNullable<Doc['paths']> = {};
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     const kept = Object.entries(item).filter(([, op]) => {
       const security = op?.security;
       return (
-        Array.isArray(security) && security.some((s) => s && typeof s === 'object' && 'apiKey' in s)
+        (op as { 'x-platform-scope'?: string })['x-platform-scope'] === undefined &&
+        Array.isArray(security) &&
+        security.some((s) => s && typeof s === 'object' && 'apiKey' in s)
       );
     });
     if (kept.length) paths[path] = Object.fromEntries(kept);

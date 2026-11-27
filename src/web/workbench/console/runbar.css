@@ -1,0 +1,87 @@
+/* The Run bar, its button states and the response placeholders. */
+.runbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  padding: 10px 12px 12px 16px;
+  min-height: 58px;
+}
+.valid {
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--pk-text-muted);
+}
+.valid > svg,
+.valid summary svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+.valid[data-ok="true"] > svg {
+  color: var(--pk-success);
+}
+.valid summary {
+  cursor: pointer;
+  color: var(--pk-danger);
+}
+.valid ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 7rem;
+  overflow: auto;
+}
+.btn.run .kbd {
+  font: 500 10.5px var(--pk-font-mono);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.16);
+}
+.spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: dp-spin 0.7s linear infinite;
+}
+@keyframes dp-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+.run-err {
+  margin: 0;
+  padding: 16px 20px;
+  color: var(--pk-danger);
+  font-size: 13px;
+}
+/* Ghost buttons stay quiet on hover and while their menu is open. */
+.btn.ghost:not(.outline):is(:hover, :focus-visible, [aria-expanded="true"]):not(:disabled) {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+  box-shadow: none;
+}
+
+/* On a phone the Run bar docks to the bottom edge of the screen while the console is in view. */
+.runbar-dock {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 5;
+  margin-inline: calc(var(--wb-gutter) * -1);
+  padding-inline: var(--wb-gutter);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--pk-border-subtle);
+  background: color-mix(in oklab, var(--pk-surface-page) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+.runbar-dock .runbar {
+  padding-inline: 0;
+  align-items: center;
+}
+.runbar-dock .btn.run {
+  min-height: 44px;
+}

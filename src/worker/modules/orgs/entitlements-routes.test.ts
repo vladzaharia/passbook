@@ -113,7 +113,7 @@ describe('platform read', () => {
     const p = await people();
     expect((await call('GET', platformPath(p.orgId), p.admin)).status).toBe(403);
     const key = fake.apiKey({ orgId: p.orgId, scopes: ['org:read', 'org:write'] });
-    expect((await call('GET', platformPath(p.orgId), key)).status).toBe(401);
+    expect((await call('GET', platformPath(p.orgId), key)).status).toBe(403);
     expect((await call('GET', platformPath(p.orgId), {})).status).toBe(401);
     expect((await call('GET', platformPath('nope'), p.root)).status).toBe(404);
   });
@@ -172,6 +172,7 @@ describe('platform write', () => {
       writeEntitlements(rk.kit.ctx, {
         orgId: p.orgId,
         admin,
+        by: admin.userId,
         expectedRevision: before.revision,
         preset: 'standard',
         presetRevision: 1,

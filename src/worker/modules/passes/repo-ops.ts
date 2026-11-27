@@ -230,6 +230,11 @@ export async function releaseStaleRunGuard(
   );
 }
 
+/** A failed run's own guard, named by its instance: a retry of that operation must not be refused by it. */
+export async function releaseRunGuardOf(db: D1Database, instanceId: string): Promise<void> {
+  await run(db, 'UPDATE workflow_runs SET run_guard = NULL WHERE instance_id = ?', [instanceId]);
+}
+
 export const setWorkflowStatus = (
   db: D1Database,
   instanceId: string,

@@ -6,14 +6,11 @@ import {
   OkSchema,
   PassActionResponseSchema,
   PassDetailSchema,
-  PassListQuerySchema,
-  PassListSchema,
   RefreshPassResponseSchema,
   RotateLinkResponseSchema,
 } from '../../../shared/contracts/index.ts';
-import { methodScope, modeOf } from '../../platform/auth.ts';
+import { methodScope } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
-import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { registerPassChannelRoutes } from '../channels/routes.ts';
@@ -21,7 +18,6 @@ import { registerEventRoutes } from '../events/routes.ts';
 import { registerPassPrintRoutes } from '../prints/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
-import { assertMatchUnambiguous, listFilterOf } from './find.ts';
 import {
   actorFor,
   authOf,
@@ -30,23 +26,24 @@ import {
   svc,
   tenantAuthorityOf,
 } from './http.ts';
-import { requireTenantPassRead, tenantPassForRead, tenantPassForWrite } from './pass-access.ts';
+import { tenantPassForRead, tenantPassForWrite } from './pass-access.ts';
 import { rotateLink } from './pass-service-delivery.ts';
 import { requestRefresh } from './pass-service-refresh.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
-import { countPasses } from './repo-list.ts';
 import { registerActionRoutes } from './routes-actions.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
 import { registerBulkRunRoutes } from './routes-bulk-runs.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
+import { registerListRoute } from './routes-list.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerPhotoImportRoutes } from './routes-photo-import.ts';
+import { registerSimulateRoutes } from './routes-simulate.ts';
 import { registerStampsRoutes } from './routes-stamps.ts';
 import { registerTermRoutes } from './routes-term.ts';
 import { registerViewRoutes } from './routes-views.ts';
 import { registerWriteRoutes } from './routes-write.ts';
-import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.ts';
+import { deletePass, unvoidPass, voidPass } from './service.ts';
 
 export const passesRoutes = createRouter({ bodyLimit: false });
 /** Image overrides have their own cap (routes-assets.ts). */
@@ -64,57 +61,7 @@ guard(
   }),
 );
 
-register(
-  passesRoutes,
-  'passes',
-  {
-    method: 'get',
-    path: '/',
-    summary: 'List passes',
-    query: PassListQuerySchema,
-    response: PassListSchema,
-  },
-  async (c) => {
-    const q = c.req.valid('query');
-    const ctx = svc(c);
-    const auth = authOf(c);
-    // A key bound to an org lists that org by default. A global key must say so: `orgId=null` is explicit.
-    const orgId =
-      q.orgId !== undefined
-        ? q.orgId
-        : auth.kind === 'api_key' && auth.orgId !== null
-          ? auth.orgId
-          : undefined;
-    if (orgId === undefined)
-      throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
-    if (orgId === null) {
-      if (auth.kind !== 'api_key' || auth.orgId !== null)
-        throw new ForbiddenError(
-          'A global API key is required for platform-wide pass lists.',
-          'ORG_FORBIDDEN',
-        );
-    } else {
-      await requireTenantPassRead(ctx, auth, orgId);
-    }
-    const mode = modeOf(auth);
-    const { limit, cursor, count, orgId: _org, ...filter } = q;
-    const list = listFilterOf(ctx, { orgId, mode }, filter);
-    if (!list) return c.json({ items: [], nextCursor: null, ...(count ? { count: 0 } : {}) });
-    // A match walks json_each per row: bound it by an organization, and read its keys unambiguously.
-    if (q.match) {
-      if (!orgId)
-        throw new ValidationError(
-          'Pick an organization to filter by input.',
-          [{ path: 'match', message: 'Needs orgId.' }],
-          'MATCH_NEEDS_TEMPLATE',
-        );
-      if (!q.templateId) await assertMatchUnambiguous(ctx, orgId, mode, q.match);
-    }
-    const page = await listPassSummaries(ctx, { ...list, ...(cursor ? { cursor } : {}), limit });
-    return c.json(count ? { ...page, count: await countPasses(ctx.env.DB, list) } : page);
-  },
-);
-
+registerListRoute(passesRoutes);
 registerViewRoutes(passesRoutes);
 registerBulkRunRoutes(passesRoutes);
 
@@ -317,3 +264,4 @@ registerPassChannelRoutes(passesRoutes);
 registerPassPrintRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);
+registerSimulateRoutes(passesRoutes);

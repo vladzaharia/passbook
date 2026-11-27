@@ -1,11 +1,12 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Link } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { Check, ChevronsUpDown, Globe, RefreshCw, User } from 'lucide-react';
+import { Check, ChevronsUpDown, Globe, Layers, RefreshCw, User } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { cn } from '../../lib/cn.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
+import { canUseAllScope } from '../../lib/org-lists.ts';
 import { orgPath } from '../../lib/scope.ts';
 import { useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
@@ -29,6 +30,14 @@ export function PlatformMark({ size = 24 }: { size?: MarkSize }) {
   return (
     <span className={cn(MARK, MARK_SIZE[size])}>
       <Globe aria-hidden />
+    </span>
+  );
+}
+
+export function AllOrgsMark({ size = 24 }: { size?: MarkSize }) {
+  return (
+    <span className={cn(MARK, MARK_SIZE[size])}>
+      <Layers aria-hidden />
     </span>
   );
 }
@@ -96,6 +105,8 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
     choices: memberships,
     membership,
     switchScope,
+    switchAll,
+    memberships: grants,
     isLoading,
     isError,
     refetch,
@@ -122,8 +133,19 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   }
   // Platform is a scope only for platform admins; anyone else is offered their organizations.
   const platform = scope?.kind === 'platform' && isAdmin;
-  const name = platform ? 'Platform' : (membership?.orgName ?? undefined);
-  const icon = platform ? <PlatformMark /> : membership ? <OrgMark org={membership} /> : null;
+  const all = scope?.kind === 'all' && canUseAllScope(grants);
+  const name = all
+    ? 'All organizations'
+    : platform
+      ? 'Platform'
+      : (membership?.orgName ?? undefined);
+  const icon = all ? (
+    <AllOrgsMark />
+  ) : platform ? (
+    <PlatformMark />
+  ) : membership ? (
+    <OrgMark org={membership} />
+  ) : null;
   const personal = memberships.find((m) => m.personal);
   const others = memberships.filter((m) => !m.personal);
   const choose = (run: () => void) => () => {
@@ -215,11 +237,19 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                   ) : null}
                 </Command.Group>
               ) : null}
-              {(isAdmin || personal) && others.length > 0 ? (
+              {(isAdmin || personal) && (others.length > 0 || canUseAllScope(grants)) ? (
                 <Command.Separator alwaysRender aria-hidden className="mx-1 my-1 h-px bg-border" />
               ) : null}
-              {others.length > 0 ? (
+              {others.length > 0 || canUseAllScope(grants) ? (
                 <Command.Group heading="Organizations" className={GROUP}>
+                  {canUseAllScope(grants) ? (
+                    <Item
+                      current={all}
+                      icon={<AllOrgsMark />}
+                      label="All organizations"
+                      onSelect={choose(switchAll)}
+                    />
+                  ) : null}
                   {others.map((m) => (
                     <Item
                       key={m.orgId}

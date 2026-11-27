@@ -10,10 +10,13 @@ import {
   ReplyToOrgSchema,
   ReplyToStatusSchema,
 } from '../../../shared/contracts/settings.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { requireAdmin, requireCaller } from '../../platform/auth.ts';
+import { viaToken } from '../../platform/auth-workbench.ts';
+import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
@@ -23,24 +26,36 @@ import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
 import { orgIdOfScope } from './registry.ts';
 import { listSettings, settingsImpact, settingsRevision, updateSettings } from './service.ts';
+import { changesSignIn } from './sign-in-settings.ts';
 
-const ScopedSettingsListSchema = SettingsListSchema.extend({
+export const ScopedSettingsListSchema = SettingsListSchema.extend({
   oidc: SettingsListSchema.shape.oidc.optional(),
 });
 
 export const settingsRoutes = createRouter();
-guard(settingsRoutes, requireTenantSession);
+// The designer reads two org settings on the Workbench token (design §1.8); every other settings call is a session's.
+const SETTINGS_READ = /^\/api\/v1\/settings\/?$/;
+const tokenRead = requireCaller({ scope: 'org:read', capability: 'org:read' });
+guard(
+  settingsRoutes,
+  declareKeyAccess(
+    (c, next) =>
+      c.req.method === 'GET' &&
+      SETTINGS_READ.test(c.req.path) &&
+      c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX)
+        ? tokenRead(c, next)
+        : requireTenantSession(c, next),
+    { read: [] },
+  ),
+);
+/** What a token may read: the website and the time zone the previews draw. Nothing that signs anyone in or reaches out. */
+export const TOKEN_SETTINGS: ReadonlySet<string> = new Set(['org.website', 'org.timeZone']);
 // A platform sign-in or account-linking setting (auth.*, oidc.*) reopens or loosens who gets in.
 settingsRoutes.put(
   '/',
   requireStepUp(STEP_UP_SECONDS, async (c) => {
     const { scope, values } = await peekBody(c);
-    return (
-      scope === 'platform' &&
-      typeof values === 'object' &&
-      values !== null &&
-      Object.keys(values).some((key) => key.startsWith('auth.') || key.startsWith('oidc.'))
-    );
+    return scope === 'platform' && changesSignIn(values);
   }),
 );
 
@@ -63,7 +78,7 @@ async function scopeAuthority(
   return authority;
 }
 
-function oidcInfo(c: Context<AppBindings>) {
+export function oidcInfo(c: Context<AppBindings>) {
   return {
     issuer: c.env.OIDC_ISSUER,
     platformAdminGroup: configuredNames(c.env, 'OIDC_PLATFORM_ADMIN_GROUP'),
@@ -75,7 +90,7 @@ function oidcInfo(c: Context<AppBindings>) {
   };
 }
 
-const releaseInfo = () => ({
+export const releaseInfo = () => ({
   google: walletProviderEnabled('google'),
   samsung: walletProviderEnabled('samsung'),
 });
@@ -93,6 +108,16 @@ register(
   async (c) => {
     const { scope } = c.req.valid('query');
     const ctx = serviceContext(c);
+    if (viaToken(c.var.auth)) {
+      const orgId = orgIdOfScope(scope);
+      if (!c.var.auth || !orgId) throw new ForbiddenError();
+      await tenantAuthorityOf(ctx, c.var.auth, orgId, 'org:read');
+      const own = await listSettings(ctx, scope);
+      return c.json({
+        items: own.filter((i) => TOKEN_SETTINGS.has(i.key)),
+        ...(await settingsRevision(ctx, scope)),
+      });
+    }
     await scopeAuthority(c, ctx, scope, 'org:read');
     const items = await listSettings(ctx, scope);
     return c.json({

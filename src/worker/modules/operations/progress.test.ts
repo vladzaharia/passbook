@@ -243,3 +243,68 @@ describe('tracked', () => {
     expect((await read(op.id)).revision).toBe(afterFirst.revision);
   });
 });
+
+describe('tick (work spread over jobs)', () => {
+  it('counts in the database, caps at the total, and leaves state and status alone', async () => {
+    const op = await start();
+    const first = progressOf(kit.ctx, op.id, 1);
+    const b = first.step('b');
+    b.total(2);
+    await b.count(0);
+    // Two jobs, each with its own reporter and its own view of the row.
+    const [one, two, three] = [1, 2, 3].map(() => progressOf(kit.ctx, op.id, 1).step('b'));
+    expect(await one?.tick()).toEqual({ done: 1, total: 2 });
+    expect(await two?.tick()).toEqual({ done: 2, total: 2 });
+    expect(await three?.tick()).toEqual({ done: 2, total: 2 });
+    expect(await read(op.id)).toMatchObject({ status: 'running' });
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'running', done: 2, total: 2 });
+  });
+
+  it('writes nothing once the operation ended, and a later step write keeps the counted value', async () => {
+    const op = await start();
+    const a = progressOf(kit.ctx, op.id, 1);
+    const b = a.step('b');
+    b.total(3);
+    await b.count(0);
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    // This runner loaded the row before the tick: its done must not overwrite the count.
+    await b.done();
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'done' });
+    await a.succeed();
+    expect(await progressOf(kit.ctx, op.id, 1).step('b').tick()).toBeNull();
+  });
+});
+
+describe('stale writers (H1)', () => {
+  it('a runner that loaded the step before two ticks cannot lower its count, by waiting() or step()', async () => {
+    const op = await start();
+    const setup = progressOf(kit.ctx, op.id, 1);
+    const b = setup.step('b');
+    b.total(5);
+    await b.count(0);
+    const stale = progressOf(kit.ctx, op.id, 1);
+    const staleStep = stale.step('b');
+    await staleStep.count(0);
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    await progressOf(kit.ctx, op.id, 1).step('b').tick();
+    await stale.waiting('b', {
+      until: kit.clock.now() + 1000,
+      reason: 'Waiting for a scan window',
+    });
+    expect((await read(op.id)).steps[1]).toMatchObject({ state: 'waiting', done: 2 });
+    await stale.step('b').count(1);
+    expect((await read(op.id)).steps[1]?.done).toBe(2);
+  });
+
+  it('a shorter wait never replaces a longer one', async () => {
+    const op = await start();
+    const long = progressOf(kit.ctx, op.id, 1);
+    const until = kit.clock.now() + 10 * 3_600_000;
+    await long.waiting('b', { until, reason: 'Waiting for a scan window' });
+    await progressOf(kit.ctx, op.id, 1).waiting('b', {
+      until: kit.clock.now() + 60_000,
+      reason: 'Waiting for a scan window',
+    });
+    expect((await read(op.id)).steps[1]?.until).toBe(until);
+  });
+});

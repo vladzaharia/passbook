@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adminNavGroups, firstAllowedPath, isActivePath, sectionLabel } from './nav.ts';
-import { PLATFORM } from './scope.ts';
+import { ALL, PLATFORM } from './scope.ts';
 import { membershipFixture } from './test-utils.tsx';
 
 const org = { kind: 'org', orgId: 'o1' } as const;
@@ -17,6 +17,20 @@ describe('admin navigation per scope', () => {
     expect(adminNavGroups(org, false, membershipFixture('o1'))[1]?.[0]?.to).toBe(
       '/admin/o/o1/passes',
     );
+  });
+
+  it('adds Groups to the platform console only while Polaris ID is connected', () => {
+    const flat = (polaris: boolean) =>
+      adminNavGroups(PLATFORM, true, undefined, { polaris })
+        .flat()
+        .map((i) => i.label);
+    expect(flat(false)).not.toContain('Groups');
+    expect(flat(true)).toContain('Groups');
+    expect(
+      adminNavGroups(PLATFORM, true)
+        .flat()
+        .map((i) => i.label),
+    ).not.toContain('Groups');
   });
 
   it('lists the platform console for a platform admin', () => {
@@ -74,5 +88,21 @@ describe('sectionLabel and isActivePath', () => {
     expect(isActivePath('/admin/platform/users', '/admin/platform')).toBe(false);
     expect(isActivePath('/admin', '/admin')).toBe(true);
     expect(isActivePath('/admin/o/o1/passes', '/admin')).toBe(false);
+  });
+});
+
+describe('the All scope navigation', () => {
+  const two = [membershipFixture('o1'), membershipFixture('o2')];
+
+  it('lists Passes only, and only with two readable organizations', () => {
+    expect(labels(adminNavGroups(ALL, false, undefined, {}, two))).toEqual([['Passes']]);
+    expect(adminNavGroups(ALL, false, undefined, {}, two)[0]?.[0]?.to).toBe('/admin/all/passes');
+    expect(adminNavGroups(ALL, false, undefined, {}, [two[0] as (typeof two)[0]])).toEqual([]);
+    expect(adminNavGroups(ALL, true)).toEqual([]);
+  });
+
+  it('opens Passes first and labels the section', () => {
+    expect(firstAllowedPath(ALL, false, undefined, two)).toBe('/admin/all/passes');
+    expect(sectionLabel('/admin/all/passes')).toBe('Passes');
   });
 });

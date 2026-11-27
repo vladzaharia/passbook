@@ -20,11 +20,11 @@ import {
   KeyValue,
 } from '../../ui/index.ts';
 import type { SourceField } from '../mapping/mapping.ts';
+import { senderIcon } from './connector-tiles.ts';
 import { datasetOfSample } from './demo/datasets.ts';
 import { RecordCard } from './demo/record-card.tsx';
 import { MODE_LABEL } from './labels.ts';
 import { type Lifecycle, scheduled } from './lifecycle-fields.tsx';
-import { recipeLine } from './recipe-copy.ts';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
 
@@ -84,7 +84,7 @@ export function ReviewStep({
         </Callout>
       ) : null}
       <Card>
-        <CardHeader title="Source" actions={edit(1, 'source')} />
+        <CardHeader title="Setup" actions={edit(1, 'setup')} />
         <CardBody>
           <KeyValue
             items={[
@@ -116,7 +116,7 @@ export function ReviewStep({
         </CardBody>
       </Card>
       <Card>
-        <CardHeader title="Lifecycle" actions={edit(3, 'lifecycle')} />
+        <CardHeader title="Issuing" actions={edit(3, 'issuing')} />
         <CardBody>
           <KeyValue
             items={[
@@ -164,7 +164,7 @@ export function WizardAside({
   /** The wizard's step: the empty sample hint belongs to Configuration and Mapping only. */
   step: number;
 }) {
-  const Icon = connectorIcon(connector?.type ?? '');
+  const Icon = sender ? senderIcon(sender.id) : connectorIcon(connector?.type ?? '');
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-5">
       {connector ? (
@@ -181,7 +181,7 @@ export function WizardAside({
             </p>
             {sender || connector.description ? (
               <p className="mt-0.5 text-xs text-fg-muted">
-                {sender ? recipeLine(sender.id) : connector.description}
+                {sender ? sender.line : connector.description}
               </p>
             ) : null}
           </div>

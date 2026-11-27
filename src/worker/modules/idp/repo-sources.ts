@@ -1,4 +1,5 @@
 import { all, first } from '../../platform/db.ts';
+import { madeByLiveKey } from './repo-key-creator.ts';
 
 /** The PassBook user behind a Polaris ID subject, with what the desired state needs of them. */
 export interface IdentityRow {
@@ -24,6 +25,21 @@ export const subjectsOfUser = async (db: D1Database, userId: string): Promise<st
       [userId],
     )
   ).map((r) => r.subject);
+
+/**
+ * The account a person signed in with: the one used last, since a session records no subject. Null when they have
+ * none, or when two were used at the same moment and nothing says which.
+ */
+export async function signedInSubject(db: D1Database, userId: string): Promise<string | null> {
+  const rows = await all<{ subject: string; last_used_at: number | null }>(
+    db,
+    "SELECT subject, last_used_at FROM auth_identities WHERE provider = 'pocketid' AND user_id = ? ORDER BY last_used_at DESC, subject LIMIT 2",
+    [userId],
+  );
+  if (rows.length === 2 && (rows[0]?.last_used_at ?? 0) === (rows[1]?.last_used_at ?? 0))
+    return null;
+  return rows[0]?.subject ?? null;
+}
 
 export interface MembershipSource {
   org_id: string;
@@ -123,8 +139,9 @@ export interface ClaimSource {
  * Claims of a subject that are inside their window and whose invitation is still open (not revoked,
  * or accepted). An accepted invitation moves its reason to the membership, sponsorship or group row.
  */
-export const claimSources = (db: D1Database, subject: string, now: number) =>
-  all<ClaimSource>(
+export const claimSources = (db: D1Database, subject: string, now: number) => {
+  const byLive = madeByLiveKey('pi', now);
+  return all<ClaimSource>(
     db,
     `SELECT c.id,
        CASE WHEN c.org_invitation_id IS NOT NULL THEN 'member'
@@ -143,12 +160,13 @@ export const claimSources = (db: D1Database, subject: string, now: number) =>
        AND po.revoked_at IS NULL AND po.accepted_at IS NULL AND po.expires_at > ?
        AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = po.org_id AND o.status IN ('active', 'suspended'))
      LEFT JOIN platform_invitations pi ON pi.id = c.platform_invitation_id
-       AND pi.revoked_at IS NULL AND pi.accepted_at IS NULL
+       AND pi.revoked_at IS NULL AND pi.accepted_at IS NULL AND ${byLive.sql}
      WHERE c.subject = ? AND c.claim_until > ? AND c.swept_at IS NULL
        AND (oi.id IS NOT NULL OR di.id IS NOT NULL OR pi.id IS NOT NULL)
      ORDER BY c.created_at, c.id`,
-    [now, now, subject, now],
+    [now, now, ...byLive.params, subject, now],
   );
+};
 
 /** The keys among `keys` that name a group that still exists. */
 export async function liveGroupKeys(db: D1Database, keys: readonly string[]): Promise<Set<string>> {
@@ -159,4 +177,43 @@ export async function liveGroupKeys(db: D1Database, keys: readonly string[]): Pr
     keys,
   );
   return new Set(rows.map((r) => r.key));
+}
+
+/** The user is active and has a live, unrevoked session with the admin role (a demotion in Polaris ID ends it). */
+export async function hasLiveAdminSession(
+  db: D1Database,
+  userId: string,
+  now: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM sessions s JOIN users u ON u.id = s.user_id
+       WHERE s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL AND s.amr = 'oidc'
+         AND s.expires_at > ? AND s.idle_expires_at > ? AND json_valid(s.roles)
+         AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin')
+       LIMIT 1`,
+      [userId, now, now],
+    )) !== null
+  );
+}
+
+/** A Platform key that is not revoked, expired or retired, and still holds `scope`. */
+export async function hasLivePlatformKey(
+  db: D1Database,
+  keyId: string,
+  now: number,
+  scope: string,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS ok FROM api_keys
+       WHERE id = ? AND kind = 'platform' AND org_id IS NULL AND revoked_at IS NULL
+         AND (expires_at IS NULL OR expires_at > ?) AND (retire_at IS NULL OR retire_at > ?)
+         AND json_valid(scopes) AND EXISTS (SELECT 1 FROM json_each(scopes) s WHERE s.value = ?)
+       LIMIT 1`,
+      [keyId, now, now, scope],
+    )) !== null
+  );
 }

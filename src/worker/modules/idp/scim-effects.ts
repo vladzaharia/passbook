@@ -2,7 +2,12 @@ import { bump, read } from '../../platform/counters.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { listLiveSessions, revokeSession, revokeSessionsWithRole } from '../auth/repo-sessions.ts';
+import {
+  endAdminAccess,
+  listLiveSessions,
+  revokeSession,
+  revokeSessionsWithRole,
+} from '../auth/repo-sessions.ts';
 import { idpClient } from './client.ts';
 import { endSessions, noteDrift } from './effects.ts';
 import { idpCodeOf } from './errors.ts';
@@ -31,8 +36,8 @@ import { identitiesOfSubjects } from './repo-sync.ts';
 export const SCIM_BREAKER_LIMIT = 20;
 const BREAKER_WINDOW_MS = 600_000;
 /** A tripped breaker stays open this long, or until a platform admin deletes its counter row (docs/operations.md). */
-const BREAKER_LATCH_MS = 86_400_000;
-const BREAKER_KEY = 'idp:scim:breaker';
+export const BREAKER_LATCH_MS = 86_400_000;
+export const BREAKER_KEY = 'idp:scim:breaker';
 const HOUR = 3_600_000;
 /** `lookup` calls a push may spend an hour on confirming deactivations and admin removals. */
 export const SCIM_LOOKUPS_PER_HOUR = 60;
@@ -129,6 +134,9 @@ async function revoke(ctx: ServiceContext, gate: Gate, r: Revoke): Promise<Step>
     ctx.log.error('idp.scim_breaker', { code: 'IDP_SCIM_BREAKER', limit: SCIM_BREAKER_LIMIT });
     return 'breaker';
   }
+  // Polaris ID confirmed the account is off: keys made as an admin end, whatever `before` leaves of the sessions
+  // (it only spares a session made after a re-enable, not a key made before the change).
+  await endAdminAccess(db, identity.user_id);
   const ended =
     r.before === null
       ? await revokeSessionsWithRole(db, identity.user_id, 'user', now)

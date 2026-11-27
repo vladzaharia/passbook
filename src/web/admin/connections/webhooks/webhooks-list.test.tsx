@@ -84,10 +84,10 @@ describe('endpoint detail for a reader', () => {
     const url = await screen.findByRole('textbox', { name: /URL/ });
     expect(url).toHaveValue('hooks.example.com/…1234');
     expect(url).toHaveAttribute('readonly');
-    expect(screen.queryByRole('button', { name: 'Send test event' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send test' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Replay' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
-    expect(await screen.findByRole('table', { name: 'Deliveries' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: 'Deliveries' })).toBeVisible();
   });
 
   it('shows the disabled callout with Resume and Replay failed', async () => {

@@ -154,24 +154,8 @@ describe('islands', () => {
     return { observed, unobserved };
   };
 
-  it('registers every island by name', () => {
-    expect(Object.keys(ISLANDS).sort()).toEqual([
-      'account',
-      'api-rail',
-      'bench-strip',
-      'hero-start',
-      'keys',
-      'logs',
-      'moved',
-      'operations',
-      'org-chip',
-      'playground',
-      'quickstart',
-      'run',
-      'snippets',
-      'webhook-tester',
-      'workbench',
-    ]);
+  it('registers the portal islands by name, none of the Workbench tools', () => {
+    expect(Object.keys(ISLANDS).sort()).toEqual(['account', 'moved', 'operations', 'snippets']);
   });
 
   it('mounts an island once when its element comes into view', async () => {

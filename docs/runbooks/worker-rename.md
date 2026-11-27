@@ -20,11 +20,17 @@ env:
 
 Owner only. Agents never deploy or use `--remote` (AGENTS.md).
 
-Renames the PassBook Workers and every Cloudflare resource tied to them to `passbook-*`: Workers `wallet` to `passbook` and `apple-provisioner` to `passbook-apple-connector`, D1 `wallet-platform` to `passbook-platform` and `apple-provisioner` to `passbook-apple-connector`, R2 `wallet-passes` to `passbook-passes`, queues `wallet-jobs`, `wallet-jobs-dlq`, `wallet-webhooks` to `passbook-*`, nine workflows, the `wallet_events` dataset. Cloudflare cannot rename any of these in place, so this copies the data across, proves it, and lets the merge (CI deploy) switch the code over. Plan, resource table and what is lost: `.wrangler/agent-logs/worker-rename-plan.md`. `passbook-id-connector` is not deployed and has no database yet: nothing to move.
+Renames the PassBook Workers and every Cloudflare resource tied to them to `passbook-*`: Workers `wallet` to `passbook` and `apple-provisioner` to `passbook-apple-connector`, D1 `wallet-platform` to `passbook-platform` and `apple-provisioner` to `passbook-apple-connector`, R2 `wallet-passes` to `passbook-passes`, queues `wallet-jobs`, `wallet-jobs-dlq`, `wallet-webhooks` to `passbook-*`, nine workflows, the `wallet_events` dataset. Cloudflare cannot rename any of these in place, so this copies the data across, proves it, and lets the merge (CI deploy) switch the code over. Plan, resource table and what is lost: `.wrangler/agent-logs/worker-rename-plan.md`. `passbook-id-connector` is not deployed and has no database yet: nothing to move. Its owner runbooks (`passbook-id-connector-*`) and the platform identity runbooks (`platform-identity-*`, `platform-keys`) already use the new names, including D1 `passbook-platform`; run them only after this cutover.
 
 Production has no users, so the downtime from step 3 to the end of the CI deploy (20 to 40 minutes) is accepted. Lost: `ScanHub` Durable Object state, workflow instance history, Analytics Engine history, Worker version and log history, rate-limit counters. Every D1 row and R2 object is kept.
 
 Order matters: a merge before step 4 passes fails closed (`deploy:check` refuses a placeholder D1 id or missing secrets and `wallet` keeps serving), but the domains would already be detached. Do not skip the freeze and copy.
+
+Brought current with `main` on 2026-11-27 (branch `chore/worker-rename-refresh`). If `main` has moved since, merge it again before step 5 and check nothing new carries an old name.
+
+```sh name=refresh-check confirm=no
+git fetch origin main && git merge-base --is-ancestor origin/main HEAD && echo current || echo "main has moved: merge origin/main, run npm run gen"; git grep -n -E 'polaris-binding|apple-provisioner|wallet-(platform|passes|jobs|webhooks)' -- . ':!docs/runbooks/worker-rename*' ':!docs/audits' ':!docs/design' | head
+```
 
 Back out before the merge: the `norun` blocks in "Back out". Deleting the old resources is a separate note, [[Worker Rename Cleanup]], run days later.
 

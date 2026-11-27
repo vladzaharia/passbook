@@ -61,6 +61,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('connection_webhook_retention'),
   inOrg('connection_webhook_legacy_sources'),
   inOrg('connection_webhook_replays'),
+  inOrg('connection_webhook_arrivals'),
   // Files first: connection_files has no cascade to the connection.
   inOrg('connection_files'),
   inOrg('connections'),
@@ -80,6 +81,8 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('template_imports'),
   inOrg('workflow_runs'),
   inOrg('identity_runs'),
+  inOrg('pass_moves'),
+  inOrg('identity_moves'),
   inOrg('wallet_org_cards'),
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
@@ -174,6 +177,8 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   idp_drift: 'Polaris ID differences by subject and target',
   idp_group_members: 'Polaris ID group members by subject, no org',
   idp_groups: 'Polaris ID custom groups, platform level',
+  idp_scim_tokens: 'Polaris ID SCIM receiver token hashes, platform level',
+  idp_group_intents: 'Polaris ID custom groups about to be created, platform level',
   idp_run_lease: 'Polaris ID sync run locks by name',
   idp_target_state: 'Polaris ID projection cache by subject and target',
   entitlement_preset_meta: 'platform plan presets',
@@ -191,6 +196,8 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   users: 'user accounts',
   wallet_logs: 'platform device log posts',
   wallet_samsung_auth_replays: 'replay guard of the platform callback',
+  workbench_token_epochs:
+    'Workbench token generation of a user session: no org, ends with the session',
 };
 
 /**

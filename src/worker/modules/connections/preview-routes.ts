@@ -1,5 +1,9 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
-import { ConnectionPreviewSchema, IdParamSchema } from '../../../shared/contracts/index.ts';
+import {
+  ConnectionPreviewRequestSchema,
+  ConnectionPreviewSchema,
+  IdParamSchema,
+} from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
@@ -10,6 +14,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { authorizeStoredConnection } from './access.ts';
 import { previewSync } from './preview.ts';
+import { previewArrival } from './preview-arrival.ts';
 import * as service from './service.ts';
 
 async function requirePassRead(
@@ -42,8 +47,10 @@ export function registerConnectionPreviewRoute(router: OpenAPIHono<AppBindings>)
     {
       method: 'post',
       path: '/{id}/preview',
-      summary: 'Preview a sync',
+      summary: 'Preview a sync, or what one received webhook made',
       params: IdParamSchema,
+      body: ConnectionPreviewRequestSchema,
+      bodyOptional: true,
       response: ConnectionPreviewSchema,
     },
     async (c) => {
@@ -60,7 +67,12 @@ export function registerConnectionPreviewRoute(router: OpenAPIHono<AppBindings>)
         'integrations:read',
       );
       await requirePassRead(ctx, c.var.auth, conn.orgId);
-      return c.json(await previewSync(ctx, id, authority));
+      const arrivalId = (c.req.valid('json') as { arrivalId?: string } | undefined)?.arrivalId;
+      return c.json(
+        arrivalId
+          ? await previewArrival(ctx, id, arrivalId, authority)
+          : await previewSync(ctx, id, authority),
+      );
     },
   );
 }

@@ -15,6 +15,15 @@ export interface ResolvedIdentity extends PassIdentity {
   material: SigningMaterial;
 }
 
+/** What a metadata read of an identity names: its id and certificate (never the key), and the pass type and team it signs for. */
+export interface PeekedIdentity {
+  id: string;
+  certificate?: string | null;
+  /** What the certificate must be for: signing refuses any other pass type or team. */
+  passTypeIdentifier?: string;
+  teamIdentifier?: string;
+}
+
 export interface IdentityResolver {
   /**
    * Identity for a new pass: explicit id, else the org default, else the platform identity.
@@ -30,11 +39,29 @@ export interface IdentityResolver {
   /** `byId` for a row the caller already read in a batch. */
   byRow?(row: IdentityRow): Promise<ResolvedIdentity>;
   platform(): Promise<ResolvedIdentity>;
+  /**
+   * `forOrg` and `byId` from the identity's metadata alone (status, purpose, certificate dates): the same
+   * refusals, but the signing key is never read. For a dry run that only counts.
+   */
+  peekForOrg?(
+    orgId: string,
+    identityId: string | null | undefined,
+    now: number,
+  ): Promise<PeekedIdentity>;
+  peekById?(identityId: string): Promise<PeekedIdentity>;
 }
 
 /** Intermediate for chain checks: SIGNER_PLATFORM_INTERMEDIATE override, else the bundled WWDR G4. */
 export function intermediatePem(env: AppEnv): string {
   return envString(env, 'SIGNER_PLATFORM_INTERMEDIATE') ?? wwdrG4;
+}
+
+/** Whether the deployment still carries the legacy platform certificate and key. */
+export function envIdentityPresent(env: AppEnv, prefix = 'PLATFORM'): boolean {
+  return (
+    !!envString(env, `SIGNER_${prefix}_CERTIFICATE`) &&
+    !!envString(env, `SIGNER_${prefix}_PRIVATE_KEY`)
+  );
 }
 
 export function readEnvIdentity(env: AppEnv, prefix = 'PLATFORM'): ResolvedIdentity {

@@ -1,10 +1,9 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { GATE_COPY } from '../../../shared/copy/developers-gate.ts';
 import { opUrl, PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
-import { Gate } from '../ui/gate.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
 
 export function Head({ title, line }: { title: string; line?: string }) {
@@ -39,7 +38,7 @@ export function ReferenceIndex({ site }: { site: Site }) {
           <a className="card link tile slim" href={PATHS.errors}>
             <div className="h3">Errors</div>
           </a>
-          <a className="card link tile slim" href={PATHS.console}>
+          <a className="card link tile slim" href={wbHref('console')}>
             <div className="h3">Console</div>
           </a>
           <a className="card link tile slim" href={PATHS.protocols}>
@@ -123,6 +122,11 @@ export function ErrorEntryView({ entry }: { entry: ErrorEntry }) {
       </div>
       <h1 className="h1 page-h mono">{entry.code}</h1>
       {entry.title !== entry.code ? <p className="lede mt2 prose">{entry.title}</p> : null}
+      <div className="wrap-row g2 mt4">
+        <a className="btn outline sm" href={wbHref('logs', { query: { code: entry.code } })}>
+          {DEV_COPY.reference.seeInLogs}
+        </a>
+      </div>
       {entry.fix ? (
         <>
           <h2 className="h2 mt8">Fix</h2>
@@ -165,42 +169,5 @@ export function ProtocolsView({ site }: { site: Site }) {
         ))}
       </div>
     </>
-  );
-}
-
-export function WebhooksView({ site }: { site: Site }) {
-  return (
-    <div className="wh">
-      <div
-        className="stack g4"
-        data-island="webhook-tester"
-        data-types={site.webhookEvents.map((e) => e.type).join(',')}
-      >
-        <Gate
-          title={GATE_COPY.lines.webhooks}
-          next={PATHS.webhooks}
-          docs={`${PATHS.reference}/webhook-endpoints`}
-        />
-      </div>
-      <section>
-        <h2 className="h2">Events</h2>
-        <p className="muted mt2 prose">
-          Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and
-          dedupe on x-passbook-event-id.
-        </p>
-        <div className="list card mt4">
-          {site.webhookEvents.map((e) => (
-            <div key={e.type} id={e.type} className="lrow wrap-row">
-              <code className="mono sm strong">{e.type}</code>
-              <span className="push muted sm">{e.summary}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt6 muted">
-          Endpoints are managed with the{' '}
-          <a href={`${PATHS.reference}/webhook-endpoints`}>webhook endpoints</a> API.
-        </p>
-      </section>
-    </div>
   );
 }

@@ -8,21 +8,20 @@ import {
   StatusResponseSchema,
   WorkflowRunListSchema,
 } from '../../../shared/contracts/index.ts';
-import { requireAdmin } from '../../platform/auth.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
 import { listIncidents, openIncident, resolveIncident } from './incidents.ts';
 import { getStatus, listWorkflowRuns } from './service.ts';
 
 export const statusRoutes = createRouter();
-guard(statusRoutes, requireAdmin);
 
 register(
   statusRoutes,
   'status',
   {
     method: 'get',
+    auth: { platform: 'platform:status', key: true },
     path: '/',
     summary: 'Component health',
     query: StatusQuerySchema,
@@ -38,6 +37,7 @@ register(
   'status',
   {
     method: 'get',
+    auth: { platform: 'platform:status', key: true },
     path: '/workflows',
     summary: 'Recent workflow runs',
     query: CursorQuerySchema,
@@ -50,6 +50,7 @@ register(
   'status',
   {
     method: 'get',
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents',
     summary: 'Incident notes on the public status page',
     query: CursorQuerySchema,
@@ -62,6 +63,7 @@ register(
   'status',
   {
     method: 'post',
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents',
     summary: 'Open an incident note on the public status page',
     body: OpenIncidentSchema,
@@ -76,6 +78,7 @@ register(
   'status',
   {
     method: 'post',
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents/{id}/resolve',
     summary: 'Resolve an incident note',
     params: IdParamSchema,
