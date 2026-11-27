@@ -11770,6 +11770,7 @@ type RequestLogsRetrieveResponse struct {
 	BodiesExpireAt  *int64                           `json:"bodiesExpireAt"`
 	BodiesRecorded  bool                             `json:"bodiesRecorded"`
 	BodiesTruncated bool                             `json:"bodiesTruncated"`
+	Headers         map[string]any                   `json:"headers"`
 }
 
 type RequestLogsRetrieveResponseFlags struct {

@@ -9203,7 +9203,11 @@
    "responseBody": "x",
    "bodiesExpireAt": 0,
    "bodiesRecorded": false,
-   "bodiesTruncated": false
+   "bodiesTruncated": false,
+   "headers": {
+    "req": {},
+    "res": {}
+   }
   }
  },
  {

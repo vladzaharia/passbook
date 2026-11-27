@@ -7,10 +7,13 @@ import type { ConnectionDetailSchema } from '@/shared/contracts/connections.ts';
 import { copyText } from '../../lib/clipboard.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { CodeBlock, ConfirmDialog, toast, Wizard } from '../../ui/index.ts';
+import type { SetupTopic } from '../../ui/webhook-setup/index.ts';
 import {
+  SetupFinish,
   SetupSources,
   SetupSteps,
   TwoSided,
+  topicProgress,
   useRotateSecret,
 } from '../../ui/webhook-setup/index.ts';
 import { useOrgTimeZone } from '../settings/use-org-time-zone.ts';
@@ -23,9 +26,29 @@ import { signingSecretError } from './recipe-copy.ts';
 import { SecretStep } from './secret-step.tsx';
 import { SendSnippets } from './send-snippets.tsx';
 import { arrivalLoader, useNotIssued } from './setup-api.ts';
-import { SetupFinish } from './setup-finish.tsx';
 import { dropSecret, heldSecret } from './setup-handoff.ts';
 import { generateSecret } from './webhook.tsx';
+
+/** What the test saw, in lines: the signature, the topics and what the connection issues. */
+function finishFacts(
+  topics: readonly SetupTopic[],
+  seen: readonly string[],
+  issues: string | undefined,
+): string[] {
+  const progress = topicProgress(topics, seen);
+  const missing = topics.filter((t) => t.required && !seen.includes(t.id)).map((t) => t.id);
+  return [
+    'Signature OK',
+    ...(progress.of > 0
+      ? [
+          progress.seen >= progress.of
+            ? `${progress.seen} of ${progress.of} required topics seen`
+            : `${progress.seen} of ${progress.of} seen · ${missing.join(', ')} not seen yet`,
+        ]
+      : []),
+    ...(issues ? [`Issues: ${issues}`] : []),
+  ];
+}
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
 type Overlap = 0 | 3600 | 86_400 | 604_800;
@@ -132,10 +155,9 @@ export function ProviderWizard({
   if (finished)
     return (
       <SetupFinish
-        provider={provider}
-        topics={setup.subscriptions.topics}
-        seen={seen}
-        issues={template.data?.name}
+        title={`${provider} is connected`}
+        facts={finishFacts(setup.subscriptions.topics, seen, template.data?.name)}
+        openLabel="Open connection"
         onOpen={open}
         onAnother={() => void navigate({ to: '/admin/connections/new' })}
       />

@@ -60,7 +60,9 @@ export function canAccessOrgSection(rest: string, membership: OrgMembership | un
   if (within(path, '/connections')) {
     return hasCapability(
       membership,
-      path === '/connections/new' || path === '/connections/webhooks/new'
+      path === '/connections/new' ||
+        path === '/connections/webhooks/new' ||
+        /^\/connections\/webhooks\/[^/]+\/setup$/.test(path)
         ? 'integrations:manage'
         : 'integrations:read',
     );
