@@ -151,7 +151,7 @@ describe('scan read corpus', () => {
     const { real } = await maximal();
     const actor = real;
     const auth = scanReadAuthority(actor, { now: clock.now() });
-    const inner = { sql: 'EXISTS (SELECT 1 FROM passes p WHERE p.org_id = ao.org_id)', params: [] };
+    const inner = { sql: 'EXISTS (SELECT 1 FROM orgs o WHERE o.id = ao.org_id)', params: [] };
     const filter = { mode: 'live', limit: 5, orgId } as const;
     const rows = async (stmt: D1PreparedStatement) => (await stmt.all()).results;
     expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 1 }]);
