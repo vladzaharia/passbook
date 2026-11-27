@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { registerTestKinds } from '../operations/operations-test-fixtures.ts';
 import { workbenchKit } from './workbench-test-fixtures.ts';
@@ -9,6 +9,15 @@ let undo: () => void;
 beforeAll(async () => {
   t = await workbenchKit();
   undo = registerTestKinds();
+  // A delete retry that passes the rate limit starts a purge. A real instance runs in workerd and can outlive
+  // the file, so the binding starts nothing; the purge itself is covered in developer/sandbox-operations.test.ts.
+  Object.defineProperty(t.kit.env, 'ORG_PURGE', {
+    configurable: true,
+    value: {
+      create: async () => ({}),
+      get: async () => ({ status: async () => ({ status: 'complete' }) }),
+    },
+  });
 });
 afterAll(() => {
   undo();
@@ -137,23 +146,6 @@ describe('operations under a sandbox token: its owner’s sandbox rows', () => {
       const retry = await t.call('POST', `/operations/${id}/retry`, client, {});
       expect(retry.status, `retry ${id} ${await retry.clone().text()}`).not.toBe(403);
       expect(retry.status, `retry ${id}`).not.toBe(404);
-    }
-    // A delete retry that passes the rate limit starts a real purge workflow: let it end here, so nothing
-    // outlives the file (the rate limit decides whether one starts).
-    const row = await first<{ workflow_instance_id: string | null }>(
-      t.kit.env.DB,
-      'SELECT workflow_instance_id FROM operations WHERE id = ?',
-      [mine.del],
-    );
-    if (row?.workflow_instance_id) {
-      const purge = await t.kit.env.ORG_PURGE.get(row.workflow_instance_id);
-      const ended = ['complete', 'errored', 'terminated'];
-      let status = (await purge.status()).status;
-      for (let i = 0; i < 800 && !ended.includes(status); i++) {
-        await new Promise((r) => setTimeout(r, 25));
-        status = (await purge.status()).status;
-      }
-      expect(ended, 'purge workflow left running').toContain(status);
     }
   });
 
