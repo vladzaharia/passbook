@@ -5,6 +5,7 @@ import { createApp } from '../../app.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { all, run } from '../../platform/db.ts';
 import { createLogger } from '../../platform/log.ts';
+import { brandingKey } from '../orgs/branding-files.ts';
 import { grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from '../passes/tenant-test-fixtures.ts';
 import { enrolOn } from './enrolled-test-fixtures.ts';
@@ -86,6 +87,24 @@ describe('wallet health', () => {
     const res = await get(auth.admin({ mode: mode() }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ items: [] });
+  });
+
+  it('marks only its own responses no-store, not other org routes', async () => {
+    open();
+    const own = await get(auth.admin({ mode: mode() }));
+    expect(own.headers.get('cache-control')).toBe('no-store');
+    await run(f.kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
+      JSON.stringify({ logo: {} }),
+      orgId(),
+    ]);
+    await f.kit.env.BUCKET.put(brandingKey(orgId(), 'logo', 3, undefined), new Uint8Array([1]));
+    const other = await app.request(
+      `https://wallet.test/api/v1/orgs/${orgId()}/branding/logo/3x`,
+      { headers: auth.admin({ mode: mode() }) },
+      f.kit.env,
+    );
+    expect(other.status).toBe(200);
+    expect(other.headers.get('cache-control')).toBe('private, no-cache');
   });
 
   it('refuses anonymous callers and plain users', async () => {

@@ -13,10 +13,16 @@ import { listWalletHealth, recheckUncertain } from './health.ts';
 
 /** Mount at /api/v1/orgs, ahead of the session-only org routes. A key needs `wallet:read` to read and `passes:write` to recheck. */
 export const walletHealthRoutes = createRouter();
-walletHealthRoutes.use('*', async (c, next) => {
+// Not '*': this router is mounted at /api/v1/orgs, so a wildcard would stamp every org route under it.
+const noStore = async (
+  c: { header: (n: string, v: string) => void },
+  next: () => Promise<void>,
+) => {
   await next();
   c.header('cache-control', 'no-store');
-});
+};
+walletHealthRoutes.use('/:orgId/wallet-health', noStore);
+walletHealthRoutes.use('/:orgId/wallet-health/*', noStore);
 
 register(
   walletHealthRoutes,
