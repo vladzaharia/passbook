@@ -5,7 +5,12 @@ import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import type { SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import { reportDenied } from './denied.ts';
-import { ForbiddenError, IdpSignInRequiredError, StepUpRequiredError } from './errors.ts';
+import {
+  cliTokenNotAllowed,
+  ForbiddenError,
+  IdpSignInRequiredError,
+  StepUpRequiredError,
+} from './errors.ts';
 import { serviceContext } from './service-context.ts';
 
 // A session guard registers the level it enforces, so the route inventory test and the OpenAPI
@@ -160,6 +165,8 @@ export const requireStepUp = (
   declareStepUp(
     async (c, next) => {
       const auth = c.var.auth;
+      // A CLI token never meets a step-up: the Workbench does that work (`CLI_TOKEN_NOT_ALLOWED`).
+      if (auth?.kind === 'api_key' && auth.via === 'cli') throw cliTokenNotAllowed();
       const person =
         auth?.kind === 'session'
           ? auth

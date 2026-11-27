@@ -97,7 +97,12 @@ function KeyDetail({
   const legacy = key.kind === 'platform' && (key.expiresAt === null || key.ipAllow.length === 0);
   // The key the host runs on is never revoked or rotated from its own page.
   const runsHost = host?.own?.(key) === true;
-  const canRotate = !runsHost && live && !legacy && (own || (canManage && key.kind !== 'personal'));
+  const canRotate =
+    !runsHost &&
+    live &&
+    !legacy &&
+    key.origin !== 'cli' &&
+    (own || (canManage && key.kind !== 'personal'));
   // Platform keys have no children; a personal or child key mints none.
   const mints = key.kind === 'service' && key.parentKeyId === null && key.orgId !== null;
   return (

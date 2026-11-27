@@ -3,6 +3,7 @@ export * from './audit.ts';
 export * from './broadcasts.ts';
 export * from './bundles.ts';
 export * from './channels.ts';
+export * from './cli.ts';
 export * from './common.ts';
 export * from './connection-arrivals.ts';
 export * from './connection-files.ts';

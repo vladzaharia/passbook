@@ -10,6 +10,7 @@ import { wantsHtml } from '../../ssr/error-response.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { endCliTokensOf } from '../workbench/cli-revoke.ts';
 import { clearSessionCookie, ipPrefix, readCookie, setNextCookie } from './cookies.ts';
 import { loginPath, safeNext } from './next.ts';
 import { postLogoutRedirectUri } from './oidc-cimd.ts';
@@ -81,6 +82,8 @@ export async function logout(c: Context<AppBindings>) {
     const count = everywhere
       ? await revokeAllForUser(ctx, auth.userId)
       : await revokeOne(ctx, auth.sessionId);
+    // Signing out everywhere ends the person's CLI tokens too (a plain sign-out does not).
+    if (everywhere) await endCliTokensOf(ctx, { userId: auth.userId }, 'sign_out_everywhere');
     await recordAudit(ctx, {
       actorType: 'user',
       actorId: auth.userId,

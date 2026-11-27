@@ -461,6 +461,8 @@ const PLATFORM_KEY_CONDITIONAL: string[] = [
  * Person-only by design (§2.3): no `key`, each with its criterion. A follow-up that adds keys never touches this list.
  */
 const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
+  // S6: the CLI kill switch ends other people's CLI tokens: a platform admin with a recent Polaris ID sign-in.
+  'POST /api/v1/platform/cli-tokens/revoke',
   // P3: PassBook's own Apple signing identities: adding one or choosing the default decides who signs passes.
   'POST /api/v1/platform/apple/identities',
   'POST /api/v1/platform/apple/identities/:id/default',

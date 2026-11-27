@@ -14,7 +14,7 @@ import {
 } from './auth-capability.ts';
 import type { AuthContext, SessionAuth } from './auth-types.ts';
 import { admitTokenSession, assertWorkbenchOrg, resolveBearer } from './auth-workbench.ts';
-import { type KeyCaller, keyCallerOf, TRY_TOKEN_PREFIX } from './browser-signals.ts';
+import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
@@ -33,6 +33,7 @@ import {
   type RouteAuth,
   type ScopeRule,
   sessionKindOf,
+  signInOf,
 } from './route-auth-spec.ts';
 import { serviceContext } from './service-context.ts';
 import {
@@ -89,9 +90,8 @@ export const apiKeyMissing = (): UnauthenticatedError =>
   );
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
-  // A Workbench call never falls back to the cookie: a `pbtry_` anywhere in Authorization, parsed or not, refuses it.
-  if (c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX))
-    throw new UnauthenticatedError();
+  // A Workbench call never falls back to the cookie: a `pbtry_` or `pbcli_` anywhere in Authorization, parsed or not, refuses it.
+  if (/pbtry_|pbcli_/i.test(c.req.header('authorization') ?? '')) throw new UnauthenticatedError();
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
   // A person's browser calls have a budget too; API keys are metered by tier.
@@ -204,8 +204,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const platformDecl = 'platform' in auth ? auth : null;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
-  const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
-  const level: SignInLevel = 'human' in auth || 'scope' in auth ? (auth.signIn ?? 'idp') : 'idp';
+  const oidcOnly = ('platform' in auth || 'human' in auth) && auth.signIn === 'oidc';
+  const level = signInOf(auth);
   const ownOnlyAdmitted = 'scope' in auth && auth.signIn === 'any';
   const platformKeysOwn = 'scope' in auth && auth.platformKeys === 'own';
   if (

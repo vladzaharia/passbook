@@ -138,7 +138,8 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     id: c.var.ids.id(),
     orgId: auth.orgId,
     keyId: auth.keyId,
-    via: auth.via ?? null,
+    // The log's column holds `try` only (a CHECK); a CLI token's calls are the key's own, told apart by `client`.
+    via: auth.via === 'try' ? 'try' : null,
     client: portalCall(auth.via, c.req.header('x-passbook-client'))
       ? PORTAL_CLIENT
       : clientOf(c.req.header('user-agent')),

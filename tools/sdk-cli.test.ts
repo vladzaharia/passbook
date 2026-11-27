@@ -55,7 +55,6 @@ function fakeApi(pages: () => Capture[], schema: Record<string, unknown> = {}): 
             nextCursor: start + limit < all.length ? String(start + limit) : null,
           };
         },
-        revealSecret: async () => ({ secret: 'whsec_revealed' }),
       },
     },
     templates: {

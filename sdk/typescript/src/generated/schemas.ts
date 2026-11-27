@@ -63,6 +63,7 @@ export type ApiKeyDetail = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   lastIpPrefix: string | null;
   parent: {
     id: string;
@@ -98,6 +99,7 @@ export type ApiKeyMinted = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   secret?: string;
 };
 
@@ -129,6 +131,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
     secret: string;
   } | {
     id: string;
@@ -153,6 +156,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
   previous: {
     id: string;
@@ -177,6 +181,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
 };
 
@@ -218,6 +223,7 @@ export type ApiKeysListResponse = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   }>;
   nextCursor: string | null;
   revokedCount?: number;
@@ -758,6 +764,10 @@ export type CapturedEmailDetail = {
 export type CapturedEmailPage = {
   items: Array<CapturedEmail>;
   nextCursor: string | null;
+};
+
+export type CliTokenEnded = {
+  ok: true;
 };
 
 export type ConnectionPreview = {

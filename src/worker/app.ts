@@ -98,6 +98,7 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { cliPlatformRoutes, cliRoutes } from './modules/workbench/cli-routes.ts';
 import { workbenchRoutes } from './modules/workbench/routes.ts';
 import { devicePassPlatformRoutes } from './modules/workbench/routes-device-pass-platform.ts';
 import { devicePassPublicRoutes } from './modules/workbench/routes-device-pass-public.ts';
@@ -191,6 +192,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
   app.route('/api/v1/workbench', workbenchRoutes);
+  app.route('/api/v1/cli', cliRoutes);
+  app.route('/api/v1/platform', cliPlatformRoutes);
   app.route('/api/v1', resolveRoutes);
   app.route('/api/v1/workbench', workbenchReadRoutes);
   app.route('/api/v1/request-logs', requestLogRoutes);

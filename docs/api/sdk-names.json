@@ -2862,5 +2862,45 @@
     "method": "voidAll",
     "sdk": false,
     "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+  },
+  "cli.postSessions": {
+    "resource": "cli.sessions",
+    "method": "create",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsLookup": {
+    "resource": "cli.sessions",
+    "method": "lookup",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdApprove": {
+    "resource": "cli.sessions",
+    "method": "approve",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsByIdDeny": {
+    "resource": "cli.sessions",
+    "method": "decline",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.postSessionsToken": {
+    "resource": "cli.sessions",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+  },
+  "cli.deleteTokensById": {
+    "resource": "apiKeys.cliTokens",
+    "method": "revoke"
+  },
+  "platform.postCliTokensRevoke": {
+    "resource": "platform.cliTokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Platform administration by a person; no key calls it."
   }
 }

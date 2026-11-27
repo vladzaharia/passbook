@@ -24,6 +24,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/cli/tokens/{id} new operation",
+    "class": "additive",
+    "operationId": "cli.deleteTokensById",
+    "op": "DELETE /api/v1/cli/tokens/{id}",
+    "change": "new operation",
+    "note": "Sign out of the CLI: a pbcli_ token ends itself. Send it as the bearer."
+  },
+  {
     "key": "DELETE /api/v1/connections/{id}/files/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsByIdFilesByFileId",
@@ -337,6 +345,14 @@
     "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeys",
@@ -367,6 +383,14 @@
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"logs:read\" added",
@@ -4528,6 +4552,14 @@
     "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
+    "key": "POST /api/v1/api-keys 201.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -4736,6 +4768,14 @@
     "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
@@ -4766,6 +4806,14 @@
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
@@ -4800,6 +4848,14 @@
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
@@ -4830,6 +4886,14 @@
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
@@ -4864,6 +4928,14 @@
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
@@ -4894,6 +4966,14 @@
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
@@ -5340,6 +5420,46 @@
     "op": "POST /api/v1/broadcasts/preview",
     "change": "request: templates resolve by the key mode release",
     "note": "Preview resolves templates by the key mode release, as create does."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions new operation",
+    "class": "additive",
+    "operationId": "cli.postSessions",
+    "op": "POST /api/v1/cli/sessions",
+    "change": "new operation",
+    "note": "Start a CLI sign-in (passbook login): returns a device code and the code the person types at /workbench/cli."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/{id}/approve new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsByIdApprove",
+    "op": "POST /api/v1/cli/sessions/{id}/approve",
+    "change": "new operation",
+    "note": "Approve a CLI sign-in for one context. Polaris ID, a recent sign-in and a cookie session only; never a bearer."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/{id}/deny new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsByIdDeny",
+    "op": "POST /api/v1/cli/sessions/{id}/deny",
+    "change": "new operation",
+    "note": "Deny a CLI sign-in. Polaris ID, a recent sign-in and a cookie session only."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/lookup new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsLookup",
+    "op": "POST /api/v1/cli/sessions/lookup",
+    "change": "new operation",
+    "note": "Look up a typed CLI code: the device, where it started and the account approving. A miss, expired and used code answer alike."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/token new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsToken",
+    "op": "POST /api/v1/cli/sessions/token",
+    "change": "new operation",
+    "note": "Poll a CLI sign-in with its device code: 400 pending, slow down, denied or expired, else a 30-day Test token, once."
   },
   {
     "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field added",
@@ -6663,6 +6783,14 @@
     "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
     "change": "new operation",
     "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/cli-tokens/revoke new operation",
+    "class": "additive",
+    "operationId": "platform.postCliTokensRevoke",
+    "op": "POST /api/v1/platform/cli-tokens/revoke",
+    "change": "new operation",
+    "note": "Kill switch: a platform admin ends every CLI token, or those of one organization or person."
   },
   {
     "key": "POST /api/v1/platform/device-passes/unblock new operation",
