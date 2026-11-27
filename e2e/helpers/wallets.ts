@@ -11,6 +11,9 @@ import { createOrgWithRoles, readSeed } from './seed.ts';
 /** The fake Google and Samsung servers tools/e2e-server.ts starts (test/mock-wallets). */
 export const MOCK = `http://localhost:${e2ePorts.wallets}`;
 export const TEST = { 'x-passbook-mode': 'test' } as const;
+export const LIVE = { 'x-passbook-mode': 'live' } as const;
+export type WalletMode = 'test' | 'live';
+const headersOf = (mode: WalletMode) => (mode === 'live' ? LIVE : TEST);
 type Provider = 'google' | 'samsung';
 
 /**
@@ -59,21 +62,23 @@ export async function enrolTestAccount(
   admin: Api,
   orgId: string,
   credential: Record<string, unknown> & { provider: Provider },
+  mode: WalletMode = 'test',
 ): Promise<string> {
+  const MODE = headersOf(mode);
   const { provider, ...credentials } = credential;
   const base = `/api/v1/orgs/${encodeURIComponent(orgId)}`;
   const saved = await admin.send<{ id: string }>(
     'PUT',
     `${base}/wallet-credentials`,
     { provider, expectedRevision: 0, credentials },
-    TEST,
+    MODE,
   );
   const checks = `${base}/wallet-credentials/${encodeURIComponent(saved.id)}`;
   const { checkId } = await admin.send<{ checkId: string }>(
     'POST',
     `${checks}/check`,
     undefined,
-    TEST,
+    MODE,
   );
   await expect
     .poll(
@@ -83,7 +88,7 @@ export async function enrolTestAccount(
             'GET',
             `${checks}/checks/${encodeURIComponent(checkId)}`,
             undefined,
-            TEST,
+            MODE,
           )
         ).status,
       { message: `the ${provider} credential check`, timeout: 30_000 },
@@ -93,13 +98,13 @@ export async function enrolTestAccount(
     'PUT',
     `${base}/wallet-enrolments/${provider}`,
     { source: 'org', expectedRevision: 0 },
-    TEST,
+    MODE,
   );
   const on = await admin.send<{ state: string }>(
     'POST',
     `${base}/wallet-enrolments/${provider}/enable`,
     { expectedRevision: source.enrolmentRevision },
-    TEST,
+    MODE,
   );
   expect(on.state).toBe('on');
   return saved.id;
@@ -110,13 +115,15 @@ export async function runCredentialCheck(
   admin: Api,
   orgId: string,
   credentialId: string,
+  mode: WalletMode = 'test',
 ): Promise<string> {
+  const MODE = headersOf(mode);
   const checks = `/api/v1/orgs/${encodeURIComponent(orgId)}/wallet-credentials/${encodeURIComponent(credentialId)}`;
   const { checkId } = await admin.send<{ checkId: string }>(
     'POST',
     `${checks}/check`,
     undefined,
-    TEST,
+    MODE,
   );
   let status = 'pending';
   await expect
@@ -127,7 +134,7 @@ export async function runCredentialCheck(
             'GET',
             `${checks}/checks/${encodeURIComponent(checkId)}`,
             undefined,
-            TEST,
+            MODE,
           )
         ).status;
         return status !== 'pending';
@@ -158,6 +165,8 @@ export interface WalletOrgOptions {
   enrol?: boolean;
   /** Runs once the accounts are On and before the template is released. */
   afterEnrol?: () => Promise<unknown>;
+  /** The mode the accounts, template release and projections are made in; default test. */
+  mode?: WalletMode;
 }
 
 /**
@@ -195,7 +204,12 @@ export async function walletOrg(
   const accounts: Partial<Record<Provider, string>> = {};
   if (options.enrol !== false)
     for (const credential of [credentials].flat())
-      accounts[credential.provider] = await enrolTestAccount(admin, org.id, credential);
+      accounts[credential.provider] = await enrolTestAccount(
+        admin,
+        org.id,
+        credential,
+        options.mode,
+      );
   await options.afterEnrol?.();
   const blueprint = options.blueprint ?? BLUEPRINT;
   let made = await admin.send<{ id: string; versions: { version: string }[] }>(
@@ -214,9 +228,10 @@ export async function walletOrg(
     });
     version = made.versions.find((v) => v.version !== first)?.version ?? '';
   }
-  await publishTemplateVersion(admin, org.id, made.id, version, 'test');
-  const apple = await requireActiveTemplateRelease(admin, org.id, made.id, 'test');
-  return { org, template: { id: made.id }, apple, accounts };
+  const mode = options.mode ?? 'test';
+  await publishTemplateVersion(admin, org.id, made.id, version, mode);
+  const apple = await requireActiveTemplateRelease(admin, org.id, made.id, mode);
+  return { org, template: { id: made.id }, apple, accounts, mode };
 }
 
 export type WalletOrg = Awaited<ReturnType<typeof walletOrg>>;
@@ -248,15 +263,16 @@ async function approveAndPublish(
   w: Pick<WalletOrg, 'org' | 'template'>,
   provider: Provider,
   c: Candidate,
+  mode: WalletMode = 'test',
 ) {
-  const scope = { orgId: w.org.id, mode: 'test', provider };
+  const scope = { orgId: w.org.id, mode, provider };
   const reviewer = await templateReviewer(admin, w.org.id);
   try {
     const approval = await reviewer.send<{ id: string }>(
       'POST',
       `${templatePath(w)}/candidates/${encodeURIComponent(c.id)}/approve`,
       { ...scope, candidateHash: c.candidateHash },
-      TEST,
+      headersOf(mode),
     );
     await admin.send(
       'POST',
@@ -268,7 +284,7 @@ async function approveAndPublish(
         candidateHash: c.candidateHash,
         expectedGeneration: 0,
       },
-      TEST,
+      headersOf(mode),
     );
   } finally {
     await reviewer.dispose();
@@ -291,7 +307,7 @@ export async function releaseSystem(
   admin: Api,
   w: Pick<WalletOrg, 'org' | 'template' | 'apple'>,
   provider: Provider,
-  options: { cron?: boolean } = {},
+  options: { cron?: boolean; mode?: WalletMode } = {},
 ): Promise<string[]> {
   const tick = async () => {
     // A template released before its account was On is found by the minute cron's drain (CAND-1).
@@ -302,7 +318,7 @@ export async function releaseSystem(
     .poll(
       async () => {
         await tick();
-        candidate = await systemCandidate(admin, w, provider);
+        candidate = await systemCandidate(admin, w, provider, options.mode);
         return Boolean(candidate);
       },
       { message: `the system ${provider} candidate`, timeout: 45_000 },
@@ -310,12 +326,12 @@ export async function releaseSystem(
     .toBe(true);
   if (!candidate) throw new Error(`No system ${provider} candidate`);
   const omissions = candidate.projection.approvedOmissions ?? [];
-  if (omissions.length > 0) await approveAndPublish(admin, w, provider, candidate);
+  if (omissions.length > 0) await approveAndPublish(admin, w, provider, candidate, options.mode);
   await expect
     .poll(
       async () => {
         await tick();
-        return (await providerRelease(admin, w, provider)) !== null;
+        return (await providerRelease(admin, w, provider, options.mode)) !== null;
       },
       { message: `the ${provider} release`, timeout: 45_000 },
     )
@@ -328,13 +344,14 @@ export async function systemCandidate(
   admin: Api,
   w: Pick<WalletOrg, 'org' | 'template'>,
   provider: Provider,
+  mode: WalletMode = 'test',
 ) {
-  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
+  const query = new URLSearchParams({ orgId: w.org.id, mode, provider });
   const list = await admin.send<{ items: (Candidate & { authorId: string })[] }>(
     'GET',
     `${templatePath(w)}/candidates?${query}`,
     undefined,
-    TEST,
+    headersOf(mode),
   );
   return list.items.find((c) => c.authorId.startsWith('system:'));
 }
@@ -344,13 +361,14 @@ export async function providerRelease(
   admin: Api,
   w: Pick<WalletOrg, 'org' | 'template'>,
   provider: Provider,
+  mode: WalletMode = 'test',
 ): Promise<{ id: string } | null> {
-  const query = new URLSearchParams({ orgId: w.org.id, mode: 'test', provider });
+  const query = new URLSearchParams({ orgId: w.org.id, mode, provider });
   const list = await admin.send<{ active: { id: string } | null }>(
     'GET',
     `${templatePath(w)}/releases?${query}`,
     undefined,
-    TEST,
+    headersOf(mode),
   );
   return list.active;
 }
@@ -381,11 +399,12 @@ export async function releaseProjection(
 /** A Test pass from the org's Day pass release, with the holder's email. */
 export async function testPass(
   admin: Api,
-  w: Pick<WalletOrg, 'org' | 'apple'>,
+  w: Pick<WalletOrg, 'org' | 'apple'> & { mode?: WalletMode },
   input?: Record<string, unknown>,
   extra: Record<string, unknown> = {},
 ) {
   const memberId = uid('DAY').toUpperCase();
+  const mode = w.mode ?? 'test';
   const pass = await admin.send<{ id: string; publicUrl: string }>(
     'POST',
     '/api/v1/passes',
@@ -395,13 +414,13 @@ export async function testPass(
       templateVersion: w.apple.version,
       releaseId: w.apple.id,
       releaseGeneration: w.apple.generation,
-      mode: 'test',
+      mode,
       // A change message needs a value to change from (passkit/wallets/google/messages.ts).
       input: input ?? { memberName: `Holder ${memberId}`, memberId, message: 'Welcome.' },
       holderEmail: `${uid('holder')}@example.test`,
       ...extra,
     },
-    { ...TEST, 'Idempotency-Key': uid('idem') },
+    { ...headersOf(mode), 'Idempotency-Key': uid('idem') },
   );
   return { ...pass, path: new URL(pass.publicUrl).pathname };
 }
