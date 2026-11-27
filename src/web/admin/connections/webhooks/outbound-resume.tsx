@@ -24,7 +24,8 @@ export function OutboundResume({ endpointId }: { endpointId: string }) {
     />
   );
   if (!scope.orgId) return <OrgChooser />;
-  if (endpoint.isError) return detailError(endpoint, { entity: 'connection', to: TO, header });
+  if (endpoint.isError)
+    return detailError(endpoint, { entity: 'connection', noun: 'Webhook', to: TO, header });
   if (endpoint.data && endpoint.data.orgId !== scope.orgId)
     return (
       <>
