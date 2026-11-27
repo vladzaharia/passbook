@@ -54,14 +54,14 @@ export function lookupPassesStmt(
     auth,
     `SELECT ring.i AS i,
       COALESCE((SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
-        WHERE p.id = ring.pass_id AND ${auth.tenant('p', 'passes')}
+        WHERE p.id = ring.pass_id AND ${auth.tenantOnce('p', 'passes')}
           AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
           AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql} AND ${cleared.sql}), 0) AS pass_ok,
       EXISTS (SELECT 1 FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenant('hp', 'passes')}) AS present,
+        WHERE hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}) AS present,
       (SELECT ${effectiveReleaseIdSql('hp')} FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenant('hp', 'passes')}) AS head
-    FROM ring WHERE ${auth.ok}`,
+        WHERE hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}) AS head
+    FROM ${auth.rows}ring`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,
@@ -78,5 +78,6 @@ export const lookupGateStmt = (db: D1Database, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `SELECT ${auth.ok} AS authorized, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset`,
+    `SELECT COALESCE(${auth.present}, 0) AS authorized,
+      (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset FROM ${auth.anchor}`,
   );

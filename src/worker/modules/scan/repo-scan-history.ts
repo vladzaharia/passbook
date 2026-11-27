@@ -148,7 +148,7 @@ export async function readSummary(
         params,
         limit: SUMMARY_CONTRIBUTORS + 1,
         // The `+` keeps the planner on the actor's own index, not the org's.
-        tenant: auth.tenant('+s', 'scans'),
+        tenant: auth.tenantOnce('+s', 'scans'),
       },
       now,
     ),

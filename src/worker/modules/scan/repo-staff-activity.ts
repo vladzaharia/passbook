@@ -18,7 +18,7 @@ export async function staffTimeZones(db: D1Database, auth: ScanReadAuthority): P
   const rows = await scanRead(
     db,
     auth,
-    `SELECT DISTINCT sc.time_zone FROM scanners sc WHERE ${auth.ok} AND ${auth.tenant('sc', 'scanners')}`,
+    `SELECT DISTINCT sc.time_zone FROM ${auth.rows}scanners sc WHERE ${auth.tenantOnce('sc', 'scanners')}`,
   ).all<{ time_zone: string }>();
   return rows.results.map((row) => row.time_zone);
 }
@@ -40,22 +40,23 @@ export async function readStaffActivity(
 ): Promise<StaffActivityRaw[]> {
   const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);
-  const mode = '(SELECT mode FROM actor_ok)';
+  const mode = 'ao.mode';
+  const snapshotOk = `NOT EXISTS (
+          SELECT 1 FROM scanners current_sc
+          WHERE ${auth.tenantOnce('current_sc', 'scanners')}
+            AND NOT EXISTS (SELECT 1 FROM starts WHERE starts.zone = current_sc.time_zone)
+        )`;
+  // The padded row of an unauthorized or empty page has no person: its person columns stay NULL.
+  const ofPerson = (expr: string) => `CASE WHEN st.id IS NULL THEN NULL ELSE ${expr} END`;
   const starts = zones.map((zone) => ({ zone, since: dayStartMs(zone, now) }));
   const ctes = `starts AS (
       SELECT json_extract(value, '$.zone') AS zone, json_extract(value, '$.since') AS since
       FROM json_each(?)
-    ), scope AS (
-      SELECT CASE WHEN ${auth.ok} THEN 1 ELSE 0 END AS auth_ok,
-        NOT EXISTS (
-          SELECT 1 FROM scanners current_sc
-          WHERE ${auth.tenant('current_sc', 'scanners')}
-            AND NOT EXISTS (SELECT 1 FROM starts WHERE starts.zone = current_sc.time_zone)
-        ) AS snapshot_ok
     ), page AS MATERIALIZED (
-      SELECT st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
+      SELECT CASE WHEN ${auth.present} THEN 1 ELSE 0 END AS auth_ok, ${snapshotOk} AS snapshot_ok,
+        st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
         st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
-        EXISTS (
+        ${ofPerson(`EXISTS (
           SELECT 1 FROM scanners sc
           WHERE sc.org_id = st.org_id AND sc.mode = ${mode} AND sc.revoked_at IS NULL
             AND sc.kind = 'device' AND sc.device_role = 'scan' AND sc.token_hash IS NOT NULL
@@ -68,12 +69,12 @@ export async function readStaffActivity(
               SELECT 1 FROM counters c WHERE c.key = 'scan:pinall:' || sc.id
                 AND c.window_start = ? AND c.count >= ?
             ))
-        ) AS m_locked,
-        EXISTS (
+        )`)} AS m_locked,
+        ${ofPerson(`EXISTS (
           SELECT 1 FROM counters d WHERE d.key = 'scan:pinday:' || st.id
             AND d.window_start = ? AND d.count >= ?
-        ) AS m_day_locked,
-        (SELECT count(*) FROM scans s
+        )`)} AS m_day_locked,
+        ${ofPerson(`(SELECT count(*) FROM scans s
           LEFT JOIN scanners day_sc ON day_sc.id = s.scanner_id
             AND day_sc.org_id = s.org_id AND day_sc.mode = s.mode
           LEFT JOIN starts ON starts.zone = day_sc.time_zone
@@ -82,13 +83,14 @@ export async function readStaffActivity(
             AND s.state = 'done' AND s.outcome = 'ok'
             AND s.undone_at IS NULL AND s.undone_by IS NULL AND s.action_kind != 'undo'
             AND ${scanLedgerScopeSql('s')}
-        ) AS m_today,
+        )`)} AS m_today,
         (SELECT s.id FROM scans s
           WHERE +s.org_id = st.org_id AND +s.mode = ${mode} AND s.staff_id = st.id AND s.state = 'done'
             AND ${scanLedgerScopeSql('s')}
           ORDER BY s.at DESC, s.id DESC LIMIT 1) AS scan_id
-      FROM scope JOIN scan_staff st ON scope.auth_ok = 1 AND scope.snapshot_ok = 1
-        AND ${auth.tenant('st', 'scan_staff')}${page.staffId === undefined ? '' : ' AND st.id = ?'}
+      FROM ${auth.anchor}
+        LEFT JOIN scan_staff st ON ${auth.present} AND ${snapshotOk}
+        AND ${auth.tenantOnce('st', 'scan_staff')}${page.staffId === undefined ? '' : ' AND st.id = ?'}
         AND ${name.sql} ${cursor.sql}
       ORDER BY st.disabled_at IS NOT NULL, st.name COLLATE NOCASE, st.id LIMIT ?
     )`;
@@ -113,8 +115,8 @@ export async function readStaffActivity(
   const result = await scanRead(
     db,
     auth,
-    `SELECT scope.auth_ok, scope.snapshot_ok, page.*, ${HISTORY_COLUMNS}
-     FROM scope LEFT JOIN page ON 1 ${HISTORY_JOINS}
+    `SELECT page.*, ${HISTORY_COLUMNS}
+     FROM page ${HISTORY_JOINS}
      ORDER BY page.m_disabled_at IS NOT NULL, page.m_name COLLATE NOCASE, page.m_id`,
     [now],
     { ctes, params },

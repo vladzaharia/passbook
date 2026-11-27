@@ -39,7 +39,7 @@ export interface ScanLogFilter {
  */
 function narrowTenant(f: ScanLogFilter, auth: ScanReadAuthority): string | undefined {
   return !f.orgId && (f.scannerId || f.staffId || f.eventId || f.passId)
-    ? auth.tenant('+s', 'scans')
+    ? auth.tenantOnce('+s', 'scans')
     : undefined;
 }
 

@@ -1,6 +1,7 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
+import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
@@ -18,11 +19,36 @@ export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
   ctes: string;
   params: SqlValue[];
-  /** The fence for the main WHERE: true only when the actor's checks all hold. */
+  /**
+   * The scalar fence: true only when the actor's checks all hold.
+   * @deprecated Re-expands the actor at every use. Use `rows` or `anchor` with `present`; P2b removes it.
+   */
   ok: string;
-  /** Rows of `table` (aliased `alias`) belong to the actor's org and mode. */
+  /**
+   * Rows of `table` (aliased `alias`) belong to the actor's org and mode.
+   * @deprecated Use `tenantOnce`; P2b removes it.
+   */
   tenant: (alias: string, table: string) => string;
+  /** First FROM term of a row read (`actor_ok ao CROSS JOIN `): no actor, no rows. Once per statement. */
+  rows: string;
+  /** Outermost FROM of a read that must answer when the actor fails: `ao` columns are then NULL. */
+  anchor: string;
+  /** The actor's checks all hold (`ao.present = 1`, with any session row); NULL, not 0, with `anchor`. */
+  present: string;
+  /** A platform key's tenant: present and org-less. */
+  platform: string;
+  /** `tenant`, written against the one `ao` row. */
+  tenantOnce: (alias: string, table: string) => string;
 }
+
+/** The join-once fields of an `authorityPredicate`, for the org-and-mode fences. */
+const once = (p: ReturnType<typeof authorityPredicate>) => ({
+  rows: p.rows,
+  anchor: p.anchor,
+  present: p.ok,
+  platform: p.platform,
+  tenantOnce: (alias: string, table: string) => p.tenant(alias, table, 'org_mode'),
+});
 
 /** A fence that asked for read relaxations: usable by reads only, never as a write guard. */
 export interface RelaxedReadAuthority extends ScanReadAuthority {
@@ -53,17 +79,19 @@ export function scanReadAuthority(
 ): ScanReadAuthority {
   // As `sessionGrant`: the membership's own roles still grant the capability.
   const capability = scanCapabilityChecks(actor);
-  const { ctes, params } = authorityPredicate(scanPrincipal(actor), {
+  const predicate = authorityPredicate(scanPrincipal(actor), {
     scope: 'org_mode',
     now: input.now,
     checks: [...capability, ...(input.extraChecks ?? []), ...scanActorChecks(actor, input)],
   });
+  const { ctes, params } = predicate;
   assertBudget(ctes, params, PARAM_BUDGET);
   return {
     ctes,
     params,
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+    ...once(predicate),
     relaxed: input.read !== undefined,
   } as ScanReadAuthority;
 }
@@ -91,6 +119,12 @@ export function scanRead(
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;
+  // P2b's statements still read the actor through several scalar subqueries: the one text that has no `ao` join and
+  // more than one reference. Everything else (join-once reads, a lone `EXISTS (SELECT 1 FROM actor_ok)`) is checked.
+  const scalar =
+    !/\bactor_ok\s+ao\b/i.test(text) &&
+    (text.match(/\b(?:FROM|JOIN)\s+actor_ok\b/gi)?.length ?? 0) > 1;
+  if (!scalar) assertActorOnce(text);
   assertBudget('', all, PARAM_BUDGET);
   const bytes = encoder.encode(text).length;
   if (bytes > READ_SQL_BYTE_BUDGET)
@@ -131,7 +165,7 @@ export function apiKeyReadAuthority(
   now: number,
 ): RelaxedReadAuthority {
   const bound = key.orgId !== null;
-  const { ctes, params } = authorityPredicate(
+  const predicate = authorityPredicate(
     {
       kind: 'api_key',
       keyId: key.keyId,
@@ -140,6 +174,7 @@ export function apiKeyReadAuthority(
     },
     { scope: bound ? 'org_mode' : 'platform', now },
   );
+  const { ctes, params } = predicate;
   assertBudget(ctes, params, PARAM_BUDGET);
   const named = !bound && namedOrgId !== undefined;
   return {
@@ -150,6 +185,14 @@ export function apiKeyReadAuthority(
       bound
         ? tenantFilter(alias, table, 'org_mode')
         : `(SELECT org_id FROM actor_ok) IS NULL AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = (SELECT mode FROM actor_ok)`,
+    rows: predicate.rows,
+    anchor: predicate.anchor,
+    present: predicate.ok,
+    platform: predicate.platform,
+    tenantOnce: (alias, table) =>
+      bound
+        ? predicate.tenant(alias, table, 'org_mode')
+        : `${predicate.platform} AND ${named ? `${alias}.org_id = (SELECT org_id FROM named) AND ` : ''}${alias}.mode = ao.mode`,
     relaxed: true,
   };
 }
@@ -170,6 +213,7 @@ export function withSessionRow<A extends ScanReadAuthority>(
       WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
     ok: `(${auth.ok} AND EXISTS (SELECT 1 FROM session_row))`,
+    present: `(${auth.present} AND EXISTS (SELECT 1 FROM session_row))`,
   };
 }
 
@@ -193,17 +237,19 @@ export function keyScanReadAuthority(
     (authority.scope !== 'scan-setup:read' && authority.scope !== 'scanning:write')
   )
     throw new ForbiddenError();
-  const { ctes, params } = authorityPredicate(tenantPrincipal(authority), {
+  const predicate = authorityPredicate(tenantPrincipal(authority), {
     scope: 'org_mode',
     now,
     checks: capabilityChecks(authority),
   });
+  const { ctes, params } = predicate;
   assertBudget(ctes, params, PARAM_BUDGET);
   return {
     ctes,
     params,
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+    ...once(predicate),
     keyRead: true,
     relaxed: true,
   };

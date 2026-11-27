@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import type { ScanActor } from './actor.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { listConsoleEvents } from './repo-events.ts';
@@ -13,21 +13,33 @@ import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { activitySelector } from './repo-session-activity.ts';
 import { readStaffActivity } from './repo-staff-activity.ts';
 
+/** The join-once fragments of a real predicate; the fixtures below bring their own CTEs. */
+const fragments = authorityPredicate(
+  { kind: 'scanner', scannerId: 'plans', credentialEpoch: 0 },
+  { scope: 'org_mode', now: 0 },
+);
+
 /** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
 const fixedAuth: ScanReadAuthority = {
   ctes: `actor AS MATERIALIZED (SELECT 'o' AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
   params: [],
   ok: 'EXISTS (SELECT 1 FROM actor_ok)',
   tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+  rows: fragments.rows,
+  anchor: fragments.anchor,
+  present: fragments.ok,
+  platform: fragments.platform,
+  tenantOnce: (alias, table) => fragments.tenant(alias, table, 'org_mode'),
 };
 
 /** A platform key naming no org: the mode only, as `apiKeyReadAuthority` gives it. */
 const platformAuth: ScanReadAuthority = {
   ...fixedAuth,
   ctes: `actor AS MATERIALIZED (SELECT NULL AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
   tenant: (alias) => `${alias}.mode = (SELECT mode FROM actor_ok)`,
+  tenantOnce: (alias) => `${fragments.platform} AND ${alias}.mode = ao.mode`,
 };
 
 /** Runs a repo function against a DB that records its statements, then explains each one. */
@@ -147,7 +159,7 @@ describe('console list query plans (SC)', () => {
             where: where.sql,
             params: where.params,
             limit: 50,
-            tenant: fixedAuth.tenant('+s', 'scans'),
+            tenant: fixedAuth.tenantOnce('+s', 'scans'),
           },
           5,
         ),
@@ -181,7 +193,7 @@ describe('console list query plans (SC)', () => {
       if (!selector) throw new Error('Missing activity selector');
       const auth = withSessionRow(fixedAuth, row(accepts));
       const lines = await plans((db) =>
-        readHistoryPage(db, auth, { ...selector, tenant: auth.tenant('+s', 'scans') }, 5),
+        readHistoryPage(db, auth, { ...selector, tenant: auth.tenantOnce('+s', 'scans') }, 5),
       );
       expect(fullScans(lines, 's')).toEqual([]);
       expect(fullScans(lines, 'scans')).toEqual([]);

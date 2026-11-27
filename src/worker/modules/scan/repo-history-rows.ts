@@ -66,13 +66,13 @@ export interface HistorySelector {
   where: string;
   params: readonly SqlValue[];
   limit: number;
-  /** The tenant predicate; defaults to the fence's own. */
+  /** The tenant predicate (`auth.tenantOnce`); defaults to the fence's own. */
   tenant?: string;
 }
 
 const PAGE_SCANS = (auth: ScanReadAuthority, sel: HistorySelector) => `page AS MATERIALIZED (
-    SELECT s.id AS scan_id FROM scans s
-    WHERE ${auth.ok} AND ${sel.tenant ?? auth.tenant('s', 'scans')} AND ${sel.where}
+    SELECT s.id AS scan_id FROM ${auth.rows}scans s
+    WHERE ${auth.present} AND ${sel.tenant ?? auth.tenantOnce('s', 'scans')} AND ${sel.where}
     ORDER BY s.at DESC, s.id DESC LIMIT ?)`;
 
 /** The page statement: the scans, their ledger events, recorded and current pass state, names, flags. */
