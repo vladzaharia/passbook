@@ -136,7 +136,7 @@ func newPlatformAuditEntriesResource(c *core) *PlatformAuditEntriesResource {
 	}
 }
 
-// Export Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export`
+// Export Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/platform/export`
 func (r *PlatformAuditEntriesResource) Export(ctx context.Context, query *PlatformAuditEntriesExportQuery, opts ...RequestOption) (*http.Response, error) {
 	return r.c.download(ctx, call{method: "GET", path: "/api/v1/audit/platform/export", query: queryValues(query)}, opts)
 }

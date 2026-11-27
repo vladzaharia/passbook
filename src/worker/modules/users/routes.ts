@@ -69,6 +69,7 @@ register(
         c.req.valid('param').id,
         ownSession(c),
         platformActorOf(c).userId ?? '',
+        c.var.auth?.kind !== 'session',
       ),
     ),
 );

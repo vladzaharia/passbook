@@ -13,7 +13,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -96,5 +96,31 @@ describe('a Platform key on the platform audit log', () => {
     expect(Object.keys(JSON.parse(rows[0]?.detail ?? '{}')).sort()).toEqual(['rows', 'truncated']);
     expect((await call('/export', key.headers)).status).toBe(200);
     expect((await call('/export', key.headers)).status).toBe(429);
+  });
+
+  it('leaves personal-org rows out for a key, by list and by export, and keeps them for a person', async () => {
+    const owner = await makeUser(fx);
+    const personal = await makeOrg(fx, { personalUserId: owner.id });
+    const regular = await makeOrg(fx);
+    for (const org of [personal, regular])
+      await run(
+        env.DB,
+        "INSERT INTO audit_log (at, org_id, actor_type, action) VALUES (?, ?, 'system', 'probe.row')",
+        [fx.clock.now(), org.id],
+      );
+    const orgsOf = async (headers: Record<string, string>) =>
+      (
+        (await (await call('?action=probe.row&limit=50', headers)).json()) as {
+          items: { orgId: string | null }[];
+        }
+      ).items.map((i) => i.orgId);
+    const key = await platformKey(['platform:audit']);
+    expect(await orgsOf(key.headers)).toEqual([regular.id]);
+    const asked = await call(`?action=probe.row&orgId=${personal.id}`, key.headers);
+    expect(((await asked.json()) as { items: unknown[] }).items).toEqual([]);
+    const csv = await (await call('/export?action=probe.row', key.headers)).text();
+    expect(csv).toContain(regular.id);
+    expect(csv).not.toContain(personal.id);
+    expect(await orgsOf(admin.headers)).toEqual(expect.arrayContaining([personal.id, regular.id]));
   });
 });
