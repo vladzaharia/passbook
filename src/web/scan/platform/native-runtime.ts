@@ -1,6 +1,15 @@
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { connectNativeReader } from '../input/native-reader.ts';
-import type { RawRead } from '../input/types.ts';
+import {
+  departure,
+  liveIds,
+  onScreen,
+  outcomeOf,
+  type ReadResult,
+  unsentVerdict,
+} from '../input/native-settle.ts';
+import type { RawRead, ScanInput } from '../input/types.ts';
+import { readFate } from '../machine/reduce-read.ts';
 import type { ScanState } from '../machine/types.ts';
 import { customerBrandingOf } from './customer-branding.ts';
 import { setHapticSender } from './haptics.ts';
@@ -8,7 +17,9 @@ import { getNativeCapabilities, setNativeCapabilities } from './native-capabilit
 
 interface Deps {
   session: () => ScanSession;
-  emit(read: RawRead): string | null;
+  /** Puts a read on the bus (the machine's input), without the idle checks. */
+  dispatch(read: RawRead): ScanInput;
+  now(): number;
   held(): boolean;
   idle(): boolean;
   notice(text: string, polite?: boolean): void;
@@ -25,12 +36,35 @@ export function createNativeRuntime(d: Deps) {
   let vasFallbackNoticeShown = false;
   let native: ReturnType<typeof connectNativeReader> = null;
   setHapticSender(null);
-  const emitNative = (read: RawRead) => {
-    if (!d.held() && d.idle()) d.notice('Not scanning right now. Resume, then scan again.', false);
-    return d.emit(read);
+  /** Every native read gets an answer: tracked by input id, or ended now with why. */
+  const emitNative = (read: RawRead): ReadResult => {
+    if (d.held()) return { error: true };
+    if (d.idle()) {
+      d.notice('Not scanning right now. Resume, then scan again.', false);
+      return { error: true };
+    }
+    const before = d.snapshot().state;
+    const input = d.dispatch(read);
+    if (liveIds(d.snapshot().state).has(input.id)) return { track: input.id };
+    return { drop: readFate(before, input, d.now()) === 'duplicate' ? 'duplicate' : 'closed' };
+  };
+  let prev = d.snapshot().state;
+  /** Answer the read on screen, then end tracked reads the machine let go of. */
+  const settle = (s: ScanState) => {
+    if (!native) return;
+    const shown = onScreen(s);
+    if (shown) native.result(shown.id, shown.outcome);
+    const live = liveIds(s);
+    for (const id of native.unanswered()) {
+      if (live.has(id)) continue;
+      const unsent = unsentVerdict(prev, id);
+      if (unsent) native.result(id, unsent);
+      else native.dropped(id, departure(prev, id));
+    }
   };
   native = connectNativeReader({
     read: emitNative,
+    settleNow: () => settle(d.snapshot().state),
     cancelled(id) {
       const l = d.snapshot().state.loop;
       if ((l.s === 'checking' || l.s === 'applying') && l.input.id === id) d.fail(l.key);
@@ -69,16 +103,11 @@ export function createNativeRuntime(d: Deps) {
     /** Reflect the machine on the app: customer display status, the verdict, stop on block. */
     sync(s: ScanState) {
       if (!native) return;
+      settle(s);
       if (s.loop.s === 'checking' || s.loop.s === 'applying')
         native.customerStatus('checking', s.loop.input.id);
       if (s.loop.s === 'verdict') {
-        const outcome =
-          !s.loop.outcome.local && s.loop.outcome.kind === 'ok'
-            ? 'accepted'
-            : s.loop.outcome.kind === 'refused'
-              ? 'rejected'
-              : 'error';
-        native.result(s.loop.input.id, outcome);
+        const outcome = outcomeOf(s.loop.outcome);
         const displayStatus =
           outcome === 'error'
             ? 'failed'
@@ -88,6 +117,7 @@ export function createNativeRuntime(d: Deps) {
         native.customerStatus(displayStatus, s.loop.input.id);
       }
       if (s.loop.s === 'ready' || s.loop.s === 'paused') native.customerStatus('ready');
+      prev = s;
       if (s.block) native.stop();
     },
     dispose() {

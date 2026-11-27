@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fixtureInput, fixtureState } from '../machine/fixtures.test-support.ts';
+import type { ScanState } from '../machine/types.ts';
 import { buzz } from './haptics.ts';
 import { createNativeRuntime } from './native-runtime.ts';
 
@@ -11,7 +13,8 @@ const bridge = {
 function runtime() {
   return createNativeRuntime({
     session: () => ({ event: null, scanner: null }) as never,
-    emit: () => null,
+    dispatch: () => fixtureInput(),
+    now: () => 0,
     held: () => false,
     idle: () => false,
     notice: vi.fn(),

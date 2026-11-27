@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { connectNativeReader } from './native-reader.ts';
+import type { ReadResult } from './native-settle.ts';
 
 function setup() {
   const sent: Record<string, unknown>[] = [];
@@ -7,7 +8,7 @@ function setup() {
     postMessage: (s: string) => sent.push(JSON.parse(s)),
     onmessage: null as ((e: { data: string }) => void) | null,
   };
-  const read = vi.fn(() => 'input-1');
+  const read = vi.fn((): ReadResult => ({ track: 'input-1' }));
   const cancelled = vi.fn();
   const unsupported = vi.fn();
   const capabilities = vi.fn();
@@ -37,7 +38,7 @@ describe('native scanner adapter', () => {
   it('acknowledges receipt before any verdict, and keeps earlier reads pending', () => {
     const s = setup();
     s.event({ event: 'ready', features: ['scanAck'], capabilities: {} });
-    s.read.mockReturnValueOnce('input-1').mockReturnValueOnce('input-2');
+    s.read.mockReturnValueOnce({ track: 'input-1' }).mockReturnValueOnce({ track: 'input-2' });
     s.event({ event: 'scan', id: 'native-1', source: 'barcode', value: 'A' });
     expect(s.sent.at(-1)).toEqual({ version: 1, op: 'scanAck', id: 'native-1' });
     s.event({ event: 'scan', id: 'native-2', source: 'barcode', value: 'B' });
@@ -52,7 +53,7 @@ describe('native scanner adapter', () => {
   it('acknowledges a scan the page refuses, then reports the error', () => {
     const s = setup();
     s.event({ event: 'ready', features: ['scanAck'], capabilities: {} });
-    s.read.mockReturnValueOnce(null as never);
+    s.read.mockReturnValueOnce({ error: true });
     s.event({ event: 'scan', id: 'native-3', source: 'barcode', value: 'C' });
     expect(s.sent.slice(-2)).toEqual([
       { version: 1, op: 'scanAck', id: 'native-3' },
@@ -199,7 +200,7 @@ describe('native scanner adapter, bridge v2 tags', () => {
       version: 2,
       op: 'hello',
       versions: [1, 2],
-      features: ['scanAck'],
+      features: ['scanAck', 'scanSettle'],
     });
     expect(s.sent[1]).toEqual({ version: 1, op: 'stop' });
     s.client?.start();
@@ -270,7 +271,12 @@ describe('native scanner adapter, bridge v2 tags', () => {
       onmessage: null as ((e: { data: string }) => void) | null,
     };
     const client = connectNativeReader(
-      { read: vi.fn(), cancelled: vi.fn(), unsupported: vi.fn(), tagEnded },
+      {
+        read: vi.fn(() => ({ error: true as const })),
+        cancelled: vi.fn(),
+        unsupported: vi.fn(),
+        tagEnded,
+      },
       bridge,
     );
     bridge.onmessage?.({ data: JSON.stringify({ version: 2, event: 'ready', capabilities: {} }) });

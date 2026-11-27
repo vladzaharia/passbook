@@ -154,7 +154,8 @@ export async function createRuntime(
   };
   const nativeRuntime = createNativeRuntime({
     session: () => session,
-    emit,
+    dispatch: (read) => bus.emit(read),
+    now: () => clock.now(),
     held: () => held,
     idle: () => Boolean(idle()),
     notice,

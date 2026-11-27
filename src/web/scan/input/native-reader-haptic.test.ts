@@ -9,7 +9,7 @@ function setup() {
   };
   const settleReady = vi.fn();
   const client = connectNativeReader(
-    { read: () => null, cancelled: vi.fn(), unsupported: vi.fn(), settleReady },
+    { read: () => ({ error: true }), cancelled: vi.fn(), unsupported: vi.fn(), settleReady },
     bridge,
   );
   const ready = (version: 1 | 2, features?: string[]) =>
