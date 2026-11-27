@@ -38,6 +38,7 @@ export const detail = (n: number, over: Partial<RequestLogDetail> = {}): Request
   bodiesExpireAt: Date.now() + 3_600_000,
   bodiesRecorded: true,
   bodiesTruncated: false,
+  headers: null,
   ...over,
 });
 

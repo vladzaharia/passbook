@@ -139,6 +139,31 @@ describe('POST /developer/try-token', () => {
   });
 });
 
+describe('RL_API_TRY charges', () => {
+  it('spends one call of the try budget per request, on the request log too', async () => {
+    const d = await developer();
+    const { token } = await mint(d.browser);
+    const saved = t.kit.env.RL_API_TRY;
+    const limit = vi.fn(async () => ({ success: true }));
+    t.kit.env.RL_API_TRY = { limit } as unknown as RateLimit;
+    try {
+      for (const path of ['/developer/logs?source=key', '/developer/logs/missing', '/passes']) {
+        limit.mockClear();
+        await send('GET', path, fromPage(d.browser, token));
+        expect(limit, path).toHaveBeenCalledTimes(1);
+      }
+      const seen: string[] = [];
+      const spy = vi.spyOn(console, 'info').mockImplementation((l) => void seen.push(String(l)));
+      await send('GET', '/developer/logs', { authorization: 'Bearer pbtry_nope.nope' });
+      spy.mockRestore();
+      const done = seen.filter((l) => l.includes('request.done')).map((l) => JSON.parse(l));
+      expect(done.map((l) => l.route)).toContain('/api/v1/developer/logs');
+    } finally {
+      t.kit.env.RL_API_TRY = saved;
+    }
+  });
+});
+
 describe('try token revocation', () => {
   it('stops at sign-out', async () => {
     const d = await developer();
