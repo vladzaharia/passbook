@@ -1,3 +1,4 @@
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { beforeAll, expect, it } from 'vitest';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled } from '../../jobs/cron.ts';
 import { first } from '../../platform/db.ts';
@@ -20,11 +21,13 @@ it('leaves room for the daily hooks after it: 50 due passes, one cron run', asyn
   const hooks = CRON_HOOKS[DAILY_CRON] ?? [];
   hooks.push({ name: 'test.marker', run: async () => void marker++ });
   try {
+    const ctx = createExecutionContext();
     await handleScheduled(
       { cron: DAILY_CRON, scheduledTime: Date.now() } as ScheduledController,
       kit.env as AppEnv,
-      { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext,
+      ctx,
     );
+    await waitOnExecutionContext(ctx);
   } finally {
     hooks.pop();
   }

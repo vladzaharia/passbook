@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { dailyCapOf, dayStart } from '../auth/magic-caps.ts';
 import { readCounter } from '../auth/repo-magic.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { loadHooks, withHooks } from './checks-hooks.ts';
 import { connectionHealthCounts, unhealthyConnections, workflowCounts } from './repo.ts';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
@@ -90,16 +91,20 @@ export async function checkQueue(ctx: ServiceContext): Promise<Draft> {
       notes.push(`${dlqDepth} failed.`);
     }
     if (dlqDepth === null) notes.push('Dead-letter depth unavailable.');
-    return {
-      ...base,
-      state,
-      detail: notes.join(' ') || null,
-      data: {
-        backlog: m.backlogCount,
-        oldestAgeSeconds: Math.floor(oldestAge / 1000),
-        dlq: dlqDepth,
+    return withHooks(
+      {
+        ...base,
+        state,
+        detail: notes.join(' ') || null,
+        data: {
+          backlog: m.backlogCount,
+          oldestAgeSeconds: Math.floor(oldestAge / 1000),
+          dlq: dlqDepth,
+        },
       },
-    };
+      await loadHooks(ctx),
+      'queue',
+    );
   } catch (error) {
     ctx.log.warn('status.queue_metrics_failed', { error });
     return { ...base, state: 'configured', detail: 'Queue metrics unavailable.' };

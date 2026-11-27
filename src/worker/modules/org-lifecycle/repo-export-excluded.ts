@@ -19,6 +19,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   captured_emails: 'Test mode mail capture, not org data',
   channel_apply_marks: BOOKKEEPING,
   channel_apply_runs: BOOKKEEPING,
+  dlq_outcomes: BOOKKEEPING,
   connection_files:
     'uploaded files of a connection, stored in R2: upload them again after a restore',
   connection_inbox: BOOKKEEPING,

@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { areaButtonTail, WB_AREA, WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
+import { areaButtonTail, WB_SHELL_COPY, wbLabel } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
 import type { WbContext } from '../host/contexts.ts';
@@ -54,7 +54,7 @@ export function AreaButton({
   attentionIn: WbTool | null;
   onOpen: () => void;
 }) {
-  const area = WB_AREA[tool].label;
+  const area = wbLabel(tool);
   return (
     <button
       type="button"
@@ -70,7 +70,7 @@ export function AreaButton({
       <span className="whitespace-nowrap">{area}</span> <TestTag context={context} />
       {/* The name is the visible words plus these: "Logs Test, change area. Attention in Events". */}
       <span className="sr-only">
-        {areaButtonTail(attentionIn ? WB_AREA[attentionIn].label : undefined)}
+        {areaButtonTail(attentionIn ? wbLabel(attentionIn) : undefined)}
       </span>
       <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
     </button>

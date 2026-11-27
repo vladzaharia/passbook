@@ -8,65 +8,26 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
-import { behaviorPlugins } from '../../../generated/behaviors.ts';
-import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
-import { planPass } from '../../../passkit/build.ts';
 import { stampedView } from '../../../passkit/build-assets.ts';
-import { FIELD_GROUPS } from '../../../passkit/schema/constants.ts';
 import { resolvePaper } from '../../../passkit/template/paper.ts';
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
 import { paperContent } from '../../../passkit/template/paper-content.ts';
-import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
-import { PASS_STYLES, type PassJson, type TemplateManifest } from '../../../passkit/types.ts';
+import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
+import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import type { OutFile } from '../../developers/model/types.ts';
 import { PAPER_CSS } from '../../paper/css.ts';
 import { drawPaperCode } from '../../paper/drawing.ts';
 import { PaperTicket } from '../../paper/ticket.tsx';
 import type { BlueprintPreview, BlueprintPreviews } from './model.ts';
+import { planPreview } from './preview-plan.ts';
 
-/** Fixed, so two builds of the same templates are the same bytes. */
-const NOW = new Date(Date.UTC(2026, 0, 1));
 /** A code of the print code's shape, so the ticket draws a real QR; never a real ticket's. */
 const SAMPLE_CODE = 'PSAMPLEABCDEFGHIJKLMNOPQRST';
 const PAPER_WIDTH = 520;
 const PAGE_GAP = 28;
 /** The sheet is XML inside the image, so its drawings need their namespace spelled out. */
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const behaviors = createBehaviorRegistry([...behaviorPlugins]);
-const noRegistry: TemplateRegistry = {
-  list: async () => [],
-  resolve: async () => {
-    throw new Error('No registry at build time.');
-  },
-  openAsset: async () => {
-    throw new Error('No assets at build time.');
-  },
-};
-
-const SLOT = /^(contact|pass-service)(-poster)?$/;
-
-/**
- * What the preview endpoint does for an org with no contacts (modules/passes/contacts.ts,
- * `withBackContacts`): the `pass-service` back field gets the site, the empty `contact` is dropped.
- */
-function withPassService(base: PassJson, passService: string): PassJson {
-  const pass = structuredClone(base);
-  for (const style of PASS_STYLES) {
-    const dict = pass[style] as Record<string, unknown> | undefined;
-    for (const group of FIELD_GROUPS) {
-      const list = dict?.[group];
-      if (!dict || !Array.isArray(list)) continue;
-      dict[group] = list.flatMap((field: { key?: string; value?: unknown }) => {
-        const slot = SLOT.exec(typeof field?.key === 'string' ? field.key : '')?.[1];
-        if (!slot || field.value !== '') return [field];
-        return slot === 'contact' ? [] : [{ ...field, value: passService }];
-      });
-    }
-  }
-  return pass;
-}
-
 const dataUri = (root: string, slug: string, name: string | undefined): string | undefined => {
   if (!name) return undefined;
   const bytes = readFileSync(join(root, 'templates', slug, name));
@@ -117,7 +78,6 @@ export function blueprintPreviews(
 ): { json: string; files: OutFile[] } {
   const items: BlueprintPreview[] = [];
   const files: OutFile[] = [];
-  const identity = { passTypeIdentifier: 'pass.preview', teamIdentifier: 'PREVIEW000' };
   for (const b of bakedTemplates.filter((t) => t.blueprint)) {
     const template: ResolvedTemplate = {
       id: b.id,
@@ -131,24 +91,7 @@ export function blueprintPreviews(
     };
     const { inputs, sample, ...manifest } = b.manifest as unknown as Record<string, unknown>;
     const input = (sample ?? {}) as Record<string, never>;
-    const plan = planPass({
-      template,
-      registry: noRegistry,
-      input,
-      server: {
-        serial: 'preview',
-        authToken: 'preview-token-000000000000000000',
-        webServiceURL: `${origin}/wallet`,
-        organizationName: 'Your organization',
-        identity,
-        scanCode: 'PREVIEW2PASS3SCAN4CODE5XYZ',
-      },
-      signing: undefined as never,
-      behaviors,
-      now: NOW,
-    });
-    const { authenticationToken: _token, ...built } = plan.passJson;
-    const passJson = withPassService(built as PassJson, origin);
+    const passJson = planPreview({ template, input, origin });
     const names = new Set([
       ...(stampedView(template, input) ?? template.assets).map((a) => a.name),
       ...((b.manifest as TemplateManifest).previewOnlyAssets ?? []),
@@ -164,6 +107,8 @@ export function blueprintPreviews(
       inputs: (inputs ?? {}) as BlueprintPreview['inputs'],
       sample: input,
       manifest,
+      source: b.passJson as Record<string, unknown>,
+      origin,
       passJson: passJson as unknown as Record<string, unknown>,
       assetBaseUrl: `/templates/${b.slug}/${b.version}`,
       assetNames: [...names],
