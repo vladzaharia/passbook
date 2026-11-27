@@ -24,6 +24,7 @@ export interface RawOp {
   security?: Record<string, string[]>[];
   deprecated?: boolean;
   'x-sdk'?: SdkName;
+  'x-workbench'?: 'test';
   'x-codes'?: unknown;
 }
 

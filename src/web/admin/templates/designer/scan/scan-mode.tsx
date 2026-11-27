@@ -8,7 +8,7 @@ import { ConfirmDialog, toast } from '../../../../ui/index.ts';
 import { useDesigner } from '../context.tsx';
 import { DesignerLayout } from '../layout.tsx';
 import { isRecord } from '../model.ts';
-import { scanDisplayOf } from './document.ts';
+import { scanDisplayOf } from './display-of.ts';
 import { ScanOutline } from './scan-outline.tsx';
 import { scanSelectionAction } from './scan-outline-model.ts';
 import { focusScanTarget } from './scan-outline-ui.tsx';

@@ -11,6 +11,7 @@ const item = (id: string, method: RunIndexItem['method']): RunIndexItem => ({
   path: `/api/v1/${id}`,
   title: id,
   destructive: method !== 'get',
+  wb: true,
 });
 
 describe('the console start', () => {

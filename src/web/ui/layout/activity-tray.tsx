@@ -12,6 +12,8 @@ export interface ActivityTrayProps {
   client?: OperationsClient;
   /** Which operations it lists; all of the person's when omitted. Keep it stable. */
   include?: (op: Operation) => boolean;
+  /** Where the tray's "All activity" link goes, when the host has a full list. */
+  allHref?: string;
 }
 
 /** The bar's activity indicator for the admin, the holder portal and the Workbench (the `controls` slot). */

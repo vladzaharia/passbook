@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 
 /** The frame's pieces around a page's content: crumbs, Prev/Next, "On this page". */
 
@@ -69,10 +69,10 @@ export function Pager({ prev, next }: PagerLinks) {
 }
 
 export const TOOL_PATH = {
-  console: PATHS.console,
-  webhooks: PATHS.webhooks,
-  logs: PATHS.logs,
-  keys: PATHS.keys,
+  console: wbHref('console'),
+  webhooks: wbHref('events'),
+  logs: wbHref('logs'),
+  keys: wbHref('keys'),
 } as const;
 
 export interface TocItem {

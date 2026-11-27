@@ -1,0 +1,43 @@
+/* In the Workbench the page sits right of the 15 rem sidebar from 1024, so the two-column layout needs 240 px
+   more window than the docs page did: the one-column order (the pass between steps 3 and 4) holds up to 1479. */
+@media (max-width: 1479px) {
+  .wb-tool-quickstart .qs {
+    display: flex;
+    flex-direction: column;
+    padding-inline: 0;
+  }
+  .wb-tool-quickstart .qs-main,
+  .wb-tool-quickstart .qs-steps {
+    display: contents;
+  }
+  .wb-tool-quickstart .qs-step[data-step="1"] {
+    margin-top: 28px;
+  }
+  .wb-tool-quickstart .qs-step[data-step="1"],
+  .wb-tool-quickstart .qs-step[data-step="2"],
+  .wb-tool-quickstart .qs-step[data-step="3"] {
+    order: 1;
+  }
+  .wb-tool-quickstart .qs-stage {
+    order: 2;
+    align-self: stretch;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    background: none;
+    border: 1px solid var(--pk-border-subtle);
+    border-radius: var(--pk-radius-xl);
+    margin: 0 0 30px;
+    padding: 18px 16px 20px;
+  }
+  .wb-tool-quickstart .qs-step[data-step="4"],
+  .wb-tool-quickstart .qs-step[data-step="5"] {
+    order: 3;
+  }
+  .wb-tool-quickstart .qs-step:last-child {
+    padding-bottom: 56px;
+  }
+  .wb-tool-quickstart .qs-stage-card {
+    min-height: 0;
+  }
+}

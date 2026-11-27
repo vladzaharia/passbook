@@ -24,7 +24,6 @@ export * from './dropdown-menu.tsx';
 export * from './email-list.tsx';
 export * from './empty-state.tsx';
 export * from './entity.tsx';
-export * from './entity-picker.tsx';
 export * from './error-state.tsx';
 export * from './field.tsx';
 export * from './file-drop.tsx';

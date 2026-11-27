@@ -6,6 +6,8 @@ import { json, renderApp } from '../../lib/test-utils.tsx';
 import { fixtureOperation, NOW, SANDBOX_CREATE } from '../../ui/operation/fixtures.test-support.ts';
 import { resetOperationCache } from '../../ui/operation/store.ts';
 import type { Operation } from '../../ui/operation/types.ts';
+import { updateSession } from '../console/session.ts';
+import { homeFresh } from '../home/home-fixtures.ts';
 import { forgetTokens } from '../host/token.ts';
 import { setSingleKeys } from './prefs.ts';
 import { CONTEXTS, handlers } from './test-fixtures.ts';
@@ -36,16 +38,17 @@ const SESSION_PATHS = new Set([
   '/api/v1/workbench/token',
   '/api/v1/orgs/memberships/me',
   '/api/v1/orgs',
+  // The person's own addresses (the inbox's Send to me check): account data, not a tenant call.
+  '/api/v1/me/emails',
+  // The person's own sandbox home: the server holds it to the session and refuses a `pbtry_` bearer there.
+  '/api/v1/developer/home',
 ]);
 /**
- * W2 moved these sandbox-only tools in with their calls still on the cookie session. The server holds a
- * sandbox to Test (`SANDBOX_TEST_ONLY`). Each entry names the T package that moves it onto the token;
- * the list shrinks to zero and the test below fails if it grows.
+ * Calls a tool may still make on the cookie session instead of the token. Every tool is on the token
+ * now: the sandbox's lifecycle, key mint and Home read are account-level and live in SESSION_PATHS.
+ * The list must stay empty; an entry needs a written reason and fails the test below.
  */
-const SESSION_CLIENT_EXEMPT: readonly { path: string; movedBy: string }[] = [
-  { path: '/api/v1/developer/sandbox', movedBy: 'T1' },
-  { path: '/api/v1/developer/home', movedBy: 'T8' },
-];
+const SESSION_CLIENT_EXEMPT: readonly { path: string; reason: string }[] = [];
 const EXEMPT_PATHS = new Set(SESSION_CLIENT_EXEMPT.map((e) => e.path));
 const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
   fetchMock.mock.calls
@@ -60,6 +63,13 @@ const apiCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
 const headerOf = (init: RequestInit): Record<string, string> =>
   Object.fromEntries(new Headers(init.headers).entries());
 
+const SANDBOX_SESSION = {
+  kind: 'ready',
+  csrf: 'csrf-token',
+  siteKey: 'site',
+  sandbox: { id: 's1', orgId: 'sbx', orgSlug: 'dev-4f8c673e', templateId: null },
+} as const;
+
 describe('the Workbench tray (R4 H1)', () => {
   const ops = [
     running('op_live', 'LIVE bulk reissue', 'nw', 'live'),
@@ -72,7 +82,7 @@ describe('the Workbench tray (R4 H1)', () => {
   });
 
   it("lists only this context's Test operations, and counts only those", async () => {
-    const { fetchMock } = await renderApp('/workbench/o/nw/activity', {
+    const { fetchMock } = await renderApp('/workbench/o/nw/logs', {
       session: 'developer',
       handlers: withOps(),
     });
@@ -115,12 +125,8 @@ describe('the Workbench tray (R4 H1)', () => {
 });
 
 describe('the session-client exemption list', () => {
-  it('only shrinks: at most two sandbox-only entries, each owned by a T package', () => {
-    expect(SESSION_CLIENT_EXEMPT.length).toBeLessThanOrEqual(2);
-    for (const { path, movedBy } of SESSION_CLIENT_EXEMPT) {
-      expect(path).toMatch(/^\/api\/v1\/developer\/(sandbox|home)$/);
-      expect(movedBy).toMatch(/^T[1-8]$/);
-    }
+  it('is empty: no tool reads the sandbox on the session', () => {
+    expect(SESSION_CLIENT_EXEMPT).toEqual([]);
   });
 });
 
@@ -133,6 +139,8 @@ describe('the runtime boundary (R4 M7, L14)', () => {
         session: 'developer',
         handlers: {
           ...handlers({ errors: 2 }),
+          // The Console reads the docs' operation index (a static file, not an API call).
+          '/developers/run/index.json': () => json({ codes: [], groups: [] }),
           '/api/v1/operations': () =>
             json({ items: [running('op_1', 'NW test job', 'nw', 'test')] }),
         },
@@ -163,6 +171,7 @@ describe('the runtime boundary (R4 M7, L14)', () => {
   );
 
   it('the sandbox context holds to the same rule', async () => {
+    updateSession(SANDBOX_SESSION);
     const { fetchMock } = await renderApp('/workbench/o/sbx/sandbox', {
       session: 'developer',
       handlers: handlers(),
@@ -176,12 +185,15 @@ describe('the runtime boundary (R4 M7, L14)', () => {
 
 describe('more of the boundary (R4 N3)', () => {
   it('Quickstart in the sandbox: every tenant call carries the token', async () => {
+    updateSession(SANDBOX_SESSION);
     const { fetchMock } = await renderApp('/workbench/quickstart', {
       session: 'developer',
-      handlers: handlers(),
+      handlers: { ...handlers(), '/api/v1/developer/home': () => json(homeFresh) },
     });
     await waitFor(() => expect(screen.getByRole('main')).toHaveTextContent('Quickstart'));
-    await waitFor(() => expect(apiCalls(fetchMock).length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(allCalls(fetchMock).some(({ path: p }) => p === '/api/v1/developer/home')).toBe(true),
+    );
     for (const { path: p, init } of allCalls(fetchMock)) {
       expect(
         Object.keys(headerOf(init)).filter((h) => /mode/i.test(h)),
@@ -217,7 +229,7 @@ describe('more of the boundary (R4 N3)', () => {
       posts.push(`${id}:${String(init?.method)}`);
       return json({ operation: { ...live, id } });
     };
-    const { fetchMock } = await renderApp('/workbench/o/nw/activity', {
+    const { fetchMock } = await renderApp('/workbench/o/nw/logs', {
       session: 'developer',
       handlers: {
         ...handlers(),

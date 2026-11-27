@@ -1,0 +1,25 @@
+/* The inbox on the bench: what its rows and detail add to the primitives (bench/list.css, inspector.css). */
+.inbox-subject {
+  font: 500 14px / 20px var(--pk-font-sans);
+}
+.inbox-to {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-kind {
+  color: var(--pk-text-muted);
+  font: 400 12px / 18px var(--pk-font-mono);
+}
+.inbox-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.inbox-none {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--pk-text-muted);
+}

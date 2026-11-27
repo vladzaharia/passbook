@@ -45,12 +45,15 @@ describe('guide pages', () => {
     expect(read('developers/guides.md')).toContain('## At the door');
   });
 
-  it('opens the console prefilled from every runnable guide', () => {
+  it('opens the Workbench Console on the operation from every runnable guide', () => {
     for (const g of DEV_GUIDES.filter((d) => d.id !== 'partner-apps')) {
-      const links = [...page(g.id).matchAll(/href="(\/developers\/console#[^"]+)"/g)];
+      const links = [...page(g.id).matchAll(/href="(\/workbench\/console\?op=[^"]+)"/g)];
       expect(links.length, g.id).toBeGreaterThan(0);
     }
-    expect(page('issue-on-purchase')).toContain('/developers/console#passes.postPasses?body=');
+    expect(page('issue-on-purchase')).toContain(
+      '/workbench/console?op=passes.postPasses&amp;sample=',
+    );
+    expect(page('issue-on-purchase')).not.toMatch(/href="\/workbench[^"]*body=/);
   });
 
   it('copies the guide and its operation list for AI', () => {

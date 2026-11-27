@@ -18,24 +18,9 @@ import { api } from '../../lib/api.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { fetchPreview, scopePreviewAssets, templatePreviewKey } from '../../lib/preview-batch.ts';
+import { type TemplateFilters, templateKeys } from './keys.ts';
 
-export interface TemplateFilters {
-  orgId?: string | undefined;
-  origin?: 'baked' | 'uploaded' | undefined;
-  includeArchived?: boolean | undefined;
-  q?: string | undefined;
-  /** True lists blueprints; templates otherwise. */
-  blueprint?: boolean | undefined;
-}
-
-export const templateKeys = {
-  all: ['admin', 'templates'] as const,
-  list: (f: TemplateFilters) => ['admin', 'templates', 'list', f] as const,
-  detail: (id: string, orgId?: string) =>
-    ['admin', 'templates', 'detail', id, orgId ?? null] as const,
-  import: (id: string, orgId: string | undefined) =>
-    ['admin', 'templates', 'import', id, orgId ?? null] as const,
-};
+export { type TemplateFilters, templateKeys };
 
 function useTemplateListOrg(orgId: string | undefined): string | undefined {
   const scope = useOrgScope();

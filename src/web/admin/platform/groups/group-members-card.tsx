@@ -5,6 +5,7 @@ import { GROUP_COPY } from '@/shared/copy/idp-platform.ts';
 import { removeGroupMemberConfirm } from '@/web/lib/confirms-idp.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { personLabel } from '@/web/lib/format.ts';
+import { EntityPicker } from '@/web/ui/entity-picker.tsx';
 import {
   Button,
   Card,
@@ -13,7 +14,6 @@ import {
   ConfirmDialog,
   EmptyState,
   EntityAvatar,
-  EntityPicker,
   ErrorState,
   FormDialog,
   FormField,

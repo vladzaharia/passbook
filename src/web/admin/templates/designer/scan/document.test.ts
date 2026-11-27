@@ -3,7 +3,8 @@ import { renderScanDisplay } from '@/passkit/template/scan-display/render.ts';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import { sampleDoc } from '../fixtures.ts';
 import type { DesignDoc } from '../model.ts';
-import { scanDisplayOf, scanIssues } from './document.ts';
+import { scanDisplayOf } from './display-of.ts';
+import { scanIssues } from './document.ts';
 
 const display: ScanDisplayDoc = {
   v: 1,

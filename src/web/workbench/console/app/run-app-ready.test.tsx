@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const m = vi.hoisted(() => ({
@@ -8,7 +7,7 @@ const m = vi.hoisted(() => ({
   retain: vi.fn(() => () => undefined),
 }));
 vi.mock('../data.ts', () => ({ loadIndex: m.loadIndex, loadFile: m.loadFile }));
-vi.mock('../token.ts', () => ({ retain: m.retain }));
+vi.mock('../token.ts', () => ({ retain: m.retain, tokenHeld: () => false }));
 vi.mock('./console.tsx', () => ({
   OpConsole: ({ op, mode, prefill }: { op: { id: string }; mode: string; prefill?: unknown }) => (
     <p>
@@ -36,7 +35,6 @@ vi.mock('./index-pane.tsx', () => ({
   ),
 }));
 
-import { ConsoleApp } from './console-app.tsx';
 import { RunApp } from './run-app.tsx';
 
 const sandbox = { id: 's', orgId: 'org-1', orgSlug: 'o', templateId: 't' };
@@ -85,33 +83,5 @@ describe('RunApp with a sandbox', () => {
     m.loadFile.mockRejectedValue(new Error('x'));
     render(<RunApp session={ready} mode="sheet" slug="passes" opId="a" />);
     expect(await screen.findByText('Could not load this operation')).toBeInTheDocument();
-  });
-
-  it('the console page starts on the hashed operation and follows the picker', async () => {
-    location.hash = '#b';
-    m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<ConsoleApp session={ready} />);
-    expect(await screen.findByText('current b')).toBeInTheDocument();
-    expect(await screen.findByText(/console b console/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Reference' })).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByText('pick a'));
-    await waitFor(() => expect(screen.getByText('current a')).toBeInTheDocument());
-    expect(location.hash).toBe('#a');
-  });
-
-  it('the console page opens on the first read, and says so in the address, when none is linked', async () => {
-    m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<ConsoleApp session={ready} />);
-    expect(await screen.findByText('current a')).toBeInTheDocument();
-    expect(location.hash).toBe('#a');
-  });
-
-  it('keeps a guide link\u2019s prefill for its operation and drops it for another', async () => {
-    location.hash = '#b?body=%7B%7D';
-    m.loadFile.mockResolvedValue({ origin: 'https://x', ops: [{ id: 'a' }, { id: 'b' }] });
-    render(<ConsoleApp session={ready} />);
-    expect(await screen.findByText(/console b console prefilled/)).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByText('pick a'));
-    expect(await screen.findByText(/console a console plain/)).toBeInTheDocument();
   });
 });

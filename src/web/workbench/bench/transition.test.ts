@@ -26,24 +26,24 @@ function reveal(at: string, from: { nav?: string | null; referrer?: string }) {
 
 describe('the tool switch', () => {
   it('runs from one tool to another, typed by tab order', () => {
-    const next = reveal('/developers/logs', { nav: `${ORIGIN}/developers/console` });
+    const next = reveal('/workbench/logs', { nav: `${ORIGIN}/workbench/console` });
     expect(next.skipTransition).not.toHaveBeenCalled();
     expect([...next.types]).toEqual(['bench-next']);
-    const back = reveal('/developers/webhooks/', { nav: `${ORIGIN}/developers/keys#k1` });
+    const back = reveal('/workbench/events/', { nav: `${ORIGIN}/workbench/keys#k1` });
     expect([...back.types]).toEqual(['bench-back']);
   });
 
   it('reads the referrer where there is no Navigation API', () => {
-    const vt = reveal('/developers/keys', { referrer: `${ORIGIN}/developers/logs?status=4xx` });
+    const vt = reveal('/workbench/keys', { referrer: `${ORIGIN}/workbench/logs?status=4xx` });
     expect([...vt.types]).toEqual(['bench-next']);
   });
 
   it('skips any other navigation: from a docs page, the same tool, or nowhere', () => {
     for (const vt of [
-      reveal('/developers/logs', { nav: `${ORIGIN}/developers/guides` }),
-      reveal('/developers/logs', { nav: `${ORIGIN}/developers/logs` }),
-      reveal('/developers/logs', { nav: null }),
-      reveal('/developers/guides', { nav: `${ORIGIN}/developers/logs` }),
+      reveal('/workbench/logs', { nav: `${ORIGIN}/developers/guides` }),
+      reveal('/workbench/logs', { nav: `${ORIGIN}/workbench/logs` }),
+      reveal('/workbench/logs', { nav: null }),
+      reveal('/developers/guides', { nav: `${ORIGIN}/workbench/logs` }),
     ])
       expect(vt.skipTransition).toHaveBeenCalledOnce();
   });

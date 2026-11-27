@@ -1,13 +1,18 @@
 import { ConsolePage } from '../console/app/console-page.tsx';
-import { LegacyTool } from './legacy.tsx';
+import { ToolPage } from '../shell/tool-page.tsx';
+import '../bench/bench.css';
+import '../bench/pane.css';
 import '../console/console.css';
 import '../console/page.css';
+import '../styles/legacy.css';
 
-/** Console (T5 rebuilds it on the token client): the moved bench tool on the sandbox's session. */
+/** Console: any operation of the API, run on the org's Workbench token (design §3, T5). */
 export function ConsoleToolPage() {
   return (
-    <LegacyTool tool="console" className="wb-tool-console">
-      {({ sandbox, csrf }) => <ConsolePage sandbox={sandbox} csrf={csrf} />}
-    </LegacyTool>
+    <ToolPage tool="console">
+      <div className="wb-legacy wb-tool-console">
+        <ConsolePage />
+      </div>
+    </ToolPage>
   );
 }

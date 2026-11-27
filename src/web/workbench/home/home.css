@@ -1,0 +1,71 @@
+/* Home: the live lists' arrival wash and the pass fan. Tokens only; nothing moves under reduced motion. */
+@keyframes wb-home-wash {
+  from {
+    background-color: color-mix(in oklab, var(--pk-accent) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes wb-home-stamp {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes wb-home-deal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(0deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wb-home-row[data-fresh] {
+    animation:
+      wb-home-wash 1.6s var(--wl-ease-out) both,
+      wb-home-stamp var(--wl-dur-enter) var(--wl-ease-out) both;
+  }
+  .wb-home-fan > * {
+    animation: wb-home-deal var(--wl-dur-card) var(--wl-ease-bounce) both;
+  }
+  .wb-home-fan > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .wb-home-fan > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+}
+.wb-home-fan > * {
+  transition: transform var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wb-home-fan > :nth-child(1) {
+  rotate: -6deg;
+  translate: 0 6px;
+}
+.wb-home-fan > :nth-child(3) {
+  rotate: 6deg;
+  translate: 0 6px;
+}
+.wb-home-fan > :nth-child(n + 2) {
+  margin-inline-start: -0.75rem;
+}
+.wb-home-fan > :nth-child(2) {
+  z-index: 1;
+}
+.wb-home-fan[data-n="1"] > *,
+.wb-home-fan[data-n="2"] > :nth-child(2) {
+  rotate: 0deg;
+  translate: 0;
+}
+.wb-home-fan > a:hover,
+.wb-home-fan > a:focus-visible {
+  z-index: 2;
+  transform: translateY(-6px);
+}
+.wb-home-meter > i {
+  transition: width var(--wl-dur-card) var(--wl-ease-out);
+}

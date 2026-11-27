@@ -275,3 +275,25 @@
 .mt8 {
   margin-top: 32px;
 }
+/* The companion link to the Workbench: a button in the bar from 720 px, the sheet's first row below. */
+.dev-wb {
+  display: none;
+  gap: 8px;
+}
+.dev-wb-face {
+  width: 20px;
+  height: 20px;
+}
+.menu-wb {
+  display: inline-flex;
+  align-items: center;
+}
+@media (min-width: 720px) {
+  .dev-wb {
+    display: inline-flex;
+    align-items: center;
+  }
+  .menu-wb {
+    display: none;
+  }
+}

@@ -36,7 +36,7 @@ describe('a body in the bench', () => {
     const tree = screen.getByRole('region', { name: 'Response' });
     // The chip arrives as its own chunk, after the id shows as plain text.
     expect(
-      await within(tree).findByRole('button', { name: `Copy object id ${PASS}` }),
+      await within(tree).findByRole('button', { name: new RegExp(`, Copy object id ${PASS}$`) }),
     ).toBeTruthy();
     expect(within(tree).getByRole('button', { name: 'Open object' })).toBeTruthy();
   });

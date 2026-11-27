@@ -21,15 +21,9 @@ import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { registerTemplateChannelRoutes } from '../channels/routes.ts';
-import {
-  authOf,
-  orgIdOf,
-  requireTenantSession,
-  requireTenantSessionOrApiKey,
-} from '../passes/http.ts';
+import { authOf, orgIdOf } from '../passes/http.ts';
 import { registerTemplateScanSetup } from '../scan/routes-template-setup.ts';
 import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate } from './fork.ts';
@@ -38,6 +32,7 @@ import { assignOrg } from './org-assignment.ts';
 import { registerTemplateReleaseFlow } from './release-flow-route.ts';
 import { TemplateScopeQuerySchema } from './route-scope.ts';
 import { registerBlueprints } from './routes-blueprints.ts';
+import { templatesGuard } from './routes-guard.ts';
 import {
   registerInputSchema,
   registerLifecycle,
@@ -57,29 +52,7 @@ import { VERSION_BODY_LIMIT } from './version-files.ts';
 export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
-/** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
-const OWN_AUTH_WRITES =
-  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|release|review|review-requests|preview)\/?$/;
-
-// Template reads allow scoped API keys; mutations require a session and are authorized per org.
-// The scan setup route declares its own `auth` (a session or a `scanning:write` key).
-const SCAN_SETUP = /^\/api\/v1\/templates\/[^/]+\/scan-setup$/;
-templatesRoutes.use(
-  '*',
-  declareKeyAccess(
-    async (c, next) =>
-      c.req.method === 'POST' && (SCAN_SETUP.test(c.req.path) || OWN_AUTH_WRITES.test(c.req.path))
-        ? next()
-        : c.req.method === 'GET'
-          ? requireTenantSessionOrApiKey(
-              /\/templates\/eligible\/?$/.test(c.req.path)
-                ? ['templates:read', 'passes:read']
-                : 'templates:read',
-            )(c, next)
-          : requireTenantSession(c, next),
-    { read: ['templates:read'] },
-  ),
-);
+templatesRoutes.use('*', templatesGuard);
 templatesRoutes.use(
   '/uploads',
   bodyLimit({

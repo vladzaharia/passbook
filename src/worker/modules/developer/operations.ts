@@ -48,9 +48,12 @@ const resumed =
 const stepDone = (op: OperationDto, key: string) =>
   op.steps.find((s) => s.key === key)?.state === 'done';
 
+/** The person's own session, or the one a sandbox Workbench token carries for its owner (the token is theirs). */
 const sessionOnly = (caller: AuthContext): SessionAuth => {
-  if (caller.kind !== 'session') throw new ForbiddenError();
-  return caller;
+  if (caller.kind === 'session') return caller;
+  const person = caller.kind === 'api_key' ? caller.workbench?.person : undefined;
+  if (!person) throw new ForbiddenError();
+  return person;
 };
 
 /** A retry runs the start's own checks again: the rate limit, and the day's slot unless an attempt already took it. */

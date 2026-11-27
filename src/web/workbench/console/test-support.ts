@@ -29,6 +29,8 @@ export const passesCreate: RunOp = {
     },
   },
   example: { templateId: 'tpl_1', input: { name: 'Ada' } },
+  wb: true,
+  sdk: { call: 'pb.passes.create' },
 };
 
 export const passesVoid: RunOp = {
@@ -50,6 +52,7 @@ export const passesVoid: RunOp = {
   ],
   body: null,
   example: undefined,
+  sdk: { call: 'pb.passes.void' },
 };
 
 type Reply = (call: Call) => Response | Promise<Response>;

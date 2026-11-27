@@ -57,6 +57,21 @@ export const memberTokenRow = (
     [claims.orgId, claims.membershipId, claims.sessionIdHash, claims.generation, now],
   );
 
+/** The sandbox person's live session and membership: their user and session roles (a sandbox token's key routes). */
+export const sandboxPersonRow = (
+  db: D1Database,
+  orgId: string,
+  membershipId: string,
+  sessionIdHash: string,
+) =>
+  first<{ user_id: string; roles: string }>(
+    db,
+    `SELECT s.user_id, s.roles FROM sessions s
+     JOIN org_memberships m ON m.id = ?1 AND m.org_id = ?2 AND m.user_id = s.user_id AND m.revoked_at IS NULL
+     WHERE s.id_hash = ?3 AND s.revoked_at IS NULL`,
+    [membershipId, orgId, sessionIdHash],
+  );
+
 /** Ends every member token of the session: the next mint carries the new generation. */
 export const bumpMemberEpoch = (db: D1Database, sessionIdHash: string, now: number) =>
   run(

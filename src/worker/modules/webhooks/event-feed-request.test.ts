@@ -34,6 +34,34 @@ describe('GET /events?requestId= and /events/{id}/deliveries', () => {
     });
   });
 
+  it('reads newest first in one page, and the cursor continues from the newest', async () => {
+    const s = await t.sandbox();
+    await t.eventsFor(s, ['ray-d-SEA', 'ray-e-SEA', 'ray-f-SEA']);
+    const asc = (await t.call('GET', '/events', s.key))[1];
+    const [status, desc] = await t.call('GET', '/events?order=desc&limit=2', s.key);
+    expect(status).toBe(200);
+    expect(desc.items.map((e: { id: string }) => e.id)).toEqual(
+      asc.items
+        .slice(-2)
+        .reverse()
+        .map((e: { id: string }) => e.id),
+    );
+    expect(desc.hasMore).toBe(true);
+    // The cursor is the newest event's: nothing comes after it yet.
+    expect(desc.nextCursor).toBe(asc.nextCursor);
+    const next = (await t.call('GET', `/events?after=${desc.nextCursor}`, s.key))[1];
+    expect(next.items).toEqual([]);
+    await expectProblem(
+      await t.app.request(
+        `https://wallet.test/api/v1/events?order=desc&after=${desc.nextCursor}`,
+        { headers: s.key },
+        t.kit.env,
+      ),
+      422,
+      'VALIDATION',
+    );
+  });
+
   it('answers not found for an event of another sandbox', async () => {
     const a = await t.sandbox();
     const b = await t.sandbox();

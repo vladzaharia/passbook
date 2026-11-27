@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { chainLevelOf } from '@/shared/channels.ts';
-import { useTemplateChannels } from '../../channels/api.ts';
+import { useTemplateChannels } from '../../channels/reads.ts';
 import type { WalletName } from './roles-model.ts';
 
 export interface WalletChannels {

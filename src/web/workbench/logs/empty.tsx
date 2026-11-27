@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
-import { PATHS } from '../../../shared/developers.ts';
+import { WB_EMPTY } from '../../../shared/copy/workbench-states.ts';
+import { wbPath } from '../../../shared/workbench.ts';
+import { useToolApi } from '../../lib/tool-api.tsx';
 import { BenchCode } from '../bench/code-block.tsx';
 import { BenchState } from '../bench/state.tsx';
-import { LOG_API } from './model.ts';
+import { readLog } from './api.ts';
 
 const S = LOGS_BENCH_COPY.state;
 
@@ -14,20 +16,17 @@ const firstCall = (origin: string) =>
 
 /** How many calls exist from the portal (Run here, its own reads): the default view hides them. */
 function usePortalCalls(): number {
+  const api = useToolApi();
   const [count, setCount] = useState(0);
   useEffect(() => {
-    let live = true;
-    fetch(`${LOG_API}?source=try&limit=100`, { headers: { accept: 'application/json' } })
-      .then(async (res) => (res.ok ? ((await res.json()) as { items: unknown[] }).items.length : 0))
-      .then((n) => live && setCount(n))
-      .catch((error: unknown) => {
-        // The empty state shows without the hint; the page's handler hears why.
-        reportError(error);
-      });
-    return () => {
-      live = false;
-    };
-  }, []);
+    const ctl = new AbortController();
+    readLog(api, { source: 'try' }, { signal: ctl.signal }).then(
+      (page) => setCount(page.items.length),
+      // The empty state shows without the hint.
+      () => undefined,
+    );
+    return () => ctl.abort();
+  }, [api]);
   return count;
 }
 
@@ -36,7 +35,15 @@ function usePortalCalls(): number {
  * itself ready to copy, or the way to a key when there is none. Calls from the portal alone are said and shown
  * in one tap.
  */
-export function FirstCall({ hasKey, onShowPortal }: { hasKey: boolean; onShowPortal: () => void }) {
+export function FirstCall({
+  orgId,
+  hasKey,
+  onShowPortal,
+}: {
+  orgId: string;
+  hasKey: boolean;
+  onShowPortal: () => void;
+}) {
   const portal = usePortalCalls();
   if (portal > 0)
     return (
@@ -47,7 +54,7 @@ export function FirstCall({ hasKey, onShowPortal }: { hasKey: boolean; onShowPor
       </BenchState>
     );
   return (
-    <BenchState scene="logs-idle" title={hasKey ? undefined : S.noCalls}>
+    <BenchState scene="logs-idle" title={hasKey ? WB_EMPTY.logs?.title : S.noCalls}>
       {hasKey ? (
         <div className="logs-first">
           <BenchCode label="curl" lang="curl" body={firstCall(location.origin)} empty={S.noCalls} />
@@ -57,14 +64,15 @@ export function FirstCall({ hasKey, onShowPortal }: { hasKey: boolean; onShowPor
       )}
       <div className="logs-first-a">
         {hasKey ? null : (
-          <a className="btn" href={PATHS.keys}>
+          <a className="btn" href={wbPath(orgId, 'keys')}>
             {S.makeKey}
           </a>
         )}
-        <a className={hasKey ? 'btn' : 'btn outline'} href={PATHS.console}>
+        <a className={hasKey ? 'btn' : 'btn outline'} href={wbPath(orgId, 'console')}>
           {S.console}
         </a>
       </div>
+      <p className="sm muted logs-kept">{LOGS_BENCH_COPY.kept}</p>
     </BenchState>
   );
 }

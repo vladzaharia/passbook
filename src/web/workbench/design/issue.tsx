@@ -1,0 +1,175 @@
+import { useNavigate } from '@tanstack/react-router';
+import { QrCode, Ticket } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
+import { wbPath } from '@/shared/workbench.ts';
+import { useDesigner } from '../../admin/templates/designer/context.tsx';
+import { useDesignerHost } from '../../admin/templates/designer/host.tsx';
+import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../../pass-card/barcode-engine.ts';
+import { Button } from '../../ui/button.tsx';
+import { CopyButton } from '../../ui/copy-button.tsx';
+import { Dialog, DialogContent } from '../../ui/dialog.tsx';
+import { IconButton } from '../../ui/icon-button.tsx';
+import { toast } from '../../ui/toaster.tsx';
+import { useOptionalToolHost } from '../host/tool-host.tsx';
+import { sampleOf } from './sample.ts';
+import { useOpenTemplate } from './template-context.tsx';
+
+type Issued = { id: string; downloadUrl: string };
+
+/** Issues a Test pass from the template's Test release with the sample on screen. */
+export function useIssue() {
+  const { issueTest } = useDesignerHost();
+  const { doc } = useDesigner();
+  const { id } = useOpenTemplate();
+  const [busy, setBusy] = useState(false);
+  const gone = useRef(false);
+  useEffect(() => {
+    gone.current = false;
+    return () => {
+      gone.current = true;
+    };
+  }, []);
+  async function issue(): Promise<Issued | null> {
+    if (!issueTest || busy) return null;
+    setBusy(true);
+    try {
+      const pass = await issueTest({ templateId: id, input: sampleOf(doc) });
+      return { id: pass.id, downloadUrl: pass.downloadUrl };
+    } catch (cause) {
+      toast.error(cause, WB_DESIGN.phone.failed);
+      return null;
+    } finally {
+      if (!gone.current) setBusy(false);
+    }
+  }
+  return { issue, busy, can: Boolean(issueTest) };
+}
+
+/** A link as a QR on a white tile, drawn as an image. Without the encoder the link beside it is the way in. */
+function Qr({ value }: { value: string }) {
+  const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
+  useEffect(() => {
+    if (engine) return;
+    let live = true;
+    loadBarcodeEngine().then(
+      (e) => live && setEngine(() => e),
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [engine]);
+  const size = 'size-44 rounded-lg bg-white p-2';
+  if (!engine) return <span className={size} aria-hidden />;
+  const svg = engine({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
+  return (
+    <img
+      className={size}
+      src={`data:image/svg+xml;base64,${btoa(svg)}`}
+      alt="QR code of the Add to Wallet link"
+    />
+  );
+}
+
+const absolute = (url: string) => (url.startsWith('/') ? `${location.origin}${url}` : url);
+
+/**
+ * Try on my phone (design §3.4). In an org's Test it issues a test pass and shows its own Add to
+ * Wallet link as a QR. In a sandbox the device-pass install is not built yet (S4), so the dialog
+ * says so and names the pass it made; nothing pretends to install.
+ */
+export function TryOnPhone({ icon = false }: { icon?: boolean }) {
+  const { issue, busy, can } = useIssue();
+  const host = useOptionalToolHost();
+  const [issued, setIssued] = useState<Issued | null>(null);
+  const [open, setOpen] = useState(false);
+  if (!can) return null;
+  const run = async () => {
+    const made = await issue();
+    if (!made) return;
+    setIssued(made);
+    setOpen(true);
+  };
+  const sandbox = host?.context.kind === 'sandbox';
+  return (
+    <>
+      {icon ? (
+        <IconButton
+          label={WB_DESIGN.phone.action}
+          icon={<QrCode aria-hidden />}
+          variant="outline"
+          disabled={busy}
+          onClick={() => void run()}
+        />
+      ) : (
+        <Button
+          variant="outline"
+          iconStart={<QrCode aria-hidden />}
+          loading={busy}
+          onClick={() => void run()}
+        >
+          {WB_DESIGN.phone.action}
+        </Button>
+      )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          title={WB_DESIGN.phone.title}
+          size="sm"
+          footer={
+            <>
+              <Button variant="outline" loading={busy} onClick={() => void run()}>
+                {WB_DESIGN.phone.again}
+              </Button>
+              <Button onClick={() => setOpen(false)}>{WB_DESIGN.phone.done}</Button>
+            </>
+          }
+        >
+          {issued ? (
+            <div className="grid justify-items-center gap-3 text-center">
+              {sandbox ? (
+                <p className="text-sm text-fg-muted">{WB_DESIGN.phone.sandbox}</p>
+              ) : (
+                <>
+                  <Qr value={absolute(issued.downloadUrl)} />
+                  <p className="text-sm text-fg-muted">{WB_DESIGN.phone.scan}</p>
+                  <CopyButton value={absolute(issued.downloadUrl)} label={WB_DESIGN.phone.link} />
+                </>
+              )}
+              <p className="font-mono text-xs text-fg-muted">{issued.id}</p>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** Issue test pass: a pass of the template's Test release with this sample, named in a toast with its way to Passes. */
+export function IssueTestPass() {
+  const { issue, busy, can } = useIssue();
+  const host = useOptionalToolHost();
+  const navigate = useNavigate();
+  if (!can) return null;
+  const run = async () => {
+    const made = await issue();
+    if (!made) return;
+    const message = `${WB_DESIGN.phone.issued} ${made.id}`;
+    if (host)
+      toast.action(message, {
+        label: 'Passes',
+        onClick: () => void navigate({ to: wbPath(host.context.orgId, 'passes') }),
+      });
+    else toast.success(message);
+  };
+  return (
+    <Button
+      variant="outline"
+      iconStart={<Ticket aria-hidden />}
+      loading={busy}
+      onClick={() => void run()}
+    >
+      {WB_DESIGN.phone.issue}
+    </Button>
+  );
+}

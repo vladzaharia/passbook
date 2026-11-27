@@ -8,7 +8,7 @@ import {
   RotatedApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { viaToken } from '../../platform/auth-workbench.ts';
+import { viaToken, workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
@@ -47,6 +47,9 @@ export async function authorizeKey(
   id: string,
   capability: 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
+  // A sandbox token reads the key it stands for (the Logs key chip opens it) but never changes it.
+  if (capability === 'integrations:manage' && workbenchPinOf(auth)?.keyId === id)
+    throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
   // Under a Workbench token a Live key, or one of another org, is not found.
   if (viaToken(auth) && (await getKey(ctx.env.DB, id, orgId))?.mode !== 'test')
     throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
