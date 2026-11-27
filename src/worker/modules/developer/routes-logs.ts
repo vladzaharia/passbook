@@ -50,8 +50,8 @@ export const logCaller = declareKeyAccess(
 );
 
 export const developerLogRoutes = createRouter();
-for (const path of ['/logs', '/logs/*', '/rail', '/resolve'])
-  developerLogRoutes.use(path, logCaller);
+// `/logs/*` also matches `/logs`: a second `/logs` entry would run the guard, and charge the try budget, twice.
+for (const path of ['/logs/*', '/rail', '/resolve']) developerLogRoutes.use(path, logCaller);
 
 register(
   developerLogRoutes,

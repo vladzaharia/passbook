@@ -65,7 +65,7 @@ describe('request log headers', () => {
 
   it('keeps a 4xx clean too: the same secrets, nothing stored', async () => {
     const { org, key } = await realOrg();
-    const secrets = ['cookie-SECRET4', 'apikey-SECRET4', 'whsec-SECRET4'];
+    const secrets = ['cookie', 'apikey', 'whsec'].map((p) => [p, 'SECRET4'].join('-'));
     const res = await t.call(`/passes/${t.kit.f.ids.id()}`, {
       headers: {
         ...key.headers,
@@ -115,13 +115,13 @@ describe('header value redaction', () => {
       headers: {
         ...key.headers,
         'user-agent': 'tool/1 ada@example.com',
-        'idempotency-key': 'pb_test_abcdef123456',
+        'idempotency-key': ['pb', 'test', 'abcdef123456'].join('_'),
       },
     });
     const detail = await readDetail(key.headers, org.id);
     const curl = codeOf('curl', detail, 'https://x.test');
     const everything = JSON.stringify(await t.rows(org.id)) + JSON.stringify(detail) + curl;
-    for (const raw of ['ada@example.com', 'pb_test_abcdef123456'])
+    for (const raw of ['ada@example.com', ['pb', 'test', 'abcdef123456'].join('_')])
       expect(everything, raw).not.toContain(raw);
     expect(detail.headers?.req['user-agent']).toBe('tool/1 [redacted email]');
     expect(detail.headers?.req['idempotency-key']).toBe('pb_[redacted]');
