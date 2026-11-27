@@ -4,10 +4,12 @@ import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captur
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
+import { ApiError } from '../../lib/errors.ts';
 import { formatTime } from '../../lib/format.ts';
+import { isLimited } from '../../lib/poll-backoff.ts';
 import { type LiveClient, PORTAL_READ } from '../playground/live.ts';
 import { Step, type StepState } from './parts.tsx';
-import { usePoll } from './use-home.ts';
+import { useSinglePoll } from './single-poll.ts';
 import type { Quickstart } from './use-quickstart.ts';
 
 const H = QS_COPY.hear;
@@ -26,14 +28,17 @@ function useCaptures(client: LiveClient | null, endpointId: string | undefined, 
       );
       // Events can arrive in any order: the list is by event time, newest first.
       if (page.body) setItems([...page.body.items].sort((a, b) => b.createdAt - a.createdAt));
-    } catch {
-      // The list keeps what it has; the next poll asks again.
+      else if (page.status === 429)
+        throw new ApiError({ status: 429, code: 'rate_limited', retryAfter: page.retryAfter });
+    } catch (error) {
+      // The list keeps what it has; the next poll asks again. A 429 slows the page's loop.
+      if (isLimited(error)) throw error;
     }
   }, [client, endpointId]);
   useEffect(() => {
     void read();
   }, [read]);
-  usePoll(active, () => void read(), 2000);
+  useSinglePoll('hear', active, read);
   return { items, read };
 }
 

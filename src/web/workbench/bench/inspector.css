@@ -93,6 +93,13 @@
   font: 400 12px / 18px var(--pk-font-mono);
 }
 
+.bench-insp-stage {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px 14px;
+  min-width: 0;
+}
+
 .bench-insp-b {
   flex: 1 0 auto;
   display: grid;

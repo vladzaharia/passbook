@@ -2863,6 +2863,7 @@ type EmailFailedEvent struct {
 	Data       EmailFailedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type EmailFailedEventData struct {
@@ -5963,6 +5964,7 @@ type PassChannelsChangedEvent struct {
 	Data       PassChannelsChangedEventData `json:"data"`
 	RequestID  *string                      `json:"requestId,omitempty"`
 	Sample     *bool                        `json:"sample,omitempty"`
+	Simulated  *bool                        `json:"simulated,omitempty"`
 }
 
 type PassChannelsChangedEventData struct {
@@ -7059,6 +7061,7 @@ type PassInstalledEvent struct {
 	Data       PassInstalledEventData `json:"data"`
 	RequestID  *string                `json:"requestId,omitempty"`
 	Sample     *bool                  `json:"sample,omitempty"`
+	Simulated  *bool                  `json:"simulated,omitempty"`
 }
 
 type PassInstalledEventData struct {
@@ -7079,6 +7082,7 @@ type PassIssuedEvent struct {
 	Data       PassIssuedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PassIssuedEventData struct {
@@ -7103,6 +7107,7 @@ type PassPrintVoidedEvent struct {
 	Data       PassPrintVoidedEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassPrintVoidedEventData struct {
@@ -7121,6 +7126,7 @@ type PassPrintedEvent struct {
 	Data       PassPrintedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassPrintedEventData struct {
@@ -7140,6 +7146,7 @@ type PassRemovedEvent struct {
 	Data       PassRemovedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassRemovedEventData struct {
@@ -7159,6 +7166,7 @@ type PassReplacedEvent struct {
 	Data       PassReplacedEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassReplacedEventData struct {
@@ -7176,6 +7184,7 @@ type PassRestoredEvent struct {
 	Data       PassRestoredEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassRestoredEventData struct {
@@ -7193,6 +7202,7 @@ type PassScanRefusedEvent struct {
 	Data       PassScanRefusedEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassScanRefusedEventData struct {
@@ -7215,6 +7225,7 @@ type PassScanUndoneEvent struct {
 	Data       PassScanUndoneEventData `json:"data"`
 	RequestID  *string                 `json:"requestId,omitempty"`
 	Sample     *bool                   `json:"sample,omitempty"`
+	Simulated  *bool                   `json:"simulated,omitempty"`
 }
 
 type PassScanUndoneEventData struct {
@@ -7234,6 +7245,7 @@ type PassScannedEvent struct {
 	Data       PassScannedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassScannedEventData struct {
@@ -7809,6 +7821,7 @@ type PassUninstalledEvent struct {
 	Data       PassUninstalledEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassUninstalledEventData struct {
@@ -7830,6 +7843,7 @@ type PassUnvoidedEvent struct {
 	Data       PassUnvoidedEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassUnvoidedEventData struct {
@@ -7847,6 +7861,7 @@ type PassUpdatedEvent struct {
 	Data       PassUpdatedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassUpdatedEventData struct {
@@ -7907,6 +7922,7 @@ type PassVoidedEvent struct {
 	Data       PassVoidedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PassVoidedEventData struct {
@@ -11871,6 +11887,7 @@ type PushFailedEvent struct {
 	Data       PushFailedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PushFailedEventData struct {
@@ -17414,6 +17431,7 @@ type WebhookTestEvent struct {
 	Data       WebhookTestEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type WebhookTestEventData struct{}

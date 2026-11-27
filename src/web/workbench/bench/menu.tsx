@@ -42,14 +42,20 @@ export function BenchMenu({
   trigger,
   items,
   onOpen,
+  footer,
   className,
+  triggerClassName,
 }: {
   /** The trigger's and the menu's name. */
   label: string;
   trigger: ReactNode;
   items: readonly BenchMenuItem[];
   onOpen?: () => void;
+  /** A quiet line under the choices (what they do); it is not a choice. */
+  footer?: ReactNode;
   className?: string;
+  /** Styles the trigger (a kit button's classes); an IdChip's own is styled by the chip. */
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
@@ -113,7 +119,7 @@ export function BenchMenu({
       <button
         ref={button}
         type="button"
-        className="bench-mn-t"
+        className={triggerClassName ? `bench-mn-t ${triggerClassName}` : 'bench-mn-t'}
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -153,6 +159,7 @@ export function BenchMenu({
             </button>
           ),
         )}
+        {footer ? <span className="bench-mn-f">{footer}</span> : null}
       </div>
     </span>
   );

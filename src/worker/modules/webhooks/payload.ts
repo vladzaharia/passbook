@@ -146,6 +146,11 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
   }
 }
 
+/** Set by the Workbench simulator; real events carry no flag. */
+function simulatedOf(raw: string): { simulated?: true } {
+  return parse(raw).simulated === true ? { simulated: true } : {};
+}
+
 /** The API request that caused the event, when the ledger kept it. */
 function requestIdOf(raw: string): { requestId?: string } {
   const id = parse(raw).requestId;
@@ -172,6 +177,7 @@ export function buildEnvelope(
     pass: { id: row.passId, externalId: row.externalId, templateId: row.templateId },
     data: dataOf(row, type),
     ...requestIdOf(row.data),
+    ...simulatedOf(row.data),
     ...(sample ? { sample: true } : {}),
   } as WebhookEvent;
 }

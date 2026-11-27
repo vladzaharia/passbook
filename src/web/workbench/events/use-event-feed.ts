@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookEventSchema } from '@/shared/contracts/webhooks.ts';
+import { pacer } from '../../lib/poll-hold.ts';
 import type { EventsApi, FeedFilter } from './api.ts';
 
 export type FeedEvent = z.infer<typeof WebhookEventSchema>;
 
-const POLL_MS = 3000;
+export const FEED_POLL_MS = 4000;
 const FRESH_MS = 4000;
 /** The ledger reads oldest first: read to its end, 200 at a time, up to this many pages. */
 const MAX_PAGES = 25;
@@ -30,7 +31,7 @@ const keyOf = (f: FeedFilter) => `${f.type ?? ''}|${f.request ?? ''}|${f.pass ??
 
 /**
  * The event list that stays current. The ledger is a cursor feed, oldest first: it is read to its
- * end once, then asked for what is newer every 3 s while the tab is shown. A new filter starts over.
+ * end once, then asked for what is newer every 4 s while the tab is shown. A new filter starts over.
  */
 export function useEventFeed(api: EventsApi, filter: FeedFilter): EventFeed {
   const key = keyOf(filter);
@@ -80,9 +81,22 @@ export function useEventFeed(api: EventsApi, filter: FeedFilter): EventFeed {
     setFailed(false);
     setFresh(new Set());
     read(true).catch(() => setFailed(true));
-    const poll = setInterval(() => {
-      if (!document.hidden && cursor.current !== undefined) read(false).catch(() => undefined);
-    }, POLL_MS);
+    const pace = pacer('events-feed', FEED_POLL_MS);
+    let poll: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+    const again = (error?: unknown) => {
+      if (!stopped) poll = setTimeout(() => void loop(), pace.after(error));
+    };
+    const loop = async () => {
+      if (document.hidden || cursor.current === undefined) return again();
+      try {
+        await read(false);
+        again();
+      } catch (error) {
+        again(error);
+      }
+    };
+    again();
     const tick = () => {
       setPaused(document.hidden);
       if (!document.hidden && cursor.current !== undefined) read(false).catch(() => undefined);
@@ -90,7 +104,9 @@ export function useEventFeed(api: EventsApi, filter: FeedFilter): EventFeed {
     document.addEventListener('visibilitychange', tick);
     return () => {
       mine.current += 1;
-      clearInterval(poll);
+      stopped = true;
+      clearTimeout(poll);
+      pace.stop();
       clearTimeout(timer.current);
       document.removeEventListener('visibilitychange', tick);
     };
