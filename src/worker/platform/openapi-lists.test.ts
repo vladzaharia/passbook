@@ -49,6 +49,8 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/platform/idp/drift',
   // The setup checklist: a fixed list of items, not rows to page.
   '/api/v1/platform/idp/setup',
+  // A sandbox's recent device passes: the newest 50, capped by the open-pass limit.
+  '/api/v1/developer/device-passes',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);

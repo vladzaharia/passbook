@@ -33,6 +33,7 @@ CREATE TABLE cli_sessions (
 CREATE UNIQUE INDEX cli_sessions_pending_code ON cli_sessions (code_mac) WHERE state = 'pending';
 CREATE INDEX cli_sessions_token ON cli_sessions (token_id) WHERE token_id IS NOT NULL;
 CREATE INDEX cli_sessions_user ON cli_sessions (user_id) WHERE token_id IS NOT NULL;
+CREATE INDEX cli_sessions_org ON cli_sessions (org_id);
 CREATE INDEX cli_sessions_expiry ON cli_sessions (expires_at);
 
 CREATE TRIGGER cli_sessions_revoke_key AFTER UPDATE OF token_revoked_at ON cli_sessions
