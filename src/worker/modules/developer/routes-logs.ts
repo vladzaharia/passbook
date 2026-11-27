@@ -25,8 +25,12 @@ import { resolveId } from './resolve-service.ts';
  * names its org and a session finds the person's sandbox; neither takes an org from the request. A real API key is
  * not accepted. Declared with no key scopes, so the public document lists no key for these operations.
  */
+const guarded = new WeakSet<Request>();
 export const logCaller = declareKeyAccess(
   createMiddleware<AppBindings>(async (c, next) => {
+    // `/logs` and `/logs/*` both match `/logs`: the guard runs, and charges the try budget, once per request.
+    if (guarded.has(c.req.raw)) return next();
+    guarded.add(c.req.raw);
     const sent = bearerOf(c);
     if (sent === 'empty') throw apiKeyMissing();
     const token = sent?.token;
@@ -50,8 +54,8 @@ export const logCaller = declareKeyAccess(
 );
 
 export const developerLogRoutes = createRouter();
-// `/logs/*` also matches `/logs`: a second `/logs` entry would run the guard, and charge the try budget, twice.
-for (const path of ['/logs/*', '/rail', '/resolve']) developerLogRoutes.use(path, logCaller);
+for (const path of ['/logs', '/logs/*', '/rail', '/resolve'])
+  developerLogRoutes.use(path, logCaller);
 
 register(
   developerLogRoutes,

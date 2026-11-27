@@ -152,6 +152,12 @@ describe('RL_API_TRY charges', () => {
         await send('GET', path, fromPage(d.browser, token));
         expect(limit, path).toHaveBeenCalledTimes(1);
       }
+      const seen: string[] = [];
+      const spy = vi.spyOn(console, 'info').mockImplementation((l) => void seen.push(String(l)));
+      await send('GET', '/developer/logs', { authorization: 'Bearer pbtry_nope.nope' });
+      spy.mockRestore();
+      const done = seen.filter((l) => l.includes('request.done')).map((l) => JSON.parse(l));
+      expect(done.map((l) => l.route)).toContain('/api/v1/developer/logs');
     } finally {
       t.kit.env.RL_API_TRY = saved;
     }
