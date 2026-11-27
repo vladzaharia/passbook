@@ -1,12 +1,12 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
 import { CONNECTOR } from '../../passes/test-fixtures.ts';
-import { returnTarget } from './outbound-return.ts';
+import { comeBack, returnTarget } from './outbound-return.ts';
 import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
@@ -91,7 +91,73 @@ describe('an endpoint that was never tested', () => {
   });
 });
 
+describe('a sandbox at its endpoint quota', () => {
+  it('says so on the Where step and holds Next with the reason', async () => {
+    const calls: Calls[] = [];
+    await renderApp('/admin/o/org1/connections/new?source=outbound', {
+      session: 'admin',
+      memberships: [{ ...manager, testOnly: true }],
+      selectedOrg: 'org1',
+      handlers: hooks(calls, undefined, {
+        '/api/v1/workbench/summary': () =>
+          json({
+            now: Date.now(),
+            quickstart: null,
+            errors: 0,
+            failedDeliveries: 0,
+            listening: false,
+            inboxNew: 0,
+            keysExpiring: 0,
+            quotas: {
+              passes: { used: 0, limit: null },
+              templates: { used: 0, limit: null },
+              endpoints: { used: 3, limit: 3 },
+              keys: { used: 0, limit: null },
+            },
+          }),
+      }),
+    });
+    expect(await screen.findByText('3 of 3 endpoints. Delete one to add another.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Endpoint limit reached.')).toBeVisible();
+  });
+});
+
 describe('the way back', () => {
+  it('lands on the Workbench by hash and on the docs by ?endpoint=', () => {
+    expect(comeBack('/workbench/o/sbx/events?tab=endpoints', 'we1')).toBe(
+      '/workbench/o/sbx/events?tab=endpoints#we1',
+    );
+    expect(comeBack('/developers/webhooks', 'we1')).toBe('/developers/webhooks?endpoint=we1');
+  });
+
+  it('finishes the wizard by returning to the Workbench with the new endpoint selected', async () => {
+    const user = userEvent.setup();
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    const back = encodeURIComponent('/workbench/o/org1/events?tab=endpoints');
+    await open(`/admin/o/org1/connections/new?source=outbound&return=${back}`, []);
+    await user.type(
+      await screen.findByRole('textbox', { name: /URL/ }),
+      'https://hooks.example.com/x',
+    );
+    const next = () => user.click(screen.getByRole('button', { name: 'Next' }));
+    await next();
+    await next();
+    await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'I saved the secret' }));
+    await next();
+    await next();
+    await user.click(await screen.findByRole('button', { name: 'Send test' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Done' })).not.toHaveAttribute('aria-disabled'),
+    );
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await user.click(await screen.findByRole('button', { name: 'Open endpoint' }));
+    expect(assign).toHaveBeenCalledWith('/workbench/o/org1/events?tab=endpoints#we-new');
+    vi.unstubAllGlobals();
+  });
+
   it('goes only to the developer site', () => {
     expect(returnTarget('/developers/webhooks')).toBe('/developers/webhooks');
     expect(returnTarget('/workbench/o/sbx/events?tab=endpoints')).toBe(

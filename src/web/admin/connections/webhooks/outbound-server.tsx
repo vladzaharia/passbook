@@ -5,6 +5,8 @@ import {
   CopyRow,
   HeldSecret,
   type RotateSecretState,
+  type SendResult,
+  SetupFinish,
   SetupSteps,
   TwoSided,
 } from '../../../ui/webhook-setup/index.ts';
@@ -98,6 +100,35 @@ export function OutboundVerifyStep({
       strip={
         <p className="truncate text-sm text-fg">{`${host} · ${pluralize(events, 'event')}`}</p>
       }
+    />
+  );
+}
+
+/** Done: the test passed, so say what was proven. */
+export function OutboundFinish({
+  host,
+  result,
+  events,
+  onOpen,
+  onAnother,
+}: {
+  host: string;
+  result: SendResult;
+  events: number;
+  onOpen: () => void;
+  onAnother: () => void;
+}) {
+  return (
+    <SetupFinish
+      title={`${host} is set up`}
+      facts={[
+        `Delivered · ${result.status ?? 200} in ${result.durationMs} ms`,
+        `Sends ${pluralize(events, 'event')}`,
+      ]}
+      openLabel="Open endpoint"
+      onOpen={onOpen}
+      onAnother={onAnother}
+      anotherLabel="Add another"
     />
   );
 }

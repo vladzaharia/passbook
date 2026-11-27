@@ -23,6 +23,7 @@ export function OutboundPage({
       onAnother={() => setRun((n) => n + 1)}
       orgId={orgId}
       canManage={canManage}
+      sandbox={membership?.testOnly === true}
       returnTo={returnTo}
       onBackToPicker={test || membership?.testOnly ? undefined : onBackToPicker}
     />

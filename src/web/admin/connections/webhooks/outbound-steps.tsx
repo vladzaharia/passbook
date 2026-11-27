@@ -6,28 +6,40 @@ import { endpointHost } from './health.ts';
 
 /** The destination: your server's URL, checked on blur. */
 export function OutboundStepWhere({
+  quota,
   form,
   onChange,
   errors,
   checking,
   onUrlBlur,
 }: {
+  quota: { used: number; limit: number | null } | null;
   form: FormState;
   onChange: (patch: Partial<FormState>) => void;
   errors: Record<string, string | undefined>;
   checking: boolean;
   onUrlBlur: () => void;
 }) {
+  const full = quota !== null && quota.limit !== null && quota.used >= quota.limit;
   return (
-    <UrlField
-      autoFocus
-      value={form}
-      onChange={onChange}
-      errors={errors}
-      checking={checking}
-      onUrlBlur={onUrlBlur}
-      urlHelp="https only."
-    />
+    <>
+      {quota && quota.limit !== null ? (
+        <p role="status" className={full ? 'text-sm text-danger' : 'text-sm text-fg-muted'}>
+          {full
+            ? `${quota.used} of ${quota.limit} endpoints. Delete one to add another.`
+            : `${quota.used} of ${quota.limit} endpoints`}
+        </p>
+      ) : null}
+      <UrlField
+        autoFocus
+        value={form}
+        onChange={onChange}
+        errors={errors}
+        checking={checking}
+        onUrlBlur={onUrlBlur}
+        urlHelp="https only."
+      />
+    </>
   );
 }
 

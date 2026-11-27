@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { SkipForward } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type {
@@ -6,7 +7,6 @@ import type {
   WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
 import { isApiError } from '../../../lib/errors.ts';
-import { pluralize } from '../../../lib/format.ts';
 import {
   ConfirmDialog,
   PageHeader,
@@ -19,17 +19,24 @@ import {
   HeldSecret,
   LiveCheck,
   type SendResult,
-  SetupFinish,
   useRotateSecret,
 } from '../../../ui/webhook-setup/index.ts';
 import { useAdminTemplateChoices } from './admin-templates.ts';
 import {
   useEndpointActions,
+  useEndpointQuota,
   useOutboundSetup,
   useSecretCalls,
   useValidateEndpoint,
 } from './api.ts';
-import { checkForm, draftOf, emptyForm, type FormState, formOf } from './form-state.ts';
+import {
+  checkForm,
+  draftOf,
+  emptyForm,
+  type FormErrors,
+  type FormState,
+  formOf,
+} from './form-state.ts';
 import { endpointHost } from './health.ts';
 import {
   OUTBOUND_STEPS,
@@ -38,7 +45,7 @@ import {
   SERVER_PHASE,
 } from './outbound-rail.ts';
 import { comeBack, returnTarget } from './outbound-return.ts';
-import { OutboundVerifyStep } from './outbound-server.tsx';
+import { OutboundFinish, OutboundVerifyStep } from './outbound-server.tsx';
 import { OutboundReview, OutboundStepEvents, OutboundStepWhere } from './outbound-steps.tsx';
 
 type Created = z.infer<typeof WebhookEndpointCreatedSchema>;
@@ -49,14 +56,11 @@ const urlProblem = (error: unknown) =>
 
 const at = (id: OutboundStepId) => OUTBOUND_STEPS.findIndex((s) => s.id === id);
 
-/**
- * The one place an outbound webhook endpoint is set up ("Send to your server"), as a path
- * of the Connections wizard: where, events and review in PassBook, Create, then your server's side
- * (the secret, the signature check, a live test send). Nothing else in the admin creates one.
- */
+/** The one place an outbound endpoint is set up: the Connections wizard's "Send to your server" path. */
 export function OutboundFlow({
   orgId,
   canManage,
+  sandbox = false,
   returnTo,
   onBackToPicker,
   onAnother,
@@ -64,6 +68,8 @@ export function OutboundFlow({
 }: {
   orgId: string;
   canManage: boolean;
+  /** A sandbox counts endpoints against its plan. */
+  sandbox?: boolean;
   returnTo?: string | undefined;
   /** Back from the first step: the picker, in Live (a Test org has no picker). */
   onBackToPicker?: (() => void) | undefined;
@@ -76,6 +82,8 @@ export function OutboundFlow({
   const { create, rotate: rotateCall } = useSecretCalls();
   const validate = useValidateEndpoint();
   const guide = useOutboundSetup(orgId);
+  const quota = useEndpointQuota(orgId, sandbox);
+  const full = !resume && quota !== null && quota.limit !== null && quota.used >= quota.limit;
   const [step, setStep] = useState(resume ? SERVER_PHASE + 1 : 0);
   const [form, setForm] = useState<FormState>(() => (resume ? formOf(resume) : emptyForm()));
   const [showErrors, setShowErrors] = useState(false);
@@ -98,25 +106,17 @@ export function OutboundFlow({
   const guard = useUnsavedChangesGuard(!created && form.url !== '');
   const rotate = useRotateSecret((hours) => rotateCall(created?.endpoint.id ?? '', hours));
 
-  const errors = {
-    where: { ...(found.url ? { url: found.url } : {}) },
-    events: {
-      ...(found.eventTypes ? { eventTypes: found.eventTypes } : {}),
-      ...(found.templateIds ? { templateIds: found.templateIds } : {}),
-    },
-  };
-  /** Client problems wait for a press on Next; the server's refusal of the URL shows at once. */
-  const shown = (key: 'where' | 'events') =>
-    key === 'where'
-      ? { ...(showErrors ? errors.where : {}), ...(serverUrl ? { url: serverUrl } : {}) }
-      : showErrors
-        ? errors.events
-        : {};
-
-  const shownAll = (key: 'where' | 'events') => ({
-    ...errors[key],
-    ...(key === 'where' && serverUrl ? { url: serverUrl } : {}),
+  /** What blocks a step: the form's problems, and the server's refusal of the URL. */
+  const problems = (key: 'where' | 'events'): FormErrors => ({
+    ...(key === 'where'
+      ? { url: serverUrl ?? found.url }
+      : { eventTypes: found.eventTypes, templateIds: found.templateIds }),
   });
+  const blocking = (key: 'where' | 'events') =>
+    Object.entries(problems(key)).filter(([, v]) => v !== undefined);
+  /** Client problems wait for a press on Next; the server's refusal of the URL shows at once. */
+  const shown = (key: 'where' | 'events'): FormErrors =>
+    showErrors || (key === 'where' && serverUrl) ? problems(key) : {};
 
   const patch = (p: Partial<FormState>) => {
     setForm((f) => ({ ...f, ...p }));
@@ -175,7 +175,7 @@ export function OutboundFlow({
   /** False keeps the step: the Wizard focuses the first error and announces the count. */
   function next(): boolean | undefined {
     if (id === 'where' || id === 'events') {
-      if (Object.keys(shownAll(id)).length > 0) {
+      if (blocking(id).length > 0) {
         setShowErrors(true);
         return false;
       }
@@ -205,16 +205,12 @@ export function OutboundFlow({
     return (
       <>
         <PageHeader title={title} breadcrumbs={crumbs} />
-        <SetupFinish
-          title={`${host} is set up`}
-          facts={[
-            `Delivered · ${delivered.status ?? 200} in ${delivered.durationMs} ms`,
-            `Sends ${pluralize(created.endpoint.eventTypes.length, 'event')}`,
-          ]}
-          openLabel="Open endpoint"
+        <OutboundFinish
+          host={host}
+          result={delivered}
+          events={created.endpoint.eventTypes.length}
           onOpen={() => open()}
           onAnother={onAnother}
-          anotherLabel="Add another"
         />
       </>
     );
@@ -241,23 +237,31 @@ export function OutboundFlow({
         }
         onNext={next}
         nextLabel={id === 'review' ? 'Add endpoint' : id === 'test' ? 'Done' : 'Next'}
-        nextDisabled={!canManage || (id === 'secret' && !saved) || (id === 'test' && !delivered)}
+        nextDisabled={
+          !canManage ||
+          (full && id === 'where') ||
+          (id === 'secret' && !saved) ||
+          (id === 'test' && !delivered)
+        }
         nextHint={
           !canManage
             ? 'Needs integrations access.'
-            : id === 'secret'
-              ? 'Confirm you saved it.'
-              : 'Send a test first.'
+            : full && id === 'where'
+              ? 'Endpoint limit reached.'
+              : id === 'secret'
+                ? 'Confirm you saved it.'
+                : 'Send a test first.'
         }
         barMenu={
           id === 'test' && !delivered
-            ? [{ label: 'Skip for now', onSelect: () => open() }]
+            ? [{ label: 'Skip for now', icon: SkipForward, onSelect: () => open() }]
             : undefined
         }
         busy={saving}
       >
         {id === 'where' ? (
           <OutboundStepWhere
+            quota={quota}
             form={form}
             onChange={patch}
             errors={shown('where')}
