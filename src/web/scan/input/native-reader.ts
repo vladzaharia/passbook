@@ -70,6 +70,8 @@ export function connectNativeReader(
     cancelled(inputId: string): void;
     unsupported(): void;
     capabilities?(value: Record<string, unknown>): void;
+    /** The handshake settled whether the app takes v2 haptics (`scanAck` and `scanSettle` listed). */
+    settleReady?(on: boolean): void;
     /** A one-shot `tagRead` ended without a tag (sheet cancelled or timed out). */
     tagEnded?(why: 'cancelled' | 'timeout'): void;
   },
@@ -82,6 +84,8 @@ export function connectNativeReader(
   let version: 1 | 2 = 1;
   /** The app named `scanAck` in its `features`; until then it is never sent one. */
   let appAcks = false;
+  /** The app named `scanSettle`: it plays no buzz of its own on `result`, so the page may send `haptic`. */
+  let appSettles = false;
   let tagFormats = false;
   let tagSeq = 0;
   let tagPending: string | null = null;
@@ -128,8 +132,14 @@ export function connectNativeReader(
     // A message newer than the handshake is not from the app we agreed a version with.
     if (message.version > version) return;
     if (message.event === 'ready' || message.event === 'capabilities') {
-      if (Array.isArray(message.features)) appAcks = message.features.includes('scanAck');
-      else if (message.event === 'ready') appAcks = false;
+      if (Array.isArray(message.features)) {
+        appAcks = message.features.includes('scanAck');
+        appSettles = message.features.includes('scanSettle');
+      } else if (message.event === 'ready') {
+        appAcks = false;
+        appSettles = false;
+      }
+      options.settleReady?.(version >= 2 && appAcks && appSettles);
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
       const display = CustomerDisplay.safeParse(capabilities.data.customerDisplay);
@@ -222,6 +232,8 @@ export function connectNativeReader(
       send({ op: 'tagCancel', id: tagPending });
       tagPending = null;
     },
+    /** A buzz at the negotiated version. */
+    haptic: (pattern: number[]) => send({ op: 'haptic', pattern }),
     start: () => send({ op: 'start', ...formats() }),
     result(inputId: string, outcome: ReaderOutcome) {
       const nativeId = pending.get(inputId);
