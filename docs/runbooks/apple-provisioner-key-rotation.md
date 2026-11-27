@@ -12,7 +12,7 @@ Use to replace the App Store Connect key the provisioner holds, on a schedule or
 ## Prerequisites
 
 - In App Store Connect, create a new Team key with the Admin role. The `.p8` downloads once.
-- Profile `passbook-apple-provisioner` defines `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `ASC_KEY_ID` and `ASC_ISSUER_ID` for the new key.
+- Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile `passbook-apple-provisioner`), and the profile defines `ASC_KEY_ID` and `ASC_ISSUER_ID` for the new key.
 
 ## Parameters
 

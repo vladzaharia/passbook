@@ -13,7 +13,7 @@ Use when the binding's Polaris ID API key may have leaked. On Polaris ID v2.19.3
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile `passbook-polaris-binding`).
 
 ## 1. Revoke the key (UI)
 
