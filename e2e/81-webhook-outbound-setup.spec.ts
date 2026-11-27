@@ -107,6 +107,12 @@ test('Send events: pick the tile, set up both sides, and land on the endpoint', 
   await expect(page.getByRole('heading', { name: 'Verify requests' })).toBeVisible();
   await check(page, 'outbound-detail-signing');
 
+  // The secret was shown once: setup resumes at Verify from the endpoint alone.
+  await page.goto(`/admin/o/${org}/connections/webhooks/${endpointId}/setup`);
+  await expect(page.getByRole('heading', { name: 'Check the signature', level: 2 })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy signing secret' })).toHaveCount(0);
+  await check(page, 'outbound-resume');
+
   const api = await apiAs('admin');
   await api.send('DELETE', `/api/v1/webhook-endpoints/${endpointId}`);
   await api.dispose();
