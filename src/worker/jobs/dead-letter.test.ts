@@ -1,6 +1,7 @@
 import { createExecutionContext } from 'cloudflare:test';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ORG_KIND, registerTestKinds } from '../modules/operations/operations-test-fixtures.ts';
+import * as progress from '../modules/operations/progress.ts';
 import { rowById } from '../modules/operations/repo.ts';
 import { startOperation } from '../modules/operations/start.ts';
 import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
@@ -70,6 +71,34 @@ describe('dead-letter terminal outcome', () => {
     // A redelivered drop changes nothing.
     await drain(dead({ kind: 'operation.run', operationId: op.id, attempt: 1 }));
     expect(await all(kit.env.DB, 'SELECT 1 FROM dlq_outcomes')).toHaveLength(1);
+  });
+});
+
+describe('failing operation update', () => {
+  it('still keeps the drop for Status', async () => {
+    const op = await startOperation(kit.ctx, {
+      kind: ORG_KIND.kind,
+      org: { orgId: kit.org.id, mode: 'live' },
+      actor: { type: 'user', id: 'u1' },
+      subject: { k: 'dlq-fail' },
+    });
+    const spy = vi.spyOn(progress, 'progressOf').mockImplementation(() => {
+      throw new Error('d1');
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const m = dead({ kind: 'operation.run', operationId: op.id, attempt: 1 });
+      await drain(m);
+      expect(m.acked).toBe(true);
+    } finally {
+      spy.mockRestore();
+      error.mockRestore();
+    }
+    const kept = await all<{ job_kind: string; target_id: string | null }>(
+      kit.env.DB,
+      'SELECT job_kind, target_id FROM dlq_outcomes',
+    );
+    expect(kept).toEqual([{ job_kind: 'operation.run', target_id: op.id }]);
   });
 });
 
