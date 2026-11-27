@@ -73452,6 +73452,62 @@
           "recent"
         ]
       },
+      "PlatformMetricsRetrieveDeveloperResponse": {
+        "type": "object",
+        "properties": {
+          "windowDays": {
+            "type": "integer"
+          },
+          "sandboxes": {
+            "type": "integer"
+          },
+          "viewed": {
+            "type": "integer"
+          },
+          "called": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "previewed": {
+            "type": "integer"
+          },
+          "completion": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ttfpP50Ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ttfpP90Ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ttfpSamples": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "windowDays",
+          "sandboxes",
+          "viewed",
+          "called",
+          "passed",
+          "previewed",
+          "completion",
+          "ttfpP50Ms",
+          "ttfpP90Ms",
+          "ttfpSamples"
+        ]
+      },
       "MetricsRetrieveOverviewResponse": {
         "type": "object",
         "properties": {
@@ -150449,60 +150505,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "windowDays": {
-                      "type": "integer"
-                    },
-                    "sandboxes": {
-                      "type": "integer"
-                    },
-                    "viewed": {
-                      "type": "integer"
-                    },
-                    "called": {
-                      "type": "integer"
-                    },
-                    "passed": {
-                      "type": "integer"
-                    },
-                    "previewed": {
-                      "type": "integer"
-                    },
-                    "completion": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    },
-                    "ttfpP50Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpP90Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpSamples": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": [
-                    "windowDays",
-                    "sandboxes",
-                    "viewed",
-                    "called",
-                    "passed",
-                    "previewed",
-                    "completion",
-                    "ttfpP50Ms",
-                    "ttfpP90Ms",
-                    "ttfpSamples"
-                  ]
+                  "$ref": "#/components/schemas/PlatformMetricsRetrieveDeveloperResponse"
                 },
                 "example": {
                   "windowDays": 36,
@@ -150533,9 +150536,7 @@
         "operationId": "metrics.getMetricsPlatformDeveloper",
         "x-sdk": {
           "resource": "platform.metrics",
-          "method": "retrieveDeveloper",
-          "sdk": false,
-          "reason": "Platform admin console card; needs an admin's session."
+          "method": "retrieveDeveloper"
         },
         "x-sign-in": "idp",
         "x-codes": [

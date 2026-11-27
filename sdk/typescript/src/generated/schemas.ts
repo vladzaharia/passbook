@@ -8322,6 +8322,19 @@ export type PlatformInvitationsRevokeResponse = {
   ok: true;
 };
 
+export type PlatformMetricsRetrieveDeveloperResponse = {
+  windowDays: number;
+  sandboxes: number;
+  viewed: number;
+  called: number;
+  passed: number;
+  previewed: number;
+  completion: number | null;
+  ttfpP50Ms: number | null;
+  ttfpP90Ms: number | null;
+  ttfpSamples: number;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";

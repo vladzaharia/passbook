@@ -1325,6 +1325,7 @@ __all__ = [
     "PlatformInvitationsResendResult",
     "PlatformInvitationsRevokeResponse",
     "PlatformInvitationsRevokeResult",
+    "PlatformMetricsRetrieveDeveloperResponse",
     "PlatformMetricsRetrieveDeveloperResult",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
@@ -10285,7 +10286,7 @@ class PlatformInvitationsResendResponseCreatedBy(_Model):
 class PlatformInvitationsRevokeResponse(_Model):
     ok: _Literal[True]
 
-class PlatformMetricsRetrieveDeveloperResult(_Model):
+class PlatformMetricsRetrieveDeveloperResponse(_Model):
     windowDays: int
     sandboxes: int
     viewed: int
@@ -16943,6 +16944,8 @@ PlatformInvitationsListResult = PlatformInvitationsListResponse
 PlatformInvitationsResendResult = PlatformInvitationsResendResponse
 
 PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
+
+PlatformMetricsRetrieveDeveloperResult = PlatformMetricsRetrieveDeveloperResponse
 
 PlatformMetricsRetrieveOverviewResult = PlatformMetricsRetrieveOverviewResponse
 

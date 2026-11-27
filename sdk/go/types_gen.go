@@ -9752,7 +9752,7 @@ type PlatformInvitationsRevokeResponse struct {
 
 type PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
-type PlatformMetricsRetrieveDeveloperResult struct {
+type PlatformMetricsRetrieveDeveloperResponse struct {
 	WindowDays  int64    `json:"windowDays"`
 	Sandboxes   int64    `json:"sandboxes"`
 	Viewed      int64    `json:"viewed"`
@@ -9764,6 +9764,8 @@ type PlatformMetricsRetrieveDeveloperResult struct {
 	TtfpP90Ms   *int64   `json:"ttfpP90Ms"`
 	TtfpSamples int64    `json:"ttfpSamples"`
 }
+
+type PlatformMetricsRetrieveDeveloperResult = PlatformMetricsRetrieveDeveloperResponse
 
 type PlatformMetricsRetrieveOverviewQuery struct {
 	TemplateID *string `json:"templateId,omitempty"`
