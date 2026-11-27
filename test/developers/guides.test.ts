@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+
 import { describe, expect, it, vi } from 'vitest';
 import openapi from '../../docs/api/openapi.v1.json';
 import { prefillFromCurl } from '../../src/web/developers/guide/model.ts';
@@ -8,6 +9,7 @@ import {
   linksIn,
   parseGuide,
 } from '../../src/web/developers/guide/parse.ts';
+import { expandSetupDirective } from '../../src/web/developers/guide/webhook-setup.ts';
 import { EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { type Call, kit, snippetWorld } from './snippet-world.ts';
 
@@ -94,11 +96,11 @@ const EXPECTED: Record<string, string[]> = { 'bulk-import': ['IMPORT_BUSY'] };
 describe('guides', () => {
   const files = Object.entries(guideText).map(([path, text]) => ({
     path,
-    doc: parseGuide(text, path),
+    doc: parseGuide(expandSetupDirective(text), path),
   }));
 
-  it('has the fifteen guides', () => {
-    expect(files.length).toBe(15);
+  it('has the sixteen guides', () => {
+    expect(files.length).toBe(16);
   });
 
   for (const { path, doc } of files) {
@@ -144,7 +146,7 @@ describe('guides', () => {
           `https://passbook.mobile${op.path.replace(/\{(\w+)\}/g, (_, name: string) =>
             name === 'id'
               ? (made[segment] ?? (segment === 'passes' ? EXAMPLE_IDS.passId : EXAMPLE_IDS.otherId))
-              : (fields[name] ?? EXAMPLE_IDS.otherId),
+              : (fields[name] ?? (name === 'recipe' ? 'shopify-orders' : EXAMPLE_IDS.otherId)),
           )}`,
         );
         for (const [k, v] of Object.entries(step.query ?? {})) url.searchParams.set(k, v);

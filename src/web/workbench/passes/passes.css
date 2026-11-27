@@ -1,0 +1,83 @@
+/* The Passes tool: the list's card thumbnail, the inspector's stage and the phone view. */
+.wb-tool-passes {
+  --wb-row: 64px;
+}
+.wb-pass-thumb {
+  display: grid;
+  grid-template-rows: repeat(3, 4px) 1fr;
+  gap: 4px;
+  inline-size: 44px;
+  block-size: 58px;
+  padding: 6px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--pk-text-strong) 72%, var(--pk-accent));
+  box-shadow: var(--pk-elevation-1);
+}
+.wb-pass-thumb i {
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--pk-surface-raised) 75%, transparent);
+}
+.wb-pass-thumb i:first-child {
+  inline-size: 40%;
+}
+.wb-pass-thumb i:nth-child(2) {
+  inline-size: 75%;
+}
+.wb-pass-thumb b {
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, var(--pk-surface-raised) 0 2px, transparent 2px 4px);
+  opacity: 0.9;
+}
+.wb-pass-thumb-off {
+  background: var(--pk-border-strong);
+  box-shadow: none;
+}
+
+/* The stage: the card on a dotted ground, the buddy seated on its top edge. */
+.wb-pass-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 20px 12px 12px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background:
+    radial-gradient(
+      color-mix(in oklab, var(--pk-text-subtle) 28%, transparent) 1px,
+      transparent 1px
+    )
+    0 0 / 14px 14px,
+    var(--pk-surface-sunken);
+}
+
+/* The card is the stage's subject, not its whole: the actions stay on screen under it. */
+.wb-pass-stage .pc-stage {
+  max-width: 15rem;
+}
+
+/* A voided pass: one danger treatment, a quiet block with a 3 px rule. */
+.wb-pass-void {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--pk-border-subtle);
+  border-inline-start: 3px solid var(--pk-danger);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-sunken);
+}
+
+/* The simulate menu's footnote. */
+.wb-sim-note {
+  display: block;
+  padding: 8px 12px;
+  border-top: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-muted);
+  font-size: 12px;
+}
+
+/* A phone card: the pass's link as a QR beside its words. */
+.wb-phone-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+}
