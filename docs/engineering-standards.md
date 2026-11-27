@@ -11,6 +11,7 @@ Rules `npm run check` enforces, and where.
 | Authority redesign: every fence pattern has one owner in `authority-epochs.md` Appendix A; no `OR REPLACE` outside its allowlist, no raw write to a guarded table outside `platform/authority.ts`, no `updated_at = ?` predicate. Unowned matches fail `tools/authority-scope.test.ts`; the other rules only warn until WP8 turns on `--strict` | `tools/authority-scope.ts` |
 | Initial web load stays under its gzip budget and carries no table, virtual or cmdk code | `tools/check-bundle.ts`, after `vite build` |
 | List and search queries use an index | `test/query-plans.test.ts` |
+| Every SQL statement the worker tests prepare passes SQLite 3.54.1 (the cursor-count rule) with D1's limits; known failures are pinned in `tools/sql-depth-allowlist.json`, and a new one fails | `tools/check-sql-depth.ts`, `npm run check:sql-depth` |
 | Web code uses the kit: toasts (`ui/toaster.tsx`), copying (`CopyButton`, `lib/clipboard.ts`), dates and numbers (`lib/format.ts`), emails (`strictEmail`), motion tokens, `Spinner` only in buttons | `src/web/ui/kit-lint.test.ts` |
 | SSR tokens, controls, fonts and holder CSS equal the SPA's (`npm run gen` output is current) | `tools/ssr-parity.test.ts`, `tools/ssr-holder.test.ts` |
 | `run_worker_first` negations match `public/` | `tools/wrangler-config.test.ts` |

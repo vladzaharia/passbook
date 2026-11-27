@@ -10,11 +10,30 @@ function bindable(value: SqlValue): string | number | null | ArrayBuffer {
   return value;
 }
 
+let recordSql: ((sql: string) => void) | null = null;
+
+/**
+ * Test-only SQL corpus hook (`test/setup/sql-corpus.ts`). Installs only when the binding
+ * `SQL_CORPUS` is '1', which exists in the vitest miniflare bindings and nowhere in wrangler.jsonc.
+ */
+export function installSqlRecorder(
+  env: { SQL_CORPUS?: string },
+  record: (sql: string) => void,
+): (() => void) | null {
+  if (env.SQL_CORPUS !== '1') return null;
+  const previous = recordSql;
+  recordSql = record;
+  return () => {
+    recordSql = previous;
+  };
+}
+
 export function stmt(
   db: D1Database,
   sql: string,
   params: readonly SqlValue[] = [],
 ): D1PreparedStatement {
+  recordSql?.(sql);
   return db.prepare(sql).bind(...params.map(bindable));
 }
 

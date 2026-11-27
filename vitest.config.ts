@@ -1,3 +1,4 @@
+import { appendFileSync, mkdirSync, rmSync } from 'node:fs';
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 import { createFixtureIdentity } from './src/passkit/testing/fixture-identity.ts';
@@ -9,11 +10,34 @@ const alias = {
 // Coverage instrumentation (istanbul in workerd, v8 in node) makes tests 2–3× slower on CI runners.
 const timeout = process.argv.includes('--coverage') ? 90_000 : 30_000;
 
+// Worker tests log each distinct SQL text as `@@SQL@@<json>` (test/setup/sql-corpus.ts); the lines are
+// collected per shard for tools/check-sql-depth.ts and kept out of the test output.
+const corpusDir = new URL('./.wrangler/sql-corpus/', import.meta.url).pathname;
+const shard = process.argv
+  .find((arg) => arg.startsWith('--shard='))
+  ?.slice(8)
+  .replace('/', 'of');
+rmSync(corpusDir, { recursive: true, force: true });
+mkdirSync(corpusDir, { recursive: true });
+
 export default defineConfig({
   // Not under node_modules, which worktrees share (see vite.config.ts).
   cacheDir: new URL('./.cache/vite', import.meta.url).pathname,
   resolve: { alias },
   test: {
+    // Agent runs default to 'passed-only', which would hide the corpus lines of passing tests.
+    silent: false,
+    onConsoleLog(log) {
+      // One chunk may hold several console lines, so take every marked line out of it.
+      const lines = log.split('\n').filter((line) => line.length > 0);
+      const marked = lines.filter((line) => line.startsWith('@@SQL@@'));
+      if (marked.length === 0) return undefined;
+      appendFileSync(
+        `${corpusDir}${shard ?? 'local'}.jsonl`,
+        marked.map((line) => `${line.slice(7)}\n`).join(''),
+      );
+      return marked.length === lines.length ? false : undefined;
+    },
     projects: [
       {
         extends: true,
@@ -67,6 +91,8 @@ export default defineConfig({
                   BREAKGLASS_TOKEN_SHA256: '',
                   // Production keeps the scanner off until M1; tests cover it on (and off, by override).
                   SCAN_ENABLED: '1',
+                  // Test-only: lets stmt() record SQL text for tools/check-sql-depth.ts.
+                  SQL_CORPUS: '1',
                 },
               },
             };
@@ -86,6 +112,7 @@ export default defineConfig({
             './test/setup/block-network.ts',
             './test/setup/check-responses.ts',
             './test/setup/apply-migrations.ts',
+            './test/setup/sql-corpus.ts',
             './test/setup/settle-wait-until.ts',
             './test/setup/settle-workflows.ts',
           ],

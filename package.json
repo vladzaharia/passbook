@@ -41,8 +41,9 @@
     "changelog:release": "node tools/changelog-release.ts",
     "deploy:check": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
+    "check:sql-depth": "node tools/check-sql-depth.ts",
     "check:rules": "node tools/check-log-codes.ts && node tools/check-migrations.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/check-apple-binding.ts && node tools/check-idp-binding.ts && node tools/check-openapi.ts && node tools/gen-reference-examples.ts --check && node tools/check-vocabulary.ts && node tools/check-developers.ts && node tools/gen-sdk-ts.ts --check && node tools/gen-sdk-py.ts --check && node tools/gen-sdk-go.ts --check && node tools/gen-snippets.ts --check && node tools/authority-scope.ts --strict && knip",
-    "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run build",
+    "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run check:sql-depth && npm run build",
     "dev:oidc": "OIDC_CLIENT_ID=wallet-dev node test/mock-oidc/server.ts 5174"
   },
   "dependencies": {
@@ -92,6 +93,7 @@
     "@cloudflare/vitest-plugin": "1.9.2",
     "@faker-js/faker": "10.6.0",
     "@playwright/test": "1.64.1",
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
     "@tailwindcss/node": "4.3.4",
     "@tailwindcss/vite": "4.3.5",
     "@tanstack/router-plugin": "1.169.0",
