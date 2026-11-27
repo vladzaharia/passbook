@@ -1,0 +1,43 @@
+{
+  "provenance": "doc-shape",
+  "note": "Doc-shape, not recorded from Samsung: built from the documented response shapes in docs/design/wallet-providers/samsung-wallet.md (S-card attribute tables, S-api Get Card Data, Update Notification and Send Card State). Real recordings are owner-held (journey 20) and replace this file by name. Source: S-api Get Card Data; S-card coupon/others.",
+  "name": "coupon-get-card-data",
+  "request": {
+    "method": "GET",
+    "path": "/cards/<card-id>/<ref-1>"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "card": {
+        "type": "coupon",
+        "subType": "others",
+        "data": [
+          {
+            "refId": "<ref-1>",
+            "state": "ACTIVE",
+            "createdAt": 1794873600000,
+            "updatedAt": 1794873600000,
+            "language": "en",
+            "attributes": {
+              "title": "20% off",
+              "mainImg": "https://img.example/main.png",
+              "expiry": "1801000000000",
+              "issueDate": "1794873600000",
+              "editableYn": "N",
+              "deletableYn": "Y",
+              "displayRedeemButtonYn": "N",
+              "notificationYn": "Y",
+              "appLinkLogo": "https://img.example/org-logo.png",
+              "appLinkName": "Example Org",
+              "appLinkData": "https://org.example"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
