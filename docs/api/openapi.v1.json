@@ -654,6 +654,13 @@
               },
               "firstDevice": {
                 "type": "boolean"
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -756,6 +763,13 @@
                   "wallet",
                   "push_gone"
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -1485,6 +1499,13 @@
                   "string",
                   "null"
                 ],
+                "maxLength": 300
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
                 "maxLength": 300
               }
             }
@@ -45702,6 +45723,12 @@
                 },
                 "deviceId": {
                   "type": "string"
+                },
+                "devicePass": {
+                  "type": "boolean",
+                  "enum": [
+                    true
+                  ]
                 }
               },
               "required": [
@@ -95346,6 +95373,939 @@
         ]
       }
     },
+    "/api/v1/developer/device-passes": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Make a device pass: a Test pass of your own sandbox on your phone, shown as PassBook Test, valid for 24 hours. Answers a one-time code to open on the phone (Idempotency-Key)",
+        "operationId": "developer.postDevicePasses",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "passId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "passId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-21d5ba4f7b54",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "create",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_BLOCKED",
+          "DEVICE_PASS_LIMIT",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "DEVICE_PASS_RATE_LIMITED",
+          "DEVICE_PASS_SOURCE_VOIDED",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Your device passes: the open ones and the last 7 days, with state, phones and expiry",
+        "operationId": "developer.getDevicePasses",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "passId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "active",
+                              "voided",
+                              "expired"
+                            ]
+                          },
+                          "voidReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "developer",
+                              "expired",
+                              "overshared",
+                              "platform",
+                              "pass_gone",
+                              null
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "expiresAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "deviceCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "lastSeenAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "code": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "expiresAt": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "expiresAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "passId",
+                          "state",
+                          "voidReason",
+                          "createdAt",
+                          "expiresAt",
+                          "deviceCount",
+                          "lastSeenAt",
+                          "code"
+                        ]
+                      }
+                    },
+                    "active": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "active",
+                    "limit"
+                  ]
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-e7ff07ca3ee7",
+                      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "state": "active",
+                      "voidReason": "developer",
+                      "createdAt": 1794362400000,
+                      "expiresAt": 1798790399999,
+                      "deviceCount": 24,
+                      "lastSeenAt": 1795570500000,
+                      "code": {
+                        "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                        "expiresAt": 1798790399999
+                      }
+                    }
+                  ],
+                  "active": 30,
+                  "limit": 25
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "list",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}/code": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "A new one-time code for a device pass that is not opened yet. The old code stops working; a pass has 5 codes (Idempotency-Key)",
+        "operationId": "developer.postDevicePassesByIdCode",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-b99d9a6b2589",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "replaceCode",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_CODE_LIMIT",
+          "DEVICE_PASS_CODE_USED",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}/again": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Add again: a new device pass from the same source after the old one expired or was voided. It counts against the 5 (Idempotency-Key)",
+        "operationId": "developer.postDevicePassesByIdAgain",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-e885e79bd335",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "addAgain",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_BLOCKED",
+          "DEVICE_PASS_LIMIT",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "DEVICE_PASS_RATE_LIMITED",
+          "DEVICE_PASS_SOURCE_VOIDED",
+          "DEVICE_PASS_STILL_OPEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}": {
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Void a device pass: its phones get the voided copy",
+        "operationId": "developer.deleteDevicePassesById",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-44109642f043",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "void",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/developer/access": {
       "get": {
         "security": [
@@ -106305,6 +107265,198 @@
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/device-passes/void": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Void every open device pass of one developer; their phones get the voided copy",
+        "operationId": "platform.postDevicePassesVoid",
+        "tags": [
+          "platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "userId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "voided": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "voided"
+                  ]
+                },
+                "example": {
+                  "voided": 3
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.devicePasses",
+          "method": "voidAll",
+          "sdk": false,
+          "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/device-passes/unblock": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Let a developer make device passes again after one was shared",
+        "operationId": "platform.postDevicePassesUnblock",
+        "tags": [
+          "platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "userId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.devicePasses",
+          "method": "clearBlock",
+          "sdk": false,
+          "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -178035,6 +179187,10 @@
           "APPLE_UNAUTHORIZED",
           "DEVICE_INVALID",
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PUSH_TOKEN_INVALID",
           "RATE_LIMITED",
@@ -178230,6 +179386,8 @@
         ],
         "x-codes": [
           "APPLE_UNAUTHORIZED",
+          "ASSET_NOT_FOUND",
+          "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -178237,7 +179395,11 @@
           "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -178404,6 +179566,65 @@
         "x-codes": [
           "LOG_BUDGET",
           "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/d/{code}": {
+      "get": {
+        "summary": "A device pass, once: the signed Test pass for a one-time code (410 when used or expired)",
+        "operationId": "public.getDevicePassByCode",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "public.devicePasses",
+          "method": "download",
+          "sdk": false,
+          "reason": "A one-time link a phone opens from a QR code: a person's browser, not an integration."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "ASSET_SLOT",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TOKEN_SEAL_MISMATCH",
           "VALIDATION"
         ]
       }

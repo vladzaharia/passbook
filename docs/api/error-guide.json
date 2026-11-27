@@ -4174,5 +4174,71 @@
     "when": "The account making the request is the one being disabled.",
     "fix": "Ask another platform admin.",
     "retryable": false
+  },
+  "DEVICE_PASS_BLOCKED": {
+    "title": "Device passes paused",
+    "when": "A device pass of yours was added to more than 3 phones, so new ones are paused for your account.",
+    "fix": "Ask a platform admin to clear the block, then make the device pass again.",
+    "retryable": false
+  },
+  "DEVICE_PASS_CODE_LIMIT": {
+    "title": "No codes left",
+    "when": "The device pass has used its 5 one-time codes.",
+    "fix": "Void the device pass and make a new one.",
+    "retryable": false
+  },
+  "DEVICE_PASS_CODE_USED": {
+    "title": "Device pass already opened",
+    "when": "The device pass was opened on a phone, or is no longer pending, so it takes no new code.",
+    "fix": "Make a new device pass for the same Test pass.",
+    "retryable": false
+  },
+  "DEVICE_PASS_IDENTITY_NOT_READY": {
+    "title": "Device passes unavailable",
+    "when": "The device-test signing identity is not set up or its certificate is not usable.",
+    "fix": "Try again later. A platform admin sets the identity up.",
+    "retryable": true
+  },
+  "DEVICE_PASS_LIMIT": {
+    "title": "Too many device passes",
+    "when": "Your sandbox already holds 5 device passes that are pending or on a phone.",
+    "fix": "Void one with DELETE /api/v1/developer/device-passes/{id}, then send the request again.",
+    "retryable": false
+  },
+  "DEVICE_PASS_NOT_FOUND": {
+    "title": "Device pass not found",
+    "when": "No device pass of yours has that id.",
+    "fix": "List yours with GET /api/v1/developer/device-passes and use one of those ids.",
+    "retryable": false
+  },
+  "DEVICE_PASS_NOT_SANDBOX": {
+    "title": "Not a pass of your sandbox",
+    "when": "Device passes work for Test passes in your own sandbox only, and this pass is not one.",
+    "fix": "Send the id of a Test pass from your own sandbox.",
+    "retryable": false
+  },
+  "DEVICE_PASS_RATE_LIMITED": {
+    "title": "Too many device passes",
+    "when": "You made 10 device passes in the last hour.",
+    "fix": "Wait for the time in the Retry-After header, then send the request again.",
+    "retryable": true
+  },
+  "DEVICE_PASS_SOURCE_VOIDED": {
+    "title": "The pass is voided",
+    "when": "The Test pass is voided or removed, so it cannot go on a phone.",
+    "fix": "Make a new Test pass and use its id.",
+    "retryable": false
+  },
+  "DEVICE_PASS_STILL_OPEN": {
+    "title": "Device pass still open",
+    "when": "Add again works after a device pass expired or was voided, and this one is still open.",
+    "fix": "Void it first, or keep using it.",
+    "retryable": false
+  },
+  "DEVICE_PASS_BUILD_INVALID": {
+    "title": "Device pass could not be built",
+    "when": "The device pass failed one of its own checks before signing, so nothing was made.",
+    "fix": "Send the request again. If it keeps failing, report it with the request id.",
+    "retryable": true
   }
 }

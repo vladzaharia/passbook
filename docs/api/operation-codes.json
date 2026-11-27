@@ -130,15 +130,25 @@
   ],
   "apple get /passes/{passTypeId}/{serial}": [
     "APPLE_UNAUTHORIZED",
+    "ASSET_NOT_FOUND",
+    "ASSET_SLOT",
     "IDENTITY_EXPIRED",
     "IDENTITY_NOT_CONFIGURED",
     "IDENTITY_NOT_FOUND",
     "IDENTITY_RETIRED",
-    "PASS_FILE_MISSING"
+    "PASS_FILE_MISSING",
+    "PASS_NOT_FOUND",
+    "PASS_VERSION_MISSING",
+    "TEMPLATE_NOT_FOUND",
+    "TOKEN_SEAL_MISMATCH"
   ],
   "apple post /devices/{deviceId}/registrations/{passTypeId}/{serial}": [
     "APPLE_UNAUTHORIZED",
     "DEVICE_INVALID",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "PUSH_TOKEN_INVALID",
     "REGISTRATION_LIMIT"
   ],
@@ -1406,6 +1416,21 @@
     "SANDBOX_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
+  "developer delete /{id}": [
+    "DEVICE_PASS_NOT_FOUND",
+    "DEVICE_PASS_NOT_SANDBOX",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "developer get /": [
+    "DEVICE_PASS_NOT_SANDBOX",
+    "NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
   "developer get /access": [
     "UNAUTHENTICATED"
   ],
@@ -1509,6 +1534,24 @@
     "UNAUTHENTICATED",
     "VALIDATION",
     "WORKBENCH_TEST_ONLY"
+  ],
+  "developer post /": [
+    "DEVICE_PASS_BLOCKED",
+    "DEVICE_PASS_LIMIT",
+    "DEVICE_PASS_NOT_FOUND",
+    "DEVICE_PASS_NOT_SANDBOX",
+    "DEVICE_PASS_RATE_LIMITED",
+    "DEVICE_PASS_SOURCE_VOIDED",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REQUIRED",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "NOT_FOUND",
+    "UNAUTHENTICATED"
   ],
   "developer post /beacon": [
     "UNAUTHENTICATED"
@@ -1793,6 +1836,37 @@
   "developer post /try-token": [
     "SANDBOX_KEY_MISSING",
     "SANDBOX_NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "developer post /{id}/again": [
+    "DEVICE_PASS_BLOCKED",
+    "DEVICE_PASS_LIMIT",
+    "DEVICE_PASS_NOT_FOUND",
+    "DEVICE_PASS_NOT_SANDBOX",
+    "DEVICE_PASS_RATE_LIMITED",
+    "DEVICE_PASS_SOURCE_VOIDED",
+    "DEVICE_PASS_STILL_OPEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REQUIRED",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "NOT_FOUND",
+    "UNAUTHENTICATED"
+  ],
+  "developer post /{id}/code": [
+    "DEVICE_PASS_CODE_LIMIT",
+    "DEVICE_PASS_CODE_USED",
+    "DEVICE_PASS_NOT_FOUND",
+    "DEVICE_PASS_NOT_SANDBOX",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REQUIRED",
+    "IDEMPOTENCY_KEY_REUSED",
+    "NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "entitlements get /entitlement-presets": [],
@@ -5412,6 +5486,16 @@
     "PLATFORM_INVITE_CONFLICT",
     "UNAUTHENTICATED"
   ],
+  "platform post /device-passes/unblock": [
+    "UNAUTHENTICATED"
+  ],
+  "platform post /device-passes/void": [
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "UNAUTHENTICATED"
+  ],
   "polaris access get /{id}/access": [
     "FORBIDDEN",
     "IDP_BUDGET",
@@ -5810,6 +5894,18 @@
     "WALLET_ART_MISMATCH",
     "WALLET_OFFER_NOT_FOUND",
     "WALLET_PROJECTION_UNSUPPORTED"
+  ],
+  "public get /{code}": [
+    "ASSET_NOT_FOUND",
+    "ASSET_SLOT",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
+    "PASS_NOT_FOUND",
+    "PASS_VERSION_MISSING",
+    "TEMPLATE_NOT_FOUND",
+    "TOKEN_SEAL_MISMATCH"
   ],
   "public get /{file}": [
     "WALLET_IMAGE_NOT_FOUND"

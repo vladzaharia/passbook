@@ -8084,6 +8084,8 @@ class PassInstalledEventData(_Model):
     device: str | None
     deviceCount: int
     firstDevice: bool
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassIssuedEvent(_Model):
     id: str
@@ -8749,6 +8751,8 @@ class PassUninstalledEventData(_Model):
     deviceCount: int
     lastDevice: bool
     cause: _Literal["wallet", "push_gone"] | str
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassUnvoidedEvent(_Model):
     id: str
@@ -9344,6 +9348,7 @@ class PassesDevicesListResponseDevicesItem(_Model):
     removal: _Literal["pending", "fetched", "deleted", None] | str
     simulated: bool | None = None
     deviceId: str | None = None
+    devicePass: _Literal[True] | None = None
 
 class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
@@ -11689,6 +11694,8 @@ class PushFailedEventData(_Model):
     status: int | None = None
     reason: str | None = None
     code: str | None = None
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class ReleaseResponse1(_Model):
     version: str

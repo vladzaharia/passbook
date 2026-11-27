@@ -7041,10 +7041,12 @@ type PassInstalledEvent struct {
 }
 
 type PassInstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	FirstDevice bool    `json:"firstDevice"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	FirstDevice  bool    `json:"firstDevice"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassIssuedEvent struct {
@@ -7801,11 +7803,13 @@ type PassUninstalledEvent struct {
 }
 
 type PassUninstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	LastDevice  bool    `json:"lastDevice"`
-	Cause       string  `json:"cause"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	LastDevice   bool    `json:"lastDevice"`
+	Cause        string  `json:"cause"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassUnvoidedEvent struct {
@@ -8541,6 +8545,7 @@ type PassesDevicesListResponseDevicesItem struct {
 	Removal        *string        `json:"removal"`
 	Simulated      *bool          `json:"simulated,omitempty"`
 	DeviceID       *string        `json:"deviceId,omitempty"`
+	DevicePass     *bool          `json:"devicePass,omitempty"`
 }
 
 type PassesDevicesListResult = PassesDevicesListResponse
@@ -11447,10 +11452,12 @@ type PushFailedEvent struct {
 }
 
 type PushFailedEventData struct {
-	Version *int64  `json:"version,omitempty"`
-	Status  *int64  `json:"status,omitempty"`
-	Reason  *string `json:"reason,omitempty"`
-	Code    *string `json:"code,omitempty"`
+	Version      *int64  `json:"version,omitempty"`
+	Status       *int64  `json:"status,omitempty"`
+	Reason       *string `json:"reason,omitempty"`
+	Code         *string `json:"code,omitempty"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type ReleaseResponse = any
