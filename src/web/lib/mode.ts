@@ -22,7 +22,9 @@ function fromUrl(): Mode | null {
   return value === 'test' || value === 'live' ? value : null;
 }
 
-let current: Mode = fromUrl() ?? stored();
+/** What this load's address asked for (`?mode=`), so the announcer can say it once. */
+export const adoptedMode: Mode | null = fromUrl();
+let current: Mode = adoptedMode ?? stored();
 const listeners = new Set<(mode: Mode) => void>();
 
 /** Platform pages ignore mode: they read and show Live whatever the browser's choice. */

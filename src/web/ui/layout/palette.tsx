@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Globe, Layers, RefreshCw, Search, User } from 'lucide-react';
+import { Globe, Layers, RefreshCw, Search, User, Wrench } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { BRIDGE_COPY } from '@/shared/copy/workbench-bridge.ts';
+import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
+import { SANDBOX_ONLY, WB_TOOLS } from '@/shared/workbench.ts';
 import { useIdpConnected } from '@/web/admin/idp/status-queries.ts';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
@@ -24,6 +27,7 @@ import {
 import { useSession } from '../../lib/session.ts';
 import { useSwatches } from '../../lib/swatches.ts';
 import { useTheme } from '../../lib/theme.tsx';
+import { useWorkbenchBridge } from '../../lib/workbench-bridge.ts';
 import {
   type CommandGroup,
   type CommandItem,
@@ -96,6 +100,7 @@ export function AdminPalette({
     enabled: searching && platformReady && term.length >= 2,
     staleTime: 15_000,
   });
+  const bridge = useWorkbenchBridge();
   const polaris = useIdpConnected();
   const nav = adminNavGroups(
     adminScope,
@@ -259,6 +264,29 @@ export function AdminPalette({
                   : orgPath(o.id, '/settings'),
               ),
             })),
+          },
+          {
+            heading: BRIDGE_COPY.group,
+            // Test only: records never deep-link from Live. The areas are the org's; the
+            // Workbench shows the ones this person may use.
+            items:
+              bridge?.records && q
+                ? local(
+                    WB_TOOLS.filter((t) => membership?.testOnly || !SANDBOX_ONLY.has(t)).map(
+                      (t) => ({
+                        id: `workbench:${t}`,
+                        label: `${BRIDGE_COPY.open}: ${WB_AREA[t].title}`,
+                        icon: Wrench,
+                        hint: BRIDGE_COPY.test,
+                        onSelect: () => window.location.assign(bridge.href(t)),
+                      }),
+                    ),
+                    (i) => [
+                      'workbench',
+                      ...(WB_AREA[i.id.slice(10) as keyof typeof WB_AREA]?.keywords ?? []),
+                    ],
+                  )
+                : [],
           },
           {
             heading: 'Actions',

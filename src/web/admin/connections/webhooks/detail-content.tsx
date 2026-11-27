@@ -25,6 +25,7 @@ import {
   toast,
   useNow,
 } from '../../../ui/index.ts';
+import { OpenInWorkbench } from '../../../ui/layout/open-in-workbench.tsx';
 import { LiveCheck } from '../../../ui/webhook-setup/index.ts';
 import { useEndpointActions } from './api.ts';
 import { Deliveries } from './deliveries.tsx';
@@ -148,36 +149,39 @@ export function EndpointDetail({
           </>
         }
         actions={
-          canManage ? (
-            <>
-              {lastDelivery(e) !== null ? (
-                <Button
-                  variant="outline"
-                  iconStart={<RotateCw aria-hidden />}
-                  onClick={() => setReplay(true)}
-                >
-                  Replay
-                </Button>
-              ) : null}
-              <MoreMenu>
-                <DropdownMenuItem
-                  disabled={e.status === 'disabled'}
-                  onSelect={() => void setStatus(paused ? 'active' : 'paused')}
-                >
-                  {paused ? <Play aria-hidden /> : <Pause aria-hidden />}
-                  {paused ? 'Resume' : 'Pause'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setRotate(true)}>
-                  <ACTION_ICON.rotate aria-hidden />
-                  Rotate secret
-                </DropdownMenuItem>
-                <DropdownMenuItem destructive onSelect={() => setDel(true)}>
-                  <ACTION_ICON.delete aria-hidden />
-                  Delete
-                </DropdownMenuItem>
-              </MoreMenu>
-            </>
-          ) : undefined
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <OpenInWorkbench tool="events" options={{ query: { tab: 'endpoints' }, hash: e.id }} />
+            {canManage ? (
+              <>
+                {lastDelivery(e) !== null ? (
+                  <Button
+                    variant="outline"
+                    iconStart={<RotateCw aria-hidden />}
+                    onClick={() => setReplay(true)}
+                  >
+                    Replay
+                  </Button>
+                ) : null}
+                <MoreMenu>
+                  <DropdownMenuItem
+                    disabled={e.status === 'disabled'}
+                    onSelect={() => void setStatus(paused ? 'active' : 'paused')}
+                  >
+                    {paused ? <Play aria-hidden /> : <Pause aria-hidden />}
+                    {paused ? 'Resume' : 'Pause'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setRotate(true)}>
+                    <ACTION_ICON.rotate aria-hidden />
+                    Rotate secret
+                  </DropdownMenuItem>
+                  <DropdownMenuItem destructive onSelect={() => setDel(true)}>
+                    <ACTION_ICON.delete aria-hidden />
+                    Delete
+                  </DropdownMenuItem>
+                </MoreMenu>
+              </>
+            ) : null}
+          </div>
         }
       />
       <div className="mb-6 empty:hidden">
