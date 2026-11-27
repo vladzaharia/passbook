@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, runOne } from '../../../../test/helpers/index.ts';
-import { RACE_AUTHORIZED } from './race-tags.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import {
   ACTION,
   ACTIVITY_NAME,

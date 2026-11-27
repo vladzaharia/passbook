@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
-import { RACE_AUTHORIZED } from './race-tags.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import {
   CHECK_IN,
   kit,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
-import { RACE_AUTHORIZED } from './race-tags.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import {
   ACTIVITY_NAME,
   activityFixture,

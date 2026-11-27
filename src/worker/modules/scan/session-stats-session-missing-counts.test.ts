@@ -7,7 +7,7 @@ import {
   makeTemplate,
 } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
-import { RACE_AUTHORIZED } from './race-tags.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import { recordSessionCountScan } from './repo-session-count-scope-test-fixtures.ts';
 import {
   atCountBatch,

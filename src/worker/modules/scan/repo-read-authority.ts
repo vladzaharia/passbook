@@ -14,7 +14,6 @@ import {
   scanCapabilityChecks,
   scanPrincipal,
 } from './authority-checks.ts';
-import { RACE_AUTHORIZED } from './race-tags.ts';
 
 export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
@@ -120,6 +119,9 @@ export function scanRead(
     );
   return exactStmt(db, text, all);
 }
+
+/** SQL comment tag race tests match the authorized statement on; defined here so it adds no import to pinned writes. */
+export const RACE_AUTHORIZED = '/* race:authorized */';
 
 /** `authorized` is 1 when the actor's checks all hold now. */
 export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
