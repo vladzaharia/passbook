@@ -47,11 +47,11 @@ describe('every way in lands in the wizard, on the outbound path', () => {
           }),
       }),
     );
-    await user.click(await screen.findByRole('radio', { name: /Send events to your server/ }));
+    await user.click(await screen.findByRole('radio', { name: /Send to your server/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Back' }));
-    expect(await screen.findByRole('radio', { name: /Send events to your server/ })).toBeVisible();
+    expect(await screen.findByRole('radio', { name: /Send to your server/ })).toBeVisible();
   });
 });
 

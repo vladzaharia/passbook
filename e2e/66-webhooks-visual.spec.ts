@@ -43,7 +43,7 @@ test.describe('webhooks console, every size and theme', () => {
 
   for (const [size, width, height] of SIZES) {
     for (const scheme of ['light', 'dark'] as const) {
-      test(`${size}, ${scheme}: list, new, detail`, async ({ page }) => {
+      test(`${size}, ${scheme}: list, wizard, detail`, async ({ page }) => {
         mkdirSync(SHOTS, { recursive: true });
         const org = encodeURIComponent(readSeed().org.id);
         await page.setViewportSize({ width, height });
@@ -57,17 +57,19 @@ test.describe('webhooks console, every size and theme', () => {
             },
           ],
           [
-            'new',
+            'wizard',
             `/admin/o/${org}/connections/webhooks/new`,
             async () => {
-              await expect(page.getByRole('textbox', { name: /URL/ })).toBeVisible();
+              await expect(
+                page.getByRole('heading', { name: 'Where to send', level: 2 }),
+              ).toBeVisible();
             },
           ],
           [
             'detail',
             `/admin/o/${org}/connections/webhooks/${endpointId}`,
             async () => {
-              await expect(page.getByRole('heading', { name: 'Deliveries' })).toBeVisible();
+              await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
             },
           ],
         ];

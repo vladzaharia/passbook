@@ -99,7 +99,7 @@ describe('connector tiles', () => {
 
   it('offers sending events out as its own tile, not a stored connection', () => {
     const out = buildTiles(ALL).find((t) => t.key === 'outbound');
-    expect(out).toMatchObject({ label: 'Send events to your server', category: 'outbound' });
+    expect(out).toMatchObject({ label: 'Send to your server', category: 'outbound' });
     expect(matchTiles(buildTiles(ALL), 'endpoint').map((t) => t.key)).toEqual(['outbound']);
   });
 

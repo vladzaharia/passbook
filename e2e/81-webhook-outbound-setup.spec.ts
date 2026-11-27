@@ -58,10 +58,12 @@ test('Send events: pick the tile, set up both sides, and land on the endpoint', 
 
   // The picker has the tile, in its own group, and Next goes to the endpoint step.
   await page.goto(`/admin/o/${org}/connections/new`);
-  const tile = page.getByRole('radio', { name: /Send events to your server/ });
+  const tile = page.getByRole('radio', { name: /Send to your server/ });
   await expect(tile).toBeVisible();
   await check(page, 'outbound-picker');
-  await tile.check();
+  // The radio is drawn as the tile: its label takes the press.
+  await page.getByText('Send to your server').click();
+  await expect(tile).toBeChecked();
   await next(page);
   await page.waitForURL(/\/connections\/new\?source=outbound/);
   await expect(page.getByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();

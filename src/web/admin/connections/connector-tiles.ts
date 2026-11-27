@@ -110,7 +110,7 @@ export function buildTiles(connectors: readonly Connector[]): ConnectorTile[] {
   out.push({
     key: OUTBOUND,
     type: OUTBOUND,
-    label: 'Send events to your server',
+    label: 'Send to your server',
     line: 'Webhook out',
     category: 'outbound',
     order: 0,

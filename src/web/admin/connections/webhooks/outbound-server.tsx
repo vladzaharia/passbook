@@ -77,7 +77,10 @@ export function OutboundVerifyStep({
               storageKey={`wallet-outbound-setup:${endpointId}`}
             />
           ) : null}
-          <VerifyGuide url={url} />
+          <section aria-label="Verify in code" className="flex flex-col gap-3">
+            <h3 className="text-sm font-medium text-fg-strong">Verify in code</h3>
+            <VerifyGuide url={url} />
+          </section>
         </div>
       }
       panel={<PassbookSide host={host} events={events} />}

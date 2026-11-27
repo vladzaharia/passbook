@@ -47,7 +47,7 @@ const urlProblem = (error: unknown) =>
 const at = (id: OutboundStepId) => OUTBOUND_STEPS.findIndex((s) => s.id === id);
 
 /**
- * The one place an outbound webhook endpoint is set up ("Send events to your server"), as a path
+ * The one place an outbound webhook endpoint is set up ("Send to your server"), as a path
  * of the Connections wizard: where, events and review in PassBook, Create, then your server's side
  * (the secret, the signature check, a live test send). Nothing else in the admin creates one.
  */
