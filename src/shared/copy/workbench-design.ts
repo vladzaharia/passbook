@@ -35,4 +35,21 @@ export const WB_DESIGN = {
     restore: 'Restore',
     discard: 'Discard',
   },
+  /** Design signed out: a blueprint, its sample as data, and the way to a sandbox (design §1.9). */
+  anon: {
+    pick: 'Blueprint',
+    save: 'Save to my sandbox',
+    share: 'Share as link',
+    copied: 'Link copied',
+    signIn: 'Sign in to design',
+    editsInCode: 'Edits show in the code. The previews update in your sandbox.',
+    badLink: (name: string) => `That link did not match a blueprint. Showing ${name}.`,
+    loadFailed: 'The blueprints did not load.',
+    saving: 'Saving to your sandbox',
+    saved: (name: string) => `Saved as ${name}`,
+    saveFailed: 'Could not save to your sandbox.',
+    noBlueprint: 'That blueprint is no longer offered.',
+    needSandbox: 'Make your sandbox to keep this design.',
+    makeSandbox: 'Create sandbox',
+  },
 } as const;

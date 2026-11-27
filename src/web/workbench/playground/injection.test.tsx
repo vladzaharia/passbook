@@ -10,11 +10,20 @@ import {
   runTs,
   shapeOf,
 } from '../../developers/model/sample-check.ts';
+import { AnonProvider } from '../design/anon/anon-context.tsx';
+import { AnonData } from '../design/anon/anon-data.tsx';
+import { AnonCode } from '../design/anon/anon-extras.tsx';
+import { useAnonValue } from '../design/anon/use-anon-value.ts';
+import { TemplateProvider } from '../design/template-context.tsx';
 import { encodeHash, type PlaygroundState } from './hash.ts';
-import { Playground } from './playground.tsx';
 import { snippetsFor } from './snippets.ts';
 import { fromBlueprint, valuesOf } from './templates.ts';
 import { builtPreviews } from './test-data.ts';
+
+// The Code tab reads the schema from the designer's document; the test stands in the blueprint's own.
+vi.mock('../../admin/templates/designer/context.tsx', () => ({
+  useDesigner: () => ({ doc: { manifest: { inputs: {} }, passJson: {}, assets: [] } }),
+}));
 
 const { data } = builtPreviews();
 const STORE = 'baked:starter-store-card';
@@ -37,20 +46,18 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  history.replaceState(null, '', '/developers/playground');
+  history.replaceState(null, '', '/workbench/design');
 });
 
 /** The four samples as the page shows them: read from the code panel, tab by tab. */
 async function shown(user: ReturnType<typeof userEvent.setup>) {
   const out = {} as Record<(typeof LANGS)[number], string>;
   for (const lang of LANGS) {
-    await user.click(screen.getByRole('tab', { name: TAB[lang] }));
-    const lines = [...screen.getByTestId('code-panel').querySelectorAll('pre .ln')];
-    out[lang] = lines.map((l) => l.textContent).join('\n');
+    await user.click(await screen.findByRole('tab', { name: TAB[lang] }));
+    const panel = screen.getByRole('region', { name: `${TAB[lang]} code` });
+    out[lang] = panel.querySelector('code')?.textContent ?? '';
     // Text only: a value never becomes an element in the panel.
-    expect(
-      screen.getByTestId('code-panel').querySelectorAll('script, img, iframe, [onerror]'),
-    ).toHaveLength(0);
+    expect(panel.querySelectorAll('script, img, iframe, [onerror]')).toHaveLength(0);
   }
   return out;
 }
@@ -82,10 +89,25 @@ async function expectInert(
   if (py.ran) expect(py.sent).toEqual(expected);
 }
 
-describe('playground code from hostile input', () => {
+/** The signed-out page's panels on its own state: the Data form beside the Code tab, as the designer lays them out. */
+function Harness() {
+  const { value } = useAnonValue(data, false);
+  return (
+    <AnonProvider value={value}>
+      <TemplateProvider
+        value={{ id: value.blueprint.preview.id, name: value.blueprint.preview.name }}
+      >
+        <AnonData />
+        <AnonCode />
+      </TemplateProvider>
+    </AnonProvider>
+  );
+}
+
+describe('signed-out Design: code from hostile input', () => {
   it.each(Object.entries(PAYLOADS))('%s typed into a field', async (_name, text) => {
     const user = userEvent.setup();
-    render(<Playground data={data} />);
+    render(<Harness />);
     // Typing is a change event per field; user.type would read `{` and `[` as key names.
     const holder = (await screen.findByLabelText(/^Name/)) as HTMLInputElement;
     const card = screen.getByLabelText(/^Card number/) as HTMLInputElement;
@@ -114,10 +136,10 @@ describe('playground code from hostile input', () => {
         lang: 'ts',
         mode: 'form',
       };
-      history.replaceState(null, '', `/developers/playground${encodeHash(state)}`);
+      history.replaceState(null, '', `/workbench/design${encodeHash(state)}`);
       const user = userEvent.setup();
-      render(<Playground data={data} />);
-      await screen.findByTestId('all-channels');
+      render(<Harness />);
+      await screen.findByRole('tab', { name: 'TypeScript' });
       const code = await shown(user);
       // A template id that is not in the list never reaches the code: the page falls back to a real one.
       expect(code.ts).toContain(STORE);

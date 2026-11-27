@@ -12,6 +12,7 @@ import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useOptionalToolHost } from '../host/tool-host.tsx';
+import { takeIssueFocus } from './issue-focus.ts';
 import { sampleOf } from './sample.ts';
 import { useOpenTemplate } from './template-context.tsx';
 
@@ -150,6 +151,10 @@ export function IssueTestPass() {
   const { issue, busy, can } = useIssue();
   const host = useOptionalToolHost();
   const navigate = useNavigate();
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (can && takeIssueFocus()) button.current?.focus();
+  }, [can]);
   if (!can) return null;
   const run = async () => {
     const made = await issue();
@@ -164,6 +169,7 @@ export function IssueTestPass() {
   };
   return (
     <Button
+      ref={button}
       variant="outline"
       iconStart={<Ticket aria-hidden />}
       loading={busy}
