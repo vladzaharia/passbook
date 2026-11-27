@@ -109,6 +109,23 @@ describe('L5: one org, one session', () => {
     expect((await t.call('GET', `/passes?orgId=${a.orgId}`, t.asClient(token))).status).toBe(200);
   });
 
+  it('a token never lists across organizations', async () => {
+    const a = await t.member();
+    const b = await t.member();
+    await t.join(a.user.id, b.orgId, ['org_admin']);
+    const { token } = await t.wbMint(a.browser, a.orgId);
+    for (const q of [
+      'orgId=all',
+      'orgId=null',
+      `orgId=all&orgIds=${b.orgId}`,
+      'orgId=all&count=true',
+    ])
+      expect((await t.call('GET', `/passes?${q}`, t.asClient(token))).status, q).toBe(403);
+    const d = await t.developer();
+    const sandbox = await t.wbMint(d.browser, d.made.orgId);
+    expect((await t.call('GET', '/passes?orgId=all', t.asClient(sandbox.token))).status).toBe(403);
+  });
+
   it('stops after DELETE, sign-out, expiry, a removed membership, or beside another session', async () => {
     const ended = await t.member();
     const first = await t.wbMint(ended.browser, ended.orgId);

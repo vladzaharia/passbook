@@ -1,10 +1,13 @@
 import { type CSSProperties, createContext, useContext } from 'react';
+import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { formatDay } from '../../lib/format.ts';
+import { cn } from '../../lib/cn.ts';
+import { formatDay, formatDayIn } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, RowLink, StatusIcon, StatusPill } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
 import type { FindChip } from './find-query.ts';
 import { MatchHint } from './match-hint.tsx';
 import { PassRowMenu } from './row-menu.tsx';
@@ -16,7 +19,12 @@ export interface ListContextValue {
   orgId: string | undefined;
   canOperate: boolean;
   templateNames: ReadonlyMap<string, string>;
-  orgNames: ReadonlyMap<string, string>;
+  /** The All scope: rows span organizations, are read-only and open in their own organization. */
+  all: boolean;
+  /** The All scope: the readable organizations, for each row's mark. */
+  orgs: ReadonlyMap<string, Pick<OrgMembership, 'orgId' | 'orgName' | 'personal'>>;
+  /** The All list's own address: the pass page's "Passes" crumb comes back to it. */
+  returnTo: string;
   swatches: ReadonlyMap<string, Swatch>;
   /** Some titles repeat on the page: subtitles disambiguate them. */
   showSubtitles: boolean;
@@ -91,21 +99,41 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
     <span className="flex min-w-0 max-w-72 flex-col gap-0.5 contain-inline-size">
       <span className="flex min-w-0 items-center gap-3">
         <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
-        <RowLink
-          to="/admin/passes/$passId"
-          params={{ passId: p.id }}
-          inactive={p.status === 'voided'}
-          title={nameOf(p)}
-        >
-          {nameOf(p)}
-        </RowLink>
+        {o.all ? (
+          <RowLink
+            to="/admin/o/$orgId/passes/$passId"
+            params={{ orgId: p.orgId, passId: p.id }}
+            state={(prev) => ({ ...prev, returnTo: o.returnTo })}
+            inactive={p.status === 'voided'}
+            title={nameOf(p)}
+          >
+            {nameOf(p)}
+          </RowLink>
+        ) : (
+          <RowLink
+            to="/admin/passes/$passId"
+            params={{ passId: p.id }}
+            inactive={p.status === 'voided'}
+            title={nameOf(p)}
+          >
+            {nameOf(p)}
+          </RowLink>
+        )}
         <ModePill mode={p.mode} compact />
         {p.status === 'voided' ? <StatusPill status="voided" /> : null}
         {p.removedAt !== null ? <StatusIcon status="removed" /> : null}
         {o.showSubtitles && p.subtitle ? (
-          <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
+          <span className={cn('min-w-12 truncate text-sm text-fg-muted', o.all && 'max-xl:hidden')}>
+            {p.subtitle}
+          </span>
         ) : null}
       </span>
+      {o.all ? (
+        // Below xl the Organization column is hidden: the chip takes the subtitle's line.
+        <span className="min-w-0 xl:hidden">
+          <OrgChip pass={p} />
+        </span>
+      ) : null}
       {o.find && p.matched?.length ? (
         <MatchHint matched={p.matched} chips={o.find.chips} labels={o.find.labels} />
       ) : null}
@@ -113,9 +141,34 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
   );
 }
 
+/** The pass's organization: its mark and name. The one chip for the Organization column and the phone's title cell. */
+export function OrgChip({ pass }: { pass: PassSummaryDto }) {
+  const org = useList().orgs.get(pass.orgId);
+  const name = pass.orgName ?? org?.orgName ?? '—';
+  return (
+    <span
+      className="inline-flex min-w-0 max-w-56 items-center gap-2 text-sm text-fg-muted"
+      title={name}
+    >
+      <OrgMark
+        org={{ orgId: pass.orgId, orgName: name, personal: org?.personal ?? false }}
+        size={24}
+      />
+      <span className="truncate">{name}</span>
+    </span>
+  );
+}
+
 function OrgCell({ pass }: { pass: PassSummaryDto }) {
-  const org = useList().orgNames.get(pass.orgId) ?? '—';
-  return <span title={org}>{org}</span>;
+  return <OrgChip pass={pass} />;
+}
+
+function UpdatedCell({ pass }: { pass: PassSummaryDto }) {
+  const { all } = useList();
+  // Each row's day is the day in its own organization's zone.
+  const day =
+    all && pass.timeZone ? formatDayIn(pass.modifiedAt, pass.timeZone) : formatDay(pass.modifiedAt);
+  return <span className="text-fg-muted">{day}</span>;
 }
 
 function TemplateCell({ pass }: { pass: PassSummaryDto }) {
@@ -123,15 +176,20 @@ function TemplateCell({ pass }: { pass: PassSummaryDto }) {
   return <span title={t}>{t}</span>;
 }
 
-/** Stable columns: only the org scope changes the set. */
-export function passColumns(showOrg: boolean): DataColumnDef<PassSummaryDto, never>[] {
+/** Stable columns: only the scope changes the set. The All scope has an Organization column and no select or actions. */
+export function passColumns(all: boolean): DataColumnDef<PassSummaryDto, never>[] {
+  const showOrg = all;
   return [
-    {
-      id: 'select',
-      meta: { stackLead: true },
-      header: () => <SelectAll />,
-      cell: ({ row }) => <SelectRow pass={row.original} />,
-    },
+    ...(all
+      ? []
+      : [
+          {
+            id: 'select',
+            meta: { stackLead: true },
+            header: () => <SelectAll />,
+            cell: ({ row }) => <SelectRow pass={row.original} />,
+          } satisfies DataColumnDef<PassSummaryDto, never>,
+        ]),
     {
       id: 'title',
       header: 'Pass',
@@ -187,14 +245,16 @@ export function passColumns(showOrg: boolean): DataColumnDef<PassSummaryDto, nev
       id: 'updated',
       header: 'Updated',
       meta: { nowrap: true, stackHidden: true },
-      cell: ({ row }) => (
-        <span className="text-fg-muted">{formatDay(row.original.modifiedAt)}</span>
-      ),
+      cell: ({ row }) => <UpdatedCell pass={row.original} />,
     },
-    {
-      id: 'actions',
-      header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <ActionsCell pass={row.original} />,
-    },
+    ...(all
+      ? []
+      : [
+          {
+            id: 'actions',
+            header: () => <span className="sr-only">Actions</span>,
+            cell: ({ row }) => <ActionsCell pass={row.original} />,
+          } satisfies DataColumnDef<PassSummaryDto, never>,
+        ]),
   ];
 }

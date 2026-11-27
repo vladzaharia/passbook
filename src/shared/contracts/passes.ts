@@ -4,6 +4,7 @@ import { PassMatchSchema } from './broadcasts.ts';
 import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
+import { jsonParam, PassAcrossShape, PassOrgIdsSchema } from './pass-across.ts';
 import { PassListStatusSchema } from './pass-list-status.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
 import { PassTermSchema } from './pass-term.ts';
@@ -64,6 +65,7 @@ export const PassSummarySchema = z.object({
   removedAt: TimestampSchema.nullable().default(null),
   modifiedAt: TimestampSchema,
   createdAt: TimestampSchema,
+  ...PassAcrossShape,
 });
 export type PassSummaryDto = z.infer<typeof PassSummarySchema>;
 
@@ -169,18 +171,13 @@ export const PassDetailSchema = PassSummarySchema.extend({
 });
 export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 
-const jsonParam = (what: string) => (raw: string, ctx: z.RefinementCtx) => {
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    ctx.addIssue({ code: 'custom', message: `Use a JSON ${what}.` });
-    return z.NEVER;
-  }
-};
-
 export const PassListQuerySchema = z.object({
-  /** Literal `null` selects global scope for a global API key; org-bound keys may omit it. */
+  /**
+   * An organization id; `all` for every organization you can read passes in; `null` (All-organizations
+   * key only) is the older spelling of `all`. Org-bound keys may omit it.
+   */
   orgId: IdSchema.transform((value) => (value === 'null' ? null : value)).optional(),
+  orgIds: PassOrgIdsSchema.optional(),
   templateId: IdSchema.optional(),
   connectionId: IdSchema.optional(),
   /** Passes a pass import created or updated. */

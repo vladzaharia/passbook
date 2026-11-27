@@ -8,6 +8,8 @@ export const passListSearchSchema = z.object({
   q: opt(z.string().max(200)),
   m: opt(z.string().max(2000)),
   orgId: opt(z.string()),
+  /** The All scope's Organization filter: ids joined by commas. */
+  orgIds: opt(z.string().max(3300)),
   templateId: opt(z.string()),
   connectionId: opt(z.string()),
   importId: opt(z.string()),

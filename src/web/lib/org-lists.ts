@@ -14,3 +14,16 @@ export function listableMemberships<T extends Pick<OrgMembership, 'testOnly'>>(
 ): T[] {
   return memberships.filter((m) => !isSandbox(m));
 }
+
+/** The organizations the All scope covers: listable, active, with `passes:read`. */
+export function readablePassOrgs<
+  T extends Pick<OrgMembership, 'testOnly' | 'revokedAt' | 'capabilities'>,
+>(memberships: readonly T[]): T[] {
+  return listableMemberships(memberships).filter(
+    (m) => m.revokedAt === null && m.capabilities.includes('passes:read'),
+  );
+}
+
+/** Two or more readable organizations make the All scope worth offering. */
+export const canUseAllScope = (memberships: readonly OrgMembership[]): boolean =>
+  new Set(readablePassOrgs(memberships).map((m) => m.orgId)).size >= 2;

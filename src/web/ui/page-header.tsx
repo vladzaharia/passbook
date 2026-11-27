@@ -10,7 +10,7 @@ export interface Crumb {
   /** Route path; omit for the current page. */
   to?: string;
   /** Optional query parameters for the destination. */
-  search?: Record<string, string | undefined>;
+  search?: Record<string, unknown>;
 }
 
 export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; className?: string }) {

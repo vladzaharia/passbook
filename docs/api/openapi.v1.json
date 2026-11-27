@@ -7340,6 +7340,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           }
         },
         "required": [
@@ -7828,6 +7837,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           },
           "email": {
             "type": "object",
@@ -120553,6 +120571,15 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 3249
+            },
+            "required": false,
+            "name": "orgIds",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "minLength": 1,
               "maxLength": 64
             },
@@ -120778,6 +120805,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_SCOPE_TOO_WIDE",
           "RATE_LIMITED",
           "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
