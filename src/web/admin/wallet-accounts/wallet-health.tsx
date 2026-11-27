@@ -2,19 +2,19 @@ import { useState } from 'react';
 import type { WalletHealth } from '@/shared/contracts/wallet-health.ts';
 import type { WalletProvider } from '@/shared/contracts/wallet-providers.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { formatFullIn, formatStampIn } from '@/web/lib/format.ts';
+import { formatDateTimeIn, formatFullIn } from '@/web/lib/format.ts';
 import type { Tone } from '@/web/lib/status.ts';
 import {
   Button,
   Callout,
   ErrorState,
-  SkeletonRows,
+  Skeleton,
   StatusPill,
   toast,
   WalletArt,
 } from '@/web/ui/index.ts';
 import { useOrgTimeZone } from '../settings/use-org-time-zone.ts';
-import { HEALTH, PROVIDER_NAME, safeError } from './copy.ts';
+import { HEALTH, safeError } from './copy.ts';
 import { useOrgWalletHealth, useWalletRecheck } from './health-queries.ts';
 
 const TONE: Record<WalletHealth['tone'], Tone> = {
@@ -25,14 +25,22 @@ const TONE: Record<WalletHealth['tone'], Tone> = {
 };
 const MOOD = { ok: 'happy', attention: 'curious', failing: 'sad', idle: 'flat' } as const;
 
-function Fact({ label, value, hot }: { label: string; value: React.ReactNode; hot?: boolean }) {
+function Fact({
+  label,
+  value,
+  hot,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hot?: 'warning' | 'danger' | false;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 rounded-md bg-surface-sunken px-3 py-2">
       <dt className="text-xs text-fg-muted">{label}</dt>
       <dd
         className={cn(
-          'truncate text-sm font-medium tabular-nums',
-          hot ? 'text-warning' : 'text-fg-strong',
+          'text-sm font-medium tabular-nums',
+          hot === 'danger' ? 'text-danger' : hot ? 'text-warning' : 'text-fg-strong',
         )}
       >
         {value}
@@ -45,7 +53,7 @@ function Moment({ at, zone }: { at: number | null; zone: string }) {
   if (at === null) return <span className="text-fg-muted">{HEALTH.none}</span>;
   return (
     <time dateTime={new Date(at).toISOString()} title={formatFullIn(at, zone)}>
-      {formatStampIn(at, zone)}
+      {formatDateTimeIn(at, zone)}
     </time>
   );
 }
@@ -69,12 +77,20 @@ export function WalletHealthPanel({
   const recheck = useWalletRecheck(orgId);
   const [busy, setBusy] = useState(false);
   const item = health.data?.items.find((i) => i.provider === provider);
-  const name = PROVIDER_NAME[provider];
 
   if (health.isPending)
     return (
-      <div className="border-t border-border pt-4">
-        <SkeletonRows rows={2} />
+      <div
+        role="status"
+        aria-label="Loading"
+        className="flex flex-col gap-3 border-t border-border pt-4"
+      >
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[3.375rem]" />
+          ))}
+        </div>
       </div>
     );
   if (health.isError)
@@ -108,12 +124,15 @@ export function WalletHealthPanel({
           {HEALTH.tone[item.tone]}
         </StatusPill>
       </div>
-      <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className="m-0 grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Fact label={HEALTH.lastUpdate} value={<Moment at={item.lastSuccessAt} zone={zone} />} />
         <Fact label={HEALTH.queued} value={item.queued} />
-        <Fact label={HEALTH.failed} value={item.failed24h} hot={item.failed24h > 0} />
-        <Fact label={HEALTH.uncertain} value={item.uncertain} hot={item.uncertain > 0} />
-        <Fact label={HEALTH.report(name)} value={<Moment at={item.callbackAt} zone={zone} />} />
+        <Fact
+          label={HEALTH.failed}
+          value={item.failed24h}
+          hot={item.failed24h > 0 && (item.tone === 'failing' ? 'danger' : 'warning')}
+        />
+        <Fact label={HEALTH.report} value={<Moment at={item.callbackAt} zone={zone} />} />
       </dl>
       {item.tone === 'failing' ? <Callout tone="danger">{HEALTH.failing}</Callout> : null}
       {item.uncertain > 0 ? (

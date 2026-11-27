@@ -54,6 +54,23 @@ beforeEach(() => {
 afterEach(() => resetModeForTests());
 
 describe('wallet health', () => {
+  it('shows the panel in Live once the wallet is released there', async () => {
+    setMode('live');
+    await renderOrgAccounts({
+      memberships: [member(OPERATE)],
+      handlers: {
+        ...handlers([health({ mode: 'live' })]),
+        '/api/v1/orgs/o1/wallet-enrolments': () =>
+          json({
+            items: [enrolment({ mode: 'live', state: 'on', source: 'platform' })],
+            nextCursor: null,
+          }),
+      },
+    });
+    const panel = await screen.findByRole('region', { name: 'Health' });
+    expect(within(panel).getByText('Healthy')).toBeInTheDocument();
+  });
+
   it('shows the counts and a calm pill when all is well, with no axe violations', async () => {
     const { container } = await renderOrgAccounts({
       memberships: [member(OPERATE)],
@@ -119,7 +136,7 @@ describe('wallet health', () => {
     const panel = await screen.findByRole('region', { name: 'Health' });
     expect(within(panel).getByText('Credentials failing')).toBeInTheDocument();
     expect(
-      within(panel).getByText('The provider refused the credentials twice. Rotate them.'),
+      within(panel).getByText('The provider rejected the credentials twice.'),
     ).toBeInTheDocument();
   });
 });

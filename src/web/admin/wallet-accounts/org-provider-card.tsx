@@ -153,20 +153,22 @@ export function OrgProviderCard({
             <p className="text-sm text-fg-muted">{notReleased}</p>
           ) : null}
           {help ? <p className="text-sm text-fg-muted">{help}</p> : null}
-          <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
-            {gatesOf(e).map((g) => (
-              <li key={g.label} className="flex items-center gap-2 text-fg-muted">
-                {g.ok ? (
-                  <CircleCheck aria-hidden className="size-4 text-success" />
-                ) : (
-                  <CircleDashed aria-hidden className="size-4" />
-                )}
-                <span>
-                  {g.label}: {g.state}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {on ? null : (
+            <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
+              {gatesOf(e).map((g) => (
+                <li key={g.label} className="flex items-center gap-2 text-fg-muted">
+                  {g.ok ? (
+                    <CircleCheck aria-hidden className="size-4 text-success" />
+                  ) : (
+                    <CircleDashed aria-hidden className="size-4" />
+                  )}
+                  <span>
+                    {g.label}: {g.state}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <WalletHealthPanel orgId={orgId} provider={e.provider} canOperate={canReissue} />
         <OperationSlot

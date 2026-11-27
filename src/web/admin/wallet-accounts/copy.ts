@@ -37,8 +37,7 @@ export const HEALTH = {
   lastUpdate: 'Last update',
   queued: 'Queued',
   failed: 'Failed, 24 h',
-  uncertain: 'Unknown outcome',
-  report: (name: string) => `${name} report`,
+  report: 'Provider report',
   none: 'None yet',
   recheck: 'Check again',
   rechecked: 'Checking again',
@@ -46,7 +45,7 @@ export const HEALTH = {
   waiting: 'Settles by itself within 10 minutes.',
   due: 'The provider may not have received them.',
   unknown: (n: number) => `${n} ${n === 1 ? 'update has' : 'updates have'} an unknown outcome`,
-  failing: 'The provider refused the credentials twice. Rotate them.',
+  failing: 'The provider rejected the credentials twice.',
   loadError: 'Could not load health.',
 } as const;
 
