@@ -115,8 +115,14 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   test.setTimeout(600_000);
   await signIn(page);
   const org = await sandboxOrgId(page);
+  // Other specs issue passes in this sandbox too: count what is there, then what this spec adds.
+  await page.goto(`/workbench/o/${org}/passes`);
+  const rows = page.getByRole('listbox', { name: 'Passes' }).getByRole('option');
+  await rows.first().or(page.getByText('No passes').first()).waitFor({ timeout: 20_000 });
+  const before = await rows.count();
   await issuePass(page, org);
   await issuePass(page, org);
+  const total = before + 2;
 
   const calls: { path: string; authorization: string | undefined; mode: string | undefined }[] = [];
   page.on('request', (r) => {
@@ -129,8 +135,8 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   await page.goto(`/workbench/o/${org}/passes`);
   await expect(page.getByRole('heading', { level: 1, name: /Passes/ })).toBeVisible();
   const list = page.getByRole('listbox', { name: 'Passes' });
-  await expect(list.getByRole('option')).toHaveCount(2);
-  await expect(page.getByText('2 passes').first()).toBeVisible();
+  await expect(list.getByRole('option')).toHaveCount(total);
+  await expect(page.getByText(`${total} passes`).first()).toBeVisible();
   // No mode switch, and a sandbox has no On my phone view while the device pass is off.
   await expect(page.getByRole('radio', { name: 'Live' })).toHaveCount(0);
   await expect(page.getByRole('radiogroup', { name: 'Passes view' })).toHaveCount(0);

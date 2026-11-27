@@ -13,7 +13,7 @@ Use to lift a freeze. `freeze` writes a row to `idp_freezes` and every write the
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile `passbook-polaris-binding`).
 
 ## 1. List open freezes
 

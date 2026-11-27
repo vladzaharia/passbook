@@ -13,7 +13,7 @@ Rotate the Polaris ID API key every 90 days. `health().keyExpiresAt` is the near
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `POCKET_ID_API_KEY` (the new key).
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile), and the profile `passbook-polaris-binding` defines `POCKET_ID_API_KEY` (the new key).
 
 ## 1. Create the new key (UI)
 
