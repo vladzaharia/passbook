@@ -4,6 +4,7 @@ import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { guideExamples } from '../model/load.ts';
 import type { Example } from '../model/types.ts';
 import { type GuideDoc, parseGuide } from './parse.ts';
+import { expandSetupDirective } from './webhook-setup.ts';
 
 export const GUIDES_DIR = 'docs/developers/guides';
 
@@ -19,7 +20,10 @@ export function readGuideFiles(root: string): { file: string; text: string }[] {
   return readdirSync(dir)
     .filter((f) => f.endsWith('.md'))
     .sort()
-    .map((f) => ({ file: `${GUIDES_DIR}/${f}`, text: readFileSync(join(dir, f), 'utf8') }));
+    .map((f) => ({
+      file: `${GUIDES_DIR}/${f}`,
+      text: expandSetupDirective(readFileSync(join(dir, f), 'utf8')),
+    }));
 }
 
 export function loadGuideInputs(root: string): GuideInputs {
