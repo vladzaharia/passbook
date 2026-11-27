@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
 import { CONNECTOR } from '../../passes/test-fixtures.ts';
-import { returnTarget } from './outbound-flow.tsx';
+import { returnTarget } from './outbound-return.ts';
 import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
