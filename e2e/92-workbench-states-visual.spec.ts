@@ -222,14 +222,15 @@ test.describe('a developer sandbox', () => {
       ['inbox', 'No test emails'],
       ['passes', 'No passes'],
       ['activity', 'Nothing running'],
-      ['keys', 'No API keys'],
+      ['keys', 'No keys'],
       ['design', 'No templates'],
     ];
     for (const [tool, heading] of empties) {
-      // The first call and the key list are emptied by the route, so the shot is the §6 empty state
-      // whatever the sandbox has already logged or issued.
-      const glob = tool === 'logs' ? '**/api/v1/request-logs*' : '**/api/v1/api-keys*';
-      const mocked = tool === 'logs' || tool === 'keys';
+      // The first call, the key list and the templates are emptied by the route, so the shot is the §6
+      // empty state whatever the sandbox has already logged, issued or made.
+      const globs = { logs: '**/api/v1/request-logs*', design: '**/api/v1/templates?*' };
+      const glob = globs[tool as keyof typeof globs] ?? '**/api/v1/api-keys*';
+      const mocked = tool === 'logs' || tool === 'keys' || tool === 'design';
       if (mocked)
         await page.route(glob, (route) =>
           route.request().method() === 'GET' && !/api-keys\/[^/?]/.test(route.request().url())
