@@ -7,9 +7,6 @@ import { LayersArt } from '../../../ui/art/layers.tsx';
 import {
   Badge,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   ErrorState,
   FormField,
   ListRow,
@@ -18,7 +15,8 @@ import {
   SkeletonRows,
   StatusPill,
 } from '../../../ui/index.ts';
-import { usePassDiff } from '../versions-api.ts';
+import { usePassDiff } from './sync-api.ts';
+import { TabCard } from './tab-card.tsx';
 
 function show(v: unknown): string {
   if (v === undefined || v === null || v === '') return '—';
@@ -71,10 +69,14 @@ export function VersionsTab({
   pass,
   selected,
   onSelect,
+  flat,
 }: {
   pass: PassDetailDto;
-  selected: number | undefined;
-  onSelect: (version: number | undefined) => void;
+  selected?: number | undefined;
+  /** Without it the rows have no Preview (a host that cannot read a retained version). */
+  onSelect?: ((version: number | undefined) => void) | undefined;
+  /** The Workbench inspector: no card around it. */
+  flat?: boolean;
 }) {
   const versions = useMemo(
     () => [...pass.versions].sort((a, b) => b.version - a.version),
@@ -88,9 +90,8 @@ export function VersionsTab({
 
   return (
     <div className="grid gap-6">
-      <Card>
-        <CardHeader title="Versions" />
-        <CardBody>
+      <TabCard flat={flat} heading title="Versions">
+        <div>
           <ListRows label="Versions">
             {versions.map((v) => (
               <ListRow
@@ -104,7 +105,7 @@ export function VersionsTab({
                 }
                 meta={`${versionLabel(v)} · ${formatDateTime(v.createdAt)}`}
                 trailing={
-                  v.version === showing ? (
+                  !onSelect ? null : v.version === showing ? (
                     <StatusPill status="showing" />
                   ) : (
                     <Button
@@ -122,12 +123,11 @@ export function VersionsTab({
               />
             ))}
           </ListRows>
-        </CardBody>
-      </Card>
+        </div>
+      </TabCard>
       {kept.length > 1 ? (
-        <Card>
-          <CardHeader title="Compare" />
-          <CardBody className="flex flex-col gap-4">
+        <TabCard flat={flat} heading title="Compare">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end gap-3">
               <FormField label="From">
                 {(c) => (
@@ -160,8 +160,8 @@ export function VersionsTab({
             ) : (
               <Changes id={pass.id} from={from} to={to} />
             )}
-          </CardBody>
-        </Card>
+          </div>
+        </TabCard>
       ) : null}
     </div>
   );

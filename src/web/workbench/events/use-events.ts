@@ -36,7 +36,7 @@ export function useEventDeliveries(eventId: string) {
   return useQuery({
     queryKey: ['workbench', 'events', 'deliveries', eventId, ...key],
     queryFn: () => api.eventDeliveries(eventId).then((r) => r.items),
-    refetchInterval: 4000,
+    refetchInterval: 8000,
   });
 }
 
@@ -48,6 +48,6 @@ export function useCaptures(endpointId: string | undefined) {
     queryKey: ['workbench', 'events', 'captures', endpointId, ...key],
     queryFn: () => api.captures(endpointId as string).then((r) => r.items),
     enabled: Boolean(endpointId),
-    refetchInterval: 4000,
+    refetchInterval: 8000,
   });
 }

@@ -87,6 +87,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   events: WB_TOOL_BUDGET_BYTES,
   home: WB_TOOL_BUDGET_BYTES,
   keys: WB_TOOL_BUDGET_BYTES,
+  passes: WB_TOOL_BUDGET_BYTES,
   sandbox: WB_TOOL_BUDGET_BYTES,
   quickstart: WB_TOOL_BUDGET_BYTES,
   design: WB_DESIGN_BUDGET_BYTES,
