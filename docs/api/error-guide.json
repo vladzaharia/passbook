@@ -947,6 +947,12 @@
     "fix": "Contact support to update it, then send the request again.",
     "retryable": false
   },
+  "IDENTITY_MOVE_SAME": {
+    "title": "Same identity",
+    "when": "The move's source and target are the same signing identity.",
+    "fix": "Choose a different target identity, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_NOT_CONFIGURED": {
     "title": "Identity not set up",
     "when": "The organization has no signing identity for this pass type.",

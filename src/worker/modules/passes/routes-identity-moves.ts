@@ -21,7 +21,7 @@ import { armMoveById } from './identity-move-arm.ts';
 import { listIdentityMoves } from './identity-move-list.ts';
 import { previewIdentityMove, startIdentityMove } from './identity-move-start.ts';
 
-/** Person-only: a platform admin session. A key never reaches these routes, and no token retries or cancels the operation. */
+/** The two reads take a Platform key (platform:identities or platform:read); the writes are a platform admin session's alone, and no token retries or cancels the operation. */
 const READ = { platform: 'platform:identities' } as const;
 const WRITE = { ...READ, stepUp: { maxAgeSec: STEP_UP_SECONDS } } as const;
 const ERRORS = ['IDEMPOTENCY_KEY_REQUIRED', 'ORG_NOT_FOUND', 'IDENTITY_NOT_FOUND'] as const;
@@ -50,7 +50,7 @@ register(
     summary: 'Dry run of an identity move: what would move and what stays, by reason',
     query: IdentityMoveOrgQuerySchema,
     response: IdentityMovePreviewSchema,
-    auth: READ,
+    auth: { ...READ, key: true },
     codes: [
       ...ERRORS,
       'IDENTITY_MOVE_SAME',
@@ -60,7 +60,6 @@ register(
     ],
   },
   async (c) => {
-    adminOf(c);
     const q = c.req.valid('query');
     return c.json(await previewIdentityMove(serviceContext(c), q));
   },
@@ -75,12 +74,9 @@ register(
     summary: 'Move rows with their state and reason, including kept_both and unarmed',
     query: IdentityMoveListQuerySchema,
     response: IdentityMoveListSchema,
-    auth: READ,
+    auth: { ...READ, key: true },
   },
-  async (c) => {
-    adminOf(c);
-    return c.json(await listIdentityMoves(serviceContext(c), c.req.valid('query')));
-  },
+  async (c) => c.json(await listIdentityMoves(serviceContext(c), c.req.valid('query'))),
 );
 
 register(
