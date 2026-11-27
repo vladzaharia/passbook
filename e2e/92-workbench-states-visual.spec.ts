@@ -17,11 +17,17 @@ const FULL = [
   [390, 844],
 ] as const;
 
-async function shot(page: Page, name: string, widths: 'phone' | 'all' = 'phone') {
+/** 'current' shoots the viewport as it is, and as a viewport (not full page): for sheets and their scrim. */
+async function shot(page: Page, name: string, widths: 'phone' | 'all' | 'current' = 'phone') {
   if (!DIR) return;
   mkdirSync(DIR, { recursive: true });
   const before = page.viewportSize();
-  const views = widths === 'all' ? FULL : FULL.slice(2);
+  const views =
+    widths === 'all'
+      ? FULL
+      : widths === 'phone'
+        ? FULL.slice(2)
+        : [[before?.width ?? 390, before?.height ?? 844] as const];
   for (const [width, height] of views) {
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
@@ -30,10 +36,19 @@ async function shot(page: Page, name: string, widths: 'phone' | 'all' = 'phone')
         const finite = document
           .getAnimations()
           .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity);
-        await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+        for (const a of finite) {
+          try {
+            a.finish();
+          } catch {
+            // an animation that cannot finish (paused, or a zero-rate one) is shot as it stands
+          }
+        }
         await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       });
-      await page.screenshot({ path: `${DIR}/${name}-${width}-${scheme}.png`, fullPage: true });
+      await page.screenshot({
+        path: `${DIR}/${name}-${width}-${scheme}.png`,
+        fullPage: widths !== 'current',
+      });
     }
   }
   await page.emulateMedia({ colorScheme: 'light' });
@@ -145,7 +160,7 @@ test.describe('contexts', () => {
       await page.setViewportSize({ width, height });
       await page.getByRole('button', { name: /change area/ }).click();
       await expect(page.getByRole('dialog', { name: 'Workbench' })).toBeVisible();
-      await shot(page, `nav-sheet-${width}`);
+      await shot(page, `nav-sheet-${width}`, 'current');
       await page.keyboard.press('Escape');
     }
   });
@@ -186,7 +201,9 @@ test.describe('contexts', () => {
       }),
     );
     await page.reload();
-    await expect(h1(page)).toBeVisible();
+    await expect(text(page, 'Your session ended')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Sign in again' }).first()).toBeVisible();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     await shot(page, 'state-session-expired');
   });
 });
@@ -199,11 +216,34 @@ test.describe('a developer sandbox', () => {
     await signInToWorkbench(page, { key: true, desktop: false });
     await page.setViewportSize(phone);
     const org = await sandboxOrgId(page);
-    for (const tool of ['logs', 'events', 'inbox', 'passes', 'activity', 'keys', 'design']) {
+    const empties: Array<[string, string | RegExp]> = [
+      ['logs', 'Waiting for your first call'],
+      ['events', 'Listening for events'],
+      ['inbox', 'No test emails'],
+      ['passes', 'No passes'],
+      ['activity', 'Nothing running'],
+      ['keys', 'No API keys'],
+      ['design', 'No templates'],
+    ];
+    for (const [tool, heading] of empties) {
+      // The first call and the key list are emptied by the route, so the shot is the §6 empty state
+      // whatever the sandbox has already logged or issued.
+      const glob = tool === 'logs' ? '**/api/v1/request-logs*' : '**/api/v1/api-keys*';
+      const mocked = tool === 'logs' || tool === 'keys';
+      if (mocked)
+        await page.route(glob, (route) =>
+          route.request().method() === 'GET' && !/api-keys\/[^/?]/.test(route.request().url())
+            ? route.fulfill({
+                json: { items: [], nextCursor: null, capped: null, bodiesRecorded: true },
+              })
+            : route.fallback(),
+        );
       await page.goto(wbPath(org, tool));
       await expect(h1(page)).toBeVisible();
-      await expect(page.locator('[aria-busy="true"], [aria-busy]')).toHaveCount(0);
+      await expect(text(page, heading)).toBeVisible();
+      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
       await shot(page, `empty-${tool}`);
+      if (mocked) await page.unroute(glob);
     }
     await page.goto(wbPath(org, 'home'));
     await expect(h1(page)).toBeVisible();
