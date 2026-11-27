@@ -47,6 +47,7 @@ import {
   type HookOutcome,
   recordHookOutcomes,
 } from '../modules/status/hook-health.ts';
+import { pruneDlqOutcomes } from '../modules/status/repo-hooks.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
@@ -121,6 +122,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'auth.retention', run: dailyAuth },
     { name: 'audit.retention', run: dailyAudit },
     { name: 'events.retention', run: dailyEvents },
+    { name: 'dlq.retention', run: async (ctx) => pruneDlqOutcomes(ctx.env.DB, ctx.clock.now()) },
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
@@ -210,7 +212,7 @@ export async function handleScheduled(
       });
     });
   }
-  await recordHookOutcomes(base, 'cron', outcomes);
+  await recordHookOutcomes(base, controller.cron === DAILY_CRON ? 'daily' : 'minute', outcomes);
   if (controller.cron === MINUTE_CRON) {
     try {
       await recordCronRun(base, 'minute');

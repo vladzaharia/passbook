@@ -6,8 +6,6 @@ import { AppError } from '../platform/errors.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
 import type { Job } from './types.ts';
 
-const KEEP_MS = 30 * 86_400_000;
-
 /**
  * A job that will never run again must leave a terminal, visible outcome: the operation it served
  * ends failed (DEAD_LETTER) instead of staying pending, and the drop is kept for Status.
@@ -27,16 +25,12 @@ export async function settleDroppedJob(
       );
   }
   const now = ctx.clock.now();
-  await recordDlqOutcome(
-    ctx.env.DB,
-    {
-      messageId,
-      jobKind: job?.kind ?? 'invalid',
-      orgId: job && 'orgId' in job ? job.orgId : null,
-      targetId: operationId ?? null,
-      code,
-      at: now,
-    },
-    now - KEEP_MS,
-  );
+  await recordDlqOutcome(ctx.env.DB, {
+    messageId,
+    jobKind: job?.kind ?? 'invalid',
+    orgId: job && 'orgId' in job ? job.orgId : null,
+    targetId: operationId ?? null,
+    code,
+    at: now,
+  });
 }

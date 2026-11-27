@@ -1,6 +1,7 @@
 import { all, run, stmt } from '../../platform/db.ts';
 
-export type HookKind = 'cron' | 'queue';
+/** The cron schedule a hook runs on, or the queue. */
+export type HookKind = 'minute' | 'daily' | 'queue';
 
 export interface HookHealthRow {
   kind: HookKind;
@@ -47,17 +48,19 @@ export interface DlqOutcome {
   at: number;
 }
 
-/** One row per dropped message; a redelivery changes nothing. Rows older than `keepAfter` go. */
-export async function recordDlqOutcome(
-  db: D1Database,
-  o: DlqOutcome,
-  keepAfter: number,
-): Promise<void> {
+/** A drop counts in Status, and is kept, this long. */
+export const DLQ_KEEP_MS = 30 * 86_400_000;
+
+/** One row per dropped message; a redelivery changes nothing. */
+export async function recordDlqOutcome(db: D1Database, o: DlqOutcome): Promise<void> {
   await run(
     db,
     `INSERT OR IGNORE INTO dlq_outcomes (message_id, job_kind, org_id, target_id, code, dropped_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [o.messageId, o.jobKind, o.orgId, o.targetId, o.code, o.at],
   );
-  await run(db, 'DELETE FROM dlq_outcomes WHERE dropped_at < ?', [keepAfter]);
+}
+
+export async function pruneDlqOutcomes(db: D1Database, now: number): Promise<void> {
+  await run(db, 'DELETE FROM dlq_outcomes WHERE dropped_at < ?', [now - DLQ_KEEP_MS]);
 }

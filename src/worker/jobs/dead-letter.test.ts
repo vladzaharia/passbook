@@ -5,8 +5,10 @@ import { rowById } from '../modules/operations/repo.ts';
 import { startOperation } from '../modules/operations/start.ts';
 import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { checkTerminalFailures } from '../modules/status/checks-health.ts';
-import { checkHooks } from '../modules/status/checks-hooks.ts';
+import { loadHooks, withHooks } from '../modules/status/checks-hooks.ts';
+import { checkCron } from '../modules/status/cron-check.ts';
 import { recordHookOutcomes } from '../modules/status/hook-health.ts';
+import { pruneDlqOutcomes, recordDlqOutcome } from '../modules/status/repo-hooks.ts';
 import { all } from '../platform/db.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { handleQueue } from './queue.ts';
@@ -16,6 +18,10 @@ let kit: Kit;
 let undo: () => void;
 beforeEach(async () => {
   kit = await setupKit();
+  await kit.env.DB.batch([
+    kit.env.DB.prepare('DELETE FROM dlq_outcomes'),
+    kit.env.DB.prepare('DELETE FROM hook_health'),
+  ]);
   undo = registerTestKinds({ run: async () => {} });
 });
 afterEach(() => undo());
@@ -67,19 +73,50 @@ describe('dead-letter terminal outcome', () => {
   });
 });
 
+describe('old drops', () => {
+  it('no longer degrade Status after 30 days, and the daily hook prunes them', async () => {
+    await recordDlqOutcome(kit.env.DB, {
+      messageId: 'dm-old',
+      jobKind: 'push.deliver',
+      orgId: null,
+      targetId: null,
+      code: 'DEAD_LETTER',
+      at: kit.clock.now(),
+    });
+    expect((await checkTerminalFailures(kit.ctx)).state).toBe('degraded');
+    kit.clock.advance(31 * 86_400_000);
+    expect((await checkTerminalFailures(kit.ctx)).state).toBe('verified');
+    await pruneDlqOutcomes(kit.env.DB, kit.clock.now());
+    expect(await all(kit.env.DB, 'SELECT 1 FROM dlq_outcomes')).toHaveLength(0);
+  });
+
+  it('keeps an invalid message as an outcome with a code and no payload', async () => {
+    await drain(dead({ nonsense: 'secret-payload' }, 'dm-bad'));
+    const rows = await all<Record<string, unknown>>(kit.env.DB, 'SELECT * FROM dlq_outcomes');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ job_kind: 'invalid', code: 'INVALID_MESSAGE' });
+    expect(JSON.stringify(rows)).not.toContain('secret-payload');
+  });
+});
+
 describe('hook health', () => {
-  it('keeps last success and last failure per hook and flags a failing one', async () => {
-    expect((await checkHooks(kit.ctx)).state).toBe('configured');
-    await recordHookOutcomes(kit.ctx, 'cron', [{ hook: 'a.hook', failure: null }]);
-    expect((await checkHooks(kit.ctx)).state).toBe('verified');
+  const cronRow = async () => (await checkCron(kit.ctx)).find((c) => c.id === 'cron:minute');
+  it('shows each hook on its cron row and degrades it when the last run failed', async () => {
+    await recordHookOutcomes(kit.ctx, 'minute', [{ hook: 'a.hook', failure: null }]);
+    expect((await cronRow())?.data).toHaveProperty('a.hook');
     kit.clock.advance(1000);
-    await recordHookOutcomes(kit.ctx, 'cron', [{ hook: 'a.hook', failure: 'CRON_HOOK_FAILED' }]);
-    const s = await checkHooks(kit.ctx);
-    expect(s.state).toBe('degraded');
-    expect(s.data).toMatchObject({ failing: 1 });
-    expect(String(s.data?.['cron:a.hook'])).toContain('CRON_HOOK_FAILED');
+    await recordHookOutcomes(kit.ctx, 'minute', [{ hook: 'a.hook', failure: 'CRON_HOOK_FAILED' }]);
+    const bad = await cronRow();
+    expect(bad?.state).toBe('degraded');
+    expect(String(bad?.data?.['a.hook'])).toContain('CRON_HOOK_FAILED');
     kit.clock.advance(1000);
-    await recordHookOutcomes(kit.ctx, 'cron', [{ hook: 'a.hook', failure: null }]);
-    expect((await checkHooks(kit.ctx)).state).toBe('verified');
+    await recordHookOutcomes(kit.ctx, 'minute', [{ hook: 'a.hook', failure: null }]);
+    expect((await cronRow())?.detail ?? '').not.toContain('failing');
+  });
+
+  it('lists queue kinds under the job queue row', async () => {
+    await recordHookOutcomes(kit.ctx, 'queue', [{ hook: 'push.deliver', failure: 'JOB_FAILED' }]);
+    const queue = withHooks({ state: 'verified', detail: null }, await loadHooks(kit.ctx), 'queue');
+    expect(queue.state).toBe('degraded');
   });
 });

@@ -10,6 +10,7 @@ import { macRootVersions } from '../../platform/mac-roots.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Draft } from './checks.ts';
 import { staffPinsOnRoot } from './repo.ts';
+import { DLQ_KEEP_MS } from './repo-hooks.ts';
 
 /** Present and usable: the ring loads and a round trip decrypts. Reports versions, never key material. */
 export async function checkKek(ctx: ServiceContext): Promise<Draft> {
@@ -63,7 +64,8 @@ export async function checkTerminalFailures(ctx: ServiceContext): Promise<Draft>
      UNION ALL
      SELECT 'webhook' AS kind, count(*) AS n FROM connection_webhook_retention WHERE state = 'failed'
      UNION ALL
-     SELECT 'dropped_' || job_kind AS kind, count(*) AS n FROM dlq_outcomes GROUP BY job_kind`,
+     SELECT 'dropped_' || job_kind AS kind, count(*) AS n FROM dlq_outcomes WHERE dropped_at >= ? GROUP BY job_kind`,
+      [ctx.clock.now() - DLQ_KEEP_MS],
     );
   } catch (error) {
     ctx.log.warn('status.probe_failed', { component: 'failures', code: 'PROBE_FAILED', error });

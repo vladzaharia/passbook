@@ -1,6 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { Draft } from './checks.ts';
-import { type HookHealthRow, listHookHealth } from './repo-hooks.ts';
+import { type HookHealthRow, type HookKind, listHookHealth } from './repo-hooks.ts';
 
 const iso = (at: number | null) => (at === null ? 'never' : new Date(at).toISOString());
 
@@ -9,26 +8,37 @@ const failing = (r: HookHealthRow) =>
   r.last_failure_at !== null &&
   (r.last_success_at === null || r.last_failure_at > r.last_success_at);
 
-/** Last success and last failure of every cron hook and queue job kind that has run. */
-export async function checkHooks(ctx: ServiceContext): Promise<Draft> {
-  const base = { id: 'hooks', kind: 'cron', label: 'Cron and queue hooks' } as const;
-  let rows: HookHealthRow[];
+/** Every recorded hook; a failed read is logged and shows no hooks rather than failing the row. */
+export async function loadHooks(ctx: ServiceContext): Promise<HookHealthRow[]> {
   try {
-    rows = await listHookHealth(ctx.env.DB);
+    return await listHookHealth(ctx.env.DB);
   } catch (error) {
     ctx.log.warn('status.probe_failed', { component: 'hooks', code: 'PROBE_FAILED', error });
-    return { ...base, state: 'failing', detail: 'Probe failed.' };
+    return [];
   }
-  if (rows.length === 0) return { ...base, state: 'configured', detail: 'No run recorded.' };
-  const bad = rows.filter(failing);
-  const data: Record<string, string | number> = { hooks: rows.length, failing: bad.length };
-  for (const r of rows)
-    data[`${r.kind}:${r.hook}`] =
+}
+
+/** Adds each hook's last success and failure to a row's detail; a failing hook degrades the row. */
+export function withHooks<
+  T extends {
+    state: string;
+    detail: string | null;
+    data?: Record<string, string | number | boolean | null> | undefined;
+  },
+>(draft: T, rows: HookHealthRow[], kind: HookKind): T {
+  const mine = rows.filter((r) => r.kind === kind);
+  if (mine.length === 0) return draft;
+  const data: Record<string, string | number | boolean | null> = { ...draft.data };
+  for (const r of mine)
+    data[r.hook] =
       `ok ${iso(r.last_success_at)}, failed ${iso(r.last_failure_at)}${r.last_failure_code ? ` ${r.last_failure_code}` : ''}`;
+  const bad = mine.filter(failing);
+  if (bad.length === 0) return { ...draft, data };
+  const note = `${bad.length} failing: ${bad.map((r) => r.hook).join(', ')}.`;
   return {
-    ...base,
-    state: bad.length > 0 ? 'degraded' : 'verified',
-    detail: bad.length > 0 ? `${bad.length} failing: ${bad.map((r) => r.hook).join(', ')}.` : null,
+    ...draft,
+    state: draft.state === 'failing' ? 'failing' : 'degraded',
+    detail: draft.detail ? `${draft.detail} ${note}` : note,
     data,
   };
 }

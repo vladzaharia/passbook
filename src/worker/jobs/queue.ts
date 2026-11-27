@@ -73,6 +73,7 @@ export async function handleQueue(
           await settleDroppedJob(base, parsed.data, message.id, 'DEAD_LETTER');
         } else if (!(await retainLegacyJob(base, message))) {
           base.log.error('queue.invalid_message', { id: message.id, code: 'INVALID_MESSAGE' });
+          await settleDroppedJob(base, null, message.id, 'INVALID_MESSAGE');
         }
         message.ack();
       } catch (error) {
@@ -89,15 +90,13 @@ export async function handleQueue(
             code,
             ...(webhook ? {} : { error }),
           });
-          if (parsed.success) {
-            try {
-              await settleDroppedJob(base, parsed.data, message.id, code);
-            } catch (settleError) {
-              base.log.error('queue.dlq_settle_failed', {
-                id: message.id,
-                code: safeCode(settleError, 'DLQ_SETTLE_FAILED'),
-              });
-            }
+          try {
+            await settleDroppedJob(base, parsed.success ? parsed.data : null, message.id, code);
+          } catch (settleError) {
+            base.log.error('queue.dlq_settle_failed', {
+              id: message.id,
+              code: safeCode(settleError, 'DLQ_SETTLE_FAILED'),
+            });
           }
           message.ack();
         } else {

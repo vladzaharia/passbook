@@ -25,7 +25,6 @@ const LABELS: Record<string, string> = {
   lastRunAt: 'Last run',
   keysetReady: 'Keyset ready',
   rewrapState: 'Rewrap',
-  hooks: 'Hooks',
   id: 'Build',
 };
 

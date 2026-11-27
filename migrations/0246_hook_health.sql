@@ -1,6 +1,6 @@
 -- Last success and last failure per cron hook and queue job kind. Codes are stable, never messages.
 CREATE TABLE hook_health (
-  kind TEXT NOT NULL CHECK (kind IN ('cron', 'queue')),
+  kind TEXT NOT NULL CHECK (kind IN ('minute', 'daily', 'queue')),
   hook TEXT NOT NULL,
   last_success_at INTEGER,
   last_failure_at INTEGER,

@@ -23,7 +23,6 @@ import {
 } from './checks.ts';
 import { checkChannelApply } from './checks-channels.ts';
 import { checkKek, checkTerminalFailures } from './checks-health.ts';
-import { checkHooks } from './checks-hooks.ts';
 import { identityComponent } from './checks-identity.ts';
 import { checkKeys } from './checks-keys.ts';
 import { checkWalletCredentials } from './checks-wallet.ts';
@@ -97,7 +96,6 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
     checkOidc(ctx, deps.fetch ?? fetch),
     checkConnections(ctx),
     checkCron(ctx),
-    checkHooks(ctx),
     checkBuild(ctx),
     checkRateLimits(ctx),
     checkBreakglass(ctx),
