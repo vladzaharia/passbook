@@ -406,9 +406,9 @@ describe('the request log client', () => {
     const rows = await t.rows(d.made.orgId);
     const clients = rows.map((r) => r.client);
     expect(clients).toContain('curl/8.7.1');
-    // The User-Agent is on the header allowlist, so its text lives in `headers` and nowhere else: `client` stays a fixed name.
+    // The whole row, `headers` included: the User-Agent's email is redacted there. Its other text lives only in `headers`; `client` stays a fixed name.
+    expect(JSON.stringify(rows)).not.toContain('alice@example.com');
     const elsewhere = JSON.stringify(rows.map(({ headers: _headers, ...rest }) => rest));
-    expect(elsewhere).not.toContain('alice@example.com');
     expect(elsewhere).not.toContain('secret-tool');
     const page = RequestLogPageSchema.parse(
       await (await t.call('/developer/logs?source=key', { headers: d.browser })).json(),

@@ -1,6 +1,8 @@
+import { redactString } from '../../platform/log.ts';
+
 /**
  * The only headers a Test call's log keeps. This list is the boundary: nothing else is ever read, so no secret
- * (Authorization, Cookie, Set-Cookie, X-Api-Key, a signature) can reach a row.
+ * (Authorization, Cookie, Set-Cookie, X-Api-Key, a signature) can reach a row. Values are redacted like paths.
  */
 export const REQUEST_HEADERS = [
   'content-type',
@@ -52,8 +54,10 @@ function keptValue(name: string, raw: string | null | undefined): string | null 
   if (raw == null) return null;
   const head = (COMMA_IN_VALUE.has(name) ? raw : (raw.split(',')[0] ?? '')).trim();
   if (!PRINTABLE.test(head)) return null;
-  if (head.length <= MAX) return head;
-  return name === 'user-agent' ? `${head.slice(0, MAX - 1)}…` : null;
+  // The same value redaction as paths and queries: emails, keys and capability URLs never reach a row.
+  const kept = redactString(head);
+  if (kept.length <= MAX) return kept;
+  return name === 'user-agent' ? `${kept.slice(0, MAX - 1)}…` : null;
 }
 
 function pick(names: readonly string[], get: (name: string) => string | null | undefined) {

@@ -104,7 +104,7 @@ export const RequestLogEntrySchema = z.object({
   resourceId: IdSchema.nullable(),
   /** The `PassBook-Version` date the call pinned. */
   apiVersion: z.string().nullable(),
-  /** Which headers the call carried. Presence only, never a value. */
+  /** Which headers the call carried. Presence only; the values are in the detail's `headers`. */
   flags: z.object({ idempotencyKey: z.boolean(), ifMatch: z.boolean(), version: z.boolean() }),
 });
 export type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;

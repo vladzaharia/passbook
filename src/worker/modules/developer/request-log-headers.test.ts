@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
 import { RequestLogDetailSchema } from '../../../shared/contracts/index.ts';
+import { codeOf } from '../../../web/workbench/logs/curl.ts';
 import { first, run } from '../../platform/db.ts';
 import { headersJson, headersOf } from './request-log-headers.ts';
 import { logKit } from './request-log-test-fixtures.ts';
@@ -86,6 +87,27 @@ describe('request log headers', () => {
       [org.id],
     );
     expect(stored?.headers).toBeNull();
+  });
+});
+
+describe('header value redaction', () => {
+  it('redacts an email or a key in user-agent and idempotency-key: row, API and curl', async () => {
+    const { org, key } = await realOrg();
+    await t.call('/passes?limit=1', {
+      headers: {
+        ...key.headers,
+        'user-agent': 'tool/1 ada@example.com',
+        'idempotency-key': 'pb_test_abcdef123456',
+      },
+    });
+    const detail = await readDetail(key.headers, org.id);
+    const curl = codeOf('curl', detail, 'https://x.test');
+    const everything = JSON.stringify(await t.rows(org.id)) + JSON.stringify(detail) + curl;
+    for (const raw of ['ada@example.com', 'pb_test_abcdef123456'])
+      expect(everything, raw).not.toContain(raw);
+    expect(detail.headers?.req['user-agent']).toBe('tool/1 [redacted email]');
+    expect(detail.headers?.req['idempotency-key']).toBe('pb_[redacted]');
+    expect(curl).toContain('pb_[redacted]');
   });
 });
 

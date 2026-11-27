@@ -104,7 +104,7 @@ function sentOf(c: { req: { raw: Request; header(name: string): string | undefin
   return copy ? { copy } : null;
 }
 
-/** Which of the three headers a call carried: presence only, never a value. */
+/** Which of the three headers a call carried: presence only; allowlisted values go in `headers`. */
 const flagsOf = (header: (name: string) => string | undefined) =>
   (header('idempotency-key') !== undefined ? FLAG_IDEMPOTENCY_KEY : 0) |
   (header('if-match') !== undefined ? FLAG_IF_MATCH : 0) |
