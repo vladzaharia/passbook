@@ -1,6 +1,7 @@
 import { exactStmt, prefixMatch, type SqlValue } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { ScanActor } from './actor.ts';
+import { RACE_SEARCH_PAGE } from './race-tags.ts';
 import { eventMatch } from './repo-event-match.ts';
 import { type MissWindow, missWindow } from './repo-miss-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
@@ -213,7 +214,7 @@ export function searchPassesStmt(
   if (!where) return null;
   return exactStmt(
     db,
-    `SELECT p.id,
+    `${RACE_SEARCH_PAGE} SELECT p.id,
     (SELECT max(at) FROM scans s WHERE s.pass_id = p.id AND s.org_id = p.org_id AND s.mode = p.mode AND s.state = 'done') AS last_scan_at,
     (SELECT s.id FROM scans s WHERE s.pass_id = p.id AND s.org_id = p.org_id AND s.mode = p.mode
       AND s.state = 'done' AND s.at IS NOT NULL ORDER BY s.at DESC, s.id DESC LIMIT 1) AS last_scan_id

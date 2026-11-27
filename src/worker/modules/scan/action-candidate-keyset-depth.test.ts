@@ -7,6 +7,7 @@ import { first, run, stmt } from '../../platform/db.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
+import { RACE_CANDIDATE_READ, RACE_KEYSET_INSERT } from './race-tags.ts';
 import {
   grantScanMembership,
   key,
@@ -177,8 +178,8 @@ async function atInitialization(f: Fixture, change: Change, at: 'grant' | 'keyse
       if (property === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          const keyset = sql.includes('INSERT INTO credential_ref_keyset');
-          if (!keyset && !sql.includes('AS active_release_candidate_hash')) return prepared;
+          const keyset = sql.includes(RACE_KEYSET_INSERT);
+          if (!keyset && !sql.includes(RACE_CANDIDATE_READ)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

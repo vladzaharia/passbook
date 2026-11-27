@@ -15,6 +15,7 @@ import {
   setupPhoto,
   templateId,
 } from './lookup-output-test-fixtures.ts';
+import { RACE_GRANT_INSERT, RACE_MISS_COUNTER } from './race-tags.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
 import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -71,8 +72,8 @@ describe('lookup output authority', () => {
     // The miss is its own grant: the actor, the credential's refs and the search window hold with it.
     const missBatch = batches.find(
       (batch) =>
-        batch.some((sql) => sql.includes('INSERT INTO counters')) &&
-        batch.some((sql) => sql.includes('INSERT INTO authority_grants')),
+        batch.some((sql) => sql.includes(RACE_MISS_COUNTER)) &&
+        batch.some((sql) => sql.includes(RACE_GRANT_INSERT)),
     );
     expect(missBatch).toBeDefined();
   });
@@ -96,7 +97,7 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     let changed = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (!changed && sql.some((text) => text.includes('INSERT INTO authority_grants'))) {
+      if (!changed && sql.some((text) => text.includes(RACE_GRANT_INSERT))) {
         changed = true;
         await run(real, "UPDATE passes SET status='voided', revision=revision+1 WHERE id=?", [
           pass.id,
@@ -143,7 +144,7 @@ describe('lookup output authority', () => {
     const barcodeHash = await barcodeHashOfCode(cleanCode(code));
     let changed = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (!changed && sql.some((text) => text.includes('INSERT INTO counters'))) {
+      if (!changed && sql.some((text) => text.includes(RACE_MISS_COUNTER))) {
         changed = true;
         await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
           barcodeHash,

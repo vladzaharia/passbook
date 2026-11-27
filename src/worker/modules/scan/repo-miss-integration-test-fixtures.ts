@@ -1,6 +1,7 @@
 import { expect } from 'vitest';
 import { all, first } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 
 export function missCounter(db: D1Database, key: string, window: number) {
   return first<{ count: number }>(db, 'SELECT count FROM counters WHERE key=? AND window_start=?', [
@@ -33,7 +34,7 @@ export async function atMissStopCommit(
         return (sql: string) => {
           const prepared = target.prepare(sql);
           // Every stop commit opens its batch with the grant insert (the claim has its own grant).
-          if (!sql.includes('INSERT INTO authority_grants')) return prepared;
+          if (!sql.includes(RACE_GRANT_INSERT)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

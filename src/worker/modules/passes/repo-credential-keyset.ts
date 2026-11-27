@@ -1,5 +1,6 @@
 import { first, type SqlValue, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
+import { RACE_KEYSET_INSERT } from '../../platform/race-tag.ts';
 
 /** Bind the commitment captured before generating credential refs in the final SQL statement. */
 export const credentialRefKeysetSql =
@@ -29,7 +30,7 @@ export function credentialRefKeysetInitializeStmt(
   // so its depth does not accumulate with the blocking-event view.
   return stmt(
     db,
-    `${guard ? 'WITH keyset_proposal AS MATERIALIZED (SELECT ? AS commitment)\n    ' : ''}INSERT INTO credential_ref_keyset (id, commitment)
+    `${guard ? 'WITH keyset_proposal AS MATERIALIZED (SELECT ? AS commitment)\n    ' : ''}${RACE_KEYSET_INSERT} INSERT INTO credential_ref_keyset (id, commitment)
     SELECT 1, ${guard ? 'keyset_proposal.commitment FROM keyset_proposal' : '?'} WHERE (
       NOT EXISTS (SELECT 1 FROM credential_ref_keyset)
       AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones)

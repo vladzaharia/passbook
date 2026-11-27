@@ -5,6 +5,7 @@ import { all, run } from '../../platform/db.ts';
 import { captureCredentialKeyEnv, ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { credentialTombstoneRefsForInput, scanCredentialKeys } from './credential-input.ts';
+import { RACE_SEARCH_PAGE } from './race-tags.ts';
 import {
   credentialTombstonesClear,
   noCredentialTombstonesSql,
@@ -382,8 +383,7 @@ describe('scanner credential tombstones', () => {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) => {
-            if (sql.includes('FROM passes p JOIN templates t') && sql.includes('LIMIT 50 OFFSET'))
-              searches++;
+            if (sql.includes(RACE_SEARCH_PAGE)) searches++;
             return target.prepare(sql);
           };
         const value = Reflect.get(target, prop, target);

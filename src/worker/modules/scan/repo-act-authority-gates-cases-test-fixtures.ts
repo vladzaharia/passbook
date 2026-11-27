@@ -4,6 +4,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { reconcileScans } from './jobs.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
@@ -128,7 +129,7 @@ export function registerAuthorityGates() {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+            if (!sql.includes(RACE_GATE_WRITE)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')

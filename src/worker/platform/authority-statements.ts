@@ -149,7 +149,13 @@ export function returningSql(columns: string[] | undefined): string {
   return columns && columns.length > 0 ? ` RETURNING ${columns.map(identifier).join(', ')}` : '';
 }
 
+/** Prefixes an inert race-test marker comment (`scan/race-tags.ts`), so a race test finds the statement without matching its SQL. */
+export const tagged = (built: BuiltStatement, tag: string | undefined): BuiltStatement =>
+  tag ? { ...built, sql: `${tag} ${built.sql}` } : built;
+
 export interface WriteOptions {
+  /** Race-test marker comment (`scan/race-tags.ts`); no effect on the plan. */
+  tag?: string;
   set?: Record<string, SetValue>;
   /** Columns raised by one, for example a client-visible version. */
   inc?: string[];
@@ -261,6 +267,8 @@ export interface InsertFrom {
 }
 
 export interface InsertOptions {
+  /** Race-test marker comment (`scan/race-tags.ts`); no effect on the plan. */
+  tag?: string;
   returning?: string[];
   /** Read-only conditions evaluated when the statement runs. */
   when?: GrantCond[];

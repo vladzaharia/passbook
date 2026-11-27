@@ -3,6 +3,7 @@ import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
+import { RACE_MISS_COUNTER } from './race-tags.ts';
 
 /** Misses for one actor are independent across tenants and live/test modes. */
 export function missCounterKey(actor: ScanActor): string {
@@ -17,11 +18,11 @@ const INCREMENT = (when: string) =>
 
 /** The increment of a stop grant's miss: it applies only when the statement before it changed a row (the scan closed here). */
 export const missIncrementPart = (key: string, window: number): GrantPart =>
-  writePart(INCREMENT('changes()=1 AND '), [key, window]);
+  writePart(INCREMENT('changes()=1 AND '), [key, window], RACE_MISS_COUNTER);
 
 /** The increment of a read miss: the grant's own checks are the condition, nothing precedes it. */
 export const readMissIncrementPart = (key: string, window: number): GrantPart =>
-  writePart(INCREMENT(''), [key, window]);
+  writePart(INCREMENT(''), [key, window], RACE_MISS_COUNTER);
 
 /** The audit row's condition: the increment just before it crossed the cap. */
 export const crossedCap = (key: string, window: number, threshold: number): GrantCond => ({

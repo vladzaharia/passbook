@@ -37,19 +37,39 @@ export interface GrantPart {
   readonly kind: 'read' | 'write';
   readonly sql: string;
   readonly params: readonly SqlValue[];
+  /** Inert race-test marker comment (`platform/race-tag.ts`), prefixed after the lint. */
+  readonly tag?: string;
 }
 
+const RACE_TAG = /^\/\* race:[a-z0-9-]+ \*\/$/;
+const tagOf = (tag: string | undefined): { tag?: string } => {
+  if (tag === undefined) return {};
+  if (!RACE_TAG.test(tag))
+    throw new AuthorityError('GRANT_SCOPE_OVERRIDE', 'A part tag is a race marker.');
+  return { tag };
+};
+
 /** A read-only SELECT whose tenant comes from `{org}` (`{grant}` for a platform grant). */
-export const readPart = (sql: string, params: readonly SqlValue[] = []): GrantPart => ({
+export const readPart = (
+  sql: string,
+  params: readonly SqlValue[] = [],
+  tag?: string,
+): GrantPart => ({
   kind: 'read',
   sql,
   params,
+  ...tagOf(tag),
 });
 /** One write to a table outside the builder's guarded set; it must carry `{grant}`. */
-export const writePart = (sql: string, params: readonly SqlValue[] = []): GrantPart => ({
+export const writePart = (
+  sql: string,
+  params: readonly SqlValue[] = [],
+  tag?: string,
+): GrantPart => ({
   kind: 'write',
   sql,
   params,
+  ...tagOf(tag),
 });
 
 const override = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
@@ -206,5 +226,9 @@ export function buildPart(
     }),
   );
   stripLiterals(sql);
-  return { sql, params, ...(part.kind === 'read' ? { read: true as const } : {}) };
+  return {
+    sql: part.tag ? `${part.tag} ${sql}` : sql,
+    params,
+    ...(part.kind === 'read' ? { read: true as const } : {}),
+  };
 }

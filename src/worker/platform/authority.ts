@@ -38,6 +38,7 @@ import {
   buildUpdate,
   type InsertOptions,
   PARAM_BUDGET,
+  tagged,
   WRITE_PARAM_BUDGET,
   type WriteOptions,
 } from './authority-statements.ts';
@@ -140,13 +141,13 @@ export class Grant {
 
   update(table: string, options: WriteOptions): GrantedStatement {
     return this.#write('updating', keyMayRow(table), table, (t, pin, keyed) =>
-      buildUpdate(this.id, this.scope, t, options, pin, keyed),
+      tagged(buildUpdate(this.id, this.scope, t, options, pin, keyed), options.tag),
     );
   }
 
   delete(table: string, options: Omit<WriteOptions, 'set' | 'inc'>): GrantedStatement {
     return this.#write('deleting', keyMayRow(table), table, (t, pin, keyed) =>
-      buildDelete(this.id, this.scope, t, options, pin, keyed),
+      tagged(buildDelete(this.id, this.scope, t, options, pin, keyed), options.tag),
     );
   }
 
@@ -163,7 +164,10 @@ export class Grant {
       keyMayRow(table, options?.from),
       table,
       (t, pin, keyed) =>
-        buildInsertSelect(this.id, this.scope, t, columns, values, options, pin, keyed),
+        tagged(
+          buildInsertSelect(this.id, this.scope, t, columns, values, options, pin, keyed),
+          options?.tag,
+        ),
       'insert',
     );
   }
@@ -176,7 +180,10 @@ export class Grant {
     options: UpsertOptions,
   ): GrantedStatement {
     return this.#write('upserting', keyMayRow(table, options.from), table, (t, pin, keyed) =>
-      buildUpsert(this.id, this.scope, t, columns, values, options, pin, keyed),
+      tagged(
+        buildUpsert(this.id, this.scope, t, columns, values, options, pin, keyed),
+        options.tag,
+      ),
     );
   }
 
@@ -213,8 +220,10 @@ export class Grant {
    * statement's position in the batch: add the audit before a write to ask "was it still unrevoked?",
    * after an insert to ask "does the new row exist?".
    */
-  audit(entry: AuditRow, when?: AuditWhen): GrantedStatement {
-    return this.#push(buildAudit(this.id, this.scope, withVia(entry, this.#input.via), when));
+  audit(entry: AuditRow, when?: AuditWhen, tag?: string): GrantedStatement {
+    return this.#push(
+      tagged(buildAudit(this.id, this.scope, withVia(entry, this.#input.via), when), tag),
+    );
   }
 
   /**

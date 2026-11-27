@@ -3,6 +3,7 @@ import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key, makeLegacyScanPass, type ScanKit, setupScanKit } from './test-kit.ts';
 
 export let kit: ScanKit;
@@ -125,7 +126,7 @@ async function withoutGateClaim<T>(work: () => Promise<T>): Promise<T> {
     get(target, prop) {
       if (prop === 'prepare')
         return (sql: string) => {
-          if (sql.includes('INSERT INTO scan_gates')) attempted = true;
+          if (sql.includes(RACE_GATE_WRITE)) attempted = true;
           return target.prepare(sql);
         };
       const value = Reflect.get(target, prop, target);
@@ -184,7 +185,7 @@ export async function atGate<T>(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+          if (!sql.includes(RACE_GATE_WRITE)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

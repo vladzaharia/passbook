@@ -16,6 +16,7 @@ import {
   templateId,
   useKeysetlessDatabase,
 } from './lookup-output-test-fixtures.ts';
+import { RACE_CANDIDATE_READ, RACE_KEYSET_INSERT, RACE_SEARCH_PAGE } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -183,14 +184,12 @@ describe('lookup output authority', () => {
     overrideDeps(ctx.env, depsOf(kit.env));
     expect((await lookup(ctx, actor, pass.id)).items.map((item) => item.passId)).toEqual([pass.id]);
     const bootstrap = batches.find((batch) =>
-      batch.some((sql) => sql.includes('INSERT INTO credential_ref_keyset')),
+      batch.some((sql) => sql.includes(RACE_KEYSET_INSERT)),
     );
     expect(bootstrap).toBeDefined();
-    expect(bootstrap?.some((sql) => sql.includes('FROM passes p JOIN templates t'))).toBe(true);
+    expect(bootstrap?.some((sql) => sql.includes(RACE_SEARCH_PAGE))).toBe(true);
     // The first initialization is guarded by the actor's read authority, in the same batch.
-    expect(bootstrap?.find((sql) => sql.includes('INSERT INTO credential_ref_keyset'))).toContain(
-      'FROM actor_ok',
-    );
+    expect(bootstrap?.find((sql) => sql.includes(RACE_KEYSET_INSERT))).toContain('FROM actor_ok');
     expect(await first(real, 'SELECT commitment FROM credential_ref_keyset WHERE id=1')).toEqual({
       commitment: actor.credentialKeysetCommitment,
     });
@@ -214,20 +213,12 @@ describe('lookup output authority', () => {
     expect(result.outcome).toMatchObject({ kind: 'ready', card: { passId: pass.id } });
     expect(result.credentialContext?.credentialTombstoneRefs).toEqual([]);
     const bootstrap = batches.find((batch) =>
-      batch.some((sql) => sql.includes('INSERT INTO credential_ref_keyset')),
+      batch.some((sql) => sql.includes(RACE_KEYSET_INSERT)),
     );
     // The candidate read, identified by its keyset column; SQL balancing rewrites its WHERE.
-    expect(
-      bootstrap?.some(
-        (sql) =>
-          sql.includes('FROM passes p') &&
-          sql.includes('credential_keyset.commitment AS credential_keyset_commitment'),
-      ),
-    ).toBe(true);
+    expect(bootstrap?.some((sql) => sql.includes(RACE_CANDIDATE_READ))).toBe(true);
     // The first initialization is guarded by the actor's read authority, in the same batch.
-    expect(bootstrap?.find((sql) => sql.includes('INSERT INTO credential_ref_keyset'))).toContain(
-      'FROM actor_ok',
-    );
+    expect(bootstrap?.find((sql) => sql.includes(RACE_KEYSET_INSERT))).toContain('FROM actor_ok');
     expect(await first(real, 'SELECT commitment FROM credential_ref_keyset WHERE id=1')).toEqual({
       commitment: result.credentialContext?.credentialKeysetCommitment,
     });
@@ -241,7 +232,7 @@ describe('lookup output authority', () => {
     const real = kit.env.DB;
     let revoked = false;
     const { db } = interceptBatches(real, async (sql) => {
-      if (!revoked && sql.some((text) => text.includes('INSERT INTO credential_ref_keyset'))) {
+      if (!revoked && sql.some((text) => text.includes(RACE_KEYSET_INSERT))) {
         revoked = true;
         await run(real, 'UPDATE scanners SET revoked_at=? WHERE id=?', [
           kit.clock.now(),

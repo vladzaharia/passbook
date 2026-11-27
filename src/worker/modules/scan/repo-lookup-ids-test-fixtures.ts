@@ -5,6 +5,7 @@ import type { ScanLookupResultSchema } from '../../../shared/contracts/scan-sess
 import { run } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { RACE_CANDIDATE_READ, RACE_SEARCH_PAGE } from './race-tags.ts';
 import { approveScanReleases, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 export let kit: ScanKit;
@@ -156,8 +157,8 @@ export function afterLookupRead(
           const statement = target.prepare(sql);
           const match =
             stage === 'candidate'
-              ? sql.includes('credential_keyset.commitment AS credential_keyset_commitment')
-              : sql.includes('FROM passes p JOIN templates');
+              ? sql.includes(RACE_CANDIDATE_READ)
+              : sql.includes(RACE_SEARCH_PAGE);
           return match ? wrap(statement) : statement;
         };
       if (prop === 'batch')

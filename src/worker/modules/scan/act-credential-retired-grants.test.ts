@@ -3,6 +3,7 @@ import { all, first, run } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import {
   codeOf,
   key,
@@ -56,7 +57,7 @@ async function beforeGrant<T>(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('INSERT INTO authority_grants')) return prepared;
+          if (!sql.includes(RACE_GRANT_INSERT)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

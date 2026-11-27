@@ -15,6 +15,7 @@ import {
 import { assertBudget, type BuiltStatement, PARAM_BUDGET } from './authority-statements.ts';
 import type { DenialOptions, DenyReason } from './errors.ts';
 import { DENY_REASONS } from './errors.ts';
+import { RACE_GRANT_INSERT } from './race-tag.ts';
 import type { ServiceContext } from './service-context.ts';
 
 export interface GrantInput {
@@ -142,7 +143,7 @@ export function grantInsert(
   const created = b.bind(now);
   const guard = b.bind(id);
   const sql = `WITH actor AS MATERIALIZED (${actor})
-    INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, target_id, denied, created_at, leak_guard, limit_key)
+    ${RACE_GRANT_INSERT} INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, target_id, denied, created_at, leak_guard, limit_key)
     SELECT ${idP}, ${scopeP}, ${scope === 'platform' ? 'NULL' : 'a.org_id'}, ${scope === 'org_mode' ? 'a.mode' : 'NULL'},
       ${label}, ${purpose}, ${target}, ${denied}, ${created}, ${guard}, a.limit_key
     FROM (SELECT 1 AS one) AS one LEFT JOIN actor AS a ON 1 = 1`;
