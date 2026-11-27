@@ -12,7 +12,7 @@ import {
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/index.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { bearerOf, requireAdmin, requireCaller } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -37,17 +37,23 @@ import {
 export const identitiesRoutes = createRouter();
 
 const isOrgList = (c: Parameters<typeof requireAdmin>[0]) => !!c.req.query('orgId');
+const platformKeyList = requireCaller({ platform: 'platform:identities', key: true });
 
 /**
- * Two reads serve a member of the organization as well as a platform admin, so they keep a dispatching guard (a
- * person-only reason: `orgId` and the certificate history are org reads, checked in the handler). Every other route
- * declares `{ platform: 'platform:identities' }` itself and is person-only; the certificate, push-key and rotate
- * writes ask a recent sign-in.
+ * Two reads serve a member of the organization as well as a platform admin, so they keep a dispatching guard:
+ * `orgId` and the certificate history are org reads, checked in the handler. The list without `orgId` is the platform's:
+ * a Bearer key goes through the platform gate (a Platform key with `platform:identities` or `platform:read`), a
+ * session through `requireAdmin`. Every other route declares `{ platform: 'platform:identities' }` itself; the
+ * certificate, push-key and rotate writes ask a session for a recent sign-in.
  */
 identitiesRoutes.get(
   '/',
   createMiddleware<AppBindings>((c, next) =>
-    isOrgList(c) ? requireTenantSession(c, next) : requireAdmin(c, next),
+    isOrgList(c)
+      ? requireTenantSession(c, next)
+      : bearerOf(c)
+        ? platformKeyList(c, next)
+        : requireAdmin(c, next),
   ),
 );
 identitiesRoutes.get('/:id/certificates', requireTenantSession);
@@ -83,7 +89,7 @@ register(
   {
     method: 'post',
     path: '/',
-    auth: { platform: 'platform:identities', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
+    auth: { platform: 'platform:identities', key: true, stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     summary: 'Upload an Apple identity',
     body: UploadIdentitySchema,
     status: 201,
@@ -98,7 +104,7 @@ register(
   {
     method: 'get',
     path: '/{id}',
-    auth: { platform: 'platform:identities' },
+    auth: { platform: 'platform:identities', key: true },
     summary: 'Get an Apple identity',
     params: IdParamSchema,
     response: IdentitySchema,
@@ -111,7 +117,7 @@ register(
   {
     method: 'patch',
     path: '/{id}',
-    auth: { platform: 'platform:identities' },
+    auth: { platform: 'platform:identities', key: true },
     summary: 'Update an Apple identity',
     params: IdParamSchema,
     body: UpdateIdentitySchema,
@@ -149,7 +155,7 @@ register(
   {
     method: 'post',
     path: '/{id}/rotate',
-    auth: { platform: 'platform:identities', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
+    auth: { platform: 'platform:identities', key: true, stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     summary: 'Replace the certificate and key of an Apple identity',
     params: IdParamSchema,
     body: RotateIdentitySchema,
@@ -171,7 +177,7 @@ register(
   {
     method: 'post',
     path: '/{id}/apns-check',
-    auth: { platform: 'platform:identities' },
+    auth: { platform: 'platform:identities', key: true },
     summary: 'Probe APNs with the identity certificate using a dummy token',
     params: IdParamSchema,
     response: ApnsProbeResultSchema,
@@ -187,7 +193,7 @@ register(
   {
     method: 'put',
     path: '/{id}/push-key',
-    auth: { platform: 'platform:identities', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
+    auth: { platform: 'platform:identities', key: true, stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     summary: 'Set or replace the APNs push key (.p8) of the identity team',
     params: IdParamSchema,
     body: PushKeyInputSchema,
@@ -209,7 +215,7 @@ register(
   {
     method: 'delete',
     path: '/{id}/push-key',
-    auth: { platform: 'platform:identities' },
+    auth: { platform: 'platform:identities', key: true },
     summary: 'Remove the APNs push key of the identity team',
     params: IdParamSchema,
     response: IdentitySchema,

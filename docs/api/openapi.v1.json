@@ -71737,6 +71737,7 @@
                 "platform:users",
                 "platform:groups",
                 "platform:claims",
+                "platform:identities",
                 "platform:status",
                 "platform:audit",
                 "platform:settings",
@@ -109867,10 +109868,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Start a managed Google issuer for an organization",
         "tags": [
@@ -109939,8 +109944,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -109955,10 +109963,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Finish a parked managed Google issuer with an issuer id made in the console",
         "tags": [
@@ -110027,9 +110039,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GOOGLE_ISSUER_NOT_SHARED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -110044,10 +110059,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Rotate a platform Google credential's service-account key now",
         "tags": [
@@ -110101,8 +110120,11 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -110116,10 +110138,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "List the platform wallet credentials",
         "tags": [
@@ -110214,8 +110245,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -110224,10 +110258,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Create or rotate a platform wallet credential",
         "tags": [
@@ -110307,9 +110345,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -110324,10 +110365,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Name the Samsung card of one more type on a platform credential",
         "tags": [
@@ -110411,9 +110456,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -110531,10 +110579,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Check a platform wallet credential with its provider",
         "tags": [
@@ -110585,8 +110637,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "RATE_LIMITED",
@@ -110602,10 +110657,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Read the result of a platform wallet credential check",
         "tags": [
@@ -110668,8 +110732,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "RATE_LIMITED",
@@ -110884,10 +110951,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "List every organization enrollment of a wallet provider",
         "tags": [
@@ -110971,8 +111047,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -110983,10 +111062,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Report the legacy wallet accounts waiting for a credential source",
         "tags": [
@@ -111067,8 +111155,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -111077,10 +111168,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Queue the migration of legacy wallet accounts onto credential sources",
         "tags": [
@@ -111118,8 +111213,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -142537,10 +142635,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Upload an Apple identity",
         "tags": [
@@ -142627,6 +142729,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXISTS",
           "IDENTITY_NOT_CONFIGURED",
@@ -142634,6 +142737,8 @@
           "IDENTITY_PROTECTED",
           "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -142646,10 +142751,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Get an Apple identity",
         "tags": [
@@ -142728,9 +142842,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -142740,10 +142857,14 @@
       "patch": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Update an Apple identity",
         "tags": [
@@ -142837,6 +142958,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "APNS_BINDING_MANAGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
@@ -142844,6 +142966,8 @@
           "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PROTECTED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -142922,10 +143046,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Replace the certificate and key of an Apple identity",
         "tags": [
@@ -143023,10 +143151,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDENTITY_PROTECTED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -143039,10 +143170,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Probe APNs with the identity certificate using a dummy token",
         "tags": [
@@ -143096,9 +143231,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -143110,10 +143248,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Set or replace the APNs push key (.p8) of the identity team",
         "tags": [
@@ -143210,9 +143352,12 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -143223,10 +143368,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Remove the APNs push key of the identity team",
         "tags": [
@@ -143305,9 +143454,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "PUSH_KEY_NONE",
           "RATE_LIMITED",
@@ -143320,10 +143472,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Get a new certificate now (managed identities)",
         "tags": [
@@ -143385,11 +143541,14 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -144136,10 +144295,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Apple provisioner's call ledger",
         "tags": [
@@ -144205,8 +144373,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

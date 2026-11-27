@@ -10,6 +10,7 @@ import {
   WalletCredentialIdParamsSchema,
   WalletCredentialKeyRotationSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
+import { platformActorOf } from '../../platform/actor.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -25,6 +26,13 @@ const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   if (auth.kind !== 'session') throw new UnauthenticatedError();
   return auth;
 };
+
+/** The person who acted, or the Platform key that did (a key's run has no creator). */
+const issuerBy = (c: Parameters<typeof platformActorOf>[0]) => {
+  const by = platformActorOf(c, { scope: 'platform:wallet' });
+  return { createdBy: by.userId, keyId: by.keyId };
+};
+const keyOf = ({ keyId }: { keyId: string | null }) => (keyId ? { keyId } : {});
 
 /** Mounted inside the org wallet routes (`/api/v1/orgs`, tenant session). */
 export const googleManagedOrgRoutes = createRouter();
@@ -99,7 +107,7 @@ register(
     c.json(await sharedIssuerInfo(serviceContext(c), sessionOf(c), c.req.valid('param').orgId)),
 );
 
-/** Mounted inside the platform wallet routes (`/api/v1/platform`); person-only, each route declares it. */
+/** Mounted inside the platform wallet routes (`/api/v1/platform`); each route declares its own access. */
 export const googleManagedPlatformRoutes = createRouter();
 
 register(
@@ -107,7 +115,7 @@ register(
   'wallet platform',
   {
     method: 'post',
-    auth: { platform: 'platform:wallet' },
+    auth: { platform: 'platform:wallet', key: true },
     path: '/orgs/{orgId}/wallet-accounts/google/managed',
     summary: 'Start a managed Google issuer for an organization',
     params: GoogleManagedOrgParamsSchema,
@@ -120,7 +128,8 @@ register(
       (
         await startManagedIssuer(serviceContext(c), {
           orgId: c.req.valid('param').orgId,
-          createdBy: sessionOf(c).userId,
+          createdBy: issuerBy(c).createdBy,
+          ...keyOf(issuerBy(c)),
         })
       ).run,
       202,
@@ -132,7 +141,7 @@ register(
   'wallet platform',
   {
     method: 'post',
-    auth: { platform: 'platform:wallet' },
+    auth: { platform: 'platform:wallet', key: true },
     path: '/orgs/{orgId}/wallet-accounts/google/managed/complete',
     summary: 'Finish a parked managed Google issuer with an issuer id made in the console',
     params: GoogleManagedOrgParamsSchema,
@@ -145,7 +154,8 @@ register(
       await completeManualIssuer(serviceContext(c), {
         orgId: c.req.valid('param').orgId,
         issuerId: c.req.valid('json').issuerId,
-        adminId: sessionOf(c).userId,
+        adminId: issuerBy(c).createdBy,
+        ...keyOf(issuerBy(c)),
       }),
       202,
     ),
@@ -157,7 +167,7 @@ register(
   {
     method: 'post',
     // Rotating a service-account key replaces what signs for Google Wallet: a recent sign-in.
-    auth: { platform: 'platform:wallet', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
+    auth: { platform: 'platform:wallet', key: true, stepUp: { maxAgeSec: STEP_UP_SECONDS } },
     path: '/wallet-credentials/{id}/rotate-key',
     summary: "Rotate a platform Google credential's service-account key now",
     params: WalletCredentialIdParamsSchema,
@@ -170,7 +180,7 @@ register(
         runId: (
           await startKeyRotation(serviceContext(c), {
             credentialId: c.req.valid('param').id,
-            createdBy: sessionOf(c).userId,
+            createdBy: issuerBy(c).createdBy,
           })
         ).runId,
       },

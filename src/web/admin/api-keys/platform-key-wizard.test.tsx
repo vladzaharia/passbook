@@ -11,6 +11,7 @@ vi.mock('@/shared/contracts/api-keys.ts', async (orig) => ({
     'platform:read',
     'platform:users',
     'platform:groups',
+    'platform:identities',
     'platform:wallet',
   ],
 }));
@@ -89,6 +90,7 @@ describe('platform keys in the wizard', () => {
     expect(within(dialog).queryByRole('checkbox', { name: 'Read passes' })).toBeNull();
     expect(within(dialog).getByText('Removed: Assign holders.')).toBeInTheDocument();
     expect(within(dialog).getByRole('checkbox', { name: 'Polaris ID groups' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('checkbox', { name: 'Apple identities' })).toBeInTheDocument();
     expect(within(dialog).queryByRole('checkbox', { name: 'Polaris ID claims' })).toBeNull();
     await user.click(within(dialog).getByRole('radio', { name: 'All organizations' }));
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();

@@ -21,6 +21,7 @@ import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
+import { isActor, type PlatformCaller } from './platform-caller.ts';
 import { walletReleaseByMode } from './provider-policy.ts';
 import { lastChecksOf } from './repo-credential-checks.ts';
 import {
@@ -127,8 +128,17 @@ export async function orgWriter(
   };
 }
 
-export function platformWriter(auth: SessionAuth, purpose: string): CredentialWriter {
-  const session = sessionOf(auth);
+/** A key's event rows name the key as a `platform` actor: the event tables allow no other type. */
+export function platformWriter(by: PlatformCaller, purpose: string): CredentialWriter {
+  if (isActor(by))
+    return {
+      purpose,
+      principal: by.principal,
+      checks: by.checks,
+      actor: { type: 'platform', id: by.actorId },
+      platform: true,
+    };
+  const session = sessionOf(by);
   if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
   return {
     purpose,
@@ -281,7 +291,7 @@ export async function revokeOrgCredential(
 
 export async function listPlatformCredentials(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: PlatformCaller,
 ): Promise<PlatformWalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
   return {
@@ -293,7 +303,7 @@ export async function listPlatformCredentials(
 
 export async function savePlatformCredential(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: PlatformCaller,
   input: SaveWalletCredential & { mode: 'live' | 'test' },
 ): Promise<WalletCredential> {
   ctx = snapshotWalletCredentialContext(ctx);
@@ -308,7 +318,7 @@ export async function savePlatformCredential(
 
 export async function revokePlatformCredential(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: PlatformCaller,
   id: string,
   input: RevokeWalletCredential,
 ): Promise<WalletCredential> {
