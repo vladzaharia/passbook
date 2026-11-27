@@ -1,8 +1,10 @@
 import { Eye } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
+import { POLL_PAUSED } from '@/shared/copy/workbench-poll.ts';
 import { WB_AREA, WB_SHELL_COPY, WB_TAB_TITLE } from '@/shared/copy/workbench-shell.ts';
 import type { WbTool } from '@/shared/workbench.ts';
 import { useDocumentTitle } from '../../lib/route-focus.tsx';
+import { usePollPaused } from '../../lib/use-poll-paused.ts';
 import { Button } from '../../ui/button.tsx';
 import { type BenchSlots, BenchSlotsContext } from '../bench/slots.tsx';
 import { SEEN_AREAS, type SeenArea } from '../host/summary.ts';
@@ -47,6 +49,8 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
     [countEl, actionEl, bar, status],
   );
   useDocumentTitle(WB_TAB_TITLE[tool] ?? title);
+  // Logs and Events say it in their own live mark.
+  const limited = usePollPaused() && tool !== 'logs' && tool !== 'events';
   const area = isSeenArea(tool) && attention[tool] ? tool : null;
   // The Sandbox and Quickstart pages show their own operation.
   const resetting = useSandboxBusy(
@@ -71,6 +75,11 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
           className="font-mono text-[0.8125rem] text-fg-muted empty:hidden"
         />
         <div ref={setStatus} data-bench-status="" className="empty:hidden" />
+        {limited ? (
+          <span role="status" className="text-[0.8125rem] text-fg-muted">
+            {POLL_PAUSED}
+          </span>
+        ) : null}
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {area && context && seenAt !== undefined ? (
             <Button

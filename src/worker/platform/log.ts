@@ -17,9 +17,9 @@ const SENSITIVE_KEY =
 const PIN_KEY =
   /(?:^|[^a-zA-Z])[pP]in(?:[-_]?[hH]ash|[-_]?[cC]ode|s)?$|[a-z]Pin(?:Hash|Code|s)?$|(?:^|_)PINS?(?:_HASH)?$|[a-z]PINS?$/;
 
-/** Capability URLs: /p/, /b/, /j/, /t/, /w/ and /preview/ values, `?t=`, `?sig=`, `?p=`, `?m=` and `#pair=` values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`), scanner tokens (`wls_`), try tokens (`pbtry_`), webhook secrets (`whsec_`), JWTs, PEM blocks. Shared with the developer request log. */
+/** Capability URLs: /p/, /b/, /d/, /j/, /t/, /w/ and /preview/ values, `?t=`, `?sig=`, `?p=`, `?m=` and `#pair=` values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`), scanner tokens (`wls_`), try tokens (`pbtry_`), webhook secrets (`whsec_`), JWTs, PEM blocks. Shared with the developer request log. */
 export const VALUE_PATTERNS: [RegExp, string][] = [
-  [/(\/(?:preview|p|b|j|t|w|w\/i)\/)[A-Za-z0-9_.~-]{12,}/g, '$1[redacted]'],
+  [/(\/(?:preview|p|b|d|j|t|w|w\/i)\/)[A-Za-z0-9_.~-]{12,}/g, '$1[redacted]'],
   [/([?&](?:t|token|code|key|state|sig|exp|p|m)=)[^&\s"]+/gi, '$1[redacted]'],
   [/#pair=[^&\s"]+/g, '#pair=[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],

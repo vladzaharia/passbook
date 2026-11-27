@@ -50,6 +50,7 @@ import { syncGoogleClassReviews } from '../modules/wallet-providers/google-revie
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
+import { cronDevicePasses } from '../modules/workbench/device-pass-sync.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { sweepIdempotency } from '../platform/idempotency.ts';
@@ -68,6 +69,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'delivery.sweep', run: sweepDelivery },
     { name: 'webhooks.sweep', run: sweepWebhooks },
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
+    { name: 'device_passes.sweep', run: cronDevicePasses },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
     { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },

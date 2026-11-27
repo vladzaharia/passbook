@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { useWalletPreviews } from '../../channel-previews/use-wallet-previews.ts';
-import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../../pass-card/barcode-engine.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { copyToClipboard } from '../playground/copy.ts';
 import { ApplePane, PaperPane, WalletPane } from '../playground/panes.tsx';
 import { Seg } from '../playground/seg.tsx';
 import { sourceOf } from '../playground/templates.ts';
+import { QrTile } from '../ui/qr-tile.tsx';
 import { MakeSandbox } from './make-sandbox.tsx';
 import type { Fix } from './model.ts';
 import { GhostCard } from './parts.tsx';
@@ -25,30 +25,6 @@ const CHANNELS: { value: Channel; label: string }[] = [
 ];
 const S = QS_COPY.stage;
 
-/** The link as a QR on a white tile, drawn as an image: the portal's CSP allows data: images, not inline styles. */
-function Qr({ value }: { value: string }) {
-  const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
-  useEffect(() => {
-    if (engine) return;
-    let live = true;
-    loadBarcodeEngine().then(
-      (e) => live && setEngine(() => e),
-      // Without the encoder the link beside it is the way in.
-      () => undefined,
-    );
-    return () => {
-      live = false;
-    };
-  }, [engine]);
-  if (!engine) return <span className="qs-qr" />;
-  const svg = engine({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
-  return (
-    <span className="qs-qr">
-      <img src={`data:image/svg+xml;base64,${btoa(svg)}`} alt="QR code of the test preview link" />
-    </span>
-  );
-}
-
 function PreviewCard({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -63,7 +39,7 @@ function PreviewCard({ url }: { url: string }) {
       aria-label={QS_COPY.preview.title}
     >
       <Buddy key="done" size="sm" at="end" mood="happy" scene="wave" />
-      <Qr value={url} />
+      <QrTile value={url} alt="QR code of the test preview link" className="qs-qr" />
       <div className="qs-link-t">
         <h3 className="h3">{QS_COPY.preview.title}</h3>
         <a className="mono xs qs-url" href={url}>

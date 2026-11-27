@@ -467,6 +467,9 @@ const PERSON_ONLY_PLATFORM_ROUTES: string[] = [
   // P3: moving orgs between signing identities re-signs their passes; the arm step is the go/no-go.
   'POST /api/v1/platform/apple/identity-moves',
   'POST /api/v1/platform/apple/identity-moves/:moveId/arm',
+  // S4: a developer's device passes sign with PassBook's device-test identity; voiding or unblocking one is a person's call.
+  'POST /api/v1/platform/device-passes/unblock',
+  'POST /api/v1/platform/device-passes/void',
   // P3: hard-deletes the identity, its credential and the team's last push key.
   'DELETE /api/v1/identities/:id',
   // P3: closes the org with platform authority, the act §2.3 lists as person-only.

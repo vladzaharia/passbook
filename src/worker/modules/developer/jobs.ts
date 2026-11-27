@@ -1,4 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { endSandboxDevicePasses } from '../workbench/device-pass-end.ts';
 import { idleSandboxOrgs, sandboxOfUser } from './repo.ts';
 import { closeSandbox } from './repo-grants.ts';
 
@@ -15,7 +16,10 @@ export async function dailyDeveloperSandbox(ctx: ServiceContext): Promise<void> 
   let closed = 0;
   for (const orgId of idle) {
     try {
-      if (await closeSandbox(ctx, orgId)) closed++;
+      if (await closeSandbox(ctx, orgId)) {
+        closed++;
+        await endSandboxDevicePasses(ctx, orgId);
+      }
     } catch (error) {
       ctx.log.warn('developer.idle_close_failed', { orgId, code: 'SANDBOX_CLOSE_FAILED', error });
     }
@@ -30,5 +34,7 @@ export async function dailyDeveloperSandbox(ctx: ServiceContext): Promise<void> 
 export async function closeDeveloperSandbox(ctx: ServiceContext, userId: string): Promise<boolean> {
   const row = await sandboxOfUser(ctx.env.DB, userId);
   if (!row || row.closed_at !== null) return false;
-  return closeSandbox(ctx, row.org_id, undefined, 'admin');
+  const closed = await closeSandbox(ctx, row.org_id, undefined, 'admin');
+  if (closed) await endSandboxDevicePasses(ctx, row.org_id);
+  return closed;
 }

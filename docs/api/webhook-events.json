@@ -95,6 +95,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -219,6 +222,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -328,6 +334,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -433,6 +442,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -539,6 +551,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -638,6 +653,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -739,6 +757,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -846,6 +867,13 @@
               },
               "firstDevice": {
                 "type": "boolean"
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -862,6 +890,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -976,6 +1007,13 @@
                   "wallet",
                   "push_gone"
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -993,6 +1031,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1201,6 +1242,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1361,6 +1405,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1488,6 +1535,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1622,6 +1672,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1734,6 +1787,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1846,6 +1902,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1962,6 +2021,13 @@
                     "type": "null"
                   }
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "additionalProperties": false
@@ -1972,6 +2038,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2077,6 +2146,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2146,6 +2218,9 @@
           "sample": {
             "type": "boolean",
             "const": true
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [

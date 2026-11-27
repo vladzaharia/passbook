@@ -158,6 +158,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
 /** Tables with no tenant rows. The authority tables (grants live inside one batch and are swept) count as well. */
 export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   apns_keys: 'platform push key',
+  device_pass_blocks: 'a platform control on one developer, removed with the user',
   wallet_sa_keys: 'platform service-account key inventory',
   wallet_provider_releases: 'platform release state of each provider and mode, no org',
   auth_identities: 'user sign-in',
