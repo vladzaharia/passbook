@@ -2,7 +2,8 @@
 import { makeApiKey, makePass, makeTemplate } from '../../../test/helpers/index.ts';
 import { db } from './authority-ext-fixtures.ts';
 import type { Principal } from './authority-principal.ts';
-import { authorityPredicate, tenantFilter } from './authority-read.ts';
+import { authorityPredicate } from './authority-read.ts';
+import { assertActorOnce } from './authority-read-once.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { all, run } from './db.ts';
 
@@ -38,10 +39,8 @@ export async function world(label: string) {
 /** The rows of `passes` a read by this principal sees, through the shared read predicate. */
 export async function visible(x: Setup, principal: Principal, ids: string[]): Promise<string[]> {
   const p = authorityPredicate(principal, { scope: 'org_mode', now: x.s.f.clock.now() });
-  const rows = await all<{ id: string }>(
-    db,
-    `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('p', 'passes')} AND p.id IN (${ids.map(() => '?').join(',')}) ORDER BY p.id`,
-    [...p.params, ...ids],
-  );
+  const sql = `WITH ${p.ctes} SELECT p.id FROM ${p.rows}passes p WHERE ${p.ok} AND ${p.tenant('p', 'passes')} AND p.id IN (${ids.map(() => '?').join(',')}) ORDER BY p.id`;
+  assertActorOnce(sql);
+  const rows = await all<{ id: string }>(db, sql, [...p.params, ...ids]);
   return rows.map((r) => r.id).sort();
 }

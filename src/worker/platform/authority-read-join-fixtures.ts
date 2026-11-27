@@ -315,7 +315,7 @@ export async function actors(s: Seed): Promise<Actor[]> {
       {
         name: `platform key ${mode}, named org`,
         scope: 'platform',
-        principal,
+        principal: { ...principal, orgId: a.id },
         platform: { named: a.id },
       },
     );
