@@ -97,7 +97,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -224,7 +225,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -336,7 +338,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -444,7 +447,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -553,7 +557,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -655,7 +660,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -759,7 +765,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -892,7 +899,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1033,7 +1041,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1244,7 +1253,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1407,7 +1417,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1537,7 +1548,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1674,7 +1686,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1789,7 +1802,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1904,7 +1918,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -2040,7 +2055,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -2148,7 +2164,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -2220,7 +2237,8 @@
             "const": true
           },
           "simulated": {
-            "type": "boolean"
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [

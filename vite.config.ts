@@ -69,14 +69,12 @@ const VITE_DEV_PATHS = [
   '!/node_modules/*',
   // The dep optimizer's cache (cacheDir below) is served from the project root.
   '!/.cache/*',
-  // Source files outside src/ that the app imports (docs/developers/sdk-status.json). The build inlines them.
+  // Source files outside src/ that the app imports (docs/developers/sdk-status.json, docs/api/webhook-vectors.json). The build inlines them.
   '!/docs/*',
   '!/@fs/*',
   '!/@id/*',
   '!/@vite/*',
   '!/@react-refresh',
-  // The Workbench Verify tab imports docs/api/webhook-vectors.json; /docs itself belongs to the Worker.
-  '!/docs/api/*',
   // The scanner is its own document (scan.html); Vite answers /scan with it.
   '!/scan',
 ];

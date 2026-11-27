@@ -70,3 +70,10 @@ export async function saveState(page: Page, role: Role) {
   mkdirSync(dirname(stateFile(role)), { recursive: true });
   await page.context().storageState({ path: stateFile(role) });
 }
+
+/** Signs the admin in again just now, for actions that need a recent sign-in. A new sign-in ends the old session, so the stored state follows. */
+export async function stepUpAdmin(page: Page) {
+  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
+  await page.waitForURL(/\/admin/);
+  await saveState(page, 'admin');
+}
