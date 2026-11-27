@@ -102,7 +102,14 @@ describe.each(MODES)('dry run when %s', (_n, patch, over) => {
     await env.DB.prepare(
       `INSERT INTO idp_signups (token_id, token_sha256, kind, targets, ref, created_at, expires_at) VALUES ('tok-x', 'x', 'member', '["console"]', 'r', 1, 2)`,
     ).run();
+    const dryRun = Boolean((over as { dryRun?: boolean }).dryRun);
+    const used = async (b: 'preview' | 'deleteSignup') =>
+      (await s.api.health()).budget[b]?.day ?? 0;
+    const before = [await used('preview'), await used('deleteSignup')];
     await expect(s.api.deleteSignup('tok-x', ctx(over))).resolves.toEqual({ dryRun: true });
+    const spent = [(await used('preview')) - before[0]!, (await used('deleteSignup')) - before[1]!];
+    expect(dryRun ? spent[0] : spent[1]).toBeGreaterThan(0);
+    expect(dryRun ? spent[1] : spent[0]).toBe(0);
     expect(pocket.s.tokens).toHaveLength(1);
     expect(pocket.writes()).toHaveLength(0);
   });
