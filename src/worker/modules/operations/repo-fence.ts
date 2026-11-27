@@ -5,11 +5,12 @@ import type { SqlValue } from '../../platform/db.ts';
 import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 
 /**
- * Who may read which rows, as SQL. `ctes` follow `WITH` (empty for a starter read); `where` is ANDed onto
- * the `operations` alias `o`. Revoked membership, key, session or org epoch removes the rows at once.
+ * Who may read which rows, as SQL. `ctes` follow `WITH` (empty for a starter read); `from` is the read's
+ * FROM term (the actor's `ao` row joined before `operations o`); `where` is ANDed onto the alias `o`. Revoked membership, key, session or org epoch removes the rows at once.
  */
 export interface Fence {
   ctes: string;
+  from: string;
   ctesParams: SqlValue[];
   where: string;
   whereParams: SqlValue[];
@@ -17,13 +18,14 @@ export interface Fence {
 
 /** Org rows of the actor's own org and mode. The org and mode come from the actor row, never the request. */
 export function orgFence(principal: Principal, checks: Check[], now: number): Fence {
-  const { ctes, params } = authorityPredicate(principal, { scope: 'org_mode', now, checks });
+  const p = authorityPredicate(principal, { scope: 'org_mode', now, checks });
   return {
-    ctes,
-    ctesParams: params,
-    where: `o.audience = 'org' AND EXISTS (SELECT 1 FROM actor_ok)
-      AND o.org_id = (SELECT org_id FROM actor_ok) AND o.mode = (SELECT mode FROM actor_ok)
-      AND (SELECT limit_key FROM actor_ok) IS NULL`,
+    ctes: p.ctes,
+    from: `${p.rows}operations o`,
+    ctesParams: p.params,
+    where: `o.audience = 'org' AND ${p.ok}
+      AND o.org_id = ao.org_id AND o.mode = ao.mode
+      AND ao.limit_key IS NULL`,
     whereParams: [],
   };
 }
@@ -33,11 +35,12 @@ export function platformFence(
   principal: Extract<Principal, { kind: 'platform' }>,
   now: number,
 ): Fence {
-  const { ctes, params } = authorityPredicate(principal, { scope: 'platform', now });
+  const p = authorityPredicate(principal, { scope: 'platform', now });
   return {
-    ctes,
-    ctesParams: params,
-    where: `o.audience = 'platform' AND EXISTS (SELECT 1 FROM actor_ok)`,
+    ctes: p.ctes,
+    from: `${p.rows}operations o`,
+    ctesParams: p.params,
+    where: `o.audience = 'platform' AND ${p.ok}`,
     whereParams: [],
   };
 }
@@ -47,12 +50,13 @@ export function platformKeyFence(
   principal: Extract<Principal, { kind: 'api_key' }>,
   now: number,
 ): Fence {
-  const { ctes, params } = authorityPredicate(principal, { scope: 'platform', now });
+  const p = authorityPredicate(principal, { scope: 'platform', now });
   return {
-    ctes,
-    ctesParams: params,
+    ctes: p.ctes,
+    from: `${p.rows}operations o`,
+    ctesParams: p.params,
     where: `o.audience IN ('platform', 'starter') AND o.org_id IS NULL AND o.actor_type = 'api_key'
-      AND o.actor_id = ? AND EXISTS (SELECT 1 FROM actor_ok)`,
+      AND o.actor_id = ? AND ${p.ok}`,
     whereParams: [principal.keyId],
   };
 }
@@ -79,6 +83,7 @@ export function starterFence(
   if (!session)
     return {
       ctes: '',
+      from: 'operations o',
       ctesParams: [],
       where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.target_type = 'sandbox' AND o.target_id = ?
         AND EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.org_id = ? AND d.user_id = o.actor_id AND d.closed_at IS NULL)`,
@@ -86,6 +91,7 @@ export function starterFence(
     };
   return {
     ctes: '',
+    from: 'operations o',
     ctesParams: [],
     where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?${ownSession ? ' AND o.actor_session = ?' : ''}
       ${pinnedOrg === undefined ? '' : "AND o.org_id = ? AND o.mode = 'test'"}

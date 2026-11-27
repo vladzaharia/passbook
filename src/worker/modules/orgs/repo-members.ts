@@ -1,6 +1,7 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { authorityPredicate } from '../../platform/authority-read.ts';
+import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 
@@ -176,8 +177,8 @@ export function pendingInvitationFor(db: D1Database, orgId: string, email: strin
 
 /** A key's read of its own org: the grant's actor checks, re-run inside the query, name the org (never the request). */
 const keyReadGuard = (principal: Principal, checks: Check[], now: number) => {
-  const { ctes, params } = authorityPredicate(principal, { scope: 'org', now, checks });
-  return { head: `WITH ${ctes}`, params, sql: 'm.org_id = (SELECT org_id FROM actor_ok)' };
+  const p = authorityPredicate(principal, { scope: 'org', now, checks });
+  return { head: `WITH ${p.ctes}`, rows: p.rows, params: p.params, sql: 'm.org_id = ao.org_id' };
 };
 /** The org's members for a key: the invitation's address, never an account's primary email. */
 export function keyOrgMembers(
@@ -188,15 +189,13 @@ export function keyOrgMembers(
   now: number,
 ) {
   const g = keyReadGuard(principal, checks, now);
-  return all<MembershipRow>(
-    db,
-    `${g.head} SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
+  const sql = `${g.head} SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
        COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
-     FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
+     FROM ${g.rows}org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
      WHERE m.org_id = ? AND ${g.sql} AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
-     ORDER BY m.created_at, m.id`,
-    [...g.params, orgId],
-  );
+     ORDER BY m.created_at, m.id`;
+  assertActorOnce(sql);
+  return all<MembershipRow>(db, sql, [...g.params, orgId]);
 }
 export function keyOrgInvitations(
   db: D1Database,
@@ -206,10 +205,8 @@ export function keyOrgInvitations(
   now: number,
 ) {
   const g = keyReadGuard(principal, checks, now);
-  return all<InvitationRow>(
-    db,
-    `${g.head} SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
-     FROM org_invitations m WHERE m.org_id = ? AND ${g.sql} ORDER BY m.created_at, m.id`,
-    [...g.params, orgId],
-  );
+  const sql = `${g.head} SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
+     FROM ${g.rows}org_invitations m WHERE m.org_id = ? AND ${g.sql} ORDER BY m.created_at, m.id`;
+  assertActorOnce(sql);
+  return all<InvitationRow>(db, sql, [...g.params, orgId]);
 }
