@@ -258,6 +258,40 @@ describe('PATCH /users/:id by a key', () => {
   });
 });
 
+describe('session revokes by a key', () => {
+  it('refuse a platform admin target with 409 and leave its sessions, and a person may', async () => {
+    const key = await platformKey(['platform:users']);
+    const target = await user();
+    await run(h.env.DB, `UPDATE users SET last_roles = '["admin"]' WHERE id = ?`, [target]);
+    const s = await makeSession(f(), { userId: target, roles: ['admin', 'user'] });
+    const sid = await hashSessionCookie(s.cookieValue);
+    for (const [method, path] of [
+      ['POST', `/api/v1/users/${target}/sessions/revoke`],
+      ['DELETE', `/api/v1/users/${target}/sessions/${sid}`],
+    ] as const)
+      await expectProblem(await send(method, path, key.headers), 409, 'IDP_PLATFORM_ADMIN');
+    expect(
+      (
+        await first<{ revoked_at: number | null }>(
+          h.env.DB,
+          'SELECT revoked_at FROM sessions WHERE id_hash = ?',
+          [sid],
+        )
+      )?.revoked_at,
+    ).toBeNull();
+    expect(
+      (await send('DELETE', `/api/v1/users/${target}/sessions/${sid}`, await person())).status,
+    ).toBe(200);
+  });
+
+  it('still work on a user who is not an admin', async () => {
+    const key = await platformKey(['platform:users']);
+    expect(
+      (await send('POST', `/api/v1/users/${await user()}/sessions/revoke`, key.headers)).status,
+    ).toBe(200);
+  });
+});
+
 describe('what stays a person', () => {
   it('refuses a key every email route', async () => {
     const key = await platformKey([...MINTABLE_PLATFORM_SCOPES]);

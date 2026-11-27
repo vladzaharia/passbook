@@ -11,11 +11,15 @@ import {
   ReceiptListSchema,
 } from '../../../shared/contracts/retention.ts';
 import { platformActorOf } from '../../platform/actor.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import {
+  ForbiddenError,
+  PersonRequiredError,
+  UnauthenticatedError,
+} from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { byUserOfCaller } from '../idp/actor.ts';
-import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
+import { personalOwnerOf } from '../orgs/repo-personal.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { listHoldViews, listReceiptItems, receiptFile } from './console.ts';
 import { type HoldBy, placeHold, releaseHold } from './holds.ts';
@@ -47,9 +51,10 @@ const platformPlaceBy = async (c: C): Promise<HoldBy> => {
   return { kind: 'platform', admin, user: await byUserOfCaller(c.env.DB, admin) };
 };
 
-/** A key is nobody's owner: a personal org's holds and receipts are not its to read or place. */
+/** A personal org's holds and receipts are a person's: a key is refused (403 PERSON_REQUIRED, a person may). */
 const keyNotPersonal = async (c: C, orgId: string) => {
-  if (platformActorOf(c).keyId) await requireNotPersonalFor(c.env.DB, orgId, '');
+  if (platformActorOf(c).keyId && (await personalOwnerOf(c.env.DB, orgId)) !== null)
+    throw new PersonRequiredError();
 };
 
 const download = (c: C, name: string) =>

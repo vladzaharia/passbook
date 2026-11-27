@@ -17,13 +17,11 @@ import { platformActorOf } from '../../platform/actor.ts';
 import { currentUserId } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ConflictError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { assertStrictSignIn, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
-import { isLiveAdmin } from '../idp/platform-admin.ts';
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
-import { getUserDetail, listUsers, requireUser, setUserStatus } from './service.ts';
+import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
 import { listPassesOfUser } from './user-passes.ts';
 
@@ -113,16 +111,9 @@ register(
   },
   async (c) => {
     const { status } = c.req.valid('json');
-    const ctx = serviceContext(c);
     const actor = platformActorOf(c, { scope: 'platform:users' });
     const { id } = c.req.valid('param');
-    // A key never changes a platform admin: that is a person's call (the same refusal as the Polaris ID routes).
-    if (actor.keyId && (await isLiveAdmin(ctx, id, (await requireUser(ctx, id)).last_roles)))
-      throw new ConflictError(
-        'Platform admins hold every role. Change it in Polaris ID.',
-        'IDP_PLATFORM_ADMIN',
-      );
-    return c.json(await setUserStatus(ctx, actor, id, status));
+    return c.json(await setUserStatus(serviceContext(c), actor, id, status));
   },
 );
 register(

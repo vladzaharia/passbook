@@ -257,11 +257,15 @@ describe("a personal org is not a key's to touch", () => {
         `${P}/orgs/${id}/entitlements`,
         { expectedRevision: 1, preset: 'trial', overrides: {} },
       ],
+    ] as const)
+      await expectProblem(await send(method, path, key.headers, body), 403, 'ORG_PERSONAL');
+    for (const [method, path, body] of [
       ['GET', `${P}/orgs/${id}/retention/holds`],
       ['POST', `${P}/orgs/${id}/retention/holds`, { reason: 'inquiry' }],
       ['GET', `${P}/orgs/${id}/retention/receipts`],
     ] as const)
-      await expectProblem(await send(method, path, key.headers, body), 403, 'ORG_PERSONAL');
+      await expectProblem(await send(method, path, key.headers, body), 403, 'PERSON_REQUIRED');
+    expect((await send('GET', `${P}/orgs/${id}/retention/holds`, await person())).status).toBe(200);
   });
 });
 
