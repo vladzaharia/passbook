@@ -58,6 +58,7 @@ function pick(
 
 const EXITS = new Set(['scan', 'desk', 'stay', 'clear', 'zone', 'forced']);
 const VERSION = { version: 'number' } as const;
+const DEVICE_PASS = { devicePass: 'boolean', devicePassId: 'string' } as const;
 const SCAN_IDS = { scanId: 'string', scannerId: 'string', staffId: 'string' } as const;
 
 /**
@@ -85,6 +86,7 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
         device: row.device,
         deviceCount: row.deviceCount ?? 0,
         firstDevice: row.deviceCount === 1,
+        ...pick(d, DEVICE_PASS),
       };
     case 'pass.uninstalled': {
       const count = row.deviceCount ?? 0;
@@ -94,6 +96,7 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
         deviceCount: count,
         lastDevice: count === 0,
         cause: d.reason === 'push_gone' ? 'push_gone' : 'wallet',
+        ...pick(d, DEVICE_PASS),
       };
     }
     case 'pass.scanned': {
@@ -138,7 +141,13 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
     case 'pass.replaced':
       return pick(d, { replacedBy: 'string' });
     case 'push.failed':
-      return pick(d, { ...VERSION, status: 'number', reason: 'string', code: 'string' });
+      return pick(d, {
+        ...VERSION,
+        status: 'number',
+        reason: 'string',
+        code: 'string',
+        ...DEVICE_PASS,
+      });
     case 'email.failed':
       return pick(d, { code: 'string' });
     case 'webhook.test':

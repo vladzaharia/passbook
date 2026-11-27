@@ -17,6 +17,7 @@ export const ContextsSchema = z.object({
       slug: z.string().optional(),
       closed: z.boolean().optional(),
       timeZone: z.string().optional(),
+      devicePass: z.boolean().optional().catch(false),
     })
     .nullable(),
   orgs: z.array(
@@ -39,6 +40,8 @@ export interface WbContext {
   closed: boolean;
   /** The org's IANA zone: every time shows in it. */
   timeZone: string;
+  /** The server's device-pass flag; only a sandbox ever has it on. */
+  devicePass?: boolean;
 }
 
 /** The sandbox first (pinned), then orgs; each with its allowed areas in nav order. */
@@ -52,6 +55,7 @@ export function toContexts(body: z.infer<typeof ContextsSchema>): WbContext[] {
       tools: WB_TOOLS,
       closed: body.sandbox.closed ?? false,
       timeZone: resolveOrgTimeZone(body.sandbox.timeZone),
+      devicePass: body.sandbox.devicePass === true,
     });
   }
   for (const org of body.orgs) {

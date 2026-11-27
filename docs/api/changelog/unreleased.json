@@ -24,6 +24,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/cli/tokens/{id} new operation",
+    "class": "additive",
+    "operationId": "cli.deleteTokensById",
+    "op": "DELETE /api/v1/cli/tokens/{id}",
+    "change": "new operation",
+    "note": "Sign out of the CLI: a pbcli_ token ends itself. Send it as the bearer."
+  },
+  {
     "key": "DELETE /api/v1/connections/{id}/files/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsByIdFilesByFileId",
@@ -62,6 +70,14 @@
     "op": "DELETE /api/v1/connections/uploads/{fileId}",
     "change": "new operation",
     "note": "Discard a draft upload and its stored file."
+  },
+  {
+    "key": "DELETE /api/v1/developer/device-passes/{id} new operation",
+    "class": "additive",
+    "operationId": "developer.deleteDevicePassesById",
+    "op": "DELETE /api/v1/developer/device-passes/{id}",
+    "change": "new operation",
+    "note": "Void a device pass: its phones get the voided copy. Behind a flag that is off."
   },
   {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
@@ -329,6 +345,14 @@
     "note": "Ends this session's Workbench tokens for the org; signing out ends them too."
   },
   {
+    "key": "GET /api/v1/api-keys 200.items[].origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.getApiKeys",
+    "op": "GET /api/v1/api-keys",
+    "change": "200.items[].origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "GET /api/v1/api-keys 200.items[].scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeys",
@@ -359,6 +383,14 @@
     "op": "GET /api/v1/api-keys",
     "change": "200.items[].scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "GET /api/v1/api-keys/{id} 200.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.getApiKeysById",
+    "op": "GET /api/v1/api-keys/{id}",
+    "change": "200.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "GET /api/v1/api-keys/{id} 200.scopes[]: enum value \"logs:read\" added",
@@ -881,6 +913,14 @@
     "note": "GET /developer/access answers yes, none or email, with signInUrl for an email session."
   },
   {
+    "key": "GET /api/v1/developer/device-passes new operation",
+    "class": "additive",
+    "operationId": "developer.getDevicePasses",
+    "op": "GET /api/v1/developer/device-passes",
+    "change": "new operation",
+    "note": "Your device passes: the open ones and the last 7 days. Behind a flag that is off."
+  },
+  {
     "key": "GET /api/v1/developer/home 200.calls[].apiVersion: field added",
     "class": "additive",
     "operationId": "developer.getHome",
@@ -1329,6 +1369,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|15.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|15.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|15.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|15.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|15.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -1433,6 +1489,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/events 200.items[]|6.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|6.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|6.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|6.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/events 200.items[]|6.requestId: field added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -1447,6 +1519,22 @@
     "op": "GET /api/v1/events",
     "change": "200.items[]|6.simulated: field added",
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|7.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|7.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events 200.items[]|7.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "200.items[]|7.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
   },
   {
     "key": "GET /api/v1/events 200.items[]|7.requestId: field added",
@@ -1641,6 +1729,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|15.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|15.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|15.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|15.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|15.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
@@ -1745,6 +1849,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/events/{id} 200|6.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|6.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|6.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|6.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/events/{id} 200|6.requestId: field added",
     "class": "additive",
     "operationId": "events.getEventsById",
@@ -1759,6 +1879,22 @@
     "op": "GET /api/v1/events/{id}",
     "change": "200|6.simulated: field added",
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|7.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|7.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/events/{id} 200|7.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "events.getEventsById",
+    "op": "GET /api/v1/events/{id}",
+    "change": "200|7.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
   },
   {
     "key": "GET /api/v1/events/{id} 200|7.requestId: field added",
@@ -2471,6 +2607,14 @@
     "op": "GET /api/v1/passes/{id}/devices",
     "change": "200.devices[].deviceId: field added",
     "note": "Devices made by Simulate carry deviceId, the id the simulate call returned."
+  },
+  {
+    "key": "GET /api/v1/passes/{id}/devices 200.devices[].devicePass: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdDevices",
+    "op": "GET /api/v1/passes/{id}/devices",
+    "change": "200.devices[].devicePass: field added",
+    "note": "A phone that holds a device pass of the pass carries devicePass: true. Appears only while device passes are on."
   },
   {
     "key": "GET /api/v1/passes/{id}/devices 200.devices[].simulated: field added",
@@ -3545,6 +3689,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|15.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|15.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|15.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
@@ -3649,6 +3809,22 @@
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|6.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|6.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|6.requestId: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
@@ -3663,6 +3839,22 @@
     "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
     "change": "200.payload|6.simulated: field added",
     "note": "Events from the Workbench simulator carry simulated: true; real events omit it."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.data.devicePass: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|7.data.devicePass: field added",
+    "note": "Events about a developer's own device pass (a Test pass on their phone) carry devicePass: true."
+  },
+  {
+    "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.data.devicePassId: field added",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+    "op": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+    "change": "200.payload|7.data.devicePassId: field added",
+    "note": "Events about a developer's own device pass carry devicePassId: the device pass the phone holds."
   },
   {
     "key": "GET /api/v1/webhook-endpoints/{id}/deliveries/{eventId} 200.payload|7.requestId: field added",
@@ -3769,6 +3961,14 @@
     "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
+    "key": "GET /api/v1/workbench/contexts 200.sandbox.devicePass: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.sandbox.devicePass: field added",
+    "note": "The sandbox context carries devicePass: true while device passes are on. The Workbench shows On my phone from it."
+  },
+  {
     "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
     "class": "additive",
     "operationId": "workbench.getContexts",
@@ -3807,6 +4007,14 @@
     "op": "GET /b/{token}/wallet/google",
     "change": "new operation",
     "note": "Opens one Google save link for every eligible pass of a bundle."
+  },
+  {
+    "key": "GET /d/{code} new operation",
+    "class": "additive",
+    "operationId": "public.getDevicePassByCode",
+    "op": "GET /d/{code}",
+    "change": "new operation",
+    "note": "The one-time download of a device pass, for the code a QR carries. A used or expired code answers 410."
   },
   {
     "key": "Pass input: required issue path",
@@ -4360,6 +4568,14 @@
     "note": "New event pass.replaced: an identity move replaced a pass. The payload names the replacement."
   },
   {
+    "key": "POST /api/v1/api-keys 201.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "201.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys 201.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -4568,6 +4784,14 @@
     "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|0.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
@@ -4598,6 +4822,14 @@
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.key|0.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.key|1.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
@@ -4632,6 +4864,14 @@
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
+    "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysByIdRotate",
+    "op": "POST /api/v1/api-keys/{id}/rotate",
+    "change": "201.previous.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysByIdRotate",
@@ -4662,6 +4902,14 @@
     "op": "POST /api/v1/api-keys/{id}/rotate",
     "change": "201.previous.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|0.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|0.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|0.scopes[]: enum value \"logs:read\" added",
@@ -4696,6 +4944,14 @@
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
   },
   {
+    "key": "POST /api/v1/api-keys/me/rotate 201.key|1.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.key|1.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
+  },
+  {
     "key": "POST /api/v1/api-keys/me/rotate 201.key|1.scopes[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "api-keys.postApiKeysMeRotate",
@@ -4726,6 +4982,14 @@
     "op": "POST /api/v1/api-keys/me/rotate",
     "change": "201.key|1.scopes[]: enum value \"platform:read\" added",
     "note": "New scope platform:read, for Platform keys only. It reads every platform route a key may call. Never mixed with an organization scope."
+  },
+  {
+    "key": "POST /api/v1/api-keys/me/rotate 201.previous.origin: field added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeysMeRotate",
+    "op": "POST /api/v1/api-keys/me/rotate",
+    "change": "201.previous.origin: field added",
+    "note": "Keys carry origin: cli for a key made by passbook login (pbcli_test_), app otherwise."
   },
   {
     "key": "POST /api/v1/api-keys/me/rotate 201.previous.scopes[]: enum value \"logs:read\" added",
@@ -5174,6 +5438,46 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/cli/sessions new operation",
+    "class": "additive",
+    "operationId": "cli.postSessions",
+    "op": "POST /api/v1/cli/sessions",
+    "change": "new operation",
+    "note": "Start a CLI sign-in (passbook login): returns a device code and the code the person types at /workbench/cli."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/{id}/approve new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsByIdApprove",
+    "op": "POST /api/v1/cli/sessions/{id}/approve",
+    "change": "new operation",
+    "note": "Approve a CLI sign-in for one context. Polaris ID, a recent sign-in and a cookie session only; never a bearer."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/{id}/deny new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsByIdDeny",
+    "op": "POST /api/v1/cli/sessions/{id}/deny",
+    "change": "new operation",
+    "note": "Deny a CLI sign-in. Polaris ID, a recent sign-in and a cookie session only."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/lookup new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsLookup",
+    "op": "POST /api/v1/cli/sessions/lookup",
+    "change": "new operation",
+    "note": "Look up a typed CLI code: the device, where it started and the account approving. A miss, expired and used code answer alike."
+  },
+  {
+    "key": "POST /api/v1/cli/sessions/token new operation",
+    "class": "additive",
+    "operationId": "cli.postSessionsToken",
+    "op": "POST /api/v1/cli/sessions/token",
+    "change": "new operation",
+    "note": "Poll a CLI sign-in with its device code: 400 pending, slow down, denied or expired, else a 30-day Test token, once."
+  },
+  {
     "key": "POST /api/v1/connections 201.firstVerifiedArrivalAt: field added",
     "class": "additive",
     "operationId": "connections.postConnections",
@@ -5388,6 +5692,30 @@
     "op": "POST /api/v1/connections/uploads",
     "change": "new operation",
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/developer/device-passes new operation",
+    "class": "additive",
+    "operationId": "developer.postDevicePasses",
+    "op": "POST /api/v1/developer/device-passes",
+    "change": "new operation",
+    "note": "Make a device pass of your own sandbox's Test pass for your phone, with a one-time code. Takes Idempotency-Key and a step-up. Behind a flag that is off."
+  },
+  {
+    "key": "POST /api/v1/developer/device-passes/{id}/again new operation",
+    "class": "additive",
+    "operationId": "developer.postDevicePassesByIdAgain",
+    "op": "POST /api/v1/developer/device-passes/{id}/again",
+    "change": "new operation",
+    "note": "Add again: a new device pass from the same source after the old one expired or was voided. Takes Idempotency-Key and a step-up."
+  },
+  {
+    "key": "POST /api/v1/developer/device-passes/{id}/code new operation",
+    "class": "additive",
+    "operationId": "developer.postDevicePassesByIdCode",
+    "op": "POST /api/v1/developer/device-passes/{id}/code",
+    "change": "new operation",
+    "note": "A new one-time code for a device pass that is not opened yet; the old code stops working. Takes Idempotency-Key and a step-up."
   },
   {
     "key": "POST /api/v1/developer/sandbox response 201 removed",
@@ -6471,6 +6799,30 @@
     "op": "POST /api/v1/platform/apple/identity-moves/{moveId}/arm",
     "change": "new operation",
     "note": "Starts one move row's 24 hours now. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/cli-tokens/revoke new operation",
+    "class": "additive",
+    "operationId": "platform.postCliTokensRevoke",
+    "op": "POST /api/v1/platform/cli-tokens/revoke",
+    "change": "new operation",
+    "note": "Kill switch: a platform admin ends every CLI token, or those of one organization or person."
+  },
+  {
+    "key": "POST /api/v1/platform/device-passes/unblock new operation",
+    "class": "additive",
+    "operationId": "platform.postDevicePassesUnblock",
+    "op": "POST /api/v1/platform/device-passes/unblock",
+    "change": "new operation",
+    "note": "Lets a developer make device passes again after one was shared."
+  },
+  {
+    "key": "POST /api/v1/platform/device-passes/void new operation",
+    "class": "additive",
+    "operationId": "platform.postDevicePassesVoid",
+    "op": "POST /api/v1/platform/device-passes/void",
+    "change": "new operation",
+    "note": "Voids every open device pass of one developer."
   },
   {
     "key": "POST /api/v1/platform/idp/freeze new operation",

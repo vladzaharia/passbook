@@ -5,10 +5,9 @@ import {
   TEST_ONLY_SCOPES,
 } from '../../../shared/contracts/api-keys.ts';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
-import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
+import type { ApiKeyKind } from '../../platform/api-key-token.ts';
 import { CREDENTIAL_SCOPES, effectiveScopes } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -22,6 +21,9 @@ import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
+import { type CliMint, newSecret } from './service-secret.ts';
+
+export { newSecret } from './service-secret.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
 export const MAX_LIFETIME_MS = 91 * 86_400_000;
@@ -29,14 +31,6 @@ export const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Open (not revoked) child keys one key may hold. */
 const MAX_CHILDREN = 50;
 const RESTRICTABLE = /^(passes|nfc):|^templates:read$|^holders:write$/;
-
-/** A fresh secret: shown once, stored only as its hash. */
-export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'live' | 'test') {
-  const prefix = ctx.ids.token(6);
-  const label = secretLabel(kind, mode);
-  const secret = `${label}_${prefix}_${ctx.ids.token(32)}`;
-  return { prefix, label, secret, hash: await sha256Hex(secret) };
-}
 
 /** A credential scope (`scanning:admin`, `nfc:keys`) mints PINs, pairing codes and tag keys: only a live key of one organization, and it expires within 90 days. Refused at mint, not at the first call. */
 export function assertCredentialKey(
@@ -206,6 +200,7 @@ export async function createApiKey(
   ctx: ServiceContext,
   authority: ApiKeyAuthority,
   raw: z.input<typeof CreateApiKeySchema>,
+  cli?: CliMint,
 ): Promise<ApiKeyDto & { secret: string }> {
   const given: z.infer<typeof CreateApiKeySchema> = {
     ...raw,
@@ -276,7 +271,7 @@ export async function createApiKey(
   assertCredentialKey(held, kind, mode, input.expiresAt, now);
   assertOrgBoundScopes(held, kind);
   assertPlatformKey(authority, kind, mode, held, input.expiresAt, now);
-  const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
+  const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode, cli);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),
     org_id: orgId,
@@ -305,6 +300,7 @@ export async function createApiKey(
     created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
     last_ip_prefix: null,
     created_amr: authority.kind === 'api_key' ? null : authority.amr,
+    origin: cli ? 'cli' : 'app',
   };
   const audit: AuditEntry = {
     orgId,
@@ -323,6 +319,7 @@ export async function createApiKey(
       ...(terminalIds.length ? { terminalIds } : {}),
       ...(row.parent_key_id ? { parentKeyId: row.parent_key_id } : {}),
       ...(restricted ? { templateIds, passStyles } : {}),
+      ...(cli ? { origin: 'cli' } : {}),
     },
   };
   await createKey(ctx, row, authority, audit, { terminalIds, templateIds, passStyles });

@@ -1,5 +1,7 @@
 import { parseArgs } from 'node:util';
 import type { Api } from './api.ts';
+import { type AuthIo, authCommand, originFor } from './auth-commands.ts';
+import { DEFAULT_ORIGIN } from './credentials.ts';
 import { receiverUrl } from './forward.ts';
 import { listen } from './listen.ts';
 import { followLogs } from './logs.ts';
@@ -8,9 +10,14 @@ import { triggerCommand } from './trigger.ts';
 import { inputTypeFile, typeName } from './types-gen.ts';
 
 /** Keep equal to `version` in package.json (a test checks). */
-export const CLI_VERSION = '0.1.0';
+export const CLI_VERSION = '0.2.0';
 
 export const HELP = `passbook <command>
+
+  login                       Sign in with your browser: a Test token for your sandbox or an org, kept 30 days.
+      [--switch] [--no-browser]
+  logout                      End this sign-in and forget it.
+  open [id|tool]              Open the Workbench, a tool (logs, events, passes...) or a pasted id.
 
   listen --forward-to <url>   Forward webhook captures to a local server, with their original signatures.
       [--endpoint <id>] [--interval <ms>] [--from-start] [--once]
@@ -27,9 +34,10 @@ export const HELP = `passbook <command>
       [--pass <id>] [--device <id>]   scan_refused, push_failed, updated_on_device or email_failed.
                                       Without --pass, the newest Test pass.
 
-PASSBOOK_KEY holds a pbp_test_ key (logs needs the logs:read scope). PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
+PASSBOOK_KEY holds a pbp_test_ key (logs needs the logs:read scope) and wins over a sign-in. PASSBOOK_BASE_URL overrides
+https://passbook.mobile; a sign-in is sent only to the origin that issued it.`;
 
-export interface Io {
+export interface Io extends AuthIo {
   env: Record<string, string | undefined>;
   out: (line: string) => void;
   err: (line: string) => void;
@@ -38,8 +46,6 @@ export interface Io {
   makeClient: (options: { apiKey: string; baseUrl?: string; userAgent?: string }) => Api;
   readFile?: (path: string) => Promise<string>;
   readStdin?: () => Promise<string>;
-  fetch?: typeof fetch;
-  signal?: AbortSignal;
 }
 
 /** Runs a command line and returns the exit code. */
@@ -49,13 +55,18 @@ export async function run(argv: string[], io: Io): Promise<number> {
     io.out(HELP);
     return command ? 0 : 1;
   }
+  let signedIn = false;
   try {
-    const apiKey = io.env.PASSBOOK_KEY?.trim();
-    if (!apiKey) throw new Error('Set PASSBOOK_KEY to a pbp_test_ key.');
+    if (command === 'login' || command === 'logout' || command === 'open') {
+      await authCommand(command, rest, io, CLI_VERSION);
+      return 0;
+    }
+    const creds = await credentialsFor(io);
+    signedIn = creds.signedIn;
     const api = io.makeClient({
-      apiKey,
+      apiKey: creds.apiKey,
       userAgent: `passbook-cli/${CLI_VERSION}`,
-      ...(io.env.PASSBOOK_BASE_URL ? { baseUrl: io.env.PASSBOOK_BASE_URL } : {}),
+      ...(creds.baseUrl ? { baseUrl: creds.baseUrl } : {}),
     });
     if (command === 'listen') {
       const { values } = parseArgs({
@@ -154,8 +165,36 @@ export async function run(argv: string[], io: Io): Promise<number> {
     throw new Error(`Unknown command "${command}". Run passbook --help.`);
   } catch (e) {
     const { code, detail } = e as { code?: unknown; detail?: unknown };
-    if (typeof code === 'string' && typeof detail === 'string') io.err(`${code}: ${detail}`);
+    if (signedIn && code === 'INVALID_API_KEY') io.err('Your sign-in ended. Run passbook login.');
+    else if (typeof code === 'string' && typeof detail === 'string') io.err(`${code}: ${detail}`);
     else io.err(e instanceof Error ? e.message : String(e));
     return 1;
   }
+}
+
+/**
+ * The key a command sends: `PASSBOOK_KEY` wins. Else the stored sign-in of the origin in use, and only that origin's:
+ * a base URL set to another host never receives it.
+ */
+async function credentialsFor(
+  io: Io,
+): Promise<{ apiKey: string; baseUrl?: string; signedIn: boolean }> {
+  const key = io.env.PASSBOOK_KEY?.trim();
+  if (key)
+    return {
+      apiKey: key,
+      signedIn: false,
+      ...(io.env.PASSBOOK_BASE_URL ? { baseUrl: io.env.PASSBOOK_BASE_URL } : {}),
+    };
+  const origin = originFor(io.env);
+  const profile = await io.credentials?.get(origin);
+  if (profile && profile.expiresAt > (io.now ?? Date.now)())
+    return { apiKey: profile.token, baseUrl: origin, signedIn: true };
+  if (profile) throw new Error('Your sign-in expired. Run passbook login.');
+  const elsewhere = origin !== DEFAULT_ORIGIN && (await io.credentials?.get(DEFAULT_ORIGIN));
+  throw new Error(
+    elsewhere
+      ? `Set PASSBOOK_KEY, or run passbook login for ${origin}. The sign-in for ${DEFAULT_ORIGIN} is not sent there.`
+      : 'Set PASSBOOK_KEY to a pbp_test_ key, or run passbook login.',
+  );
 }

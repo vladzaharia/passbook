@@ -10,6 +10,7 @@ import { homeSandboxOf } from '../developer/repo-home.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { testCapableOrg } from './context.ts';
+import { devicePassEnabled } from './device-pass-identity.ts';
 
 type Tool = (typeof WORKBENCH_TOOLS)[number];
 
@@ -58,6 +59,7 @@ export async function workbenchContexts(
           slug: sandbox.slug,
           closed: sandbox.closed_at !== null,
           timeZone: await readOrgTimeZone(ctx.env.DB, sandbox.org_id),
+          devicePass: devicePassEnabled(ctx.env),
         }
       : null,
     orgs,

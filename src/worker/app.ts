@@ -98,7 +98,10 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { cliPlatformRoutes, cliRoutes } from './modules/workbench/cli-routes.ts';
 import { workbenchRoutes } from './modules/workbench/routes.ts';
+import { devicePassPlatformRoutes } from './modules/workbench/routes-device-pass-platform.ts';
+import { devicePassPublicRoutes } from './modules/workbench/routes-device-pass-public.ts';
 import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
 import { resolveRoutes, workbenchReadRoutes } from './modules/workbench/routes-read.ts';
 import { apiVersionGate } from './platform/api-version.ts';
@@ -123,7 +126,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing|d)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -189,6 +192,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
   app.route('/api/v1/workbench', workbenchRoutes);
+  app.route('/api/v1/cli', cliRoutes);
+  app.route('/api/v1/platform', cliPlatformRoutes);
   app.route('/api/v1', resolveRoutes);
   app.route('/api/v1/workbench', workbenchReadRoutes);
   app.route('/api/v1/request-logs', requestLogRoutes);
@@ -207,6 +212,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   // Platform routes that declare their own key access.
   app.route('/api/v1/platform', platformSettingsRoutes);
+  app.route('/api/v1/platform', devicePassPlatformRoutes);
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
   // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
   app.route('/api/v1/platform', idpOperationRoutes);
@@ -279,6 +285,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
   app.route('/scan', scanShellSwRoutes);
+  app.route('/d', devicePassPublicRoutes);
   app.route('/p', walletOfferRoutes);
   app.route('/w/i', walletImageRoutes);
   app.route('/brand', brandAssetRoutes);

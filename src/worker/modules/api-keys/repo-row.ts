@@ -30,6 +30,8 @@ export interface ApiKeyRow {
   last_ip_prefix: string | null;
   /** How the creating person signed in (`oidc`, `magic_link`, `breakglass`). Null: made by a key, or before 0169. */
   created_amr: Amr | null;
+  /** `cli`: made by a CLI sign-in (0245). Absent reads as `app`. */
+  origin?: 'app' | 'cli';
   /** The creator's `users.access_revision` at mint, for a platform key; null on every other key. Set once (0231). */
   creator_access_revision?: number | null;
 }

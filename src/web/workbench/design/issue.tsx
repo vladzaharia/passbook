@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useOptionalToolHost } from '../host/tool-host.tsx';
+import { absoluteUrl } from '../ui/preview-qr.tsx';
 import { QrTile } from '../ui/qr-tile.tsx';
 import { takeIssueFocus } from './issue-focus.ts';
 import { sampleOf } from './sample.ts';
@@ -46,8 +47,6 @@ export function useIssue() {
   }
   return { issue, busy, can: Boolean(issueTest) };
 }
-
-const absolute = (url: string) => (url.startsWith('/') ? `${location.origin}${url}` : url);
 
 /**
  * Try on my phone (design §3.4). In an org's Test it issues a test pass and shows its own Add to
@@ -107,12 +106,15 @@ export function TryOnPhone({ icon = false }: { icon?: boolean }) {
               ) : (
                 <>
                   <QrTile
-                    value={absolute(issued.downloadUrl)}
+                    value={absoluteUrl(issued.downloadUrl)}
                     alt="QR code of the Add to Wallet link"
                     className="grid size-44 place-items-center rounded-lg bg-white p-2"
                   />
                   <p className="text-sm text-fg-muted">{WB_DESIGN.phone.scan}</p>
-                  <CopyButton value={absolute(issued.downloadUrl)} label={WB_DESIGN.phone.link} />
+                  <CopyButton
+                    value={absoluteUrl(issued.downloadUrl)}
+                    label={WB_DESIGN.phone.link}
+                  />
                 </>
               )}
               <p className="font-mono text-xs text-fg-muted">{issued.id}</p>

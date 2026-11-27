@@ -82,7 +82,10 @@
     // "1" stores the hardware summary devices report. On since the release after the tolerant
     // reader shipped. Rollback: set "0" and deploy; stored summaries are ignored by readers, not
     // dropped. Do not roll the Worker back past the tolerant reader (044cfe11d) while rows exist.
-    "DEVICE_REPORT_HARDWARE": "1"
+    "DEVICE_REPORT_HARDWARE": "1",
+    // "1" turns on Workbench device passes (a developer's sandbox pass on their phone). Off until the owner has
+    // provisioned the device-test identity and the security review is signed off. Off is also the kill switch.
+    "DEVICE_PASS_ENABLED": "0"
   },
 
   "secrets": {
@@ -255,7 +258,10 @@
       "name": "RL_SANDBOX_DELIVERY",
       "namespace_id": "1031",
       "simple": { "limit": 60, "period": 60 }
-    }
+    },
+    // CLI sign-in (`passbook login`): starts per network (a burst guard on top of 10 an hour), and polls per network.
+    { "name": "RL_CLI_START", "namespace_id": "1034", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_CLI_POLL", "namespace_id": "1035", "simple": { "limit": 30, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

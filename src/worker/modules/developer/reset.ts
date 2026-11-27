@@ -5,6 +5,7 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Progress } from '../operations/progress-types.ts';
+import { endCliTokensOf } from '../workbench/cli-revoke.ts';
 import { quickstartTemplateOf, type SandboxRow, sandboxOfUser } from './repo.ts';
 import {
   deleteCaptures,
@@ -103,6 +104,8 @@ export async function resetSandbox(
     }
     used += 1;
   }
+  // A reset ends the CLI tokens of the sandbox: the person signs in again.
+  await endCliTokensOf(ctx, { orgId }, 'sandbox_reset');
   await claim.done();
   await after('claim');
 

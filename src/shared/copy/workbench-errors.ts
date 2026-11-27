@@ -8,3 +8,5 @@ export const WORKBENCH_KEY_SCOPE_COPY =
   'A key made in the Workbench holds Test data scopes only. Make it in admin for more.';
 export const WORKBENCH_KEY_EXPIRY_COPY =
   'A key made in the Workbench expires within 30 days. Pick an earlier date.';
+/** A CLI token asked for a route it may not call (403 `CLI_TOKEN_NOT_ALLOWED`). */
+export const CLI_TOKEN_NOT_ALLOWED_COPY = 'A CLI sign-in cannot do this. Use the Workbench.';
