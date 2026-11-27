@@ -19,8 +19,9 @@ const ports = vi.hoisted(() => ({
     customerStatus: vi.fn(),
     customerBranding: vi.fn(),
     dispose: vi.fn(),
+    unanswered: vi.fn(() => [] as string[]),
     capabilities: undefined as ((value: Record<string, unknown>) => void) | undefined,
-    read: undefined as ((read: RawRead) => string | null) | undefined,
+    read: undefined as ((read: RawRead) => unknown) | undefined,
   },
   cameraEmit: undefined as ((read: RawRead) => void) | undefined,
 }));
@@ -33,7 +34,7 @@ vi.mock('../camera/controller.ts', () => ({
 vi.mock('../input/native-reader.ts', () => ({
   connectNativeReader: (options: {
     capabilities?: (value: Record<string, unknown>) => void;
-    read: (read: RawRead) => string | null;
+    read: (read: RawRead) => unknown;
   }) => {
     ports.native.capabilities = options.capabilities;
     ports.native.read = options.read;
@@ -90,7 +91,7 @@ describe('hardware test hold', () => {
     runtime.start();
     runtime.hold(true);
     expect(runtime.emit({ method: 'wedge', code: 'SERIAL-1' })).toBeNull();
-    expect(ports.native.read?.({ method: 'camera', code: 'NATIVE-1' })).toBeNull();
+    expect(ports.native.read?.({ method: 'camera', code: 'NATIVE-1' })).toEqual({ error: true });
     ports.cameraEmit?.({ method: 'camera', code: 'CAM-1', format: 'qr' });
     const scanned = vi.fn();
     window.addEventListener('passbook:wedge-scan', scanned);
@@ -113,7 +114,7 @@ describe('native reads the page cannot take', () => {
     } as unknown as ScanApi;
     const announce = vi.fn();
     runtime = await createRuntime(session('operator', 'choose'), api, () => null, announce);
-    expect(ports.native.read?.({ method: 'wedge', code: 'EARLY-1' })).toBeNull();
+    expect(ports.native.read?.({ method: 'wedge', code: 'EARLY-1' })).toEqual({ error: true });
     expect(announce).toHaveBeenCalledWith(
       expect.objectContaining({ text: 'Not scanning right now. Resume, then scan again.' }),
     );
