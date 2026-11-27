@@ -24,7 +24,11 @@ async function signIn(page: Page) {
   await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   await page.setViewportSize({ width: 1440, height: 900 });
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
+  // A track already done (an earlier spec's pass) opens on the Done page, with neither.
+  await create
+    .or(page.getByRole('radio', { name: 'Run here' }))
+    .or(page.locator('.qs-done'))
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
@@ -49,7 +53,6 @@ async function serious(page: Page) {
 test('L20: a code in the URL fills nothing, and the person types it, approves after 3 seconds and gets one token', async ({
   page,
 }) => {
-  test.setTimeout(150_000);
   await signIn(page);
   const urls: string[] = [];
   page.on('request', (r) => urls.push(r.url()));
@@ -106,7 +109,6 @@ test('L20: a code in the URL fills nothing, and the person types it, approves af
 });
 
 test('a different network warns, and Deny ends the sign-in', async ({ page }) => {
-  test.setTimeout(150_000);
   await signIn(page);
   const s = await start(page, '203.0.113.9');
   await page.goto('/workbench/cli');
