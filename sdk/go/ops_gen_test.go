@@ -1196,6 +1196,20 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"walletHealth.list", "GET", "/api/v1/orgs/id1/wallet-health", false,
+		"", `{"items":[{"provider":"google","mode":"live","tone":"ok","lastSuccessAt":0,"queued":0,"failed24h":0,"uncertain":0,"uncertainWaiting":0,"callbackAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WalletHealth.List(ctx, "id1")
+		},
+	},
+	{
+		"walletHealth.retry", "POST", "/api/v1/orgs/id1/wallet-health/id2/recheck", false,
+		"", `{"due":0,"waiting":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WalletHealth.Retry(ctx, "id1", "id2")
+		},
+	},
+	{
 		"passImports.list", "GET", "/api/v1/pass-imports", false,
 		"", `{"items":[{"id":"x","templateId":"x","templateVersion":"x","mode":"live","state":"mapping","source":{"kind":"file","name":"x"},"columns":[{"pointer":"x","label":"x","samples":["x"]}],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"counts":{"rows":0,"create":0,"update":0,"unchanged":0,"errors":0,"warnings":0,"emailable":0},"previews":[{"row":0,"action":"create","input":{}}],"problems":[{"row":0,"column":"x","field":"x","code":"x","message":"x","severity":"error"}],"problemTotals":{"errors":0,"warnings":0},"problemsTruncated":false,"emailBudget":0,"email":false,"progress":{"done":0,"created":0,"updated":0,"unchanged":0,"failed":0,"notEmailed":0,"removed":0},"errorCode":"x","errorFile":false,"createdAt":0,"checkedAt":0,"committedAt":0,"finishedAt":0,"expiresAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

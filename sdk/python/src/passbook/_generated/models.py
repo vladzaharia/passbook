@@ -2305,7 +2305,9 @@ __all__ = [
     "WalletEnrollmentsUpdateResponsePrerequisites",
     "WalletHealthListResponse",
     "WalletHealthListResponseItemsItem",
+    "WalletHealthListResult",
     "WalletHealthRetryResponse",
+    "WalletHealthRetryResult",
     "WalletIdentitiesListResponse",
     "WalletIdentitiesListResponseItemsItem",
     "WalletProviderAccountsRetrieveResponse",
@@ -16107,7 +16109,7 @@ class WalletHealthListResponseItemsItem(_Model):
     callbackAt: int | None
 
 class WalletHealthRetryResponse(_Model):
-    queued: int
+    due: int
     waiting: int
 
 class WalletIdentitiesListResponse(_Model):
@@ -17501,6 +17503,10 @@ TestEmailsListResult = CapturedEmailPage
 TestEmailsRetrieveResult = CapturedEmailDetail
 
 WalletCredentialsUpsertParams = WalletCredentialsUpsertParams1 | WalletCredentialsUpsertParams2
+
+WalletHealthListResult = WalletHealthListResponse
+
+WalletHealthRetryResult = WalletHealthRetryResponse
 
 WalletProviderAccountsUpsertParams = WalletProviderAccountsUpsertParams1 | WalletProviderAccountsUpsertParams2
 

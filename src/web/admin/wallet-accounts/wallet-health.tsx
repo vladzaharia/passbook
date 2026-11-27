@@ -106,7 +106,7 @@ export function WalletHealthPanel({
     setBusy(true);
     try {
       const result = await recheck(provider);
-      if (result.queued > 0) toast.success(HEALTH.rechecked);
+      if (result.due > 0) toast.success(HEALTH.rechecked);
       else toast.info(HEALTH.nothingDue);
     } catch (cause) {
       toast.error(safeError(cause), 'Could not check');

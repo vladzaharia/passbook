@@ -5,21 +5,18 @@ import {
   WalletHealthParamsSchema,
   WalletRecheckResultSchema,
 } from '../../../shared/contracts/wallet-health.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { actorFor, authOf } from '../passes/http.ts';
 import { listWalletHealth, recheckUncertain } from './health.ts';
 
-/** Mounted by `routes-enrolments.ts` under /api/v1/orgs, behind its tenant session guard. */
+/** Mount at /api/v1/orgs, ahead of the session-only org routes. A key needs `wallet:read` to read and `passes:write` to recheck. */
 export const walletHealthRoutes = createRouter();
-
-const sessionOf = (c: Parameters<typeof authOf>[0]) => {
-  const auth = authOf(c);
-  if (auth.kind !== 'session') throw new UnauthenticatedError();
-  return auth;
-};
+walletHealthRoutes.use('*', async (c, next) => {
+  await next();
+  c.header('cache-control', 'no-store');
+});
 
 register(
   walletHealthRoutes,
@@ -27,12 +24,13 @@ register(
   {
     method: 'get',
     path: '/{orgId}/wallet-health',
-    summary: 'Health of the wallets open to an organization, in the session mode',
+    summary: "Health of the wallets open to an organization, in the caller's mode",
     params: z.strictObject({ orgId: IdSchema }),
     response: WalletHealthListSchema,
+    auth: { scope: 'wallet:read', capability: 'integrations:read' },
   },
   async (c) =>
-    c.json(await listWalletHealth(serviceContext(c), sessionOf(c), c.req.valid('param').orgId)),
+    c.json(await listWalletHealth(serviceContext(c), authOf(c), c.req.valid('param').orgId)),
 );
 
 register(
@@ -45,11 +43,12 @@ register(
     status: 202,
     params: WalletHealthParamsSchema,
     response: WalletRecheckResultSchema,
+    auth: { scope: 'passes:write', capability: 'passes:operate' },
   },
   async (c) => {
     const { orgId, provider } = c.req.valid('param');
     const ctx = serviceContext(c);
-    const result = await recheckUncertain(ctx, sessionOf(c), orgId, provider);
+    const result = await recheckUncertain(ctx, authOf(c), orgId, provider);
     const actor = actorFor(c);
     await recordAudit(ctx, {
       orgId,
@@ -58,7 +57,7 @@ register(
       action: 'wallet.uncertain_recheck',
       targetType: 'org',
       targetId: orgId,
-      detail: { provider, queued: result.queued },
+      detail: { provider, due: result.due },
     });
     return c.json(result, 202);
   },

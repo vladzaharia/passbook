@@ -18,7 +18,6 @@ import {
   revokeEnrolment,
   setEnrolmentSource,
 } from './enrolment-service.ts';
-import { walletHealthRoutes } from './routes-health.ts';
 
 /** Mount at /api/v1/orgs. The session's mode picks the enrolment; Test and Live are separate rows. */
 export const walletEnrolmentRoutes = createRouter();
@@ -27,8 +26,6 @@ walletEnrolmentRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });
-
-walletEnrolmentRoutes.route('/', walletHealthRoutes);
 
 const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   const auth = authOf(c);

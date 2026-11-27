@@ -16938,10 +16938,14 @@ type WalletHealthListResponseItemsItem struct {
 	CallbackAt       *int64 `json:"callbackAt"`
 }
 
+type WalletHealthListResult = WalletHealthListResponse
+
 type WalletHealthRetryResponse struct {
-	Queued  int64 `json:"queued"`
+	Due     int64 `json:"due"`
 	Waiting int64 `json:"waiting"`
 }
+
+type WalletHealthRetryResult = WalletHealthRetryResponse
 
 type WalletIdentitiesListResponse struct {
 	Items      []WalletIdentitiesListResponseItemsItem `json:"items"`

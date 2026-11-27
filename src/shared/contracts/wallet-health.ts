@@ -32,9 +32,9 @@ export const WalletHealthParamsSchema = z.strictObject({
   provider: WalletProviderSchema,
 });
 
-/** What a recheck started: `queued` updates go back to the queue, `waiting` are still inside the grace window. */
+/** What a recheck started: `due` updates are past the window and sent to settle (at most 50), `waiting` are still inside it. */
 export const WalletRecheckResultSchema = z.strictObject({
-  queued: z.number().int().nonnegative(),
+  due: z.number().int().nonnegative(),
   waiting: z.number().int().nonnegative(),
 });
 export type WalletRecheckResult = z.infer<typeof WalletRecheckResultSchema>;

@@ -42,7 +42,7 @@ function handlers(items: WalletHealth[], onRecheck?: (url: URL) => unknown) {
     '/api/v1/orgs/o1/wallet-health': () => json({ items }),
     '/api/v1/orgs/o1/wallet-health/google/recheck': (u: URL) => {
       onRecheck?.(u);
-      return json({ queued: 2, waiting: 0 }, 202);
+      return json({ due: 2, waiting: 0 }, 202);
     },
   };
 }

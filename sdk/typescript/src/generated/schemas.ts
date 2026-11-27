@@ -14585,7 +14585,7 @@ export type WalletHealthListResponse = {
 };
 
 export type WalletHealthRetryResponse = {
-  queued: number;
+  due: number;
   waiting: number;
 };
 
