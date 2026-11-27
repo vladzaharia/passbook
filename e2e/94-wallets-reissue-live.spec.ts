@@ -98,7 +98,7 @@ test('a Samsung reissue sends every added card an update', async () => {
 });
 
 /** The org's Test round trip for Google: a signed save callback, which Live enabling asks for (planEnable). */
-async function googleTestRoundTrip(w: WalletOrg, issuerId: string) {
+async function googleTestRoundTrip(issuerId: string) {
   const keys = await makeCallbackSigningKeys();
   await fetch(`${MOCK}/__mock/google-keys`, {
     method: 'POST',
@@ -132,7 +132,6 @@ async function googleTestRoundTrip(w: WalletOrg, issuerId: string) {
     body,
   });
   expect(res.status).toBe(204);
-  expect(w.org.id).toBeTruthy();
 }
 
 /** The Live release of the template and its pass, once the Live account is on. */
@@ -155,7 +154,7 @@ test('a Live Google offer saves to the Live issuer and never to the Test one', a
   const w = await walletOrg(admin, 'g-live', testIssuer);
   await releaseSystem(admin, w, 'google');
   await saveToGoogle(browser, (await samplePass(admin, w)).path);
-  await googleTestRoundTrip(w, testIssuer.issuerId);
+  await googleTestRoundTrip(testIssuer.issuerId);
   await enrolTestAccount(admin, w.org.id, liveIssuer, 'live');
   const holder = await livePass(w, 'google');
   await saveToGoogle(browser, holder.path);
@@ -197,6 +196,13 @@ test('a Live Samsung add reaches the Live card and never the Test one', async ()
   expect(refs[testRef]?.cardId).toBe(testKit.cardId);
   expect(refs[liveRef]?.cardId).toBe(liveKit.cardId);
   expect(liveKit.cardId).not.toBe(testKit.cardId);
+  // Each edit's own note reached its own card, and neither card saw the other's.
+  const testCard = JSON.stringify(await testKit.card(testRef));
+  const liveCard = JSON.stringify(await liveKit.card(liveRef));
+  expect(testCard).toContain('Test edit.');
+  expect(testCard).not.toContain('Live edit.');
+  expect(liveCard).toContain('Live edit.');
+  expect(liveCard).not.toContain('Test edit.');
 });
 
 test('a Samsung card still in testing mode passes the Test check and fails the Live one', async () => {
