@@ -15,6 +15,7 @@ import { toast } from '../../../ui/toaster.tsx';
 import { useToolHost } from '../../host/tool-host.tsx';
 import type { InputValues } from '../../playground/model.ts';
 import { ToolPage } from '../../shell/tool-page.tsx';
+import { postUnique } from '../blueprint-start.ts';
 import { wantIssueFocus } from '../issue-focus.ts';
 import { handoffCode, handoffState, ownsHandoff, spendHandoff } from './handoff.ts';
 import { clearMirror } from './use-anon-state.ts';
@@ -76,21 +77,16 @@ export function HandoffSave() {
           assets: doc.assets.flatMap((a) => (a.sha1 ? [{ name: a.name, sha1: a.sha1 }] : [])),
         },
       };
-      // A second save of the same blueprint finds its name taken: the next free number goes on it.
-      let made: Awaited<ReturnType<typeof api.post<typeof TemplateDetailSchema>>> | undefined;
-      for (let n = 1; !made; n++) {
-        try {
-          made = await api.post(
-            `${path}/use`,
-            TemplateDetailSchema,
-            { ...body, name: n === 1 ? blueprint.name : `${blueprint.name} ${n}` },
-            { headers: { 'idempotency-key': `${key.current}-${n}` } },
-          );
-        } catch (cause) {
-          if (!(cause instanceof ApiError) || cause.code !== 'TEMPLATE_EXISTS' || n >= 9)
-            throw cause;
-        }
-      }
+      const made = await postUnique(blueprint.name, key.current, (name, k) =>
+        api.post(
+          `${path}/use`,
+          TemplateDetailSchema,
+          { ...body, name },
+          {
+            headers: { 'idempotency-key': k },
+          },
+        ),
+      );
       const first = made.activeVersion ?? made.versions[0]?.version;
       if (first)
         await releaseInTest(api, orgId, made.id, first, crypto.randomUUID()).catch((cause) =>

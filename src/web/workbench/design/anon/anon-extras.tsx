@@ -31,18 +31,18 @@ function AnonHead({ actions }: { name: string; actions: ReactNode }) {
   const { blueprint, options, pick } = useAnon();
   const phone = useMediaQuery(PHONE);
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className="mb-3 flex items-center gap-2 sm:flex-wrap">
       <Select
-        className="w-64 max-w-full"
+        className="min-w-0 flex-1 sm:w-64 sm:flex-none"
         aria-label={WB_DESIGN.anon.pick}
         tall
         value={blueprint.preview.id}
         options={options}
         onValueChange={pick}
       />
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 sm:ml-auto sm:flex-wrap">
         {actions}
-        <ShareButton />
+        <ShareButton iconOnly={phone} />
         {phone ? null : <SaveButton />}
       </div>
     </div>
