@@ -63,7 +63,10 @@ const LIVE_ONLY = new Map([
 ]);
 
 /** Google and Samsung ship dark: the reissue route answers WALLET_PROVIDER_DISABLED until a provider is released. */
-const DARK_PROVIDER = new Set(['wallet-providers.postWalletProvidersReissue']);
+const DARK_PROVIDER = new Set([
+  'wallet-providers.postWalletProvidersReissue',
+  'wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck',
+]);
 
 /** One line per call the API refused. */
 function failures(id: string, calls: Call[]): string[] {
