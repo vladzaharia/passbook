@@ -9,6 +9,13 @@ import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { currentFile } from '../passes/timed-variant.ts';
+import {
+  isDeviceTestPassType,
+  registerDevicePass,
+  serveDevicePass,
+  unregisterDevicePass,
+  updatedDevicePasses,
+} from '../workbench/device-pass-wallet.ts';
 import { recordPassFetch } from './log-events.ts';
 import { personalize } from './personalize.ts';
 import {
@@ -64,7 +71,8 @@ register(
   async (c) => {
     const p = c.req.valid('param');
     const body = (await c.req.json().catch(() => null)) as { pushToken?: unknown } | null;
-    const outcome = await registerDevice(svc(c), {
+    const register = isDeviceTestPassType(p.passTypeId) ? registerDevicePass : registerDevice;
+    const outcome = await register(svc(c), {
       ...p,
       authorization: c.req.header('authorization'),
       pushToken: body?.pushToken,
@@ -83,10 +91,14 @@ register(
     params: serial,
   },
   async (c) => {
-    await unregisterDevice(svc(c), {
-      ...c.req.valid('param'),
-      authorization: c.req.header('authorization'),
-    });
+    const params = c.req.valid('param');
+    await (isDeviceTestPassType(params.passTypeId) ? unregisterDevicePass : unregisterDevice)(
+      svc(c),
+      {
+        ...params,
+        authorization: c.req.header('authorization'),
+      },
+    );
     return empty(200);
   },
 );
@@ -104,7 +116,9 @@ register(
   async (c) => {
     const p = c.req.valid('param');
     const q = c.req.valid('query');
-    const result = await updatedSerials(svc(c), { ...p, since: q.passesUpdatedSince });
+    const result = isDeviceTestPassType(p.passTypeId)
+      ? await updatedDevicePasses(svc(c), { deviceId: p.deviceId, since: q.passesUpdatedSince })
+      : await updatedSerials(svc(c), { ...p, since: q.passesUpdatedSince });
     return result ? c.json(result) : empty(204);
   },
 );
@@ -121,6 +135,12 @@ register(
   async (c) => {
     const p = c.req.valid('param');
     const ctx = svc(c);
+    if (isDeviceTestPassType(p.passTypeId))
+      return serveDevicePass(
+        ctx,
+        { ...p, authorization: c.req.header('authorization') },
+        c.req.raw,
+      );
     const { pass } = await authorizePass(
       ctx,
       p.passTypeId,

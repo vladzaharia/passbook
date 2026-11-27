@@ -36,8 +36,13 @@ const IMPORT_FILE = 'reads an uploaded import file (a CSV or a template package)
 const CREDENTIALS =
   'reads a provider credential only through runtime-core-credentials.ts, whose gate refuses a developer org';
 
+const DEVICE_PASS =
+  "the one sanctioned exception (Workbench device pass, design 3.4): it signs and pushes only a Test pass of the caller's own sandbox, as the dedicated device-test identity (never the platform identity), behind DEVICE_PASS_ENABLED (off), at most 5 open per sandbox, 3 phones and 24 hours each, with a platform kill switch; routes: modules/workbench/routes-device-pass*.ts";
+
 /** Every file that holds a primitive and no fence of its own, with why that is safe. */
 const EXEMPT: Record<string, Exempt> = {
+  'src/worker/modules/workbench/device-pass-build.ts': { reason: DEVICE_PASS },
+  'src/worker/modules/workbench/device-pass-push.ts': { reason: DEVICE_PASS },
   'src/worker/modules/passes/import-read.ts': { reason: IMPORT_FILE },
   'src/worker/modules/passes/import-check-run.ts': { reason: IMPORT_FILE },
   'src/worker/modules/templates/import-pipeline.ts': { reason: IMPORT_FILE },
