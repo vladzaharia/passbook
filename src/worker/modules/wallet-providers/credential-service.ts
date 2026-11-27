@@ -128,7 +128,7 @@ export async function orgWriter(
   };
 }
 
-/** A key's event rows name the key as a `platform` actor: the event tables allow no other type. */
+/** A Platform key's event rows name the key as an `api_key` actor; a person's say `platform`. */
 export function platformWriter(by: PlatformCaller, purpose: string): CredentialWriter {
   const session = isActor(by) ? null : sessionOf(by);
   if (session && !session.roles.includes('admin'))
@@ -139,7 +139,10 @@ export function platformWriter(by: PlatformCaller, purpose: string): CredentialW
       ? by.principal
       : { kind: 'platform', userId: by.userId, sessionIdHash: by.sessionId },
     checks: isActor(by) ? by.checks : [],
-    actor: { type: 'platform', id: isActor(by) ? by.actorId : by.userId },
+    actor:
+      isActor(by) && by.keyId
+        ? { type: 'api_key', id: by.keyId }
+        : { type: 'platform', id: isActor(by) ? by.actorId : by.userId },
     platform: true,
   };
 }

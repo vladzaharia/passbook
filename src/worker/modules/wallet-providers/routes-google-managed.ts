@@ -15,6 +15,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { byUserOf } from '../idp/actor.ts';
 import { authOf } from '../passes/http.ts';
 import { managedIssuerStatus, requestManagedIssuer } from './google-managed-service.ts';
 import { completeManualIssuer, startManagedIssuer } from './issuer-provision.ts';
@@ -27,10 +28,10 @@ const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   return auth;
 };
 
-/** The person who acted, or the Platform key that did (a key's run has no creator). */
-const issuerBy = (c: Parameters<typeof platformActorOf>[0]) => {
+/** The person recorded as creator (a key's is the person who minted it), and the key that acted, if any. */
+const issuerBy = async (c: Parameters<typeof platformActorOf>[0]) => {
   const by = platformActorOf(c, { scope: 'platform:wallet' });
-  return { createdBy: by.userId, keyId: by.keyId };
+  return { createdBy: await byUserOf(c.env.DB, by), keyId: by.keyId };
 };
 const keyOf = ({ keyId }: { keyId: string | null }) => (keyId ? { keyId } : {});
 
@@ -123,17 +124,19 @@ register(
     response: GoogleIssuerRunSchema,
     status: 202,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    const by = await issuerBy(c);
+    return c.json(
       (
         await startManagedIssuer(serviceContext(c), {
           orgId: c.req.valid('param').orgId,
-          createdBy: issuerBy(c).createdBy,
-          ...keyOf(issuerBy(c)),
+          createdBy: by.createdBy,
+          ...keyOf(by),
         })
       ).run,
       202,
-    ),
+    );
+  },
 );
 
 register(
@@ -149,16 +152,18 @@ register(
     response: GoogleIssuerRunSchema,
     status: 202,
   },
-  async (c) =>
-    c.json(
+  async (c) => {
+    const by = await issuerBy(c);
+    return c.json(
       await completeManualIssuer(serviceContext(c), {
         orgId: c.req.valid('param').orgId,
         issuerId: c.req.valid('json').issuerId,
-        adminId: issuerBy(c).createdBy,
-        ...keyOf(issuerBy(c)),
+        adminId: by.createdBy,
+        ...keyOf(by),
       }),
       202,
-    ),
+    );
+  },
 );
 
 register(
@@ -174,16 +179,12 @@ register(
     response: WalletCredentialKeyRotationSchema,
     status: 202,
   },
-  async (c) =>
-    c.json(
-      {
-        runId: (
-          await startKeyRotation(serviceContext(c), {
-            credentialId: c.req.valid('param').id,
-            createdBy: issuerBy(c).createdBy,
-          })
-        ).runId,
-      },
-      202,
-    ),
+  async (c) => {
+    const by = await issuerBy(c);
+    const { runId } = await startKeyRotation(serviceContext(c), {
+      credentialId: c.req.valid('param').id,
+      createdBy: by.createdBy,
+    });
+    return c.json({ runId }, 202);
+  },
 );

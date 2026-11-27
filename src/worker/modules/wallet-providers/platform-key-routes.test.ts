@@ -6,7 +6,7 @@ import { fakeAuth, makeApiKey, makeSession } from '../../../../test/helpers/inde
 import { MINTABLE_PLATFORM_SCOPES } from '../../../shared/contracts/api-keys.ts';
 import { createApp } from '../../app.ts';
 import { systemClock } from '../../platform/clock.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
@@ -69,7 +69,26 @@ describe('a Platform key with platform:wallet', () => {
       'SELECT actor_type, actor_id FROM wallet_credential_events WHERE credential_id = ?',
       [saved.id],
     );
-    expect(events).toEqual([{ actor_type: 'platform', actor_id: key.id }]);
+    expect(events).toEqual([{ actor_type: 'api_key', actor_id: key.id }]);
+    expect(
+      await all(
+        k.env.DB,
+        "SELECT actor_type, actor_id FROM audit_log WHERE target_id = ? AND action = 'wallet_provider.credential_create'",
+        [saved.id],
+      ),
+    ).toEqual([{ actor_type: 'api_key', actor_id: key.id }]);
+    // The run's creator column names a user: the person who minted the key.
+    const rotate = await call(key.headers, 'POST', `/wallet-credentials/${saved.id}/rotate-key`);
+    expect(rotate.status).toBe(202);
+    const { runId } = (await rotate.json()) as { runId: string };
+    const row = (
+      await all<{ creator: string; minter: string }>(
+        k.env.DB,
+        'SELECT r.created_by AS creator, a.created_by AS minter FROM identity_runs r, api_keys a WHERE r.id = ? AND a.id = ?',
+        [runId, key.id],
+      )
+    )[0];
+    expect(row?.creator).toBe(row?.minter);
     const list = await call(key.headers, 'GET', '/wallet-credentials');
     expect(list.status).toBe(200);
     expect(((await list.json()) as { items: { id: string }[] }).items.map((i) => i.id)).toContain(
@@ -123,6 +142,27 @@ describe('a Platform key with platform:wallet', () => {
     ];
     for (const [method, path, body] of person)
       await expectProblem(await call(key.headers, method, path, body), 403, 'PERSON_REQUIRED');
+  });
+});
+
+describe('the rebuilt credential event table', () => {
+  it('stays append-only after the key actor type was added', async () => {
+    const id = (
+      await all<{ credential_id: string }>(
+        k.env.DB,
+        "SELECT credential_id FROM wallet_credential_events WHERE actor_type = 'api_key' LIMIT 1",
+      )
+    )[0]?.credential_id;
+    expect(id).toBeDefined();
+    await expect(
+      run(k.env.DB, 'UPDATE wallet_credential_events SET request_id = ? WHERE credential_id = ?', [
+        'x',
+        id,
+      ]),
+    ).rejects.toThrow(/immutable wallet credential event/);
+    await expect(
+      run(k.env.DB, 'DELETE FROM wallet_credential_events WHERE credential_id = ?', [id]),
+    ).rejects.toThrow(/immutable wallet credential event/);
   });
 });
 
