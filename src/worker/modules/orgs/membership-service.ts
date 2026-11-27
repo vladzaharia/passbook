@@ -9,6 +9,7 @@ import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
 import { INVITE_PATH, INVITE_PREFIX } from '../../../shared/invitation-link.ts';
 import type { Actor } from '../../platform/actor.ts';
 import type { AuthContext } from '../../platform/auth.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
   AppError,
@@ -92,12 +93,21 @@ function invitationDto(row: repo.InvitationRow): OrgInvitation {
     acceptedAt: row.accepted_at,
   };
 }
+/** A key limited to templates never lists people: it is refused, as on any route that does not enforce the limit. */
+async function refuseLimitedKey(ctx: ServiceContext, principal: Principal): Promise<void> {
+  if (principal.kind === 'api_key' && (await repo.keyIsLimited(ctx.env.DB, principal.keyId)))
+    throw new ForbiddenError(
+      'This key is limited to templates and cannot call this route.',
+      'API_KEY_RESTRICTED_ROUTE',
+    );
+}
 export async function listOrgMembers(
   ctx: ServiceContext,
   auth: AuthContext,
   orgId: string,
 ): Promise<OrgMember[]> {
   const actor = await orgActorOf(ctx, auth, orgId, 'members:read');
+  if (actor.userId === null) await refuseLimitedKey(ctx, actor.principal);
   const rows =
     actor.userId === null
       ? await repo.keyOrgMembers(ctx.env.DB, orgId, actor.principal, actor.checks, ctx.clock.now())
@@ -110,6 +120,7 @@ export async function listOrgInvitations(
   orgId: string,
 ): Promise<OrgInvitation[]> {
   const actor = await orgActorOf(ctx, auth, orgId, 'members:read');
+  if (actor.userId === null) await refuseLimitedKey(ctx, actor.principal);
   const rows =
     actor.userId === null
       ? await repo.keyOrgInvitations(

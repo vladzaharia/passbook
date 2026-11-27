@@ -15,7 +15,8 @@ export type AuthorityMisuse =
   | 'GRANT_NO_EDGE'
   | 'GRANT_TABLE_NOT_ALLOWED'
   | 'SQL_BIND_BUDGET'
-  | 'SQL_SIZE_BUDGET';
+  | 'SQL_SIZE_BUDGET'
+  | 'SQL_ACTOR_REUSE';
 
 /** A programming error in a grant (never request-caused): always a 500 with a stable code. */
 export class AuthorityError extends AppError {

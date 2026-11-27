@@ -55,10 +55,10 @@ function notesStmt(db: D1Database, auth: ScanReadAuthority, q: NotesQuery): D1Pr
     db,
     auth,
     `SELECT n.id, n.created_at, n.body, n.author_name, n.author_staff_id, n.scanner_id, n.edited_at
-     FROM pass_notes n
+     FROM ${auth.rows}pass_notes n
      JOIN passes p ON p.id = n.pass_id AND p.org_id = n.org_id AND p.mode = n.mode
        AND p.credential_generation = n.credential_generation
-     WHERE ${auth.ok} AND ${auth.tenant('n', 'pass_notes')}
+     WHERE ${auth.present} AND ${auth.tenantOnce('n', 'pass_notes')}
        AND n.pass_id = ? AND p.template_id = ? AND n.credential_generation = ?
        AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0${cursor}
      ORDER BY n.created_at DESC, n.id DESC LIMIT ?`,

@@ -103276,6 +103276,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "API_KEY_RESTRICTED_ROUTE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103374,6 +103375,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "API_KEY_RESTRICTED_ROUTE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",

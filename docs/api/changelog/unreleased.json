@@ -2361,6 +2361,14 @@
     "note": "A new capability, logs:read, is granted with integrations:read (org admin, integration admin, read only)."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/memberships 403.API_KEY_RESTRICTED_ROUTE: key limited to templates",
+    "class": "notable",
+    "operationId": "orgs.listOrgsByIdMemberships",
+    "op": "GET /api/v1/orgs/{id}/memberships",
+    "change": "403 API_KEY_RESTRICTED_ROUTE: template-limited keys refused",
+    "note": "Keys limited to templates cannot list members or invitations (403 API_KEY_RESTRICTED_ROUTE), as on every route outside their limit."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdPlan",
