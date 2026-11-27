@@ -46,22 +46,28 @@ export function OrgsFilter({
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="flex w-72 flex-col gap-1">
-        {choices.map((c) => (
-          <div key={c.orgId} className="flex min-w-0 items-center gap-2">
-            <CheckboxField
-              className="min-w-0 flex-1"
-              checked={value.includes(c.orgId)}
-              onCheckedChange={() => toggle(c.orgId)}
-              label={
-                <span className="flex min-w-0 items-center gap-2">
-                  <OrgMark org={c} size={24} />
-                  <span className="truncate">{c.orgName}</span>
-                </span>
-              }
-            />
-          </div>
-        ))}
+      <PopoverContent
+        align="start"
+        collisionPadding={8}
+        className="flex max-h-(--radix-popover-content-available-height) w-72 max-w-[calc(100vw-1rem)] flex-col gap-1"
+      >
+        <div className="flex min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain">
+          {choices.map((c) => (
+            <div key={c.orgId} className="flex min-w-0 items-center gap-2">
+              <CheckboxField
+                className="min-w-0 flex-1"
+                checked={value.includes(c.orgId)}
+                onCheckedChange={() => toggle(c.orgId)}
+                label={
+                  <span className="flex min-w-0 items-center gap-2">
+                    <OrgMark org={c} size={24} />
+                    <span className="truncate">{c.orgName}</span>
+                  </span>
+                }
+              />
+            </div>
+          ))}
+        </div>
         <div className="mt-1 flex justify-end border-t border-border pt-2">
           <Button
             variant="ghost"

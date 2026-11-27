@@ -118,4 +118,49 @@ test.describe('All organizations passes', () => {
     expect(new URL(page.url()).searchParams.get('orgIds')).toBe(second.org.id);
     await expect(rowOf(second.holder)).toBeVisible();
   });
+
+  test('keeps the Organization filter inside the viewport with many organizations', async ({
+    page,
+  }) => {
+    const api = await apiAs('admin');
+    let last = '';
+    try {
+      for (let n = 0; n < 24; n++) {
+        const slug = uid('many').toLowerCase();
+        last = `Many ${slug}`;
+        const org = await createOrgWithRoles(api, { slug, name: last });
+        if (n > 0) continue;
+        const template = await templateFromBlueprint(api, org.id, 'Many card');
+        await createPass(api, org.id, {
+          holder: uid('Many holder'),
+          release: await requireActiveTemplateRelease(api, org.id, template.id),
+        });
+      }
+    } finally {
+      await api.dispose();
+    }
+    for (const [width, height] of [
+      [390, 844],
+      [820, 1100],
+      [1280, 720],
+      [1440, 900],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.goto('/admin/all/passes');
+      await page.getByRole('button', { name: /^Organization:/ }).click();
+      const panel = page.getByRole('dialog');
+      await expect(panel).toBeVisible();
+      const box = await panel.boundingBox();
+      expect(box).not.toBeNull();
+      if (!box) return;
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height).toBeLessThanOrEqual(height);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+      // The last choice scrolls into reach inside the panel and can be picked.
+      await page.getByRole('checkbox', { name: new RegExp(last) }).click();
+      await expect(page.getByRole('checkbox', { name: new RegExp(last) })).toBeChecked();
+      await page.keyboard.press('Escape');
+    }
+  });
 });
