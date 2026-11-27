@@ -1,7 +1,6 @@
 import {
   type QueryClient,
   queryOptions,
-  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -19,7 +18,6 @@ import {
   PassAssetListSchema,
   PassAssetSchema,
   PassDetailSchema,
-  PassListSchema,
   type PassListStatusSchema,
   type PassSummaryDto,
   RefreshPassResponseSchema,
