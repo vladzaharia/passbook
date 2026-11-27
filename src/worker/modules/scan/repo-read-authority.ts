@@ -72,7 +72,13 @@ export function scanReadAuthority(
   const predicate = authorityPredicate(scanPrincipal(actor), {
     scope: 'org_mode',
     now: input.now,
-    checks: [...capability, ...(input.extraChecks ?? []), ...scanActorChecks(actor, input)],
+    checks: [
+      ...capability,
+      ...(input.extraChecks ?? []),
+      ...scanActorChecks(actor, input),
+      // The SQL tenant is the principal's own org: it must be the org the JS actor (and the binds) name.
+      { reason: 'actor', ok: (b) => `a.org_id = ${b.bind(actor.orgId)}` },
+    ],
   });
   const { ctes, params } = predicate;
   assertBudget(ctes, params, PARAM_BUDGET);
@@ -104,13 +110,11 @@ export function scanRead(
   sql: string,
   params: readonly SqlValue[] = [],
   extra?: { ctes: string; params?: readonly SqlValue[] },
-  /** Skips `assertActorOnce` for a scalar-form original in the differential tests. Only `legacyRead` may pass it (`scan-read-exempt.test.ts`). */
-  exempt?: 'differential-legacy',
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;
   assertBudget('', all, PARAM_BUDGET);
-  if (!exempt) assertActorOnce(text);
+  assertActorOnce(text);
   const bytes = encoder.encode(text).length;
   if (bytes > READ_SQL_BYTE_BUDGET)
     throw new AuthorityError(

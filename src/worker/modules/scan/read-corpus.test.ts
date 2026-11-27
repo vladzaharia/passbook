@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { runOne } from '../../../../test/helpers/exact-rows.ts';
 import {
   type makeEnv,
+  makeOrg,
   makeScanEvent,
   makeScanner,
   makeScanStaff,
@@ -17,14 +18,8 @@ import { effectiveReleaseIs } from './effective-release.ts';
 import { createGuardHarness, get } from './guard-test-fixtures.ts';
 import { pinKeyset } from './keyset-pin.ts';
 import { countScanRows } from './repo-feed.ts';
+import { livePlaceEventStmt } from './repo-live-places.ts';
 import { scanAuthorizedStmt, scanRead, scanReadAuthority } from './repo-read-authority.ts';
-import { legacyOf } from './repo-read-once-legacy-auth.ts';
-import {
-  legacyActorFenceStmt,
-  legacyAuthorizedStmt,
-  legacyBrandingStmt,
-  legacyFeedCountStmt,
-} from './repo-read-once-legacy-more.ts';
 import { passlessStmt } from './repo-resolve-passless-read.ts';
 import { orgBrandingForActorStmt } from './repo-session.ts';
 import { copyScanEpochs, scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
@@ -152,37 +147,36 @@ describe('scan read corpus', () => {
     expect(skipped.params.length).toBeLessThan(base.params.length);
   });
 
-  it('a staffed scanner reads what its scalar-form fence read, live and once revoked', async () => {
+  it('a staffed scanner reads through the join-once fence live and reads nothing once revoked', async () => {
     const { real } = await maximal();
     const actor = real;
     const auth = scanReadAuthority(actor, { now: clock.now() });
-    const old = legacyOf(auth);
     const inner = { sql: 'EXISTS (SELECT 1 FROM passes p WHERE p.org_id = ao.org_id)', params: [] };
     const filter = { mode: 'live', limit: 5, orgId } as const;
     const rows = async (stmt: D1PreparedStatement) => (await stmt.all()).results;
-    const compare = async () => {
-      expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual(
-        await rows(legacyAuthorizedStmt(env.DB, old)),
-      );
-      expect(await rows(orgBrandingForActorStmt(env.DB, auth))).toEqual(
-        await rows(legacyBrandingStmt(env.DB, old)),
-      );
-      expect(await rows(passlessStmt(env.DB, auth, [inner]))).toEqual(
-        await rows(legacyActorFenceStmt(env.DB, old, inner)),
-      );
-      const [was] = await rows(legacyFeedCountStmt(env.DB, old, filter, 10));
-      expect((await countScanRows(env.DB, auth, filter, 10)).n).toBe(
-        (await rows(legacyAuthorizedStmt(env.DB, old))).length ? (was as { n: number }).n : 0,
-      );
-    };
-    await compare();
     expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 1 }]);
+    expect((await rows(orgBrandingForActorStmt(env.DB, auth))).length).toBeGreaterThan(0);
+    expect((await rows(passlessStmt(env.DB, auth, [inner]))).length).toBeGreaterThan(0);
     await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
       clock.now(),
       actor.scanner?.id ?? '',
     ]);
-    await compare();
     expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 0 }]);
+    expect(await rows(orgBrandingForActorStmt(env.DB, auth))).toEqual([]);
+    expect(await rows(passlessStmt(env.DB, auth, [inner]))).toEqual([]);
+    expect((await countScanRows(env.DB, auth, filter, 10)).n).toBe(0);
+  });
+
+  it('a place read fences the event to the actor org whatever org the binds name', async () => {
+    const { real } = await maximal();
+    const auth = scanReadAuthority(real, { now: clock.now() });
+    const own = await makeScanEvent(f, { orgId, mode: real.mode });
+    const other = await makeOrg(f);
+    const foreign = await makeScanEvent(f, { orgId: other.id, mode: real.mode });
+    const read = async (org: string, id: string) =>
+      livePlaceEventStmt(env.DB, auth, org, real.mode, id).first();
+    expect(await read(orgId, own.id)).not.toBeNull();
+    expect(await read(other.id, foreign.id)).toBeNull();
   });
 
   it('pinKeyset reads the keyset once per context and again for another', async () => {

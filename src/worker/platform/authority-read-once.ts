@@ -24,8 +24,8 @@ const count = (text: string, re: RegExp): number => text.match(re)?.length ?? 0;
  * limit): `actor_ok` appears as one FROM or JOIN term outside its own definition, `actor` only inside that
  * definition, and `key_tpl` nowhere. Names match case-insensitively, quoted or not; a comma join, an IN list
  * or a subquery counts as a second reference. A single reference in a nested FROM passes (one expansion).
- * The alias `ao` belongs to `actor_ok`, and `ao.org_id IS NULL` is allowed only after `ao.present = 1`
- * (use `platform`): an absent anchor row is NULL too. Dotted names (`a.actor_ok`) are columns. Throws
+ * The alias `ao` belongs to `actor_ok`, and `ao.org_id` is allowed only as `= ao.org_id`, `ao.org_id =` or
+ * the `platform` text: an absent anchor row is NULL too. Dotted names (`a.actor_ok`) are columns. Throws
  * `SQL_ACTOR_REUSE`. A column alias `AS actor` trips it too: it fails closed.
  */
 export function assertActorOnce(sql: string): void {
@@ -35,11 +35,13 @@ export function assertActorOnce(sql: string): void {
   const defined = (n: string) =>
     count(text, new RegExp(`(?<![.\\w])${n}\\s+AS\\s+(?:NOT\\s+)?(?:MATERIALIZED\\s*)?\\(`, 'gi'));
   const usedFrom = count(text, /\b(?:FROM|JOIN)\s+actor_ok(?![\w])/gi);
-  // Structural: an `ao.org_id` outside `= ao.org_id` / `ao.org_id =` (NULL-safe equality) needs `ao.present = 1`
-  // in the statement, whatever the spelling (ISNULL, COALESCE, IS NOT NOT NULL ...).
-  const bareNull =
-    /\bao\.org_id\b/i.test(text.replace(/(?:=|\|\|)\s*ao\.org_id\b|\bao\.org_id\s*=(?!=)/gi, '')) &&
-    !/\bao\.present\s*=\s*1\b/i.test(text);
+  // Structural: `ao.org_id` appears only in `= ao.org_id`, `ao.org_id =` (NULL-safe equality) or the `platform` text
+  // (`ao.present = 1 AND ao.org_id IS NULL`); any other spelling (ISNULL, COALESCE, parentheses ...) is refused.
+  const bareNull = /\bao\.org_id\b/i.test(
+    text
+      .replace(/\bao\.present\s*=\s*1\s+AND\s+ao\.org_id\s+IS\s+NULL\b/gi, ' ')
+      .replace(/(?:=|\|\|)\s*ao\.org_id\b|\bao\.org_id\s*=(?!=)/gi, ' '),
+  );
   const aliases = [...text.matchAll(/(?<![.\w])([A-Za-z_]\w*|\))\s+(?:AS\s+)?ao(?![\w.])/gi)];
   const shadowed = aliases.some((m) => m[1]?.toLowerCase() !== 'actor_ok');
   const bad =
