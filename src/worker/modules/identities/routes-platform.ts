@@ -18,7 +18,7 @@ import { setPlatformDefault } from './platform-default.ts';
 import { listPlatformIdentities } from './platform-status.ts';
 import { startPlatformIdentity } from './runs-service.ts';
 
-/** Person-only: a platform admin session. A key never reaches these routes. */
+/** The list takes a Platform key (platform:identities or platform:read); the writes are a platform admin session's alone. */
 const READ = { platform: 'platform:identities' } as const;
 const WRITE = { ...READ, stepUp: { maxAgeSec: STEP_UP_SECONDS } } as const;
 
@@ -39,7 +39,7 @@ register(
     path: '/',
     summary: "The platform's own Apple identities, with their setup runs",
     response: PlatformIdentityListSchema,
-    auth: READ,
+    auth: { ...READ, key: true },
   },
   async (c) => c.json(await listPlatformIdentities(serviceContext(c))),
 );

@@ -3136,6 +3136,10 @@ type IdentitiesCheckApnsResponse struct {
 	Method    *string `json:"method,omitempty"`
 }
 
+type IdentitiesCheckApnsResult = IdentitiesCheckApnsResponse
+
+type IdentitiesCreateBody = IdentitiesCreateParams
+
 type IdentitiesCreateParams struct {
 	OrgID          *string `json:"orgId,omitempty"`
 	Label          string  `json:"label"`
@@ -3191,6 +3195,8 @@ type IdentitiesCreateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesCreateResult = IdentitiesCreateResponse
 
 type IdentitiesDeleteResponse struct {
 	Ok bool `json:"ok"`
@@ -3314,6 +3320,10 @@ type IdentitiesPushKeyDeleteResponseNfcKeysItem struct {
 	PassesLeft  *int64 `json:"passesLeft"`
 }
 
+type IdentitiesPushKeyDeleteResult = IdentitiesPushKeyDeleteResponse
+
+type IdentitiesPushKeyUploadBody = IdentitiesPushKeyUploadParams
+
 type IdentitiesPushKeyUploadParams struct {
 	KeyID string `json:"keyId"`
 	P8    string `json:"p8"`
@@ -3365,6 +3375,8 @@ type IdentitiesPushKeyUploadResponseNfcKeysItem struct {
 	PassesLeft  *int64 `json:"passesLeft"`
 }
 
+type IdentitiesPushKeyUploadResult = IdentitiesPushKeyUploadResponse
+
 type IdentitiesRenewResponse struct {
 	ID         string  `json:"id"`
 	OrgID      *string `json:"orgId"`
@@ -3380,6 +3392,8 @@ type IdentitiesRenewResponse struct {
 	UpdatedAt  int64   `json:"updatedAt"`
 	FinishedAt *int64  `json:"finishedAt"`
 }
+
+type IdentitiesRenewResult = IdentitiesRenewResponse
 
 type IdentitiesRetrieveResponse struct {
 	ID                 string                                  `json:"id"`
@@ -3426,6 +3440,10 @@ type IdentitiesRetrieveResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesRetrieveResult = IdentitiesRetrieveResponse
+
+type IdentitiesRotateBody = IdentitiesRotateParams
 
 type IdentitiesRotateParams struct {
 	CertificatePem *string `json:"certificatePem,omitempty"`
@@ -3479,6 +3497,10 @@ type IdentitiesRotateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesRotateResult = IdentitiesRotateResponse
+
+type IdentitiesUpdateBody = IdentitiesUpdateParams
 
 type IdentitiesUpdateParams struct {
 	Label       *string `json:"label,omitempty"`
@@ -3534,6 +3556,8 @@ type IdentitiesUpdateResponseNfcKeysItem struct {
 	PassCount   int64  `json:"passCount"`
 	PassesLeft  *int64 `json:"passesLeft"`
 }
+
+type IdentitiesUpdateResult = IdentitiesUpdateResponse
 
 type IdentityRunsCancelResponse struct {
 	ID         string  `json:"id"`
@@ -8884,6 +8908,10 @@ type PassesVersionsRetrieveResult = PassDetail
 
 type PassesVoidResult = PassSummary
 
+type PlatformAppleCallsListQuery struct {
+	Since *int64 `json:"since,omitempty"`
+}
+
 type PlatformAppleCallsListResponse struct {
 	Items     []PlatformAppleCallsListResponseItemsItem `json:"items"`
 	Available bool                                      `json:"available"`
@@ -8900,6 +8928,8 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	DurationMs *int64  `json:"durationMs"`
 	At         int64   `json:"at"`
 }
+
+type PlatformAppleCallsListResult = PlatformAppleCallsListResponse
 
 type PlatformAppleIdentitiesCreateParams struct {
 	Slot string `json:"slot"`
@@ -8995,9 +9025,36 @@ type PlatformAppleIdentitiesListResponseOpenRunsItem struct {
 	RunID string `json:"runId"`
 }
 
+type PlatformAppleIdentitiesListResult = PlatformAppleIdentitiesListResponse
+
 type PlatformAppleIdentitiesMakeDefaultResponse struct {
 	IdentityID string `json:"identityId"`
 	Changed    bool   `json:"changed"`
+}
+
+type PlatformAppleIdentityMovesListItem struct {
+	ID             string  `json:"id"`
+	OperationID    string  `json:"operationId"`
+	OrgID          string  `json:"orgId"`
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   string  `json:"toIdentityId"`
+	OldPassID      string  `json:"oldPassId"`
+	NewPassID      string  `json:"newPassId"`
+	State          string  `json:"state"`
+	Reason         *string `json:"reason"`
+	ConflictCount  int64   `json:"conflictCount"`
+	RegisteredAt   *int64  `json:"registeredAt"`
+	VoidAt         *int64  `json:"voidAt"`
+	VoidedAt       *int64  `json:"voidedAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+}
+
+type PlatformAppleIdentityMovesListQuery struct {
+	Cursor      *string `json:"cursor,omitempty"`
+	Limit       *int64  `json:"limit,omitempty"`
+	OperationID *string `json:"operationId,omitempty"`
+	State       *string `json:"state,omitempty"`
+	Reason      *string `json:"reason,omitempty"`
 }
 
 type PlatformAppleIdentityMovesListResponse struct {
@@ -9022,6 +9079,11 @@ type PlatformAppleIdentityMovesListResponseItemsItem struct {
 	UpdatedAt      int64   `json:"updatedAt"`
 }
 
+type PlatformAppleIdentityMovesPreviewQuery struct {
+	FromIdentityID string  `json:"fromIdentityId"`
+	ToIdentityID   *string `json:"toIdentityId,omitempty"`
+}
+
 type PlatformAppleIdentityMovesPreviewResponse struct {
 	ToIdentityID string           `json:"toIdentityId"`
 	Passes       int64            `json:"passes"`
@@ -9029,6 +9091,8 @@ type PlatformAppleIdentityMovesPreviewResponse struct {
 	Holders      int64            `json:"holders"`
 	Kept         map[string]int64 `json:"kept"`
 }
+
+type PlatformAppleIdentityMovesPreviewResult = PlatformAppleIdentityMovesPreviewResponse
 
 type PlatformAppleIdentityMovesStartParams struct {
 	OrgID          string  `json:"orgId"`
@@ -9085,6 +9149,48 @@ type PlatformAppleIdentityMovesStartTimerResponse struct {
 	Armed  bool   `json:"armed"`
 }
 
+type PlatformAuditEntriesExportQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+}
+
+type PlatformAuditEntriesListItem struct {
+	ID          int64   `json:"id"`
+	At          int64   `json:"at"`
+	OrgID       *string `json:"orgId"`
+	OrgLabel    *string `json:"orgLabel,omitempty"`
+	ActorType   string  `json:"actorType"`
+	ActorID     *string `json:"actorId"`
+	ActorLabel  *string `json:"actorLabel,omitempty"`
+	Action      string  `json:"action"`
+	TargetType  *string `json:"targetType"`
+	TargetID    *string `json:"targetId"`
+	TargetLabel *string `json:"targetLabel,omitempty"`
+	RequestID   *string `json:"requestId"`
+	Detail      any     `json:"detail,omitempty"`
+}
+
+type PlatformAuditEntriesListQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+	Cursor        *string `json:"cursor,omitempty"`
+	Limit         *int64  `json:"limit,omitempty"`
+}
+
 type PlatformAuditEntriesListResponse struct {
 	Items      []PlatformAuditEntriesListResponseItemsItem `json:"items"`
 	NextCursor *string                                     `json:"nextCursor"`
@@ -9120,6 +9226,10 @@ type PlatformEntitlementPresetsListResponsePresetsItem struct {
 	Values      map[string]any `json:"values"`
 }
 
+type PlatformEntitlementPresetsListResult = PlatformEntitlementPresetsListResponse
+
+type PlatformEntitlementPresetsUpdateBody = PlatformEntitlementPresetsUpdateParams
+
 type PlatformEntitlementPresetsUpdateParams struct {
 	Preset           string         `json:"preset"`
 	ExpectedRevision int64          `json:"expectedRevision"`
@@ -9140,6 +9250,8 @@ type PlatformEntitlementPresetsUpdateResponsePreset struct {
 	PendingOrgs int64          `json:"pendingOrgs"`
 	Values      map[string]any `json:"values"`
 }
+
+type PlatformEntitlementPresetsUpdateResult = PlatformEntitlementPresetsUpdateResponse
 
 type PlatformGroupsClaimsRetrieveResponse struct {
 	Claims    map[string]PlatformGroupsClaimsRetrieveResponseClaimsValue `json:"claims"`
@@ -9771,6 +9883,26 @@ type PlatformInvitationsRevokeResponse struct {
 
 type PlatformInvitationsRevokeResult = PlatformInvitationsRevokeResponse
 
+type PlatformMetricsRetrieveDeveloperResponse struct {
+	WindowDays  int64    `json:"windowDays"`
+	Sandboxes   int64    `json:"sandboxes"`
+	Viewed      int64    `json:"viewed"`
+	Called      int64    `json:"called"`
+	Passed      int64    `json:"passed"`
+	Previewed   int64    `json:"previewed"`
+	Completion  *float64 `json:"completion"`
+	TtfpP50Ms   *int64   `json:"ttfpP50Ms"`
+	TtfpP90Ms   *int64   `json:"ttfpP90Ms"`
+	TtfpSamples int64    `json:"ttfpSamples"`
+}
+
+type PlatformMetricsRetrieveDeveloperResult = PlatformMetricsRetrieveDeveloperResponse
+
+type PlatformMetricsRetrieveOverviewQuery struct {
+	TemplateID *string `json:"templateId,omitempty"`
+	Range      *string `json:"range,omitempty"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
@@ -9919,6 +10051,10 @@ type PlatformMetricsRetrieveOverviewResponseTotals struct {
 	ScanRefused   int64  `json:"scanRefused"`
 }
 
+type PlatformMetricsRetrieveOverviewResult = PlatformMetricsRetrieveOverviewResponse
+
+type PlatformOrgsCreateBody = PlatformOrgsCreateParams
+
 type PlatformOrgsCreateParams struct {
 	Slug              string       `json:"slug"`
 	Name              string       `json:"name"`
@@ -9927,6 +10063,8 @@ type PlatformOrgsCreateParams struct {
 	Preset            *string      `json:"preset,omitempty"`
 	AddMe             *bool        `json:"addMe,omitempty"`
 }
+
+type PlatformOrgsCreateResult = Org
 
 type PlatformOrgsDeleteResponse struct {
 	Ok bool `json:"ok"`
@@ -9957,6 +10095,10 @@ type PlatformOrgsEntitlementsRetrieveResponsePresetsItem struct {
 	OrgCount int64          `json:"orgCount"`
 	Values   map[string]any `json:"values"`
 }
+
+type PlatformOrgsEntitlementsRetrieveResult = PlatformOrgsEntitlementsRetrieveResponse
+
+type PlatformOrgsEntitlementsUpdateBody = PlatformOrgsEntitlementsUpdateParams
 
 type PlatformOrgsEntitlementsUpdateParams struct {
 	ExpectedRevision int64                                                         `json:"expectedRevision"`
@@ -9996,6 +10138,10 @@ type PlatformOrgsEntitlementsUpdateResponsePresetsItem struct {
 	Values   map[string]any `json:"values"`
 }
 
+type PlatformOrgsEntitlementsUpdateResult = PlatformOrgsEntitlementsUpdateResponse
+
+type PlatformOrgsLegalHoldsCreateBody = PlatformOrgsLegalHoldsCreateParams
+
 type PlatformOrgsLegalHoldsCreateParams struct {
 	PassID *string `json:"passId,omitempty"`
 	Reason string  `json:"reason"`
@@ -10003,6 +10149,25 @@ type PlatformOrgsLegalHoldsCreateParams struct {
 
 type PlatformOrgsLegalHoldsCreateResponse struct {
 	Ok bool `json:"ok"`
+}
+
+type PlatformOrgsLegalHoldsCreateResult = PlatformOrgsLegalHoldsCreateResponse
+
+type PlatformOrgsLegalHoldsListItem struct {
+	ID              string  `json:"id"`
+	PassID          *string `json:"passId"`
+	PassLabel       *string `json:"passLabel"`
+	PlacedByKind    string  `json:"placedByKind"`
+	PlacedByLabel   string  `json:"placedByLabel"`
+	Reason          *string `json:"reason"`
+	CreatedAt       int64   `json:"createdAt"`
+	ReleasedAt      *int64  `json:"releasedAt"`
+	ReleasedByLabel *string `json:"releasedByLabel"`
+	CanRelease      bool    `json:"canRelease"`
+}
+
+type PlatformOrgsLegalHoldsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformOrgsLegalHoldsListResponse struct {
@@ -10027,6 +10192,20 @@ type PlatformOrgsLegalHoldsReleaseResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type PlatformOrgsListClosedItem struct {
+	ID         string `json:"id"`
+	Slug       string `json:"slug"`
+	Name       string `json:"name"`
+	ClosedAt   int64  `json:"closedAt"`
+	PurgeAfter int64  `json:"purgeAfter"`
+	Purging    bool   `json:"purging"`
+	Held       bool   `json:"held"`
+}
+
+type PlatformOrgsListClosedQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
 type PlatformOrgsListClosedResponse struct {
 	Items      []PlatformOrgsListClosedResponseItemsItem `json:"items"`
 	NextCursor *string                                   `json:"nextCursor"`
@@ -10040,6 +10219,34 @@ type PlatformOrgsListClosedResponseItemsItem struct {
 	PurgeAfter int64  `json:"purgeAfter"`
 	Purging    bool   `json:"purging"`
 	Held       bool   `json:"held"`
+}
+
+type PlatformOrgsListItem struct {
+	ID            string                     `json:"id"`
+	Slug          string                     `json:"slug"`
+	Name          string                     `json:"name"`
+	Status        string                     `json:"status"`
+	Personal      *bool                      `json:"personal,omitempty"`
+	CreatedAt     int64                      `json:"createdAt"`
+	Counts        PlatformOrgsListItemCounts `json:"counts"`
+	CountsCapped  bool                       `json:"countsCapped"`
+	PersonalOwner map[string]any             `json:"personalOwner,omitempty"`
+	Plan          map[string]any             `json:"plan,omitempty"`
+}
+
+type PlatformOrgsListItemCounts struct {
+	Passes      int64  `json:"passes"`
+	Templates   int64  `json:"templates"`
+	Connections int64  `json:"connections"`
+	APIKeys     int64  `json:"apiKeys"`
+	Members     *int64 `json:"members,omitempty"`
+}
+
+type PlatformOrgsListQuery struct {
+	Cursor    *string `json:"cursor,omitempty"`
+	Limit     *int64  `json:"limit,omitempty"`
+	Q         *string `json:"q,omitempty"`
+	Sandboxes *string `json:"sandboxes,omitempty"`
 }
 
 type PlatformOrgsListResponse struct {
@@ -10066,6 +10273,15 @@ type PlatformOrgsListResponseItemsItemCounts struct {
 	Connections int64  `json:"connections"`
 	APIKeys     int64  `json:"apiKeys"`
 	Members     *int64 `json:"members,omitempty"`
+}
+
+type PlatformOrgsPersonalLabelsListItem struct {
+	OrgID string `json:"orgId"`
+	Label string `json:"label"`
+}
+
+type PlatformOrgsPersonalLabelsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformOrgsPersonalLabelsListResponse struct {
@@ -10098,6 +10314,25 @@ type PlatformOrgsRetentionReceiptsDownloadResponseReceipt struct {
 	Mac        string  `json:"mac"`
 	RefsDigest *string `json:"refsDigest"`
 	RequestID  *string `json:"requestId"`
+}
+
+type PlatformOrgsRetentionReceiptsDownloadResult = PlatformOrgsRetentionReceiptsDownloadResponse
+
+type PlatformOrgsRetentionReceiptsListItem struct {
+	ID         string `json:"id"`
+	Cls        string `json:"cls"`
+	Kind       string `json:"kind"`
+	RanAt      int64  `json:"ranAt"`
+	CutoffAt   *int64 `json:"cutoffAt"`
+	PolicyDays *int64 `json:"policyDays"`
+	Deleted    int64  `json:"deleted"`
+	Anonymised int64  `json:"anonymised"`
+	Verified   bool   `json:"verified"`
+}
+
+type PlatformOrgsRetentionReceiptsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
 }
 
 type PlatformOrgsRetentionReceiptsListResponse struct {
@@ -10138,6 +10373,10 @@ type PlatformOrgsRetrieveResponseCounts struct {
 	Members     *int64 `json:"members,omitempty"`
 }
 
+type PlatformOrgsRetrieveResult = PlatformOrgsRetrieveResponse
+
+type PlatformOrgsSetStatusBody = PlatformOrgsSetStatusParams
+
 type PlatformOrgsSetStatusParams struct {
 	Status string `json:"status"`
 }
@@ -10162,6 +10401,8 @@ type PlatformOrgsSetStatusResponseCounts struct {
 	APIKeys     int64  `json:"apiKeys"`
 	Members     *int64 `json:"members,omitempty"`
 }
+
+type PlatformOrgsSetStatusResult = PlatformOrgsSetStatusResponse
 
 type PlatformOrgsWalletEnrollmentsHoldParams struct {
 	Reason string `json:"reason"`
@@ -10195,6 +10436,25 @@ type PlatformRetentionReceiptsDownloadResponseReceipt struct {
 	Mac        string  `json:"mac"`
 	RefsDigest *string `json:"refsDigest"`
 	RequestID  *string `json:"requestId"`
+}
+
+type PlatformRetentionReceiptsDownloadResult = PlatformRetentionReceiptsDownloadResponse
+
+type PlatformRetentionReceiptsListItem struct {
+	ID         string `json:"id"`
+	Cls        string `json:"cls"`
+	Kind       string `json:"kind"`
+	RanAt      int64  `json:"ranAt"`
+	CutoffAt   *int64 `json:"cutoffAt"`
+	PolicyDays *int64 `json:"policyDays"`
+	Deleted    int64  `json:"deleted"`
+	Anonymised int64  `json:"anonymised"`
+	Verified   bool   `json:"verified"`
+}
+
+type PlatformRetentionReceiptsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
 }
 
 type PlatformRetentionReceiptsListResponse struct {
@@ -10301,6 +10561,20 @@ type PlatformSettingsUpdateResponseReleased struct {
 
 type PlatformSettingsUpdateResult = PlatformSettingsUpdateResponse
 
+type PlatformStatusListIncidentsItem struct {
+	ID         string  `json:"id"`
+	Title      string  `json:"title"`
+	Note       string  `json:"note"`
+	Component  *string `json:"component"`
+	Impact     string  `json:"impact"`
+	StartedAt  int64   `json:"startedAt"`
+	ResolvedAt *int64  `json:"resolvedAt"`
+}
+
+type PlatformStatusListIncidentsQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
 type PlatformStatusListIncidentsResponse struct {
 	Items      []PlatformStatusListIncidentsResponseItemsItem `json:"items"`
 	NextCursor *string                                        `json:"nextCursor"`
@@ -10314,6 +10588,21 @@ type PlatformStatusListIncidentsResponseItemsItem struct {
 	Impact     string  `json:"impact"`
 	StartedAt  int64   `json:"startedAt"`
 	ResolvedAt *int64  `json:"resolvedAt"`
+}
+
+type PlatformStatusListWorkflowRunsItem struct {
+	InstanceID string  `json:"instanceId"`
+	Kind       string  `json:"kind"`
+	OrgID      *string `json:"orgId"`
+	TargetID   *string `json:"targetId"`
+	Status     string  `json:"status"`
+	StartedAt  int64   `json:"startedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+	ErrorCode  *string `json:"errorCode"`
+}
+
+type PlatformStatusListWorkflowRunsQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformStatusListWorkflowRunsResponse struct {
@@ -10332,6 +10621,8 @@ type PlatformStatusListWorkflowRunsResponseItemsItem struct {
 	ErrorCode  *string `json:"errorCode"`
 }
 
+type PlatformStatusOpenIncidentBody = PlatformStatusOpenIncidentParams
+
 type PlatformStatusOpenIncidentParams struct {
 	Title     string  `json:"title"`
 	Note      string  `json:"note"`
@@ -10349,6 +10640,8 @@ type PlatformStatusOpenIncidentResponse struct {
 	ResolvedAt *int64  `json:"resolvedAt"`
 }
 
+type PlatformStatusOpenIncidentResult = PlatformStatusOpenIncidentResponse
+
 type PlatformStatusResolveIncidentResponse struct {
 	ID         string  `json:"id"`
 	Title      string  `json:"title"`
@@ -10357,6 +10650,12 @@ type PlatformStatusResolveIncidentResponse struct {
 	Impact     string  `json:"impact"`
 	StartedAt  int64   `json:"startedAt"`
 	ResolvedAt *int64  `json:"resolvedAt"`
+}
+
+type PlatformStatusResolveIncidentResult = PlatformStatusResolveIncidentResponse
+
+type PlatformStatusRetrieveQuery struct {
+	Fresh *string `json:"fresh,omitempty"`
 }
 
 type PlatformStatusRetrieveResponse struct {
@@ -10380,6 +10679,8 @@ type PlatformStatusRetrieveResponseComponentsItem struct {
 	CheckedAt int64          `json:"checkedAt"`
 	Data      map[string]any `json:"data,omitempty"`
 }
+
+type PlatformStatusRetrieveResult = PlatformStatusRetrieveResponse
 
 type PlatformTemplatesAssignParams struct {
 	OrgID *string `json:"orgId"`
@@ -10697,6 +10998,25 @@ type PlatformUsersHoldsDeleteResponseOperationStepsItem struct {
 	FinishedAt    *int64  `json:"finishedAt"`
 }
 
+type PlatformUsersListItem struct {
+	ID            string   `json:"id"`
+	Name          *string  `json:"name"`
+	PrimaryEmail  *string  `json:"primaryEmail"`
+	Status        string   `json:"status"`
+	LastRoles     []string `json:"lastRoles"`
+	CreatedAt     int64    `json:"createdAt"`
+	LastLoginAt   *int64   `json:"lastLoginAt"`
+	PassCount     *int64   `json:"passCount,omitempty"`
+	SignInMethods []string `json:"signInMethods,omitempty"`
+}
+
+type PlatformUsersListQuery struct {
+	Q      *string `json:"q,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
 type PlatformUsersListResponse struct {
 	Items      []PlatformUsersListResponseItemsItem `json:"items"`
 	NextCursor *string                              `json:"nextCursor"`
@@ -10780,6 +11100,25 @@ type PlatformUsersOffboardResponsePlanSponsorshipsItemOrg struct {
 
 type PlatformUsersOffboardResult = PlatformUsersOffboardResponse
 
+type PlatformUsersPassesListItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgStatus    string   `json:"orgStatus"`
+	TimeZone     string   `json:"timeZone"`
+	TemplateName string   `json:"templateName"`
+	Status       string   `json:"status"`
+	Holding      string   `json:"holding"`
+	Channels     []string `json:"channels"`
+	IssuedAt     int64    `json:"issuedAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+}
+
+type PlatformUsersPassesListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
 type PlatformUsersPassesListResponse struct {
 	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
 	NextCursor *string                                    `json:"nextCursor"`
@@ -10859,6 +11198,8 @@ type PlatformUsersRetrieveResponseSessionsItem struct {
 	Current    bool     `json:"current"`
 	Method     string   `json:"method"`
 }
+
+type PlatformUsersRetrieveResult = PlatformUsersRetrieveResponse
 
 type PlatformUsersRolesRemoveExternalResponse struct {
 	UserID        string                                              `json:"userId"`
@@ -10963,9 +11304,15 @@ type PlatformUsersSessionsRevokeAllResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type PlatformUsersSessionsRevokeAllResult = PlatformUsersSessionsRevokeAllResponse
+
 type PlatformUsersSessionsRevokeResponse struct {
 	Ok bool `json:"ok"`
 }
+
+type PlatformUsersSessionsRevokeResult = PlatformUsersSessionsRevokeResponse
+
+type PlatformUsersUpdateBody = PlatformUsersUpdateParams
 
 type PlatformUsersUpdateParams struct {
 	Status string `json:"status"`
@@ -10981,6 +11328,10 @@ type PlatformUsersUpdateResponse struct {
 	LastLoginAt  *int64   `json:"lastLoginAt"`
 }
 
+type PlatformUsersUpdateResult = PlatformUsersUpdateResponse
+
+type PlatformWalletAccountsGoogleManagedCompleteBody = PlatformWalletAccountsGoogleManagedCompleteParams
+
 type PlatformWalletAccountsGoogleManagedCompleteParams struct {
 	IssuerID string `json:"issuerId"`
 }
@@ -10994,6 +11345,10 @@ type PlatformWalletAccountsGoogleManagedCompleteResponse struct {
 	IssuerID   *string `json:"issuerId"`
 	UpdatedAt  int64   `json:"updatedAt"`
 }
+
+type PlatformWalletAccountsGoogleManagedCompleteResult = PlatformWalletAccountsGoogleManagedCompleteResponse
+
+type PlatformWalletAccountsGoogleManagedCreateBody = PlatformWalletAccountsGoogleManagedCreateParams
 
 type PlatformWalletAccountsGoogleManagedCreateParams struct {
 	Mode string `json:"mode"`
@@ -11009,16 +11364,55 @@ type PlatformWalletAccountsGoogleManagedCreateResponse struct {
 	UpdatedAt  int64   `json:"updatedAt"`
 }
 
+type PlatformWalletAccountsGoogleManagedCreateResult = PlatformWalletAccountsGoogleManagedCreateResponse
+
 type PlatformWalletCredentialsChecksCreateResponse struct {
 	CheckID string `json:"checkId"`
 	Status  string `json:"status"`
 }
+
+type PlatformWalletCredentialsChecksCreateResult = PlatformWalletCredentialsChecksCreateResponse
 
 type PlatformWalletCredentialsChecksRetrieveResponse struct {
 	CheckID   string  `json:"checkId"`
 	Status    string  `json:"status"`
 	Code      *string `json:"code"`
 	CheckedAt *int64  `json:"checkedAt"`
+}
+
+type PlatformWalletCredentialsChecksRetrieveResult = PlatformWalletCredentialsChecksRetrieveResponse
+
+type PlatformWalletCredentialsListItem struct {
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsListResponse struct {
@@ -11111,6 +11505,8 @@ type PlatformWalletCredentialsMigrateResponse struct {
 	Queued int64 `json:"queued"`
 }
 
+type PlatformWalletCredentialsMigrateResult = PlatformWalletCredentialsMigrateResponse
+
 type PlatformWalletCredentialsResolveMigrationParams struct {
 	OrgID    string `json:"orgId"`
 	Mode     string `json:"mode"`
@@ -11120,6 +11516,27 @@ type PlatformWalletCredentialsResolveMigrationParams struct {
 
 type PlatformWalletCredentialsResolveMigrationResponse struct {
 	Accounts int64 `json:"accounts"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItem struct {
+	AccountID      string                                                             `json:"accountId"`
+	OrgID          string                                                             `json:"orgId"`
+	Mode           string                                                             `json:"mode"`
+	Provider       string                                                             `json:"provider"`
+	State          string                                                             `json:"state"`
+	Reason         *string                                                            `json:"reason"`
+	IdentityShared []PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem `json:"identityShared"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem struct {
+	OrgID    string `json:"orgId"`
+	Mode     string `json:"mode"`
+	Provider string `json:"provider"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationQuery struct {
+	After  *string `json:"after,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsRetrieveMigrationResponse struct {
@@ -11183,6 +11600,10 @@ type PlatformWalletCredentialsRotateKeyResponse struct {
 	RunID string `json:"runId"`
 }
 
+type PlatformWalletCredentialsRotateKeyResult = PlatformWalletCredentialsRotateKeyResponse
+
+type PlatformWalletCredentialsSetSamsungCardBody = PlatformWalletCredentialsSetSamsungCardParams
+
 type PlatformWalletCredentialsSetSamsungCardParams struct {
 	Type             string `json:"type"`
 	CardID           string `json:"cardId"`
@@ -11217,6 +11638,10 @@ type PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 struct {
 	Code string `json:"code"`
 	At   int64  `json:"at"`
 }
+
+type PlatformWalletCredentialsSetSamsungCardResult = PlatformWalletCredentialsSetSamsungCardResponse
+
+type PlatformWalletCredentialsUpsertBody = PlatformWalletCredentialsUpsertParams
 
 type PlatformWalletCredentialsUpsertParams = any
 
@@ -11278,6 +11703,25 @@ type PlatformWalletCredentialsUpsertResponseLastCheck2 struct {
 	Ok   bool   `json:"ok"`
 	Code string `json:"code"`
 	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsUpsertResult = PlatformWalletCredentialsUpsertResponse
+
+type PlatformWalletEnrollmentsListItem struct {
+	OrgID     string         `json:"orgId"`
+	OrgName   string         `json:"orgName"`
+	Mode      string         `json:"mode"`
+	Provider  string         `json:"provider"`
+	Source    *string        `json:"source"`
+	State     string         `json:"state"`
+	Hold      map[string]any `json:"hold"`
+	UpdatedAt int64          `json:"updatedAt"`
+}
+
+type PlatformWalletEnrollmentsListQuery struct {
+	Provider string  `json:"provider"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {

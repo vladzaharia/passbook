@@ -100,7 +100,7 @@ export interface CredentialWriter {
   purpose: string;
   principal: Principal;
   checks: Check[];
-  actor: { type: 'user' | 'platform' | 'system'; id: string | null };
+  actor: { type: 'user' | 'platform' | 'system' | 'api_key'; id: string | null };
   /** A platform grant names the mode itself; an org_mode grant takes org and mode from its row. */
   platform: boolean;
 }

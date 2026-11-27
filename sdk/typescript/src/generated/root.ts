@@ -2,6 +2,7 @@
 import type { Core } from '../core.ts';
 import { ApiKeysResource } from './resources/api-keys.ts';
 import { AuditEntriesResource } from './resources/audit-entries.ts';
+import { PlatformResource } from './resources/platform.ts';
 import { BrandResource } from './resources/brand.ts';
 import { BroadcastsResource } from './resources/broadcasts.ts';
 import { BundlesResource } from './resources/bundles.ts';
@@ -10,6 +11,7 @@ import { ConnectorsResource } from './resources/connectors.ts';
 import { DeliveriesResource } from './resources/deliveries.ts';
 import { EventsResource } from './resources/events.ts';
 import { HoldersResource } from './resources/holders.ts';
+import { IdentitiesResource } from './resources/identities.ts';
 import { MessageRulesResource } from './resources/message-rules.ts';
 import { NfcResource } from './resources/nfc.ts';
 import { OperationsResource } from './resources/operations.ts';
@@ -23,7 +25,6 @@ import { PassesResource } from './resources/passes.ts';
 import { PrintJobsResource } from './resources/print-jobs.ts';
 import { BulkRunsResource } from './resources/bulk-runs.ts';
 import { PassViewsResource } from './resources/pass-views.ts';
-import { PlatformResource } from './resources/platform.ts';
 import { RequestLogsResource } from './resources/request-logs.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
 import { ScanEventsResource } from './resources/scan-events.ts';
@@ -44,6 +45,7 @@ import { WebhookEndpointsResource } from './resources/webhook-endpoints.ts';
 export class Resources {
   readonly apiKeys: ApiKeysResource;
   readonly auditEntries: AuditEntriesResource;
+  readonly platform: PlatformResource;
   readonly brand: BrandResource;
   readonly broadcasts: BroadcastsResource;
   readonly bundles: BundlesResource;
@@ -52,6 +54,7 @@ export class Resources {
   readonly deliveries: DeliveriesResource;
   readonly events: EventsResource;
   readonly holders: HoldersResource;
+  readonly identities: IdentitiesResource;
   readonly messageRules: MessageRulesResource;
   readonly nfc: NfcResource;
   readonly operations: OperationsResource;
@@ -65,7 +68,6 @@ export class Resources {
   readonly printJobs: PrintJobsResource;
   readonly bulkRuns: BulkRunsResource;
   readonly passViews: PassViewsResource;
-  readonly platform: PlatformResource;
   readonly requestLogs: RequestLogsResource;
   readonly rollCalls: RollCallsResource;
   readonly scanEvents: ScanEventsResource;
@@ -84,6 +86,7 @@ export class Resources {
   constructor(core: Core) {
     this.apiKeys = new ApiKeysResource(core);
     this.auditEntries = new AuditEntriesResource(core);
+    this.platform = new PlatformResource(core);
     this.brand = new BrandResource(core);
     this.broadcasts = new BroadcastsResource(core);
     this.bundles = new BundlesResource(core);
@@ -92,6 +95,7 @@ export class Resources {
     this.deliveries = new DeliveriesResource(core);
     this.events = new EventsResource(core);
     this.holders = new HoldersResource(core);
+    this.identities = new IdentitiesResource(core);
     this.messageRules = new MessageRulesResource(core);
     this.nfc = new NfcResource(core);
     this.operations = new OperationsResource(core);
@@ -105,7 +109,6 @@ export class Resources {
     this.printJobs = new PrintJobsResource(core);
     this.bulkRuns = new BulkRunsResource(core);
     this.passViews = new PassViewsResource(core);
-    this.platform = new PlatformResource(core);
     this.requestLogs = new RequestLogsResource(core);
     this.rollCalls = new RollCallsResource(core);
     this.scanEvents = new ScanEventsResource(core);

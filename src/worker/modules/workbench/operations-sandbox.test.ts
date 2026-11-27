@@ -9,6 +9,15 @@ let undo: () => void;
 beforeAll(async () => {
   t = await workbenchKit();
   undo = registerTestKinds();
+  // A delete retry that passes the rate limit starts a purge. A real instance runs in workerd and can outlive
+  // the file, so the binding starts nothing; the purge itself is covered in developer/sandbox-operations.test.ts.
+  Object.defineProperty(t.kit.env, 'ORG_PURGE', {
+    configurable: true,
+    value: {
+      create: async () => ({}),
+      get: async () => ({ status: async () => ({ status: 'complete' }) }),
+    },
+  });
 });
 afterAll(() => {
   undo();
@@ -125,18 +134,19 @@ describe('operations under a sandbox token: its owner’s sandbox rows', () => {
       expect((await t.call('GET', `/operations/${id}`, client)).status, id).toBe(200);
     for (const id of Object.values(hidden))
       expect((await t.call('GET', `/operations/${id}`, client)).status, id).toBe(404);
+    // Rows outside the fence stay not found, whatever the verb. These go first: retrying the delete row
+    // below deletes the sandbox in the background and revokes this token.
+    for (const id of Object.values(hidden))
+      for (const verb of ['retry', 'cancel'])
+        expect((await t.call('POST', `/operations/${id}/${verb}`, client, {})).status, id).toBe(
+          404,
+        );
     // The sandbox kinds declare `tokenActs`: the token stops and retries them on its own sandbox rows.
     for (const id of Object.values(mine)) {
       const retry = await t.call('POST', `/operations/${id}/retry`, client, {});
       expect(retry.status, `retry ${id} ${await retry.clone().text()}`).not.toBe(403);
       expect(retry.status, `retry ${id}`).not.toBe(404);
     }
-    // Rows outside the fence stay not found, whatever the verb.
-    for (const id of Object.values(hidden))
-      for (const verb of ['retry', 'cancel'])
-        expect((await t.call('POST', `/operations/${id}/${verb}`, client, {})).status, id).toBe(
-          404,
-        );
   });
 
   it('stops and retries only a kind that declares tokenActs, even on its own sandbox row', async () => {

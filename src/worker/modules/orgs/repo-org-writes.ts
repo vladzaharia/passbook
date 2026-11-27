@@ -1,4 +1,5 @@
 import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
+import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
@@ -95,14 +96,11 @@ export function saveOrgBrandKit(
   return writeOrg(ctx, before.id, before.config_revision, { branding }, now, authority);
 }
 
-/** A platform admin's live session: the principal of org create, status and delete. */
+/** A platform admin's live session: the principal of a personal org and of the creator's membership. */
 export interface OrgAdmin {
   userId: string;
   sessionId: string;
 }
-
-const adminPrincipal = (admin: OrgAdmin) =>
-  ({ kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId }) as const;
 
 /**
  * `platform.org.create`: commits only while the admin session is live. The org and its entitlements row
@@ -111,12 +109,12 @@ const adminPrincipal = (admin: OrgAdmin) =>
 export async function insertOrgAsAdmin(
   ctx: ServiceContext,
   row: Omit<OrgRow, 'config_revision' | 'personal_user_id'>,
-  admin: OrgAdmin,
+  admin: PlatformCaller,
   preset: EntitlementPreset,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'platform.org.create',
-    principal: adminPrincipal(admin),
+    principal: callerPrincipal(admin),
     target: row.id,
   });
   g.insertSelect(
@@ -147,13 +145,13 @@ export async function moveOrgStatusAsAdmin(
   id: string,
   from: OrgRow['status'],
   to: OrgRow['status'],
-  admin: OrgAdmin,
+  admin: PlatformCaller,
   /** Committed in the same batch, and only if the status moved. */
   audit?: AuditEntry,
 ): Promise<boolean> {
   const g = grant(ctx, {
     purpose: to === 'deleted' ? 'platform.org.delete' : 'platform.org.status',
-    principal: adminPrincipal(admin),
+    principal: callerPrincipal(admin),
     target: id,
   });
   g.update('orgs', {

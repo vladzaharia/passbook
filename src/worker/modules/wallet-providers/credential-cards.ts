@@ -1,11 +1,11 @@
 import type { SetSamsungCard } from '../../../shared/contracts/wallet-provider-actions.ts';
 import type { WalletCredential } from '../../../shared/contracts/wallet-providers.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { openSourceVersion } from './account-credential-source.ts';
 import { changed, platformWriter, save, withLastCheck } from './credential-service.ts';
+import type { WalletPlatformCaller } from './platform-caller.ts';
 import { findCheckTarget } from './repo-credential-checks.ts';
 import { findCredential } from './repo-credentials.ts';
 
@@ -17,7 +17,7 @@ import { findCredential } from './repo-credentials.ts';
  */
 export async function setPlatformSamsungCard(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   id: string,
   input: SetSamsungCard,
 ): Promise<WalletCredential> {

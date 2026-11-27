@@ -11,8 +11,7 @@ import { changesSignIn, needsPerson } from './sign-in-settings.ts';
 const PlatformSettingsUpdateSchema = UpdateSettingsSchema.omit({ scope: true });
 
 /**
- * Mount at /api/v1/platform before the router-level `requireAdmin` of the wallet platform routes, which ignores a
- * Bearer key. The platform scope of `/settings`, for a Platform key as well as a person.
+ * Mount at /api/v1/platform. The platform scope of `/settings`, for a Platform key as well as a person.
  */
 export const platformSettingsRoutes = createRouter();
 

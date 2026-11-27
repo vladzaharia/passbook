@@ -18,7 +18,7 @@ register(
       'Names of the personal organizations, which are not listed, for views that show an org by id',
     query: CursorQuerySchema,
     response: PersonalOrgLabelsSchema,
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
   },
   async (c) =>
     c.json({
