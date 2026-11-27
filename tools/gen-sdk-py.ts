@@ -30,6 +30,16 @@ function endOfList(page: object): object {
   return 'hasMore' in page ? { ...page, hasMore: false } : { ...page, nextCursor: null };
 }
 
+const platformOwned = (
+  doc: OpenApiDoc,
+  op: { http: string; path: string; resource: string[] },
+): boolean => {
+  const raw = doc.paths[op.path]?.[op.http.toLowerCase()] as
+    | { 'x-platform-scope'?: string }
+    | undefined;
+  return raw?.['x-platform-scope'] !== undefined || op.resource[0] === 'platform';
+};
+
 /** One row per operation for tests/test_generated_ops.py: how to call it, and what the server would send. */
 export function manifest(doc: OpenApiDoc, names: SdkNames): string {
   const schemas = doc.components.schemas;
@@ -42,6 +52,8 @@ export function manifest(doc: OpenApiDoc, names: SdkNames): string {
       return {
         id: op.id,
         call: [...op.resource.map(snake), snake(op.method)].join('.'),
+        // Platform-scoped operations are callable by keys but not published in the portal, so they have no snippet.
+        published: !platformOwned(doc, op),
         http: op.http,
         path: op.path,
         pathParams: path.map((p) => ({ name: p.name, py: p.py, integer: p.ty.k === 'int' })),

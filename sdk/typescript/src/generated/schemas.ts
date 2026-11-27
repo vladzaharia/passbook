@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write" | "platform:read" | "platform:users" | "platform:groups" | "platform:claims" | "platform:status" | "platform:audit" | "platform:settings" | "platform:wallet">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write" | "platform:read" | "platform:users" | "platform:orgs" | "platform:groups" | "platform:claims" | "platform:identities" | "platform:status" | "platform:audit" | "platform:settings" | "platform:wallet">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -8343,6 +8343,19 @@ export type PlatformInvitationsResendResponse = {
 
 export type PlatformInvitationsRevokeResponse = {
   ok: true;
+};
+
+export type PlatformMetricsRetrieveDeveloperResponse = {
+  windowDays: number;
+  sandboxes: number;
+  viewed: number;
+  called: number;
+  passed: number;
+  previewed: number;
+  completion: number | null;
+  ttfpP50Ms: number | null;
+  ttfpP90Ms: number | null;
+  ttfpSamples: number;
 };
 
 export type PlatformMetricsRetrieveOverviewResponse = {

@@ -2,9 +2,9 @@ import type {
   PlatformWalletEnrolmentList,
   WalletProvider,
 } from '../../../shared/contracts/wallet-providers.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import { type EnrolmentCursor, platformEnrolmentRows } from './repo-enrolments-platform.ts';
 
 function decodeCursor(raw: string | undefined): EnrolmentCursor | undefined {
@@ -22,12 +22,12 @@ function decodeCursor(raw: string | undefined): EnrolmentCursor | undefined {
 /** Every org's enrolment of one provider, both modes. */
 export async function listPlatformEnrolments(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   provider: WalletProvider,
   limit = 50,
   rawCursor?: string,
 ): Promise<PlatformWalletEnrolmentList> {
-  if (auth?.kind !== 'session' || !auth.roles.includes('admin'))
+  if (!isActor(auth) && (auth?.kind !== 'session' || !auth.roles.includes('admin')))
     throw new ForbiddenError('Admin access is required.');
   const cursor = decodeCursor(rawCursor);
   const fetched = await platformEnrolmentRows(ctx.env.DB, provider, limit + 1, cursor);

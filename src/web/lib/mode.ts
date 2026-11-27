@@ -15,16 +15,17 @@ function stored(): Mode {
   }
 }
 
-/** A tab opened with ?mode=test (or live) adopts it, and keeps it like a click would. */
+/** A tab opened with ?mode=test (or live) adopts it for this load; only a click is stored. */
 function fromUrl(): Mode | null {
   if (typeof window === 'undefined') return null;
   const value = new URLSearchParams(window.location.search).get('mode');
   return value === 'test' || value === 'live' ? value : null;
 }
 
-/** What this load's address asked for (`?mode=`), so the announcer can say it once. */
-export const adoptedMode: Mode | null = fromUrl();
-let current: Mode = adoptedMode ?? stored();
+const asked = fromUrl();
+/** The mode this load's address switched to (`?mode=`), so the announcer says it once; null if it changed nothing. */
+export const adoptedMode: Mode | null = asked !== null && asked !== stored() ? asked : null;
+let current: Mode = asked ?? stored();
 const listeners = new Set<(mode: Mode) => void>();
 
 /** Platform pages ignore mode: they read and show Live whatever the browser's choice. */

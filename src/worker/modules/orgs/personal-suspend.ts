@@ -1,7 +1,7 @@
+import type { PlatformCaller } from '../../platform/actor.ts';
 import type { Actor } from '../../platform/context.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgRow } from './repo.ts';
-import type { OrgAdmin } from './repo-org-writes.ts';
 import { personalOrgIdOf } from './repo-personal.ts';
 import { setOrgStatus } from './service.ts';
 
@@ -10,7 +10,7 @@ export async function suspendPersonalOrgOf(
   ctx: ServiceContext,
   actor: Actor,
   userId: string,
-  admin: OrgAdmin,
+  admin: PlatformCaller,
 ): Promise<void> {
   const org = await personalOrgIdOf(ctx.env.DB, userId);
   const row = org && (await getOrgRow(ctx.env.DB, org.id));

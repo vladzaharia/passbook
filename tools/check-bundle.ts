@@ -78,8 +78,8 @@ export const WB_TOOL_BUDGET_BYTES = 75_000;
 export const WB_DESIGN_BUDGET_BYTES = 230_000;
 /**
  * The tool routes that hold moved code, with their own line where the route is over 75 kB: the
- * anonymous Design route (88.0 kB; the playground's cards), which DC2 and DC3 bring under the design
- * budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
+ * anonymous Design route (the blueprints in the designer core, `wb-tool-playground`), which shares the
+ * design budget. The quickstart is under 75 kB (60.5 kB measured) since its stage and finished page load lazily.
  */
 export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   logs: WB_TOOL_BUDGET_BYTES,
@@ -91,7 +91,7 @@ export const WB_TOOLS_MEASURED: Readonly<Record<string, number>> = {
   sandbox: WB_TOOL_BUDGET_BYTES,
   quickstart: WB_TOOL_BUDGET_BYTES,
   design: WB_DESIGN_BUDGET_BYTES,
-  playground: 92_000,
+  playground: WB_DESIGN_BUDGET_BYTES,
 };
 /** The class every tool route's body carries (`wb-tool-logs`): it marks the route's chunk. */
 export const WB_TOOL_MARKER = 'wb-tool-';

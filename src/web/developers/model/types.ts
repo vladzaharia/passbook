@@ -26,6 +26,8 @@ export interface RawOp {
   'x-sdk'?: SdkName;
   'x-workbench'?: 'test';
   'x-codes'?: unknown;
+  /** Set on a `platform` route: a Platform key's scope, not an org key's. */
+  'x-platform-scope'?: string;
 }
 
 export interface RawDoc {

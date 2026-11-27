@@ -1,33 +1,27 @@
 import type { WbTool } from '../workbench.ts';
+import { WB_AREA_WORDS } from './workbench-areas.ts';
 
 /**
  * The Workbench's own words: area names, groups, the bar, the switcher, attention and keys
  * (design §1.4, §1.6, §5.4). States live in workbench-states.ts.
  */
-export const WB_AREA: Record<
-  WbTool,
-  { label: string; title: string; keywords: readonly string[] }
-> = {
-  home: { label: 'Home', title: 'Home', keywords: ['overview', 'start'] },
-  quickstart: { label: 'Quickstart', title: 'Quickstart', keywords: ['start', 'first call'] },
-  design: {
-    label: 'Design',
-    title: 'Design',
-    keywords: ['templates', 'designer', 'blueprints'],
-  },
-  passes: { label: 'Passes', title: 'Passes', keywords: ['simulate', 'phone', 'devices'] },
-  console: { label: 'Console', title: 'Console', keywords: ['run', 'request', 'try'] },
-  logs: { label: 'Logs', title: 'Logs', keywords: ['requests', 'calls', 'errors'] },
-  events: {
-    label: 'Events',
-    title: 'Events',
-    keywords: ['webhooks', 'endpoints', 'deliveries', 'captures'],
-  },
-  inbox: { label: 'Inbox', title: 'Test inbox', keywords: ['emails', 'mail'] },
-  activity: { label: 'Activity', title: 'Activity', keywords: ['operations', 'jobs', 'running'] },
-  keys: { label: 'Keys', title: 'Keys', keywords: ['api keys', 'secrets', 'tokens'] },
-  sandbox: { label: 'Sandbox', title: 'Sandbox', keywords: ['reset', 'limits', 'start over'] },
+const WB_LABEL: Record<WbTool, string> = {
+  home: 'Home',
+  quickstart: 'Quickstart',
+  design: 'Design',
+  passes: 'Passes',
+  console: 'Console',
+  logs: 'Logs',
+  events: 'Events',
+  inbox: 'Inbox',
+  activity: 'Activity',
+  keys: 'Keys',
+  sandbox: 'Sandbox',
 };
+
+export const WB_AREA = Object.fromEntries(
+  (Object.keys(WB_LABEL) as WbTool[]).map((t) => [t, { label: WB_LABEL[t], ...WB_AREA_WORDS[t] }]),
+) as Record<WbTool, { label: string; title: string; keywords: readonly string[] }>;
 
 /** The tab title when it says more than the h1: Events is where webhooks live. */
 export const WB_TAB_TITLE: Partial<Record<WbTool, string>> = { events: 'Events and webhooks' };

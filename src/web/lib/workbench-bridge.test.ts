@@ -1,6 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { BRIDGE_AREA } from '@/shared/copy/workbench-bridge.ts';
-import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
 import { bridgeFromSearch, bridgeHref, bridgeLabel, readBridgeOrigin } from './workbench-bridge.ts';
 
 describe('bridge launch links', () => {
@@ -55,15 +53,5 @@ describe('arriving from the Workbench', () => {
     expect(bridgeLabel('/workbench/o/a/events')).toBe('Events');
     expect(bridgeLabel('/workbench/o/a')).toBe('Home');
     expect(bridgeLabel('/workbench')).toBe('Workbench');
-  });
-});
-
-describe('area words', () => {
-  it("match the Workbench's own", () => {
-    for (const [tool, area] of Object.entries(WB_AREA))
-      expect(BRIDGE_AREA[tool as keyof typeof BRIDGE_AREA]).toEqual({
-        title: area.title,
-        keywords: area.keywords,
-      });
   });
 });
