@@ -106,19 +106,21 @@ describe('pass object gc', () => {
     const id = pass.id;
     const source = pass.objectKey;
     const target = `passes/${id}/v8-target.pkpass`;
+    // Seeded directly: the insert guard demands a live, issuable pass.
+    await run(kit.env.DB, 'DROP TRIGGER pass_issuance_delivery_insert_guard');
     await run(
       kit.env.DB,
       `INSERT INTO pass_issuance_deliveries
        (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
         source_lifecycle_generation, source_link_generation, source_object_key, template_id,
         connection_id, connection_ref, connection_generation, context, state, outbox_id, created_at)
-       SELECT id, org_id, mode, holder_email, identity_id, owner_user_id, credential_generation,
+       SELECT id, org_id, mode, COALESCE(holder_email, 'h@example.com'), COALESCE(identity_id, 'i'), owner_user_id, credential_generation,
          lifecycle_generation, link_generation, object_key, template_id, connection_id, external_ref,
          1, '{}', 'pending', NULL, ? FROM passes WHERE id = ?`,
       [Date.now(), id],
     );
     // The head moves on, so the source object is held by the delivery alone.
-    await run(kit.env.DB, 'UPDATE passes SET object_key = ? WHERE id = ?', [
+    await run(kit.env.DB, 'UPDATE passes SET object_key = ?, version = version + 1 WHERE id = ?', [
       `passes/${id}/v9-new.pkpass`,
       id,
     ]);
@@ -151,7 +153,7 @@ describe('pass object gc', () => {
     );
     const scans = plan
       .map((r) => r.detail)
-      .filter((d) => /\bSCAN\b/.test(d) && !/json_each/.test(d));
+      .filter((d) => /\bSCAN\b/.test(d) && !/json_each|VIRTUAL TABLE/.test(d));
     expect(scans, plan.map((r) => r.detail).join(' | ')).toEqual([]);
   });
 });

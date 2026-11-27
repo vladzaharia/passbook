@@ -82,13 +82,15 @@ describe('version retention', () => {
     const pass = await kit.pass({ memberName: 'v1' });
     const [v1] = await rows(pass.id);
     const bound = v1?.object_key ?? '';
+    // Seeded directly: the insert guard demands a live, issuable pass.
+    await run(kit.env.DB, 'DROP TRIGGER pass_issuance_delivery_insert_guard');
     await run(
       kit.env.DB,
       `INSERT INTO pass_issuance_deliveries
        (pass_id, org_id, mode, recipient, identity_id, source_owner_user_id, source_generation,
         source_lifecycle_generation, source_link_generation, source_object_key, template_id,
         connection_id, connection_ref, connection_generation, context, state, outbox_id, created_at)
-       SELECT id, org_id, mode, holder_email, identity_id, owner_user_id, credential_generation,
+       SELECT id, org_id, mode, COALESCE(holder_email, 'h@example.com'), COALESCE(identity_id, 'i'), owner_user_id, credential_generation,
          lifecycle_generation, link_generation, object_key, template_id, connection_id, external_ref,
          1, '{}', 'pending', NULL, ? FROM passes WHERE id = ?`,
       [Date.now(), pass.id],
