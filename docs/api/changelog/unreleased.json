@@ -681,6 +681,14 @@
     "note": "A webhook connection's setup guide with its URL and header names filled in. It never returns the secret, only hasSecret."
   },
   {
+    "key": "GET /api/v1/connections/{id}/webhook-arrivals 200.items[].retentionId: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdWebhookArrivals",
+    "op": "GET /api/v1/connections/{id}/webhook-arrivals",
+    "change": "200.items[].retentionId: field added",
+    "note": "Accepted arrivals carry retentionId, their retained work in webhook-failures, so a delivery that issued nothing can be told."
+  },
+  {
     "key": "GET /api/v1/connections/{id}/webhook-arrivals new operation",
     "class": "additive",
     "operationId": "connections.getConnectionsByIdWebhookArrivals",
@@ -4723,7 +4731,7 @@
     "operationId": "connections.postConnections",
     "op": "POST /api/v1/connections",
     "change": "behavior changed",
-    "note": "Shopify, Stripe and Ticket Tailor connections start with no secret when webhookSecret is omitted; PATCH sets it. Shopify store secrets may be shared in one org."
+    "note": "Shopify, Stripe and Ticket Tailor connections start with no secret when webhookSecret is omitted; PATCH sets it. Shopify secrets may be shared in one org."
   },
   {
     "key": "POST /api/v1/connections body.fileId: optional input field added",

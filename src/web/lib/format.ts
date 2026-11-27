@@ -62,6 +62,18 @@ export function formatCalendarDate(key: string): string {
   return CALENDAR_DATE.format(Date.UTC(y, m - 1, d));
 }
 
+const MONTH_YEAR = new Intl.DateTimeFormat(LOCALE, {
+  timeZone: CALENDAR_ZONE,
+  month: 'short',
+  year: 'numeric',
+});
+
+/** "Nov 2026" from a `YYYY-MM-DD` key: a plain calendar date, so no zone moves it across a month. */
+export function formatMonthYear(key: string): string {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return MONTH_YEAR.format(Date.UTC(y, m - 1, d));
+}
+
 /** Today's `YYYY-MM-DD` on the calendar of a time zone. */
 export function todayKey(timeZone: string, now: number = Date.now()): string {
   return new Intl.DateTimeFormat('en-CA', {

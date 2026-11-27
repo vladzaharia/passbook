@@ -4104,6 +4104,7 @@ class ConnectionsWebhookArrivalsListItem(_Model):
     topic: str | None
     contentClass: _Literal["json", "xml", "form", "other"] | str
     eventRef: str | None
+    retentionId: str | None
     usedPrevious: bool
     count: int
 
@@ -4120,6 +4121,7 @@ class ConnectionsWebhookArrivalsListResponseItemsItem(_Model):
     topic: str | None
     contentClass: _Literal["json", "xml", "form", "other"] | str
     eventRef: str | None
+    retentionId: str | None
     usedPrevious: bool
     count: int
 

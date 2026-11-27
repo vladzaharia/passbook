@@ -1,8 +1,8 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { useChangeCount } from '../lib/change-count.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { useBlockedSubmit } from './form.tsx';
-import { WizardButtons } from './wizard/wizard-actions.tsx';
+import { type WizardBarAction, WizardButtons } from './wizard/wizard-actions.tsx';
 import { WizardStep } from './wizard/wizard-step.tsx';
 import { WizardStepper } from './wizard/wizard-stepper.tsx';
 import type { WizardRail, WizardStepDef, WizardStepState } from './wizard/wizard-types.ts';
@@ -54,6 +54,8 @@ export interface WizardProps {
   nextDisabled?: boolean;
   /** Why Next is off, in a few words; shown beside it while it is disabled. */
   nextHint?: string;
+  /** The page's own actions beside Back and Next (Skip for now, Copy URL on a phone); on a phone they and Cancel share a menu. */
+  barMenu?: readonly WizardBarAction[] | undefined;
   busy?: boolean;
   children: ReactNode;
 }
@@ -72,6 +74,7 @@ export function WizardBar({
   nextTone,
   nextDisabled,
   nextHint,
+  barMenu,
   busy,
 }: Pick<
   WizardProps,
@@ -83,10 +86,27 @@ export function WizardBar({
   | 'nextTone'
   | 'nextDisabled'
   | 'nextHint'
+  | 'barMenu'
   | 'busy'
 > & { onBlocked?: () => void }) {
+  // The bar's height as a variable, so the page keeps its last line clear of it (a phone's bar is three rows).
+  const bar = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const set = () => root.style.setProperty('--wl-wizard-bar', `${el.offsetHeight}px`);
+    set();
+    const watch = new ResizeObserver(set);
+    watch.observe(el);
+    return () => {
+      watch.disconnect();
+      root.style.removeProperty('--wl-wizard-bar');
+    };
+  }, []);
   return (
     <section
+      ref={bar}
       aria-label="Wizard actions"
       // Part of the page, not a transient bar: it arrives with the route, no slide.
       data-static=""
@@ -95,6 +115,7 @@ export function WizardBar({
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-safe py-3 max-sm:flex-wrap sm:[--wl-gutter:1.5rem]">
         <WizardButtons
           keepCancel
+          menu={barMenu}
           first={!onBack}
           label={nextLabel}
           tone={nextTone}
@@ -210,7 +231,7 @@ export function Wizard({
   return (
     <div
       data-staged={staged || undefined}
-      className="wl-wizard flex min-w-0 flex-col gap-6 pb-24 max-sm:pb-40"
+      className="wl-wizard flex min-w-0 flex-col gap-6 pb-[calc(var(--wl-wizard-bar,6rem)+1.5rem)]"
     >
       <div className="@container">
         <div className="flex flex-col gap-5 @[43.5rem]:flex-row @[43.5rem]:gap-8">

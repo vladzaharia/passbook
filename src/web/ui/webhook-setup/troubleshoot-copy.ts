@@ -17,13 +17,21 @@ export interface InboundContext {
   origin: 'provider' | 'passbook';
   /** The guide's `troubleshooting`: ledger reason to a recipe-specific fix. `none` is the empty ledger. */
   recipeFix?: Readonly<Record<string, string>> | undefined;
+  /** Retention ids of accepted deliveries whose work failed or is blocked: nothing was issued. */
+  notIssued?: ReadonlySet<string> | undefined;
 }
 
 export const NOTHING = 'none';
 
+/** A name that opens a line is capitalised there only: "your system sent no signature" reads "Your system…". */
+const atLineStart = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /** What the ledger saw, in words, with the fix: recipe-specific from the guide, else the generic line. */
-export function inboundTrouble(
-  arrival: Pick<Arrival, 'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious'> | null,
+function rawInboundTrouble(
+  arrival: Pick<
+    Arrival,
+    'outcome' | 'reason' | 'topic' | 'contentClass' | 'usedPrevious' | 'retentionId'
+  > | null,
   ctx: InboundContext,
 ): Trouble {
   const { provider, origin } = ctx;
@@ -47,7 +55,14 @@ export function inboundTrouble(
             'Signed with the previous secret. Switch the sender to the new one.',
           ),
         }
-      : { tone: 'success', title: 'Signature OK', fix: 'Signed correctly.' };
+      : (arrival.retentionId ? ctx.notIssued?.has(arrival.retentionId) : false)
+        ? {
+            tone: 'warning',
+            title: 'Accepted, not issued',
+            fix: 'Signed correctly, but no pass was made. See the failed webhooks.',
+            action: 'openFailures',
+          }
+        : { tone: 'success', title: 'Signature OK', fix: 'Signed correctly.' };
   }
   const reason: ArrivalReason | null = arrival.reason;
   const rejected: Partial<Record<ArrivalReason, Trouble>> = {
@@ -101,7 +116,7 @@ export function inboundTrouble(
     no_secret: {
       tone: 'danger',
       title: 'No secret yet',
-      fix: fixFor('no_secret', 'Save the secret on the previous step first.'),
+      fix: fixFor('no_secret', 'No secret saved yet. Save it, then send another test.'),
       action: 'goToSecret',
     },
   };
@@ -230,4 +245,12 @@ export function outboundTrouble(result: SendResult): Trouble {
       ? (NETWORK[key] as string)
       : 'PassBook could not reach your server. Check the URL and that it is public.',
   };
+}
+
+export function inboundTrouble(
+  arrival: Parameters<typeof rawInboundTrouble>[0],
+  ctx: InboundContext,
+): Trouble {
+  const t = rawInboundTrouble(arrival, ctx);
+  return { ...t, fix: atLineStart(t.fix) };
 }

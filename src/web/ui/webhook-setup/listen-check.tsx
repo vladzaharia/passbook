@@ -25,6 +25,10 @@ export interface ListenProps {
   since: number;
   topics?: readonly SetupTopic[];
   origin?: InboundContext['origin'];
+  /** What a real delivery is, in the plural: "orders". Said in the sample note. */
+  record?: string;
+  /** Accepted deliveries whose work failed: the row says nothing was issued. */
+  notIssued?: ReadonlySet<string>;
   /** The guide's `troubleshooting`. */
   recipeFix?: InboundContext['recipeFix'];
   /** The guide's test line: where to press Send test. Shown while nothing has arrived. */
@@ -49,7 +53,13 @@ function words(a: Arrival, ctx: InboundContext): { text: string; bad: boolean } 
   const t = inboundTrouble(a, ctx);
   if (a.outcome === 'rejected') return { text: t.title, bad: true };
   const outcome =
-    a.outcome === 'accepted' ? 'Accepted' : a.outcome === 'duplicate' ? 'Duplicate' : t.title;
+    a.outcome === 'accepted'
+      ? t.title === 'Accepted, not issued'
+        ? t.title
+        : 'Accepted'
+      : a.outcome === 'duplicate'
+        ? 'Duplicate'
+        : t.title;
   return { text: `Signature OK · ${outcome}`, bad: false };
 }
 
@@ -60,6 +70,7 @@ export function ListenCheck(props: ListenProps) {
     provider,
     origin: props.origin ?? 'provider',
     recipeFix: props.recipeFix,
+    notIssued: props.notIssued,
   };
   const feed = useArrivalFeed(load, since, props.marks);
   const verdict = useMemo(() => judge(feed.rows, topics), [feed.rows, topics]);
@@ -201,7 +212,7 @@ export function ListenCheck(props: ListenProps) {
             ) : null}
             {sample ? (
               <p className="text-sm text-fg-muted">
-                Samples prove the setup. Real orders issue passes.
+                Samples prove the setup. Real {props.record ?? 'records'} issue passes.
               </p>
             ) : null}
           </div>
