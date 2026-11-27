@@ -12,6 +12,7 @@ import { AppError } from './errors.ts';
 import './openapi-names.ts';
 import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
+import { ownRoutesOnly } from './router-scope.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -107,7 +108,7 @@ const throwInvalid = (
  */
 export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono<AppBindings> {
   const router = new OpenAPIHono<AppBindings>({ defaultHook: throwInvalid });
-  if (options.bodyLimit !== false) router.use('*', defaultBodyLimit());
+  if (options.bodyLimit !== false) router.use('*', ownRoutesOnly(router, defaultBodyLimit()));
   return router;
 }
 
@@ -226,10 +227,10 @@ export function register<S extends RouteSpec>(
   );
 }
 
-/** Applies a middleware to every route of a router. */
+/** Applies a middleware to every route of a router, and only to its own routes. */
 export function guard(
   router: OpenAPIHono<AppBindings>,
   ...middleware: MiddlewareHandler<AppBindings>[]
 ): void {
-  for (const m of middleware) router.use('*', m);
+  for (const m of middleware) router.use('*', ownRoutesOnly(router, m));
 }

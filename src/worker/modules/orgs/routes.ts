@@ -16,6 +16,7 @@ import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
@@ -33,7 +34,7 @@ orgsRoutes.route('/', membershipRoutes);
 orgsRoutes.route('/', orgsPlatformRoutes);
 guard(orgsRoutes, requireTenantSession);
 // Two base64 PNGs of at most 200 KB each, plus JSON overhead.
-orgsRoutes.use('*', limitBody(1024 * 1024));
+ownUse(orgsRoutes, limitBody(1024 * 1024));
 
 async function authorizeOrg(c: Context<AppBindings>, id: string, capability: OrgCapability) {
   const auth = c.var.auth;

@@ -13,6 +13,7 @@ import {
 } from '../../../shared/contracts/wallet-providers.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
@@ -26,7 +27,7 @@ import { googleManagedOrgRoutes } from './routes-google-managed.ts';
 /** Mount at /api/v1/orgs. `integrations:read` lists, `integrations:manage` writes; the session's mode applies. */
 export const walletCredentialRoutes = createRouter();
 guard(walletCredentialRoutes, requireTenantSession);
-walletCredentialRoutes.use('*', async (c, next) => {
+ownUse(walletCredentialRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

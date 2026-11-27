@@ -12,6 +12,7 @@ import { limitBody } from '../../platform/body-limit.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { brandKitOf } from './brand.ts';
@@ -25,7 +26,7 @@ import { assertSharedWrite } from './shared-write.ts';
 export const brandRoutes = createRouter();
 guard(brandRoutes, requireTenantSessionOrApiKey(['brand:manage']));
 // One PNG of at most 512 KB, base64, plus JSON overhead.
-brandRoutes.use('*', limitBody(1024 * 1024));
+ownUse(brandRoutes, limitBody(1024 * 1024));
 
 function orgOf(auth: AuthContext | undefined, requested: string | undefined): string {
   if (!auth) throw new UnauthenticatedError();
