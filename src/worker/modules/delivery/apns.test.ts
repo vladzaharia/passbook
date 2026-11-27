@@ -55,5 +55,9 @@ describe('mtls apns transport', () => {
     expect(sent?.get('apns-collapse-id')).toBe('pass-1');
     await transport.send(target, ['tok'], 0);
     expect(sent?.has('apns-collapse-id')).toBe(false);
+    await transport.send({ ...target, collapseId: 'x'.repeat(65) }, ['tok'], 0);
+    expect(sent?.has('apns-collapse-id')).toBe(false);
+    await transport.send({ ...target, collapseId: 'x'.repeat(64) }, ['tok'], 0);
+    expect(sent?.get('apns-collapse-id')).toBe('x'.repeat(64));
   });
 });
