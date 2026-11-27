@@ -23,6 +23,7 @@ import { PlatformWalletCredentialListSchema } from '../../../shared/contracts/wa
 import { platformActorOf } from '../../platform/actor.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
 import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
@@ -46,7 +47,7 @@ import { walletReleaseRoutes } from './routes-release.ts';
  */
 export const walletPlatformRoutes = createRouter();
 walletPlatformRoutes.route('/', walletReleaseRoutes);
-walletPlatformRoutes.use('*', async (c, next) => {
+ownUse(walletPlatformRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

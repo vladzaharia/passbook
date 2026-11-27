@@ -4,7 +4,8 @@ import { ScanStaffSchema } from '../../../shared/contracts/scanners.ts';
 import { currentUserId } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
+import { wholeMountUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
 import {
@@ -26,7 +27,8 @@ scanStaffRoutes.use('*', async (c, next) => {
 scanStaffRoutes.use('*', limitBody(16 * 1024));
 /** List, create, edit and reset take a session or a `scanning:admin` key: they register before the session guard. */
 registerStaffAdmin(scanStaffRoutes);
-guard(scanStaffRoutes, requireTenantSession);
+// Dedicated prefix: the session guard covers every path (an anonymous unknown path is a 401), and the rate limit below needs the session.
+wholeMountUse(scanStaffRoutes, requireTenantSession);
 scanStaffRoutes.use('*', async (c, next) => {
   await staffRateLimit(
     serviceContext(c),

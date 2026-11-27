@@ -13,13 +13,14 @@ import {
   type RouteSpec,
   register,
 } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { assertConsoleGroup, assertDeveloper } from '../../platform/sign-in-guard.ts';
 import { endWorkbenchTokens, issueWorkbenchToken, mintTarget } from './service.ts';
 
 /** /api/v1/workbench. A person's own calls: a token never mints or ends a token (bearers are ignored here). */
 export const workbenchRoutes = createRouter();
-workbenchRoutes.use('*', async (c, next) => {
+ownUse(workbenchRoutes, async (c, next) => {
   c.header('cache-control', 'no-store');
   await next();
 });

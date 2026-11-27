@@ -24,6 +24,7 @@ import {
   register,
 } from '../../platform/openapi.ts';
 import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rate-limit.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import {
   assertConsoleGroup,
@@ -43,7 +44,7 @@ import { mintTarget } from './service.ts';
 
 /** /api/v1/cli. Sign-in for the command line: no CORS, no cache, and a bearer approves nothing. */
 export const cliRoutes = createRouter();
-cliRoutes.use('*', async (c, next) => {
+ownUse(cliRoutes, async (c, next) => {
   c.header('cache-control', 'no-store');
   await next();
 });
@@ -216,7 +217,7 @@ register(
 
 /** Mount at /api/v1/platform. The kill switch: a platform admin signed in with Polaris ID, recently. */
 export const cliPlatformRoutes = createRouter();
-cliPlatformRoutes.use('*', async (c, next) => {
+ownUse(cliPlatformRoutes, async (c, next) => {
   c.header('cache-control', 'no-store');
   await next();
 });
