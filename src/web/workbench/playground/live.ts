@@ -60,11 +60,6 @@ export interface Sent<T> {
   problem: { code: string | undefined; detail: string } | null;
 }
 
-export type Connection =
-  | { state: 'signed-out' }
-  | { state: 'no-sandbox' }
-  | { state: 'ready'; client: LiveClient };
-
 export class LiveClient {
   #token: { value: string; expiresAt: number } | null = null;
 
@@ -182,19 +177,4 @@ export class LiveClient {
       },
     );
   }
-}
-
-/** Session, then sandbox, then a client. Nothing here runs until the visitor chose their sandbox. */
-export async function connect(): Promise<Connection> {
-  const session = await fetch(`${API}/session`, { headers: { accept: 'application/json' } });
-  if (!session.ok) throw await failure(session);
-  const who = (await session.json()) as { authenticated: boolean; csrfToken?: string };
-  if (!who.authenticated || !who.csrfToken) return { state: 'signed-out' };
-  const res = await fetch(`${API}/developer/sandbox`, { headers: { accept: 'application/json' } });
-  if (!res.ok) throw await failure(res);
-  const { sandbox } = (await res.json()) as {
-    sandbox: { templateId: string | null; orgSlug: string; closedAt: number | null } | null;
-  };
-  if (!sandbox || sandbox.closedAt) return { state: 'no-sandbox' };
-  return { state: 'ready', client: new LiveClient(who.csrfToken, sandbox) };
 }

@@ -117,6 +117,50 @@ describe('the opening gesture', () => {
   });
 });
 
+describe('the opening gesture in a sheet', () => {
+  const asSheet = (on: boolean) =>
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: on && q.includes('max-width'),
+      media: q,
+    }));
+  afterEach(() => vi.unstubAllGlobals());
+  let n = 100;
+
+  it.each(['mouse', 'pen', 'touch'])('ignores a %s opener pointer up and click', (pointerType) => {
+    asSheet(true);
+    const id = n++;
+    const p = { pointerType, pointerId: id };
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, p);
+    const item = open(onSelect);
+    fireEvent.pointerUp(item, p);
+    fireEvent.click(item, { detail: 1, ...p });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'pen', 'touch'])('selects a fresh %s press on the item', (pointerType) => {
+    asSheet(true);
+    const id = n++;
+    const p = { pointerType, pointerId: id };
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, p);
+    const item = open(onSelect);
+    fireEvent.pointerUp(document.body, p);
+    fireEvent.pointerDown(item, p);
+    fireEvent.pointerUp(item, p);
+    fireEvent.click(item, { detail: 1, ...p });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the desktop popover as before for a mouse', () => {
+    asSheet(false);
+    const onSelect = vi.fn();
+    fireEvent.pointerDown(document.body, { pointerType: 'mouse', pointerId: n });
+    fireEvent.pointerUp(open(onSelect), { pointerType: 'mouse', pointerId: n++ });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('dropdown menu focus', () => {
   it('makes the rest of the page inert while open and restores it on close', () => {
     const page = document.createElement('div');
