@@ -41,9 +41,10 @@ export async function readStaffActivity(
   const name = staffNameMatch(page.q);
   const cursor = afterCursorSql(page.cursor);
   const mode = 'ao.mode';
-  // Inline, not a CTE: a CTE reference this deep in the statement fails on workerd (each costs the cursors so far).
+  // `starts` is joined once, first in the page's FROM: a CTE reference deeper in the statement fails on workerd
+  // (each costs the cursors allocated so far). The three uses read its zone list through `z`.
   const starts = `(SELECT json_extract(value, '$.zone') AS zone, json_extract(value, '$.since') AS since
-      FROM json_each(?))`;
+      FROM json_each(z.zones))`;
   const snapshotOk = `NOT EXISTS (
           SELECT 1 FROM scanners current_sc
           WHERE ${auth.tenantOnce('current_sc', 'scanners')}
@@ -52,7 +53,7 @@ export async function readStaffActivity(
   // The padded row of an unauthorized or empty page has no person: its person columns stay NULL.
   const ofPerson = (expr: string) => `CASE WHEN st.id IS NULL THEN NULL ELSE ${expr} END`;
   const zoneStarts = JSON.stringify(zones.map((zone) => ({ zone, since: dayStartMs(zone, now) })));
-  const ctes = `page AS MATERIALIZED (
+  const ctes = `starts AS (SELECT ? AS zones), page AS MATERIALIZED (
       SELECT CASE WHEN ${auth.present} THEN 1 ELSE 0 END AS auth_ok, ${snapshotOk} AS snapshot_ok,
         st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
         st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
@@ -88,7 +89,7 @@ export async function readStaffActivity(
           WHERE +s.org_id = st.org_id AND +s.mode = ${mode} AND s.staff_id = st.id AND s.state = 'done'
             AND ${scanLedgerScopeSql('s')}
           ORDER BY s.at DESC, s.id DESC LIMIT 1) AS scan_id
-      FROM ${auth.anchor}
+      FROM starts z CROSS JOIN ${auth.anchor}
         LEFT JOIN scan_staff st ON ${auth.present} AND ${snapshotOk}
         AND ${auth.tenantOnce('st', 'scan_staff')}${page.staffId === undefined ? '' : ' AND st.id = ?'}
         AND ${name.sql} ${cursor.sql}
@@ -106,9 +107,7 @@ export async function readStaffActivity(
     PIN_MISSES_PER_SCANNER,
     dayWindowOf(now),
     PIN_MISSES_PER_STAFF_DAY,
-    zoneStarts,
     dayStartMs(orgZone, now),
-    zoneStarts,
     ...(page.staffId === undefined ? [] : [page.staffId]),
     ...name.params,
     ...cursor.params,

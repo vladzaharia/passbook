@@ -1,5 +1,5 @@
 // Differential: the scan readers on the join-once predicate return exactly the rows of their scalar-form
-// originals (scan-read-once-legacy*.ts), for member, scanner (good and bad epoch), key and platform actors,
+// originals (repo-read-once-legacy*.ts), for member, scanner (good and bad epoch), key and platform actors,
 // over seeded scanners, staff, scans, events and photos of two orgs and both modes.
 import { describe, expect, it } from 'vitest';
 import { passRow } from '../../platform/authority-checks.ts';
@@ -22,21 +22,21 @@ import { livePlaceEventStmt } from './repo-live-places.ts';
 import { livePhotoStmt, liveRecipientStmt, liveRowsStmt } from './repo-live-render.ts';
 import { lookupGateStmt, lookupPassesStmt } from './repo-lookup-final.ts';
 import { apiKeyReadAuthority, type ScanReadAuthority } from './repo-read-authority.ts';
-import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
 import {
   legacyLivePhotoStmt,
   legacyLivePlaceEventStmt,
   legacyLiveRecipientStmt,
   legacyLiveRowsStmt,
   legacyLookupPassesStmt,
-} from './scan-read-once-legacy.ts';
+} from './repo-read-once-legacy.ts';
 import {
   legacyEventsStmt,
   legacyHistoryPageStmt,
   legacyLookupGateStmt,
   legacyStaffActivityStmt,
   legacyTimeZonesStmt,
-} from './scan-read-once-legacy-staff.ts';
+} from './repo-read-once-legacy-staff.ts';
+import { readStaffActivity, staffTimeZones } from './repo-staff-activity.ts';
 
 /** The scan actor fields the readers consult: no session, no event, every template accepted. */
 const scanner = {

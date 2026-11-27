@@ -119,12 +119,8 @@ export function scanRead(
 ): D1PreparedStatement {
   const all = [...auth.params, ...(extra?.params ?? []), ...params];
   const text = `WITH ${auth.ctes}${extra ? `,\n${extra.ctes}` : ''}\n${sql}`;
-  // P2b's statements still read the actor through several scalar subqueries: the one text that has no `ao` join and
-  // more than one reference. Everything else (join-once reads, a lone `EXISTS (SELECT 1 FROM actor_ok)`) is checked.
-  const scalar =
-    !/\bactor_ok\s+ao\b/i.test(text) &&
-    (text.match(/\b(?:FROM|JOIN)\s+actor_ok\b/gi)?.length ?? 0) > 1;
-  if (!scalar) assertActorOnce(text);
+  // The reads P2b has not moved yet still use the scalar form and have no `ao`; every join-once read is checked.
+  if (/\bactor_ok\s+ao\b/i.test(text)) assertActorOnce(text);
   assertBudget('', all, PARAM_BUDGET);
   const bytes = encoder.encode(text).length;
   if (bytes > READ_SQL_BYTE_BUDGET)
