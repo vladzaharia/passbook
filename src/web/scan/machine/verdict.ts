@@ -76,6 +76,8 @@ export interface VerdictOpts {
   resumeCamera?: boolean;
   /** A read that arrived while the request was in flight. */
   next?: ScanInput | null;
+  /** The request this verdict answers. */
+  key?: string;
   /** The recent row to replace (a late answer), by its time; otherwise a new row is added. */
   replaceRecentAt?: number;
   /** The draft that was sent, kept for a Manager's PIN. */
@@ -147,6 +149,7 @@ export function enterVerdict(s: MachineState, o: VerdictOpts, env: Env): Out {
       settleAt,
       openFrom: now + SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT,
       next: o.next ?? null,
+      ...(o.key !== undefined ? { key: o.key } : {}),
       ...(o.draft ? { draft: o.draft } : {}),
       ...(o.pin ? { pin: o.pin } : {}),
     },
