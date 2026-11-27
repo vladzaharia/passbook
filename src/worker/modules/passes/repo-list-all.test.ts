@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, makePass } from '../../../../test/helpers/index.ts';
 import { all } from '../../platform/db.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
-import { passesByIds } from './repo-list-all.ts';
 import { listPassesSql } from './repo-list.ts';
+import { passesByIds } from './repo-list-all.ts';
 
 let kit: Kit;
 beforeAll(async () => {
