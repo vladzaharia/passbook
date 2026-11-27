@@ -3,8 +3,8 @@ import { connectNativeReader } from '../input/native-reader.ts';
 import type { RawRead } from '../input/types.ts';
 import type { ScanState } from '../machine/types.ts';
 import { customerBrandingOf } from './customer-branding.ts';
-import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 import { setHapticSender } from './haptics.ts';
+import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 
 interface Deps {
   session: () => ScanSession;
