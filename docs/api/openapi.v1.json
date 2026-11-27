@@ -98724,7 +98724,8 @@
                     "name": "Northwind sandbox",
                     "slug": "northwind-climbing",
                     "closed": false,
-                    "timeZone": "America/Los_Angeles"
+                    "timeZone": "America/Los_Angeles",
+                    "devicePass": false
                   },
                   "orgs": [
                     {
