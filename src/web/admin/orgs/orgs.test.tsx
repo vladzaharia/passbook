@@ -269,7 +269,7 @@ describe('orgs list', () => {
     const dialog = await screen.findByRole('dialog', { name: 'New organization' });
     expect(within(dialog).getByLabelText(/Name/)).toBeInTheDocument();
     expect(within(dialog).getByLabelText(/Slug/)).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Create' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toBeInTheDocument();
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/admin/platform/orgs');
       expect(router.state.location.search).toMatchObject({ q: 'acme' });
@@ -280,7 +280,7 @@ describe('orgs list', () => {
     expect(router.state.location.search).toMatchObject({ q: 'acme' });
   });
 
-  it('creates an org in an lg dialog (the plan cards need two columns), clears fixed errors and opens the new org', async () => {
+  it('creates an org in the wizard (Basics, Plan, Review), clears fixed errors and opens the new org', async () => {
     let body: unknown;
     let created = false;
     const { router } = await renderApp('/admin/orgs', {
@@ -321,22 +321,23 @@ describe('orgs list', () => {
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog.className).toContain('sm:max-w-3xl');
-    await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText(/Name/)));
-    expect(await within(dialog).findByText('2 fields need attention')).toBeInTheDocument();
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme Gym');
     // The fix clears both errors as it is typed.
     expect(within(dialog).queryByText('Required.')).toBeNull();
     expect(within(dialog).getByLabelText(/Name/)).not.toHaveAttribute('aria-invalid');
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
     // Plans load as cards: Standard is the default, the developer sandbox is not offered.
     expect(await within(dialog).findByRole('radio', { name: 'Standard' })).toBeChecked();
     expect(within(dialog).queryByRole('radio', { name: 'Developer sandbox' })).toBeNull();
     await ui.click(within(dialog).getByRole('radio', { name: 'Premium' }));
-    await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(within(dialog).getByRole('heading', { name: 'Check and create' })).toBeInTheDocument();
+    await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
     await waitFor(() =>
       expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym', addMe: true, preset: 'premium' }),
     );
@@ -364,9 +365,10 @@ describe('orgs list', () => {
     await ui.click(screen.getByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme');
-    await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
+    // The refused field sends the wizard back to the step that owns it.
     expect(await within(dialog).findByText('Taken.')).toBeInTheDocument();
-    expect(within(dialog).getByText('Slug already in use.')).toBeInTheDocument();
   });
 });
 

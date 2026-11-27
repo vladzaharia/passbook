@@ -222,13 +222,16 @@ describe('quick setup', () => {
     await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
     const dialog = document.body;
     expect(within(dialog).queryByRole('button', { name: 'Open designer' })).toBeNull();
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
       logoFile(200, 60),
     );
     expect(await within(dialog).findByText('logo.png')).toBeInTheDocument();
     fireColor(within(dialog).getByLabelText('Custom colour'), '#aa3311');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('logo.png', { selector: 'dd, dd *' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     const [body] = bodies;
     expect(body).toMatchObject({ orgId: ORG.id, name: 'Balance card' });
@@ -276,11 +279,13 @@ describe('quick setup', () => {
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
     await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
     const dialog = document.body;
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
     await user.click(await within(dialog).findByRole('combobox', { name: 'Stamps for a reward' }));
     await user.click(await screen.findByRole('option', { name: '8' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Currency' }));
     await user.click(await screen.findByRole('option', { name: 'CAD' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     const sent = bodies[0]?.version.manifest as {
       stamps: { goal: number };
@@ -301,6 +306,7 @@ describe('quick setup', () => {
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
     await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
     const dialog = document.body;
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
       new File(['x'], 'logo.png', { type: 'image/png' }),
@@ -371,6 +377,12 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
     expect((await axe(container)).violations).toEqual([]);
     await user.click(screen.getAllByRole('button', { name: /^Use / })[0] as HTMLElement);
     await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await screen.findByRole('heading', { name: 'Logo and colour' });
+    expect((await axe(document.body)).violations).toEqual([]);
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await screen.findByRole('heading', { name: 'Check and create' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 });

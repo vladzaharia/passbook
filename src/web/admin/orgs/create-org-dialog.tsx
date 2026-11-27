@@ -3,16 +3,13 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { CreateOrgSchema } from '@/shared/contracts/orgs.ts';
 import { PLAN_COPY } from '@/shared/copy/plans.ts';
-import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
-  Button,
-  Dialog,
-  DialogContent,
-  Form,
   FormField,
   Input,
   SwitchRow,
-  useFormErrors,
+  useWizard,
+  WizardDialog,
+  WizardReview,
 } from '@/web/ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
 import { PlanPicker } from './features/plan-picker.tsx';
@@ -34,31 +31,19 @@ type PlanId = NonNullable<z.input<typeof CreateOrgSchema>['preset']>;
 /** What a new org starts on when nothing is picked; the server's own default. */
 const DEFAULT_PLAN = 'standard';
 
-/** The plans as cards, once they load. A failed read leaves the field out; the create still sends the default plan. */
-function PlanField({ value, onChange }: { value: string; onChange: (preset: string) => void }) {
-  const presets = usePresets();
-  const plans = (presets.data?.presets ?? []).filter((p) => p.preset !== 'developer');
-  if (plans.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-fg">{PLAN_COPY.title}</span>
-      <PlanPicker plans={plans} current={null} picked={value} onPick={onChange} />
-    </div>
-  );
-}
-
 const SLUG = /^[a-z0-9][a-z0-9-]{1,63}$/;
 
-function validate(name: string, slug: string): Record<string, string> {
-  const found: Record<string, string> = {};
-  if (!name.trim()) found.name = 'Required.';
-  if (!SLUG.test(slug)) found.slug = 'Use 2 to 64 lowercase letters, digits or hyphens.';
-  return found;
-}
+const STEPS = [
+  { id: 'basics', title: 'Basics', heading: 'Name it' },
+  { id: 'plan', title: 'Plan', heading: 'Pick a plan' },
+  { id: 'review', title: 'Review', heading: 'Check and create' },
+] as const;
+type StepId = (typeof STEPS)[number]['id'];
 
 /**
  * Creates the org and opens it, where a Created callout and the checklist carry the next steps.
  * The dialog has no history entry of its own, so Back from the new org returns to the list.
+ * A failed plan read drops the Plan step; the create still sends the default plan.
  */
 export function CreateOrgDialog({
   open,
@@ -74,69 +59,58 @@ export function CreateOrgDialog({
   const [slugEdited, setSlugEdited] = useState(false);
   const [addMe, setAddMe] = useState(true);
   const [preset, setPreset] = useState(DEFAULT_PLAN);
-  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string>();
-  const check = useFormErrors(validate(name, slug));
-  const errors = { ...serverErrors, ...check.errors };
+  const presets = usePresets();
+  const plans = (presets.data?.presets ?? []).filter((p) => p.preset !== 'developer');
+  const plan = plans.find((p) => p.preset === preset);
 
-  function close() {
-    onOpenChange(false);
-    setName('');
-    setSlug('');
-    setSlugEdited(false);
-    setAddMe(true);
-    setPreset(DEFAULT_PLAN);
-    check.reset();
-    setServerErrors({});
-    setFormError(undefined);
-  }
-
-  async function submit() {
-    setFormError(undefined);
-    try {
+  const w = useWizard<StepId>({
+    open,
+    steps: STEPS.map((s) => ({
+      ...s,
+      ...(s.id === 'basics' ? { summary: name.trim() || undefined } : {}),
+      ...(s.id === 'plan' ? { skip: plans.length === 0, summary: plan?.label } : {}),
+    })),
+    errors: {
+      basics: {
+        ...(name.trim() ? {} : { name: 'Required.' }),
+        ...(SLUG.test(slug) ? {} : { slug: 'Use 2 to 64 lowercase letters, digits or hyphens.' }),
+      },
+    },
+    hints: { basics: 'Name the organization.' },
+    fieldStep: { name: 'basics', slug: 'basics', addMe: 'basics', preset: 'plan' },
+    onFinish: async () => {
       const org = await create.mutateAsync({
         name: name.trim(),
         slug,
         addMe,
         preset: preset as PlanId,
       });
-      close();
+      onOpenChange(false);
       markCreated(`org:${org.id}`);
       void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
-    } catch (cause) {
-      if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServerErrors(cause.fields);
-      setFormError(errorMessage(cause));
-    }
-  }
-  const clearServer = (key: string) => setServerErrors(({ [key]: _gone, ...rest }) => rest);
+    },
+  });
 
   return (
-    <Dialog
+    <WizardDialog
       open={open}
+      onOpenChange={onOpenChange}
+      title="New organization"
+      wizard={w}
       dirty={name.trim() !== '' || slug !== ''}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
+      finishLabel="Create organization"
+      busy={create.isPending}
+      onClose={() => {
+        setName('');
+        setSlug('');
+        setSlugEdited(false);
+        setAddMe(true);
+        setPreset(DEFAULT_PLAN);
+      }}
     >
-      <DialogContent
-        size="lg"
-        title="New organization"
-        footer={
-          <>
-            <Button variant="outline" onClick={close}>
-              Cancel
-            </Button>
-            <Button type="submit" form="new-org" loading={create.isPending}>
-              Create
-            </Button>
-          </>
-        }
-      >
-        <Form
-          id="new-org"
-          className="flex flex-col gap-4"
-          {...check.form}
-          onValid={() => void submit()}
-        >
-          <FormField label="Name" required error={errors.name}>
+      {w.id === 'basics' ? (
+        <>
+          <FormField label="Name" required error={w.errors.name}>
             {(p) => (
               <Input
                 {...p}
@@ -145,7 +119,7 @@ export function CreateOrgDialog({
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  clearServer('name');
+                  w.clearServer('name');
                   if (!slugEdited) setSlug(slugify(e.target.value));
                 }}
               />
@@ -154,7 +128,7 @@ export function CreateOrgDialog({
           <FormField
             label="Slug"
             required
-            error={errors.slug}
+            error={w.errors.slug}
             help="Used in links and typed to delete."
           >
             {(p) => (
@@ -168,16 +142,45 @@ export function CreateOrgDialog({
                 onChange={(e) => {
                   setSlugEdited(true);
                   setSlug(e.target.value);
-                  clearServer('slug');
+                  w.clearServer('slug');
                 }}
               />
             )}
           </FormField>
-          <PlanField value={preset} onChange={setPreset} />
           <SwitchRow label="Add me as admin" checked={addMe} onCheckedChange={setAddMe} />
-          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </>
+      ) : null}
+      {w.id === 'plan' ? (
+        <fieldset className="m-0 min-w-0 border-0 p-0">
+          <legend className="sr-only">{PLAN_COPY.title}</legend>
+          <PlanPicker plans={plans} current={null} picked={preset} onPick={setPreset} />
+        </fieldset>
+      ) : null}
+      {w.id === 'review' ? (
+        <WizardReview
+          onEdit={w.go}
+          sections={[
+            {
+              id: 'basics',
+              title: 'Basics',
+              items: [
+                { label: 'Name', value: name.trim() },
+                { label: 'Slug', value: slug, mono: true },
+                { label: 'Admin', value: addMe ? 'You' : 'Nobody yet' },
+              ],
+            },
+            ...(plans.length > 0
+              ? [
+                  {
+                    id: 'plan' as const,
+                    title: 'Plan',
+                    items: [{ label: 'Plan', value: plan?.label ?? preset }],
+                  },
+                ]
+              : []),
+          ]}
+        />
+      ) : null}
+    </WizardDialog>
   );
 }
