@@ -60,13 +60,13 @@ function CheckItem({
   onCheckedChange: (v: boolean) => void;
   children: ReactNode;
 }) {
-  const ignoreOpening = useIgnoreOpeningGesture();
+  const opening = useIgnoreOpeningGesture();
   return (
     <Primitive.CheckboxItem
       checked={checked}
       onCheckedChange={onCheckedChange}
       onSelect={(e) => e.preventDefault()}
-      onPointerUp={ignoreOpening}
+      {...opening}
       className={CHECK_ITEM}
     >
       <span className="text-fg-muted">{icon}</span>

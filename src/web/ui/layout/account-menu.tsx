@@ -32,7 +32,7 @@ import { IconButton } from '../icon-button.tsx';
 function ThemeChoice() {
   const { pref, setPref } = useTheme();
   const changed = useChangeCount(pref);
-  const ignoreOpening = useIgnoreOpeningGesture();
+  const opening = useIgnoreOpeningGesture();
   return (
     <div className="px-2 py-1.5">
       <p id="theme-label" className="mb-1.5 text-xs text-fg-muted">
@@ -53,7 +53,7 @@ function ThemeChoice() {
               key={t.value}
               value={t.value}
               onSelect={(e) => e.preventDefault()}
-              onPointerUp={ignoreOpening}
+              {...opening}
               className={cn(
                 'relative flex min-h-7 flex-1 cursor-pointer select-none items-center justify-center gap-1.5 rounded-[5px] px-2 text-xs font-medium outline-hidden wl-colors pointer-coarse:min-h-11',
                 'data-highlighted:text-fg-strong data-highlighted:outline-2 data-highlighted:outline-focus [html[data-modality=pointer]_&]:data-highlighted:outline-none',
