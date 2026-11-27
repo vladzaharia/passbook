@@ -292,7 +292,9 @@ describe('cron dispatcher', () => {
     };
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      await handleScheduled(controller(MINUTE_CRON), env as AppEnv, createExecutionContext());
+      const ctx = createExecutionContext();
+      await handleScheduled(controller(MINUTE_CRON), env as AppEnv, ctx);
+      await waitOnExecutionContext(ctx);
       expect(error.mock.calls.some((call) => String(call[0]).includes('cron.hook_failed'))).toBe(
         true,
       );
@@ -367,7 +369,9 @@ describe('cron dispatcher', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       for (minute = 1; minute <= 3; minute++) {
-        await handleScheduled(controller(MINUTE_CRON), appEnv, createExecutionContext());
+        const ctx = createExecutionContext();
+        await handleScheduled(controller(MINUTE_CRON), appEnv, ctx);
+        await waitOnExecutionContext(ctx);
         expect(completed).toBe(minute === 3);
       }
       for (const n of [1, 2, 3]) {
@@ -401,7 +405,9 @@ describe('cron dispatcher', () => {
     );
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
-      await handleScheduled(controller(DAILY_CRON), env as AppEnv, createExecutionContext());
+      const ctx = createExecutionContext();
+      await handleScheduled(controller(DAILY_CRON), env as AppEnv, ctx);
+      await waitOnExecutionContext(ctx);
       expect(ran).toEqual(['heavy']);
       expect(warn.mock.calls.some((c) => String(c[0]).includes('cron.budget_skipped'))).toBe(true);
     } finally {
