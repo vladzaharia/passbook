@@ -7,12 +7,14 @@ import type {
   UpdateOrgSchema,
 } from '../../../shared/contracts/orgs.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
+import type { PlatformCaller } from '../../platform/actor.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  PersonRequiredError,
   ValidationError,
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -122,8 +124,15 @@ export async function createOrg(
   ctx: ServiceContext,
   actor: Actor,
   input: z.infer<typeof CreateOrgSchema>,
-  admin: OrgAdmin,
+  admin: PlatformCaller,
 ): Promise<OrgDto> {
+  // A key is nobody's member: it cannot add a person to the org it makes.
+  if (input.addMe === true && admin.userId === null)
+    throw new ValidationError(
+      'A platform key cannot add itself to an organization. Send addMe false.',
+      [{ path: 'addMe', message: 'Not allowed for a platform key.' }],
+      'ORG_ADD_ME_NEEDS_PERSON',
+    );
   await checkSlug(ctx, input.slug);
   await checkIdentity(ctx, null, input.defaultIdentityId ?? null);
   const now = ctx.clock.now();
@@ -142,10 +151,11 @@ export async function createOrg(
     kind: 'standard',
   };
   const preset = input.preset ?? 'standard';
-  const addMe = input.addMe ?? true;
-  const me = addMe ? await getPersonalUser(ctx.env.DB, admin.userId) : null;
+  const addMe = input.addMe ?? admin.userId !== null;
+  const me = addMe && admin.userId ? await getPersonalUser(ctx.env.DB, admin.userId) : null;
   if (me?.status === 'active')
     await insertOrgWithCreator(ctx, row, admin, preset, {
+      userId: me.id,
       email: me.primary_email,
       invitationId: ctx.ids.id(),
       membershipId: ctx.ids.id(),
@@ -258,10 +268,12 @@ export async function setOrgStatus(
   actor: Actor,
   id: string,
   status: 'active' | 'suspended',
-  admin: OrgAdmin,
+  admin: PlatformCaller,
 ): Promise<OrgDto> {
   const before = await requireOrg(ctx, id);
-  await requirePersonalStatusMove(ctx.env.DB, before, status, admin.userId);
+  // A personal org is its owner's and the platform admins': a key never moves it (P3).
+  if (admin.userId === null && before.personal_user_id !== null) throw new PersonRequiredError();
+  await requirePersonalStatusMove(ctx.env.DB, before, status, admin.userId ?? '');
   const entry = {
     ...auditActor(actor),
     orgId: id,

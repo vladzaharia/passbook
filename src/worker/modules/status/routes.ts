@@ -21,7 +21,7 @@ register(
   'status',
   {
     method: 'get',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/',
     summary: 'Component health',
     query: StatusQuerySchema,
@@ -37,7 +37,7 @@ register(
   'status',
   {
     method: 'get',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/workflows',
     summary: 'Recent workflow runs',
     query: CursorQuerySchema,
@@ -50,7 +50,7 @@ register(
   'status',
   {
     method: 'get',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents',
     summary: 'Incident notes on the public status page',
     query: CursorQuerySchema,
@@ -63,7 +63,7 @@ register(
   'status',
   {
     method: 'post',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents',
     summary: 'Open an incident note on the public status page',
     body: OpenIncidentSchema,
@@ -78,7 +78,7 @@ register(
   'status',
   {
     method: 'post',
-    auth: { platform: 'platform:status' },
+    auth: { platform: 'platform:status', key: true },
     path: '/incidents/{id}/resolve',
     summary: 'Resolve an incident note',
     params: IdParamSchema,

@@ -172,6 +172,7 @@ describe('platform write', () => {
       writeEntitlements(rk.kit.ctx, {
         orgId: p.orgId,
         admin,
+        by: admin.userId,
         expectedRevision: before.revision,
         preset: 'standard',
         presetRevision: 1,

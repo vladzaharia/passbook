@@ -1797,6 +1797,8 @@
   ],
   "entitlements get /entitlement-presets": [],
   "entitlements get /orgs/{id}/entitlements": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED"
@@ -1820,12 +1822,16 @@
   ],
   "entitlements put /entitlement-presets": [
     "ENTITLEMENTS_CHANGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "PRESET_MOVING",
     "PRESET_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "entitlements put /orgs/{id}/entitlements": [
     "ENTITLEMENTS_CHANGED",
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED",
@@ -2821,9 +2827,12 @@
   ],
   "metrics get /platform/developer": [],
   "metrics get /platform/overview": [
+    "FORBIDDEN",
     "METRICS_NOT_FOUND",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
-    "ORG_PERSONAL"
+    "ORG_PERSONAL",
+    "UNAUTHENTICATED"
   ],
   "nfc get /{slug}": [],
   "nfc-keysets get /keysets": [
@@ -3567,6 +3576,8 @@
   "orgs get /": [],
   "orgs get /personal-org-labels": [],
   "orgs get /{id}": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
     "UNAUTHENTICATED"
@@ -3624,12 +3635,17 @@
     "WORKBENCH_TEST_ONLY"
   ],
   "orgs post /": [
+    "FORBIDDEN",
     "IDENTITY_NOT_FOUND",
+    "MISSING_SCOPE",
+    "ORG_ADD_ME_NEEDS_PERSON",
     "ORG_SLUG_RESERVED",
     "ORG_SLUG_TAKEN",
     "UNAUTHENTICATED"
   ],
   "orgs post /{id}/status": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
@@ -5961,12 +5977,22 @@
     "WALLET_OFFER_NOT_FOUND",
     "WALLET_PROJECTION_UNSUPPORTED"
   ],
-  "retention get /orgs/{orgId}/retention/holds": [],
+  "retention get /orgs/{orgId}/retention/holds": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
+  ],
   "retention get /orgs/{orgId}/retention/receipts": [
-    "INVALID_CURSOR"
+    "FORBIDDEN",
+    "INVALID_CURSOR",
+    "MISSING_SCOPE",
+    "UNAUTHENTICATED"
   ],
   "retention get /orgs/{orgId}/retention/receipts/{receiptId}/download": [
-    "RECEIPT_NOT_FOUND"
+    "FORBIDDEN",
+    "MISSING_SCOPE",
+    "RECEIPT_NOT_FOUND",
+    "UNAUTHENTICATED"
   ],
   "retention get /retention/receipts": [
     "INVALID_CURSOR"
@@ -6002,6 +6028,7 @@
   ],
   "retention post /orgs/{orgId}/retention/holds": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "ORG_NOT_FOUND",
     "PASS_NOT_FOUND",
     "UNAUTHENTICATED",
@@ -9372,22 +9399,50 @@
     "USER_NOT_FOUND"
   ],
   "users delete /{id}/sessions/{sessionId}": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "SESSION_NOT_FOUND",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users get /": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "users get /{id}": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users get /{id}/passes": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
   "users patch /{id}": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "ORG_CONFLICT",
     "ORG_NOT_FOUND",
     "ORG_PERSONAL",
@@ -9408,6 +9463,17 @@
     "USER_NOT_FOUND"
   ],
   "users post /{id}/sessions/revoke": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
   ],
@@ -9607,14 +9673,17 @@
   ],
   "wallet platform get /wallet-credentials": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform get /wallet-credentials/migrate": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform get /wallet-credentials/{id}/checks/{checkId}": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "SANDBOX_TEST_ONLY",
@@ -9623,6 +9692,7 @@
   ],
   "wallet platform get /wallet-enrolments": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -9635,6 +9705,8 @@
     "WALLET_ENROLMENT_PREREQUISITE"
   ],
   "wallet platform post /orgs/{orgId}/wallet-accounts/google/managed": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_NOT_FOUND",
     "UNAUTHENTICATED",
@@ -9642,7 +9714,9 @@
     "WALLET_PLATFORM_CREDENTIAL_MISSING"
   ],
   "wallet platform post /orgs/{orgId}/wallet-accounts/google/managed/complete": [
+    "FORBIDDEN",
     "GOOGLE_ISSUER_NOT_SHARED",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ISSUER_CLAIMED",
@@ -9668,6 +9742,7 @@
   ],
   "wallet platform post /wallet-credentials/migrate": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform post /wallet-credentials/migrate/resolve": [
@@ -9683,6 +9758,7 @@
   ],
   "wallet platform post /wallet-credentials/{id}/check": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "SANDBOX_TEST_ONLY",
@@ -9699,6 +9775,8 @@
     "WALLET_ENROLMENT_PREREQUISITE"
   ],
   "wallet platform post /wallet-credentials/{id}/rotate-key": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT"
@@ -9716,6 +9794,7 @@
   "wallet platform put /wallet-credentials": [
     "CONFLICT",
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_CREDENTIALS_INVALID",
@@ -9725,6 +9804,7 @@
   "wallet platform put /wallet-credentials/{id}/cards": [
     "CONFLICT",
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",

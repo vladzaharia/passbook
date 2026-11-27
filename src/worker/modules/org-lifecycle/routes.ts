@@ -232,7 +232,7 @@ register(
   'org-lifecycle',
   {
     method: 'get',
-    auth: { platform: 'platform:orgs' },
+    auth: { platform: 'platform:orgs', key: true },
     path: '/closed-orgs',
     summary: 'List closed organizations',
     query: CursorQuerySchema,
