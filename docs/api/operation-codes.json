@@ -5979,20 +5979,17 @@
   "retention get /orgs/{orgId}/retention/holds": [
     "FORBIDDEN",
     "MISSING_SCOPE",
-    "ORG_PERSONAL",
     "UNAUTHENTICATED"
   ],
   "retention get /orgs/{orgId}/retention/receipts": [
     "FORBIDDEN",
     "INVALID_CURSOR",
     "MISSING_SCOPE",
-    "ORG_PERSONAL",
     "UNAUTHENTICATED"
   ],
   "retention get /orgs/{orgId}/retention/receipts/{receiptId}/download": [
     "FORBIDDEN",
     "MISSING_SCOPE",
-    "ORG_PERSONAL",
     "RECEIPT_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
@@ -6032,7 +6029,6 @@
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_NOT_FOUND",
-    "ORG_PERSONAL",
     "PASS_NOT_FOUND",
     "UNAUTHENTICATED",
     "VALIDATION"
@@ -9403,6 +9399,15 @@
   ],
   "users delete /{id}/sessions/{sessionId}": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
     "MISSING_SCOPE",
     "SESSION_NOT_FOUND",
     "UNAUTHENTICATED",
@@ -9458,6 +9463,15 @@
   ],
   "users post /{id}/sessions/revoke": [
     "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CLIENT",
+    "IDP_CONFLICT",
+    "IDP_IN_USE",
+    "IDP_NOT_MANAGED",
+    "IDP_PLATFORM_ADMIN",
+    "IDP_REFUSED",
+    "IDP_SCIM_FOREIGN",
+    "IDP_SCIM_MISSING",
     "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "USER_NOT_FOUND"
