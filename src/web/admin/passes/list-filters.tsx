@@ -2,7 +2,9 @@ import { FilterBar, type FilterDef } from '../../ui/index.ts';
 import { useConnections } from '../connections/api.ts';
 import type { PassFilters } from './api.ts';
 
-export interface ListSearch extends Omit<PassFilters, 'orgId' | 'match'> {
+export interface ListSearch extends Omit<PassFilters, 'orgId' | 'orgIds' | 'match'> {
+  /** The All scope's Organization filter: ids joined by commas. */
+  orgIds?: string | undefined;
   /** The query bar's chips (JSON): see find-query.ts. */
   m?: string | undefined;
 }
@@ -17,6 +19,7 @@ export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   onDevice: undefined,
   noScanDays: undefined,
   m: undefined,
+  orgIds: undefined,
 };
 
 const ANY = 'all';
@@ -26,14 +29,17 @@ const pick = <T extends string>(v: string): T | undefined => (v === ANY ? undefi
 export function PassListFilters({
   search,
   orgId,
+  all = false,
   onChange,
 }: {
   search: ListSearch;
   orgId: string | undefined;
+  /** The All scope: filters that need one organization's connections stay out. */
+  all?: boolean;
   onChange: (patch: Partial<ListSearch>) => void;
 }) {
   const connections = useConnections({ orgId });
-  const filters: FilterDef[] = [
+  const defs: FilterDef[] = [
     {
       id: 'status',
       label: 'Status',
@@ -111,5 +117,7 @@ export function PassListFilters({
         ]
       : []),
   ];
+  // Connections and imports belong to one organization.
+  const filters = all ? defs.filter((f) => f.id !== 'connection' && f.id !== 'import') : defs;
   return <FilterBar maxInline={5} filters={filters} onClear={() => onChange(CLEARED)} />;
 }

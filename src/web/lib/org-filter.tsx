@@ -6,8 +6,8 @@ import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { api } from './api.ts';
 import { canAccessAdminPath } from './guards.ts';
 import { firstAllowedPath } from './nav.ts';
-import { listableMemberships } from './org-lists.ts';
-import { type AdminScope, PLATFORM, parseAdminPath, switchTarget, withOrg } from './scope.ts';
+import { canUseAllScope, listableMemberships } from './org-lists.ts';
+import { type AdminScope, ALL, PLATFORM, parseAdminPath, switchTarget, withOrg } from './scope.ts';
 import { membershipsQuery, sessionQuery, useMemberships, useSession } from './session.ts';
 
 const NO_MEMBERSHIPS: OrgMembership[] = [];
@@ -85,6 +85,11 @@ export function useOrgScope() {
     },
     [isAdmin, memberships, navigate, pathname],
   );
+  /** The All-organizations scope: its Passes page, when two or more organizations are readable. */
+  const switchAll = useCallback(() => {
+    if (!canUseAllScope(memberships)) return;
+    void navigate({ to: switchTarget(pathname, ALL, () => true) });
+  }, [memberships, navigate, pathname]);
   /**
    * A page's own organization choice (a wizard or dialog creating elsewhere): the same page in
    * that organization, with its search, when the membership opens it; else as the switcher.
@@ -105,6 +110,7 @@ export function useOrgScope() {
     orgId: membership?.orgId,
     setOrgId,
     switchScope,
+    switchAll,
     memberships,
     /** What admin offers as "your organizations": no developer sandboxes (org-lists.ts). */
     choices: listableMemberships(memberships),

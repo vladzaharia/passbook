@@ -2420,6 +2420,7 @@
      "topic": "x",
      "contentClass": "json",
      "eventRef": "x",
+     "retentionId": "x",
      "usedPrevious": false,
      "count": 0
     }

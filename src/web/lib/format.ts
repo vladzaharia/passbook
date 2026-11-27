@@ -4,6 +4,7 @@ import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shar
 
 export { formatClockIn, formatFullIn, formatStampIn } from '../../shared/format-clock.ts';
 export { formatEndedOn } from '../../shared/format-date.ts';
+export { formatDayIn };
 
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
 // differently ("Nov 2, 2026, 11:51 PM" in Chromium, "… at 11:51 PM" in WebKit), so the parts are
@@ -59,6 +60,18 @@ const CALENDAR_DATE = new Intl.DateTimeFormat(LOCALE, {
 export function formatCalendarDate(key: string): string {
   const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
   return CALENDAR_DATE.format(Date.UTC(y, m - 1, d));
+}
+
+const MONTH_YEAR = new Intl.DateTimeFormat(LOCALE, {
+  timeZone: CALENDAR_ZONE,
+  month: 'short',
+  year: 'numeric',
+});
+
+/** "Nov 2026" from a `YYYY-MM-DD` key: a plain calendar date, so no zone moves it across a month. */
+export function formatMonthYear(key: string): string {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return MONTH_YEAR.format(Date.UTC(y, m - 1, d));
 }
 
 /** Today's `YYYY-MM-DD` on the calendar of a time zone. */

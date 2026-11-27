@@ -25,7 +25,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ? scope.memberships.find((m) => shown?.kind === 'org' && m.orgId === shown.orgId)
     : undefined;
   const polaris = useIdpConnected();
-  const groups = adminNavGroups(shown, isAdmin, membership, { polaris });
+  const groups = adminNavGroups(
+    shown,
+    isAdmin,
+    membership,
+    { polaris },
+    ready ? scope.memberships : [],
+  );
   const reviews = useTemplateReviews(
     shown?.kind === 'org' ? shown.orgId : undefined,
     Boolean(membership?.capabilities.includes('templates:review')),

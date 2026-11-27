@@ -4186,6 +4186,7 @@ class ConnectionsWebhookArrivalsListItem(_Model):
     topic: str | None
     contentClass: _Literal["json", "xml", "form", "other"] | str
     eventRef: str | None
+    retentionId: str | None
     usedPrevious: bool
     count: int
 
@@ -4202,6 +4203,7 @@ class ConnectionsWebhookArrivalsListResponseItemsItem(_Model):
     topic: str | None
     contentClass: _Literal["json", "xml", "form", "other"] | str
     eventRef: str | None
+    retentionId: str | None
     usedPrevious: bool
     count: int
 
@@ -7263,6 +7265,9 @@ class PassDetail(_Model):
     removedAt: int | None = None
     modifiedAt: int
     createdAt: int
+    orgName: str | None = None
+    templateName: str | None = None
+    timeZone: str | None = None
     email: PassDetailEmail | None = None
     reissueRequired: bool
     pushBudget: PassDetailPushBudget | None = None
@@ -8787,6 +8792,9 @@ class PassSummary(_Model):
     removedAt: int | None = None
     modifiedAt: int
     createdAt: int
+    orgName: str | None = None
+    templateName: str | None = None
+    timeZone: str | None = None
 
 class PassSummaryMatchedItem(_Model):
     input: str

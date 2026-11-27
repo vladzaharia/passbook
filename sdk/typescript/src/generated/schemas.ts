@@ -1844,6 +1844,7 @@ export type ConnectionsWebhookArrivalsListResponse = {
     topic: string | null;
     contentClass: "json" | "xml" | "form" | "other";
     eventRef: string | null;
+    retentionId: string | null;
     usedPrevious: boolean;
     count: number;
   }>;
@@ -5080,6 +5081,9 @@ export type PassDetail = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
   email?: {
     outcome: "queued" | "deferred" | "limited_org" | "limited_recipient" | "cancelled" | "none";
     cap?: "org" | "recipient";
@@ -6771,6 +6775,9 @@ export type PassSummary = {
   removedAt?: number | null;
   modifiedAt: number;
   createdAt: number;
+  orgName?: string;
+  templateName?: string;
+  timeZone?: string;
 };
 
 export type PassUninstalledEvent = {

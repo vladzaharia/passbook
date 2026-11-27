@@ -3,7 +3,7 @@ import { CHECKED_AT, defineGuide } from './setup-define.ts';
 export const tickettailorTicketsSetup = defineGuide({
   direction: 'inbound',
   recipe: 'tickettailor-tickets',
-  version: '2026-11-25',
+  version: '2026-11-26',
   checkedAt: CHECKED_AT,
   provider: {
     name: 'Ticket Tailor',
@@ -54,7 +54,7 @@ export const tickettailorTicketsSetup = defineGuide({
           t: 'path',
           items: ['Box office', 'Settings', 'API', 'Webhooks', 'Create new webhook'],
         },
-        { t: 'field', label: 'Events', choose: true, value: 'Both events below.' },
+        { t: 'field', label: 'Events', value: 'Both events below.' },
         { t: 'topics' },
         { t: 'field', label: 'URL', copy: 'endpointUrl' },
         { t: 'note', text: 'If it takes one event each, add a webhook for each.' },

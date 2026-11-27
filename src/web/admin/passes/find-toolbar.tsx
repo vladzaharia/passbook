@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import type { PassView } from '@/shared/contracts/pass-views.ts';
 import { UserMessageError } from '../../lib/errors.ts';
 import { toast } from '../../ui/index.ts';
@@ -17,6 +18,10 @@ import {
 } from './find-query.ts';
 import { FindViews } from './find-views.tsx';
 import { type ListSearch, PassListFilters } from './list-filters.tsx';
+import { OrgsFilter } from './orgs-filter.tsx';
+
+export const orgIdsOf = (raw: string | undefined): string[] =>
+  raw ? raw.split(',').filter(Boolean) : [];
 
 /** Views, the query bar and the select filters: what narrows the passes list. */
 export function PassFindToolbar({
@@ -24,12 +29,15 @@ export function PassFindToolbar({
   orgId,
   templates,
   canOperate,
+  all,
   onChange,
 }: {
   search: ListSearch;
   orgId: string | undefined;
   templates: { id: string; name: string }[];
   canOperate: boolean;
+  /** The All scope: the organizations to pick from. Views, templates and inputs need one organization. */
+  all?: readonly Pick<OrgMembership, 'orgId' | 'orgName' | 'personal'>[] | undefined;
   onChange: (patch: Partial<ListSearch>) => void;
 }) {
   const chips = useMemo(() => allChips(search), [search]);
@@ -81,22 +89,24 @@ export function PassFindToolbar({
 
   return (
     <>
-      <FindViews
-        views={saved}
-        counts={counts}
-        active={active}
-        canSave={canOperate}
-        filter={filter}
-        onPick={pick}
-        onSave={async (name) => {
-          if (filter.holderEmail)
-            throw new UserMessageError('A view cannot hold an email address.');
-          const id = `v${Date.now().toString(36)}`;
-          await save.mutateAsync({ items: [...saved, { id, name, filter }], revision });
-          toast.success('View saved');
-        }}
-        onDelete={(id) => save.mutate({ items: saved.filter((v) => v.id !== id), revision })}
-      />
+      {all ? null : (
+        <FindViews
+          views={saved}
+          counts={counts}
+          active={active}
+          canSave={canOperate}
+          filter={filter}
+          onPick={pick}
+          onSave={async (name) => {
+            if (filter.holderEmail)
+              throw new UserMessageError('A view cannot hold an email address.');
+            const id = `v${Date.now().toString(36)}`;
+            await save.mutateAsync({ items: [...saved, { id, name, filter }], revision });
+            toast.success('View saved');
+          }}
+          onDelete={(id) => save.mutate({ items: saved.filter((v) => v.id !== id), revision })}
+        />
+      )}
       <FindBar
         chips={chips}
         fields={fields}
@@ -105,8 +115,17 @@ export function PassFindToolbar({
         onTemplate={(templateId) => onChange({ templateId })}
         onAdd={add}
         onRemove={remove}
+        extra={
+          all ? (
+            <OrgsFilter
+              choices={all}
+              value={orgIdsOf(search.orgIds)}
+              onChange={(ids) => onChange({ orgIds: ids.length ? ids.join(',') : undefined })}
+            />
+          ) : undefined
+        }
       />
-      <PassListFilters search={search} orgId={orgId} onChange={onChange} />
+      <PassListFilters search={search} orgId={orgId} all={Boolean(all)} onChange={onChange} />
     </>
   );
 }

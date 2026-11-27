@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react';
-import { type KeyboardEvent, useId, useMemo, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useId, useMemo, useState } from 'react';
 import type { InputField } from '@/shared/issuing/fields.ts';
 import { cn } from '../../lib/cn.ts';
 import { Select } from '../../ui/index.ts';
@@ -56,6 +56,7 @@ export function FindBar({
   onTemplate,
   onAdd,
   onRemove,
+  extra,
 }: {
   chips: readonly FindChip[];
   fields: readonly InputField[];
@@ -64,6 +65,8 @@ export function FindBar({
   onTemplate: (id: string | undefined) => void;
   onAdd: (chip: FindChip) => void;
   onRemove: (index: number) => void;
+  /** A control beside the bar, where the template select sits. */
+  extra?: ReactNode;
 }) {
   const id = useId();
   const [text, setText] = useState('');
@@ -148,6 +151,7 @@ export function FindBar({
           className="w-auto min-w-36 max-w-56 max-sm:w-full max-sm:max-w-none"
         />
       ) : null}
+      {extra}
       {offers.length > 0 ? (
         <div
           id={`${id}-list`}

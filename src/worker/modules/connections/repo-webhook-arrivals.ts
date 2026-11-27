@@ -24,6 +24,7 @@ export interface ArrivalRow {
   topic: string | null;
   contentClass: ContentClass;
   eventRef: string | null;
+  retentionId: string | null;
   usedPrevious: boolean;
   count: number;
 }
@@ -37,6 +38,7 @@ interface ArrivalSql {
   topic: string | null;
   content_class: ContentClass;
   event_ref: string | null;
+  retention_id: string | null;
   used_previous: number;
   count: number;
 }
@@ -134,7 +136,7 @@ export async function listArrivals(
 ): Promise<ArrivalRow[]> {
   const rows = await all<ArrivalSql>(
     db,
-    `SELECT id, received_at, last_at, outcome, reason, topic, content_class, event_ref, used_previous, count
+    `SELECT id, received_at, last_at, outcome, reason, topic, content_class, event_ref, retention_id, used_previous, count
      FROM connection_webhook_arrivals WHERE org_id = ? AND connection_id = ? AND last_at > ?
      ORDER BY last_at DESC, id DESC LIMIT ?`,
     [orgId, connectionId, since, limit],
@@ -148,6 +150,7 @@ export async function listArrivals(
     topic: r.topic,
     contentClass: r.content_class,
     eventRef: r.event_ref,
+    retentionId: r.retention_id,
     usedPrevious: r.used_previous === 1,
     count: r.count,
   }));

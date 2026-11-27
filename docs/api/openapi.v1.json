@@ -7340,6 +7340,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           }
         },
         "required": [
@@ -7828,6 +7837,15 @@
           "createdAt": {
             "type": "integer",
             "minimum": 0
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           },
           "email": {
             "type": "object",
@@ -55748,6 +55766,14 @@
                   ],
                   "maxLength": 200
                 },
+                "retentionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 64
+                },
                 "usedPrevious": {
                   "type": "boolean"
                 },
@@ -55765,6 +55791,7 @@
                 "topic",
                 "contentClass",
                 "eventRef",
+                "retentionId",
                 "usedPrevious",
                 "count"
               ]
@@ -120877,6 +120904,15 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 3249
+            },
+            "required": false,
+            "name": "orgIds",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "minLength": 1,
               "maxLength": 64
             },
@@ -121102,6 +121138,7 @@
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_SCOPE_TOO_WIDE",
           "RATE_LIMITED",
           "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
@@ -136208,6 +136245,7 @@
                       "topic": null,
                       "contentClass": "json",
                       "eventRef": null,
+                      "retentionId": "0193a1b2-7c00-7000-8000-a8139303a64a",
                       "usedPrevious": false,
                       "count": 2
                     }

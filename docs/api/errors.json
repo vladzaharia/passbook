@@ -3990,6 +3990,15 @@
       ]
     },
     {
+      "code": "ORG_SCOPE_TOO_WIDE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "ORG_SLUG_RESERVED",
       "statuses": [
         400
@@ -7203,6 +7212,7 @@
         422
       ],
       "modules": [
+        "passes",
         "platform",
         "templates"
       ]

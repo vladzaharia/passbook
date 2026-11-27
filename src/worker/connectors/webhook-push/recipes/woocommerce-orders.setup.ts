@@ -3,7 +3,7 @@ import { CHECKED_AT, defineGuide } from './setup-define.ts';
 export const woocommerceOrdersSetup = defineGuide({
   direction: 'inbound',
   recipe: 'woocommerce-orders',
-  version: '2026-11-25',
+  version: '2026-11-26',
   checkedAt: CHECKED_AT,
   provider: {
     name: 'WooCommerce',
@@ -42,13 +42,13 @@ export const woocommerceOrdersSetup = defineGuide({
           ],
         },
         { t: 'text', text: 'Add one webhook for each topic. Paste the same secret into both.' },
-        { t: 'field', label: 'Name', choose: true, value: 'Anything you will recognise.' },
-        { t: 'field', label: 'Status', value: 'Active' },
-        { t: 'field', label: 'Topic', choose: true, value: 'One of the topics below.' },
+        { t: 'field', label: 'Name', value: 'Anything you will recognise.' },
+        { t: 'field', label: 'Status', choose: true, value: 'Active' },
+        { t: 'field', label: 'Topic', value: 'One of the topics below.' },
         { t: 'topics' },
         { t: 'field', label: 'Delivery URL', copy: 'endpointUrl' },
         { t: 'field', label: 'Secret', copy: 'secret' },
-        { t: 'field', label: 'API Version', choose: true, value: 'Keep the default.' },
+        { t: 'field', label: 'API Version', choose: true, value: 'Default' },
       ],
     },
     {

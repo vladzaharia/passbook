@@ -12,7 +12,7 @@ import {
 export const stripePaymentsSetup = defineGuide({
   direction: 'inbound',
   recipe: 'stripe-payments',
-  version: '2026-11-25',
+  version: '2026-11-26',
   checkedAt: CHECKED_AT,
   provider: STRIPE_PROVIDER,
   secret: STRIPE_SECRET,
