@@ -50,12 +50,6 @@ function Meta({ attention, known }: { attention: Attention | undefined; known: b
           {attention.value}
         </span>
       );
-    case 'live':
-      return (
-        <span aria-hidden className="wb-meta">
-          <span className="wb-live" />
-        </span>
-      );
     case 'warn':
       return (
         <span aria-hidden className="wb-meta">

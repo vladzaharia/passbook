@@ -53,7 +53,6 @@ export const ATTENTION_LABEL = {
   quickstart: (done: number, total: number) => `${done} of ${total} done`,
   errors: (n: number) => `${n} new ${n === 1 ? 'error' : 'errors'}`,
   failedDeliveries: (n: number) => `${n} failed ${n === 1 ? 'delivery' : 'deliveries'}`,
-  listening: 'Listening',
   inboxNew: (n: number) => `${n} new`,
   running: (n: number) => `${n} running`,
   keyExpiring: 'A key expires within 7 days',

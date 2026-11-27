@@ -104,6 +104,11 @@ export function ContextNotFound() {
   );
 }
 
+const NAME_MAX = 24;
+/** An org name long enough to wrap the heading to three lines at 390 reads cut short. */
+const shortName = (name: string): string =>
+  name.length > NAME_MAX ? `${name.slice(0, NAME_MAX - 1).trimEnd()}…` : name;
+
 /**
  * A deep link to an area this org's Test does not allow: the area is absent from the nav, so this
  * names it, offers the nearest allowed area and admin (design §6). Never a 403 page.
@@ -121,8 +126,8 @@ export function ToolNotAllowed({
   return (
     <NoAccessState
       heading
-      titleClassName={STATE_TITLE}
-      title={WB_STATES.notAllowed.title(orgName)}
+      titleClassName={cn(STATE_TITLE, 'max-w-full line-clamp-2 break-words')}
+      title={WB_STATES.notAllowed.title(shortName(orgName))}
       actions={
         <>
           <Button asChild variant="outline" iconStart={<Icon aria-hidden />}>
