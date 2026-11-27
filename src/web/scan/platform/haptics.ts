@@ -18,6 +18,11 @@ export function setHapticSender(send: ((pattern: number[]) => void) | null) {
   sender = send;
 }
 
+/** Clears the sender only if it is still `send`, so a late dispose cannot unset a newer runtime's. */
+export function clearHapticSender(send: (pattern: number[]) => void) {
+  if (sender === send) sender = null;
+}
+
 /** Whether this device can buzz at all: a native shell that plays the op, or the Vibration API (not iOS Safari). */
 export function canBuzz(
   bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,

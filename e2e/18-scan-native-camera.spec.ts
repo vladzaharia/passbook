@@ -108,7 +108,7 @@ async function settleDoor(page: Page, features: string[]) {
     template.versions[0].version,
   );
   const codes: string[] = [];
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 3, 4, 5, 6]) {
     const memberId = uid(`SETTLE${n}`).toUpperCase();
     codes.push(memberId);
     await createPass(api, orgId, {
@@ -145,23 +145,55 @@ test('an app listing scanSettle: duplicate is dropped, parked reads are answered
     await expect
       .poll(async () => (await sentOps(page)).find((m) => m.id === 'dup' && m.op !== 'scanAck'))
       .toMatchObject({ op: 'dropped', reason: 'duplicate' });
+    // Hold the server check, so reads sent meanwhile park behind it whatever the page's speed.
+    let release = () => {};
+    let held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('**/resolve', async (route) => {
+      await held;
+      await route.continue();
+    });
+    const terminal = (id: string) =>
+      expect.poll(
+        async () =>
+          (await sentOps(page)).find(
+            (m) => m.id === id && (m.op === 'result' || m.op === 'dropped'),
+          ),
+        { timeout: 20_000 },
+      );
+    await expect(page.getByTestId('scan-result')).not.toBeVisible({ timeout: 20_000 });
+    await nativeScan(page, [['c', codes[1] as string]]);
+    await expect
+      .poll(async () => (await sentOps(page)).some((m) => m.id === 'c' && m.op === 'scanAck'))
+      .toBe(true);
     await nativeScan(page, [
-      ['a', codes[1] as string],
-      ['b', codes[2] as string],
+      ['a', codes[2] as string],
+      ['b', codes[3] as string],
     ]);
+    await terminal('a').toMatchObject({ op: 'dropped', reason: 'replaced' });
+    release();
+    await terminal('c').toMatchObject({ op: 'result', outcome: 'accepted' });
+    await terminal('b').toMatchObject({ op: 'result', outcome: 'accepted' });
+    // One parked read behind a held check: both are answered with their own result.
+    held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await expect(page.getByTestId('scan-result')).not.toBeVisible({ timeout: 20_000 });
+    await nativeScan(page, [['d', codes[4] as string]]);
     await expect
-      .poll(async () => (await sentOps(page)).find((m) => m.id === 'a' && m.op === 'dropped'), {
-        timeout: 20_000,
-      })
-      .toMatchObject({ reason: 'replaced' });
+      .poll(async () => (await sentOps(page)).some((m) => m.id === 'd' && m.op === 'scanAck'))
+      .toBe(true);
+    await nativeScan(page, [['e', codes[5] as string]]);
     await expect
-      .poll(async () => (await sentOps(page)).find((m) => m.id === 'b' && m.op === 'result'), {
-        timeout: 20_000,
-      })
-      .toMatchObject({ outcome: 'accepted' });
+      .poll(async () => (await sentOps(page)).some((m) => m.id === 'e' && m.op === 'scanAck'))
+      .toBe(true);
+    release();
+    await terminal('d').toMatchObject({ op: 'result', outcome: 'accepted' });
+    await terminal('e').toMatchObject({ op: 'result', outcome: 'accepted' });
     const sent = await sentOps(page);
     expect(sent.some((m) => m.op === 'haptic' && m.version === 2)).toBe(true);
-    for (const id of ['first', 'dup', 'a', 'b']) {
+    for (const id of ['first', 'dup', 'c', 'a', 'b', 'd', 'e']) {
       const terminals = sent.filter(
         (m) => m.id === id && (m.op === 'result' || m.op === 'dropped'),
       );

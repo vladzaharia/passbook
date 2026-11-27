@@ -38,12 +38,6 @@ export function departure(prev: ScanState, id: string): DropReason {
     : 'closed';
 }
 
-/** The verdict `prev` showed for `id` that no publish carried to the app. */
-export function unsentVerdict(prev: ScanState, id: string): ReaderOutcome | null {
-  const shown = onScreen(prev);
-  return shown?.id === id ? shown.outcome : null;
-}
-
 export function createNativeSettle(send: (message: object) => void, settles: () => boolean) {
   /** Input id to native id, oldest first, until the id's one terminal is sent. */
   const pending = new Map<string, string>();

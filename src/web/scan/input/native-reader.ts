@@ -76,7 +76,7 @@ export function connectNativeReader(
     unsupported(): void;
     capabilities?(value: Record<string, unknown>): void;
     /** The handshake settled whether the app takes v2 haptics (`scanAck` and `scanSettle` listed). */
-    settleReady?(on: boolean): void;
+    settleReady?(on: boolean, haptic: (pattern: number[]) => void): void;
     /** A one-shot `tagRead` ended without a tag (sheet cancelled or timed out). */
     tagEnded?(why: 'cancelled' | 'timeout'): void;
   },
@@ -93,6 +93,7 @@ export function connectNativeReader(
   let tagSeq = 0;
   let tagPending: string | null = null;
   const send = (message: object) => bridge.postMessage(JSON.stringify({ version, ...message }));
+  const haptic = (pattern: number[]) => send({ op: 'haptic', pattern });
   let customerDisplayAvailable = false;
   let lastCustomerStatus: {
     status: CustomerDisplayStatus;
@@ -145,7 +146,7 @@ export function connectNativeReader(
         appSettles = false;
       }
       if (message.event === 'ready') settle.clear();
-      options.settleReady?.(settles());
+      options.settleReady?.(settles(), haptic);
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
       const display = CustomerDisplay.safeParse(capabilities.data.customerDisplay);
@@ -235,7 +236,7 @@ export function connectNativeReader(
       tagPending = null;
     },
     /** A buzz at the negotiated version. */
-    haptic: (pattern: number[]) => send({ op: 'haptic', pattern }),
+    haptic,
     start: () => send({ op: 'start', ...formats() }),
     /** The verdict for a tracked read: `result` once, then `revise` when it changes. */
     result: settle.answer,

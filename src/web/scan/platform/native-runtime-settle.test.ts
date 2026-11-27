@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanInput } from '../input/types.ts';
 import { fixtureInput, fixtureOutcome, fixtureState } from '../machine/fixtures.test-support.ts';
 import type { ScanState } from '../machine/types.ts';
+import { buzz, setHapticSender } from './haptics.ts';
 import { createNativeRuntime } from './native-runtime.ts';
 
 const posted: Record<string, unknown>[] = [];
 const bridge = {
-  postMessage: (s: string) => posted.push(JSON.parse(s)),
+  postMessage: (s: string): unknown => posted.push(JSON.parse(s)),
   onmessage: null as ((e: { data: string }) => void) | null,
 };
 const inp = (n: number): ScanInput =>
@@ -100,6 +101,7 @@ const ops = () => posted.filter((m) => m.op !== 'scanAck' && m.op !== 'customerS
 beforeEach(() => {
   posted.length = 0;
   bridge.onmessage = null;
+  bridge.postMessage = (s: string) => posted.push(JSON.parse(s));
   (globalThis as { PassBookNative?: unknown }).PassBookNative = bridge;
 });
 
@@ -224,5 +226,68 @@ describe('native settle through the runtime', () => {
     });
     h.publish(ready());
     expect(ops()).toEqual([]);
+  });
+
+  it('a parked read whose slot is replaced in one reduce is dropped closed, never answered', () => {
+    const h = harness();
+    h.onRead(() => checking(1, 2));
+    h.scan('n1');
+    h.scan('n2');
+    posted.length = 0;
+    h.publish(checking(2));
+    expect(ops()).toEqual([{ version: 2, op: 'dropped', id: 'n1', reason: 'closed' }]);
+  });
+});
+
+describe('native haptic sender through the runtime', () => {
+  const deps = () => ({
+    session: () => ({ event: null, scanner: null }) as never,
+    dispatch: () => inp(1),
+    now: () => 0,
+    held: () => false,
+    idle: () => false,
+    notice: vi.fn(),
+    snapshot: () => ({ state: ready() }),
+    nfcReader: () => false,
+    syncCameraMode: vi.fn(),
+    tagEnded: new Set<(why: 'cancelled' | 'timeout') => void>(),
+    fail: vi.fn(),
+  });
+  const readyMessage = JSON.stringify({
+    version: 2,
+    event: 'ready',
+    features: ['scanAck', 'scanSettle'],
+    capabilities: {},
+  });
+
+  it('a late dispose leaves a newer runtime sender alone', () => {
+    const old = createNativeRuntime(deps());
+    bridge.onmessage?.({ data: readyMessage });
+    const newer = vi.fn();
+    setHapticSender(newer);
+    old.dispose();
+    expect(buzz('ok', undefined, undefined, false)).toBe(true);
+    expect(newer).toHaveBeenCalledWith([40]);
+    setHapticSender(null);
+  });
+
+  it('dispose clears its own sender', () => {
+    const rt = createNativeRuntime(deps());
+    bridge.onmessage?.({ data: readyMessage });
+    rt.dispose();
+    expect(buzz('ok', undefined, undefined, false)).toBe(false);
+  });
+
+  it('a ready delivered while the reader connects still sets the sender', () => {
+    bridge.postMessage = (s: string) => {
+      const message = JSON.parse(s);
+      posted.push(message);
+      if (message.op === 'hello') bridge.onmessage?.({ data: readyMessage });
+    };
+    const rt = createNativeRuntime(deps());
+    posted.length = 0;
+    expect(buzz('ok', undefined, undefined, false)).toBe(true);
+    expect(posted).toEqual([{ version: 2, op: 'haptic', pattern: [40] }]);
+    rt.dispose();
   });
 });

@@ -6,13 +6,12 @@ import {
   onScreen,
   outcomeOf,
   type ReadResult,
-  unsentVerdict,
 } from '../input/native-settle.ts';
 import type { RawRead, ScanInput } from '../input/types.ts';
 import { readFate } from '../machine/reduce-read.ts';
 import type { ScanState } from '../machine/types.ts';
 import { customerBrandingOf } from './customer-branding.ts';
-import { setHapticSender } from './haptics.ts';
+import { clearHapticSender, setHapticSender } from './haptics.ts';
 import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 
 interface Deps {
@@ -35,6 +34,7 @@ export function createNativeRuntime(d: Deps) {
   let tagReading = false;
   let vasFallbackNoticeShown = false;
   let native: ReturnType<typeof connectNativeReader> = null;
+  let mine: ((pattern: number[]) => void) | null = null;
   setHapticSender(null);
   /** Every native read gets an answer: tracked by input id, or ended now with why. */
   const emitNative = (read: RawRead): ReadResult => {
@@ -57,9 +57,7 @@ export function createNativeRuntime(d: Deps) {
     const live = liveIds(s);
     for (const id of native.unanswered()) {
       if (live.has(id)) continue;
-      const unsent = unsentVerdict(prev, id);
-      if (unsent) native.result(id, unsent);
-      else native.dropped(id, departure(prev, id));
+      native.dropped(id, departure(prev, id));
     }
   };
   native = connectNativeReader({
@@ -74,8 +72,9 @@ export function createNativeRuntime(d: Deps) {
     tagEnded(why) {
       for (const listener of d.tagEnded) listener(why);
     },
-    settleReady(on) {
-      setHapticSender(on && native ? native.haptic : null);
+    settleReady(on, haptic) {
+      mine = on ? haptic : null;
+      setHapticSender(mine);
     },
     capabilities(value) {
       void setNativeCapabilities(value).then(() => {
@@ -121,7 +120,7 @@ export function createNativeRuntime(d: Deps) {
       if (s.block) native.stop();
     },
     dispose() {
-      setHapticSender(null);
+      if (mine) clearHapticSender(mine);
       native?.dispose();
     },
   };
