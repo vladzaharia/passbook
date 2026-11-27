@@ -75,6 +75,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -188,6 +191,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -265,6 +271,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -338,6 +347,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -415,6 +427,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -485,6 +500,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -558,6 +576,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -650,6 +671,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -750,6 +774,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -902,6 +929,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1010,6 +1040,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1097,6 +1130,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1203,6 +1239,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1285,6 +1324,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1365,6 +1407,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1452,6 +1497,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1525,6 +1573,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1590,6 +1641,9 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
