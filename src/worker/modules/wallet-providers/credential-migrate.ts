@@ -13,6 +13,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { accountHmacKind } from '../keys/rewrap-tables.ts';
 import { decryptAccount, snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash, type SourceCredentials } from './account-credential-source.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import {
   accountAt,
   countAccounts,
@@ -80,6 +81,11 @@ export async function openLegacy(
         hmacKey: stored.objectIdHmacKey,
       }
     : { source: { provider: 'samsung', credentials: stored.credentials }, hmacKey: null };
+}
+
+/** A platform route's caller: an admin session, or the gate's `Actor` (a platform admin or a Platform key). */
+export function platformCaller(by: WalletPlatformCaller): void {
+  if (!isActor(by)) adminOnly(by);
 }
 
 export function adminOnly(auth: SessionAuth): { userId: string } {
@@ -258,8 +264,11 @@ export async function runCredentialMigrate(
 }
 
 /** Queues one job per pending account (platform admin). */
-export async function queueMigration(ctx: ServiceContext, auth: SessionAuth): Promise<number> {
-  adminOnly(auth);
+export async function queueMigration(
+  ctx: ServiceContext,
+  auth: WalletPlatformCaller,
+): Promise<number> {
+  platformCaller(auth);
   let queued = 0;
   let after = '';
   for (;;) {
@@ -278,10 +287,10 @@ const REPORT_PAGE = 100;
 /** Pending accounts and why each waits; provider ids never leave. `identityShared` names the other accounts. */
 export async function migrationReport(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   after = '',
 ): Promise<WalletMigrationReport> {
-  adminOnly(auth);
+  platformCaller(auth);
   ctx = snapshotWalletCredentialContext(ctx);
   const counts = await countAccounts(ctx.env.DB);
   const page = await pendingAccounts(ctx.env.DB, after, REPORT_PAGE + 1);

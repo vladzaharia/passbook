@@ -7,16 +7,19 @@ import type {
   UserSummarySchema,
 } from '../../../shared/contracts/index.ts';
 import { knownEmail } from '../../../shared/email.ts';
+import { callerActor, type PlatformCaller } from '../../platform/actor.ts';
 import type { Role } from '../../platform/auth.ts';
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, PersonRequiredError } from '../../platform/errors.ts';
 import { parseJsonArray, parseRoles } from '../../platform/json-column.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { BREAKGLASS_PROVIDER } from '../auth/breakglass-service.ts';
 import { emailsOf } from '../auth/repo.ts';
 import { OIDC_PROVIDER } from '../auth/service.ts';
+import { isLiveAdmin } from '../idp/platform-admin.ts';
 import { viewerOrgName } from '../orgs/personal-names.ts';
 import { suspendPersonalOrgOf } from '../orgs/personal-suspend.ts';
+import { personalOrgIdOf } from '../orgs/repo-personal.ts';
 import * as repo from './repo.ts';
 
 export type UserDto = z.infer<typeof UserSchema>;
@@ -147,34 +150,44 @@ export async function getUserDetail(
   };
 }
 
+/** A key never acts on a platform admin: signing out or disabling the people who would revoke it is a person's call. */
+export async function refuseAdminTargetForKey(
+  ctx: ServiceContext,
+  who: PlatformCaller,
+  user: repo.UserRow,
+): Promise<void> {
+  if (who.userId === null && (await isLiveAdmin(ctx, user.id, user.last_roles)))
+    throw new ConflictError(
+      'Platform admins hold every role. Change it in Polaris ID.',
+      'IDP_PLATFORM_ADMIN',
+    );
+}
+
 export async function setUserStatus(
   ctx: ServiceContext,
-  actorId: string,
+  who: PlatformCaller,
   id: string,
   status: 'active' | 'disabled',
-  adminSessionId: string,
 ): Promise<UserDto> {
   const user = await requireUser(ctx, id);
-  if (status === 'disabled' && id === actorId) {
+  await refuseAdminTargetForKey(ctx, who, user);
+  if (status === 'disabled' && id === who.userId) {
     throw new ConflictError('You cannot disable your own account.', 'SELF_DISABLE');
   }
-  const changed = await repo.setStatusAsAdmin(ctx, id, status, {
-    userId: actorId,
-    sessionId: adminSessionId,
-  });
+  // Disabling suspends a personal org, which is a person's call (P3): refuse before anything changes.
+  if (status === 'disabled' && who.userId === null && (await personalOrgIdOf(ctx.env.DB, id)))
+    throw new PersonRequiredError();
+  const changed = await repo.setStatusAsAdmin(ctx, id, status, who);
   if (changed) {
+    const actor = callerActor(who);
     await recordAudit(ctx, {
-      actorType: 'user',
-      actorId,
+      actorType: actor.type,
+      actorId: actor.id,
       action: status === 'disabled' ? 'user.disable' : 'user.enable',
       targetType: 'user',
       targetId: id,
     });
-    if (status === 'disabled')
-      await suspendPersonalOrgOf(ctx, { type: 'user', id: actorId }, id, {
-        userId: actorId,
-        sessionId: adminSessionId,
-      });
+    if (status === 'disabled') await suspendPersonalOrgOf(ctx, actor, id, who);
   }
   return toUser({ ...user, status });
 }

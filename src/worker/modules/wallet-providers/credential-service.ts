@@ -21,6 +21,7 @@ import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
+import { isActor, type WalletPlatformCaller } from './platform-caller.ts';
 import { walletReleaseByMode } from './provider-policy.ts';
 import { lastChecksOf } from './repo-credential-checks.ts';
 import {
@@ -127,14 +128,21 @@ export async function orgWriter(
   };
 }
 
-export function platformWriter(auth: SessionAuth, purpose: string): CredentialWriter {
-  const session = sessionOf(auth);
-  if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
+/** A Platform key's event rows name the key as an `api_key` actor; a person's say `platform`. */
+export function platformWriter(by: WalletPlatformCaller, purpose: string): CredentialWriter {
+  const session = isActor(by) ? null : sessionOf(by);
+  if (session && !session.roles.includes('admin'))
+    throw new ForbiddenError('Admin access is required.');
   return {
     purpose,
-    principal: { kind: 'platform', userId: session.userId, sessionIdHash: session.sessionId },
-    checks: [],
-    actor: { type: 'platform', id: session.userId },
+    principal: isActor(by)
+      ? by.principal
+      : { kind: 'platform', userId: by.userId, sessionIdHash: by.sessionId },
+    checks: isActor(by) ? by.checks : [],
+    actor:
+      isActor(by) && by.keyId
+        ? { type: 'api_key', id: by.keyId }
+        : { type: 'platform', id: isActor(by) ? by.actorId : by.userId },
     platform: true,
   };
 }
@@ -281,7 +289,7 @@ export async function revokeOrgCredential(
 
 export async function listPlatformCredentials(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
 ): Promise<PlatformWalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
   return {
@@ -293,7 +301,7 @@ export async function listPlatformCredentials(
 
 export async function savePlatformCredential(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   input: SaveWalletCredential & { mode: 'live' | 'test' },
 ): Promise<WalletCredential> {
   ctx = snapshotWalletCredentialContext(ctx);
@@ -308,7 +316,7 @@ export async function savePlatformCredential(
 
 export async function revokePlatformCredential(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: WalletPlatformCaller,
   id: string,
   input: RevokeWalletCredential,
 ): Promise<WalletCredential> {
