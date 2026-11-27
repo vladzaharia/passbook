@@ -1,17 +1,20 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import type { JobOf } from '../../jobs/types.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
+import { createLogger } from '../../platform/log.ts';
 import { grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from '../passes/tenant-test-fixtures.ts';
+import { enrolOn } from './enrolled-test-fixtures.ts';
 import { runUncertainRecheck } from './health.ts';
 import { handleUncertainRecheck } from './health-job.ts';
 import {
   claimWalletOperation,
   markWalletClaimUncertain,
   newWalletClaimHandle,
+  readWalletPassSnapshot,
 } from './instance.ts';
 import { fixture, reference } from './instance-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
@@ -29,6 +32,10 @@ beforeAll(async () => {
   auth = await setupTenantTestAuth(f.kit);
   app = createApp({ stores: auth.stores, clock: f.kit.clock });
 }, 30_000);
+// The hourly recheck counter is keyed by org, mode and provider: each test starts it from zero.
+beforeEach(async () => {
+  await run(f.kit.env.DB, `DELETE FROM counters WHERE key LIKE 'walletrecheck:%'`);
+});
 afterEach(() => {
   for (const u of undo.splice(0)) u();
 });
@@ -44,6 +51,35 @@ const recheck = (headers: Record<string, string>, provider = 'samsung') =>
     f.kit.env,
   );
 const open = () => undo.push(setWalletProvidersEnabledForTest(true));
+/** An operation the first attempt left uncertain, past the grace window. */
+async function seedDueUncertain() {
+  // One instance per pass and provider: each seeded operation gets its own pass.
+  const pass = await f.kit.pass();
+  const snap = await readWalletPassSnapshot(f.kit.env.DB, { ...f.scope, passId: pass.id });
+  if (!snap) throw new Error('Seeded pass has no snapshot');
+  const op = await f.create({
+    ...f.proof,
+    passId: pass.id,
+    passVersion: snap.passVersion,
+    passRevision: snap.passRevision,
+    passCredentialGeneration: snap.credentialGeneration,
+    lifecycleGeneration: snap.lifecycleGeneration,
+    issuingReleaseId: snap.issuingReleaseId,
+  });
+  const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now: f.kit.clock.now() };
+  expect(await claimWalletOperation(walletJobCtx(f.kit.env.DB), claim)).toBe('claimed');
+  expect(await markWalletClaimUncertain(walletJobCtx(f.kit.env.DB), claim)).toBe(true);
+  f.kit.clock.advance(UNCERTAIN_GRACE_MS + 1);
+  return op;
+}
+const stateOf = async (id: string) =>
+  (
+    await all<{ state: string }>(
+      f.kit.env.DB,
+      'SELECT state FROM wallet_provider_instance_operations WHERE id = ?',
+      [id],
+    )
+  )[0]?.state;
 
 describe('wallet health', () => {
   it('lists no wallet that is not released', async () => {
@@ -135,12 +171,19 @@ describe('wallet health', () => {
   it('lets a pass operator recheck, queues once and audits it', async () => {
     open();
     const operator = await member(['pass_operator']);
+    await seedDueUncertain();
     const before = await audits();
     const sent = f.kit.queue.sent.length;
     const res = await recheck(operator);
     expect(res.status).toBe(202);
+    expect(await res.json()).toEqual({ due: 1, waiting: 0 });
     expect(await audits()).toBe(before + 1);
-    expect(f.kit.queue.sent.length).toBeGreaterThanOrEqual(sent);
+    expect(f.kit.queue.sent).toHaveLength(sent + 1);
+    expect(f.kit.queue.sent.at(-1)).toMatchObject({
+      kind: 'wallet.uncertain_recheck',
+      orgId: orgId(),
+      provider: 'samsung',
+    });
   });
 
   it('refuses a viewer a recheck, and a pass operator the read', async () => {
@@ -157,16 +200,33 @@ describe('wallet health', () => {
       { headers: auth.admin({ mode: mode() }) },
       f.kit.env,
     );
-    expect(res.status).toBeGreaterThanOrEqual(403);
+    await expectProblem(res, 403, 'FORBIDDEN');
   });
 
   it('serves the Test and Live modes apart', async () => {
     open();
-    const other = mode() === 'test' ? 'live' : 'test';
-    const body = (await (await get(auth.admin({ mode: other }))).json()) as {
-      items: { mode: string }[];
-    };
-    for (const item of body.items) expect(item.mode).toBe(other);
+    const tag = `${Date.now()}`;
+    await enrolOn(
+      f.kit,
+      { ...f.auth, mode: 'test' },
+      {
+        provider: 'samsung',
+        expectedRevision: 0,
+        credentials: { ...f.samsung, partnerId: `p${tag}`, cardId: `c${tag}` },
+      },
+    );
+    const view = async (m: 'live' | 'test') =>
+      (await (await get(auth.admin({ mode: m }))).json()) as {
+        items: { provider: string; mode: string; queued: number }[];
+      };
+    const live = await view('live');
+    const test = await view('test');
+    expect(live.items).toHaveLength(1);
+    expect(live.items[0]).toMatchObject({ provider: 'samsung', mode: 'live' });
+    expect(live.items[0]?.queued).toBeGreaterThan(0);
+    expect(test.items).toEqual([
+      expect.objectContaining({ provider: 'samsung', mode: 'test', queued: 0 }),
+    ]);
   });
 
   it('answers a key with wallet:read to read and passes:write to recheck, nothing else', async () => {
@@ -192,13 +252,26 @@ describe('wallet health', () => {
     open();
     const admin = auth.admin({ mode: mode() });
     const statuses: number[] = [];
-    for (let i = 0; i < 12; i += 1) statuses.push((await recheck(admin)).status);
-    expect(statuses[0]).toBe(202);
-    expect(statuses.at(-1)).toBe(429);
+    for (let i = 0; i < 11; i += 1) statuses.push((await recheck(admin)).status);
+    expect(statuses).toEqual([...Array(10).fill(202), 429]);
   });
 
-  it('skips the job when the wallet was turned off after the request', async () => {
+  it('skips the job and leaves an uncertain operation untouched when the wallet was turned off', async () => {
+    undo.push(setWalletProvidersEnabledForTest(false));
+    const op = await seedDueUncertain();
+    const lines: string[] = [];
+    const ctx = {
+      ...walletJobCtx(f.kit.env.DB),
+      clock: f.kit.clock,
+      log: createLogger({}, { sink: (line) => lines.push(line) }),
+    };
     const job = { orgId: orgId(), mode: mode(), provider: 'samsung' as const };
-    expect(await runUncertainRecheck(walletJobCtx(f.kit.env.DB), job)).toBe(0);
+    expect(await runUncertainRecheck(ctx, job)).toBe(0);
+    expect(await stateOf(op.id)).toBe('uncertain');
+    const skipped = lines
+      .map((l) => JSON.parse(l))
+      .filter((l) => l.code === 'WALLET_UNCERTAIN_RECHECK_SKIPPED');
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0]).toMatchObject({ orgId: orgId(), reason: 'not_released' });
   });
 });
