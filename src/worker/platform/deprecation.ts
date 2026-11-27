@@ -11,7 +11,7 @@ export interface RouteDeprecation {
   guide: string;
 }
 
-/** Calendar dates are shown in the default zone (`src/shared/time-zone.ts` has no such constant on main yet). */
+/** Calendar dates are shown in the default zone (`DEFAULT_TIME_ZONE`). */
 const DAY = 86_400_000;
 /** The shortest support window: one year, as docs/api.md promises. */
 const MIN_WINDOW_DAYS = 365;

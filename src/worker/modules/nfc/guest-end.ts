@@ -6,8 +6,6 @@ import type { Candidate } from '../scan/repo-lookup.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { resolveCandidateReadTemplates } from '../scan/template-read-snapshot.ts';
 
-/** An org with no `org.timeZone` keeps time here. */
-
 /** When the visit of a pass on a guest plan ends (ms); null on any other plan or template. */
 export async function guestEnd(
   ctx: ServiceContext,
