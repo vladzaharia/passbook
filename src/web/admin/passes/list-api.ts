@@ -3,27 +3,58 @@ import { useMemo } from 'react';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { readablePassOrgs } from '../../lib/org-lists.ts';
+import { canUseAllScope, readablePassOrgs } from '../../lib/org-lists.ts';
 import { type PassFilters, passKeys } from './api.ts';
 
 /** Which list: one organization (the URL's), or every organization the caller can read. */
 export type PassScope = { kind: 'org' } | { kind: 'all' };
 
-export function usePassList(filters: PassFilters, passScope: PassScope = { kind: 'org' }) {
+/** Filters that name one organization's templates, connections or imports mean nothing across organizations. */
+export const SINGLE_ORG_KEYS = ['templateId', 'connectionId', 'importId', 'match'] as const;
+
+/** The readable organization ids behind the All scope; empty elsewhere. */
+export function useAllScopeOrgIds(all: boolean): ReadonlySet<string> {
   const scope = useOrgScope();
-  const all = passScope.kind === 'all';
   const ready = !scope.isLoading && !scope.isError;
-  const readable = useMemo(
-    () => (all && ready ? readablePassOrgs(scope.memberships).map((m) => m.orgId) : []),
+  return useMemo(
+    () => new Set(all && ready ? readablePassOrgs(scope.memberships).map((m) => m.orgId) : []),
     [all, ready, scope.memberships],
   );
+}
+
+/** Whether the search narrows the list; filters this scope ignores do not count. */
+export function isFiltered(search: object, all: boolean): boolean {
+  const ignored: string[] = all ? [...SINGLE_ORG_KEYS, 'm'] : ['orgIds'];
+  return Object.entries(search).some(
+    ([k, v]) => v !== undefined && v !== '' && !ignored.includes(k),
+  );
+}
+
+export function usePassList(rawFilters: PassFilters, passScope: PassScope = { kind: 'org' }) {
+  const scope = useOrgScope();
+  const all = passScope.kind === 'all';
+  const filters = useMemo(
+    () =>
+      all
+        ? {
+            ...rawFilters,
+            templateId: undefined,
+            connectionId: undefined,
+            importId: undefined,
+            match: undefined,
+          }
+        : rawFilters,
+    [all, rawFilters],
+  );
+  const ready = !scope.isLoading && !scope.isError;
+  const readable = useAllScopeOrgIds(all);
   // Only readable ids go out: a stale link naming another organization would be refused whole.
   const orgIds = useMemo(() => {
-    const chosen = (filters.orgIds ?? []).filter((id) => readable.includes(id));
+    const chosen = (filters.orgIds ?? []).filter((id) => readable.has(id));
     return chosen.length ? chosen : undefined;
   }, [filters.orgIds, readable]);
   const allowed = all
-    ? readable.length >= 2
+    ? canUseAllScope(scope.memberships)
     : Boolean(
         ready &&
           filters.orgId &&

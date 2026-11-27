@@ -161,6 +161,38 @@ describe('the All organizations passes list', () => {
     expect(screen.getByRole('button', { name: /^Organization:/ })).toBeInTheDocument();
   });
 
+  it('shows the Live and Test switch, the Test tone and the announcer', async () => {
+    const user = userEvent.setup();
+    const { seen } = await open('/admin/all/passes');
+    await screen.findByRole('link', { name: 'Sam Jones' });
+    const bar = document.querySelector('[data-menubar]');
+    expect(bar).not.toHaveAttribute('data-tone');
+    await user.click(screen.getByRole('radio', { name: 'Test' }));
+    expect(bar).toHaveAttribute('data-tone', 'test');
+    expect(screen.getByText('Test mode on. New emails go to the Test inbox.')).toBeInTheDocument();
+    await waitFor(() => expect(seen.length).toBeGreaterThan(1));
+    expect(seen.at(-1)?.searchParams.get('orgId')).toBe('all');
+    await user.click(screen.getByRole('radio', { name: 'Live' }));
+    expect(bar).not.toHaveAttribute('data-tone');
+  });
+
+  it('does not send single-organization filters from the link', async () => {
+    const { seen } = await open(
+      '/admin/all/passes?templateId=t1&connectionId=c1&importId=i1&m=%5B%5D',
+    );
+    await screen.findByRole('link', { name: 'Sam Jones' });
+    const q = seen[0]?.searchParams;
+    for (const key of ['templateId', 'connectionId', 'importId', 'match']) {
+      expect(q?.has(key)).toBe(false);
+    }
+    expect(screen.queryByText(/no .*match/i)).toBeNull();
+  });
+
+  it('goes to the chooser when no organization is readable', async () => {
+    const { router } = await open('/admin/all/passes', undefined, [sandbox]);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
+  });
+
   it('has no accessibility violations', async () => {
     const { container } = await open('/admin/all/passes');
     await screen.findByRole('link', { name: 'Sam Jones' });

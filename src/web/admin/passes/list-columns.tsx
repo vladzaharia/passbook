@@ -166,8 +166,9 @@ function OrgCell({ pass }: { pass: PassSummaryDto }) {
 function UpdatedCell({ pass }: { pass: PassSummaryDto }) {
   const { all } = useList();
   // Each row's day is the day in its own organization's zone.
-  const day =
-    all && pass.timeZone ? formatDayIn(pass.modifiedAt, pass.timeZone) : formatDay(pass.modifiedAt);
+  const day = all
+    ? formatDayIn(pass.modifiedAt, pass.timeZone ?? 'America/Los_Angeles')
+    : formatDay(pass.modifiedAt);
   return <span className="text-fg-muted">{day}</span>;
 }
 

@@ -5,7 +5,6 @@ import { canUseAllScope, readablePassOrgs } from '../../../lib/org-lists.ts';
 import { ALL, orgPath } from '../../../lib/scope.ts';
 import { enterScope } from '../../../lib/scope-store.ts';
 import { ErrorState } from '../../../ui/error-state.tsx';
-import { useReachableScope } from '../../../ui/layout/scope-entry.ts';
 import { SkeletonRows } from '../../../ui/skeleton.tsx';
 
 /**
@@ -14,7 +13,6 @@ import { SkeletonRows } from '../../../ui/skeleton.tsx';
  */
 function AllScopeGate() {
   const scope = useOrgScope();
-  const reachable = useReachableScope();
   const allowed = !scope.isLoading && !scope.isError && canUseAllScope(scope.memberships);
   useEffect(() => {
     if (allowed) enterScope(ALL);
@@ -24,10 +22,10 @@ function AllScopeGate() {
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   }
   if (!allowed) {
-    // One readable organization left: its Passes. Otherwise a scope the person can open, else the chooser.
+    // One readable organization left: its Passes. None: the chooser.
     const [only, ...more] = readablePassOrgs(scope.memberships);
-    const to = only && more.length === 0 ? orgPath(only.orgId, '/passes') : reachable?.to;
-    return <Navigate to={to ?? '/admin'} replace />;
+    const to = only && more.length === 0 ? orgPath(only.orgId, '/passes') : '/admin';
+    return <Navigate to={to} replace />;
   }
   return <Outlet />;
 }

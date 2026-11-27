@@ -26,7 +26,7 @@ import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
 import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
 import { orgIdsOf, PassFindToolbar } from './find-toolbar.tsx';
-import { usePassList } from './list-api.ts';
+import { isFiltered, useAllScopeOrgIds, usePassList } from './list-api.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { exportPassesCsv } from './list-export.ts';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
@@ -48,14 +48,10 @@ export function PassesListPage({
   const { orgId } = scope;
   // The All scope lists every readable organization without edits; opening a row is the scope switch.
   const all = useAdminScope()?.kind === 'all';
-  const readable = useMemo(
-    () => (all && !scope.isLoading && !scope.isError ? readablePassOrgs(scope.memberships) : []),
-    [all, scope.isLoading, scope.isError, scope.memberships],
-  );
-  const readableIds = useMemo(() => new Set(readable.map((m) => m.orgId)), [readable]);
+  const readableIds = useAllScopeOrgIds(all);
   const returnTo = useRouterState({ select: (state) => state.location.href });
   const canRead = all
-    ? readable.length >= 2
+    ? readableIds.size >= 2
     : Boolean(
         !scope.isLoading &&
           !scope.isError &&
@@ -97,7 +93,7 @@ export function PassesListPage({
   const shownRun =
     runId ?? (current.data && current.data.id !== dismissed ? current.data.id : undefined);
   const count = list.data?.pages[0]?.count ?? rows.length;
-  const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
+  const filtered = isFiltered(search, all);
   const truth = !list.isPending && !list.isError && !filtered && rows.length === 0;
 
   // A new filter, scope or mode is a new list: the selection does not carry over.
@@ -115,6 +111,10 @@ export function PassesListPage({
           : (templates.data?.items ?? []).map((t) => [t.id, t.name] as const),
       ),
     [all, rows, templates.data],
+  );
+  const readable = useMemo(
+    () => (all ? readablePassOrgs(scope.memberships).filter((m) => readableIds.has(m.orgId)) : []),
+    [all, scope.memberships, readableIds],
   );
   const orgs = useMemo(() => new Map(readable.map((m) => [m.orgId, m])), [readable]);
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);

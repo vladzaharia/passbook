@@ -24,7 +24,7 @@ import { Wordmark } from './wordmark.tsx';
 
 export function AdminLayout({ children }: { children?: ReactNode }) {
   const scope = useAdminScope();
-  // The wordmark opens the scope's overview; mode only exists inside an organization.
+  // The wordmark opens the scope's overview; Live and Test apply in an organization and across organizations.
   // The All scope has no overview: its one page is Passes.
   const home = scope?.kind === 'all' ? allPath('/passes') : scope ? scopePath(scope) : '/admin';
   const org = scope?.kind === 'org';
@@ -32,7 +32,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const { isAdmin } = useSession();
   const mode = useMode();
   // Only where Live and Test are a choice; a sandbox is always Test, so its bar does not change.
-  const switchable = org && !membership?.testOnly;
+  const switchable = scope?.kind === 'all' || (org && !membership?.testOnly);
   const scopeName =
     scope?.kind === 'all'
       ? 'All organizations'

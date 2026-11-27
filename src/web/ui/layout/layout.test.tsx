@@ -176,6 +176,7 @@ describe('route guards in the app', () => {
     await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     expect(await screen.findByRole('option', { name: 'Harbor' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Platform' })).toBeNull();
+    expect(screen.getByRole('option', { name: 'All organizations' })).toBeInTheDocument();
   });
 
   it('keeps API keys available to a platform admin without membership', async () => {
