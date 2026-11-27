@@ -63891,7 +63891,7 @@
           "items"
         ]
       },
-      "IdentitiesCertificatesRevokeParams": {
+      "PlatformIdentitiesCertificatesRevokeParams": {
         "type": "object",
         "properties": {
           "certificateId": {
@@ -63917,7 +63917,7 @@
           "confirm"
         ]
       },
-      "IdentitiesCertificatesRevokeResponse": {
+      "PlatformIdentitiesCertificatesRevokeResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -64019,7 +64019,7 @@
           "finishedAt"
         ]
       },
-      "IdentitiesListResponse": {
+      "PlatformIdentitiesListResponse": {
         "anyOf": [
           {
             "type": "object",
@@ -64442,7 +64442,7 @@
           }
         ]
       },
-      "IdentitiesCreateParams": {
+      "PlatformIdentitiesCreateParams": {
         "type": "object",
         "properties": {
           "orgId": {
@@ -64484,7 +64484,7 @@
           "label"
         ]
       },
-      "IdentitiesCreateResponse": {
+      "PlatformIdentitiesCreateResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -64792,7 +64792,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesRetrieveResponse": {
+      "PlatformIdentitiesRetrieveResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -65100,7 +65100,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesUpdateParams": {
+      "PlatformIdentitiesUpdateParams": {
         "type": "object",
         "properties": {
           "label": {
@@ -65133,7 +65133,7 @@
           }
         }
       },
-      "IdentitiesUpdateResponse": {
+      "PlatformIdentitiesUpdateResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -65441,7 +65441,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesDeleteResponse": {
+      "PlatformIdentitiesDeleteResponse": {
         "type": "object",
         "properties": {
           "ok": {
@@ -65455,7 +65455,7 @@
           "ok"
         ]
       },
-      "IdentitiesRotateParams": {
+      "PlatformIdentitiesRotateParams": {
         "type": "object",
         "properties": {
           "certificatePem": {
@@ -65478,7 +65478,7 @@
           }
         }
       },
-      "IdentitiesRotateResponse": {
+      "PlatformIdentitiesRotateResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -65786,7 +65786,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesCheckApnsResponse": {
+      "PlatformIdentitiesCheckApnsResponse": {
         "type": "object",
         "properties": {
           "health": {
@@ -65828,7 +65828,7 @@
           "checkedAt"
         ]
       },
-      "IdentitiesPushKeyUploadParams": {
+      "PlatformIdentitiesPushKeyUploadParams": {
         "type": "object",
         "properties": {
           "keyId": {
@@ -65847,7 +65847,7 @@
           "p8"
         ]
       },
-      "IdentitiesPushKeyUploadResponse": {
+      "PlatformIdentitiesPushKeyUploadResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -66155,7 +66155,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesPushKeyDeleteResponse": {
+      "PlatformIdentitiesPushKeyDeleteResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -66463,7 +66463,7 @@
           "createdAt"
         ]
       },
-      "IdentitiesRenewResponse": {
+      "PlatformIdentitiesRenewResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -142435,7 +142435,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentitiesCertificatesRevokeParams"
+                "$ref": "#/components/schemas/PlatformIdentitiesCertificatesRevokeParams"
               },
               "example": {
                 "certificateId": "0193a1b2-7c00-7000-8000-130785cb51ab",
@@ -142451,7 +142451,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesCertificatesRevokeResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesCertificatesRevokeResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
@@ -142484,7 +142484,7 @@
         },
         "operationId": "identities.postIdentitiesByIdRevokeCertificate",
         "x-sdk": {
-          "resource": "identities.certificates",
+          "resource": "platform.identities.certificates",
           "method": "revoke"
         },
         "x-sign-in": "idp",
@@ -142556,7 +142556,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesListResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesListResponse"
                 },
                 "example": {
                   "items": [
@@ -142611,7 +142611,7 @@
         },
         "operationId": "identities.getIdentities",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "list"
         },
         "security": [
@@ -142653,7 +142653,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentitiesCreateParams"
+                "$ref": "#/components/schemas/PlatformIdentitiesCreateParams"
               },
               "example": {
                 "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -142670,7 +142670,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesCreateResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesCreateResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -142720,7 +142720,7 @@
         },
         "operationId": "identities.postIdentities",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "create"
         },
         "x-sign-in": "idp",
@@ -142787,7 +142787,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesRetrieveResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesRetrieveResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -142837,7 +142837,7 @@
         },
         "operationId": "identities.getIdentitiesById",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "retrieve"
         },
         "x-sign-in": "idp",
@@ -142887,7 +142887,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentitiesUpdateParams"
+                "$ref": "#/components/schemas/PlatformIdentitiesUpdateParams"
               },
               "example": {
                 "label": "Northwind signing identity",
@@ -142903,7 +142903,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesUpdateResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesUpdateResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -142953,7 +142953,7 @@
         },
         "operationId": "identities.patchIdentitiesById",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "update"
         },
         "x-sign-in": "idp",
@@ -143004,7 +143004,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesDeleteResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesDeleteResponse"
                 },
                 "example": {
                   "ok": true
@@ -143025,7 +143025,7 @@
         },
         "operationId": "identities.deleteIdentitiesById",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "delete"
         },
         "x-sign-in": "idp",
@@ -143076,7 +143076,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentitiesRotateParams"
+                "$ref": "#/components/schemas/PlatformIdentitiesRotateParams"
               },
               "example": {
                 "certificatePem": "-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----",
@@ -143092,7 +143092,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesRotateResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesRotateResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -143142,7 +143142,7 @@
         },
         "operationId": "identities.postIdentitiesByIdRotate",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "rotate"
         },
         "x-sign-in": "idp",
@@ -143201,7 +143201,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesCheckApnsResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesCheckApnsResponse"
                 },
                 "example": {
                   "health": "healthy",
@@ -143226,7 +143226,7 @@
         },
         "operationId": "identities.postIdentitiesByIdApnsCheck",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "checkApns"
         },
         "x-sign-in": "idp",
@@ -143278,7 +143278,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentitiesPushKeyUploadParams"
+                "$ref": "#/components/schemas/PlatformIdentitiesPushKeyUploadParams"
               },
               "example": {
                 "keyId": "A1B2C3D4E5",
@@ -143293,7 +143293,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesPushKeyUploadResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesPushKeyUploadResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -143343,7 +143343,7 @@
         },
         "operationId": "identities.putIdentitiesByIdPushKey",
         "x-sdk": {
-          "resource": "identities.pushKey",
+          "resource": "platform.identities.pushKey",
           "method": "upload"
         },
         "x-sign-in": "idp",
@@ -143399,7 +143399,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesPushKeyDeleteResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesPushKeyDeleteResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-0000000000d1",
@@ -143449,7 +143449,7 @@
         },
         "operationId": "identities.deleteIdentitiesByIdPushKey",
         "x-sdk": {
-          "resource": "identities.pushKey",
+          "resource": "platform.identities.pushKey",
           "method": "delete"
         },
         "x-sign-in": "idp",
@@ -143503,7 +143503,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdentitiesRenewResponse"
+                  "$ref": "#/components/schemas/PlatformIdentitiesRenewResponse"
                 },
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
@@ -143536,7 +143536,7 @@
         },
         "operationId": "identities.postIdentitiesByIdRenew",
         "x-sdk": {
-          "resource": "identities",
+          "resource": "platform.identities",
           "method": "renew"
         },
         "x-sign-in": "idp",

@@ -3087,6 +3087,294 @@
   }
  },
  {
+  "id": "identities.postIdentities",
+  "call": "platform.identities.create",
+  "http": "POST",
+  "path": "/api/v1/identities",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "label": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "identities.getIdentitiesById",
+  "call": "platform.identities.retrieve",
+  "http": "GET",
+  "path": "/api/v1/identities/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "identities.patchIdentitiesById",
+  "call": "platform.identities.update",
+  "http": "PATCH",
+  "path": "/api/v1/identities/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "identities.postIdentitiesByIdApnsCheck",
+  "call": "platform.identities.check_apns",
+  "http": "POST",
+  "path": "/api/v1/identities/{id}/apns-check",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "health": "healthy",
+   "status": 0,
+   "reason": "x",
+   "checkedAt": 0
+  }
+ },
+ {
+  "id": "identities.putIdentitiesByIdPushKey",
+  "call": "platform.identities.push_key.upload",
+  "http": "PUT",
+  "path": "/api/v1/identities/{id}/push-key",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "keyId": "x",
+   "p8": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "identities.deleteIdentitiesByIdPushKey",
+  "call": "platform.identities.push_key.delete",
+  "http": "DELETE",
+  "path": "/api/v1/identities/{id}/push-key",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "identities.postIdentitiesByIdRenew",
+  "call": "platform.identities.renew",
+  "http": "POST",
+  "path": "/api/v1/identities/{id}/renew",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "kind": "provision",
+   "targetType": "identity",
+   "targetId": "x",
+   "state": "queued",
+   "step": "x",
+   "attempt": 0,
+   "waitingFor": "x",
+   "errorCode": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "identities.postIdentitiesByIdRotate",
+  "call": "platform.identities.rotate",
+  "http": "POST",
+  "path": "/api/v1/identities/{id}/rotate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "label": "x",
+   "passTypeIdentifier": "x",
+   "teamIdentifier": "x",
+   "source": "env",
+   "certSha256": "x",
+   "certSubject": "x",
+   "certSerial": "x",
+   "notBefore": 0,
+   "notAfter": 0,
+   "daysRemaining": 0,
+   "apnsBinding": "x",
+   "apnsAvailable": false,
+   "apnsHealth": "unknown",
+   "nfcEnabled": false,
+   "isDefault": false,
+   "createdAt": 0
+  }
+ },
+ {
   "id": "message-rules.getMessageRules",
   "call": "message_rules.list",
   "http": "GET",
@@ -8205,6 +8493,34 @@
   }
  },
  {
+  "id": "wallet-identities.getPlatformAppleCalls",
+  "call": "platform.apple_calls.list",
+  "http": "GET",
+  "path": "/api/v1/platform/apple-calls",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": 0,
+     "callId": "x",
+     "phase": "x",
+     "method": "x",
+     "target": "x",
+     "caller": "x",
+     "status": "x",
+     "durationMs": 0,
+     "at": 0
+    }
+   ],
+   "available": false
+  }
+ },
+ {
   "id": "polaris-platform.getPlatformIdp",
   "call": "platform.idp.retrieve",
   "http": "GET",
@@ -8969,6 +9285,66 @@
   }
  },
  {
+  "id": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
+  "call": "platform.wallet_accounts.google_managed.create",
+  "http": "POST",
+  "path": "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "mode": "live"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "runId": "x",
+   "state": "queued",
+   "step": "x",
+   "waitingFor": "x",
+   "errorCode": "x",
+   "issuerId": "x",
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
+  "call": "platform.wallet_accounts.google_managed.complete",
+  "http": "POST",
+  "path": "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "issuerId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "runId": "x",
+   "state": "queued",
+   "step": "x",
+   "waitingFor": "x",
+   "errorCode": "x",
+   "issuerId": "x",
+   "updatedAt": 0
+  }
+ },
+ {
   "id": "settings.getPlatformSettings",
   "call": "platform.settings.retrieve",
   "http": "GET",
@@ -9015,6 +9391,317 @@
      "updatedBy": "x"
     }
    ]
+  }
+ },
+ {
+  "id": "wallet-platform.getPlatformWalletCredentials",
+  "call": "platform.wallet_credentials.list",
+  "http": "GET",
+  "path": "/api/v1/platform/wallet-credentials",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "scope": "platform",
+     "orgId": "x",
+     "mode": "live",
+     "provider": "google",
+     "identityHint": "x",
+     "provenance": "platform",
+     "revision": 0,
+     "verifiedAt": 0,
+     "revokedAt": 0,
+     "createdAt": 0,
+     "updatedAt": 0,
+     "cardTypes": [
+      "x"
+     ],
+     "lastCheck": {
+      "ok": true,
+      "code": null,
+      "at": 0
+     }
+    }
+   ],
+   "nextCursor": null,
+   "release": {
+    "google": {
+     "live": {
+      "state": "disabled",
+      "reason": "not_released"
+     },
+     "test": {
+      "state": "disabled",
+      "reason": "not_released"
+     }
+    },
+    "samsung": {
+     "live": {
+      "state": "disabled",
+      "reason": "not_released"
+     },
+     "test": {
+      "state": "disabled",
+      "reason": "not_released"
+     }
+    }
+   }
+  }
+ },
+ {
+  "id": "wallet-platform.putPlatformWalletCredentials",
+  "call": "platform.wallet_credentials.upsert",
+  "http": "PUT",
+  "path": "/api/v1/platform/wallet-credentials",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "provider": "google",
+   "expectedRevision": 0,
+   "credentials": {
+    "issuerId": "x",
+    "serviceAccountEmail": "x",
+    "privateKeyPem": "x",
+    "scopes": [
+     "https://www.googleapis.com/auth/wallet_object.issuer"
+    ]
+   },
+   "mode": "live"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "scope": "platform",
+   "orgId": "x",
+   "mode": "live",
+   "provider": "google",
+   "identityHint": "x",
+   "provenance": "platform",
+   "revision": 0,
+   "verifiedAt": 0,
+   "revokedAt": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "cardTypes": [
+    "x"
+   ],
+   "lastCheck": {
+    "ok": true,
+    "code": null,
+    "at": 0
+   }
+  }
+ },
+ {
+  "id": "wallet-platform.getPlatformWalletCredentialsMigrate",
+  "call": "platform.wallet_credentials.retrieve_migration",
+  "http": "GET",
+  "path": "/api/v1/platform/wallet-credentials/migrate",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "pending": 0,
+   "migrated": 0,
+   "items": [
+    {
+     "accountId": "x",
+     "orgId": "x",
+     "mode": "live",
+     "provider": "google",
+     "state": "ready",
+     "reason": "identity_shared",
+     "identityShared": [
+      {
+       "orgId": "x",
+       "mode": "live",
+       "provider": "google"
+      }
+     ]
+    }
+   ],
+   "nextCursor": null,
+   "next": "x"
+  }
+ },
+ {
+  "id": "wallet-platform.postPlatformWalletCredentialsMigrate",
+  "call": "platform.wallet_credentials.migrate",
+  "http": "POST",
+  "path": "/api/v1/platform/wallet-credentials/migrate",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "queued": 0
+  }
+ },
+ {
+  "id": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+  "call": "platform.wallet_credentials.set_samsung_card",
+  "http": "PUT",
+  "path": "/api/v1/platform/wallet-credentials/{id}/cards",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "type": "loyalty",
+   "cardId": "x",
+   "expectedRevision": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "scope": "platform",
+   "orgId": "x",
+   "mode": "live",
+   "provider": "google",
+   "identityHint": "x",
+   "provenance": "platform",
+   "revision": 0,
+   "verifiedAt": 0,
+   "revokedAt": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "cardTypes": [
+    "x"
+   ],
+   "lastCheck": {
+    "ok": true,
+    "code": null,
+    "at": 0
+   }
+  }
+ },
+ {
+  "id": "wallet-platform.postPlatformWalletCredentialsByIdCheck",
+  "call": "platform.wallet_credentials.checks.create",
+  "http": "POST",
+  "path": "/api/v1/platform/wallet-credentials/{id}/check",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "checkId": "x",
+   "status": "queued"
+  }
+ },
+ {
+  "id": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId",
+  "call": "platform.wallet_credentials.checks.retrieve",
+  "http": "GET",
+  "path": "/api/v1/platform/wallet-credentials/{id}/checks/{checkId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "checkId",
+    "py": "check_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "checkId": "x",
+   "status": "pending",
+   "code": "x",
+   "checkedAt": 0
+  }
+ },
+ {
+  "id": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
+  "call": "platform.wallet_credentials.rotate_key",
+  "http": "POST",
+  "path": "/api/v1/platform/wallet-credentials/{id}/rotate-key",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "runId": "x"
+  }
+ },
+ {
+  "id": "wallet-platform.getPlatformWalletEnrolments",
+  "call": "platform.wallet_enrollments.list",
+  "http": "GET",
+  "path": "/api/v1/platform/wallet-enrolments",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "provider",
+    "py": "provider",
+    "value": "google"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "orgId": "x",
+     "orgName": "x",
+     "mode": "live",
+     "provider": "google",
+     "source": "platform",
+     "state": "off",
+     "hold": {
+      "at": 0,
+      "reason": "x"
+     },
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
   }
  },
  {

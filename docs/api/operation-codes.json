@@ -9598,14 +9598,17 @@
   ],
   "wallet platform get /wallet-credentials": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform get /wallet-credentials/migrate": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform get /wallet-credentials/{id}/checks/{checkId}": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "SANDBOX_TEST_ONLY",
@@ -9614,6 +9617,7 @@
   ],
   "wallet platform get /wallet-enrolments": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "VALIDATION"
   ],
@@ -9626,6 +9630,8 @@
     "WALLET_ENROLMENT_PREREQUISITE"
   ],
   "wallet platform post /orgs/{orgId}/wallet-accounts/google/managed": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_NOT_FOUND",
     "UNAUTHENTICATED",
@@ -9633,7 +9639,9 @@
     "WALLET_PLATFORM_CREDENTIAL_MISSING"
   ],
   "wallet platform post /orgs/{orgId}/wallet-accounts/google/managed/complete": [
+    "FORBIDDEN",
     "GOOGLE_ISSUER_NOT_SHARED",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ISSUER_CLAIMED",
@@ -9659,6 +9667,7 @@
   ],
   "wallet platform post /wallet-credentials/migrate": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED"
   ],
   "wallet platform post /wallet-credentials/migrate/resolve": [
@@ -9674,6 +9683,7 @@
   ],
   "wallet platform post /wallet-credentials/{id}/check": [
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
     "SANDBOX_TEST_ONLY",
@@ -9690,6 +9700,8 @@
     "WALLET_ENROLMENT_PREREQUISITE"
   ],
   "wallet platform post /wallet-credentials/{id}/rotate-key": [
+    "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT"
@@ -9707,6 +9719,7 @@
   "wallet platform put /wallet-credentials": [
     "CONFLICT",
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",
     "WALLET_CREDENTIALS_INVALID",
@@ -9716,6 +9729,7 @@
   "wallet platform put /wallet-credentials/{id}/cards": [
     "CONFLICT",
     "FORBIDDEN",
+    "MISSING_SCOPE",
     "NOT_FOUND",
     "UNAUTHENTICATED",
     "WALLET_ACCOUNT_CONFLICT",

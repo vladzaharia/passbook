@@ -435,33 +435,6 @@ __all__ = [
     "HoldersUnassignResult",
     "IdentitiesCertificatesListResponse",
     "IdentitiesCertificatesListResponseItemsItem",
-    "IdentitiesCertificatesRevokeParams",
-    "IdentitiesCertificatesRevokeResponse",
-    "IdentitiesCheckApnsResponse",
-    "IdentitiesCreateParams",
-    "IdentitiesCreateResponse",
-    "IdentitiesCreateResponseNfcKeysItem",
-    "IdentitiesDeleteResponse",
-    "IdentitiesListResponse",
-    "IdentitiesListResponse1",
-    "IdentitiesListResponse1ItemsItem",
-    "IdentitiesListResponse1ItemsItemNfcKeysItem",
-    "IdentitiesListResponse2",
-    "IdentitiesListResponse2ItemsItem",
-    "IdentitiesPushKeyDeleteResponse",
-    "IdentitiesPushKeyDeleteResponseNfcKeysItem",
-    "IdentitiesPushKeyUploadParams",
-    "IdentitiesPushKeyUploadResponse",
-    "IdentitiesPushKeyUploadResponseNfcKeysItem",
-    "IdentitiesRenewResponse",
-    "IdentitiesRetrieveResponse",
-    "IdentitiesRetrieveResponseNfcKeysItem",
-    "IdentitiesRotateParams",
-    "IdentitiesRotateResponse",
-    "IdentitiesRotateResponseNfcKeysItem",
-    "IdentitiesUpdateParams",
-    "IdentitiesUpdateResponse",
-    "IdentitiesUpdateResponseNfcKeysItem",
     "IdentityRunsCancelResponse",
     "IdentityRunsListResponse",
     "IdentityRunsListResponseItemsItem",
@@ -1194,6 +1167,7 @@ __all__ = [
     "PassesVoidResult",
     "PlatformAppleCallsListResponse",
     "PlatformAppleCallsListResponseItemsItem",
+    "PlatformAppleCallsListResult",
     "PlatformAppleIdentitiesCreateParams",
     "PlatformAppleIdentitiesCreateResponse",
     "PlatformAppleIdentitiesListResponse",
@@ -1265,6 +1239,45 @@ __all__ = [
     "PlatformGroupsUpdateParams",
     "PlatformGroupsUpdateResponse",
     "PlatformGroupsUpdateResult",
+    "PlatformIdentitiesCertificatesRevokeParams",
+    "PlatformIdentitiesCertificatesRevokeResponse",
+    "PlatformIdentitiesCheckApnsResponse",
+    "PlatformIdentitiesCheckApnsResult",
+    "PlatformIdentitiesCreateBody",
+    "PlatformIdentitiesCreateParams",
+    "PlatformIdentitiesCreateResponse",
+    "PlatformIdentitiesCreateResponseNfcKeysItem",
+    "PlatformIdentitiesCreateResult",
+    "PlatformIdentitiesDeleteResponse",
+    "PlatformIdentitiesListResponse",
+    "PlatformIdentitiesListResponse1",
+    "PlatformIdentitiesListResponse1ItemsItem",
+    "PlatformIdentitiesListResponse1ItemsItemNfcKeysItem",
+    "PlatformIdentitiesListResponse2",
+    "PlatformIdentitiesListResponse2ItemsItem",
+    "PlatformIdentitiesPushKeyDeleteResponse",
+    "PlatformIdentitiesPushKeyDeleteResponseNfcKeysItem",
+    "PlatformIdentitiesPushKeyDeleteResult",
+    "PlatformIdentitiesPushKeyUploadBody",
+    "PlatformIdentitiesPushKeyUploadParams",
+    "PlatformIdentitiesPushKeyUploadResponse",
+    "PlatformIdentitiesPushKeyUploadResponseNfcKeysItem",
+    "PlatformIdentitiesPushKeyUploadResult",
+    "PlatformIdentitiesRenewResponse",
+    "PlatformIdentitiesRenewResult",
+    "PlatformIdentitiesRetrieveResponse",
+    "PlatformIdentitiesRetrieveResponseNfcKeysItem",
+    "PlatformIdentitiesRetrieveResult",
+    "PlatformIdentitiesRotateBody",
+    "PlatformIdentitiesRotateParams",
+    "PlatformIdentitiesRotateResponse",
+    "PlatformIdentitiesRotateResponseNfcKeysItem",
+    "PlatformIdentitiesRotateResult",
+    "PlatformIdentitiesUpdateBody",
+    "PlatformIdentitiesUpdateParams",
+    "PlatformIdentitiesUpdateResponse",
+    "PlatformIdentitiesUpdateResponseNfcKeysItem",
+    "PlatformIdentitiesUpdateResult",
     "PlatformIdpCallsListItem",
     "PlatformIdpCallsListResponse",
     "PlatformIdpCallsListResponseItemsItem",
@@ -1487,12 +1500,21 @@ __all__ = [
     "PlatformUsersSessionsRevokeResponse",
     "PlatformUsersUpdateParams",
     "PlatformUsersUpdateResponse",
+    "PlatformWalletAccountsGoogleManagedCompleteBody",
     "PlatformWalletAccountsGoogleManagedCompleteParams",
     "PlatformWalletAccountsGoogleManagedCompleteResponse",
+    "PlatformWalletAccountsGoogleManagedCompleteResult",
+    "PlatformWalletAccountsGoogleManagedCreateBody",
     "PlatformWalletAccountsGoogleManagedCreateParams",
     "PlatformWalletAccountsGoogleManagedCreateResponse",
+    "PlatformWalletAccountsGoogleManagedCreateResult",
     "PlatformWalletCredentialsChecksCreateResponse",
+    "PlatformWalletCredentialsChecksCreateResult",
     "PlatformWalletCredentialsChecksRetrieveResponse",
+    "PlatformWalletCredentialsChecksRetrieveResult",
+    "PlatformWalletCredentialsListItem",
+    "PlatformWalletCredentialsListItemLastCheck1",
+    "PlatformWalletCredentialsListItemLastCheck2",
     "PlatformWalletCredentialsListResponse",
     "PlatformWalletCredentialsListResponseItemsItem",
     "PlatformWalletCredentialsListResponseItemsItemLastCheck1",
@@ -1508,21 +1530,30 @@ __all__ = [
     "PlatformWalletCredentialsListResponseReleaseSamsungLive2",
     "PlatformWalletCredentialsListResponseReleaseSamsungTest1",
     "PlatformWalletCredentialsListResponseReleaseSamsungTest2",
+    "PlatformWalletCredentialsListResult",
     "PlatformWalletCredentialsMigrateResponse",
+    "PlatformWalletCredentialsMigrateResult",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsResolveMigrationResponse",
+    "PlatformWalletCredentialsRetrieveMigrationItem",
+    "PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem",
     "PlatformWalletCredentialsRetrieveMigrationResponse",
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItem",
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem",
+    "PlatformWalletCredentialsRetrieveMigrationResult",
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsRevokeResponse",
     "PlatformWalletCredentialsRevokeResponseLastCheck1",
     "PlatformWalletCredentialsRevokeResponseLastCheck2",
     "PlatformWalletCredentialsRotateKeyResponse",
+    "PlatformWalletCredentialsRotateKeyResult",
+    "PlatformWalletCredentialsSetSamsungCardBody",
     "PlatformWalletCredentialsSetSamsungCardParams",
     "PlatformWalletCredentialsSetSamsungCardResponse",
     "PlatformWalletCredentialsSetSamsungCardResponseLastCheck1",
     "PlatformWalletCredentialsSetSamsungCardResponseLastCheck2",
+    "PlatformWalletCredentialsSetSamsungCardResult",
+    "PlatformWalletCredentialsUpsertBody",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
@@ -1531,8 +1562,11 @@ __all__ = [
     "PlatformWalletCredentialsUpsertResponse",
     "PlatformWalletCredentialsUpsertResponseLastCheck1",
     "PlatformWalletCredentialsUpsertResponseLastCheck2",
+    "PlatformWalletCredentialsUpsertResult",
+    "PlatformWalletEnrollmentsListItem",
     "PlatformWalletEnrollmentsListResponse",
     "PlatformWalletEnrollmentsListResponseItemsItem",
+    "PlatformWalletEnrollmentsListResult",
     "PlatformWalletReleaseEnableReadyBody",
     "PlatformWalletReleaseEnableReadyParams",
     "PlatformWalletReleaseEnableReadyResponse",
@@ -2481,7 +2515,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:groups", "platform:claims", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "logs:read", "members:read", "members:write", "platform:read", "platform:users", "platform:groups", "platform:claims", "platform:identities", "platform:status", "platform:audit", "platform:settings", "platform:wallet"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -4749,407 +4783,6 @@ class IdentitiesCertificatesListResponseItemsItem(_Model):
     createdAt: int
     activatedAt: int | None
     endedAt: int | None
-
-class IdentitiesCertificatesRevokeParams(_Model):
-    certificateId: str
-    reason: _Literal["compromised"] | str
-    confirm: str
-
-class IdentitiesCertificatesRevokeResponse(_Model):
-    id: str
-    orgId: str | None
-    kind: _Literal["provision", "rotate", "revoke"] | str
-    targetType: _Literal["identity", "org", "wallet_credential"] | str
-    targetId: str
-    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
-    step: str | None
-    attempt: int
-    waitingFor: str | None
-    errorCode: str | None
-    createdAt: int
-    updatedAt: int
-    finishedAt: int | None
-
-class IdentitiesCheckApnsResponse(_Model):
-    health: _Literal["healthy", "failing", "inconclusive", "unavailable"] | str
-    status: int
-    reason: str | None
-    checkedAt: int
-    method: _Literal["certificate", "key", "none"] | str | None = None
-
-class IdentitiesCreateParams(_Model):
-    orgId: str | None = None
-    label: str
-    certificatePem: str | None = None
-    privateKeyPem: str | None = None
-    pkcs12Base64: str | None = None
-    pkcs12Password: str | None = None
-    nfcEnabled: bool | None = None
-
-class IdentitiesCreateResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesCreateResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesCreateResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesDeleteResponse(_Model):
-    ok: _Literal[True]
-
-class IdentitiesListResponse1(_Model):
-    items: _List[IdentitiesListResponse1ItemsItem]
-    nextCursor: str | None
-
-class IdentitiesListResponse1ItemsItem(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesListResponse1ItemsItemNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesListResponse1ItemsItemNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesListResponse2(_Model):
-    items: _List[IdentitiesListResponse2ItemsItem]
-    nextCursor: str | None
-
-class IdentitiesListResponse2ItemsItem(_Model):
-    id: str
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsAvailable: bool
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-
-class IdentitiesPushKeyDeleteResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesPushKeyDeleteResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesPushKeyDeleteResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesPushKeyUploadParams(_Model):
-    keyId: str
-    p8: str
-
-class IdentitiesPushKeyUploadResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesPushKeyUploadResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesPushKeyUploadResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesRenewResponse(_Model):
-    id: str
-    orgId: str | None
-    kind: _Literal["provision", "rotate", "revoke"] | str
-    targetType: _Literal["identity", "org", "wallet_credential"] | str
-    targetId: str
-    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
-    step: str | None
-    attempt: int
-    waitingFor: str | None
-    errorCode: str | None
-    createdAt: int
-    updatedAt: int
-    finishedAt: int | None
-
-class IdentitiesRetrieveResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesRetrieveResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesRetrieveResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesRotateParams(_Model):
-    certificatePem: str | None = None
-    privateKeyPem: str | None = None
-    pkcs12Base64: str | None = None
-    pkcs12Password: str | None = None
-
-class IdentitiesRotateResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesRotateResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesRotateResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
-
-class IdentitiesUpdateParams(_Model):
-    label: str | None = None
-    isDefault: bool | None = None
-    nfcEnabled: bool | None = None
-    apnsBinding: str | None = None
-    rotation: _Literal["auto", "manual"] | str | None = None
-    issuing: bool | None = None
-
-class IdentitiesUpdateResponse(_Model):
-    id: str
-    orgId: str | None
-    label: str
-    passTypeIdentifier: str
-    teamIdentifier: str
-    source: _Literal["env", "db"] | str
-    certSha256: str | None
-    certSubject: str | None
-    certSerial: str | None
-    notBefore: int | None
-    notAfter: int | None
-    daysRemaining: int | None
-    apnsBinding: str | None
-    apnsAvailable: bool
-    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
-    pushKey: _Dict[str, _Any] | None = None
-    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
-    apnsCheckedAt: int | None = None
-    apnsReason: str | None = None
-    passCount: int | None = None
-    nfcEnabled: bool
-    nfcKeys: _List[IdentitiesUpdateResponseNfcKeysItem] | None = None
-    isDefault: bool
-    createdAt: int
-    kind: _Literal["platform", "managed", "own"] | str | None = None
-    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
-    rotation: _Literal["auto", "csr", "manual"] | str | None = None
-    issuing: bool | None = None
-    nextRotationAt: int | None = None
-    handle: str | None = None
-
-class IdentitiesUpdateResponseNfcKeysItem(_Model):
-    id: str
-    identityId: str
-    orgId: str
-    keyId: str
-    state: _Literal["active", "retiring", "retired"] | str
-    createdAt: int
-    activatedAt: int
-    retiredAt: int | None
-    passCount: int
-    passesLeft: int | None
 
 class IdentityRunsCancelResponse(_Model):
     id: str
@@ -9897,6 +9530,407 @@ class PlatformGroupsUpdateResponse(_Model):
     key: str
     dryRun: bool
 
+class PlatformIdentitiesCertificatesRevokeParams(_Model):
+    certificateId: str
+    reason: _Literal["compromised"] | str
+    confirm: str
+
+class PlatformIdentitiesCertificatesRevokeResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class PlatformIdentitiesCheckApnsResponse(_Model):
+    health: _Literal["healthy", "failing", "inconclusive", "unavailable"] | str
+    status: int
+    reason: str | None
+    checkedAt: int
+    method: _Literal["certificate", "key", "none"] | str | None = None
+
+class PlatformIdentitiesCreateParams(_Model):
+    orgId: str | None = None
+    label: str
+    certificatePem: str | None = None
+    privateKeyPem: str | None = None
+    pkcs12Base64: str | None = None
+    pkcs12Password: str | None = None
+    nfcEnabled: bool | None = None
+
+class PlatformIdentitiesCreateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesCreateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesCreateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class PlatformIdentitiesListResponse1(_Model):
+    items: _List[PlatformIdentitiesListResponse1ItemsItem]
+    nextCursor: str | None
+
+class PlatformIdentitiesListResponse1ItemsItem(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesListResponse1ItemsItemNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesListResponse1ItemsItemNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesListResponse2(_Model):
+    items: _List[PlatformIdentitiesListResponse2ItemsItem]
+    nextCursor: str | None
+
+class PlatformIdentitiesListResponse2ItemsItem(_Model):
+    id: str
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsAvailable: bool
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+
+class PlatformIdentitiesPushKeyDeleteResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesPushKeyDeleteResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesPushKeyDeleteResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesPushKeyUploadParams(_Model):
+    keyId: str
+    p8: str
+
+class PlatformIdentitiesPushKeyUploadResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesPushKeyUploadResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesPushKeyUploadResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesRenewResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class PlatformIdentitiesRetrieveResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesRetrieveResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesRetrieveResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesRotateParams(_Model):
+    certificatePem: str | None = None
+    privateKeyPem: str | None = None
+    pkcs12Base64: str | None = None
+    pkcs12Password: str | None = None
+
+class PlatformIdentitiesRotateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesRotateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesRotateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class PlatformIdentitiesUpdateParams(_Model):
+    label: str | None = None
+    isDefault: bool | None = None
+    nfcEnabled: bool | None = None
+    apnsBinding: str | None = None
+    rotation: _Literal["auto", "manual"] | str | None = None
+    issuing: bool | None = None
+
+class PlatformIdentitiesUpdateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[PlatformIdentitiesUpdateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class PlatformIdentitiesUpdateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
 class PlatformIdpCallsListItem(_Model):
     id: int
     phase: str
@@ -11306,6 +11340,32 @@ class PlatformWalletCredentialsChecksRetrieveResponse(_Model):
     code: str | None
     checkedAt: int | None
 
+class PlatformWalletCredentialsListItem(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsListItemLastCheck1 | PlatformWalletCredentialsListItemLastCheck2 | None
+
+class PlatformWalletCredentialsListItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsListItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
+
 class PlatformWalletCredentialsListResponse(_Model):
     items: _List[PlatformWalletCredentialsListResponseItemsItem]
     nextCursor: str | None
@@ -11388,6 +11448,20 @@ class PlatformWalletCredentialsResolveMigrationParams(_Model):
 
 class PlatformWalletCredentialsResolveMigrationResponse(_Model):
     accounts: int
+
+class PlatformWalletCredentialsRetrieveMigrationItem(_Model):
+    accountId: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    state: _Literal["ready", "refused"] | str
+    reason: _Literal["identity_shared", "org_credential_exists", "unreadable", "unproven_claim", None] | str
+    identityShared: _List[PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem]
+
+class PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
 
 class PlatformWalletCredentialsRetrieveMigrationResponse(_Model):
     pending: int
@@ -11525,6 +11599,16 @@ class PlatformWalletCredentialsUpsertResponseLastCheck2(_Model):
     ok: _Literal[False]
     code: str
     at: int
+
+class PlatformWalletEnrollmentsListItem(_Model):
+    orgId: str
+    orgName: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    source: _Literal["platform", "org", None] | str
+    state: _Literal["off", "on", "held", "revoked"] | str
+    hold: _Dict[str, _Any] | None
+    updatedAt: int
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -16408,8 +16492,6 @@ HoldersUnassignBody = HoldersUnassignParams
 
 HoldersUnassignResult = HoldersUnassignResponse
 
-IdentitiesListResponse = IdentitiesListResponse1 | IdentitiesListResponse2
-
 InvitationsCreateBody = InvitationsCreateParams
 
 InvitationsCreateResult = InvitationsCreateResponse
@@ -16700,6 +16782,8 @@ PassesVersionsRetrieveResult = PassDetail
 
 PassesVoidResult = PassSummary
 
+PlatformAppleCallsListResult = PlatformAppleCallsListResponse
+
 PlatformGroupsClaimsRetrieveResult = PlatformGroupsClaimsRetrieveResponse
 
 PlatformGroupsClaimsUpdateBody = PlatformGroupsClaimsUpdateParams
@@ -16739,6 +16823,32 @@ PlatformGroupsRulesListResult = PlatformGroupsRulesListResponse
 PlatformGroupsUpdateBody = PlatformGroupsUpdateParams
 
 PlatformGroupsUpdateResult = PlatformGroupsUpdateResponse
+
+PlatformIdentitiesCheckApnsResult = PlatformIdentitiesCheckApnsResponse
+
+PlatformIdentitiesCreateBody = PlatformIdentitiesCreateParams
+
+PlatformIdentitiesCreateResult = PlatformIdentitiesCreateResponse
+
+PlatformIdentitiesListResponse = PlatformIdentitiesListResponse1 | PlatformIdentitiesListResponse2
+
+PlatformIdentitiesPushKeyDeleteResult = PlatformIdentitiesPushKeyDeleteResponse
+
+PlatformIdentitiesPushKeyUploadBody = PlatformIdentitiesPushKeyUploadParams
+
+PlatformIdentitiesPushKeyUploadResult = PlatformIdentitiesPushKeyUploadResponse
+
+PlatformIdentitiesRenewResult = PlatformIdentitiesRenewResponse
+
+PlatformIdentitiesRetrieveResult = PlatformIdentitiesRetrieveResponse
+
+PlatformIdentitiesRotateBody = PlatformIdentitiesRotateParams
+
+PlatformIdentitiesRotateResult = PlatformIdentitiesRotateResponse
+
+PlatformIdentitiesUpdateBody = PlatformIdentitiesUpdateParams
+
+PlatformIdentitiesUpdateResult = PlatformIdentitiesUpdateResponse
 
 PlatformIdpCallsListResult = PlatformIdpCallsListResponse
 
@@ -16792,7 +16902,37 @@ PlatformUsersRolesSetBody = PlatformUsersRolesSetParams
 
 PlatformUsersRolesSetResult = PlatformUsersRolesSetResponse
 
+PlatformWalletAccountsGoogleManagedCompleteBody = PlatformWalletAccountsGoogleManagedCompleteParams
+
+PlatformWalletAccountsGoogleManagedCompleteResult = PlatformWalletAccountsGoogleManagedCompleteResponse
+
+PlatformWalletAccountsGoogleManagedCreateBody = PlatformWalletAccountsGoogleManagedCreateParams
+
+PlatformWalletAccountsGoogleManagedCreateResult = PlatformWalletAccountsGoogleManagedCreateResponse
+
+PlatformWalletCredentialsChecksCreateResult = PlatformWalletCredentialsChecksCreateResponse
+
+PlatformWalletCredentialsChecksRetrieveResult = PlatformWalletCredentialsChecksRetrieveResponse
+
+PlatformWalletCredentialsListResult = PlatformWalletCredentialsListResponse
+
+PlatformWalletCredentialsMigrateResult = PlatformWalletCredentialsMigrateResponse
+
+PlatformWalletCredentialsRetrieveMigrationResult = PlatformWalletCredentialsRetrieveMigrationResponse
+
+PlatformWalletCredentialsRotateKeyResult = PlatformWalletCredentialsRotateKeyResponse
+
+PlatformWalletCredentialsSetSamsungCardBody = PlatformWalletCredentialsSetSamsungCardParams
+
+PlatformWalletCredentialsSetSamsungCardResult = PlatformWalletCredentialsSetSamsungCardResponse
+
 PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 | PlatformWalletCredentialsUpsertParams2
+
+PlatformWalletCredentialsUpsertBody = PlatformWalletCredentialsUpsertParams
+
+PlatformWalletCredentialsUpsertResult = PlatformWalletCredentialsUpsertResponse
+
+PlatformWalletEnrollmentsListResult = PlatformWalletEnrollmentsListResponse
 
 PlatformWalletReleaseEnableReadyBody = PlatformWalletReleaseEnableReadyParams
 

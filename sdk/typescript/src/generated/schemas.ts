@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write" | "platform:read" | "platform:users" | "platform:groups" | "platform:claims" | "platform:status" | "platform:audit" | "platform:settings" | "platform:wallet">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "api-keys:write" | "audit:read" | "logs:read" | "members:read" | "members:write" | "platform:read" | "platform:users" | "platform:groups" | "platform:claims" | "platform:identities" | "platform:status" | "platform:audit" | "platform:settings" | "platform:wallet">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -2390,455 +2390,6 @@ export type IdentitiesCertificatesListResponse = {
     activatedAt: number | null;
     endedAt: number | null;
   }>;
-};
-
-export type IdentitiesCertificatesRevokeParams = {
-  certificateId: string;
-  reason: "compromised";
-  confirm: string;
-};
-
-export type IdentitiesCertificatesRevokeResponse = {
-  id: string;
-  orgId: string | null;
-  kind: "provision" | "rotate" | "revoke";
-  targetType: "identity" | "org" | "wallet_credential";
-  targetId: string;
-  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
-  step: string | null;
-  attempt: number;
-  waitingFor: string | null;
-  errorCode: string | null;
-  createdAt: number;
-  updatedAt: number;
-  finishedAt: number | null;
-};
-
-export type IdentitiesCheckApnsResponse = {
-  health: "healthy" | "failing" | "inconclusive" | "unavailable";
-  status: number;
-  reason: string | null;
-  checkedAt: number;
-  method?: "certificate" | "key" | "none";
-};
-
-export type IdentitiesCreateParams = {
-  orgId?: string | null;
-  label: string;
-  certificatePem?: string;
-  privateKeyPem?: string;
-  pkcs12Base64?: string;
-  pkcs12Password?: string;
-  nfcEnabled?: boolean;
-};
-
-export type IdentitiesCreateResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
-};
-
-export type IdentitiesDeleteResponse = {
-  ok: true;
-};
-
-export type IdentitiesListResponse = {
-  items: Array<{
-    id: string;
-    orgId: string | null;
-    label: string;
-    passTypeIdentifier: string;
-    teamIdentifier: string;
-    source: "env" | "db";
-    certSha256: string | null;
-    certSubject: string | null;
-    certSerial: string | null;
-    notBefore: number | null;
-    notAfter: number | null;
-    daysRemaining: number | null;
-    apnsBinding: string | null;
-    apnsAvailable: boolean;
-    pushMethod?: "certificate" | "key" | "none";
-    pushKey?: {
-      keyId: string;
-      createdAt: number;
-      rotatedAt: number | null;
-      identityCount: number;
-      dependentCount: number;
-    } | null;
-    apnsHealth: "unknown" | "healthy" | "failing";
-    apnsCheckedAt?: number | null;
-    apnsReason?: string | null;
-    passCount?: number;
-    nfcEnabled: boolean;
-    nfcKeys?: Array<{
-      id: string;
-      identityId: string;
-      orgId: string;
-      keyId: string;
-      state: "active" | "retiring" | "retired";
-      createdAt: number;
-      activatedAt: number;
-      retiredAt: number | null;
-      passCount: number;
-      passesLeft: number | null;
-    }>;
-    isDefault: boolean;
-    createdAt: number;
-    kind?: "platform" | "managed" | "own";
-    status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-    rotation?: "auto" | "csr" | "manual";
-    issuing?: boolean;
-    nextRotationAt?: number | null;
-    handle?: string | null;
-  }>;
-  nextCursor: string | null;
-} | {
-  items: Array<{
-    id: string;
-    label: string;
-    passTypeIdentifier: string;
-    teamIdentifier: string;
-    certSubject: string | null;
-    certSerial: string | null;
-    notBefore: number | null;
-    notAfter: number | null;
-    daysRemaining: number | null;
-    apnsAvailable: boolean;
-    apnsHealth: "unknown" | "healthy" | "failing";
-  }>;
-  nextCursor: string | null;
-};
-
-export type IdentitiesPushKeyDeleteResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
-};
-
-export type IdentitiesPushKeyUploadParams = {
-  keyId: string;
-  p8: string;
-};
-
-export type IdentitiesPushKeyUploadResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
-};
-
-export type IdentitiesRenewResponse = {
-  id: string;
-  orgId: string | null;
-  kind: "provision" | "rotate" | "revoke";
-  targetType: "identity" | "org" | "wallet_credential";
-  targetId: string;
-  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
-  step: string | null;
-  attempt: number;
-  waitingFor: string | null;
-  errorCode: string | null;
-  createdAt: number;
-  updatedAt: number;
-  finishedAt: number | null;
-};
-
-export type IdentitiesRetrieveResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
-};
-
-export type IdentitiesRotateParams = {
-  certificatePem?: string;
-  privateKeyPem?: string;
-  pkcs12Base64?: string;
-  pkcs12Password?: string;
-};
-
-export type IdentitiesRotateResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
-};
-
-export type IdentitiesUpdateParams = {
-  label?: string;
-  isDefault?: boolean;
-  nfcEnabled?: boolean;
-  apnsBinding?: string | null;
-  rotation?: "auto" | "manual";
-  issuing?: boolean;
-};
-
-export type IdentitiesUpdateResponse = {
-  id: string;
-  orgId: string | null;
-  label: string;
-  passTypeIdentifier: string;
-  teamIdentifier: string;
-  source: "env" | "db";
-  certSha256: string | null;
-  certSubject: string | null;
-  certSerial: string | null;
-  notBefore: number | null;
-  notAfter: number | null;
-  daysRemaining: number | null;
-  apnsBinding: string | null;
-  apnsAvailable: boolean;
-  pushMethod?: "certificate" | "key" | "none";
-  pushKey?: {
-    keyId: string;
-    createdAt: number;
-    rotatedAt: number | null;
-    identityCount: number;
-    dependentCount: number;
-  } | null;
-  apnsHealth: "unknown" | "healthy" | "failing";
-  apnsCheckedAt?: number | null;
-  apnsReason?: string | null;
-  passCount?: number;
-  nfcEnabled: boolean;
-  nfcKeys?: Array<{
-    id: string;
-    identityId: string;
-    orgId: string;
-    keyId: string;
-    state: "active" | "retiring" | "retired";
-    createdAt: number;
-    activatedAt: number;
-    retiredAt: number | null;
-    passCount: number;
-    passesLeft: number | null;
-  }>;
-  isDefault: boolean;
-  createdAt: number;
-  kind?: "platform" | "managed" | "own";
-  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
-  rotation?: "auto" | "csr" | "manual";
-  issuing?: boolean;
-  nextRotationAt?: number | null;
-  handle?: string | null;
 };
 
 export type IdentityRunsCancelResponse = {
@@ -7965,6 +7516,455 @@ export type PlatformGroupsUpdateParams = {
 export type PlatformGroupsUpdateResponse = {
   key: string;
   dryRun: boolean;
+};
+
+export type PlatformIdentitiesCertificatesRevokeParams = {
+  certificateId: string;
+  reason: "compromised";
+  confirm: string;
+};
+
+export type PlatformIdentitiesCertificatesRevokeResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type PlatformIdentitiesCheckApnsResponse = {
+  health: "healthy" | "failing" | "inconclusive" | "unavailable";
+  status: number;
+  reason: string | null;
+  checkedAt: number;
+  method?: "certificate" | "key" | "none";
+};
+
+export type PlatformIdentitiesCreateParams = {
+  orgId?: string | null;
+  label: string;
+  certificatePem?: string;
+  privateKeyPem?: string;
+  pkcs12Base64?: string;
+  pkcs12Password?: string;
+  nfcEnabled?: boolean;
+};
+
+export type PlatformIdentitiesCreateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type PlatformIdentitiesDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformIdentitiesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string | null;
+    label: string;
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    source: "env" | "db";
+    certSha256: string | null;
+    certSubject: string | null;
+    certSerial: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    daysRemaining: number | null;
+    apnsBinding: string | null;
+    apnsAvailable: boolean;
+    pushMethod?: "certificate" | "key" | "none";
+    pushKey?: {
+      keyId: string;
+      createdAt: number;
+      rotatedAt: number | null;
+      identityCount: number;
+      dependentCount: number;
+    } | null;
+    apnsHealth: "unknown" | "healthy" | "failing";
+    apnsCheckedAt?: number | null;
+    apnsReason?: string | null;
+    passCount?: number;
+    nfcEnabled: boolean;
+    nfcKeys?: Array<{
+      id: string;
+      identityId: string;
+      orgId: string;
+      keyId: string;
+      state: "active" | "retiring" | "retired";
+      createdAt: number;
+      activatedAt: number;
+      retiredAt: number | null;
+      passCount: number;
+      passesLeft: number | null;
+    }>;
+    isDefault: boolean;
+    createdAt: number;
+    kind?: "platform" | "managed" | "own";
+    status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+    rotation?: "auto" | "csr" | "manual";
+    issuing?: boolean;
+    nextRotationAt?: number | null;
+    handle?: string | null;
+  }>;
+  nextCursor: string | null;
+} | {
+  items: Array<{
+    id: string;
+    label: string;
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    certSubject: string | null;
+    certSerial: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    daysRemaining: number | null;
+    apnsAvailable: boolean;
+    apnsHealth: "unknown" | "healthy" | "failing";
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformIdentitiesPushKeyDeleteResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type PlatformIdentitiesPushKeyUploadParams = {
+  keyId: string;
+  p8: string;
+};
+
+export type PlatformIdentitiesPushKeyUploadResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type PlatformIdentitiesRenewResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type PlatformIdentitiesRetrieveResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type PlatformIdentitiesRotateParams = {
+  certificatePem?: string;
+  privateKeyPem?: string;
+  pkcs12Base64?: string;
+  pkcs12Password?: string;
+};
+
+export type PlatformIdentitiesRotateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type PlatformIdentitiesUpdateParams = {
+  label?: string;
+  isDefault?: boolean;
+  nfcEnabled?: boolean;
+  apnsBinding?: string | null;
+  rotation?: "auto" | "manual";
+  issuing?: boolean;
+};
+
+export type PlatformIdentitiesUpdateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
 };
 
 export type PlatformIdpCallsListResponse = {

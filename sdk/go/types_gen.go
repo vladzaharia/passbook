@@ -3102,435 +3102,6 @@ type IdentitiesCertificatesListResponseItemsItem struct {
 	EndedAt     *int64  `json:"endedAt"`
 }
 
-type IdentitiesCertificatesRevokeParams struct {
-	CertificateID string `json:"certificateId"`
-	Reason        string `json:"reason"`
-	Confirm       string `json:"confirm"`
-}
-
-type IdentitiesCertificatesRevokeResponse struct {
-	ID         string  `json:"id"`
-	OrgID      *string `json:"orgId"`
-	Kind       string  `json:"kind"`
-	TargetType string  `json:"targetType"`
-	TargetID   string  `json:"targetId"`
-	State      string  `json:"state"`
-	Step       *string `json:"step"`
-	Attempt    int64   `json:"attempt"`
-	WaitingFor *string `json:"waitingFor"`
-	ErrorCode  *string `json:"errorCode"`
-	CreatedAt  int64   `json:"createdAt"`
-	UpdatedAt  int64   `json:"updatedAt"`
-	FinishedAt *int64  `json:"finishedAt"`
-}
-
-type IdentitiesCheckApnsResponse struct {
-	Health    string  `json:"health"`
-	Status    int64   `json:"status"`
-	Reason    *string `json:"reason"`
-	CheckedAt int64   `json:"checkedAt"`
-	Method    *string `json:"method,omitempty"`
-}
-
-type IdentitiesCreateParams struct {
-	OrgID          *string `json:"orgId,omitempty"`
-	Label          string  `json:"label"`
-	CertificatePem *string `json:"certificatePem,omitempty"`
-	PrivateKeyPem  *string `json:"privateKeyPem,omitempty"`
-	Pkcs12Base64   *string `json:"pkcs12Base64,omitempty"`
-	Pkcs12Password *string `json:"pkcs12Password,omitempty"`
-	NFCEnabled     *bool   `json:"nfcEnabled,omitempty"`
-}
-
-type IdentitiesCreateResponse struct {
-	ID                 string                                `json:"id"`
-	OrgID              *string                               `json:"orgId"`
-	Label              string                                `json:"label"`
-	PassTypeIdentifier string                                `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                `json:"teamIdentifier"`
-	Source             string                                `json:"source"`
-	CertSha256         *string                               `json:"certSha256"`
-	CertSubject        *string                               `json:"certSubject"`
-	CertSerial         *string                               `json:"certSerial"`
-	NotBefore          *int64                                `json:"notBefore"`
-	NotAfter           *int64                                `json:"notAfter"`
-	DaysRemaining      *int64                                `json:"daysRemaining"`
-	ApnsBinding        *string                               `json:"apnsBinding"`
-	ApnsAvailable      bool                                  `json:"apnsAvailable"`
-	PushMethod         *string                               `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                        `json:"pushKey,omitempty"`
-	ApnsHealth         string                                `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                               `json:"apnsReason,omitempty"`
-	PassCount          *int64                                `json:"passCount,omitempty"`
-	NFCEnabled         bool                                  `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesCreateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                  `json:"isDefault"`
-	CreatedAt          int64                                 `json:"createdAt"`
-	Kind               *string                               `json:"kind,omitempty"`
-	Status             *string                               `json:"status,omitempty"`
-	Rotation           *string                               `json:"rotation,omitempty"`
-	Issuing            *bool                                 `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                `json:"nextRotationAt,omitempty"`
-	Handle             *string                               `json:"handle,omitempty"`
-}
-
-type IdentitiesCreateResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesDeleteResponse struct {
-	Ok bool `json:"ok"`
-}
-
-type IdentitiesListResponse = any
-
-type IdentitiesListResponse1 struct {
-	Items      []IdentitiesListResponse1ItemsItem `json:"items"`
-	NextCursor *string                            `json:"nextCursor"`
-}
-
-type IdentitiesListResponse1ItemsItem struct {
-	ID                 string                                        `json:"id"`
-	OrgID              *string                                       `json:"orgId"`
-	Label              string                                        `json:"label"`
-	PassTypeIdentifier string                                        `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                        `json:"teamIdentifier"`
-	Source             string                                        `json:"source"`
-	CertSha256         *string                                       `json:"certSha256"`
-	CertSubject        *string                                       `json:"certSubject"`
-	CertSerial         *string                                       `json:"certSerial"`
-	NotBefore          *int64                                        `json:"notBefore"`
-	NotAfter           *int64                                        `json:"notAfter"`
-	DaysRemaining      *int64                                        `json:"daysRemaining"`
-	ApnsBinding        *string                                       `json:"apnsBinding"`
-	ApnsAvailable      bool                                          `json:"apnsAvailable"`
-	PushMethod         *string                                       `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                                `json:"pushKey,omitempty"`
-	ApnsHealth         string                                        `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                        `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                                       `json:"apnsReason,omitempty"`
-	PassCount          *int64                                        `json:"passCount,omitempty"`
-	NFCEnabled         bool                                          `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesListResponse1ItemsItemNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                          `json:"isDefault"`
-	CreatedAt          int64                                         `json:"createdAt"`
-	Kind               *string                                       `json:"kind,omitempty"`
-	Status             *string                                       `json:"status,omitempty"`
-	Rotation           *string                                       `json:"rotation,omitempty"`
-	Issuing            *bool                                         `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                        `json:"nextRotationAt,omitempty"`
-	Handle             *string                                       `json:"handle,omitempty"`
-}
-
-type IdentitiesListResponse1ItemsItemNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesListResponse2 struct {
-	Items      []IdentitiesListResponse2ItemsItem `json:"items"`
-	NextCursor *string                            `json:"nextCursor"`
-}
-
-type IdentitiesListResponse2ItemsItem struct {
-	ID                 string  `json:"id"`
-	Label              string  `json:"label"`
-	PassTypeIdentifier string  `json:"passTypeIdentifier"`
-	TeamIdentifier     string  `json:"teamIdentifier"`
-	CertSubject        *string `json:"certSubject"`
-	CertSerial         *string `json:"certSerial"`
-	NotBefore          *int64  `json:"notBefore"`
-	NotAfter           *int64  `json:"notAfter"`
-	DaysRemaining      *int64  `json:"daysRemaining"`
-	ApnsAvailable      bool    `json:"apnsAvailable"`
-	ApnsHealth         string  `json:"apnsHealth"`
-}
-
-type IdentitiesPushKeyDeleteResponse struct {
-	ID                 string                                       `json:"id"`
-	OrgID              *string                                      `json:"orgId"`
-	Label              string                                       `json:"label"`
-	PassTypeIdentifier string                                       `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                       `json:"teamIdentifier"`
-	Source             string                                       `json:"source"`
-	CertSha256         *string                                      `json:"certSha256"`
-	CertSubject        *string                                      `json:"certSubject"`
-	CertSerial         *string                                      `json:"certSerial"`
-	NotBefore          *int64                                       `json:"notBefore"`
-	NotAfter           *int64                                       `json:"notAfter"`
-	DaysRemaining      *int64                                       `json:"daysRemaining"`
-	ApnsBinding        *string                                      `json:"apnsBinding"`
-	ApnsAvailable      bool                                         `json:"apnsAvailable"`
-	PushMethod         *string                                      `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                               `json:"pushKey,omitempty"`
-	ApnsHealth         string                                       `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                       `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                                      `json:"apnsReason,omitempty"`
-	PassCount          *int64                                       `json:"passCount,omitempty"`
-	NFCEnabled         bool                                         `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesPushKeyDeleteResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                         `json:"isDefault"`
-	CreatedAt          int64                                        `json:"createdAt"`
-	Kind               *string                                      `json:"kind,omitempty"`
-	Status             *string                                      `json:"status,omitempty"`
-	Rotation           *string                                      `json:"rotation,omitempty"`
-	Issuing            *bool                                        `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                       `json:"nextRotationAt,omitempty"`
-	Handle             *string                                      `json:"handle,omitempty"`
-}
-
-type IdentitiesPushKeyDeleteResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesPushKeyUploadParams struct {
-	KeyID string `json:"keyId"`
-	P8    string `json:"p8"`
-}
-
-type IdentitiesPushKeyUploadResponse struct {
-	ID                 string                                       `json:"id"`
-	OrgID              *string                                      `json:"orgId"`
-	Label              string                                       `json:"label"`
-	PassTypeIdentifier string                                       `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                       `json:"teamIdentifier"`
-	Source             string                                       `json:"source"`
-	CertSha256         *string                                      `json:"certSha256"`
-	CertSubject        *string                                      `json:"certSubject"`
-	CertSerial         *string                                      `json:"certSerial"`
-	NotBefore          *int64                                       `json:"notBefore"`
-	NotAfter           *int64                                       `json:"notAfter"`
-	DaysRemaining      *int64                                       `json:"daysRemaining"`
-	ApnsBinding        *string                                      `json:"apnsBinding"`
-	ApnsAvailable      bool                                         `json:"apnsAvailable"`
-	PushMethod         *string                                      `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                               `json:"pushKey,omitempty"`
-	ApnsHealth         string                                       `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                       `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                                      `json:"apnsReason,omitempty"`
-	PassCount          *int64                                       `json:"passCount,omitempty"`
-	NFCEnabled         bool                                         `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesPushKeyUploadResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                         `json:"isDefault"`
-	CreatedAt          int64                                        `json:"createdAt"`
-	Kind               *string                                      `json:"kind,omitempty"`
-	Status             *string                                      `json:"status,omitempty"`
-	Rotation           *string                                      `json:"rotation,omitempty"`
-	Issuing            *bool                                        `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                       `json:"nextRotationAt,omitempty"`
-	Handle             *string                                      `json:"handle,omitempty"`
-}
-
-type IdentitiesPushKeyUploadResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesRenewResponse struct {
-	ID         string  `json:"id"`
-	OrgID      *string `json:"orgId"`
-	Kind       string  `json:"kind"`
-	TargetType string  `json:"targetType"`
-	TargetID   string  `json:"targetId"`
-	State      string  `json:"state"`
-	Step       *string `json:"step"`
-	Attempt    int64   `json:"attempt"`
-	WaitingFor *string `json:"waitingFor"`
-	ErrorCode  *string `json:"errorCode"`
-	CreatedAt  int64   `json:"createdAt"`
-	UpdatedAt  int64   `json:"updatedAt"`
-	FinishedAt *int64  `json:"finishedAt"`
-}
-
-type IdentitiesRetrieveResponse struct {
-	ID                 string                                  `json:"id"`
-	OrgID              *string                                 `json:"orgId"`
-	Label              string                                  `json:"label"`
-	PassTypeIdentifier string                                  `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                  `json:"teamIdentifier"`
-	Source             string                                  `json:"source"`
-	CertSha256         *string                                 `json:"certSha256"`
-	CertSubject        *string                                 `json:"certSubject"`
-	CertSerial         *string                                 `json:"certSerial"`
-	NotBefore          *int64                                  `json:"notBefore"`
-	NotAfter           *int64                                  `json:"notAfter"`
-	DaysRemaining      *int64                                  `json:"daysRemaining"`
-	ApnsBinding        *string                                 `json:"apnsBinding"`
-	ApnsAvailable      bool                                    `json:"apnsAvailable"`
-	PushMethod         *string                                 `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                          `json:"pushKey,omitempty"`
-	ApnsHealth         string                                  `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                  `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                                 `json:"apnsReason,omitempty"`
-	PassCount          *int64                                  `json:"passCount,omitempty"`
-	NFCEnabled         bool                                    `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesRetrieveResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                    `json:"isDefault"`
-	CreatedAt          int64                                   `json:"createdAt"`
-	Kind               *string                                 `json:"kind,omitempty"`
-	Status             *string                                 `json:"status,omitempty"`
-	Rotation           *string                                 `json:"rotation,omitempty"`
-	Issuing            *bool                                   `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                  `json:"nextRotationAt,omitempty"`
-	Handle             *string                                 `json:"handle,omitempty"`
-}
-
-type IdentitiesRetrieveResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesRotateParams struct {
-	CertificatePem *string `json:"certificatePem,omitempty"`
-	PrivateKeyPem  *string `json:"privateKeyPem,omitempty"`
-	Pkcs12Base64   *string `json:"pkcs12Base64,omitempty"`
-	Pkcs12Password *string `json:"pkcs12Password,omitempty"`
-}
-
-type IdentitiesRotateResponse struct {
-	ID                 string                                `json:"id"`
-	OrgID              *string                               `json:"orgId"`
-	Label              string                                `json:"label"`
-	PassTypeIdentifier string                                `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                `json:"teamIdentifier"`
-	Source             string                                `json:"source"`
-	CertSha256         *string                               `json:"certSha256"`
-	CertSubject        *string                               `json:"certSubject"`
-	CertSerial         *string                               `json:"certSerial"`
-	NotBefore          *int64                                `json:"notBefore"`
-	NotAfter           *int64                                `json:"notAfter"`
-	DaysRemaining      *int64                                `json:"daysRemaining"`
-	ApnsBinding        *string                               `json:"apnsBinding"`
-	ApnsAvailable      bool                                  `json:"apnsAvailable"`
-	PushMethod         *string                               `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                        `json:"pushKey,omitempty"`
-	ApnsHealth         string                                `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                               `json:"apnsReason,omitempty"`
-	PassCount          *int64                                `json:"passCount,omitempty"`
-	NFCEnabled         bool                                  `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesRotateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                  `json:"isDefault"`
-	CreatedAt          int64                                 `json:"createdAt"`
-	Kind               *string                               `json:"kind,omitempty"`
-	Status             *string                               `json:"status,omitempty"`
-	Rotation           *string                               `json:"rotation,omitempty"`
-	Issuing            *bool                                 `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                `json:"nextRotationAt,omitempty"`
-	Handle             *string                               `json:"handle,omitempty"`
-}
-
-type IdentitiesRotateResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
-type IdentitiesUpdateParams struct {
-	Label       *string `json:"label,omitempty"`
-	IsDefault   *bool   `json:"isDefault,omitempty"`
-	NFCEnabled  *bool   `json:"nfcEnabled,omitempty"`
-	ApnsBinding *string `json:"apnsBinding,omitempty"`
-	Rotation    *string `json:"rotation,omitempty"`
-	Issuing     *bool   `json:"issuing,omitempty"`
-}
-
-type IdentitiesUpdateResponse struct {
-	ID                 string                                `json:"id"`
-	OrgID              *string                               `json:"orgId"`
-	Label              string                                `json:"label"`
-	PassTypeIdentifier string                                `json:"passTypeIdentifier"`
-	TeamIdentifier     string                                `json:"teamIdentifier"`
-	Source             string                                `json:"source"`
-	CertSha256         *string                               `json:"certSha256"`
-	CertSubject        *string                               `json:"certSubject"`
-	CertSerial         *string                               `json:"certSerial"`
-	NotBefore          *int64                                `json:"notBefore"`
-	NotAfter           *int64                                `json:"notAfter"`
-	DaysRemaining      *int64                                `json:"daysRemaining"`
-	ApnsBinding        *string                               `json:"apnsBinding"`
-	ApnsAvailable      bool                                  `json:"apnsAvailable"`
-	PushMethod         *string                               `json:"pushMethod,omitempty"`
-	PushKey            map[string]any                        `json:"pushKey,omitempty"`
-	ApnsHealth         string                                `json:"apnsHealth"`
-	ApnsCheckedAt      *int64                                `json:"apnsCheckedAt,omitempty"`
-	ApnsReason         *string                               `json:"apnsReason,omitempty"`
-	PassCount          *int64                                `json:"passCount,omitempty"`
-	NFCEnabled         bool                                  `json:"nfcEnabled"`
-	NFCKeys            []IdentitiesUpdateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
-	IsDefault          bool                                  `json:"isDefault"`
-	CreatedAt          int64                                 `json:"createdAt"`
-	Kind               *string                               `json:"kind,omitempty"`
-	Status             *string                               `json:"status,omitempty"`
-	Rotation           *string                               `json:"rotation,omitempty"`
-	Issuing            *bool                                 `json:"issuing,omitempty"`
-	NextRotationAt     *int64                                `json:"nextRotationAt,omitempty"`
-	Handle             *string                               `json:"handle,omitempty"`
-}
-
-type IdentitiesUpdateResponseNfcKeysItem struct {
-	ID          string `json:"id"`
-	IdentityID  string `json:"identityId"`
-	OrgID       string `json:"orgId"`
-	KeyID       string `json:"keyId"`
-	State       string `json:"state"`
-	CreatedAt   int64  `json:"createdAt"`
-	ActivatedAt int64  `json:"activatedAt"`
-	RetiredAt   *int64 `json:"retiredAt"`
-	PassCount   int64  `json:"passCount"`
-	PassesLeft  *int64 `json:"passesLeft"`
-}
-
 type IdentityRunsCancelResponse struct {
 	ID         string  `json:"id"`
 	OrgID      *string `json:"orgId"`
@@ -8858,6 +8429,10 @@ type PassesVersionsRetrieveResult = PassDetail
 
 type PassesVoidResult = PassSummary
 
+type PlatformAppleCallsListQuery struct {
+	Since *int64 `json:"since,omitempty"`
+}
+
 type PlatformAppleCallsListResponse struct {
 	Items     []PlatformAppleCallsListResponseItemsItem `json:"items"`
 	Available bool                                      `json:"available"`
@@ -8874,6 +8449,8 @@ type PlatformAppleCallsListResponseItemsItem struct {
 	DurationMs *int64  `json:"durationMs"`
 	At         int64   `json:"at"`
 }
+
+type PlatformAppleCallsListResult = PlatformAppleCallsListResponse
 
 type PlatformAppleIdentitiesCreateParams struct {
 	Slot string `json:"slot"`
@@ -9326,6 +8903,459 @@ type PlatformGroupsUpdateResponse struct {
 }
 
 type PlatformGroupsUpdateResult = PlatformGroupsUpdateResponse
+
+type PlatformIdentitiesCertificatesRevokeParams struct {
+	CertificateID string `json:"certificateId"`
+	Reason        string `json:"reason"`
+	Confirm       string `json:"confirm"`
+}
+
+type PlatformIdentitiesCertificatesRevokeResponse struct {
+	ID         string  `json:"id"`
+	OrgID      *string `json:"orgId"`
+	Kind       string  `json:"kind"`
+	TargetType string  `json:"targetType"`
+	TargetID   string  `json:"targetId"`
+	State      string  `json:"state"`
+	Step       *string `json:"step"`
+	Attempt    int64   `json:"attempt"`
+	WaitingFor *string `json:"waitingFor"`
+	ErrorCode  *string `json:"errorCode"`
+	CreatedAt  int64   `json:"createdAt"`
+	UpdatedAt  int64   `json:"updatedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+}
+
+type PlatformIdentitiesCheckApnsResponse struct {
+	Health    string  `json:"health"`
+	Status    int64   `json:"status"`
+	Reason    *string `json:"reason"`
+	CheckedAt int64   `json:"checkedAt"`
+	Method    *string `json:"method,omitempty"`
+}
+
+type PlatformIdentitiesCheckApnsResult = PlatformIdentitiesCheckApnsResponse
+
+type PlatformIdentitiesCreateBody = PlatformIdentitiesCreateParams
+
+type PlatformIdentitiesCreateParams struct {
+	OrgID          *string `json:"orgId,omitempty"`
+	Label          string  `json:"label"`
+	CertificatePem *string `json:"certificatePem,omitempty"`
+	PrivateKeyPem  *string `json:"privateKeyPem,omitempty"`
+	Pkcs12Base64   *string `json:"pkcs12Base64,omitempty"`
+	Pkcs12Password *string `json:"pkcs12Password,omitempty"`
+	NFCEnabled     *bool   `json:"nfcEnabled,omitempty"`
+}
+
+type PlatformIdentitiesCreateResponse struct {
+	ID                 string                                        `json:"id"`
+	OrgID              *string                                       `json:"orgId"`
+	Label              string                                        `json:"label"`
+	PassTypeIdentifier string                                        `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                        `json:"teamIdentifier"`
+	Source             string                                        `json:"source"`
+	CertSha256         *string                                       `json:"certSha256"`
+	CertSubject        *string                                       `json:"certSubject"`
+	CertSerial         *string                                       `json:"certSerial"`
+	NotBefore          *int64                                        `json:"notBefore"`
+	NotAfter           *int64                                        `json:"notAfter"`
+	DaysRemaining      *int64                                        `json:"daysRemaining"`
+	ApnsBinding        *string                                       `json:"apnsBinding"`
+	ApnsAvailable      bool                                          `json:"apnsAvailable"`
+	PushMethod         *string                                       `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                `json:"pushKey,omitempty"`
+	ApnsHealth         string                                        `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                        `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                       `json:"apnsReason,omitempty"`
+	PassCount          *int64                                        `json:"passCount,omitempty"`
+	NFCEnabled         bool                                          `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesCreateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                          `json:"isDefault"`
+	CreatedAt          int64                                         `json:"createdAt"`
+	Kind               *string                                       `json:"kind,omitempty"`
+	Status             *string                                       `json:"status,omitempty"`
+	Rotation           *string                                       `json:"rotation,omitempty"`
+	Issuing            *bool                                         `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                        `json:"nextRotationAt,omitempty"`
+	Handle             *string                                       `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesCreateResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesCreateResult = PlatformIdentitiesCreateResponse
+
+type PlatformIdentitiesDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type PlatformIdentitiesListResponse = any
+
+type PlatformIdentitiesListResponse1 struct {
+	Items      []PlatformIdentitiesListResponse1ItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformIdentitiesListResponse1ItemsItem struct {
+	ID                 string                                                `json:"id"`
+	OrgID              *string                                               `json:"orgId"`
+	Label              string                                                `json:"label"`
+	PassTypeIdentifier string                                                `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                                `json:"teamIdentifier"`
+	Source             string                                                `json:"source"`
+	CertSha256         *string                                               `json:"certSha256"`
+	CertSubject        *string                                               `json:"certSubject"`
+	CertSerial         *string                                               `json:"certSerial"`
+	NotBefore          *int64                                                `json:"notBefore"`
+	NotAfter           *int64                                                `json:"notAfter"`
+	DaysRemaining      *int64                                                `json:"daysRemaining"`
+	ApnsBinding        *string                                               `json:"apnsBinding"`
+	ApnsAvailable      bool                                                  `json:"apnsAvailable"`
+	PushMethod         *string                                               `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                        `json:"pushKey,omitempty"`
+	ApnsHealth         string                                                `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                                `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                               `json:"apnsReason,omitempty"`
+	PassCount          *int64                                                `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                  `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesListResponse1ItemsItemNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                  `json:"isDefault"`
+	CreatedAt          int64                                                 `json:"createdAt"`
+	Kind               *string                                               `json:"kind,omitempty"`
+	Status             *string                                               `json:"status,omitempty"`
+	Rotation           *string                                               `json:"rotation,omitempty"`
+	Issuing            *bool                                                 `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                                `json:"nextRotationAt,omitempty"`
+	Handle             *string                                               `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesListResponse1ItemsItemNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesListResponse2 struct {
+	Items      []PlatformIdentitiesListResponse2ItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformIdentitiesListResponse2ItemsItem struct {
+	ID                 string  `json:"id"`
+	Label              string  `json:"label"`
+	PassTypeIdentifier string  `json:"passTypeIdentifier"`
+	TeamIdentifier     string  `json:"teamIdentifier"`
+	CertSubject        *string `json:"certSubject"`
+	CertSerial         *string `json:"certSerial"`
+	NotBefore          *int64  `json:"notBefore"`
+	NotAfter           *int64  `json:"notAfter"`
+	DaysRemaining      *int64  `json:"daysRemaining"`
+	ApnsAvailable      bool    `json:"apnsAvailable"`
+	ApnsHealth         string  `json:"apnsHealth"`
+}
+
+type PlatformIdentitiesPushKeyDeleteResponse struct {
+	ID                 string                                               `json:"id"`
+	OrgID              *string                                              `json:"orgId"`
+	Label              string                                               `json:"label"`
+	PassTypeIdentifier string                                               `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                               `json:"teamIdentifier"`
+	Source             string                                               `json:"source"`
+	CertSha256         *string                                              `json:"certSha256"`
+	CertSubject        *string                                              `json:"certSubject"`
+	CertSerial         *string                                              `json:"certSerial"`
+	NotBefore          *int64                                               `json:"notBefore"`
+	NotAfter           *int64                                               `json:"notAfter"`
+	DaysRemaining      *int64                                               `json:"daysRemaining"`
+	ApnsBinding        *string                                              `json:"apnsBinding"`
+	ApnsAvailable      bool                                                 `json:"apnsAvailable"`
+	PushMethod         *string                                              `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                       `json:"pushKey,omitempty"`
+	ApnsHealth         string                                               `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                               `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                              `json:"apnsReason,omitempty"`
+	PassCount          *int64                                               `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                 `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesPushKeyDeleteResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                 `json:"isDefault"`
+	CreatedAt          int64                                                `json:"createdAt"`
+	Kind               *string                                              `json:"kind,omitempty"`
+	Status             *string                                              `json:"status,omitempty"`
+	Rotation           *string                                              `json:"rotation,omitempty"`
+	Issuing            *bool                                                `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                               `json:"nextRotationAt,omitempty"`
+	Handle             *string                                              `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesPushKeyDeleteResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesPushKeyDeleteResult = PlatformIdentitiesPushKeyDeleteResponse
+
+type PlatformIdentitiesPushKeyUploadBody = PlatformIdentitiesPushKeyUploadParams
+
+type PlatformIdentitiesPushKeyUploadParams struct {
+	KeyID string `json:"keyId"`
+	P8    string `json:"p8"`
+}
+
+type PlatformIdentitiesPushKeyUploadResponse struct {
+	ID                 string                                               `json:"id"`
+	OrgID              *string                                              `json:"orgId"`
+	Label              string                                               `json:"label"`
+	PassTypeIdentifier string                                               `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                               `json:"teamIdentifier"`
+	Source             string                                               `json:"source"`
+	CertSha256         *string                                              `json:"certSha256"`
+	CertSubject        *string                                              `json:"certSubject"`
+	CertSerial         *string                                              `json:"certSerial"`
+	NotBefore          *int64                                               `json:"notBefore"`
+	NotAfter           *int64                                               `json:"notAfter"`
+	DaysRemaining      *int64                                               `json:"daysRemaining"`
+	ApnsBinding        *string                                              `json:"apnsBinding"`
+	ApnsAvailable      bool                                                 `json:"apnsAvailable"`
+	PushMethod         *string                                              `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                       `json:"pushKey,omitempty"`
+	ApnsHealth         string                                               `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                               `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                              `json:"apnsReason,omitempty"`
+	PassCount          *int64                                               `json:"passCount,omitempty"`
+	NFCEnabled         bool                                                 `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesPushKeyUploadResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                                 `json:"isDefault"`
+	CreatedAt          int64                                                `json:"createdAt"`
+	Kind               *string                                              `json:"kind,omitempty"`
+	Status             *string                                              `json:"status,omitempty"`
+	Rotation           *string                                              `json:"rotation,omitempty"`
+	Issuing            *bool                                                `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                               `json:"nextRotationAt,omitempty"`
+	Handle             *string                                              `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesPushKeyUploadResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesPushKeyUploadResult = PlatformIdentitiesPushKeyUploadResponse
+
+type PlatformIdentitiesRenewResponse struct {
+	ID         string  `json:"id"`
+	OrgID      *string `json:"orgId"`
+	Kind       string  `json:"kind"`
+	TargetType string  `json:"targetType"`
+	TargetID   string  `json:"targetId"`
+	State      string  `json:"state"`
+	Step       *string `json:"step"`
+	Attempt    int64   `json:"attempt"`
+	WaitingFor *string `json:"waitingFor"`
+	ErrorCode  *string `json:"errorCode"`
+	CreatedAt  int64   `json:"createdAt"`
+	UpdatedAt  int64   `json:"updatedAt"`
+	FinishedAt *int64  `json:"finishedAt"`
+}
+
+type PlatformIdentitiesRenewResult = PlatformIdentitiesRenewResponse
+
+type PlatformIdentitiesRetrieveResponse struct {
+	ID                 string                                          `json:"id"`
+	OrgID              *string                                         `json:"orgId"`
+	Label              string                                          `json:"label"`
+	PassTypeIdentifier string                                          `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                          `json:"teamIdentifier"`
+	Source             string                                          `json:"source"`
+	CertSha256         *string                                         `json:"certSha256"`
+	CertSubject        *string                                         `json:"certSubject"`
+	CertSerial         *string                                         `json:"certSerial"`
+	NotBefore          *int64                                          `json:"notBefore"`
+	NotAfter           *int64                                          `json:"notAfter"`
+	DaysRemaining      *int64                                          `json:"daysRemaining"`
+	ApnsBinding        *string                                         `json:"apnsBinding"`
+	ApnsAvailable      bool                                            `json:"apnsAvailable"`
+	PushMethod         *string                                         `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                  `json:"pushKey,omitempty"`
+	ApnsHealth         string                                          `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                          `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                         `json:"apnsReason,omitempty"`
+	PassCount          *int64                                          `json:"passCount,omitempty"`
+	NFCEnabled         bool                                            `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesRetrieveResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                            `json:"isDefault"`
+	CreatedAt          int64                                           `json:"createdAt"`
+	Kind               *string                                         `json:"kind,omitempty"`
+	Status             *string                                         `json:"status,omitempty"`
+	Rotation           *string                                         `json:"rotation,omitempty"`
+	Issuing            *bool                                           `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                          `json:"nextRotationAt,omitempty"`
+	Handle             *string                                         `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesRetrieveResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesRetrieveResult = PlatformIdentitiesRetrieveResponse
+
+type PlatformIdentitiesRotateBody = PlatformIdentitiesRotateParams
+
+type PlatformIdentitiesRotateParams struct {
+	CertificatePem *string `json:"certificatePem,omitempty"`
+	PrivateKeyPem  *string `json:"privateKeyPem,omitempty"`
+	Pkcs12Base64   *string `json:"pkcs12Base64,omitempty"`
+	Pkcs12Password *string `json:"pkcs12Password,omitempty"`
+}
+
+type PlatformIdentitiesRotateResponse struct {
+	ID                 string                                        `json:"id"`
+	OrgID              *string                                       `json:"orgId"`
+	Label              string                                        `json:"label"`
+	PassTypeIdentifier string                                        `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                        `json:"teamIdentifier"`
+	Source             string                                        `json:"source"`
+	CertSha256         *string                                       `json:"certSha256"`
+	CertSubject        *string                                       `json:"certSubject"`
+	CertSerial         *string                                       `json:"certSerial"`
+	NotBefore          *int64                                        `json:"notBefore"`
+	NotAfter           *int64                                        `json:"notAfter"`
+	DaysRemaining      *int64                                        `json:"daysRemaining"`
+	ApnsBinding        *string                                       `json:"apnsBinding"`
+	ApnsAvailable      bool                                          `json:"apnsAvailable"`
+	PushMethod         *string                                       `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                `json:"pushKey,omitempty"`
+	ApnsHealth         string                                        `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                        `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                       `json:"apnsReason,omitempty"`
+	PassCount          *int64                                        `json:"passCount,omitempty"`
+	NFCEnabled         bool                                          `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesRotateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                          `json:"isDefault"`
+	CreatedAt          int64                                         `json:"createdAt"`
+	Kind               *string                                       `json:"kind,omitempty"`
+	Status             *string                                       `json:"status,omitempty"`
+	Rotation           *string                                       `json:"rotation,omitempty"`
+	Issuing            *bool                                         `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                        `json:"nextRotationAt,omitempty"`
+	Handle             *string                                       `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesRotateResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesRotateResult = PlatformIdentitiesRotateResponse
+
+type PlatformIdentitiesUpdateBody = PlatformIdentitiesUpdateParams
+
+type PlatformIdentitiesUpdateParams struct {
+	Label       *string `json:"label,omitempty"`
+	IsDefault   *bool   `json:"isDefault,omitempty"`
+	NFCEnabled  *bool   `json:"nfcEnabled,omitempty"`
+	ApnsBinding *string `json:"apnsBinding,omitempty"`
+	Rotation    *string `json:"rotation,omitempty"`
+	Issuing     *bool   `json:"issuing,omitempty"`
+}
+
+type PlatformIdentitiesUpdateResponse struct {
+	ID                 string                                        `json:"id"`
+	OrgID              *string                                       `json:"orgId"`
+	Label              string                                        `json:"label"`
+	PassTypeIdentifier string                                        `json:"passTypeIdentifier"`
+	TeamIdentifier     string                                        `json:"teamIdentifier"`
+	Source             string                                        `json:"source"`
+	CertSha256         *string                                       `json:"certSha256"`
+	CertSubject        *string                                       `json:"certSubject"`
+	CertSerial         *string                                       `json:"certSerial"`
+	NotBefore          *int64                                        `json:"notBefore"`
+	NotAfter           *int64                                        `json:"notAfter"`
+	DaysRemaining      *int64                                        `json:"daysRemaining"`
+	ApnsBinding        *string                                       `json:"apnsBinding"`
+	ApnsAvailable      bool                                          `json:"apnsAvailable"`
+	PushMethod         *string                                       `json:"pushMethod,omitempty"`
+	PushKey            map[string]any                                `json:"pushKey,omitempty"`
+	ApnsHealth         string                                        `json:"apnsHealth"`
+	ApnsCheckedAt      *int64                                        `json:"apnsCheckedAt,omitempty"`
+	ApnsReason         *string                                       `json:"apnsReason,omitempty"`
+	PassCount          *int64                                        `json:"passCount,omitempty"`
+	NFCEnabled         bool                                          `json:"nfcEnabled"`
+	NFCKeys            []PlatformIdentitiesUpdateResponseNfcKeysItem `json:"nfcKeys,omitempty"`
+	IsDefault          bool                                          `json:"isDefault"`
+	CreatedAt          int64                                         `json:"createdAt"`
+	Kind               *string                                       `json:"kind,omitempty"`
+	Status             *string                                       `json:"status,omitempty"`
+	Rotation           *string                                       `json:"rotation,omitempty"`
+	Issuing            *bool                                         `json:"issuing,omitempty"`
+	NextRotationAt     *int64                                        `json:"nextRotationAt,omitempty"`
+	Handle             *string                                       `json:"handle,omitempty"`
+}
+
+type PlatformIdentitiesUpdateResponseNfcKeysItem struct {
+	ID          string `json:"id"`
+	IdentityID  string `json:"identityId"`
+	OrgID       string `json:"orgId"`
+	KeyID       string `json:"keyId"`
+	State       string `json:"state"`
+	CreatedAt   int64  `json:"createdAt"`
+	ActivatedAt int64  `json:"activatedAt"`
+	RetiredAt   *int64 `json:"retiredAt"`
+	PassCount   int64  `json:"passCount"`
+	PassesLeft  *int64 `json:"passesLeft"`
+}
+
+type PlatformIdentitiesUpdateResult = PlatformIdentitiesUpdateResponse
 
 type PlatformIdpCallsListItem struct {
 	ID     int64   `json:"id"`
@@ -10955,6 +10985,8 @@ type PlatformUsersUpdateResponse struct {
 	LastLoginAt  *int64   `json:"lastLoginAt"`
 }
 
+type PlatformWalletAccountsGoogleManagedCompleteBody = PlatformWalletAccountsGoogleManagedCompleteParams
+
 type PlatformWalletAccountsGoogleManagedCompleteParams struct {
 	IssuerID string `json:"issuerId"`
 }
@@ -10968,6 +11000,10 @@ type PlatformWalletAccountsGoogleManagedCompleteResponse struct {
 	IssuerID   *string `json:"issuerId"`
 	UpdatedAt  int64   `json:"updatedAt"`
 }
+
+type PlatformWalletAccountsGoogleManagedCompleteResult = PlatformWalletAccountsGoogleManagedCompleteResponse
+
+type PlatformWalletAccountsGoogleManagedCreateBody = PlatformWalletAccountsGoogleManagedCreateParams
 
 type PlatformWalletAccountsGoogleManagedCreateParams struct {
 	Mode string `json:"mode"`
@@ -10983,16 +11019,55 @@ type PlatformWalletAccountsGoogleManagedCreateResponse struct {
 	UpdatedAt  int64   `json:"updatedAt"`
 }
 
+type PlatformWalletAccountsGoogleManagedCreateResult = PlatformWalletAccountsGoogleManagedCreateResponse
+
 type PlatformWalletCredentialsChecksCreateResponse struct {
 	CheckID string `json:"checkId"`
 	Status  string `json:"status"`
 }
+
+type PlatformWalletCredentialsChecksCreateResult = PlatformWalletCredentialsChecksCreateResponse
 
 type PlatformWalletCredentialsChecksRetrieveResponse struct {
 	CheckID   string  `json:"checkId"`
 	Status    string  `json:"status"`
 	Code      *string `json:"code"`
 	CheckedAt *int64  `json:"checkedAt"`
+}
+
+type PlatformWalletCredentialsChecksRetrieveResult = PlatformWalletCredentialsChecksRetrieveResponse
+
+type PlatformWalletCredentialsListItem struct {
+	ID           string   `json:"id"`
+	Scope        string   `json:"scope"`
+	OrgID        *string  `json:"orgId"`
+	Mode         string   `json:"mode"`
+	Provider     string   `json:"provider"`
+	IdentityHint string   `json:"identityHint"`
+	Provenance   string   `json:"provenance"`
+	Revision     int64    `json:"revision"`
+	VerifiedAt   *int64   `json:"verifiedAt"`
+	RevokedAt    *int64   `json:"revokedAt"`
+	CreatedAt    int64    `json:"createdAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+	CardTypes    []string `json:"cardTypes"`
+	LastCheck    any      `json:"lastCheck"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck1 struct {
+	Ok   bool  `json:"ok"`
+	Code any   `json:"code"`
+	At   int64 `json:"at"`
+}
+
+type PlatformWalletCredentialsListItemLastCheck2 struct {
+	Ok   bool   `json:"ok"`
+	Code string `json:"code"`
+	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsListResponse struct {
@@ -11085,6 +11160,8 @@ type PlatformWalletCredentialsMigrateResponse struct {
 	Queued int64 `json:"queued"`
 }
 
+type PlatformWalletCredentialsMigrateResult = PlatformWalletCredentialsMigrateResponse
+
 type PlatformWalletCredentialsResolveMigrationParams struct {
 	OrgID    string `json:"orgId"`
 	Mode     string `json:"mode"`
@@ -11094,6 +11171,27 @@ type PlatformWalletCredentialsResolveMigrationParams struct {
 
 type PlatformWalletCredentialsResolveMigrationResponse struct {
 	Accounts int64 `json:"accounts"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItem struct {
+	AccountID      string                                                             `json:"accountId"`
+	OrgID          string                                                             `json:"orgId"`
+	Mode           string                                                             `json:"mode"`
+	Provider       string                                                             `json:"provider"`
+	State          string                                                             `json:"state"`
+	Reason         *string                                                            `json:"reason"`
+	IdentityShared []PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem `json:"identityShared"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationItemIdentitySharedItem struct {
+	OrgID    string `json:"orgId"`
+	Mode     string `json:"mode"`
+	Provider string `json:"provider"`
+}
+
+type PlatformWalletCredentialsRetrieveMigrationQuery struct {
+	After  *string `json:"after,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type PlatformWalletCredentialsRetrieveMigrationResponse struct {
@@ -11157,6 +11255,10 @@ type PlatformWalletCredentialsRotateKeyResponse struct {
 	RunID string `json:"runId"`
 }
 
+type PlatformWalletCredentialsRotateKeyResult = PlatformWalletCredentialsRotateKeyResponse
+
+type PlatformWalletCredentialsSetSamsungCardBody = PlatformWalletCredentialsSetSamsungCardParams
+
 type PlatformWalletCredentialsSetSamsungCardParams struct {
 	Type             string `json:"type"`
 	CardID           string `json:"cardId"`
@@ -11191,6 +11293,10 @@ type PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 struct {
 	Code string `json:"code"`
 	At   int64  `json:"at"`
 }
+
+type PlatformWalletCredentialsSetSamsungCardResult = PlatformWalletCredentialsSetSamsungCardResponse
+
+type PlatformWalletCredentialsUpsertBody = PlatformWalletCredentialsUpsertParams
 
 type PlatformWalletCredentialsUpsertParams = any
 
@@ -11252,6 +11358,25 @@ type PlatformWalletCredentialsUpsertResponseLastCheck2 struct {
 	Ok   bool   `json:"ok"`
 	Code string `json:"code"`
 	At   int64  `json:"at"`
+}
+
+type PlatformWalletCredentialsUpsertResult = PlatformWalletCredentialsUpsertResponse
+
+type PlatformWalletEnrollmentsListItem struct {
+	OrgID     string         `json:"orgId"`
+	OrgName   string         `json:"orgName"`
+	Mode      string         `json:"mode"`
+	Provider  string         `json:"provider"`
+	Source    *string        `json:"source"`
+	State     string         `json:"state"`
+	Hold      map[string]any `json:"hold"`
+	UpdatedAt int64          `json:"updatedAt"`
+}
+
+type PlatformWalletEnrollmentsListQuery struct {
+	Provider string  `json:"provider"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
 }
 
 type PlatformWalletEnrollmentsListResponse struct {
