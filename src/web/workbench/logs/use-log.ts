@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
-import { LOG_API, type LogFilters, type Page, queryOf } from './model.ts';
+import { useToolApi } from '../../lib/tool-api.tsx';
+import { refusingApi } from '../host/refusing.ts';
+import { type Cursor, type Page, readLog } from './api.ts';
+import { type LogFilters, queryOf } from './model.ts';
 
 /** How often the log asks for newer calls while the tab is in view. Reading the log is never logged itself. */
 export const POLL_MS = 4000;
@@ -12,18 +15,7 @@ const FRESH_MS = 4000;
 /** A path typed in the search asks after this pause. */
 const TYPE_MS = 250;
 
-export type LogPhase = 'loading' | 'ready' | 'failed' | 'out' | 'no-sandbox';
-
-async function readPage(path: string): Promise<{ status: number; page: Page | null }> {
-  try {
-    const res = await fetch(path, { headers: { accept: 'application/json' } });
-    return { status: res.status, page: res.ok ? ((await res.json()) as Page) : null };
-  } catch (error) {
-    // Offline: the list says it did not load, and the page's handler hears why.
-    reportError(error);
-    return { status: 0, page: null };
-  }
-}
+export type LogPhase = 'loading' | 'ready' | 'failed';
 
 /** `value`, after it has held still for `ms`; the first value is immediate. */
 function useSettled<T>(value: T, ms: number): T {
@@ -41,11 +33,15 @@ function useSettled<T>(value: T, ms: number): T {
  * keeps the old rows (`busy` dims them) until the new ones land.
  */
 export function useLog(filters: LogFilters) {
-  const query = queryOf(filters);
+  const api = useToolApi();
+  // On a cold load the page can mount before the session's token host is ready: the refusing client would
+  // fail the first read for good, so the list stays loading until a real client arrives.
+  const live = (api as unknown) !== refusingApi;
+  const query = JSON.stringify([queryOf(filters), filters.tab === 'errors']);
   const settled = useSettled(query, TYPE_MS);
   const [phase, setPhase] = useState<LogPhase>('loading');
   const [items, setItems] = useState<RequestLogEntry[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<Cursor | null>(null);
   const [capped, setCapped] = useState<Page['capped']>(null);
   const [busy, setBusy] = useState(false);
   const [more, setMore] = useState(false);
@@ -61,45 +57,64 @@ export function useLog(filters: LogFilters) {
   const quietSince = useRef(Date.now());
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
   const latest = useRef({ settled, cursor });
   latest.current = { settled, cursor };
+  const apiRef = useRef(api);
+  apiRef.current = api;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `retries` is the Retry button's nudge.
   useEffect(() => {
+    if (!live) return;
     const mine = ++run.current;
     setBusy(true);
-    void readPage(`${LOG_API}?${settled}`).then(({ status, page }) => {
-      if (mine !== run.current) return;
-      setBusy(false);
-      if (status === 401) return setPhase('out');
-      if (status === 404) return setPhase('no-sandbox');
-      if (!page) return setPhase('failed');
-      newest.current = page.items[0]?.id ?? null;
-      setItems(page.items);
-      setCursor(page.nextCursor);
-      setCapped(page.capped);
-      setFresh(new Set());
-      setPhase('ready');
-      // Changing the view is activity: a paused listener starts again.
-      quietSince.current = Date.now();
-      if (pausedRef.current) wake.current();
-    });
-  }, [settled, retries]);
+    readLog(apiRef.current, filtersRef.current).then(
+      (page) => {
+        if (mine !== run.current) return;
+        setBusy(false);
+        newest.current = page.items[0]?.id ?? null;
+        setItems(page.items);
+        setCursor(page.cursor);
+        setCapped(page.capped);
+        setFresh(new Set());
+        setPhase('ready');
+        // Changing the view is activity: a paused listener starts again.
+        quietSince.current = Date.now();
+        if (pausedRef.current) wake.current();
+      },
+      () => {
+        // The list says it did not load; Retry reads again. A gone session is the shell's banner.
+        if (mine !== run.current) return;
+        setBusy(false);
+        setPhase('failed');
+      },
+    );
+    // `settled` is the filters after their pause: the read follows it.
+  }, [settled, retries, live]);
 
   const loadMore = useCallback(async () => {
-    const { settled: q, cursor: at } = latest.current;
+    const { cursor: at } = latest.current;
     if (!at) return;
     const mine = run.current;
     setMore(true);
-    const { page } = await readPage(`${LOG_API}?${q}&cursor=${encodeURIComponent(at)}`);
+    let page: Page;
+    try {
+      page = await readLog(apiRef.current, filtersRef.current, { cursor: at });
+    } catch {
+      // The rows stay; Show more is there to try again.
+      if (mine === run.current) setMore(false);
+      return;
+    }
     if (mine !== run.current) return;
     setMore(false);
-    if (!page) return;
     setItems((all) => {
       const have = new Set(all.map((r) => r.id));
-      return [...all, ...page.items.filter((r) => !have.has(r.id))];
+      return [...all, ...page.items.filter((r) => !have.has(r.id))].sort(
+        (a, b) => b.at - a.at || (a.id < b.id ? 1 : -1),
+      );
     });
-    setCursor(page.nextCursor);
+    setCursor(page.cursor);
   }, []);
 
   const ready = phase === 'ready';
@@ -116,9 +131,9 @@ export function useLog(filters: LogFilters) {
       if (stopped || document.visibilityState !== 'visible') return;
       if (Date.now() - quietSince.current > IDLE_MS) return setPaused(true);
       const mine = run.current;
-      const q = latest.current.settled;
-      const after = newest.current ? `&after=${encodeURIComponent(newest.current)}` : '';
-      const { page } = await readPage(`${LOG_API}?${q}${after}`);
+      const page = await readLog(apiRef.current, filtersRef.current, {
+        after: newest.current,
+      }).catch(() => null);
       if (!stopped && mine === run.current && page) {
         const have = new Set(itemsRef.current.map((r) => r.id));
         const added = page.items.filter((r) => !have.has(r.id));
@@ -162,6 +177,7 @@ export function useLog(filters: LogFilters) {
     busy,
     more,
     hasMore: cursor !== null,
+    refresh: () => setRetries((n) => n + 1),
     loadMore,
     fresh,
     paused,

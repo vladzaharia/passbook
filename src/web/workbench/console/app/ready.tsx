@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { BenchSkeleton } from '../../bench/skeleton.tsx';
+import type { ConsoleClient } from '../client.ts';
 import { loadFile } from '../data.ts';
-import type { Prefill } from '../prefill.ts';
-import type { Sandbox } from '../session.ts';
-import { retain } from '../token.ts';
+import type { Launch } from '../launch.ts';
+import { takesTemplate } from '../request.ts';
+import { firstTemplateId } from '../template-sample.ts';
 import type { RunOp } from '../types.ts';
 import { OpConsole } from './console.tsx';
 import { LazyState } from './lazy-state.tsx';
+import { type LogRead, useFill } from './use-launch.ts';
+
+const NO_LAUNCH: Launch = { op: null, sample: null, from: null, prefill: null };
 
 type Loaded = { op: RunOp; origin: string } | 'missing' | null;
 
@@ -31,41 +35,71 @@ function useOp(slug: string | undefined, id: string | undefined): Loaded {
   return state;
 }
 
-/** One operation of a sandbox in use: its file is read, then the console for it. Keeps the try token fresh. */
+/** The org's first template, read once an operation needs one: undefined while it is read, null when there is none or none is needed. */
+function useFirstTemplate(client: ConsoleClient, needed: boolean): string | null | undefined {
+  const [id, setId] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!needed || !client.orgId) return;
+    let live = true;
+    void firstTemplateId(client.orgId, client.send).then((got) => live && setId(got));
+    return () => {
+      live = false;
+    };
+  }, [client, needed]);
+  return needed && client.orgId ? id : null;
+}
+
+/** One operation: its file is read, then the console for it. */
 export function Ready({
-  sandbox,
-  csrf,
+  client,
+  templateId,
   mode,
   slug,
   opId,
   codes,
-  prefill,
+  launch,
+  log,
+  reason,
 }: {
-  sandbox: Sandbox;
-  csrf: string;
+  client: ConsoleClient;
+  /** The template examples name: the sandbox's. Undefined: the org's first one is looked up. */
+  templateId?: string | null | undefined;
   mode: 'op' | 'console' | 'sheet';
   slug?: string | undefined;
   opId?: string | undefined;
   codes: ReadonlySet<string>;
-  prefill?: Prefill | undefined;
+  /** The Console's address: what filled the request, and the Logs row it read. */
+  launch?: Launch | undefined;
+  log?: LogRead | undefined;
+  reason?: string | null | undefined;
 }) {
   const loaded = useOp(slug, opId);
-  useEffect(() => retain(csrf), [csrf]);
+  const lookup =
+    templateId === undefined && loaded !== null && loaded !== 'missing' && takesTemplate(loaded.op);
+  const found = useFirstTemplate(client, lookup);
+  const fill = useFill(
+    loaded !== null && loaded !== 'missing' ? loaded.op : null,
+    launch ?? NO_LAUNCH,
+    log ?? { state: 'none' },
+  );
   if (loaded === 'missing')
     return (
       <LazyState scene="failed" title={CONSOLE_COPY.loadFailed} onRetry={() => location.reload()} />
     );
-  if (!loaded) return <BenchSkeleton rows={3} />;
+  // A Logs row is read before the form is drawn: it starts from what that call sent.
+  if (!loaded || found === undefined || log?.state === 'loading') return <BenchSkeleton rows={3} />;
   return (
     <OpConsole
       key={loaded.op.id}
       op={loaded.op}
       origin={loaded.origin}
-      csrf={csrf}
-      templateId={sandbox.templateId}
+      client={client}
+      templateId={templateId === undefined ? found : templateId}
       codes={codes}
       mode={mode}
-      prefill={prefill ?? undefined}
+      prefill={fill.prefill ?? undefined}
+      note={fill.note}
+      reason={reason}
     />
   );
 }

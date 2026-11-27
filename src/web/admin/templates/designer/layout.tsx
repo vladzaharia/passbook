@@ -12,6 +12,7 @@ export function DesignerLayout({
   structure,
   preview,
   issues,
+  below,
   readOnly = false,
   previewOnPhone = true,
 }: {
@@ -19,12 +20,15 @@ export function DesignerLayout({
   structure: ReactNode;
   preview: ReactNode;
   issues: ReactNode;
+  /** Under the stage: what the host adds (the Workbench's code). */
+  below?: ReactNode;
   readOnly?: boolean;
   /** A preview that cannot be read at phone width leaves only the notice and the way back. */
   previewOnPhone?: boolean;
 }) {
   const phone = useMediaQuery(PHONE);
-  const { Link } = useDesignerHost();
+  const { Link, extras } = useDesignerHost();
+  if (phone && extras) return <extras.Phone preview={preview} issues={issues} />;
   if (phone) {
     return (
       <div className="grid gap-4">
@@ -45,7 +49,10 @@ export function DesignerLayout({
       <div className="dz-structure min-w-0" inert={readOnly} data-readonly={readOnly || undefined}>
         {structure}
       </div>
-      <div className="dz-stage min-w-0">{preview}</div>
+      <div className="dz-stage min-w-0">
+        {preview}
+        {below}
+      </div>
       <div className="dz-issues min-w-0">{issues}</div>
     </div>
   );

@@ -8,6 +8,7 @@ import { Badge, LoadingRail, Skeleton } from '../../../ui/index.ts';
 import { useLoadedUrls } from './assets.ts';
 import { previewAssetMap } from './images.ts';
 import { allKeys, type DraftAsset } from './model.ts';
+import { useKept } from './ui-keep.tsx';
 
 /**
  * A field that first shows up in the dry run drops onto the card (translate and scale, 320 ms
@@ -84,6 +85,8 @@ export function DesignerPreview({
   target?: PassTarget;
 }) {
   const host = usePartDrop(passJson);
+  // Kept across the phone breakpoint, which replaces the card with another tree.
+  const [face, setFace] = useKept<'front' | 'back'>('stage:face', 'front');
   const loaded = useLoadedUrls(
     useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]),
   );
@@ -107,6 +110,8 @@ export function DesignerPreview({
         <LoadingRail show={checking} />
         {view ? (
           <FacePair
+            face={face}
+            onFace={setFace}
             front={<DesignerFace view={view} face="front" target={target} />}
             back={<DesignerFace view={view} face="back" target={target} />}
           />

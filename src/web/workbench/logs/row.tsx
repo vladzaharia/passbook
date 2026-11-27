@@ -19,13 +19,23 @@ const runs = (list: PathRun[]) =>
     ),
   );
 
-/** Where a call came from, when it was not your key: Run here, or the portal reading for itself. */
-const viaLabel = (row: RequestLogEntry): string | null =>
-  row.via !== 'try'
-    ? null
-    : row.client === 'portal'
+/** Who made the call: Run here, the portal reading for itself, or the caller's tool by its short name. */
+const clientLabel = (row: Pick<RequestLogEntry, 'via' | 'client'>): string | null =>
+  row.via === 'try'
+    ? row.client === 'portal'
       ? LOGS_BENCH_COPY.via.portal
-      : LOGS_BENCH_COPY.via.try;
+      : LOGS_BENCH_COPY.via.try
+    : row.client;
+
+/** The client chip (DS6): a quiet mono tag, so a row says whether curl, a script or the Console sent it. */
+export function ClientChip({ row }: { row: Pick<RequestLogEntry, 'via' | 'client'> }) {
+  const label = clientLabel(row);
+  return label ? (
+    <span className="logs-client" data-via={row.via ?? undefined}>
+      {label}
+    </span>
+  ) : null;
+}
 
 /**
  * One request in the bench list: time and method, the path cut in the middle (ids dimmed, the whole of it
@@ -46,7 +56,12 @@ export function logRow(row: RequestLogEntry): BenchRowParts {
         <span className="logs-tail">{runs(tail)}</span>
       </span>
     ),
-    meta: row.code ? <code className="logs-err">{row.code}</code> : viaLabel(row),
+    meta: (
+      <>
+        {row.code ? <code className="logs-err">{row.code}</code> : null}
+        <ClientChip row={row} />
+      </>
+    ),
     trail: (
       <>
         <StatusChip status={row.status} />

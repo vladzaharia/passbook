@@ -81,9 +81,6 @@ export function Layout({
   return (
     <div className={wide ? 'qs qs-wide' : 'qs'}>
       <div className="qs-main">
-        <div className="eyebrow">{QS_COPY.eyebrow}</div>
-        <h1 className="h1 page-h">{QS_COPY.title}</h1>
-        <p className="lede muted mt2">{QS_COPY.lede}</p>
         {progress}
         {wide ? steps : <ol className="qs-steps">{steps}</ol>}
       </div>

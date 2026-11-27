@@ -9,9 +9,11 @@ import type { Operation } from '../operation/types.ts';
 export default function ActivityTrayBody({
   client,
   include,
+  allHref,
 }: {
   client?: OperationsClient;
   include?: (op: Operation) => boolean;
+  allHref?: string;
 }) {
   const router = useRouter();
   const onNavigate = useCallback(
@@ -23,7 +25,7 @@ export default function ActivityTrayBody({
   );
   return (
     <OperationsProvider client={client ?? sessionOperationsClient()}>
-      <OperationTray onNavigate={onNavigate} notify include={include} />
+      <OperationTray onNavigate={onNavigate} notify include={include} allHref={allHref} />
     </OperationsProvider>
   );
 }

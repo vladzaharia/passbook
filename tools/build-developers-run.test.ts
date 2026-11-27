@@ -1,7 +1,8 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { MOVED } from '../src/shared/developers.ts';
 import type { RunFile, RunIndex } from '../src/web/workbench/console/types.ts';
 import { buildDevelopers, type Manifest } from './build-developers.ts';
 
@@ -17,26 +18,33 @@ beforeAll(async () => {
 }, 120_000);
 afterAll(() => rmSync(work, { recursive: true, force: true }));
 
-describe('what the Run island reads', () => {
-  it('has a slot on every operation, and every slot resolves to its operation in its page file', () => {
+const opIds = () =>
+  new Set(
+    readdirSync(join(work, 'developers/run'))
+      .filter((f) => f !== 'index.json')
+      .flatMap((f) => runFile(f.replace('.json', '')).ops.map((o) => o.id)),
+  );
+const RUN_LINK = /<a class="btn" href="\/workbench\/console\?op=([^"&]+)">Run in Workbench/g;
+
+describe('what the Workbench Console reads', () => {
+  it('links every operation page to Run in Workbench, and every link resolves to a run file operation', () => {
     const dir = join(work, 'developers/reference');
     const pages = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) =>
       f.endsWith('.html'),
     );
     expect(pages.length).toBeGreaterThan(10);
-    let slots = 0;
+    const known = opIds();
+    const linked = new Set<string>();
     for (const page of pages) {
       const html = read(`developers/reference/${page}`);
-      for (const m of html.matchAll(/data-island="run" data-op="([^"]+)" data-slug="([^"]+)"/g)) {
-        slots += 1;
-        const file = runFile(m[2] as string);
-        expect(
-          file.ops.some((o) => o.id === m[1]),
-          `${page}: ${m[1]}`,
-        ).toBe(true);
+      expect(html, page).not.toContain('data-island="run"');
+      for (const m of html.matchAll(RUN_LINK)) {
+        const id = decodeURIComponent(m[1] as string);
+        linked.add(id);
+        expect(known.has(id), `${page}: ${id}`).toBe(true);
       }
     }
-    expect(slots).toBeGreaterThan(100);
+    expect(linked.size).toBeGreaterThan(100);
   });
 
   it('lists the run files in the manifest as JSON, and keeps them out of the sitemap', () => {
@@ -88,14 +96,17 @@ describe('what the Run island reads', () => {
       expect(read(`developers/run/${f}`)).not.toMatch(/pbtry_|pbp_|pb_(live|test)_|__Host-/);
   });
 
-  it('draws the slot as a ticket with a stub and a body, the shape the island keeps', () => {
-    expect(read('developers/reference/passes/create.html')).toMatch(
-      /data-island="run"[^>]*><div class="ticket"><div class="stub">.*?<\/div><div class="body">/s,
+  it('draws the run link as a ticket with a stub and a body, the id in ?op= and no body in the URL', () => {
+    const html = read('developers/reference/passes/create.html');
+    expect(html).toMatch(
+      /<div class="ticket"><div class="stub">.*?<\/div><div class="body"><div class="try-foot"><a class="btn" href="\/workbench\/console\?op=passes\.postPasses">Run in Workbench/s,
     );
+    expect(html).not.toMatch(/\/workbench\/console\?[^"]*body=/i);
   });
 
-  it('draws the console slot as the signed-out Gate until the island takes over', () => {
-    const html = read('developers/console.html');
-    expect(html).toMatch(/data-island="console"[^>]*><section class="card gate" data-gate=""/);
+  it('keeps no Console page: the old address is a redirect into the Workbench', () => {
+    expect(MOVED['/developers/console']).toBe('/workbench/console');
+    expect(existsSync(join(work, 'developers/console.html'))).toBe(false);
+    expect(manifest['/developers/console']).toBeUndefined();
   });
 });

@@ -23,6 +23,37 @@ export function DesignerHeader({
   const host = useDesignerHost();
   const step = host.useReleaseStep(templateId, template);
   const next = step?.action ?? null;
+  const actions =
+    undoRedo || next ? (
+      <>
+        {next}
+        {undoRedo ? (
+          <>
+            <IconButton
+              label="Undo"
+              icon={<Undo2 aria-hidden />}
+              variant="outline"
+              disabled={!undoRedo.canUndo}
+              onClick={() => undoRedo.dispatch({ type: 'undo' })}
+            />
+            <IconButton
+              label="Redo"
+              icon={<Redo2 aria-hidden />}
+              variant="outline"
+              disabled={!undoRedo.canRedo}
+              onClick={() => undoRedo.dispatch({ type: 'redo' })}
+            />
+          </>
+        ) : null}
+      </>
+    ) : undefined;
+  if (host.extras)
+    return (
+      <>
+        <host.extras.Head name={name} actions={actions} />
+        {step?.dialog}
+      </>
+    );
   return (
     <>
       <PageHeader
@@ -37,31 +68,7 @@ export function DesignerHeader({
             </>
           ) : undefined
         }
-        actions={
-          undoRedo || next ? (
-            <>
-              {next}
-              {undoRedo ? (
-                <>
-                  <IconButton
-                    label="Undo"
-                    icon={<Undo2 aria-hidden />}
-                    variant="outline"
-                    disabled={!undoRedo.canUndo}
-                    onClick={() => undoRedo.dispatch({ type: 'undo' })}
-                  />
-                  <IconButton
-                    label="Redo"
-                    icon={<Redo2 aria-hidden />}
-                    variant="outline"
-                    disabled={!undoRedo.canRedo}
-                    onClick={() => undoRedo.dispatch({ type: 'redo' })}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : undefined
-        }
+        actions={actions}
       />
       {step?.dialog}
     </>

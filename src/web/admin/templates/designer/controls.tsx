@@ -4,6 +4,7 @@ import type { Op } from './apply.ts';
 import type { Source } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { readInputs, scalarInputs } from './inputs.ts';
+import { useKept } from './ui-keep.tsx';
 
 /** A text control that edits through the history; quick keystrokes become one undo step. */
 export function TextEdit({
@@ -64,17 +65,20 @@ export function NameEdit({
   problem: (text: string) => string | null;
   onCommit: (text: string) => void;
 }) {
-  const [text, setText] = useState(value);
+  // The draft is kept by label and value: a flip of the layout mid-typing keeps what was typed.
+  const [draft, setDraft] = useKept<string | null>(`name-edit:${label}:${value}`, null);
   const [seen, setSeen] = useState(value);
   if (seen !== value) {
     setSeen(value);
-    setText(value);
+    setDraft(null);
   }
+  const text = draft ?? value;
+  const setText = (next: string) => setDraft(next === value ? null : next);
   const error = text === value ? null : problem(text);
   const commit = () => {
     if (text === value) return;
-    if (problem(text)) setText(value);
-    else onCommit(text);
+    if (!problem(text)) onCommit(text);
+    setDraft(null);
   };
   return (
     <FormField label={label} help={help} error={error ?? undefined}>

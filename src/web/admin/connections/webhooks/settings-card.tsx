@@ -13,6 +13,7 @@ import {
   useFormErrors,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
+import { useAdminTemplateChoices } from './admin-templates.ts';
 import { useEndpointActions } from './api.ts';
 import { EndpointFields } from './endpoint-fields.tsx';
 import { checkForm, type FormState, formOf, isDirty, patchOf } from './form-state.ts';
@@ -27,6 +28,7 @@ export function SettingsCard({
 }) {
   const { update } = useEndpointActions(e.id);
   const [form, setForm] = useState<FormState>(() => formOf(e));
+  const templates = useAdminTemplateChoices(e.orgId, form.templateMode === 'selected');
   const [serverUrl, setServerUrl] = useState<string>();
   const dirty = canManage && isDirty(form, e);
   const guard = useUnsavedChangesGuard(dirty);
@@ -87,7 +89,7 @@ export function SettingsCard({
             errors={{ ...check.errors, ...(serverUrl ? { url: serverUrl } : {}) }}
             disabled={!canManage}
             masked={e.urlMasked}
-            orgId={e.orgId}
+            templates={templates}
           />
         </Form>
       </CardBody>

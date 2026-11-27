@@ -1,0 +1,4 @@
+/* Design in the Workbench: the one core under the Workbench's panels. */
+.wb-tool-design [data-designer] {
+  min-width: 0;
+}

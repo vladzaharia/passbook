@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { FlaskConical } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button, toast } from '../../../ui/index.ts';
-import { templateKeys } from '../api.ts';
+import { templateKeys } from '../keys.ts';
 import type { Template } from '../versions.ts';
 import { type ReleaseStep, useDesignerHost } from './host.tsx';
 

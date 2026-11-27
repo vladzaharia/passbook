@@ -41,6 +41,11 @@
   },
   {
     "role": "org",
+    "path": "/workbench/o/{orgId}/design/{templateId}",
+    "name": "workbench-design-template"
+  },
+  {
+    "role": "org",
     "path": "/workbench/o/{orgId}/events",
     "name": "workbench-events"
   },

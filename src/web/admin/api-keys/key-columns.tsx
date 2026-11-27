@@ -28,6 +28,10 @@ export interface KeyColumnsOptions {
   now: number;
   canRevoke: boolean;
   onRevoke: (key: ApiKey) => void;
+  /** The creator's name links to their admin page; a host without one shows the name. */
+  creatorLink?: boolean;
+  /** The key the host runs on: labelled, with no Revoke. */
+  isOwn?: (key: ApiKey) => boolean;
 }
 
 /** What the list shows of a key: the start of its secret (`pb_live_`, `pbp_`, `pbo_`, or `wlt_` for an older key) and its prefix. */
@@ -42,6 +46,8 @@ export function keyColumns({
   now,
   canRevoke,
   onRevoke,
+  creatorLink = true,
+  isOwn,
 }: KeyColumnsOptions): DataColumnDef<ApiKey, never>[] {
   return [
     {
@@ -66,7 +72,7 @@ export function keyColumns({
                 </KeyNameLink>
                 {(k.kind === 'service' || k.kind === 'platform') && !k.parentKeyId ? null : (
                   <span className="shrink-0 text-xs font-normal text-fg-muted">
-                    {k.parentKeyId ? 'Child' : 'Personal'}
+                    {isOwn?.(k) ? 'Sandbox key' : k.parentKeyId ? 'Child' : 'Personal'}
                   </span>
                 )}
               </span>
@@ -127,7 +133,11 @@ export function keyColumns({
         return (
           <span className="flex min-w-0 flex-col items-start">
             <span>{formatDay(createdAt)}</span>
-            {createdBy ? (
+            {createdBy && !creatorLink ? (
+              <span className="max-w-full truncate text-xs text-fg-muted">
+                {entityLabel(createdByName, 'User')}
+              </span>
+            ) : createdBy ? (
               <MetaLink
                 to="/admin/users/$userId"
                 params={{ userId: createdBy }}
@@ -174,7 +184,7 @@ export function keyColumns({
                 icon: Copy,
                 onSelect: () => void copyText(keyPrefix(row.original), 'prefix'),
               },
-              ...(canRevoke && row.original.revokedAt === null
+              ...(canRevoke && row.original.revokedAt === null && !isOwn?.(row.original)
                 ? [
                     {
                       label: 'Revoke',

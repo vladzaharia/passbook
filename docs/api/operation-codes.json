@@ -3383,7 +3383,8 @@
     "OPERATION_NOT_CANCELABLE",
     "OPERATION_NOT_FOUND",
     "ORG_FORBIDDEN",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
   ],
   "operations post /{id}/retry": [
     "FORBIDDEN",
@@ -3393,7 +3394,8 @@
     "OPERATION_NOT_RETRYABLE",
     "OPERATION_RUNNING",
     "ORG_FORBIDDEN",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "WORKBENCH_TEST_ONLY"
   ],
   "org-lifecycle get /closed-orgs": [],
   "org-lifecycle get /{exportId}/download": [

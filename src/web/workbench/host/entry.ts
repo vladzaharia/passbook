@@ -21,6 +21,8 @@ export async function enterContext(
   tool: WbTool,
   tail: { searchStr: string; hash: string },
 ): Promise<void> {
+  // An old docs link's hash is rewritten first (loaded only when there is a hash).
+  if (tail.hash) (await import('./legacy-hash.ts')).redirectLegacy(tool, tail);
   const session = await queryClient.ensureQueryData(sessionQuery);
   if (!session.authenticated || session.amr !== 'oidc') return;
   let list: WbContext[];

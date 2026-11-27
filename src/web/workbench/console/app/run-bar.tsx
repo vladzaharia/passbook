@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Play } from 'lucide-react';
+import { CircleAlert, CircleCheck, Lock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { type Draft, type InputCheck, inputUnchecked } from '../request.ts';
@@ -21,6 +21,8 @@ export function RunBar({
   spent,
   run,
   pressRef,
+  reason,
+  ask,
 }: {
   op: RunOp;
   draft: Draft;
@@ -30,6 +32,10 @@ export function RunBar({
   spent: boolean;
   run: () => void;
   pressRef: { current: (() => void) | null };
+  /** Why this operation cannot run here: Run stays disabled and the line says why. */
+  reason?: string | null | undefined;
+  /** The Workbench asks in a dialog before a destructive call; elsewhere the button arms. */
+  ask?: (() => void) | undefined;
 }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -37,9 +43,10 @@ export function RunBar({
     const t = setTimeout(() => setArmed(false), CONFIRM_MS);
     return () => clearTimeout(t);
   }, [armed]);
-  const blocked = issues.length > 0 || pending || spent;
+  const blocked = issues.length > 0 || pending || spent || Boolean(reason);
   const press = () => {
     if (blocked) return;
+    if (op.destructive && ask) return ask();
     if (op.destructive && !armed) return setArmed(true);
     setArmed(false);
     run();
@@ -47,8 +54,13 @@ export function RunBar({
   pressRef.current = press;
   return (
     <div className="runbar">
-      <span className="valid" data-ok={issues.length === 0}>
-        {issues.length === 0 ? (
+      <span className="valid" data-ok={issues.length === 0 && !reason}>
+        {reason ? (
+          <>
+            <Lock aria-hidden="true" />
+            {reason}
+          </>
+        ) : issues.length === 0 ? (
           <>
             <CircleCheck aria-hidden="true" />
             {op.body ? (inputUnchecked(op, draft, check) ? C.shape : C.valid) : C.ready}

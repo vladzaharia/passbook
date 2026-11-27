@@ -19,11 +19,14 @@ function TrayList({
   recent,
   now,
   onOpen,
+  all,
 }: {
   active: readonly Operation[];
   recent: readonly Operation[];
   now: number;
   onOpen: (op: Operation) => void;
+  /** The full list, when the host has one: a link under the rows. */
+  all?: () => void;
 }): ReactNode {
   return (
     <div className="flex flex-col">
@@ -36,6 +39,15 @@ function TrayList({
       {recent.map((op) => (
         <OperationRow key={op.id} operation={op} now={now} onOpen={onOpen} />
       ))}
+      {all ? (
+        <button
+          type="button"
+          onClick={all}
+          className="mt-1 cursor-pointer rounded-md px-3 py-2 text-left text-sm font-medium text-accent-fg wl-colors hover:bg-state-hover-tint"
+        >
+          All activity
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -59,6 +71,7 @@ export function OperationTray({
   zone,
   notify,
   include,
+  allHref,
   className,
 }: {
   onNavigate?: (href: string) => void;
@@ -67,6 +80,8 @@ export function OperationTray({
   notify?: boolean;
   /** The operations this tray lists; the host's scope (the Workbench lists its context's Test ones). */
   include?: (op: Operation) => boolean;
+  /** Where "All activity" goes: the host's full list. Omitted, no link. */
+  allHref?: string;
   className?: string;
 }) {
   const phone = useMediaQuery(PHONE);
@@ -99,7 +114,13 @@ export function OperationTray({
       className={cn('wl-colors', busy && 'ring-2 ring-accent/40', className)}
     />
   );
-  const list = <TrayList active={active} recent={recent} now={now} onOpen={openOp} />;
+  const all = allHref
+    ? () => {
+        setOpen(false);
+        onNavigate(allHref);
+      }
+    : undefined;
+  const list = <TrayList active={active} recent={recent} now={now} onOpen={openOp} all={all} />;
   return (
     <>
       {visible ? (

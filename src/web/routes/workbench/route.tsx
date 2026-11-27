@@ -6,8 +6,8 @@ import { useSession } from '../../lib/session.ts';
 import { StandaloneError } from '../../ui/layout/lazy-error-pages.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { useWorkbenchContexts } from '../../workbench/host/contexts.ts';
+import { useFreshSpace } from '../../workbench/host/fresh-space.ts';
 import { markSessionGone, resetSessionGone } from '../../workbench/host/session-gone.ts';
-import { forgetTokens } from '../../workbench/host/token.ts';
 import { ToolHostProvider } from '../../workbench/host/tool-host.tsx';
 import { PUBLIC_AREAS } from '../../workbench/shell/nav-model.ts';
 import { setPerson } from '../../workbench/shell/person.ts';
@@ -35,10 +35,7 @@ function WorkbenchLayout() {
   const contexts = useWorkbenchContexts();
   setPerson(authed?.user.id);
   // PrincipalBoundary remounts the space for each person: no token or banner carries over.
-  useEffect(() => {
-    forgetTokens();
-    resetSessionGone();
-  }, []);
+  useFreshSpace();
 
   // The session ended behind a refetch: the "Sign in again" banner, never Retry.
   const ended = contexts.error instanceof ApiError && contexts.error.isUnauthorized;
@@ -62,14 +59,16 @@ function WorkbenchLayout() {
       : tool === 'quickstart'
         ? list.find((c) => c.kind === 'sandbox')
         : undefined) ?? null;
-  // Signed out, Design and Quickstart open; the sidebar's sign-in card shows there only, so a view
-  // never carries two buddies or two sign-in buttons.
+  // Signed out, Design and Quickstart open. Design carries the sidebar's sign-in card; Quickstart's step 1
+  // is its own, so a view never carries two buddies or two sign-in buttons.
   const signedOutPublic = Boolean(tool && PUBLIC_AREAS.has(tool) && !orgId);
+  // Quickstart words its own gate (step 1: Polaris ID, no developer access), so the shell states stand aside.
+  const ownGate = tool === 'quickstart';
   let body: ReactNode = <Outlet />;
   if (isPending) body = <SkeletonRows label="Loading" />;
   // An email link opens the holder's spaces only: the Workbench waits for Polaris ID.
   else if (authed && authed.amr !== 'oidc')
-    body = <PolarisIdRequired space="The Workbench" next={href} />;
+    body = ownGate ? <Outlet /> : <PolarisIdRequired space="The Workbench" next={href} />;
   else if (!authed) {
     if (!signedOutPublic) body = <SignInState next={href} />;
   } else if (contexts.isPending) body = <SkeletonRows label="Loading" />;
@@ -86,7 +85,7 @@ function WorkbenchLayout() {
         context={context}
         tool={tool}
         signedOut={!authed && !isPending}
-        signedOutNext={authed || isPending || !signedOutPublic ? null : href}
+        signedOutNext={authed || isPending || !signedOutPublic || ownGate ? null : href}
       >
         {stale ? (
           <Suspense fallback={null}>

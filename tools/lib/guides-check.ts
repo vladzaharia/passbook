@@ -2,6 +2,7 @@
 // that resolve, and the owner's rule that a sandbox guide ends at a preview and has no phone steps.
 import { DEV_GUIDES } from '../../src/shared/copy/developers.ts';
 import { PATHS } from '../../src/shared/developers.ts';
+import { isWorkbenchPath, wbToolOf } from '../../src/shared/workbench.ts';
 import { guideUrl, resolveGuide } from '../../src/web/developers/guide/model.ts';
 import {
   blockTexts,
@@ -85,6 +86,11 @@ export function guideFailures(
       for (const { target } of linksIn(text)) {
         if (target.startsWith('console:') || /^https?:\/\//.test(target)) continue;
         const [path = '', hash] = target.split('#');
+        if (isWorkbenchPath(path.split('?')[0] ?? '')) {
+          if (!wbToolOf(path) && path !== PATHS.workbench)
+            out.push(`${file}: link ${target} names no Workbench area`);
+          continue;
+        }
         const anchors = known.get(path);
         if (anchors === undefined) out.push(`${file}: link ${target} points at no page`);
         else if (hash && anchors && !anchors.has(hash))

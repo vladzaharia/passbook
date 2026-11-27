@@ -163,6 +163,14 @@ describe('L17: the mounted wizard on a member token', () => {
     expect(still.status).toBe(200);
   });
 
+  it('the wizard reads the outbound setup guide on the token', async () => {
+    const m = await t.member();
+    const { token } = await t.wbMint(m.browser, m.orgId);
+    const res = await t.call('GET', '/webhook-endpoints/setup', t.asClient(token));
+    expect(res.status, await res.clone().text()).toBe(200);
+    expect(await res.json()).toMatchObject({ direction: 'outbound' });
+  });
+
   it('a step-up route asks what the session would', async () => {
     const m = await t.member();
     const { token } = await t.wbMint(m.browser, m.orgId);

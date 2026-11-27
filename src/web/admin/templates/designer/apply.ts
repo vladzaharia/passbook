@@ -73,6 +73,8 @@ export type Op =
   | { op: 'input-add'; spec: InputSpec }
   | { op: 'input-set'; name: string; patch: Partial<InputSpec> }
   | { op: 'input-remove'; name: string }
+  /** Replaces the whole sample input (the Workbench's JSON view of it). */
+  | { op: 'sample-set'; sample: Record<string, unknown> }
   | { op: 'input-move'; name: string; to: number }
   | { op: 'display'; part: 'title' | 'subtitle'; expr: string }
   | { op: 'barcode'; settings: BarcodeSettings }
@@ -153,6 +155,8 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
     }
     case 'input-remove':
       return removeInput(doc, o.name);
+    case 'sample-set':
+      return { ...doc, manifest: { ...doc.manifest, sample: o.sample } };
     case 'input-move':
       return moveInput(doc, o.name, o.to);
     case 'display':

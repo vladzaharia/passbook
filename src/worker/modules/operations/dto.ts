@@ -8,6 +8,8 @@ import {
 } from '../../../shared/contracts/operations.ts';
 import { OPERATION_COPY } from '../../../shared/copy/operations.ts';
 import { stepText } from '../../../shared/operations/text.ts';
+import type { AuthContext } from '../../platform/auth.ts';
+import { workbenchPinOf } from '../../platform/auth-workbench.ts';
 import { kindOf } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 
@@ -104,3 +106,16 @@ export function toDto(row: OperationRow): OperationDto {
 }
 
 export const etagOf = (op: Pick<OperationDto, 'id' | 'revision'>) => `"${op.id}:${op.revision}"`;
+
+/**
+ * What a caller may do with it: a Workbench token is offered stop and retry only for a kind that
+ * declares `tokenActs`, so its buttons match what the server will accept.
+ */
+export function forCaller(op: OperationDto, auth: AuthContext): OperationDto {
+  if (!workbenchPinOf(auth) || kindOf(op.kind)?.tokenActs) return op;
+  return {
+    ...op,
+    cancelable: false,
+    error: op.error ? { ...op.error, retryable: false } : null,
+  };
+}

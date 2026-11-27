@@ -1,6 +1,6 @@
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
 import { Checkbox, Label } from '@/web/ui/index.ts';
-import { useTerminals } from './queries.ts';
+import { useTerminals } from './terminals.ts';
 
 export const SCOPES = MINTABLE_SCOPES;
 

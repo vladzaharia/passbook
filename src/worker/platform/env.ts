@@ -60,6 +60,7 @@ export const RATE_LIMITS = [
   'RL_API_KEY_BULK',
   'RL_API_ORG',
   'RL_API_TRY',
+  'RL_API_TRY_ASSET',
   'RL_WEBHOOK',
   'RL_REFRESH',
   'RL_SCAN_PAIR',

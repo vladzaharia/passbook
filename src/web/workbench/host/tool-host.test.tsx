@@ -19,6 +19,7 @@ const nw: WbContext = {
   kind: 'org',
   tools: ['home'],
   closed: false,
+  timeZone: 'America/Los_Angeles',
 };
 
 afterEach(() => {
