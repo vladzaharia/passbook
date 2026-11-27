@@ -243,19 +243,27 @@ test.describe('a developer sandbox', () => {
       ['design', 'No templates'],
     ];
     for (const [tool, heading] of empties) {
-      // The first call, the key list and the templates are emptied by the route, so the shot is the §6
-      // empty state whatever the sandbox has already logged, issued or made.
-      const globs = { logs: '**/api/v1/request-logs*', design: '**/api/v1/templates?*' };
-      const glob = globs[tool as keyof typeof globs] ?? '**/api/v1/api-keys*';
-      const mocked = tool === 'logs' || tool === 'keys' || tool === 'design';
-      if (mocked)
-        await page.route(glob, (route) =>
-          route.request().method() === 'GET' && !/api-keys\/[^/?]/.test(route.request().url())
-            ? route.fulfill({
-                json: { items: [], nextCursor: null, capped: null, bodiesRecorded: true },
-              })
-            : route.fallback(),
-        );
+      // Every list is emptied by the route, so the shot is the §6 empty state whatever the sandbox
+      // has already logged, received, issued or made in earlier specs.
+      const globs: Partial<Record<WbTool, string>> = {
+        logs: '**/api/v1/request-logs*',
+        events: '**/api/v1/events?*',
+        inbox: '**/api/v1/test-inbox?*',
+        passes: '**/api/v1/passes?*',
+        activity: '**/api/v1/operations?*',
+        keys: '**/api/v1/api-keys*',
+        design: '**/api/v1/templates?*',
+      };
+      const glob = globs[tool] as string;
+      const emptyList =
+        tool === 'events'
+          ? { items: [], nextCursor: '', hasMore: false }
+          : { items: [], nextCursor: null, capped: null, bodiesRecorded: true };
+      await page.route(glob, (route) =>
+        route.request().method() === 'GET' && !/api-keys\/[^/?]/.test(route.request().url())
+          ? route.fulfill({ json: emptyList })
+          : route.fallback(),
+      );
       await page.goto(wbPath(org, tool));
       await expect(h1(page)).toBeVisible();
       await expect(text(page, heading)).toBeVisible();
@@ -267,7 +275,7 @@ test.describe('a developer sandbox', () => {
           expect((await radio.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(43.5);
       }
       await shot(page, `empty-${tool}`);
-      if (mocked) await page.unroute(glob);
+      await page.unroute(glob);
     }
 
     await page.route('**/api/v1/workbench/contexts', async (route) => {
