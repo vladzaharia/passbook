@@ -1,14 +1,13 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ImagePlus, Plus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
-import { formatDay } from '../../lib/format.ts';
+import { isApiError } from '../../lib/errors.ts';
 import { useMode } from '../../lib/mode.ts';
-import { useOrgScope } from '../../lib/org-filter.tsx';
+import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
+import { readablePassOrgs } from '../../lib/org-lists.ts';
 import { orgPath } from '../../lib/scope.ts';
-import { useOrgOptions } from '../../lib/search.ts';
-import { humanizeStatus } from '../../lib/status.ts';
 import { useSwatches } from '../../lib/swatches.ts';
 import {
   Button,
@@ -20,16 +19,16 @@ import {
   PageHeader,
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
-import { usePassList } from './api.ts';
 import { BulkRunCard } from './bulk-run-card.tsx';
 import { canChangePasses, filterSelection, leaveSelection } from './change/selection.ts';
-import { downloadText, toCsv } from './csv.ts';
 import { useCurrentBulkRun } from './find-api.ts';
 import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
 import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
-import { PassFindToolbar } from './find-toolbar.tsx';
+import { orgIdsOf, PassFindToolbar } from './find-toolbar.tsx';
+import { isFiltered, useAllScopeOrgIds, usePassList } from './list-api.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
+import { exportPassesCsv } from './list-export.ts';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
 import { OtherModeHint } from './other-mode-hint.tsx';
 import { SelectionBar } from './selection-bar.tsx';
@@ -47,32 +46,44 @@ export function PassesListPage({
 }) {
   const scope = useOrgScope();
   const { orgId } = scope;
-  const canRead = Boolean(
-    !scope.isLoading &&
-      !scope.isError &&
-      orgId &&
-      scope.membership?.capabilities.includes('passes:read'),
-  );
-  const canOperate = Boolean(
-    !scope.isLoading &&
-      !scope.isError &&
-      orgId &&
-      scope.membership?.capabilities.includes('passes:operate'),
-  );
+  // The All scope lists every readable organization without edits; opening a row is the scope switch.
+  const all = useAdminScope()?.kind === 'all';
+  const readableIds = useAllScopeOrgIds(all);
+  const returnTo = useRouterState({ select: (state) => state.location.href });
+  const canRead = all
+    ? readableIds.size >= 2
+    : Boolean(
+        !scope.isLoading &&
+          !scope.isError &&
+          orgId &&
+          scope.membership?.capabilities.includes('passes:read'),
+      );
+  const canOperate =
+    !all &&
+    Boolean(
+      !scope.isLoading &&
+        !scope.isError &&
+        orgId &&
+        scope.membership?.capabilities.includes('passes:operate'),
+    );
   const mode = useMode();
   const chips = useMemo(() => allChips(search), [search]);
-  const list = usePassList({ ...search, ...chipFilter(chips), orgId });
+  const orgIds = useMemo(() => orgIdsOf(search.orgIds), [search.orgIds]);
+  const list = usePassList(
+    { ...search, ...chipFilter(chips), orgId, orgIds },
+    { kind: all ? 'all' : 'org' },
+  );
   const templates = useTemplates({ orgId });
   const fields = useFindFields(templates.data?.items ?? [], search.templateId, orgId);
   const fieldLabels = useMemo(() => new Map(fields.map((f) => [f.key, f.label])), [fields]);
-  const orgs = useOrgOptions(!orgId);
   const rows = useMemo(
     () =>
       canRead
-        ? (list.data?.pages.flatMap((page) => page.items).filter((pass) => pass.orgId === orgId) ??
-          [])
+        ? (list.data?.pages
+            .flatMap((page) => page.items)
+            .filter((pass) => (all ? readableIds.has(pass.orgId) : pass.orgId === orgId)) ?? [])
         : [],
-    [canRead, list.data, orgId],
+    [canRead, list.data, orgId, all, readableIds],
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allMatching, setAllMatching] = useState(false);
@@ -82,7 +93,7 @@ export function PassesListPage({
   const shownRun =
     runId ?? (current.data && current.data.id !== dismissed ? current.data.id : undefined);
   const count = list.data?.pages[0]?.count ?? rows.length;
-  const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
+  const filtered = isFiltered(search, all);
   const truth = !list.isPending && !list.isError && !filtered && rows.length === 0;
 
   // A new filter, scope or mode is a new list: the selection does not carry over.
@@ -93,15 +104,22 @@ export function PassesListPage({
   }, [orgId, mode, JSON.stringify(search)]);
 
   const templateNames = useMemo(
-    () => new Map((templates.data?.items ?? []).map((t) => [t.id, t.name])),
-    [templates.data],
+    () =>
+      new Map(
+        all
+          ? rows.flatMap((r) => (r.templateName ? [[r.templateId, r.templateName] as const] : []))
+          : (templates.data?.items ?? []).map((t) => [t.id, t.name] as const),
+      ),
+    [all, rows, templates.data],
   );
-  const orgNames = useMemo(
-    () => new Map((orgs.data?.items ?? []).map((o) => [o.id, o.name])),
-    [orgs.data],
+  const readable = useMemo(
+    () => (all ? readablePassOrgs(scope.memberships).filter((m) => readableIds.has(m.orgId)) : []),
+    [all, scope.memberships, readableIds],
   );
+  const orgs = useMemo(() => new Map(readable.map((m) => [m.orgId, m])), [readable]);
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);
-  const swatches = useSwatches(templateIds, orgId);
+  // Previews are per organization: the All list shows plain chips.
+  const swatches = useSwatches(all ? [] : templateIds, orgId);
   const showSubtitles = useMemo(() => {
     const seen = new Set<string>();
     return rows.some((r) => {
@@ -144,13 +162,15 @@ export function PassesListPage({
           void navigate({ href: orgPath(orgId, '/passes/change') });
         }
       : undefined;
-  const columns = useMemo(() => passColumns(!orgId), [orgId]);
+  const columns = useMemo(() => passColumns(all), [all]);
   const context = useMemo(
     () => ({
       orgId,
       canOperate,
       templateNames,
-      orgNames,
+      all,
+      orgs,
+      returnTo,
       swatches,
       showSubtitles,
       selected,
@@ -163,7 +183,9 @@ export function PassesListPage({
       orgId,
       canOperate,
       templateNames,
-      orgNames,
+      all,
+      orgs,
+      returnTo,
       swatches,
       showSubtitles,
       selected,
@@ -174,29 +196,6 @@ export function PassesListPage({
       fieldLabels,
     ],
   );
-
-  function exportCsv() {
-    const chosen = rows.filter((r) => selected.has(r.id));
-    const header = [
-      'Pass',
-      'Holder',
-      'Holder state',
-      ...(orgId ? [] : ['Organization']),
-      'Template',
-      'On device',
-      'Updated',
-    ];
-    const line = (r: PassSummaryDto) => [
-      r.title ?? r.serial,
-      r.holderEmail ?? '',
-      humanizeStatus(r.holderState),
-      ...(orgId ? [] : [orgNames.get(r.orgId) ?? '']),
-      templateNames.get(r.templateId) ?? '',
-      String(r.deviceCount),
-      formatDay(r.modifiedAt, ''),
-    ];
-    downloadText('passes.csv', toCsv(header, chosen.map(line)));
-  }
 
   const create = (variant: 'primary' | 'outline') => (
     <>
@@ -234,7 +233,15 @@ export function PassesListPage({
           loading={list.isPending}
           error={
             list.isError ? (
-              <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+              <ErrorState
+                error={list.error}
+                // Too many organizations: retrying cannot help; the Organization filter can.
+                onRetry={
+                  isApiError(list.error) && list.error.code === 'ORG_SCOPE_TOO_WIDE'
+                    ? undefined
+                    : () => void list.refetch()
+                }
+              />
             ) : undefined
           }
           fetching={list.isFetching && !list.isFetchingNextPage}
@@ -247,6 +254,7 @@ export function PassesListPage({
                 orgId={orgId}
                 templates={templates.data?.items ?? []}
                 canOperate={canOperate}
+                all={all ? readable : undefined}
                 onChange={onSearch}
               />
               {canOperate && !allSelected && rows.length > 0 ? (
@@ -271,7 +279,9 @@ export function PassesListPage({
               art="passes"
               title="No passes yet"
               description={
-                <OtherModeHint orgId={orgId} hidden={Boolean(scope.membership?.testOnly)} />
+                all ? undefined : (
+                  <OtherModeHint orgId={orgId} hidden={Boolean(scope.membership?.testOnly)} />
+                )
               }
               action={
                 canOperate ? (
@@ -302,7 +312,12 @@ export function PassesListPage({
           setAllMatching(false);
           setSelected(new Set());
         }}
-        onExport={exportCsv}
+        onExport={() =>
+          exportPassesCsv(
+            rows.filter((r) => selected.has(r.id)),
+            templateNames,
+          )
+        }
         onChange={openChange}
         onRun={setRunId}
         all={allMatching ? { filter: toPassFilter({ ...search, chips }), count } : undefined}

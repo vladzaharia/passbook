@@ -5972,6 +5972,9 @@ type PassDetail struct {
 	RemovedAt        *int64                           `json:"removedAt,omitempty"`
 	ModifiedAt       int64                            `json:"modifiedAt"`
 	CreatedAt        int64                            `json:"createdAt"`
+	OrgName          *string                          `json:"orgName,omitempty"`
+	TemplateName     *string                          `json:"templateName,omitempty"`
+	TimeZone         *string                          `json:"timeZone,omitempty"`
 	Email            *PassDetailEmail                 `json:"email,omitempty"`
 	ReissueRequired  bool                             `json:"reissueRequired"`
 	PushBudget       *PassDetailPushBudget            `json:"pushBudget,omitempty"`
@@ -7761,6 +7764,9 @@ type PassSummary struct {
 	RemovedAt       *int64                   `json:"removedAt,omitempty"`
 	ModifiedAt      int64                    `json:"modifiedAt"`
 	CreatedAt       int64                    `json:"createdAt"`
+	OrgName         *string                  `json:"orgName,omitempty"`
+	TemplateName    *string                  `json:"templateName,omitempty"`
+	TimeZone        *string                  `json:"timeZone,omitempty"`
 }
 
 type PassSummaryMatchedItem struct {
@@ -8524,6 +8530,7 @@ type PassesDevicesListResponseDevicesItem struct {
 type PassesDevicesListResult = PassesDevicesListResponse
 
 type PassesListQuery struct {
+	OrgIds       *string `json:"orgIds,omitempty"`
 	TemplateID   *string `json:"templateId,omitempty"`
 	ConnectionID *string `json:"connectionId,omitempty"`
 	ImportID     *string `json:"importId,omitempty"`
