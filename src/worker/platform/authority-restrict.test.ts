@@ -5,7 +5,7 @@ import { grant } from './authority.ts';
 import { passRow } from './authority-checks.ts';
 import { jsonSet } from './authority-expr.ts';
 import { db, refusal } from './authority-ext-fixtures.ts';
-import { authorityPredicate, tenantFilter } from './authority-read.ts';
+import { authorityPredicate } from './authority-read.ts';
 import {
   CARRIED_BY_EDGE,
   columnOf,
@@ -372,7 +372,7 @@ describe('what a write assigns', () => {
     });
     const seen = await all<{ event_seq: number }>(
       db,
-      `WITH ${p.ctes} SELECT x.event_seq FROM webhook_deliveries x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('x', 'webhook_deliveries')}`,
+      `WITH ${p.ctes} SELECT x.event_seq FROM ${p.rows}webhook_deliveries x WHERE ${p.tenant('x', 'webhook_deliveries')}`,
       p.params,
     );
     expect(seen.map((r) => r.event_seq)).toEqual([mine]);
@@ -449,7 +449,7 @@ describe('reads', () => {
       const p = authorityPredicate(w.principal(keyId), { scope: 'org', now: w.x.s.f.clock.now() });
       return all(
         db,
-        `WITH ${p.ctes} SELECT s.key FROM settings s WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('s', 'settings', 'org')}`,
+        `WITH ${p.ctes} SELECT s.key FROM ${p.rows}settings s WHERE ${p.tenant('s', 'settings', 'org')}`,
         p.params,
       );
     };
@@ -639,7 +639,7 @@ describe('the corpus: every table with a template column is covered', () => {
         now: w.x.s.f.clock.now(),
       });
       const alias = 'x';
-      const sql = `WITH ${p.ctes} SELECT count(*) AS n FROM ${table} ${alias} WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter(alias, table, scope.mode ? 'org_mode' : 'org')}`;
+      const sql = `WITH ${p.ctes} SELECT count(*) AS n FROM ${p.rows}${table} ${alias} WHERE ${p.tenant(alias, table, scope.mode ? 'org_mode' : 'org')}`;
       const row = await first<{ n: number }>(db, sql, p.params);
       expect(row, table).not.toBeNull();
     }
@@ -652,7 +652,7 @@ describe('the corpus: every table with a template column is covered', () => {
       const p = authorityPredicate(w.principal(keyId), { scope, now: w.x.s.f.clock.now() });
       return first<{ n: number }>(
         db,
-        `WITH ${p.ctes} SELECT count(*) AS n FROM ${table} x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('x', table, scope)} AND ${
+        `WITH ${p.ctes} SELECT count(*) AS n FROM ${p.rows}${table} x WHERE ${p.tenant('x', table, scope)} AND ${
           'column' in (TEMPLATE_REFS[table] ?? {})
             ? `x.${(TEMPLATE_REFS[table] as { column: string }).column} = ?`
             : '1 = 1'
