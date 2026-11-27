@@ -38,7 +38,11 @@ const call = (headers: Record<string, string>, method: string, path: string, bod
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
-    k.env,
+    // A real queue delivers after the file ends and loads the Worker entry into a torn-down environment.
+    {
+      ...k.env,
+      JOBS: { send: async () => {}, sendBatch: async () => {} },
+    } as unknown as typeof k.env,
   );
 
 async function platformKey(scopes: string[]) {

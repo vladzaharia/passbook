@@ -16,8 +16,8 @@ OPS = {o["id"]: o for o in json.loads((Path(__file__).parent / "ops.json").read_
 
 
 def test_there_is_a_snippet_for_every_operation():
-    # The portal publishes no platform operations (isPublished in the developer model), so they have no snippet.
-    published = {i for i, o in OPS.items() if not o["call"].startswith("platform.")}
+    # The portal publishes no platform operations (isPublished in the developer model: x-platform-scope or a platform resource), so they have no snippet.
+    published = {i for i, o in OPS.items() if o["published"]}
     assert {p.stem for p in SNIPPETS} == published
 
 

@@ -2,6 +2,7 @@
  {
   "id": "api-keys.getApiKeys",
   "call": "api_keys.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/api-keys",
   "pathParams": [],
@@ -33,6 +34,7 @@
  {
   "id": "api-keys.postApiKeys",
   "call": "api_keys.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/api-keys",
   "pathParams": [],
@@ -63,6 +65,7 @@
  {
   "id": "api-keys.getApiKeysMe",
   "call": "api_keys.retrieve_current",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/api-keys/me",
   "pathParams": [],
@@ -87,6 +90,7 @@
  {
   "id": "api-keys.postApiKeysMeRotate",
   "call": "api_keys.rotate_current",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/api-keys/me/rotate",
   "pathParams": [],
@@ -131,6 +135,7 @@
  {
   "id": "api-keys.getApiKeysById",
   "call": "api_keys.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/api-keys/{id}",
   "pathParams": [
@@ -173,6 +178,7 @@
  {
   "id": "api-keys.deleteApiKeysById",
   "call": "api_keys.revoke",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/api-keys/{id}",
   "pathParams": [
@@ -194,6 +200,7 @@
  {
   "id": "api-keys.getApiKeysByIdActivity",
   "call": "api_keys.activity.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/api-keys/{id}/activity",
   "pathParams": [
@@ -240,6 +247,7 @@
  {
   "id": "api-keys.postApiKeysByIdRetire",
   "call": "api_keys.retire",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/api-keys/{id}/retire",
   "pathParams": [
@@ -265,6 +273,7 @@
  {
   "id": "api-keys.postApiKeysByIdRotate",
   "call": "api_keys.rotate",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/api-keys/{id}/rotate",
   "pathParams": [
@@ -317,6 +326,7 @@
  {
   "id": "audit.getAudit",
   "call": "audit_entries.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/audit",
   "pathParams": [],
@@ -345,6 +355,7 @@
  {
   "id": "audit.getAuditExport",
   "call": "audit_entries.export",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/audit/export",
   "pathParams": [],
@@ -357,6 +368,7 @@
  {
   "id": "brand.getBrand",
   "call": "brand.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/brand",
   "pathParams": [],
@@ -387,6 +399,7 @@
  {
   "id": "brand.patchBrand",
   "call": "brand.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/brand",
   "pathParams": [],
@@ -410,6 +423,7 @@
  {
   "id": "brand.putBrandWebLogo",
   "call": "brand.web_logo.upload",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/brand/web-logo",
   "pathParams": [],
@@ -435,6 +449,7 @@
  {
   "id": "brand.deleteBrandWebLogo",
   "call": "brand.web_logo.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/brand/web-logo",
   "pathParams": [],
@@ -457,6 +472,7 @@
  {
   "id": "broadcasts.getBroadcasts",
   "call": "broadcasts.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/broadcasts",
   "pathParams": [],
@@ -508,6 +524,7 @@
  {
   "id": "broadcasts.postBroadcasts",
   "call": "broadcasts.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts",
   "pathParams": [],
@@ -560,6 +577,7 @@
  {
   "id": "broadcasts.postBroadcastsPreview",
   "call": "broadcasts.count_recipients",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/preview",
   "pathParams": [],
@@ -605,6 +623,7 @@
  {
   "id": "broadcasts.getBroadcastsById",
   "call": "broadcasts.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/broadcasts/{id}",
   "pathParams": [
@@ -657,6 +676,7 @@
  {
   "id": "broadcasts.patchBroadcastsById",
   "call": "broadcasts.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/broadcasts/{id}",
   "pathParams": [
@@ -715,6 +735,7 @@
  {
   "id": "broadcasts.postBroadcastsByIdCancel",
   "call": "broadcasts.cancel",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/{id}/cancel",
   "pathParams": [
@@ -767,6 +788,7 @@
  {
   "id": "broadcasts.getBroadcastsByIdItems",
   "call": "broadcasts.recipients.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/broadcasts/{id}/items",
   "pathParams": [
@@ -797,6 +819,7 @@
  {
   "id": "broadcasts.postBroadcastsByIdRetry",
   "call": "broadcasts.retry",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/{id}/retry",
   "pathParams": [
@@ -849,6 +872,7 @@
  {
   "id": "broadcasts.postBroadcastsByIdSend",
   "call": "broadcasts.send",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/{id}/send",
   "pathParams": [
@@ -902,6 +926,7 @@
  {
   "id": "broadcasts.postBroadcastsByIdStop",
   "call": "broadcasts.stop",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/{id}/stop",
   "pathParams": [
@@ -954,6 +979,7 @@
  {
   "id": "broadcasts.postBroadcastsByIdUndo",
   "call": "broadcasts.undo",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/broadcasts/{id}/undo",
   "pathParams": [
@@ -978,6 +1004,7 @@
  {
   "id": "bundles.getBundles",
   "call": "bundles.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/bundles",
   "pathParams": [],
@@ -1012,6 +1039,7 @@
  {
   "id": "bundles.postBundles",
   "call": "bundles.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/bundles",
   "pathParams": [],
@@ -1048,6 +1076,7 @@
  {
   "id": "bundles.getBundlesById",
   "call": "bundles.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/bundles/{id}",
   "pathParams": [
@@ -1083,6 +1112,7 @@
  {
   "id": "bundles.deleteBundlesById",
   "call": "bundles.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/bundles/{id}",
   "pathParams": [
@@ -1104,6 +1134,7 @@
  {
   "id": "bundles.postBundlesByIdRotateLink",
   "call": "bundles.rotate_link",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/bundles/{id}/rotate-link",
   "pathParams": [
@@ -1139,6 +1170,7 @@
  {
   "id": "bundles.postBundlesByIdSendEmail",
   "call": "bundles.send_email",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/bundles/{id}/send-email",
   "pathParams": [
@@ -1161,6 +1193,7 @@
  {
   "id": "connections.getConnections",
   "call": "connections.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections",
   "pathParams": [],
@@ -1222,6 +1255,7 @@
  {
   "id": "connections.postConnections",
   "call": "connections.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections",
   "pathParams": [],
@@ -1284,6 +1318,7 @@
  {
   "id": "connections.postConnectionsProbe",
   "call": "connections.probe_config",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/probe",
   "pathParams": [],
@@ -1387,6 +1422,7 @@
  {
   "id": "connections.getConnectionsSummary",
   "call": "connections.retrieve_summary",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/summary",
   "pathParams": [],
@@ -1413,6 +1449,7 @@
  {
   "id": "connections.postConnectionsTestConfig",
   "call": "connections.test_config",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/test-config",
   "pathParams": [],
@@ -1434,6 +1471,7 @@
  {
   "id": "connections.postConnectionsUploads",
   "call": "connections.uploads.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/uploads",
   "pathParams": [],
@@ -1492,6 +1530,7 @@
  {
   "id": "connections.getConnectionsUploadsByFileId",
   "call": "connections.uploads.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/uploads/{fileId}",
   "pathParams": [
@@ -1551,6 +1590,7 @@
  {
   "id": "connections.patchConnectionsUploadsByFileId",
   "call": "connections.uploads.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/connections/uploads/{fileId}",
   "pathParams": [
@@ -1611,6 +1651,7 @@
  {
   "id": "connections.deleteConnectionsUploadsByFileId",
   "call": "connections.uploads.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/connections/uploads/{fileId}",
   "pathParams": [
@@ -1632,6 +1673,7 @@
  {
   "id": "connections.getConnectionsById",
   "call": "connections.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}",
   "pathParams": [
@@ -1717,6 +1759,7 @@
  {
   "id": "connections.patchConnectionsById",
   "call": "connections.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/connections/{id}",
   "pathParams": [
@@ -1780,6 +1823,7 @@
  {
   "id": "connections.deleteConnectionsById",
   "call": "connections.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/connections/{id}",
   "pathParams": [
@@ -1801,6 +1845,7 @@
  {
   "id": "connections.getConnectionsByIdFiles",
   "call": "connections.files.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}/files",
   "pathParams": [
@@ -1861,6 +1906,7 @@
  {
   "id": "connections.postConnectionsByIdFiles",
   "call": "connections.files.upload",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/files",
   "pathParams": [
@@ -1922,6 +1968,7 @@
  {
   "id": "connections.deleteConnectionsByIdFilesByFileId",
   "call": "connections.files.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/connections/{id}/files/{fileId}",
   "pathParams": [
@@ -1948,6 +1995,7 @@
  {
   "id": "connections.postConnectionsByIdFilesByFileIdApply",
   "call": "connections.files.apply",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/files/{fileId}/apply",
   "pathParams": [
@@ -2012,6 +2060,7 @@
  {
   "id": "connections.postConnectionsByIdPreview",
   "call": "connections.preview",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/preview",
   "pathParams": [
@@ -2073,6 +2122,7 @@
  {
   "id": "connections.postConnectionsByIdProbe",
   "call": "connections.probe",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/probe",
   "pathParams": [
@@ -2179,6 +2229,7 @@
  {
   "id": "connections.getConnectionsByIdRuns",
   "call": "connections.runs.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}/runs",
   "pathParams": [
@@ -2217,6 +2268,7 @@
  {
   "id": "connections.getConnectionsByIdSetup",
   "call": "connections.setup.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}/setup",
   "pathParams": [
@@ -2295,6 +2347,7 @@
  {
   "id": "connections.postConnectionsByIdSync",
   "call": "connections.sync",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/sync",
   "pathParams": [
@@ -2318,6 +2371,7 @@
  {
   "id": "connections.postConnectionsByIdTest",
   "call": "connections.test",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/test",
   "pathParams": [
@@ -2340,6 +2394,7 @@
  {
   "id": "connections.getConnectionsByIdWebhookArrivals",
   "call": "connections.webhook_arrivals.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}/webhook-arrivals",
   "pathParams": [
@@ -2375,6 +2430,7 @@
  {
   "id": "connections.getConnectionsByIdWebhookFailures",
   "call": "connections.webhook_failures.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connections/{id}/webhook-failures",
   "pathParams": [
@@ -2409,6 +2465,7 @@
  {
   "id": "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay",
   "call": "connections.webhook_failures.replay",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/webhook-failures/{retentionId}/replay",
   "pathParams": [
@@ -2435,6 +2492,7 @@
  {
   "id": "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve",
   "call": "connections.webhook_failures.resolve",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/webhook-failures/{retentionId}/resolve",
   "pathParams": [
@@ -2463,6 +2521,7 @@
  {
   "id": "connections.postConnectionsByIdWebhookSecret",
   "call": "connections.rotate_webhook_secret",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/connections/{id}/webhook-secret",
   "pathParams": [
@@ -2525,6 +2584,7 @@
  {
   "id": "connections.deleteConnectionsByIdWebhookSecretPrevious",
   "call": "connections.revoke_previous_webhook_secret",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/connections/{id}/webhook-secret/previous",
   "pathParams": [
@@ -2587,6 +2647,7 @@
  {
   "id": "connectors.getConnectors",
   "call": "connectors.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connectors",
   "pathParams": [],
@@ -2624,6 +2685,7 @@
  {
   "id": "connectors.getConnectorsWebhookPushRecipesByRecipeSetup",
   "call": "connectors.recipe_setup.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connectors/webhook-push/recipes/{recipe}/setup",
   "pathParams": [
@@ -2696,6 +2758,7 @@
  {
   "id": "connectors.getConnectorsByType",
   "call": "connectors.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/connectors/{type}",
   "pathParams": [
@@ -2734,6 +2797,7 @@
  {
   "id": "delivery.getDelivery",
   "call": "deliveries.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/delivery",
   "pathParams": [],
@@ -2765,6 +2829,7 @@
  {
   "id": "events.getEvents",
   "call": "events.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/events",
   "pathParams": [],
@@ -2797,6 +2862,7 @@
  {
   "id": "events.getEventsById",
   "call": "events.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/events/{id}",
   "pathParams": [
@@ -2829,6 +2895,7 @@
  {
   "id": "events.getEventsByIdDeliveries",
   "call": "events.list_deliveries",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/events/{id}/deliveries",
   "pathParams": [
@@ -2867,6 +2934,7 @@
  {
   "id": "holders.getHolders",
   "call": "holders.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/holders",
   "pathParams": [],
@@ -2900,6 +2968,7 @@
  {
   "id": "holders.postHoldersAssign",
   "call": "holders.assign",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/holders/assign",
   "pathParams": [],
@@ -2932,6 +3001,7 @@
  {
   "id": "holders.postHoldersAssignBulk",
   "call": "holders.bulk_assign",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/holders/assign-bulk",
   "pathParams": [],
@@ -2973,6 +3043,7 @@
  {
   "id": "holders.postHoldersClearBlock",
   "call": "holders.clear_block",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/holders/clear-block",
   "pathParams": [],
@@ -2992,6 +3063,7 @@
  {
   "id": "holders.postHoldersReassign",
   "call": "holders.reassign",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/holders/reassign",
   "pathParams": [],
@@ -3024,6 +3096,7 @@
  {
   "id": "holders.postHoldersUnassign",
   "call": "holders.unassign",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/holders/unassign",
   "pathParams": [],
@@ -3055,6 +3128,7 @@
  {
   "id": "holders.getHoldersById",
   "call": "holders.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/holders/{id}",
   "pathParams": [
@@ -3089,6 +3163,7 @@
  {
   "id": "identities.postIdentities",
   "call": "identities.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/identities",
   "pathParams": [],
@@ -3124,6 +3199,7 @@
  {
   "id": "identities.getIdentitiesById",
   "call": "identities.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/identities/{id}",
   "pathParams": [
@@ -3162,6 +3238,7 @@
  {
   "id": "identities.patchIdentitiesById",
   "call": "identities.update",
+  "published": false,
   "http": "PATCH",
   "path": "/api/v1/identities/{id}",
   "pathParams": [
@@ -3201,6 +3278,7 @@
  {
   "id": "identities.postIdentitiesByIdApnsCheck",
   "call": "identities.check_apns",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/identities/{id}/apns-check",
   "pathParams": [
@@ -3225,6 +3303,7 @@
  {
   "id": "identities.putIdentitiesByIdPushKey",
   "call": "identities.push_key.upload",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/identities/{id}/push-key",
   "pathParams": [
@@ -3267,6 +3346,7 @@
  {
   "id": "identities.deleteIdentitiesByIdPushKey",
   "call": "identities.push_key.delete",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/identities/{id}/push-key",
   "pathParams": [
@@ -3305,6 +3385,7 @@
  {
   "id": "identities.postIdentitiesByIdRenew",
   "call": "identities.renew",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/identities/{id}/renew",
   "pathParams": [
@@ -3338,6 +3419,7 @@
  {
   "id": "identities.postIdentitiesByIdRotate",
   "call": "identities.rotate",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/identities/{id}/rotate",
   "pathParams": [
@@ -3377,6 +3459,7 @@
  {
   "id": "message-rules.getMessageRules",
   "call": "message_rules.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/message-rules",
   "pathParams": [],
@@ -3425,6 +3508,7 @@
  {
   "id": "message-rules.postMessageRules",
   "call": "message_rules.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/message-rules",
   "pathParams": [],
@@ -3486,6 +3570,7 @@
  {
   "id": "message-rules.postMessageRulesPreview",
   "call": "message_rules.count_due",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/message-rules/preview",
   "pathParams": [],
@@ -3526,6 +3611,7 @@
  {
   "id": "message-rules.getMessageRulesById",
   "call": "message_rules.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/message-rules/{id}",
   "pathParams": [
@@ -3575,6 +3661,7 @@
  {
   "id": "message-rules.putMessageRulesById",
   "call": "message_rules.update",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/message-rules/{id}",
   "pathParams": [
@@ -3643,6 +3730,7 @@
  {
   "id": "message-rules.deleteMessageRulesById",
   "call": "message_rules.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/message-rules/{id}",
   "pathParams": [
@@ -3664,6 +3752,7 @@
  {
   "id": "message-rules.postMessageRulesByIdPause",
   "call": "message_rules.pause",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/message-rules/{id}/pause",
   "pathParams": [
@@ -3713,6 +3802,7 @@
  {
   "id": "message-rules.getMessageRulesByIdRuns",
   "call": "message_rules.runs.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/message-rules/{id}/runs",
   "pathParams": [
@@ -3770,6 +3860,7 @@
  {
   "id": "message-rules.postMessageRulesByIdTest",
   "call": "message_rules.send_test",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/message-rules/{id}/test",
   "pathParams": [
@@ -3825,6 +3916,7 @@
  {
   "id": "metrics.getMetricsPlatformDeveloper",
   "call": "platform.metrics.retrieve_developer",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/metrics/platform/developer",
   "pathParams": [],
@@ -3849,6 +3941,7 @@
  {
   "id": "metrics.getMetricsPlatformOverview",
   "call": "platform.metrics.retrieve_overview",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/metrics/platform/overview",
   "pathParams": [],
@@ -3991,6 +4084,7 @@
  {
   "id": "nfc-tags.deleteNfcBindingsByBindingId",
   "call": "nfc.bindings.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/nfc/bindings/{bindingId}",
   "pathParams": [
@@ -4038,6 +4132,7 @@
  {
   "id": "nfc-keysets.getNfcKeysets",
   "call": "nfc.keysets.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/keysets",
   "pathParams": [],
@@ -4074,6 +4169,7 @@
  {
   "id": "nfc-keysets.postNfcKeysets",
   "call": "nfc.keysets.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets",
   "pathParams": [],
@@ -4113,6 +4209,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdDisable",
   "call": "nfc.keysets.disable",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/disable",
   "pathParams": [
@@ -4150,6 +4247,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdImport",
   "call": "nfc.keysets.import_tags",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/import",
   "pathParams": [
@@ -4186,6 +4284,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
   "call": "nfc.keysets.retire_key",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/keys/{version}/retire",
   "pathParams": [
@@ -4228,6 +4327,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
   "call": "nfc.keysets.revoke_key",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/keys/{version}/revoke",
   "pathParams": [
@@ -4270,6 +4370,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdReenrol",
   "call": "nfc.keysets.reenroll",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/reenrol",
   "pathParams": [
@@ -4314,6 +4415,7 @@
  {
   "id": "nfc-keysets.postNfcKeysetsByIdRotate",
   "call": "nfc.keysets.rotate",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/keysets/{id}/rotate",
   "pathParams": [
@@ -4358,6 +4460,7 @@
  {
   "id": "nfc-tags.getNfcPassesByPassIdTags",
   "call": "nfc.tags.list_for_pass",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/passes/{passId}/tags",
   "pathParams": [
@@ -4410,6 +4513,7 @@
  {
   "id": "nfc-tags.postNfcPassesByPassIdTagsAssign",
   "call": "nfc.tags.assign",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/passes/{passId}/tags/assign",
   "pathParams": [
@@ -4461,6 +4565,7 @@
  {
   "id": "nfc-tags.getNfcTagTypes",
   "call": "nfc.tag_types.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/tag-types",
   "pathParams": [],
@@ -4488,6 +4593,7 @@
  {
   "id": "nfc-tags.postNfcTagTypes",
   "call": "nfc.tag_types.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/tag-types",
   "pathParams": [],
@@ -4514,6 +4620,7 @@
  {
   "id": "nfc-tags.patchNfcTagTypesById",
   "call": "nfc.tag_types.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/nfc/tag-types/{id}",
   "pathParams": [
@@ -4545,6 +4652,7 @@
  {
   "id": "nfc-tags.postNfcTagTypesByIdArchive",
   "call": "nfc.tag_types.archive",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/tag-types/{id}/archive",
   "pathParams": [
@@ -4576,6 +4684,7 @@
  {
   "id": "nfc-tags.getNfcTags",
   "call": "nfc.tags.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/tags",
   "pathParams": [],
@@ -4622,6 +4731,7 @@
  {
   "id": "nfc-tags.getNfcTagsById",
   "call": "nfc.tags.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/tags/{id}",
   "pathParams": [
@@ -4669,6 +4779,7 @@
  {
   "id": "nfc-tags.getNfcTagsByIdHistory",
   "call": "nfc.tags.list_history",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/nfc/tags/{id}/history",
   "pathParams": [
@@ -4714,6 +4825,7 @@
  {
   "id": "nfc-tags.postNfcTagsByIdLost",
   "call": "nfc.tags.report_lost",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/tags/{id}/lost",
   "pathParams": [
@@ -4761,6 +4873,7 @@
  {
   "id": "nfc-tags.postNfcTagsByIdRestore",
   "call": "nfc.tags.restore",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/nfc/tags/{id}/restore",
   "pathParams": [
@@ -4808,6 +4921,7 @@
  {
   "id": "offboard.postOffboard",
   "call": "holders.offboard",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/offboard",
   "pathParams": [],
@@ -4828,6 +4942,7 @@
  {
   "id": "operations.getOperations",
   "call": "operations.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/operations",
   "pathParams": [],
@@ -4897,6 +5012,7 @@
  {
   "id": "operations.getOperationsById",
   "call": "operations.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/operations/{id}",
   "pathParams": [
@@ -4967,6 +5083,7 @@
  {
   "id": "operations.postOperationsByIdCancel",
   "call": "operations.cancel",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/operations/{id}/cancel",
   "pathParams": [
@@ -5037,6 +5154,7 @@
  {
   "id": "operations.postOperationsByIdRetry",
   "call": "operations.retry",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/operations/{id}/retry",
   "pathParams": [
@@ -5107,6 +5225,7 @@
  {
   "id": "orgs.getOrgs",
   "call": "platform.orgs.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/orgs",
   "pathParams": [],
@@ -5138,6 +5257,7 @@
  {
   "id": "orgs.postOrgs",
   "call": "platform.orgs.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/orgs",
   "pathParams": [],
@@ -5164,6 +5284,7 @@
  {
   "id": "orgs.getOrgsById",
   "call": "platform.orgs.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/orgs/{id}",
   "pathParams": [
@@ -5196,6 +5317,7 @@
  {
   "id": "developer-invitations.getOrgsByIdDeveloperInvitations",
   "call": "developer_invitations.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/developer-invitations",
   "pathParams": [
@@ -5231,6 +5353,7 @@
  {
   "id": "developer-invitations.postOrgsByIdDeveloperInvitations",
   "call": "developer_invitations.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/orgs/{id}/developer-invitations",
   "pathParams": [
@@ -5264,6 +5387,7 @@
  {
   "id": "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId",
   "call": "developer_invitations.revoke",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/orgs/{id}/developer-invitations/{invitationId}",
   "pathParams": [
@@ -5290,6 +5414,7 @@
  {
   "id": "developer-invitations.getOrgsByIdDevelopers",
   "call": "developers.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/developers",
   "pathParams": [
@@ -5324,6 +5449,7 @@
  {
   "id": "developer-invitations.deleteOrgsByIdDevelopersByUserId",
   "call": "developers.remove",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/orgs/{id}/developers/{userId}",
   "pathParams": [
@@ -5350,6 +5476,7 @@
  {
   "id": "entitlements.getOrgsByIdEntitlements",
   "call": "orgs.entitlements.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/entitlements",
   "pathParams": [
@@ -5381,6 +5508,7 @@
  {
   "id": "organization-memberships.getOrgsByIdInvitations",
   "call": "invitations.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/invitations",
   "pathParams": [
@@ -5416,6 +5544,7 @@
  {
   "id": "organization-memberships.postOrgsByIdInvitations",
   "call": "invitations.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/orgs/{id}/invitations",
   "pathParams": [
@@ -5452,6 +5581,7 @@
  {
   "id": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId",
   "call": "invitations.revoke",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/orgs/{id}/invitations/{invitationId}",
   "pathParams": [
@@ -5478,6 +5608,7 @@
  {
   "id": "organization-memberships.postOrgsByIdInvitationsByInvitationIdResend",
   "call": "invitations.resend",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/orgs/{id}/invitations/{invitationId}/resend",
   "pathParams": [
@@ -5513,6 +5644,7 @@
  {
   "id": "organization-memberships.getOrgsByIdMemberships",
   "call": "memberships.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/memberships",
   "pathParams": [
@@ -5553,6 +5685,7 @@
  {
   "id": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
   "call": "memberships.update_roles",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/orgs/{id}/memberships/{membershipId}",
   "pathParams": [
@@ -5598,6 +5731,7 @@
  {
   "id": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId",
   "call": "memberships.revoke",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/orgs/{id}/memberships/{membershipId}",
   "pathParams": [
@@ -5624,6 +5758,7 @@
  {
   "id": "entitlements.getOrgsByIdPlan",
   "call": "orgs.plan.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{id}/plan",
   "pathParams": [
@@ -5661,6 +5796,7 @@
  {
   "id": "orgs.postOrgsByIdStatus",
   "call": "platform.orgs.set_status",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/orgs/{id}/status",
   "pathParams": [
@@ -5696,6 +5832,7 @@
  {
   "id": "pass-setup.postOrgsByOrgIdBrandAssets",
   "call": "orgs.stage_brand_asset",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/orgs/{orgId}/brand-assets",
   "pathParams": [
@@ -5726,6 +5863,7 @@
  {
   "id": "pass-setup.getOrgsByOrgIdPassSetup",
   "call": "orgs.retrieve_pass_setup",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/orgs/{orgId}/pass-setup",
   "pathParams": [
@@ -5887,6 +6025,7 @@
  {
   "id": "pass-setup.patchOrgsByOrgIdPassSetup",
   "call": "orgs.update_pass_setup",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/orgs/{orgId}/pass-setup",
   "pathParams": [
@@ -6072,6 +6211,7 @@
  {
   "id": "pass-imports.getPassImports",
   "call": "pass_imports.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports",
   "pathParams": [],
@@ -6168,6 +6308,7 @@
  {
   "id": "pass-imports.postPassImports",
   "call": "pass_imports.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/pass-imports",
   "pathParams": [],
@@ -6267,6 +6408,7 @@
  {
   "id": "pass-imports.getPassImportsMappings",
   "call": "pass_imports.mappings.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports/mappings",
   "pathParams": [],
@@ -6306,6 +6448,7 @@
  {
   "id": "pass-imports.putPassImportsMappings",
   "call": "pass_imports.mappings.save",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/pass-imports/mappings",
   "pathParams": [],
@@ -6356,6 +6499,7 @@
  {
   "id": "pass-imports.deletePassImportsMappings",
   "call": "pass_imports.mappings.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/pass-imports/mappings",
   "pathParams": [],
@@ -6400,6 +6544,7 @@
  {
   "id": "pass-imports.getPassImportsById",
   "call": "pass_imports.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports/{id}",
   "pathParams": [
@@ -6497,6 +6642,7 @@
  {
   "id": "pass-imports.deletePassImportsById",
   "call": "pass_imports.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/pass-imports/{id}",
   "pathParams": [
@@ -6518,6 +6664,7 @@
  {
   "id": "pass-imports.postPassImportsByIdCheck",
   "call": "pass_imports.check",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/pass-imports/{id}/check",
   "pathParams": [
@@ -6627,6 +6774,7 @@
  {
   "id": "pass-imports.postPassImportsByIdCommit",
   "call": "pass_imports.commit",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/pass-imports/{id}/commit",
   "pathParams": [
@@ -6725,6 +6873,7 @@
  {
   "id": "pass-imports.postPassImportsByIdEmailRest",
   "call": "pass_imports.send_emails",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/pass-imports/{id}/email-rest",
   "pathParams": [
@@ -6751,6 +6900,7 @@
  {
   "id": "pass-imports.getPassImportsByIdErrorsCsv",
   "call": "pass_imports.download_errors",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports/{id}/errors.csv",
   "pathParams": [
@@ -6769,6 +6919,7 @@
  {
   "id": "pass-imports.getPassImportsByIdResultsCsv",
   "call": "pass_imports.download_results",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports/{id}/results.csv",
   "pathParams": [
@@ -6787,6 +6938,7 @@
  {
   "id": "pass-imports.getPassImportsByIdRows",
   "call": "pass_imports.rows.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/pass-imports/{id}/rows",
   "pathParams": [
@@ -6821,6 +6973,7 @@
  {
   "id": "pass-imports.postPassImportsByIdUndo",
   "call": "pass_imports.undo",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/pass-imports/{id}/undo",
   "pathParams": [
@@ -6853,6 +7006,7 @@
  {
   "id": "passes.getPasses",
   "call": "passes.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes",
   "pathParams": [],
@@ -6890,6 +7044,7 @@
  {
   "id": "passes.postPasses",
   "call": "passes.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes",
   "pathParams": [],
@@ -6975,6 +7130,7 @@
  {
   "id": "passes.postPassesBulk",
   "call": "passes.bulk_apply",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk",
   "pathParams": [],
@@ -6999,6 +7155,7 @@
  {
   "id": "passes.postPassesBulkPrint",
   "call": "print_jobs.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk-print",
   "pathParams": [],
@@ -7028,6 +7185,7 @@
  {
   "id": "passes.getPassesBulkPrintByJobId",
   "call": "print_jobs.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/bulk-print/{jobId}",
   "pathParams": [
@@ -7052,6 +7210,7 @@
  {
   "id": "passes.getPassesBulkPrintByJobIdPdf",
   "call": "print_jobs.download_pdf",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/bulk-print/{jobId}/pdf",
   "pathParams": [
@@ -7070,6 +7229,7 @@
  {
   "id": "passes.postPassesBulkReissue",
   "call": "passes.bulk_reissue",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk-reissue",
   "pathParams": [],
@@ -7087,6 +7247,7 @@
  {
   "id": "passes.postPassesBulkRuns",
   "call": "bulk_runs.start",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk-runs",
   "pathParams": [],
@@ -7120,6 +7281,7 @@
  {
   "id": "passes.getPassesBulkRunsCurrent",
   "call": "bulk_runs.current",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/bulk-runs/current",
   "pathParams": [],
@@ -7133,6 +7295,7 @@
  {
   "id": "passes.getPassesBulkRunsById",
   "call": "bulk_runs.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/bulk-runs/{id}",
   "pathParams": [
@@ -7165,6 +7328,7 @@
  {
   "id": "passes.postPassesBulkRunsByIdStop",
   "call": "bulk_runs.stop",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk-runs/{id}/stop",
   "pathParams": [
@@ -7197,6 +7361,7 @@
  {
   "id": "passes.postPassesBulkChannels",
   "call": "passes.bulk_update_channels",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/bulk/channels",
   "pathParams": [],
@@ -7227,6 +7392,7 @@
  {
   "id": "passes.postPassesPhotosMatch",
   "call": "passes.match_photos",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/photos/match",
   "pathParams": [],
@@ -7253,6 +7419,7 @@
  {
   "id": "passes.getPassesViews",
   "call": "pass_views.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/views",
   "pathParams": [],
@@ -7275,6 +7442,7 @@
  {
   "id": "passes.putPassesViews",
   "call": "pass_views.replace",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/views",
   "pathParams": [],
@@ -7307,6 +7475,7 @@
  {
   "id": "passes.getPassesById",
   "call": "passes.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}",
   "pathParams": [
@@ -7394,6 +7563,7 @@
  {
   "id": "passes.patchPassesById",
   "call": "passes.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/passes/{id}",
   "pathParams": [
@@ -7482,6 +7652,7 @@
  {
   "id": "passes.deletePassesById",
   "call": "passes.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/passes/{id}",
   "pathParams": [
@@ -7503,6 +7674,7 @@
  {
   "id": "passes.getPassesByIdAssets",
   "call": "passes.assets.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/assets",
   "pathParams": [
@@ -7534,6 +7706,7 @@
  {
   "id": "passes.putPassesByIdAssetsByName",
   "call": "passes.assets.upload",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/{id}/assets/{name}",
   "pathParams": [
@@ -7565,6 +7738,7 @@
  {
   "id": "passes.deletePassesByIdAssetsByName",
   "call": "passes.assets.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/passes/{id}/assets/{name}",
   "pathParams": [
@@ -7591,6 +7765,7 @@
  {
   "id": "passes.getPassesByIdChannels",
   "call": "passes.channels.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/channels",
   "pathParams": [
@@ -7636,6 +7811,7 @@
  {
   "id": "passes.putPassesByIdChannels",
   "call": "passes.channels.update",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/{id}/channels",
   "pathParams": [
@@ -7684,6 +7860,7 @@
  {
   "id": "passes.getPassesByIdCheckIn",
   "call": "passes.check_in_rules.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/check-in",
   "pathParams": [
@@ -7710,6 +7887,7 @@
  {
   "id": "passes.putPassesByIdCheckIn",
   "call": "passes.check_in_rules.update",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/{id}/check-in",
   "pathParams": [
@@ -7739,6 +7917,7 @@
  {
   "id": "passes.putPassesByIdConnection",
   "call": "passes.connection.update",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/{id}/connection",
   "pathParams": [
@@ -7830,6 +8009,7 @@
  {
   "id": "passes.getPassesByIdDevices",
   "call": "passes.devices.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/devices",
   "pathParams": [
@@ -7878,6 +8058,7 @@
  {
   "id": "passes.getPassesByIdDiff",
   "call": "passes.versions.diff",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/diff",
   "pathParams": [
@@ -7903,6 +8084,7 @@
  {
   "id": "passes.getPassesByIdEvents",
   "call": "passes.activity.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/events",
   "pathParams": [
@@ -7937,6 +8119,7 @@
  {
   "id": "passes.getPassesByIdMemberPhoto",
   "call": "passes.member_photo.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/member-photo",
   "pathParams": [
@@ -7963,6 +8146,7 @@
  {
   "id": "passes.putPassesByIdMemberPhoto",
   "call": "passes.member_photo.upload",
+  "published": true,
   "http": "PUT",
   "path": "/api/v1/passes/{id}/member-photo",
   "pathParams": [
@@ -7992,6 +8176,7 @@
  {
   "id": "passes.patchPassesByIdMemberPhoto",
   "call": "passes.member_photo.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/passes/{id}/member-photo",
   "pathParams": [
@@ -8021,6 +8206,7 @@
  {
   "id": "passes.deletePassesByIdMemberPhoto",
   "call": "passes.member_photo.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/passes/{id}/member-photo",
   "pathParams": [
@@ -8047,6 +8233,7 @@
  {
   "id": "passes.getPassesByIdMemberPhotoImage",
   "call": "passes.member_photo.download",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/member-photo/image",
   "pathParams": [
@@ -8065,6 +8252,7 @@
  {
   "id": "passes.postPassesByIdNewCode",
   "call": "passes.rotate_code",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/new-code",
   "pathParams": [
@@ -8086,6 +8274,7 @@
  {
   "id": "passes.getPassesByIdPrint",
   "call": "passes.prints.retrieve_page",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/print",
   "pathParams": [
@@ -8104,6 +8293,7 @@
  {
   "id": "passes.getPassesByIdPrintAssetsByName",
   "call": "passes.prints.download_asset",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/print/assets/{name}",
   "pathParams": [
@@ -8127,6 +8317,7 @@
  {
   "id": "passes.postPassesByIdPrintDrawn",
   "call": "passes.prints.mark_drawn",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/print/drawn",
   "pathParams": [
@@ -8156,6 +8347,7 @@
  {
   "id": "passes.getPassesByIdPrintPdf",
   "call": "passes.prints.download_pdf",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/print/pdf",
   "pathParams": [
@@ -8174,6 +8366,7 @@
  {
   "id": "passes.getPassesByIdPrints",
   "call": "passes.prints.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/prints",
   "pathParams": [
@@ -8207,6 +8400,7 @@
  {
   "id": "passes.postPassesByIdPrints",
   "call": "passes.prints.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/prints",
   "pathParams": [
@@ -8237,6 +8431,7 @@
  {
   "id": "passes.postPassesByIdPrintsByPrintIdVoid",
   "call": "passes.prints.void",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/prints/{printId}/void",
   "pathParams": [
@@ -8271,6 +8466,7 @@
  {
   "id": "passes.postPassesByIdRefresh",
   "call": "passes.refresh",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/refresh",
   "pathParams": [
@@ -8293,6 +8489,7 @@
  {
   "id": "passes.postPassesByIdRemove",
   "call": "passes.remove",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/remove",
   "pathParams": [
@@ -8332,6 +8529,7 @@
  {
   "id": "passes.postPassesByIdRenew",
   "call": "passes.renew",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/renew",
   "pathParams": [
@@ -8420,6 +8618,7 @@
  {
   "id": "passes.postPassesByIdResendEmail",
   "call": "passes.send_email",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/resend-email",
   "pathParams": [
@@ -8442,6 +8641,7 @@
  {
   "id": "passes.postPassesByIdRestore",
   "call": "passes.restore",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/restore",
   "pathParams": [
@@ -8480,6 +8680,7 @@
  {
   "id": "passes.postPassesByIdRotateLink",
   "call": "passes.rotate_link",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/rotate-link",
   "pathParams": [
@@ -8502,6 +8703,7 @@
  {
   "id": "passes.postPassesByIdSimulate",
   "call": "passes.simulate",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/simulate",
   "pathParams": [
@@ -8527,6 +8729,7 @@
  {
   "id": "passes.postPassesByIdStamps",
   "call": "passes.stamps.apply",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/stamps",
   "pathParams": [
@@ -8617,6 +8820,7 @@
  {
   "id": "passes.postPassesByIdUnvoid",
   "call": "passes.unvoid",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/unvoid",
   "pathParams": [
@@ -8655,6 +8859,7 @@
  {
   "id": "passes.getPassesByIdVersionsByVersion",
   "call": "passes.versions.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/passes/{id}/versions/{version}",
   "pathParams": [
@@ -8747,6 +8952,7 @@
  {
   "id": "passes.postPassesByIdVoid",
   "call": "passes.void",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/passes/{id}/void",
   "pathParams": [
@@ -8785,6 +8991,7 @@
  {
   "id": "wallet-identities.getPlatformAppleCalls",
   "call": "platform.apple_calls.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/apple-calls",
   "pathParams": [],
@@ -8813,6 +9020,7 @@
  {
   "id": "org-lifecycle.getPlatformClosedOrgs",
   "call": "platform.orgs.list_closed",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/closed-orgs",
   "pathParams": [],
@@ -8839,6 +9047,7 @@
  {
   "id": "entitlements.getPlatformEntitlementPresets",
   "call": "platform.entitlement_presets.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/entitlement-presets",
   "pathParams": [],
@@ -8864,6 +9073,7 @@
  {
   "id": "entitlements.putPlatformEntitlementPresets",
   "call": "platform.entitlement_presets.update",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/platform/entitlement-presets",
   "pathParams": [],
@@ -8893,6 +9103,7 @@
  {
   "id": "polaris-platform.getPlatformIdp",
   "call": "platform.idp.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp",
   "pathParams": [],
@@ -8918,6 +9129,7 @@
  {
   "id": "polaris-platform.getPlatformIdpCalls",
   "call": "platform.idp.calls.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/calls",
   "pathParams": [],
@@ -8945,6 +9157,7 @@
  {
   "id": "polaris-platform.getPlatformIdpDrift",
   "call": "platform.idp.drift.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/drift",
   "pathParams": [],
@@ -8969,6 +9182,7 @@
  {
   "id": "polaris-groups.getPlatformIdpGroups",
   "call": "platform.groups.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/groups",
   "pathParams": [],
@@ -9002,6 +9216,7 @@
  {
   "id": "polaris-groups.postPlatformIdpGroups",
   "call": "platform.groups.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/groups",
   "pathParams": [],
@@ -9022,6 +9237,7 @@
  {
   "id": "polaris-groups.postPlatformIdpGroupsEnsure",
   "call": "platform.groups.ensure",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/groups/ensure",
   "pathParams": [],
@@ -9041,6 +9257,7 @@
  {
   "id": "polaris-groups.patchPlatformIdpGroupsByKey",
   "call": "platform.groups.update",
+  "published": false,
   "http": "PATCH",
   "path": "/api/v1/platform/idp/groups/{key}",
   "pathParams": [
@@ -9066,6 +9283,7 @@
  {
   "id": "polaris-groups.deletePlatformIdpGroupsByKey",
   "call": "platform.groups.delete",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/platform/idp/groups/{key}",
   "pathParams": [
@@ -9088,6 +9306,7 @@
  {
   "id": "polaris-claims.getPlatformIdpGroupsByKeyClaims",
   "call": "platform.groups.claims.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/groups/{key}/claims",
   "pathParams": [
@@ -9110,6 +9329,7 @@
  {
   "id": "polaris-claims.patchPlatformIdpGroupsByKeyClaims",
   "call": "platform.groups.claims.update",
+  "published": false,
   "http": "PATCH",
   "path": "/api/v1/platform/idp/groups/{key}/claims",
   "pathParams": [
@@ -9140,6 +9360,7 @@
  {
   "id": "polaris-groups.getPlatformIdpGroupsByKeyMembers",
   "call": "platform.groups.members.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/groups/{key}/members",
   "pathParams": [
@@ -9170,6 +9391,7 @@
  {
   "id": "polaris-groups.postPlatformIdpGroupsByKeyMembers",
   "call": "platform.groups.members.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/groups/{key}/members",
   "pathParams": [
@@ -9198,6 +9420,7 @@
  {
   "id": "polaris-groups.deletePlatformIdpGroupsByKeyMembersById",
   "call": "platform.groups.members.delete",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/platform/idp/groups/{key}/members/{id}",
   "pathParams": [
@@ -9224,6 +9447,7 @@
  {
   "id": "polaris-groups.getPlatformIdpGroupsByKeyRules",
   "call": "platform.groups.rules.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/groups/{key}/rules",
   "pathParams": [
@@ -9255,6 +9479,7 @@
  {
   "id": "polaris-groups.postPlatformIdpGroupsByKeyRules",
   "call": "platform.groups.rules.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/groups/{key}/rules",
   "pathParams": [
@@ -9284,6 +9509,7 @@
  {
   "id": "polaris-groups.deletePlatformIdpGroupsByKeyRulesById",
   "call": "platform.groups.rules.delete",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/platform/idp/groups/{key}/rules/{id}",
   "pathParams": [
@@ -9310,6 +9536,7 @@
  {
   "id": "polaris-operations.postPlatformIdpReconcile",
   "call": "platform.idp.check",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/reconcile",
   "pathParams": [],
@@ -9377,6 +9604,7 @@
  {
   "id": "polaris-setup.postPlatformIdpScimTokenRotate",
   "call": "platform.idp.scim_token.rotate",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/scim-token/rotate",
   "pathParams": [],
@@ -9444,6 +9672,7 @@
  {
   "id": "polaris-setup.getPlatformIdpSetup",
   "call": "platform.idp.setup.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/idp/setup",
   "pathParams": [],
@@ -9465,6 +9694,7 @@
  {
   "id": "polaris-setup.postPlatformIdpSetup",
   "call": "platform.idp.setup.start",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/idp/setup",
   "pathParams": [],
@@ -9532,6 +9762,7 @@
  {
   "id": "platform-invitations.getPlatformInvitations",
   "call": "platform.invitations.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/invitations",
   "pathParams": [],
@@ -9567,6 +9798,7 @@
  {
   "id": "platform-invitations.postPlatformInvitations",
   "call": "platform.invitations.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/invitations",
   "pathParams": [],
@@ -9600,6 +9832,7 @@
  {
   "id": "platform-invitations.deletePlatformInvitationsById",
   "call": "platform.invitations.revoke",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/platform/invitations/{id}",
   "pathParams": [
@@ -9621,6 +9854,7 @@
  {
   "id": "platform-invitations.postPlatformInvitationsByIdResend",
   "call": "platform.invitations.resend",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/invitations/{id}/resend",
   "pathParams": [
@@ -9657,6 +9891,7 @@
  {
   "id": "entitlements.getPlatformOrgsByIdEntitlements",
   "call": "platform.orgs.entitlements.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/orgs/{id}/entitlements",
   "pathParams": [
@@ -9700,6 +9935,7 @@
  {
   "id": "entitlements.putPlatformOrgsByIdEntitlements",
   "call": "platform.orgs.entitlements.update",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/platform/orgs/{id}/entitlements",
   "pathParams": [
@@ -9748,6 +9984,7 @@
  {
   "id": "retention.getPlatformOrgsByOrgIdRetentionHolds",
   "call": "platform.orgs.legal_holds.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/orgs/{orgId}/retention/holds",
   "pathParams": [
@@ -9783,6 +10020,7 @@
  {
   "id": "retention.postPlatformOrgsByOrgIdRetentionHolds",
   "call": "platform.orgs.legal_holds.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/orgs/{orgId}/retention/holds",
   "pathParams": [
@@ -9807,6 +10045,7 @@
  {
   "id": "retention.getPlatformOrgsByOrgIdRetentionReceipts",
   "call": "platform.orgs.retention_receipts.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/orgs/{orgId}/retention/receipts",
   "pathParams": [
@@ -9841,6 +10080,7 @@
  {
   "id": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
   "call": "platform.orgs.retention_receipts.download",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download",
   "pathParams": [
@@ -9883,6 +10123,7 @@
  {
   "id": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
   "call": "platform.wallet_accounts.google_managed.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed",
   "pathParams": [
@@ -9913,6 +10154,7 @@
  {
   "id": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
   "call": "platform.wallet_accounts.google_managed.complete",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
   "pathParams": [
@@ -9943,6 +10185,7 @@
  {
   "id": "orgs.getPlatformPersonalOrgLabels",
   "call": "platform.orgs.personal_labels.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/personal-org-labels",
   "pathParams": [],
@@ -9964,6 +10207,7 @@
  {
   "id": "retention.getPlatformRetentionReceipts",
   "call": "platform.retention_receipts.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/retention/receipts",
   "pathParams": [],
@@ -9992,6 +10236,7 @@
  {
   "id": "retention.getPlatformRetentionReceiptsByReceiptIdDownload",
   "call": "platform.retention_receipts.download",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/retention/receipts/{receiptId}/download",
   "pathParams": [
@@ -10029,6 +10274,7 @@
  {
   "id": "settings.getPlatformSettings",
   "call": "platform.settings.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/settings",
   "pathParams": [],
@@ -10052,6 +10298,7 @@
  {
   "id": "settings.putPlatformSettings",
   "call": "platform.settings.update",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/platform/settings",
   "pathParams": [],
@@ -10078,6 +10325,7 @@
  {
   "id": "wallet-platform.getPlatformWalletCredentials",
   "call": "platform.wallet_credentials.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/wallet-credentials",
   "pathParams": [],
@@ -10139,6 +10387,7 @@
  {
   "id": "wallet-platform.putPlatformWalletCredentials",
   "call": "platform.wallet_credentials.upsert",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/platform/wallet-credentials",
   "pathParams": [],
@@ -10186,6 +10435,7 @@
  {
   "id": "wallet-platform.getPlatformWalletCredentialsMigrate",
   "call": "platform.wallet_credentials.retrieve_migration",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/wallet-credentials/migrate",
   "pathParams": [],
@@ -10221,6 +10471,7 @@
  {
   "id": "wallet-platform.postPlatformWalletCredentialsMigrate",
   "call": "platform.wallet_credentials.migrate",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/wallet-credentials/migrate",
   "pathParams": [],
@@ -10236,6 +10487,7 @@
  {
   "id": "wallet-platform.putPlatformWalletCredentialsByIdCards",
   "call": "platform.wallet_credentials.set_samsung_card",
+  "published": false,
   "http": "PUT",
   "path": "/api/v1/platform/wallet-credentials/{id}/cards",
   "pathParams": [
@@ -10281,6 +10533,7 @@
  {
   "id": "wallet-platform.postPlatformWalletCredentialsByIdCheck",
   "call": "platform.wallet_credentials.checks.create",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/wallet-credentials/{id}/check",
   "pathParams": [
@@ -10303,6 +10556,7 @@
  {
   "id": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId",
   "call": "platform.wallet_credentials.checks.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/wallet-credentials/{id}/checks/{checkId}",
   "pathParams": [
@@ -10332,6 +10586,7 @@
  {
   "id": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
   "call": "platform.wallet_credentials.rotate_key",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/wallet-credentials/{id}/rotate-key",
   "pathParams": [
@@ -10353,6 +10608,7 @@
  {
   "id": "wallet-platform.getPlatformWalletEnrolments",
   "call": "platform.wallet_enrollments.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/wallet-enrolments",
   "pathParams": [],
@@ -10389,6 +10645,7 @@
  {
   "id": "wallet-platform.getPlatformWalletRelease",
   "call": "platform.wallet_release.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/wallet-release",
   "pathParams": [],
@@ -10454,6 +10711,7 @@
  {
   "id": "wallet-platform.postPlatformWalletReleaseByProviderByModeEnableReady",
   "call": "platform.wallet_release.enable_ready",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/platform/wallet-release/{provider}/{mode}/enable-ready",
   "pathParams": [
@@ -10487,6 +10745,7 @@
  {
   "id": "workbench.listRequestLogs",
   "call": "request_logs.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/request-logs",
   "pathParams": [],
@@ -10530,6 +10789,7 @@
  {
   "id": "workbench.getRequestLog",
   "call": "request_logs.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/request-logs/{id}",
   "pathParams": [
@@ -10577,6 +10837,7 @@
  {
   "id": "roll-calls.getRollCalls",
   "call": "roll_calls.retrieve_open",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/roll-calls",
   "pathParams": [],
@@ -10633,6 +10894,7 @@
  {
   "id": "roll-calls.postRollCalls",
   "call": "roll_calls.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/roll-calls",
   "pathParams": [],
@@ -10687,6 +10949,7 @@
  {
   "id": "roll-calls.getRollCallsById",
   "call": "roll_calls.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/roll-calls/{id}",
   "pathParams": [
@@ -10747,6 +11010,7 @@
  {
   "id": "roll-calls.postRollCallsByIdEnd",
   "call": "roll_calls.end",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/roll-calls/{id}/end",
   "pathParams": [
@@ -10807,6 +11071,7 @@
  {
   "id": "roll-calls.postRollCallsByIdMarks",
   "call": "roll_calls.mark",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/roll-calls/{id}/marks",
   "pathParams": [
@@ -10883,6 +11148,7 @@
  {
   "id": "scan-events.getScanEvents",
   "call": "scan_events.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-events",
   "pathParams": [],
@@ -10925,6 +11191,7 @@
  {
   "id": "scan-events.postScanEvents",
   "call": "scan_events.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-events",
   "pathParams": [],
@@ -10972,6 +11239,7 @@
  {
   "id": "scan-events.getScanEventsById",
   "call": "scan_events.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-events/{id}",
   "pathParams": [
@@ -11015,6 +11283,7 @@
  {
   "id": "scan-events.patchScanEventsById",
   "call": "scan_events.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scan-events/{id}",
   "pathParams": [
@@ -11059,6 +11328,7 @@
  {
   "id": "scan-events.postScanEventsByIdArchive",
   "call": "scan_events.archive",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-events/{id}/archive",
   "pathParams": [
@@ -11102,6 +11372,7 @@
  {
   "id": "scan-events.postScanEventsByIdScanners",
   "call": "scan_events.attach_scanners",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-events/{id}/scanners",
   "pathParams": [
@@ -11150,6 +11421,7 @@
  {
   "id": "scanners.getScanSetups",
   "call": "scan_setups.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-setups",
   "pathParams": [],
@@ -11212,6 +11484,7 @@
  {
   "id": "scanners.getScanSetupsById",
   "call": "scan_setups.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-setups/{id}",
   "pathParams": [
@@ -11275,6 +11548,7 @@
  {
   "id": "scan-staff.getScanStaff",
   "call": "scan_staff.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-staff",
   "pathParams": [],
@@ -11308,6 +11582,7 @@
  {
   "id": "scan-staff.postScanStaff",
   "call": "scan_staff.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-staff",
   "pathParams": [],
@@ -11344,6 +11619,7 @@
  {
   "id": "scan-staff.patchScanStaffById",
   "call": "scan_staff.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scan-staff/{id}",
   "pathParams": [
@@ -11379,6 +11655,7 @@
  {
   "id": "scan-staff.postScanStaffByIdResetPin",
   "call": "scan_staff.reset_pin",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-staff/{id}/reset-pin",
   "pathParams": [
@@ -11400,6 +11677,7 @@
  {
   "id": "scan-zones.getScanZones",
   "call": "scan_zones.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scan-zones",
   "pathParams": [],
@@ -11449,6 +11727,7 @@
  {
   "id": "scan-zones.postScanZones",
   "call": "scan_zones.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-zones",
   "pathParams": [],
@@ -11498,6 +11777,7 @@
  {
   "id": "scan-zones.postScanZonesVisitsByIdReset",
   "call": "scan_zones.reset_visits",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-zones/visits/{id}/reset",
   "pathParams": [
@@ -11520,6 +11800,7 @@
  {
   "id": "scan-zones.patchScanZonesById",
   "call": "scan_zones.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scan-zones/{id}",
   "pathParams": [
@@ -11571,6 +11852,7 @@
  {
   "id": "scan-zones.postScanZonesByIdArchive",
   "call": "scan_zones.archive",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-zones/{id}/archive",
   "pathParams": [
@@ -11621,6 +11903,7 @@
  {
   "id": "scan-zones.postScanZonesByIdRestore",
   "call": "scan_zones.restore",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan-zones/{id}/restore",
   "pathParams": [
@@ -11671,6 +11954,7 @@
  {
   "id": "scan.postScanActions",
   "call": "terminal.act",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan/actions",
   "pathParams": [],
@@ -11913,6 +12197,7 @@
  {
   "id": "scan.postScanResolve",
   "call": "terminal.resolve",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan/resolve",
   "pathParams": [],
@@ -12154,6 +12439,7 @@
  {
   "id": "scan.postScanScansByScanIdUndo",
   "call": "terminal.scans.undo",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan/scans/{scanId}/undo",
   "pathParams": [
@@ -12396,6 +12682,7 @@
  {
   "id": "scan.postScanSignOut",
   "call": "terminal.sign_out_everywhere",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scan/sign-out",
   "pathParams": [],
@@ -12417,6 +12704,7 @@
  {
   "id": "scanners.postScanners",
   "call": "scanners.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanners",
   "pathParams": [],
@@ -12483,6 +12771,7 @@
  {
   "id": "scanners.patchScannersById",
   "call": "scanners.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scanners/{id}",
   "pathParams": [
@@ -12542,6 +12831,7 @@
  {
   "id": "scanners.postScannersByIdMode",
   "call": "scanners.set_mode",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanners/{id}/mode",
   "pathParams": [
@@ -12603,6 +12893,7 @@
  {
   "id": "scanners.getScannersByIdPairing",
   "call": "scanners.pairing.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scanners/{id}/pairing",
   "pathParams": [
@@ -12628,6 +12919,7 @@
  {
   "id": "scanners.postScannersByIdPairing",
   "call": "scanners.pairing.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanners/{id}/pairing",
   "pathParams": [
@@ -12651,6 +12943,7 @@
  {
   "id": "scanners.postScannersByIdRevoke",
   "call": "scanners.revoke",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanners/{id}/revoke",
   "pathParams": [
@@ -12709,6 +13002,7 @@
  {
   "id": "scanners.postScannersByIdToken",
   "call": "scanners.rotate_token",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanners/{id}/token",
   "pathParams": [
@@ -12731,6 +13025,7 @@
  {
   "id": "scanners.getScanningSessions",
   "call": "scanning_sessions.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scanning-sessions",
   "pathParams": [],
@@ -12781,6 +13076,7 @@
  {
   "id": "scanners.postScanningSessionsSetup",
   "call": "scanning_sessions.setup",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanning-sessions/setup",
   "pathParams": [],
@@ -12857,6 +13153,7 @@
  {
   "id": "scanners.getScanningSessionsById",
   "call": "scanning_sessions.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scanning-sessions/{id}",
   "pathParams": [
@@ -12950,6 +13247,7 @@
  {
   "id": "scanners.patchScanningSessionsById",
   "call": "scanning_sessions.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scanning-sessions/{id}",
   "pathParams": [
@@ -13044,6 +13342,7 @@
  {
   "id": "scanners.postScanningSessionsByIdDevices",
   "call": "scanning_sessions.devices.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanning-sessions/{id}/devices",
   "pathParams": [
@@ -13108,6 +13407,7 @@
  {
   "id": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
   "call": "scanning_sessions.devices.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/scanning-sessions/{id}/devices/{deviceId}",
   "pathParams": [
@@ -13172,6 +13472,7 @@
  {
   "id": "scanners.postScanningSessionsByIdHold",
   "call": "scanning_sessions.override_hours",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/scanning-sessions/{id}/hold",
   "pathParams": [
@@ -13268,6 +13569,7 @@
  {
   "id": "scans.getScans",
   "call": "scans.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/scans",
   "pathParams": [],
@@ -13318,6 +13620,7 @@
  {
   "id": "status.getStatus",
   "call": "platform.status.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/status",
   "pathParams": [],
@@ -13348,6 +13651,7 @@
  {
   "id": "status.getStatusIncidents",
   "call": "platform.status.list_incidents",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/status/incidents",
   "pathParams": [],
@@ -13374,6 +13678,7 @@
  {
   "id": "status.postStatusIncidents",
   "call": "platform.status.open_incident",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/status/incidents",
   "pathParams": [],
@@ -13400,6 +13705,7 @@
  {
   "id": "status.postStatusIncidentsByIdResolve",
   "call": "platform.status.resolve_incident",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/status/incidents/{id}/resolve",
   "pathParams": [
@@ -13427,6 +13733,7 @@
  {
   "id": "status.getStatusWorkflows",
   "call": "platform.status.list_workflow_runs",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/status/workflows",
   "pathParams": [],
@@ -13454,6 +13761,7 @@
  {
   "id": "templates.getTemplateReviews",
   "call": "templates.reviews.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/template-reviews",
   "pathParams": [],
@@ -13479,6 +13787,7 @@
  {
   "id": "templates.getTemplates",
   "call": "templates.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates",
   "pathParams": [],
@@ -13513,6 +13822,7 @@
  {
   "id": "templates.getTemplatesEligible",
   "call": "templates.list_eligible",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/eligible",
   "pathParams": [],
@@ -13552,6 +13862,7 @@
  {
   "id": "templates.getTemplatesPreviews",
   "call": "templates.list_previews",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/previews",
   "pathParams": [],
@@ -13589,6 +13900,7 @@
  {
   "id": "templates.getTemplatesUploads",
   "call": "template_imports.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/uploads",
   "pathParams": [],
@@ -13616,6 +13928,7 @@
  {
   "id": "templates.getTemplatesUploadsById",
   "call": "template_imports.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/uploads/{id}",
   "pathParams": [
@@ -13652,6 +13965,7 @@
  {
   "id": "templates.getTemplatesById",
   "call": "templates.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}",
   "pathParams": [
@@ -13717,6 +14031,7 @@
  {
   "id": "templates.getTemplatesByIdCandidates",
   "call": "templates.candidates.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/candidates",
   "pathParams": [
@@ -13778,6 +14093,7 @@
  {
   "id": "templates.postTemplatesByIdCandidates",
   "call": "templates.candidates.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/candidates",
   "pathParams": [
@@ -13829,6 +14145,7 @@
  {
   "id": "templates.postTemplatesByIdCandidatesByCandidateIdApprove",
   "call": "templates.candidates.approve",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/candidates/{candidateId}/approve",
   "pathParams": [
@@ -13865,6 +14182,7 @@
  {
   "id": "templates.getTemplatesByIdChannels",
   "call": "templates.channels.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/channels",
   "pathParams": [
@@ -13892,6 +14210,7 @@
  {
   "id": "templates.getTemplatesByIdChannelsRuns",
   "call": "templates.channels.list_runs",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/channels/runs",
   "pathParams": [
@@ -13925,6 +14244,7 @@
  {
   "id": "templates.getTemplatesByIdInputSchema",
   "call": "templates.retrieve_input_schema",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/input-schema",
   "pathParams": [
@@ -13944,6 +14264,7 @@
  {
   "id": "templates.getTemplatesByIdPackage",
   "call": "templates.download_package",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/package",
   "pathParams": [
@@ -13962,6 +14283,7 @@
  {
   "id": "templates.postTemplatesByIdPreview",
   "call": "templates.preview",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/preview",
   "pathParams": [
@@ -13995,6 +14317,7 @@
  {
   "id": "templates.postTemplatesByIdRelease",
   "call": "templates.releases.release",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/release",
   "pathParams": [
@@ -14041,6 +14364,7 @@
  {
   "id": "templates.getTemplatesByIdReleases",
   "call": "templates.releases.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/releases",
   "pathParams": [
@@ -14109,6 +14433,7 @@
  {
   "id": "templates.postTemplatesByIdReleases",
   "call": "templates.releases.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/releases",
   "pathParams": [
@@ -14153,6 +14478,7 @@
  {
   "id": "templates.getTemplatesByIdReleasesImpact",
   "call": "templates.releases.retrieve_impact",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/releases/impact",
   "pathParams": [
@@ -14235,6 +14561,7 @@
  {
   "id": "templates.postTemplatesByIdReview",
   "call": "templates.reviews.approve",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/review",
   "pathParams": [
@@ -14287,6 +14614,7 @@
  {
   "id": "templates.postTemplatesByIdReviewRequests",
   "call": "templates.reviews.request",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/review-requests",
   "pathParams": [
@@ -14333,6 +14661,7 @@
  {
   "id": "templates.getTemplatesByIdRollout",
   "call": "templates.retrieve_rollout",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/rollout",
   "pathParams": [
@@ -14408,6 +14737,7 @@
  {
   "id": "templates.getTemplatesByIdSampleCsv",
   "call": "templates.download_sample",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/sample.csv",
   "pathParams": [
@@ -14426,6 +14756,7 @@
  {
   "id": "templates.postTemplatesByIdScanSetup",
   "call": "templates.set_up_scanning",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/scan-setup",
   "pathParams": [
@@ -14463,6 +14794,7 @@
  {
   "id": "templates.getTemplatesByIdStampsImpact",
   "call": "templates.retrieve_stamps_impact",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/stamps-impact",
   "pathParams": [
@@ -14495,6 +14827,7 @@
  {
   "id": "templates.postTemplatesByIdUse",
   "call": "blueprints.use",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/templates/{id}/use",
   "pathParams": [
@@ -14564,6 +14897,7 @@
  {
   "id": "templates.getTemplatesByIdVersionsByVersion",
   "call": "templates.versions.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/versions/{version}",
   "pathParams": [
@@ -14615,6 +14949,7 @@
  {
   "id": "templates.getTemplatesByIdVersionsByVersionAssetsByName",
   "call": "templates.versions.download_asset",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/versions/{version}/assets/{name}",
   "pathParams": [
@@ -14643,6 +14978,7 @@
  {
   "id": "templates.getTemplatesByIdVersionsByVersionWalletReports",
   "call": "templates.versions.retrieve_wallet_reports",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/templates/{id}/versions/{version}/wallet-reports",
   "pathParams": [
@@ -14708,6 +15044,7 @@
  {
   "id": "sandbox.getTestInbox",
   "call": "test_emails.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/test-inbox",
   "pathParams": [],
@@ -14737,6 +15074,7 @@
  {
   "id": "sandbox.getTestInboxById",
   "call": "test_emails.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/test-inbox/{id}",
   "pathParams": [
@@ -14770,6 +15108,7 @@
  {
   "id": "users.getUsers",
   "call": "platform.users.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/users",
   "pathParams": [],
@@ -14798,6 +15137,7 @@
  {
   "id": "users.getUsersById",
   "call": "platform.users.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/users/{id}",
   "pathParams": [
@@ -14883,6 +15223,7 @@
  {
   "id": "users.patchUsersById",
   "call": "platform.users.update",
+  "published": false,
   "http": "PATCH",
   "path": "/api/v1/users/{id}",
   "pathParams": [
@@ -14915,6 +15256,7 @@
  {
   "id": "polaris-access.getUsersByIdAccess",
   "call": "platform.users.access.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/users/{id}/access",
   "pathParams": [
@@ -14971,6 +15313,7 @@
  {
   "id": "polaris-claims.getUsersByIdClaims",
   "call": "platform.users.claims.retrieve",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/users/{id}/claims",
   "pathParams": [
@@ -14993,6 +15336,7 @@
  {
   "id": "polaris-claims.patchUsersByIdClaims",
   "call": "platform.users.claims.update",
+  "published": false,
   "http": "PATCH",
   "path": "/api/v1/users/{id}/claims",
   "pathParams": [
@@ -15023,6 +15367,7 @@
  {
   "id": "polaris-access.postUsersByIdOffboard",
   "call": "platform.users.offboard",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/users/{id}/offboard",
   "pathParams": [
@@ -15148,6 +15493,7 @@
  {
   "id": "users.getUsersByIdPasses",
   "call": "platform.users.passes.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/users/{id}/passes",
   "pathParams": [
@@ -15186,6 +15532,7 @@
  {
   "id": "polaris-access.postUsersByIdRoles",
   "call": "platform.users.roles.set",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/users/{id}/roles",
   "pathParams": [
@@ -15246,6 +15593,7 @@
  {
   "id": "users.postUsersByIdSessionsRevoke",
   "call": "platform.users.sessions.revoke_all",
+  "published": false,
   "http": "POST",
   "path": "/api/v1/users/{id}/sessions/revoke",
   "pathParams": [
@@ -15267,6 +15615,7 @@
  {
   "id": "users.deleteUsersByIdSessionsBySessionId",
   "call": "platform.users.sessions.revoke",
+  "published": false,
   "http": "DELETE",
   "path": "/api/v1/users/{id}/sessions/{sessionId}",
   "pathParams": [
@@ -15293,6 +15642,7 @@
  {
   "id": "wallet-providers.getWalletProvidersPassesById",
   "call": "passes.retrieve_provider_status",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/wallet-providers/passes/{id}",
   "pathParams": [
@@ -15348,6 +15698,7 @@
  {
   "id": "wallet-providers.postWalletProvidersReissue",
   "call": "passes.resend_provider_copies",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/wallet-providers/reissue",
   "pathParams": [],
@@ -15368,6 +15719,7 @@
  {
   "id": "webhooks.getWebhookEndpoints",
   "call": "webhook_endpoints.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints",
   "pathParams": [],
@@ -15410,6 +15762,7 @@
  {
   "id": "webhooks.postWebhookEndpoints",
   "call": "webhook_endpoints.create",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints",
   "pathParams": [],
@@ -15456,6 +15809,7 @@
  {
   "id": "webhooks.postWebhookEndpointsCapture",
   "call": "webhook_endpoints.ensure_capture",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/capture",
   "pathParams": [],
@@ -15497,6 +15851,7 @@
  {
   "id": "webhooks.getWebhookEndpointsSetup",
   "call": "webhook_endpoints.setup.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/setup",
   "pathParams": [],
@@ -15563,6 +15918,7 @@
  {
   "id": "webhooks.getWebhookEndpointsById",
   "call": "webhook_endpoints.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}",
   "pathParams": [
@@ -15606,6 +15962,7 @@
  {
   "id": "webhooks.patchWebhookEndpointsById",
   "call": "webhook_endpoints.update",
+  "published": true,
   "http": "PATCH",
   "path": "/api/v1/webhook-endpoints/{id}",
   "pathParams": [
@@ -15650,6 +16007,7 @@
  {
   "id": "webhooks.deleteWebhookEndpointsById",
   "call": "webhook_endpoints.delete",
+  "published": true,
   "http": "DELETE",
   "path": "/api/v1/webhook-endpoints/{id}",
   "pathParams": [
@@ -15671,6 +16029,7 @@
  {
   "id": "webhooks.getWebhookEndpointsByIdCaptures",
   "call": "webhook_endpoints.captures.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}/captures",
   "pathParams": [
@@ -15706,6 +16065,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdCapturesSecret",
   "call": "webhook_endpoints.captures.reveal_secret",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/captures/secret",
   "pathParams": [
@@ -15727,6 +16087,7 @@
  {
   "id": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
   "call": "webhook_endpoints.captures.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}/captures/{captureId}",
   "pathParams": [
@@ -15762,6 +16123,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
   "call": "webhook_endpoints.captures.replay",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/captures/{captureId}/replay",
   "pathParams": [
@@ -15797,6 +16159,7 @@
  {
   "id": "webhooks.getWebhookEndpointsByIdDeliveries",
   "call": "webhook_endpoints.deliveries.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}/deliveries",
   "pathParams": [
@@ -15834,6 +16197,7 @@
  {
   "id": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
   "call": "webhook_endpoints.deliveries.retrieve",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
   "pathParams": [
@@ -15895,6 +16259,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay",
   "call": "webhook_endpoints.deliveries.replay",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/deliveries/{eventId}/replay",
   "pathParams": [
@@ -15921,6 +16286,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdReplay",
   "call": "webhook_endpoints.deliveries.bulk_replay",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/replay",
   "pathParams": [
@@ -15946,6 +16312,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdSecret",
   "call": "webhook_endpoints.rotate_secret",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/secret",
   "pathParams": [
@@ -15968,6 +16335,7 @@
  {
   "id": "webhooks.postWebhookEndpointsByIdTest",
   "call": "webhook_endpoints.send_test",
+  "published": true,
   "http": "POST",
   "path": "/api/v1/webhook-endpoints/{id}/test",
   "pathParams": [
@@ -15994,6 +16362,7 @@
  {
   "id": "webhooks.getWebhookEndpointsByIdTests",
   "call": "webhook_endpoints.tests.list",
+  "published": true,
   "http": "GET",
   "path": "/api/v1/webhook-endpoints/{id}/tests",
   "pathParams": [
