@@ -9,9 +9,9 @@ const read = <T>(file: string): T =>
 const table = read<Record<string, string[]>>('docs/api/operation-codes.json');
 
 describe('operation codes', () => {
-  it('drops the codes under an @absorbs function and keeps the ones its tag names', () => {
+  it("drops the codes under an @absorbs function and keeps the route's own", () => {
     const make = table[routeKey('developer', 'post', '/')] ?? [];
-    expect(make).toContain('DEVICE_PASS_IDENTITY_NOT_READY');
+    expect(make).toContain('DEVICE_PASS_LIMIT');
     expect(make).not.toContain('IDENTITY_RETIRED');
   });
 
