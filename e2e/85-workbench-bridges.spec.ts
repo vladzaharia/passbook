@@ -83,7 +83,11 @@ async function signIn(page: Page) {
   await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
   await page.setViewportSize({ width: 1440, height: 900 });
   const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
+  // A track already done (an earlier spec's pass) opens on the Done page, with neither.
+  await create
+    .or(page.getByRole('radio', { name: 'Run here' }))
+    .or(page.locator('.qs-done'))
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/, {
@@ -224,7 +228,6 @@ test.describe('admin, Live', () => {
 });
 
 test('a sandbox pass: Open in Workbench with its Test tag, and the way back', async ({ page }) => {
-  test.setTimeout(600_000);
   await signIn(page);
   const org = await sandboxOrgId(page);
   await issuePass(page, org);
