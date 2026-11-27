@@ -44,6 +44,13 @@ const SESSION_PATHS = new Set([
   '/api/v1/developer/home',
 ]);
 /**
+ * Device passes (design 3.4) are the person's own: a Polaris session with step-up, CSRF and an Idempotency-Key,
+ * never a key or a token. Account-level, so they carry no bearer; the server holds them to the sandbox.
+ */
+const SESSION_PREFIXES = ['/api/v1/developer/device-passes'];
+const isSession = (path: string) =>
+  SESSION_PATHS.has(path) || SESSION_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+/**
  * Calls a tool may still make on the cookie session instead of the token. Every tool is on the token
  * now: the sandbox's lifecycle, key mint and Home read are account-level and live in SESSION_PATHS.
  * The list must stay empty; an entry needs a written reason and fails the test below.
@@ -58,7 +65,7 @@ const allCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
     }))
     .filter(({ path }) => path.startsWith('/api/'));
 const apiCalls = (fetchMock: { mock: { calls: unknown[][] } }) =>
-  allCalls(fetchMock).filter(({ path }) => !SESSION_PATHS.has(path) && !EXEMPT_PATHS.has(path));
+  allCalls(fetchMock).filter(({ path }) => !isSession(path) && !EXEMPT_PATHS.has(path));
 
 const headerOf = (init: RequestInit): Record<string, string> =>
   Object.fromEntries(new Headers(init.headers).entries());
@@ -199,7 +206,7 @@ describe('more of the boundary (R4 N3)', () => {
         Object.keys(headerOf(init)).filter((h) => /mode/i.test(h)),
         p,
       ).toEqual([]);
-      if (!SESSION_PATHS.has(p) && !EXEMPT_PATHS.has(p))
+      if (!isSession(p) && !EXEMPT_PATHS.has(p))
         expect(headerOf(init).authorization, p).toBe('Bearer pbtry_sbx');
     }
   });

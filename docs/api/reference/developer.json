@@ -536,5 +536,102 @@
         "expiresAt": 1798790399999
       }
     }
+  },
+  "developer.postDevicePasses": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
+    },
+    "response": {
+      "devicePass": {
+        "id": "0193a1b2-7c00-7000-8000-21d5ba4f7b54",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "state": "active",
+        "voidReason": "developer",
+        "createdAt": 1794362400000,
+        "expiresAt": 1798790399999,
+        "deviceCount": 24,
+        "lastSeenAt": 1795570500000,
+        "code": {
+          "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "expiresAt": 1798790399999
+        }
+      }
+    }
+  },
+  "developer.getDevicePasses": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-e7ff07ca3ee7",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "state": "active",
+          "voidReason": "developer",
+          "createdAt": 1794362400000,
+          "expiresAt": 1798790399999,
+          "deviceCount": 24,
+          "lastSeenAt": 1795570500000,
+          "code": {
+            "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+            "expiresAt": 1798790399999
+          }
+        }
+      ],
+      "active": 30,
+      "limit": 25
+    }
+  },
+  "developer.postDevicePassesByIdCode": {
+    "response": {
+      "devicePass": {
+        "id": "0193a1b2-7c00-7000-8000-b99d9a6b2589",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "state": "active",
+        "voidReason": "developer",
+        "createdAt": 1794362400000,
+        "expiresAt": 1798790399999,
+        "deviceCount": 24,
+        "lastSeenAt": 1795570500000,
+        "code": {
+          "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "expiresAt": 1798790399999
+        }
+      }
+    }
+  },
+  "developer.postDevicePassesByIdAgain": {
+    "response": {
+      "devicePass": {
+        "id": "0193a1b2-7c00-7000-8000-e885e79bd335",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "state": "active",
+        "voidReason": "developer",
+        "createdAt": 1794362400000,
+        "expiresAt": 1798790399999,
+        "deviceCount": 24,
+        "lastSeenAt": 1795570500000,
+        "code": {
+          "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "expiresAt": 1798790399999
+        }
+      }
+    }
+  },
+  "developer.deleteDevicePassesById": {
+    "response": {
+      "devicePass": {
+        "id": "0193a1b2-7c00-7000-8000-44109642f043",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "state": "active",
+        "voidReason": "developer",
+        "createdAt": 1794362400000,
+        "expiresAt": 1798790399999,
+        "deviceCount": 24,
+        "lastSeenAt": 1795570500000,
+        "code": {
+          "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "expiresAt": 1798790399999
+        }
+      }
+    }
   }
 }

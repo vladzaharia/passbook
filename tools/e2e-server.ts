@@ -30,8 +30,12 @@ rmSync(varsFile, { force: true });
 // that signs with the Worker's own intermediate (e2e/helpers/platform-root.ts reads it from the state folder).
 // It keeps the real identifier because the platform slot policy requires it; the certificate is signed by this
 // throwaway test CA, lives only in the local e2e database and cannot sign a pass Apple would accept.
+// The device-test pass type (Workbench device passes) is another sibling: e2e/helpers/platform-root.ts seeds it.
 const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
-  siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
+  siblings: [
+    { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' },
+    { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook.devtest' },
+  ],
 });
 const kek = E2E_KEK_V1;
 writeDevVars(varsFile, {
@@ -54,6 +58,8 @@ writeDevVars(varsFile, {
   SCIM_BEARER_TOKEN: scimToken,
   // The scanner document, off in production until M1.
   SCAN_ENABLED: '1',
+  // Device passes are off in production until the owner's devtest step; this throwaway server runs them.
+  DEVICE_PASS_ENABLED: '1',
   // Provider calls go to test/mock-wallets (honoured only on http loopback, see mock-endpoint.ts).
   WALLET_MOCK_PROVIDERS_URL: walletsUrl,
   ...(release ? { WALLET_E2E_RELEASE: '1' } : {}),
@@ -85,6 +91,9 @@ execFileSync(
   { cwd: root, stdio: 'inherit' },
 );
 writeFileSync(resolve(state, 'platform-root.json'), JSON.stringify(fixture.siblings[0], null, 2), {
+  mode: 0o600,
+});
+writeFileSync(resolve(state, 'device-test.json'), JSON.stringify(fixture.siblings[1], null, 2), {
   mode: 0o600,
 });
 // The Polaris ID binding's own D1 (test/idp-e2e/wrangler.jsonc), with the migration the real Worker deploys.

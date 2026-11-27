@@ -7,6 +7,7 @@ import type { AppBindings } from './context.ts';
 import { NotFoundError } from './errors.ts';
 import { workbenchTestOnly } from './errors-denial.ts';
 import { enforceFeatures, type FeatureRule, trackFeatures } from './feature-guard.ts';
+import { ownSandboxOrgId } from './repo-own-sandbox.ts';
 import { isRead, type StepUp } from './route-auth-spec.ts';
 import { serviceContext } from './service-context.ts';
 import { assertConsoleGroup, assertStepUp, hasConsoleAccess } from './sign-in-guard.ts';
@@ -35,6 +36,8 @@ interface Decl {
   feature?: FeatureRule;
   stepUp?: StepUp;
   ownOnlyAdmitted: boolean;
+  /** A sandbox's person, in their own sandbox: the console-group exemption, re-checked here (developer, own open sandbox). */
+  ownSandbox?: boolean;
 }
 
 /**
@@ -50,8 +53,16 @@ export async function admitTokenSession(
   if (decl.sessionKind === 'admin') throw workbenchTestOnly();
   // As `sessionOrThrow` does: a step-up's `when` may read the principal.
   c.set('auth', session);
-  const consoleAccess = !decl.ownOnlyAdmitted || hasConsoleAccess(c, session);
-  if (decl.sessionKind === 'tenant' && consoleAccess) assertConsoleGroup(c, session);
+  const consoleAccess = decl.ownSandbox
+    ? undefined
+    : !decl.ownOnlyAdmitted || hasConsoleAccess(c, session);
+  if (decl.ownSandbox && session.workbench) {
+    assertConsoleGroup(c, session, {
+      orgId: session.workbench.orgId,
+      ownSandbox: await ownSandboxOrgId(c.env.DB, session.userId),
+    });
+  } else if (decl.ownSandbox) throw workbenchTestOnly();
+  else if (decl.sessionKind === 'tenant' && consoleAccess) assertConsoleGroup(c, session);
   if (decl.stepUp && (!decl.stepUp.when || (await decl.stepUp.when(c))))
     assertStepUp(c, session, decl.stepUp.maxAgeSec);
   const principal: SessionAuth = { ...session, mode: 'test', consoleAccess };

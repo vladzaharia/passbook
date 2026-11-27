@@ -26,15 +26,36 @@ func (r *ApiKeysActivityResource) List(ctx context.Context, id string, query *Ap
 	return &out, nil
 }
 
+type ApiKeysCliTokensResource struct {
+	c *core
+}
+
+func newApiKeysCliTokensResource(c *core) *ApiKeysCliTokensResource {
+	return &ApiKeysCliTokensResource{
+		c: c,
+	}
+}
+
+// Revoke Sign out: a CLI token ends itself (send it as the bearer); a person ends their own `DELETE /api/v1/cli/tokens/{id}`
+func (r *ApiKeysCliTokensResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ApiKeysCliTokensRevokeResult, error) {
+	var out ApiKeysCliTokensRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/cli/tokens/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ApiKeysResource struct {
-	c        *core
-	Activity *ApiKeysActivityResource
+	c         *core
+	Activity  *ApiKeysActivityResource
+	CliTokens *ApiKeysCliTokensResource
 }
 
 func newApiKeysResource(c *core) *ApiKeysResource {
 	return &ApiKeysResource{
-		c:        c,
-		Activity: newApiKeysActivityResource(c),
+		c:         c,
+		Activity:  newApiKeysActivityResource(c),
+		CliTokens: newApiKeysCliTokensResource(c),
 	}
 }
 

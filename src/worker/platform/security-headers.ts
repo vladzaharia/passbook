@@ -125,7 +125,7 @@ export function contentSecurityPolicy(
   ].join('; ');
 }
 
-const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan'];
+const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/d/', '/auth/', '/scan'];
 /**
  * The join page's form posts to itself. A browser sends `Origin: null` on a POST from a
  * `no-referrer` page, which the join origin check refuses. `strict-origin` keeps the token in the

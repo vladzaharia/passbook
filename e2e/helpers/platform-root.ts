@@ -45,9 +45,27 @@ const text = (v: string) => `'${v.replaceAll("'", "''")}'`;
  * certificate for that pass type (made by the generator the Worker tests use), its key sealed under the e2e
  * KEK, and a platform row that issues but is not the default. Nothing is dropped or bypassed.
  */
-export async function seedPlatformRoot(): Promise<{ id: string; passType: string }> {
+export function seedPlatformRoot(): Promise<{ id: string; passType: string }> {
+  return seedIdentity('platform-root.json', { label: 'PassBook', purpose: 'passes' });
+}
+
+/**
+ * Seeds the device-test pass type (`pass.mobile.passbook.devtest`) the way the owner's provisioning leaves it: a
+ * platform row with purpose `device_test` that issues. Workbench device passes sign with it and nothing else.
+ */
+export function seedDeviceTest(): Promise<{ id: string; passType: string }> {
+  return seedIdentity('device-test.json', {
+    label: 'PassBook device test',
+    purpose: 'device_test',
+  });
+}
+
+async function seedIdentity(
+  file: string,
+  as: { label: string; purpose: 'passes' | 'device_test' },
+): Promise<{ id: string; passType: string }> {
   // Made by tools/e2e-server.ts under the Worker's own intermediate, as Apple's pass types all chain to one WWDR.
-  const fixture = JSON.parse(readFileSync(`${STATE}/platform-root.json`, 'utf8')) as {
+  const fixture = JSON.parse(readFileSync(`${STATE}/${file}`, 'utf8')) as {
     identity: { passTypeIdentifier: string; teamIdentifier: string };
     certificate: string;
     privateKey: string;
@@ -79,8 +97,8 @@ export async function seedPlatformRoot(): Promise<{ id: string; passType: string
     `INSERT INTO signing_identities
        (id, org_id, label, pass_type_identifier, team_identifier, source, credential_id, cert_pem, cert_sha256,
         not_before, not_after, is_default, issuing, provenance, purpose, created_at)
-     VALUES (${text(id)}, NULL, 'PassBook', ${text(passType)}, ${text(fixture.identity.teamIdentifier)}, 'db', ${text(credentialId)},
-        ${text(fixture.certificate)}, ${text(details.sha256)}, ${details.notBefore}, ${details.notAfter}, 0, 1, 'platform', 'passes', ${now})`,
+     VALUES (${text(id)}, NULL, ${text(as.label)}, ${text(passType)}, ${text(fixture.identity.teamIdentifier)}, 'db', ${text(credentialId)},
+        ${text(fixture.certificate)}, ${text(details.sha256)}, ${details.notBefore}, ${details.notAfter}, 0, 1, 'platform', ${text(as.purpose)}, ${now})`,
   );
   return { id, passType };
 }

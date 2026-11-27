@@ -27,7 +27,7 @@ export interface World {
 }
 
 /** The routes the Passes tool calls, each recorded. */
-export function passesHandlers(world: World): Record<string, FetchHandler> {
+export function passesHandlers(world: World, contexts?: unknown): Record<string, FetchHandler> {
   const at = (path: string, fn: FetchHandler): [string, FetchHandler] => [
     path,
     (url, init) => {
@@ -110,5 +110,5 @@ export function passesHandlers(world: World): Record<string, FetchHandler> {
       }),
     );
   }
-  return { ...shell(), ...Object.fromEntries(routes) };
+  return { ...shell({}, contexts), ...Object.fromEntries(routes) };
 }

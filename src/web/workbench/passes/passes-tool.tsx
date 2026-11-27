@@ -40,6 +40,9 @@ import { usePassList } from './use-passes.ts';
 const PassInspector = lazy(() =>
   import('./pass-inspector.tsx').then((m) => ({ default: m.PassInspector })),
 );
+const DevicePhoneView = lazy(() =>
+  import('./device-phone-view.tsx').then((m) => ({ default: m.DevicePhoneView })),
+);
 const PhoneView = lazy(() => import('./phone-view.tsx').then((m) => ({ default: m.PhoneView })));
 
 const idOf = (p: PassSummaryDto) => p.id;
@@ -112,7 +115,7 @@ export function PassesTool() {
   else if (showPhone)
     body = (
       <Suspense fallback={<BenchSkeleton rows={3} />}>
-        <PhoneView orgId={orgId} passes={items} />
+        {sandbox ? <DevicePhoneView passes={items} /> : <PhoneView orgId={orgId} passes={items} />}
       </Suspense>
     );
   else
