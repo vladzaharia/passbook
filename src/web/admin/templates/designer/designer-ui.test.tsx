@@ -3,13 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { DEFAULT_SCAN_ACTION } from '@/shared/scan-defaults.ts';
+import { clearPreviewBatches } from '../../../lib/preview-batch.ts';
 import { json, membershipFixture, problem, renderApp } from '../../../lib/test-utils.tsx';
 import { ORG, templateDetail, templateSummary } from '../../passes/test-fixtures.ts';
 import { sampleDoc } from './fixtures.ts';
 import type { DesignDoc } from './model.ts';
 import { forgetStageMemory } from './scan/scan-stage-memory.ts';
 
-beforeEach(forgetStageMemory);
+// A preview queued by an earlier test must not flush into the next one's calls.
+beforeEach(() => {
+  forgetStageMemory();
+  clearPreviewBatches();
+});
 
 const VERSION = 'a1b2c3d4e5f6a7b8';
 const ISSUE = {

@@ -343,7 +343,7 @@ describe('GET /api/v1/users/{id}/passes', () => {
     const key = await makeApiKey(f());
     expect(
       (await h.call(`/api/v1/users/${a.user.id}/passes`, { headers: key.headers })).status,
-    ).toBe(401);
+    ).toBe(403);
     const res = await h.call(`/api/v1/users/${a.user.id}/passes?cursor=${'x'.repeat(100)}`, {
       headers: a.headers,
     });

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
@@ -8,14 +8,20 @@ import type { PassTarget } from '@/shared/pass-view/index.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewChannel } from '../../../channel-previews/types.ts';
 import { Button } from '../../../ui/button.tsx';
+import { Skeleton } from '../../../ui/skeleton.tsx';
 import { useOrgTimeZone } from '../../settings/use-org-time-zone.ts';
-import { useTemplateChannels } from '../channels/api.ts';
+import { useTemplateChannels } from '../channels/reads.ts';
 import { useDesignerMaybe } from './context.tsx';
+import { useDesignerHost } from './host.tsx';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
-import { PaperPreview } from './paper-preview.tsx';
 import { DesignerPreview } from './preview.tsx';
 import { useStageSource } from './stage-source.ts';
+
+/** Print and the paper editor load when the Paper channel opens. */
+const PaperPreview = lazy(() =>
+  import('./paper-preview.tsx').then((m) => ({ default: m.PaperPreview })),
+);
 
 /**
  * The designer's preview stage: every channel from the draft, the card from the dry run and the
@@ -50,6 +56,7 @@ export function DesignerStage({
     orgId,
   });
   const timeZone = useOrgTimeZone(orgId);
+  const peek = useDesignerHost().extras?.Peek;
   const openWallets = useDesignerMaybe()?.openWallets;
   const walletAction = openWallets
     ? (target: 'google' | 'samsung') => (
@@ -86,7 +93,7 @@ export function DesignerStage({
         ]),
     ) as Partial<Record<PreviewChannel, string>>;
   }, [channels.data]);
-  return (
+  const previews = (
     <ChannelPreviews
       source={source}
       channels={effective}
@@ -100,17 +107,27 @@ export function DesignerStage({
         />
       }
       paper={
-        <PaperPreview
-          passJson={passJson}
-          manifest={manifest}
-          templateId={templateId}
-          orgId={orgId}
-          timeZone={timeZone}
-          assets={card.assets}
-          assetBase={card.assetBase}
-          onEdit={onPaper}
-        />
+        <Suspense fallback={<Skeleton className="aspect-[210/297] w-full rounded-xl" />}>
+          <PaperPreview
+            passJson={passJson}
+            manifest={manifest}
+            templateId={templateId}
+            orgId={orgId}
+            timeZone={timeZone}
+            assets={card.assets}
+            assetBase={card.assetBase}
+            onEdit={onPaper}
+          />
+        </Suspense>
       }
     />
+  );
+  if (!peek) return previews;
+  const Peek = peek;
+  return (
+    <div className="relative">
+      {previews}
+      <Peek source={source} />
+    </div>
   );
 }

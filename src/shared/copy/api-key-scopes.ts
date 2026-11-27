@@ -28,7 +28,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'members:read': 'Read members and developers',
   'members:write': 'Invite and remove members and developers (Live keys)',
   'api-keys:write': 'Manage its own child keys',
-  'platform:read': 'Read the platform',
+  'platform:read': 'Read the platform, claim values and invitation addresses',
   'platform:orgs': 'Organizations and plans',
   'platform:users': 'Users, roles and invitations',
   'platform:groups': 'Polaris ID groups',

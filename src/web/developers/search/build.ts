@@ -1,8 +1,9 @@
 import { gzipSync } from 'node:zlib';
 import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { opPath, pagePath } from '../model/markdown.ts';
-import type { Site } from '../model/types.ts';
+import type { Example, Site } from '../model/types.ts';
 import type { ActionDoc, GuideDoc, HintDoc, SearchIndex } from './types.ts';
 
 /** The index is fetched on the first ⌘K; this is what it may weigh on the wire. */
@@ -27,7 +28,7 @@ const actions = (): ActionDoc[] => [
     line: 'Edit a pass, watch every wallet change',
     sandbox: false,
     words: 'edit preview pass wallet apple google',
-    href: PATHS.playground,
+    href: wbHref('design'),
   },
   {
     id: 'builder',
@@ -35,7 +36,7 @@ const actions = (): ActionDoc[] => [
     line: 'Run any operation against your sandbox',
     sandbox: true,
     words: 'console try run request send',
-    href: PATHS.console,
+    href: wbHref('console'),
   },
   {
     id: 'logs',
@@ -43,7 +44,7 @@ const actions = (): ActionDoc[] => [
     line: 'Your sandbox key’s calls',
     sandbox: true,
     words: 'requests history debug',
-    href: PATHS.logs,
+    href: wbHref('logs'),
   },
   {
     id: 'test-webhook',
@@ -51,7 +52,7 @@ const actions = (): ActionDoc[] => [
     line: 'Capture a signed delivery',
     sandbox: true,
     words: 'event capture tester endpoint signature',
-    href: PATHS.webhooks,
+    href: wbHref('events'),
   },
   {
     id: 'test-key',
@@ -59,7 +60,7 @@ const actions = (): ActionDoc[] => [
     line: 'A sandbox and its key',
     sandbox: true,
     words: 'sandbox api secret token start',
-    href: PATHS.quickstart,
+    href: wbHref('quickstart'),
   },
   {
     id: 'roll-key',
@@ -76,7 +77,7 @@ const PAGES: readonly { id: string; title: string; line: string; href: string }[
     id: 'quickstart',
     title: 'Quickstart',
     line: 'Sandbox, first request, your pass live',
-    href: PATHS.quickstart,
+    href: wbHref('quickstart'),
   },
   {
     id: 'reference',
@@ -88,15 +89,15 @@ const PAGES: readonly { id: string; title: string; line: string; href: string }[
     id: 'playground',
     title: 'Playground',
     line: 'Edit a pass and watch the wallets change',
-    href: PATHS.playground,
+    href: wbHref('design'),
   },
   {
     id: 'webhooks',
     title: 'Webhooks',
     line: 'Events, signatures, the tester',
-    href: PATHS.webhooks,
+    href: wbHref('events'),
   },
-  { id: 'logs', title: 'Request log', line: 'Your sandbox key’s calls', href: PATHS.logs },
+  { id: 'logs', title: 'Request log', line: 'Your sandbox key’s calls', href: wbHref('logs') },
   { id: 'errors', title: 'Errors', line: 'Every code and its fix', href: PATHS.errors },
   { id: 'changelog', title: 'Changelog', line: 'What changed, by date', href: PATHS.changelog },
   { id: 'status', title: 'Status', line: 'Components and incidents', href: PATHS.status },
@@ -122,7 +123,12 @@ const HINTS: readonly { terms: string[]; text: string; links: { label: string; t
     },
   ];
 
-export function buildSearchIndex(site: Site): SearchIndex {
+/**
+ * `samples` lists the guide snippets that are one curl request on one operation, by snippet id: the
+ * file stem under docs/developers/snippets/guides (`create-order-pass`). The Console resolves
+ * `?op=<operationId>&sample=<id>` through it and refuses an id whose `op` differs from `?op=`.
+ */
+export function buildSearchIndex(site: Site, examples: readonly Example[] = []): SearchIndex {
   const ops = site.pages.flatMap((page) =>
     page.ops.map((o) => ({
       id: o.operationId,
@@ -178,8 +184,11 @@ export function buildSearchIndex(site: Site): SearchIndex {
     events: site.webhookEvents.map((e) => ({
       type: e.type,
       summary: e.summary,
-      href: `${PATHS.webhooks}?type=${e.type}`,
+      href: wbHref('events', { query: { type: e.type } }),
     })),
+    samples: examples.flatMap((e) =>
+      e.curl && e.ops.length === 1 && e.ops[0] ? [{ id: e.id, op: e.ops[0], guide: e.guide }] : [],
+    ),
     actions: actions(),
     hints,
     secretHelp: ['ref:api-keys', 'roll-key'],
@@ -187,8 +196,11 @@ export function buildSearchIndex(site: Site): SearchIndex {
 }
 
 /** The index as a file, and its size on the wire; the build fails when it outgrows its budget. */
-export function searchIndexFile(site: Site): { file: string; body: string; gzip: number } {
-  const body = JSON.stringify(buildSearchIndex(site));
+export function searchIndexFile(
+  site: Site,
+  examples: readonly Example[] = [],
+): { file: string; body: string; gzip: number } {
+  const body = JSON.stringify(buildSearchIndex(site, examples));
   const gzip = gzipSync(body).length;
   if (gzip > INDEX_BUDGET_GZIP)
     throw new Error(`search index is ${gzip} bytes gzip; the budget is ${INDEX_BUDGET_GZIP}`);

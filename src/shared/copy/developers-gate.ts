@@ -9,7 +9,6 @@ export const GATE_COPY = {
     keys: BUDDY_LINES.gateKeys,
     logs: BUDDY_LINES.gateLogs,
     webhooks: BUDDY_LINES.gateWebhooks,
-    tryIt: 'Run this call against your sandbox.',
   },
   notFound: { home: 'Developers home', search: 'Search' },
   search: {

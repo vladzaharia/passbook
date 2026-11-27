@@ -1,8 +1,8 @@
 /** The developer portal's paths, shared by the generator, the Worker route and the tests. */
 export const PATHS = {
   home: '/developers',
-  /** The Workbench's overview on the home page: its slot is `id="workbench"`. */
-  workbench: '/developers#workbench',
+  /** The Workbench's own space. */
+  workbench: '/workbench',
   quickstart: '/developers/quickstart',
   guides: '/developers/guides',
   playground: '/developers/playground',
@@ -30,14 +30,14 @@ export const PATHS = {
   openapi: '/api/v1/openapi.json',
 } as const;
 
-/** Pages the Workbench took over (design §4.2): the Worker answers 301 to the new path and keeps the query. */
+/** The pages that moved into the Workbench: the Worker answers 301 from each, keeping query and hash. */
 export const MOVED: Readonly<Record<string, string>> = {
-  [PATHS.console]: '/workbench/console',
-  [PATHS.webhooks]: '/workbench/events',
-  [PATHS.logs]: '/workbench/logs',
-  [PATHS.keys]: '/workbench/keys',
-  [PATHS.playground]: '/workbench/design',
-  [PATHS.quickstart]: '/workbench/quickstart',
+  [PATHS.console]: `${PATHS.workbench}/console`,
+  [PATHS.webhooks]: `${PATHS.workbench}/events`,
+  [PATHS.logs]: `${PATHS.workbench}/logs`,
+  [PATHS.keys]: `${PATHS.workbench}/keys`,
+  [PATHS.playground]: `${PATHS.workbench}/design`,
+  [PATHS.quickstart]: `${PATHS.workbench}/quickstart`,
 };
 
 /**

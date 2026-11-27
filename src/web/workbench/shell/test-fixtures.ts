@@ -36,6 +36,12 @@ export function handlers(summary: Record<string, unknown> = {}, contexts: unknow
         keysExpiring: 0,
         ...summary,
       }),
+    // The Console reads the docs' operation index (a static file, not an API call).
+    '/developers/run/index.json': () => json({ codes: [], groups: [] }),
     '/api/v1/operations': () => json({ items: [] }),
+    // Logs reads these on arrival: an org with no calls and no keys.
+    '/api/v1/request-logs': () =>
+      json({ items: [], nextCursor: null, capped: null, bodiesRecorded: true }),
+    '/api/v1/api-keys': () => json({ items: [], nextCursor: null, revokedCount: 0 }),
   };
 }

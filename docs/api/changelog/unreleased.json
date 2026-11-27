@@ -1361,6 +1361,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events optional parameter query:order added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "optional parameter query:order added",
+    "note": "order=desc reads the newest events first in one page. Its nextCursor is the newest event's: pass it as after to read what comes next."
+  },
+  {
     "key": "GET /api/v1/events optional parameter query:requestId added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -2279,6 +2287,14 @@
     "op": "GET /api/v1/platform/idp/setup",
     "change": "new operation",
     "note": "Read what Polaris ID setup has done and what is left, item by item."
+  },
+  {
+    "key": "GET /api/v1/platform/invitations 200.items[].createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.getPlatformInvitations",
+    "op": "GET /api/v1/platform/invitations",
+    "change": "200.items[].createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
   },
   {
     "key": "GET /api/v1/platform/invitations new operation",
@@ -3201,6 +3217,22 @@
     "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
   },
   {
+    "key": "GET /api/v1/workbench/contexts 200.orgs[].timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.orgs[].timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
     "key": "GET /api/v1/workbench/contexts new operation",
     "class": "additive",
     "operationId": "workbench.getContexts",
@@ -3856,6 +3888,30 @@
     "note": "Keys may hold nfc:read or nfc:write, named on the key and never from a role; not for platform keys."
   },
   {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:audit\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:audit\" added",
+    "note": "Platform keys may hold platform:audit: read the ledger of calls to Polaris ID."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:claims\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:claims\" added",
+    "note": "Platform keys may hold platform:claims: read and set Polaris ID claims on users and groups. A platform admin's claims are a person's (409 IDP_PLATFORM_ADMIN)."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:groups\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:groups\" added",
+    "note": "Platform keys may hold platform:groups: list, create, rename and delete Polaris ID groups, their org rules and manual members."
+  },
+  {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:read\" added",
     "class": "additive",
     "operationId": "api-keys.postApiKeys",
@@ -3870,6 +3926,22 @@
     "op": "POST /api/v1/api-keys",
     "change": "body.scopes[]: enum value \"platform:settings\" added",
     "note": "Platform keys may hold platform:settings: read and write the platform settings, except sign-in (auth.*, oidc.*), which is a person's (403 PERSON_REQUIRED)."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:status\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:status\" added",
+    "note": "Platform keys may hold platform:status: read the Polaris ID status."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:users\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"platform:users\" added",
+    "note": "Platform keys may hold platform:users: platform roles, Polaris ID checks, invitations, access reads and the offboard plan."
   },
   {
     "key": "POST /api/v1/api-keys body.scopes[]: enum value \"platform:wallet\" added",
@@ -5721,12 +5793,28 @@
     "note": "Set up Polaris ID: groups, the PassBook app and the SCIM connection. A dry run unless dryRun is false. Starts the idp.setup operation."
   },
   {
+    "key": "POST /api/v1/platform/invitations 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitations",
+    "op": "POST /api/v1/platform/invitations",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
+  },
+  {
     "key": "POST /api/v1/platform/invitations new operation",
     "class": "additive",
     "operationId": "platform-invitations.postPlatformInvitations",
     "op": "POST /api/v1/platform/invitations",
     "change": "new operation",
     "note": "Platform invitations: invite a person to Polaris ID groups, with a link shown once."
+  },
+  {
+    "key": "POST /api/v1/platform/invitations/{id}/resend 201.createdBy: field added",
+    "class": "additive",
+    "operationId": "platform-invitations.postPlatformInvitationsByIdResend",
+    "op": "POST /api/v1/platform/invitations/{id}/resend",
+    "change": "201.createdBy: field added",
+    "note": "Platform invitations name who made them: a person, or a Platform key. A key's invitations end with the key."
   },
   {
     "key": "POST /api/v1/platform/invitations/{id}/resend new operation",
@@ -7311,5 +7399,13 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "Workbench token: file reads rate limit",
+    "class": "notable",
+    "operationId": "",
+    "op": "Workbench token",
+    "change": "template file reads: own rate limit",
+    "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
   }
 ]

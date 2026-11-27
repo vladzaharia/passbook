@@ -1,0 +1,41 @@
+/* Activity on the bench: grouped operation rows beside the inspector. Tokens only. */
+.activity-list {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.activity-group {
+  display: grid;
+  gap: 4px;
+}
+.activity-h {
+  margin: 0;
+  padding: 0 12px;
+  color: var(--pk-text-muted);
+  font: 500 12px / 18px var(--pk-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.activity-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--pk-border-subtle);
+}
+.activity-rows > li + li {
+  box-shadow: inset 0 1px 0 var(--pk-border-subtle);
+}
+.activity-rows > li[data-selected] {
+  background: var(--pk-state-selected-fill);
+}
+.activity-detail {
+  min-width: 0;
+}
+.activity-none {
+  margin: 0;
+  padding: 24px 16px;
+  color: var(--pk-text-muted);
+}

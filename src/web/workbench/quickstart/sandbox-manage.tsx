@@ -1,7 +1,6 @@
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { PATHS } from '../../../shared/developers.ts';
-import { SandboxOperation, startedOperation } from '../../developers/ui/sandbox-operation.tsx';
+import { wbPath } from '../../../shared/workbench.ts';
 import { WorkingNote } from '../../developers/ui/working-note.tsx';
 import {
   deleteSandboxConfirm,
@@ -18,7 +17,9 @@ import {
 } from '../console/sandbox-actions.ts';
 import type { Sandbox } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
+import { SandboxOperation, startedOperation } from '../sandbox/operation.tsx';
 
+const QS_PATH = wbPath('', 'quickstart');
 type Act = 'start-over' | 'delete';
 const COPY = { 'start-over': startOverSandboxConfirm, delete: deleteSandboxConfirm } as const;
 const HASH: Record<string, Act> = { '#start-over': 'start-over', '#delete-sandbox': 'delete' };
@@ -150,7 +151,7 @@ export function SandboxManage({
       void mintKey(csrf)
         .catch(() => null)
         .then((secret) => {
-          history.replaceState(null, '', PATHS.quickstart);
+          history.replaceState(null, '', QS_PATH);
           setAct(null);
           onOp(null);
           onMade(made, secret);
@@ -159,7 +160,7 @@ export function SandboxManage({
     [csrf, onMade, onOp],
   );
   const leave = () => {
-    if (act === 'delete') window.location.assign(PATHS.quickstart);
+    if (act === 'delete') window.location.assign(QS_PATH);
     else {
       setAct(null);
       onOp(null);
@@ -206,7 +207,7 @@ export function SandboxManage({
                 act === 'delete'
                   ? {
                       label: 'Create sandbox',
-                      onClick: () => window.location.assign(PATHS.quickstart),
+                      onClick: () => window.location.assign(QS_PATH),
                     }
                   : undefined
               }

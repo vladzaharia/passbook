@@ -30,8 +30,18 @@ export const ORG_KIND = defineOperationKind({
   read: 'passes:read',
   write: 'passes:operate',
   cancel: 'between-steps',
+  tokenActs: true,
   dedupe: (s) => `test:${s.k}`,
   errors: { FEATURE_NOT_INCLUDED: 'Not on this plan. Retry.' },
+});
+/** A kind whose retry also writes state Live uses: a Workbench token may read it, never act on it. */
+export const LIVE_STATE_KIND = defineOperationKind({
+  ...common,
+  kind: 'test.live_state',
+  audience: 'org',
+  read: 'passes:read',
+  write: 'passes:operate',
+  cancel: 'between-steps',
 });
 export const QUEUED_ONLY_KIND = defineOperationKind({
   ...common,
@@ -82,6 +92,7 @@ export function registerTestKinds(
 ): () => void {
   const undo = [
     ORG_KIND,
+    LIVE_STATE_KIND,
     QUEUED_ONLY_KIND,
     NEVER_KIND,
     STARTER_KIND,

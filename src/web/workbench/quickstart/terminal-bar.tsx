@@ -6,6 +6,7 @@ import { PATHS } from '../../../shared/developers.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
 import { duration } from '../home/model.ts';
 import { fixOfCall, maskKey, shortId, stamp } from './model.ts';
+import { useQsTransport } from './transport.tsx';
 import { useElapsed } from './use-clock.ts';
 import { useListener } from './use-listener.ts';
 import type { Quickstart } from './use-quickstart.ts';
@@ -29,10 +30,11 @@ function useCallFix(entry: RequestLogEntry | null, q: Quickstart) {
     request: string | null;
   } | null>(null);
   const id = entry && entry.status >= 400 ? entry.id : null;
+  const { fetch: send } = useQsTransport();
   useEffect(() => {
     if (!id) return;
     let live = true;
-    fetch(`/api/v1/developer/logs/${encodeURIComponent(id)}`, {
+    send(`/api/v1/developer/logs/${encodeURIComponent(id)}`, {
       headers: { accept: 'application/json' },
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -44,7 +46,7 @@ function useCallFix(entry: RequestLogEntry | null, q: Quickstart) {
     return () => {
       live = false;
     };
-  }, [id]);
+  }, [id, send]);
   if (!entry || !id) return null;
   const mine = body?.id === id ? body : null;
   return fixOfCall(
@@ -127,7 +129,7 @@ export function TerminalBar({
 }) {
   const cursor = q.home?.calls[0]?.id ?? null;
   const listening = active && q.home !== null;
-  const { heard, over, quiet, again } = useListener(listening, cursor);
+  const { heard, over, quiet, again } = useListener(listening, cursor, useQsTransport().fetch);
   // After a reload the call is still in the log: the done step shows it as it was.
   const prior = done
     ? (q.home?.calls.find((e) => isPassCreate(e) && e.status < 400) ?? null)

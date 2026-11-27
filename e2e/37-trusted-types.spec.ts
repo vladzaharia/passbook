@@ -131,6 +131,8 @@ test('Save to this phone works in the portal under the policy', async ({ browser
   const violations = watch(page);
   await signInHolder(page, email);
   await page.goto(`/passes/${pass.id}`);
+  // The portal loads the save logic lazily; before it wires the host the lead is a plain link to the door view.
+  await expect(page.locator('[data-save-phone][data-save-ready]').first()).toBeAttached();
   await page.getByRole('link', { name: 'Save to this phone' }).first().click();
   await expect(page.getByText('On this phone · Works offline')).toBeVisible();
   expect(await violations()).toEqual([]);

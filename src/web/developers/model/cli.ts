@@ -1,11 +1,12 @@
 import { SDK_STATUS, type SdkStatus } from '../../../shared/developers-sdk.ts';
 import { shQuote } from './code-literals.ts';
 import { pathValue } from './ids.ts';
+import type { SampleOp } from './sample-ts.ts';
 import type { Sample } from './samples.ts';
 import type { OpView } from './types.ts';
 
 /** `--set key=value` for each scalar field of the sample's `input`: the CLI lays them over the body. */
-function sets(op: OpView): string[] {
+function sets(op: Pick<OpView, 'sample'>): string[] {
   const body = op.sample.body;
   const input = body && typeof body === 'object' && !Array.isArray(body) ? body.input : undefined;
   if (!input || typeof input !== 'object' || Array.isArray(input)) return [];
@@ -16,8 +17,10 @@ function sets(op: OpView): string[] {
 }
 
 /** The command that makes the same call, for the operations the CLI has a command for. */
-function command(op: OpView): string | null {
-  const id = pathValue(op.path, 'id', 'string');
+function command(
+  op: Pick<OpView, 'sdkCall' | 'path' | 'sample'> & Pick<SampleOp, 'ids'>,
+): string | null {
+  const id = op.ids?.id || pathValue(op.path, 'id', 'string');
   switch (op.sdkCall) {
     case 'pb.passes.create':
       return ['passbook passes create --template $PASSBOOK_TEMPLATE_ID', ...sets(op)].join(' \\\n');
@@ -33,7 +36,10 @@ function command(op: OpView): string | null {
 }
 
 /** A CLI tab, only where there is a command. It reads the key from `PASSBOOK_KEY`. */
-export function cliSample(op: OpView, status: SdkStatus = SDK_STATUS): Sample[] {
+export function cliSample(
+  op: Pick<OpView, 'sdkCall' | 'path' | 'sample'> & Pick<SampleOp, 'ids'>,
+  status: SdkStatus = SDK_STATUS,
+): Sample[] {
   const cmd = command(op);
   if (!cmd) return [];
   const code = status.cli ? cmd.replace(/^passbook /, 'npx @passbook/cli ') : cmd;

@@ -73,8 +73,13 @@ test.describe('signed in', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator('.hero h1')).toBeVisible();
     await expect(page.locator('.tiles')).toBeVisible();
-    // The Workbench left the landing (it is its own space now): W3 rebuilds the sandbox slot, which still shows its
-    // signed-out card. The hero and the tiles are the page this spec holds still.
+    // The Workbench card sits under the hero and, signed in, opens the Workbench itself.
+    await expect(
+      page.getByRole('main').getByRole('link', { name: 'Open Workbench' }),
+    ).toHaveAttribute('href', '/workbench');
+    // No Sign in anywhere on the page, and the hero holds its one buddy.
+    await expect(page.locator('main').getByText('Sign in')).toHaveCount(0);
+    await expect(page.locator('[data-buddy]')).toHaveCount(1);
     // The header shows nothing, then the avatar: one change, never Sign in on the way.
     expect(states(rec)).toEqual(['avatar']);
     expect(shiftTotal(rec)).toBeLessThan(0.02);
@@ -90,6 +95,9 @@ test.describe('signed out', () => {
     const rec = await record(page);
     expect(rec.hero).toHaveLength(1);
     expect(states(rec)).toEqual(['Sign in']);
+    await expect(
+      page.getByRole('main').getByRole('link', { name: 'Open Workbench' }),
+    ).toHaveAttribute('href', '/workbench/quickstart');
     expect(shiftTotal(rec)).toBeLessThan(0.02);
     // The hero's code fits its box, at the desktop and the tablet width.
     for (const width of [1440, 820]) {
@@ -100,6 +108,7 @@ test.describe('signed out', () => {
       expect(fit.length).toBeGreaterThan(0);
       expect(fit.every((d) => d === 0)).toBe(true);
     }
+    await expect(page.locator('[data-buddy]')).toHaveCount(1);
     await shots(page, 'home-signed-out');
     await axeClean(page);
   });

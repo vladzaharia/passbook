@@ -1,9 +1,11 @@
 import type { CreateGroupMember, GroupMember } from '../../../shared/contracts/idp-access.ts';
+import type { Actor as PlatformActor } from '../../platform/actor.ts';
 import { batch, classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { requireUser } from '../users/service.ts';
+import { auditActorOf, byUserOf } from './actor.ts';
 import { idpClient } from './client.ts';
 import { isPlatformAdmin } from './desired.ts';
 import { toMember } from './dto-groups.ts';
@@ -39,7 +41,7 @@ export async function listMembers(ctx: ServiceContext, key: string): Promise<Gro
 
 export async function addMember(
   ctx: ServiceContext,
-  actorId: string,
+  actor: PlatformActor,
   key: string,
   input: CreateGroupMember,
 ): Promise<GroupMember> {
@@ -61,12 +63,11 @@ export async function addMember(
         subject,
         userId: identity?.user_id ?? null,
         platformInvitationId: null,
-        addedBy: actorId,
+        addedBy: await byUserOf(db, actor),
         now: ctx.clock.now(),
       }),
       auditStmt(db, ctx, {
-        actorType: 'user',
-        actorId,
+        ...auditActorOf(actor),
         action: 'idp.group_member',
         targetType: 'idp_group',
         targetId: key,
@@ -86,7 +87,7 @@ export async function addMember(
 
 export async function removeMember(
   ctx: ServiceContext,
-  actorId: string,
+  actor: PlatformActor,
   key: string,
   memberId: string,
 ): Promise<void> {
@@ -95,10 +96,9 @@ export async function removeMember(
   if (!member || member.group_key !== key || member.removed_at !== null)
     throw new NotFoundError('Member not found.', 'MEMBER_NOT_FOUND');
   await batch(db, [
-    removeMemberStmt(db, memberId, actorId, ctx.clock.now()),
+    removeMemberStmt(db, memberId, await byUserOf(db, actor), ctx.clock.now()),
     auditStmt(db, ctx, {
-      actorType: 'user',
-      actorId,
+      ...auditActorOf(actor),
       action: 'idp.group_member',
       targetType: 'idp_group',
       targetId: key,

@@ -1,4 +1,5 @@
 import { all, run } from '../../platform/db.ts';
+import { madeByLiveKey } from './repo-key-creator.ts';
 
 export type ClaimParent = { org: string } | { developer: string } | { platform: string };
 
@@ -62,8 +63,9 @@ export function claimsOfInvitation(db: D1Database, parent: ClaimParent) {
  * was accepted (the acceptor's reason moves to the membership or sponsorship, and any other subject's claim is no
  * longer a reason: marking each dirty lets the drain keep the one and take back the other). Oldest first.
  */
-export const unsettledClaims = (db: D1Database, now: number, limit: number) =>
-  all<ClaimRow>(
+export const unsettledClaims = (db: D1Database, now: number, limit: number) => {
+  const byLive = madeByLiveKey('pi', now);
+  return all<ClaimRow>(
     db,
     `SELECT c.id, c.org_invitation_id, c.developer_invitation_id, c.platform_invitation_id, c.subject, c.created_at, c.claim_until, c.swept_at
      FROM idp_invite_claims c
@@ -73,10 +75,12 @@ export const unsettledClaims = (db: D1Database, now: number, limit: number) =>
      WHERE c.swept_at IS NULL
        AND (c.claim_until <= ? OR oi.expires_at <= ?
          OR COALESCE(oi.revoked_at, di.revoked_at, pi.revoked_at) IS NOT NULL
-         OR COALESCE(oi.accepted_at, di.accepted_at, pi.accepted_at) IS NOT NULL)
+         OR COALESCE(oi.accepted_at, di.accepted_at, pi.accepted_at) IS NOT NULL
+         OR (pi.id IS NOT NULL AND NOT ${byLive.sql}))
      ORDER BY c.claim_until, c.id LIMIT ?`,
-    [now, now, limit],
+    [now, now, ...byLive.params, limit],
   );
+};
 
 /** The sweep settled this claim (its provisional grants were removed or the invitation was accepted). Once. */
 export async function markClaimSwept(db: D1Database, id: string, now: number): Promise<boolean> {

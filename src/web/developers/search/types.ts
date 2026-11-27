@@ -32,6 +32,16 @@ export interface GuideDoc {
   href: string;
 }
 
+/** A guide snippet the Console can load: `?op=<op>&sample=<id>`. */
+export interface SampleDoc {
+  /** The snippet's file stem under `docs/developers/snippets/guides/` (`create-order-pass`): unique across guides. */
+  id: string;
+  /** The one operationId the snippet calls. */
+  op: string;
+  /** The guide it belongs to. */
+  guide: string;
+}
+
 export interface EventDoc {
   type: string;
   summary: string;
@@ -62,6 +72,7 @@ export interface SearchIndex {
   ops: OpDoc[];
   guides: GuideDoc[];
   events: EventDoc[];
+  samples: SampleDoc[];
   actions: ActionDoc[];
   hints: HintDoc[];
   /** Ids to offer beside the warning when a secret is pasted: a guide or page and an action. */

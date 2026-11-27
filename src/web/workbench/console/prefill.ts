@@ -5,6 +5,10 @@ import type { Json, RunOp } from './types.ts';
 export interface Prefill {
   body?: Json;
   query: Record<string, string>;
+  /** Path ids, when the source knows them (a logged call): only parameters the operation declares are taken. */
+  path?: Record<string, string>;
+  /** The body is the reader's own (a handoff, a logged call): its ids stay, none is swapped for the template's. */
+  literal?: true;
 }
 
 /** `#<operationId>?body=<json>&q.<name>=<value>` (built by guide/model.ts). A bad escape or body is dropped. */
@@ -39,12 +43,22 @@ export function applyPrefill(
       op.params.some((p) => p.where === 'query' && p.name === k),
     ),
   );
+  const path = Object.fromEntries(
+    Object.entries(prefill.path ?? {}).filter(([k]) =>
+      op.params.some((p) => p.where === 'path' && p.name === k),
+    ),
+  );
   return {
     ...draft,
+    path: { ...draft.path, ...path },
     query: { ...draft.query, ...query },
     body:
       op.body && prefill.body !== undefined
-        ? JSON.stringify(swapTemplate(prefill.body, templateId), null, 2)
+        ? JSON.stringify(
+            prefill.literal ? prefill.body : swapTemplate(prefill.body, templateId),
+            null,
+            2,
+          )
         : draft.body,
   };
 }

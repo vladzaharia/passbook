@@ -70,6 +70,7 @@ describe('ToolHost', () => {
       kind: 'org' as const,
       tools: ['home' as const],
       closed: false,
+      timeZone: 'America/Los_Angeles',
     };
     const { result } = renderHook(
       () => ({

@@ -4,7 +4,7 @@ import {
   LATEST_WEBHOOK_API_VERSION,
   type WebhookApiVersion,
 } from '../../../shared/contracts/webhooks.ts';
-import { NotFoundError } from '../../platform/errors.ts';
+import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
 import { decodeCursor, encodeCursor } from './cursor.ts';
@@ -30,15 +30,22 @@ export async function page(ctx: ServiceContext, access: WebhookAccess, q: Query)
       nextCursor: await cursorOf(ctx, fence, await feedHead(ctx.env.DB, fence)),
       hasMore: false,
     };
+  const desc = q.order === 'desc';
+  if (desc && q.after !== undefined)
+    throw new ValidationError('order=desc cannot be combined with after.', [
+      { path: 'after', message: 'Not allowed with order=desc.' },
+    ]);
   const after = q.after === undefined ? 0 : await decodeCursor(ctx.env, fence, q.after);
   const { rows, hasMore } = await listFeed(ctx.env.DB, fence, {
     after,
+    desc,
     types: q.types,
     passId: q.passId,
     requestId: q.requestId,
     limit: q.limit,
   });
-  const last = rows[rows.length - 1];
+  // Newest first: the cursor is the newest row's, so a poller continues from the top of the page.
+  const last = desc ? rows[0] : rows[rows.length - 1];
   return {
     items: rows.map((row) => buildEnvelope(row, version)),
     nextCursor: await cursorOf(ctx, fence, last ? last.seq : after),

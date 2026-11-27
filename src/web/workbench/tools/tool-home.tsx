@@ -1,15 +1,24 @@
-import { WorkbenchIsland } from '../home/island.tsx';
-import { LegacyTool } from './legacy.tsx';
-import '../../ui/art/scenes/common.css';
-import '../../ui/art/scenes/wave.css';
-import '../home/workbench.css';
-import '../home/workbench-cards.css';
+import { HomeView } from '../home/home-view.tsx';
+import { useOptionalToolHost } from '../host/tool-host.tsx';
+import { ToolPage } from '../shell/tool-page.tsx';
+import { NoSandboxState } from '../states/states.tsx';
+import '../../pass-card/barcode-loader.ts';
+import '../home/home.css';
 
-/** Home (T1 rebuilds it): the moved Workbench cards. */
+/** Home: the live surface (T1). With no sandbox yet, Create sandbox once. */
 export function HomePage() {
+  const host = useOptionalToolHost();
+  if (!host)
+    return (
+      <ToolPage tool="home">
+        <div className="wb-tool-home">
+          <NoSandboxState />
+        </div>
+      </ToolPage>
+    );
   return (
-    <LegacyTool tool="home" className="wb-tool-home" closed={<WorkbenchIsland />}>
-      {() => <WorkbenchIsland />}
-    </LegacyTool>
+    <div className="wb-tool-home contents">
+      <HomeView />
+    </div>
   );
 }

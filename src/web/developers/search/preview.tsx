@@ -1,7 +1,7 @@
 import { CornerDownLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
-import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { clock } from '../../workbench/logs/format.ts';
 import { statusText } from '../ui/status-text.ts';
 import { type Activity, codeActivity } from './net.ts';
@@ -75,7 +75,10 @@ function ErrorPane({ code, index }: { code: string; index: SearchIndex }) {
           </p>
         </>
       ) : null}
-      <Actions href={e.href} second={{ label: P.log, href: `${PATHS.logs}#code=${e.code}` }} />
+      <Actions
+        href={e.href}
+        second={{ label: P.log, href: wbHref('logs', { query: { code: e.code } }) }}
+      />
     </div>
   );
 }
@@ -99,7 +102,10 @@ function OpPane({ id, index }: { id: string; index: SearchIndex }) {
         </>
       ) : null}
       {o.idempotent ? <span className="pill neutral">{P.idempotent}</span> : null}
-      <Actions href={o.href} second={{ label: P.builder, href: `${PATHS.console}#${o.id}` }} />
+      <Actions
+        href={o.href}
+        second={{ label: P.builder, href: wbHref('console', { query: { op: o.id } }) }}
+      />
     </div>
   );
 }

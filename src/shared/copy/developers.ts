@@ -6,8 +6,9 @@ export const DEV_COPY = {
     { key: 'guides', label: 'Guides' },
     { key: 'reference', label: 'Reference' },
     { key: 'playground', label: 'Playground' },
-    { key: 'workbench', label: 'Workbench' },
   ],
+  /** The one link to the other space, in the bar (design §1.5). */
+  companion: { label: 'Workbench', back: 'Back to Workbench' },
   /** The left tree, the crumbs and the pager. The tree's groups follow the bar. */
   frame: {
     docs: 'Docs',
@@ -35,7 +36,6 @@ export const DEV_COPY = {
   menu: 'Menu',
   sheet: {
     sandbox: 'Sandbox',
-    workbench: 'Workbench',
     keys: 'Keys',
     spaces: 'Spaces',
     signIn: 'Sign in',
@@ -69,6 +69,7 @@ export const DEV_COPY = {
       },
     ],
     sandbox: 'Your sandbox',
+    openWorkbench: 'Open Workbench',
     sandboxCreate: 'Create sandbox',
     sandboxClosed: 'Sandbox closed',
     guides: 'Guides',
@@ -90,8 +91,9 @@ export const DEV_COPY = {
     examples: 'Examples',
     sdk: 'SDK',
     sdkSoon: 'SDK coming soon',
-    tryIt: 'Try it',
-    signInToTry: 'Sign in to try',
+    request: 'Request',
+    tryIt: 'Run in Workbench',
+    seeInLogs: 'See in Logs',
   },
   console: {
     title: 'Console',
@@ -123,7 +125,7 @@ export const DEV_COPY = {
   },
   guides: {
     title: 'Guides',
-    openConsole: 'Open in console',
+    openConsole: 'Run in Workbench',
     copyForAi: 'Copy for AI',
     markdown: 'Markdown',
     operations: 'Operations',

@@ -18,10 +18,18 @@ import { keyAuthOf } from '../api-keys/service.ts';
 import { tryTokenKeyRow } from '../developer/repo-try.ts';
 import { resolveTryToken } from '../developer/try-token.ts';
 import { SHARED_WRITES } from './inventory.ts';
-import { memberTokenRow } from './repo.ts';
+import { memberTokenRow, sandboxPersonRow } from './repo.ts';
 import { tokenBucket, verifyWorkbenchToken, type WorkbenchClaims } from './token.ts';
 
 const ALLOWED: ReadonlySet<string> = new Set(WORKBENCH_ROUTES);
+const ASSET_READ = 'GET /api/v1/templates/:id/versions/:version/assets/:name';
+
+/**
+ * A call that only reads a version's file bytes (immutable per content hash, and a designer opens a
+ * dozen at once) counts against its own, larger budget so it never spends the session's calls.
+ */
+const readsAssetBytes = (caller: KeyCaller | undefined): boolean =>
+  !!caller?.routes?.length && caller.routes.every((route) => route === ASSET_READ);
 
 /**
  * Bound to the browser, as the v1 try token is: the request carries the session cookie the token was made
@@ -31,6 +39,11 @@ async function cookieOk(caller: KeyCaller, sessionIdHash: string): Promise<boole
   const cookie = caller.sessionCookie;
   return !!cookie && safeEqual(await sha256Hex(cookie), sessionIdHash);
 }
+
+/** Every route the request matched is a key route (`/api/v1/api-keys…`). */
+const onKeyRoutes = (caller: KeyCaller | undefined): boolean =>
+  !!caller?.routes?.length &&
+  caller.routes.every((route) => /^\S+ \/api\/v1\/api-keys(\/|$)/.test(route));
 
 /** The sandbox key a `sandbox_key` token stands for, while the session, sandbox generation and key hold. */
 async function sandboxPrincipal(
@@ -48,12 +61,63 @@ async function sandboxPrincipal(
   if (!row || row.org_id !== claims.orgId) return null;
   const auth = await keyAuthOf(env, clock, row, caller, options);
   if (!auth) return null;
+  const person = await sandboxPerson(
+    env,
+    claims,
+    row.membership_id,
+    row.session_auth_time,
+    row.session_amr,
+  );
   return {
     ...auth,
+    // The one scope a sandbox's person holds beyond its key: managing the keys under it. The key routes
+    // reach children only, cap them (`api-keys/workbench-cap.ts`) and never change the token's own key (404);
+    // every other route sees the key's own scopes.
+    scopes:
+      onKeyRoutes(caller) && !auth.scopes.includes('api-keys:write')
+        ? [...auth.scopes, 'api-keys:write']
+        : auth.scopes,
     via: 'try',
     sessionAuthTime: row.session_auth_time,
     sessionAmr: row.session_amr,
-    workbench: { orgId: claims.orgId, subject: 'sandbox_key' },
+    workbench: {
+      orgId: claims.orgId,
+      subject: 'sandbox_key',
+      keyId: claims.ref,
+      ...(person ? { person } : {}),
+    },
+  };
+}
+
+/**
+ * The sandbox person's Test session in their own org, for the key routes: managing a sandbox's keys is what the
+ * person does as the org's admin, so it runs on their membership like a member token, under the same cap. The
+ * person is the one the token's session names; a revoked membership or session leaves none (the routes refuse).
+ */
+async function sandboxPerson(
+  env: AppEnv,
+  claims: WorkbenchClaims,
+  membershipId: string | null,
+  authTime: number | null,
+  amr: SessionAuth['amr'],
+): Promise<SessionAuth | null> {
+  if (!membershipId) return null;
+  const row = await sandboxPersonRow(env.DB, claims.orgId, membershipId, claims.sessionIdHash);
+  if (!row) return null;
+  const roles = parseRoles(row.roles).filter((role) => role !== 'admin');
+  if (roles.length === 0) return null;
+  return {
+    kind: 'session',
+    userId: row.user_id,
+    sessionId: claims.sessionIdHash,
+    roles,
+    csrfSecret: '',
+    amr,
+    authTime,
+    mode: 'test',
+    via: 'try',
+    // Carries the sandbox key's id: the key routes refuse it (404) as they do for the token itself.
+    workbench: { orgId: claims.orgId, subject: 'member', keyId: claims.ref },
   };
 }
 
@@ -122,7 +186,11 @@ export async function resolveWorkbenchToken(
       !(await cookieOk(caller, claims.sessionIdHash))
     )
       return null;
-    await enforceRateLimit(env, 'RL_API_TRY', tokenBucket(claims.sessionIdHash));
+    await enforceRateLimit(
+      env,
+      readsAssetBytes(caller) ? 'RL_API_TRY_ASSET' : 'RL_API_TRY',
+      tokenBucket(claims.sessionIdHash),
+    );
     auth =
       claims.subject === 'sandbox_key'
         ? await sandboxPrincipal(env, clock, claims, caller, options)

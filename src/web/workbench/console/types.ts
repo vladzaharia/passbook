@@ -32,6 +32,23 @@ export interface RunParam {
   description: string;
 }
 
+/** What the SDK and CLI lines are written from: the SDK call and the shape of its answer. */
+export interface RunSdk {
+  /** `pb.passes.create`. */
+  call: string;
+  paged?: true;
+  cursorList?: true;
+  noContent?: true;
+  binary?: true;
+  download?: true;
+}
+
+/** A guide snippet's request, by the snippet's id (`?sample=`): its body and query. */
+export interface RunSample {
+  body?: Json;
+  query?: Record<string, string>;
+}
+
 export interface RunOp {
   id: string;
   anchor: string;
@@ -45,6 +62,11 @@ export interface RunOp {
   params: RunParam[];
   body: RunSchema | null;
   example: Json | undefined;
+  /** `x-workbench: test`: a member's Workbench token may call it. The rest are disabled there. */
+  wb: boolean;
+  sdk: RunSdk;
+  /** The guides' snippets that call it, by snippet id. */
+  samples?: Record<string, RunSample>;
 }
 
 /** `/developers/run/<slug>.json`: one reference page's operations. */
@@ -63,6 +85,8 @@ export interface RunIndexItem {
   title: string;
   /** The Run button asks twice: the index marks it. */
   destructive: boolean;
+  /** A member's Workbench token may call it (`x-workbench: test`). */
+  wb: boolean;
 }
 
 /** `/developers/run/index.json`: every runnable operation by group, and the catalog's codes. */
