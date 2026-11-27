@@ -38,9 +38,11 @@ export async function signInToWorkbench(
     .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
-    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/, {
-      timeout: 90_000,
-    });
+    // Specs that go on to use the token keep the long wait; the others keep the repo default.
+    await expect(page.locator('.qs-env-v')).toContainText(
+      /PASSBOOK_KEY=pbp_test_/,
+      key ? { timeout: 90_000 } : undefined,
+    );
   }
   if (!key) return;
   await expect.poll(() => sandboxOrgId(page).catch(() => ''), { timeout: 60_000 }).not.toBe('');
