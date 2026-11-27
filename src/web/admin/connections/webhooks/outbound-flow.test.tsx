@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
-import { CONNECTOR, ORG } from '../../passes/test-fixtures.ts';
+import { CONNECTOR } from '../../passes/test-fixtures.ts';
 import { comeBack, returnTarget } from './outbound-return.ts';
 import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
@@ -34,23 +34,17 @@ describe('every way in lands in the wizard, on the outbound path', () => {
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   });
 
-  it('sends the Test mode header on every request when opened in Test', async () => {
+  it('sends the Test mode header on tenant requests when opened in Test', async () => {
     setMode('test');
-    const seen: Array<string | undefined> = [];
-    const calls: Calls[] = [];
-    await open(
-      '/admin/o/org1/connections/webhooks/new',
-      calls,
-      hooks(calls, undefined, {
-        '/api/v1/orgs': (_url, init) => {
-          seen.push(new Headers(init?.headers).get(MODE_HEADER) ?? undefined);
-          return json({ items: [ORG], nextCursor: null });
-        },
-      }),
-    );
+    const { fetchMock } = await open('/admin/o/org1/connections/webhooks/new', []);
     expect(await screen.findByRole('heading', { name: 'Where to send', level: 2 })).toBeVisible();
-    expect(seen.length).toBeGreaterThan(0);
-    expect(new Set(seen)).toEqual(new Set(['test']));
+    const tenant = fetchMock.mock.calls.filter(([input]) =>
+      new URL(String(input), 'http://x').pathname.startsWith('/api/v1/'),
+    );
+    expect(tenant.length).toBeGreaterThan(0);
+    for (const [, init] of tenant) {
+      expect(new Headers(init?.headers).get(MODE_HEADER)).toBe('test');
+    }
   });
 
   it('is the Send events tile of the picker, and Back returns to it', async () => {
