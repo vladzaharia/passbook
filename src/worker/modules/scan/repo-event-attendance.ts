@@ -70,7 +70,7 @@ export function verifiedPresenceCtesSql(scope: string, capacity: boolean): strin
   return `live AS MATERIALIZED (
       ${liveEventPresenceSql('sc.org_id', 'sc.mode', 'sc.event_id', '1', true, capacity, `${scope} sc CROSS JOIN `)}
     ), verified AS MATERIALIZED (
-      SELECT live.pass_id, live.state FROM live JOIN scans witness ON witness.id=live.witness_id
+      SELECT live.pass_id, live.state FROM live CROSS JOIN scans witness ON witness.id=live.witness_id
       WHERE witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
         AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
         AND ${scanLedgerCommonScopeSql('witness')} AND ${scanLedgerSuccessfulCandidateSql('witness')}
