@@ -40,6 +40,7 @@ function enterMember(s: MachineState, ev: Answer, env: Env): Out {
       picker: null,
       held: null,
       locked: false,
+      key: l.key,
     },
     counts: ev.outcome.counts.asOf >= (s.counts?.asOf ?? 0) ? ev.outcome.counts : s.counts,
     lastActivity: now,
@@ -226,9 +227,9 @@ function late(s: MachineState, ev: Answer, env: Env): Out {
   const base = without(s, ev.key);
   const drop: Cmd = { c: 'unsure.drop', key: ev.key };
   const l = base.loop;
-  const shown = (l.s === 'verdict' || l.s === 'member') && l.input.sig === entry.sig;
-  // A verdict of a newer request for the same pass is not this answer's to replace.
-  if (shown && l.s === 'verdict' && l.key === ev.key) {
+  // A verdict or card of a newer request for the same pass is not this answer's to replace.
+  const shown = (l.s === 'verdict' || l.s === 'member') && l.key === ev.key;
+  if (shown && l.s === 'verdict') {
     const v = enterVerdict(
       base,
       {
@@ -263,8 +264,8 @@ export function expireUnsure(s: MachineState, key: string): Out {
   const row = recentRow(still, entry.at);
   const l = s.loop;
   let loop = l;
-  if (l.s === 'member' && l.input.sig === entry.sig) loop = { ...l, band: still, locked: true };
-  else if (l.s === 'verdict' && l.input.sig === entry.sig && l.outcome.reason === 'unconfirmed')
+  if (l.s === 'member' && l.key === key) loop = { ...l, band: still, locked: true };
+  else if (l.s === 'verdict' && l.key === key && l.outcome.reason === 'unconfirmed')
     loop = { ...l, outcome: still };
   return out({
     ...s,

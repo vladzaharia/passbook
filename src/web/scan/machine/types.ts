@@ -55,6 +55,8 @@ export type Loop =
       picker: Draft | null;
       held: ScanInput | null;
       locked: boolean;
+      /** The request that opened the card: a late band applies only under the same key. */
+      key?: string;
     }
   | { s: 'reviewing'; input: ScanInput; card: Card; draft: Draft; held: ScanInput | null }
   | {
