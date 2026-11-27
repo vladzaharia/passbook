@@ -3,15 +3,13 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { freshAdminApi, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
+import { VIEWS } from './helpers/shots.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
 const SHOTS = '.wrangler/agent-logs/wh-recover-shots';
-const SIZES = [
-  ['desktop', 1440, 900],
-  ['tablet', 834, 1112],
-  ['phone', 390, 844],
-] as const;
+const NAMES = ['desktop', 'tablet', 'phone'] as const;
+const SIZES = VIEWS.map(([w, h], i) => [NAMES[i], w, h] as const);
 
 async function serious(page: Page) {
   const results = await new AxeBuilder({ page })

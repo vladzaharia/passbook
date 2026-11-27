@@ -4,7 +4,8 @@ import type { Page } from '@playwright/test';
 /** Set D12_SHOTS (or SHOTS_DIR) to a folder to take every width and theme of a state; unset, a no-op. */
 const DIR = process.env.D12_SHOTS ?? process.env.SHOTS_DIR;
 
-const VIEWS = [
+/** Desktop, tablet, phone: the one list of widths every shot spec uses. */
+export const VIEWS = [
   [1440, 900],
   [834, 1112],
   [390, 844],

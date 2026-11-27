@@ -3,15 +3,11 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
+import { VIEWS } from './helpers/shots.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
 const DIR = process.env.W7_SHOTS ?? process.env.SHOTS_DIR;
-const VIEWS = [
-  [1440, 900],
-  [834, 1112],
-  [390, 844],
-] as const;
 
 async function serious(page: Page) {
   const results = await new AxeBuilder({ page })
