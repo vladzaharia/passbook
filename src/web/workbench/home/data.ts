@@ -41,21 +41,15 @@ export function useHomeSummary(api: WorkbenchApi) {
   });
 }
 
-/** The Workbench's own reads (summary, operations catalog) are not the developer's calls. */
-const OWN_PATH = /^\/api\/v1\/(?:workbench\/|operations(?:\/|$))/;
-export const isOwnCall = (call: { path: string }) => OWN_PATH.test(call.path);
-/** Read wider than shown: the Workbench's own calls are dropped after the read. */
-const CALLS_FETCH = CALLS_LIMIT * 4;
-
 export function useRecentCalls(api: WorkbenchApi) {
   return useQuery({
     queryKey: ['workbench', 'home', 'calls', api.orgId] as const,
     queryFn: async ({ signal }) => {
       const page = await api.get(P.logs, RequestLogPageSchema, {
-        query: { orgId: api.orgId, limit: CALLS_FETCH },
+        query: { orgId: api.orgId, limit: CALLS_LIMIT, portal: 'hide' },
         signal,
       });
-      return { ...page, items: page.items.filter((c) => !isOwnCall(c)).slice(0, CALLS_LIMIT) };
+      return page;
     },
     refetchInterval: pollEvery(CALLS_POLL_MS),
     refetchIntervalInBackground: false,

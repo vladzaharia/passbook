@@ -123,8 +123,8 @@ describe('Events', () => {
       expect.stringContaining('/connections/new?source=outbound'),
     );
     expect(add[0]?.getAttribute('href')).toContain('return=%2Fworkbench%2F');
-    // One label for the action, and no second button for another one.
-    expect(screen.queryByRole('button', { name: /Send (a )?test event/ })).toBeNull();
+    // Each way on once: the head holds neither while the empty state does.
+    expect(screen.getAllByRole('button', { name: 'Send test event' })).toHaveLength(1);
   });
 });
 

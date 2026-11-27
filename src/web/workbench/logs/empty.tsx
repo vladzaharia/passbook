@@ -66,7 +66,7 @@ export function FirstCall({
       title={(hasKey ? WB_EMPTY.logs?.title : S.noCalls) ?? S.noCalls}
     >
       {hasKey ? (
-        <div className="logs-first">
+        <div className="logs-first w-full min-w-0 [&_.code]:max-w-full [&_.code]:overflow-x-auto">
           <BenchCode label="curl" lang="curl" body={firstCall(location.origin)} empty={S.noCalls} />
         </div>
       ) : (
