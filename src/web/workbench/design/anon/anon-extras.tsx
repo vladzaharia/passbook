@@ -28,7 +28,7 @@ export function AnonCode() {
 }
 
 /** The head: the blueprint picker where a template's name would be, then Share and Save. */
-function AnonHead({ actions }: { name: string; actions: ReactNode }) {
+function AnonHead({ actions, modes }: { name: string; actions: ReactNode; modes?: ReactNode }) {
   const { blueprint, options, pick } = useAnon();
   const phone = useMediaQuery(PHONE);
   return (
@@ -46,6 +46,7 @@ function AnonHead({ actions }: { name: string; actions: ReactNode }) {
         options={options}
         onValueChange={pick}
       />
+      {modes}
       <div className="flex shrink-0 items-center gap-2 empty:hidden sm:ml-auto sm:flex-wrap">
         {actions}
         {phone ? null : (

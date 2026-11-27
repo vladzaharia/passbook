@@ -102,7 +102,9 @@ export function ModeSwitch({
   mode,
   options,
   onChange,
+  compact = false,
 }: {
+  compact?: boolean;
   mode: DesignerMode;
   options: readonly { value: DesignerMode; label: string }[];
   onChange: (mode: DesignerMode) => void;
@@ -110,7 +112,7 @@ export function ModeSwitch({
   const phone = useMediaQuery(PHONE);
   if (phone)
     return (
-      <div className="mb-4">
+      <div className={compact ? 'min-w-0 flex-1' : 'mb-4'}>
         <Select
           aria-label="Designer mode"
           className="w-full"
@@ -121,7 +123,7 @@ export function ModeSwitch({
       </div>
     );
   return (
-    <div className="mb-4">
+    <div className={compact ? 'mb-2' : 'mb-4'}>
       <SegmentedControl
         label="Designer mode"
         options={options}

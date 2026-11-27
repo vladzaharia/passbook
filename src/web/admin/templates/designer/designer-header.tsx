@@ -1,4 +1,5 @@
 import { Redo2, Undo2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Badge, IconButton, PageHeader } from '../../../ui/index.ts';
 import type { Template } from '../versions.ts';
 import type { CreateDesign } from './create-flow.ts';
@@ -12,12 +13,15 @@ export function DesignerHeader({
   create,
   template,
   undoRedo,
+  modes,
 }: {
   templateId: string;
   name: string;
   create: CreateDesign | undefined;
   /** Its release state names the host's next step beside Undo; absent for a new template. */
   template?: Template | undefined;
+  /** A phone's compact mode select, drawn in the host's head row. */
+  modes?: ReactNode;
   undoRedo: { canUndo: boolean; canRedo: boolean; dispatch: (action: Action) => void } | null;
 }) {
   const host = useDesignerHost();
@@ -50,7 +54,7 @@ export function DesignerHeader({
   if (host.extras)
     return (
       <>
-        <host.extras.Head name={name} actions={actions} />
+        <host.extras.Head name={name} actions={actions} modes={modes} />
         {step?.dialog}
       </>
     );

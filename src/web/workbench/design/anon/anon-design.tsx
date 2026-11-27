@@ -62,6 +62,7 @@ export function AnonDesign({ blueprint }: { blueprint: AnonBlueprint }) {
           base={{ version: '1', doc }}
           draft={null}
           readOnly={readOnly}
+          density="compact"
           assetBase={() => folder}
         />
       </TemplateProvider>
