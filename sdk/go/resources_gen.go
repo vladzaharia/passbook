@@ -2571,6 +2571,34 @@ func (r *MembershipsResource) UpdateRoles(ctx context.Context, id string, member
 	return &out, nil
 }
 
+type WalletHealthResource struct {
+	c *core
+}
+
+func newWalletHealthResource(c *core) *WalletHealthResource {
+	return &WalletHealthResource{
+		c: c,
+	}
+}
+
+// List Health of the wallets open to an organization, in the caller's mode `GET /api/v1/orgs/{orgId}/wallet-health`
+func (r *WalletHealthResource) List(ctx context.Context, orgId string, opts ...RequestOption) (*WalletHealthListResult, error) {
+	var out WalletHealthListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(orgId) + "/wallet-health"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retry Queue the settling of a wallet's uncertain updates that are past their grace window `POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck`
+func (r *WalletHealthResource) Retry(ctx context.Context, orgId string, provider string, opts ...RequestOption) (*WalletHealthRetryResult, error) {
+	var out WalletHealthRetryResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(orgId) + "/wallet-health/" + pathEscape(provider) + "/recheck"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsMappingsResource struct {
 	c *core
 }
@@ -4401,6 +4429,7 @@ type Resources struct {
 	Orgs                 *OrgsResource
 	Invitations          *InvitationsResource
 	Memberships          *MembershipsResource
+	WalletHealth         *WalletHealthResource
 	PassImports          *PassImportsResource
 	Passes               *PassesResource
 	PrintJobs            *PrintJobsResource
@@ -4445,6 +4474,7 @@ func newResources(c *core) Resources {
 		Orgs:                 newOrgsResource(c),
 		Invitations:          newInvitationsResource(c),
 		Memberships:          newMembershipsResource(c),
+		WalletHealth:         newWalletHealthResource(c),
 		PassImports:          newPassImportsResource(c),
 		Passes:               newPassesResource(c),
 		PrintJobs:            newPrintJobsResource(c),

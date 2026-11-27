@@ -2297,6 +2297,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-health new operation",
+    "class": "additive",
+    "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-health",
+    "change": "new operation",
+    "note": "wallet:read: each open wallet with last update, queued, failed in 24 h and unknown outcomes. Unreleased or unenrolled wallets are left out."
+  },
+  {
     "key": "GET /api/v1/orgs/memberships/me 200.items[].capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.getOrgsMembershipsMe",
@@ -6031,6 +6039,14 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck new operation",
+    "class": "additive",
+    "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck",
+    "change": "new operation",
+    "note": "passes:write: sends uncertain updates past the 10 minute window to settle; answers due and waiting."
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.capabilities[]: enum value \"logs:read\" added",
