@@ -19,6 +19,8 @@ export const ArrivalSchema = z.object({
   contentClass: z.enum(['json', 'xml', 'form', 'other']),
   /** The signed event id of an accepted or duplicate event. */
   eventRef: z.string().max(200).nullable(),
+  /** The retained work of an accepted event: its id in `GET /connections/{id}/webhook-failures`, until retention ends. */
+  retentionId: IdSchema.nullable(),
   /** Signed with the previous secret: the sender has not switched to the new one. */
   usedPrevious: z.boolean(),
   /** Deliveries counted into this row. */

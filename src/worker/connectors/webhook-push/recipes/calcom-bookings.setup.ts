@@ -12,7 +12,7 @@ const ids = [
 export const calcomBookingsSetup = defineGuide({
   direction: 'inbound',
   recipe: 'calcom-bookings',
-  version: '2026-11-25',
+  version: '2026-11-26',
   checkedAt: CHECKED_AT,
   provider: {
     name: 'Cal.com',
@@ -36,7 +36,6 @@ export const calcomBookingsSetup = defineGuide({
         {
           t: 'field',
           label: 'Event triggers',
-          choose: true,
           value: 'Leave the defaults on, or keep at least these.',
         },
         { t: 'topics' },

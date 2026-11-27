@@ -1,21 +1,17 @@
-import type { RecipeId } from '@/shared/contracts/connections.ts';
 import { FormField, Input } from '../../ui/index.ts';
-import { RECIPE_COPY } from './recipe-copy.ts';
 
-/** Shopify and Stripe make the secret; paste it here. */
+/** The secret the sender made, pasted. The guide's where-step says where to find it. */
 export function SigningSecretField({
-  recipe,
   value,
   onChange,
   error,
 }: {
-  recipe: Exclude<RecipeId, 'custom'>;
   value: string;
   onChange: (value: string) => void;
   error?: string | undefined;
 }) {
   return (
-    <FormField label="Signing secret" required help={RECIPE_COPY[recipe].secretHelp} error={error}>
+    <FormField label="Signing secret" required error={error}>
       {(c) => (
         <Input
           {...c}

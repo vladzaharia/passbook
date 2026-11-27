@@ -16,6 +16,7 @@ import {
   templateDetail,
   templateSummary,
 } from '../passes/test-fixtures.ts';
+import { GUIDES, setupOf } from './setup-fixtures.ts';
 
 const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
 const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
@@ -70,6 +71,16 @@ const WEBHOOK = {
   secretSchema: null,
 };
 
+const WITH_POINTERS = {
+  ...WEBHOOK,
+  configSchema: {
+    type: 'object',
+    properties: {
+      recordsPointer: { type: 'string', default: '/records', 'x-label': 'Records' },
+    },
+  },
+};
+
 function wizard(
   posts: Record<string, unknown>[],
   failWith?: Response,
@@ -96,7 +107,18 @@ function wizard(
         return (
           failWith ??
           json(
-            connection({ id: 'c9', webhookUrl: 'https://wallet.example/hooks/connections/c9' }),
+            {
+              ...connection({
+                id: 'c9',
+                webhookUrl: 'https://wallet.example/hooks/connections/c9',
+              }),
+              // PassBook is this sender's origin: the server makes the secret and returns it once.
+              ...(String(
+                (JSON.parse(String(init?.body)) as { connectorType?: string }).connectorType,
+              ) === 'webhook-push'
+                ? { webhookSecret: 'f'.repeat(64) }
+                : {}),
+            },
             201,
           )
         );
@@ -104,6 +126,9 @@ function wizard(
       return json({ items: [], nextCursor: null });
     },
     '/api/v1/connections/c9': () => json(connectionDetail({ id: 'c9' })),
+    '/api/v1/connectors/webhook-push/recipes/custom/setup': () => json(GUIDES.custom),
+    '/api/v1/connections/c9/setup': () => json(setupOf('custom')),
+    '/api/v1/connections/c9/webhook-arrivals': () => json({ items: [], nextCursor: null }),
   } satisfies Record<string, FetchHandler>;
 }
 
@@ -539,39 +564,64 @@ describe('create connection wizard', () => {
     },
   );
 
-  it('shows the endpoint and secret once, gated by I saved the secret', async () => {
+  it('creates a webhook without a secret, then shows the secret once on its setup page', async () => {
     const user = userEvent.setup();
     const posts: Record<string, unknown>[] = [];
     const { router } = await renderApp('/admin/connections/new', {
       session: 'admin',
       memberships: [membership],
       selectedOrg: ORG.id,
-      handlers: wizard(posts),
+      handlers: {
+        ...wizard(posts),
+        '/api/v1/connectors': () => json({ items: [HTTP, WITH_POINTERS], nextCursor: null }),
+        '/api/v1/connectors/webhook-push': () => json(WITH_POINTERS),
+      },
     });
     const entries = router.history.length;
     await toConfig(user, /Webhook push/);
     await user.type(await screen.findByLabelText(/^Name/), 'Hooked');
+    expect(screen.getByRole('group', { name: 'In PassBook' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'In your system' })).toBeInTheDocument();
+    // The payload shape draws as an example body that follows its pointers.
+    expect(screen.getByText(/"records": \[/)).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Records'));
+    await user.type(screen.getByLabelText('Records'), '/items');
+    expect(screen.getByText(/"items": \[/)).toBeInTheDocument();
     for (let i = 0; i < 4; i++) await next(user);
-    expect(await screen.findByText('Endpoint URL')).toBeInTheDocument();
-    expect(screen.getByText('Signing secret')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy endpoint URL' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy signing secret' })).toBeInTheDocument();
-    expect(posts[0]?.webhookSecret).toMatch(/^[0-9a-f]{64}$/);
-    const done = screen.getByRole('button', { name: 'Done' });
-    expect(done).toBeDisabled();
-    await user.click(screen.getByText('Example request'));
-    expect(screen.getByText(/x-wallet-signature/)).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
-    await user.click(done);
     await waitFor(() =>
-      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/c9$/),
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/c9\/setup$/),
     );
-    expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id);
-    // The connection's page replaces the wizard and leads with its next steps.
+    expect(posts[0]).not.toHaveProperty('webhookSecret');
+    // The setup page replaces the wizard in history, locked behind Create.
     expect(router.history.length).toBe(entries);
-    expect(await screen.findByText('Connection created')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(screen.queryByText('Connection created')).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Copy signing secret' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true');
+    expect(document.querySelectorAll('[data-locked]')).toHaveLength(5);
+    await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('heading', { name: 'Sign and send', level: 2 })).toBeVisible();
+  });
+
+  it('preselects a source from the link and starts at Setup', async () => {
+    await renderApp('/admin/connections/new?source=custom', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: wizard([]),
+    });
+    expect(await screen.findByLabelText(/^Name/)).toBeVisible();
+    expect(screen.queryByRole('radio', { name: /Webhook push/ })).toBeNull();
+  });
+
+  it('keeps the source pick when the link names none that exists', async () => {
+    await renderApp('/admin/connections/new?source=nope', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: wizard([]),
+    });
+    expect(await screen.findByRole('radio', { name: /Webhook push/ })).toBeVisible();
   });
 
   it('maps server field errors back to the configuration form', async () => {
@@ -591,10 +641,8 @@ describe('create connection wizard', () => {
     await user.type(await screen.findByLabelText(/^Name/), 'Upstream');
     await user.type(screen.getByLabelText(/Base URL/), 'https://10.0.0.1');
     for (let i = 0; i < 4; i++) await next(user);
-    expect(
-      await screen.findByText('Fix the highlighted fields on Configuration.'),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Edit source' }));
+    expect(await screen.findByText('Fix the highlighted fields on Setup.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Edit setup' }));
     expect(await screen.findByText('Host is not allowed.')).toBeInTheDocument();
   });
 });

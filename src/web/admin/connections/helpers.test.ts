@@ -34,6 +34,12 @@ describe('health text', () => {
     ).toBe('Synced 4:03 AM');
   });
 
+  it('says a webhook connection is waiting until a signed delivery arrives', () => {
+    const waiting = c({ health: 'awaiting', consecutiveFailures: 0, lastSuccessAt: null });
+    expect(healthSentence(waiting, NOW)).toBe('Waiting for the first signed delivery.');
+    expect(healthLine(waiting, NOW)).toBeNull();
+  });
+
   it('leaves the synced line to the Last success column when asked', () => {
     const healthy = c({ consecutiveFailures: 0, lastSuccessAt: NOW, nextRunAt: null });
     expect(healthLine(healthy, NOW)).toBe('Synced 4:03 AM');

@@ -44,6 +44,8 @@ export function TopicChecklist({
     (t) => all || plain || t.required || seen.includes(t.id) || t === firstOptional,
   );
   const hidden = topics.length - shown.length;
+  // A label only where every topic has one: a mix reads as an inconsistency.
+  const labelled = topics.every((t) => t.label);
   const progress = topicProgress(topics, seen);
   return (
     <section aria-label={heading} className={cn('flex min-w-0 flex-col gap-2', className)}>
@@ -71,8 +73,8 @@ export function TopicChecklist({
                 />
               )}
               <span className="min-w-0 flex-1 truncate">
-                {t.label ? <span className="text-fg">{t.label} </span> : null}
-                <span className={cn('font-mono text-xs', t.label ? 'text-fg-muted' : 'text-fg')}>
+                {labelled && t.label ? <span className="text-fg">{t.label} </span> : null}
+                <span className={cn('font-mono text-xs', labelled ? 'text-fg-muted' : 'text-fg')}>
                   {t.id}
                 </span>
                 {plain ? null : <span className="sr-only">{got ? ' (seen)' : ' (not seen)'}</span>}
@@ -93,9 +95,6 @@ export function TopicChecklist({
         >
           {hidden} more optional
         </button>
-      ) : null}
-      {topics.some((t) => t.verified === false) ? (
-        <p className="text-xs text-fg-muted">Labels may differ.</p>
       ) : null}
     </section>
   );

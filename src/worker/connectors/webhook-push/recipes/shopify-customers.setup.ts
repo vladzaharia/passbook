@@ -11,7 +11,7 @@ import {
 export const shopifyCustomersSetup = defineGuide({
   direction: 'inbound',
   recipe: 'shopify-customers',
-  version: '2026-11-25',
+  version: '2026-11-26',
   checkedAt: CHECKED_AT,
   provider: SHOPIFY_PROVIDER,
   secret: SHOPIFY_SECRET,
@@ -30,10 +30,10 @@ export const shopifyCustomersSetup = defineGuide({
       parts: [
         { t: 'path', items: ['Settings', 'Notifications', 'Webhooks', 'Create webhook'] },
         { t: 'text', text: 'Add one webhook for each event. Shopify takes one event per webhook.' },
-        { t: 'field', label: 'Event', choose: true, value: 'One of the events below.' },
-        { t: 'field', label: 'Format', value: 'JSON' },
+        { t: 'field', label: 'Event', value: 'One per webhook, from the list below.' },
+        { t: 'field', label: 'Format', choose: true, value: 'JSON' },
         { t: 'field', label: 'URL', copy: 'endpointUrl' },
-        { t: 'field', label: 'Webhook API version', choose: true, value: 'The latest stable one.' },
+        { t: 'field', label: 'Webhook API version', choose: true, value: 'Latest' },
         { t: 'topics' },
       ],
     },
