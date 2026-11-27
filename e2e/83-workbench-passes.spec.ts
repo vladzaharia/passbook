@@ -238,16 +238,8 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
     expect(c.authorization, c.path).toMatch(/^Bearer /);
     expect(c.mode, c.path).toBeUndefined();
   }
-});
 
-/** An org's On my phone view, and the empty list: the context is read as an org's, the list as empty. */
-test('Passes: an org lists its Test passes as QR links, and an empty list says so', async ({
-  page,
-}) => {
-  test.setTimeout(600_000);
-  await signIn(page);
-  const org = await sandboxOrgId(page);
-  await issuePass(page, org);
+  // An org's On my phone view (the context read as an org's), then the empty list.
   await page.route('**/api/v1/workbench/contexts', async (route) => {
     const res = await route.fetch();
     const body = (await res.json()) as {
