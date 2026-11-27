@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { wbPath } from '../src/shared/workbench.ts';
+import { type WbTool, wbPath } from '../src/shared/workbench.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { signInToWorkbench } from './helpers/workbench.ts';
 
@@ -31,7 +31,7 @@ const focused = (page: Page) =>
     };
   });
 
-async function settled(page: Page, tool: string, org: string) {
+async function settled(page: Page, tool: WbTool, org: string) {
   await page.goto(wbPath(org, tool));
   await expect(page.getByRole('main').getByRole('heading', { level: 1 }).first()).toBeVisible();
 }

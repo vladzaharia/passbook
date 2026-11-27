@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { wbPath } from '../src/shared/workbench.ts';
+import { type WbTool, wbPath } from '../src/shared/workbench.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { readSeed } from './helpers/seed.ts';
 import { signInToWorkbench } from './helpers/workbench.ts';
@@ -58,7 +58,7 @@ function watchUrls(page: Page) {
   return seen;
 }
 
-async function walk(page: Page, org: string, tools: readonly string[]) {
+async function walk(page: Page, org: string, tools: readonly WbTool[]) {
   const finish = recordCalls(page);
   const urls = watchUrls(page);
   for (const tool of tools) {

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
-import { wbPath } from '../src/shared/workbench.ts';
+import { type WbTool, wbPath } from '../src/shared/workbench.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { readSeed } from './helpers/seed.ts';
 import { signInToWorkbench } from './helpers/workbench.ts';
@@ -216,7 +216,7 @@ test.describe('a developer sandbox', () => {
     await signInToWorkbench(page, { key: true, desktop: false });
     await page.setViewportSize(phone);
     const org = await sandboxOrgId(page);
-    const empties: Array<[string, string | RegExp]> = [
+    const empties: Array<[WbTool, string | RegExp]> = [
       ['logs', 'Waiting for your first call'],
       ['events', 'Listening for events'],
       ['inbox', 'No test emails'],
