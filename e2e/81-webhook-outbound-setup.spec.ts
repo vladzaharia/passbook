@@ -97,11 +97,25 @@ test('Send events: pick the tile, set up both sides, and land on the endpoint', 
   await page.getByRole('button', { name: 'Send test', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Send again' })).toBeVisible({ timeout: 20_000 });
   await check(page, 'outbound-test');
-  await page.getByRole('button', { name: 'Skip for now' }).click();
+  // The pinned receiver cannot answer: stub the test's answer for the delivered state.
+  await page.route('**/api/v1/webhook-endpoints/*/test', (route) =>
+    route.fulfill({
+      json: { ok: true, status: 200, durationMs: 140, errorCode: null, captureId: null },
+    }),
+  );
+  await page.getByRole('button', { name: 'Send again' }).click();
+  await expect(page.getByText('Delivered', { exact: true }).first()).toBeVisible();
+  await check(page, 'outbound-test-delivered');
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'hooks.example.com is set up' })).toBeVisible();
+  await check(page, 'outbound-finish');
+  await page.getByRole('button', { name: 'Open endpoint' }).click();
 
   await expect(page.getByRole('heading', { level: 1, name: 'hooks.example.com' })).toBeVisible();
   const endpointId = new URL(page.url()).pathname.split('/').pop() as string;
   await expect(page.getByRole('tab', { name: 'Overview', selected: true })).toBeVisible();
+  // The stub proved nothing to PassBook: the endpoint is still untested, with the way back to setup.
+  await expect(page.getByRole('link', { name: 'Finish setup' })).toBeVisible();
   await check(page, 'outbound-detail-overview');
   await page.getByRole('tab', { name: 'Signing' }).click();
   await expect(page.getByRole('heading', { name: 'Verify requests' })).toBeVisible();
@@ -110,7 +124,8 @@ test('Send events: pick the tile, set up both sides, and land on the endpoint', 
   // The secret was shown once: setup resumes at Verify from the endpoint alone.
   await page.goto(`/admin/o/${org}/connections/webhooks/${endpointId}/setup`);
   await expect(page.getByRole('heading', { name: 'Check the signature', level: 2 })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Copy signing secret' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Set up your server', level: 1 })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New secret' })).toBeVisible();
   await check(page, 'outbound-resume');
 
   const api = await apiAs('admin');

@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { Plus, Send } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
+import { useEffect } from 'react';
 import { wbEventsPath } from '@/shared/workbench.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
@@ -19,9 +18,6 @@ import { EventsPanel } from './events-panel.tsx';
 import { useAddress } from './use-address.ts';
 import { useEndpoints, useEventsApi } from './use-events.ts';
 
-// The wizard is its own chunk: it opens only on Add endpoint.
-const AddEndpointWizard = lazy(() => import('./add-endpoint.tsx'));
-
 const TABS = [
   { value: 'events', label: 'Events' },
   { value: 'endpoints', label: 'Endpoints' },
@@ -29,7 +25,7 @@ const TABS = [
 
 /**
  * Events (design §1.10): the event feed with each event's deliveries and captures, and the
- * Endpoints tab with the Connections wizard's outbound path mounted in this context's Test.
+ * Endpoints tab; Add endpoint opens the Connections wizard's outbound path in admin and comes back here.
  * Everything runs on the Workbench token through the tool scope.
  */
 export function EventsTool({ className }: { className: string }) {
@@ -40,9 +36,6 @@ export function EventsTool({ className }: { className: string }) {
   const api = useEventsApi();
   const { params, write } = useAddress();
   const endpoints = useEndpoints();
-  const [seen, setSeen] = useState(params.add);
-  const [added, setAdded] = useState<string>();
-  const pushed = useRef(false);
   const list = endpoints.data;
 
   // A sandbox always has its capture endpoint: make it once if an older sandbox lacks it.
@@ -59,28 +52,13 @@ export function EventsTool({ className }: { className: string }) {
   const tab = (value: 'events' | 'endpoints') =>
     router.history.push(wbEventsPath(orgId, value === 'endpoints' ? { tab: 'endpoints' } : {}));
 
-  const openAdd = useCallback(() => {
-    pushed.current = true;
-    setSeen(true);
-    router.history.push(wbEventsPath(orgId, { tab: 'endpoints', add: true }));
-  }, [router, orgId]);
-  /** Cancel or Esc: Back when the wizard pushed its entry, else the entry is replaced. */
-  const closeAdd = useCallback(() => {
-    if (pushed.current) {
-      pushed.current = false;
-      router.history.back();
-    } else write({ new: null }, 'replace');
-  }, [router, write]);
-  const onFinish = useCallback(
-    (endpoint: WebhookEndpointDto) => {
-      pushed.current = false;
-      void qc.invalidateQueries({ queryKey: ['workbench', 'events'] });
-      router.history.replace(wbEventsPath(orgId, { tab: 'endpoints', endpoint: endpoint.id }));
-      setAdded(endpoint.id);
-      toast.success('Endpoint added');
-    },
-    [router, orgId, qc],
-  );
+  /** The one outbound wizard lives in admin; it returns here with the new endpoint selected. */
+  const addHref = `/admin/o/${encodeURIComponent(orgId)}/connections/new?${new URLSearchParams({
+    source: 'outbound',
+    mode: 'test',
+    return: wbEventsPath(orgId, { tab: 'endpoints' }),
+  })}`;
+  const openAdd = () => window.location.assign(addHref);
 
   /** Sends a test event to the built-in capture endpoint, or the first active URL endpoint, then shows it. */
   async function sendTest() {
@@ -107,8 +85,8 @@ export function EventsTool({ className }: { className: string }) {
       tool="events"
       action={
         <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="outline" onClick={openAdd} iconStart={<Plus aria-hidden />}>
-            Add endpoint
+          <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
+            <a href={addHref}>Add endpoint</a>
           </Button>
           <Button
             variant="outline"
@@ -126,8 +104,8 @@ export function EventsTool({ className }: { className: string }) {
     <ToolPage
       tool="events"
       primary={
-        <Button onClick={openAdd} iconStart={<Plus aria-hidden />}>
-          Add endpoint
+        <Button asChild iconStart={<Plus aria-hidden />}>
+          <a href={addHref}>Add endpoint</a>
         </Button>
       }
     >
@@ -148,8 +126,8 @@ export function EventsTool({ className }: { className: string }) {
             endpoints={list}
             params={params}
             write={write}
-            selectNew={added}
-            focusSend={added !== undefined}
+            selectNew={undefined}
+            focusSend={false}
             empty={empty}
           />
         ) : (
@@ -173,15 +151,6 @@ export function EventsTool({ className }: { className: string }) {
           </>
         )}
       </div>
-      {seen ? (
-        <Suspense fallback={null}>
-          <AddEndpointWizard
-            open={params.add}
-            onOpenChange={(open) => !open && closeAdd()}
-            onFinish={onFinish}
-          />
-        </Suspense>
-      ) : null}
     </ToolPage>
   );
 }

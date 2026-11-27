@@ -7,7 +7,7 @@ import { resetModeForTests, setMode } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
 import { CONNECTOR } from '../../passes/test-fixtures.ts';
 import { returnTarget } from './outbound-flow.tsx';
-import { type Calls, hooks, manager } from './test-fixtures.ts';
+import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
   renderApp(path, { session: 'admin', memberships: [manager], selectedOrg: 'org1', handlers });
@@ -65,13 +65,38 @@ describe('resuming an endpoint that exists', () => {
       await screen.findByRole('heading', { name: 'Check the signature', level: 2 }),
     ).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Copy signing secret' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Set up your server', level: 1 })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'New secret' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Add endpoint' })).toBeNull();
+  });
+});
+
+describe('an endpoint that was never tested', () => {
+  it('says Not tested and links to Finish setup from the list and the page', async () => {
+    const calls: Calls[] = [];
+    const state = { endpoints: [endpoint({ lastSuccessAt: null, lastStatus: null })] };
+    await open('/admin/connections?tab=webhooks', calls, hooks(calls, state));
+    expect(await screen.findByText('Not tested')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Finish setup' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/webhooks/we1/setup'),
+    );
+  });
+
+  it('leads the page with it', async () => {
+    const calls: Calls[] = [];
+    const state = { endpoints: [endpoint({ lastSuccessAt: null, lastStatus: null })] };
+    await open('/admin/connections/webhooks/we1', calls, hooks(calls, state));
+    expect(await screen.findByRole('link', { name: 'Finish setup' })).toBeVisible();
   });
 });
 
 describe('the way back', () => {
   it('goes only to the developer site', () => {
     expect(returnTarget('/developers/webhooks')).toBe('/developers/webhooks');
+    expect(returnTarget('/workbench/o/sbx/events?tab=endpoints')).toBe(
+      '/workbench/o/sbx/events?tab=endpoints',
+    );
     expect(returnTarget('//evil.example/developers/')).toBeUndefined();
     expect(returnTarget('https://evil.example')).toBeUndefined();
     expect(returnTarget('/admin')).toBeUndefined();
@@ -94,6 +119,6 @@ describe('one place to create an endpoint', () => {
       }
     };
     walk(root);
-    expect(found.sort()).toEqual(['outbound-flow.tsx', 'outbound-wizard.tsx']);
+    expect(found).toEqual(['outbound-flow.tsx']);
   });
 });

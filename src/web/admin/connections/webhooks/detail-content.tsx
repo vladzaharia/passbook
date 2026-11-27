@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Pause, Play, RotateCw } from 'lucide-react';
 import { useState } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
@@ -52,6 +52,25 @@ function StateCallout({
 }) {
   const state = endpointState(e);
   const hasDeliveries = lastDelivery(e) !== null;
+  if (state === 'untested')
+    return (
+      <Callout
+        actions={
+          canManage ? (
+            <Button asChild size="sm">
+              <Link
+                to="/admin/connections/webhooks/$endpointId/setup"
+                params={{ endpointId: e.id }}
+              >
+                Finish setup
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      >
+        No test or delivery has succeeded yet.
+      </Callout>
+    );
   if (state === 'active') return null;
   const actions = canManage ? (
     <>
@@ -182,7 +201,7 @@ export function EndpointDetail({
             aside={
               <>
                 <Card>
-                  <CardHeader title="Overview" />
+                  <CardHeader title="Details" />
                   <CardBody>
                     <KeyValue
                       items={[

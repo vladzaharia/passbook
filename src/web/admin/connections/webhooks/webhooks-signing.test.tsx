@@ -80,16 +80,6 @@ describe('signing on the endpoint page', () => {
   });
 });
 
-describe('add endpoint', () => {
-  it('says the signing secret is shown once', async () => {
-    const calls: Calls[] = [];
-    await open('/admin/connections/webhooks/new', calls);
-    expect(
-      await screen.findByText('https only. A signing secret is shown once after you add this.'),
-    ).toBeVisible();
-  });
-});
-
 describe('delivery sheet', () => {
   it('shows the request headers of the latest attempt and how to verify', async () => {
     const user = userEvent.setup();

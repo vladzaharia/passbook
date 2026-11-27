@@ -71,6 +71,11 @@ describe('add endpoint (the outbound path of the wizard)', () => {
     await waitFor(() => expect(done).not.toHaveAttribute('aria-disabled'));
     await user.click(done);
     expect(
+      await screen.findByRole('heading', { name: 'hooks.example.com is set up' }),
+    ).toBeVisible();
+    expect(screen.getByText(/Delivered · 200 in 140 ms/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Open endpoint' }));
+    expect(
       await screen.findByRole('heading', { name: 'hooks.example.com', level: 1 }),
     ).toBeVisible();
   });

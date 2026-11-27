@@ -6,6 +6,7 @@ import type {
   WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
 import { isApiError } from '../../../lib/errors.ts';
+import { pluralize } from '../../../lib/format.ts';
 import {
   ConfirmDialog,
   PageHeader,
@@ -14,7 +15,13 @@ import {
   useUnsavedChangesGuard,
   Wizard,
 } from '../../../ui/index.ts';
-import { LiveCheck } from '../../../ui/webhook-setup/index.ts';
+import {
+  HeldSecret,
+  LiveCheck,
+  type SendResult,
+  SetupFinish,
+  useRotateSecret,
+} from '../../../ui/webhook-setup/index.ts';
 import { useAdminTemplateChoices } from './admin-templates.ts';
 import {
   useEndpointActions,
@@ -30,15 +37,24 @@ import {
   outboundRail,
   SERVER_PHASE,
 } from './outbound-rail.ts';
-import { OutboundSecretStep, OutboundVerifyStep } from './outbound-server.tsx';
+import { OutboundVerifyStep } from './outbound-server.tsx';
 import { OutboundReview, OutboundStepEvents, OutboundStepWhere } from './outbound-steps.tsx';
 
 type Created = z.infer<typeof WebhookEndpointCreatedSchema>;
 
-/** A Workbench link comes back to it: only its own paths, never another site. */
+/** A developer-site link comes back to it: only its own paths, never another site. */
 export function returnTarget(value: string | undefined): string | undefined {
-  return value?.startsWith('/developers/') && !value.startsWith('//') ? value : undefined;
+  return (value?.startsWith('/developers/') || value?.startsWith('/workbench/')) &&
+    !value.startsWith('//')
+    ? value
+    : undefined;
 }
+
+/** Where the finish goes: the Workbench selects an endpoint by hash, the docs by `?endpoint=`. */
+const comeBack = (back: string, id: string) =>
+  back.startsWith('/workbench/')
+    ? `${back}#${id}`
+    : `${back}${back.includes('?') ? '&' : '?'}endpoint=${id}`;
 
 /** A refused URL says why: save-time checks name the reason (host not allowed, not found). */
 const urlProblem = (error: unknown) =>
@@ -56,6 +72,7 @@ export function OutboundFlow({
   canManage,
   returnTo,
   onBackToPicker,
+  onAnother,
   resume,
 }: {
   orgId: string;
@@ -63,11 +80,13 @@ export function OutboundFlow({
   returnTo?: string | undefined;
   /** Back from the first step: the picker, in Live (a Test org has no picker). */
   onBackToPicker?: (() => void) | undefined;
+  /** Finish: start a new setup. */
+  onAnother: () => void;
   /** An endpoint that exists: open at Verify (its secret was shown once, at Create). */
   resume?: WebhookEndpointDto | undefined;
 }) {
   const navigate = useNavigate();
-  const { create } = useSecretCalls();
+  const { create, rotate: rotateCall } = useSecretCalls();
   const validate = useValidateEndpoint();
   const guide = useOutboundSetup(orgId);
   const [step, setStep] = useState(resume ? SERVER_PHASE + 1 : 0);
@@ -80,7 +99,8 @@ export function OutboundFlow({
     resume ? { endpoint: resume, secret: '' } : undefined,
   );
   const [saved, setSaved] = useState(Boolean(resume));
-  const [delivered, setDelivered] = useState(false);
+  const [delivered, setDelivered] = useState<SendResult>();
+  const [finished, setFinished] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const templates = useAdminTemplateChoices(orgId, form.templateMode === 'selected');
   const found = checkForm(form);
@@ -89,6 +109,7 @@ export function OutboundFlow({
   const endpointId = created?.endpoint.id;
   const { test } = useEndpointActions(endpointId ?? '');
   const guard = useUnsavedChangesGuard(!created && form.url !== '');
+  const rotate = useRotateSecret((hours) => rotateCall(created?.endpoint.id ?? '', hours));
 
   const errors = {
     where: { ...(found.url ? { url: found.url } : {}) },
@@ -150,7 +171,7 @@ export function OutboundFlow({
     const next = endpoint ?? created?.endpoint;
     const back = returnTarget(returnTo);
     if (back && next) {
-      window.location.assign(`${back}${back.includes('?') ? '&' : '?'}endpoint=${next.id}`);
+      window.location.assign(comeBack(back, next.id));
       return;
     }
     void navigate(
@@ -174,30 +195,50 @@ export function OutboundFlow({
       setShowErrors(false);
     }
     if (id === 'review') void createEndpoint();
-    else if (id === 'test') open();
+    else if (id === 'test') setFinished(true);
     else setStep((n) => n + 1);
     return undefined;
   }
 
   const sendTest = async () => {
     const result = await test.mutateAsync();
-    if (result.ok) setDelivered(true);
+    if (result.ok) setDelivered(result);
     return result;
   };
   const secret = created?.secret ?? '';
   const floor = resume ? SERVER_PHASE + 1 : SERVER_PHASE;
+  const title = resume ? 'Set up your server' : 'Add endpoint';
   const crumbs = [
     { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
-    { label: 'Add endpoint' },
+    { label: resume ? endpointHost(resume) : 'Add endpoint' },
   ];
   const server = id === 'secret' || id === 'verify' || id === 'test';
 
+  if (finished && created && delivered)
+    return (
+      <>
+        <PageHeader title={title} breadcrumbs={crumbs} />
+        <SetupFinish
+          title={`${host} is set up`}
+          facts={[
+            `Delivered · ${delivered.status ?? 200} in ${delivered.durationMs} ms`,
+            `Sends ${pluralize(created.endpoint.eventTypes.length, 'event')}`,
+          ]}
+          openLabel="Open endpoint"
+          onOpen={() => open()}
+          onAnother={onAnother}
+          anotherLabel="Add another"
+        />
+      </>
+    );
+
   return (
     <>
-      <PageHeader title="Add endpoint" breadcrumbs={crumbs} />
+      <PageHeader title={title} breadcrumbs={crumbs} />
       <Wizard
         steps={outboundRail({
           locked: Boolean(created),
+          resumed: Boolean(resume),
           summaries: { where: form.url.trim() ? host : undefined },
         })}
         current={step}
@@ -218,7 +259,7 @@ export function OutboundFlow({
           !canManage
             ? 'Needs integrations access.'
             : id === 'secret'
-              ? 'Copy the secret.'
+              ? 'Confirm you saved it.'
               : 'Send a test first.'
         }
         barMenu={
@@ -230,10 +271,6 @@ export function OutboundFlow({
       >
         {id === 'where' ? (
           <OutboundStepWhere
-            sandbox={false}
-            quota={null}
-            kind="url"
-            onKind={() => undefined}
             form={form}
             onChange={patch}
             errors={shown('where')}
@@ -249,22 +286,27 @@ export function OutboundFlow({
             templates={templates}
           />
         ) : null}
-        {id === 'review' ? (
-          <OutboundReview level={3} kind="url" form={form} onEdit={(to) => setStep(at(to))} />
-        ) : null}
+        {id === 'review' ? <OutboundReview form={form} onEdit={(to) => setStep(at(to))} /> : null}
         {server && created ? (
           <>
             {id === 'secret' ? (
-              <OutboundSecretStep secret={secret} saved={saved} onSaved={setSaved} />
+              <HeldSecret
+                held={secret}
+                saved={saved}
+                onSaved={setSaved}
+                rotate={rotate}
+                onRotated={() => rotate.reset()}
+              />
             ) : null}
             {id === 'verify' ? (
               <OutboundVerifyStep
                 guide={guide.data}
-                secret={secret}
                 endpointId={created.endpoint.id}
                 url={created.endpoint.url ?? form.url.trim()}
-                host={host}
                 events={created.endpoint.eventTypes.length}
+                copied={resume ? undefined : saved}
+                rotate={resume ? rotate : undefined}
+                onRotated={() => rotate.reset()}
               />
             ) : null}
             {id === 'test' ? (
@@ -273,7 +315,8 @@ export function OutboundFlow({
                   mode="send"
                   host={host}
                   canSend={canManage}
-                  hint={guide.data?.test.text}
+                  title={false}
+                  hint="Done after one 2xx."
                   send={sendTest}
                 />
               </div>
