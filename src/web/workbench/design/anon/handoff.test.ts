@@ -42,7 +42,10 @@ describe('the hand-off from the signed-out page', () => {
     const edits = { holder: 'x'.repeat(900) };
     const target = handoffTarget(state(edits));
     const hash = target.slice(target.indexOf('#'));
-    expect(handoffState(hash.replace(/s=[^&]+/, 's=1')).edits).toEqual({});
+    const params = new URLSearchParams(hash.slice(1));
+    params.set('s', '1');
+    const foreign = `#${params}`;
+    expect(handoffState(foreign).edits).toEqual({});
     expect(handoffState(`#t=${encodeURIComponent(STORE)}`).edits).toEqual({});
     spendHandoff();
     expect(handoffState(hash).edits).toEqual({});
