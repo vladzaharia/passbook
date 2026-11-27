@@ -97807,6 +97807,7 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "CLI_ACCOUNT_MISMATCH",
           "CLI_AUTH_PENDING",
           "CLI_CODE_DENIED",
           "CLI_CODE_EXPIRED",
