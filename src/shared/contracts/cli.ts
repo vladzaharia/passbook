@@ -103,7 +103,6 @@ export const CLI_ROUTES: readonly string[] = [
   'POST /api/v1/webhook-endpoints/capture',
   'GET /api/v1/webhook-endpoints/:id/captures',
   'GET /api/v1/webhook-endpoints/:id/captures/:captureId',
-  'POST /api/v1/webhook-endpoints/:id/captures/secret',
   'GET /api/v1/events',
   'GET /api/v1/events/:id',
   // types: a template's input schema.

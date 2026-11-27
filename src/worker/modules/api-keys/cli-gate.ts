@@ -4,7 +4,8 @@ import type { KeyCaller } from '../../platform/auth.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { cliTokenNotAllowed, workbenchTestOnly } from '../../platform/errors.ts';
 import { parseJsonArray } from '../../platform/json-column.ts';
-import { createLogger } from '../../platform/log.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
 import type { ResolvedKeyRow } from './repo.ts';
 import { endCliToken } from './repo-cli.ts';
 
@@ -31,8 +32,17 @@ export async function admitCliToken(
   now: number,
 ): Promise<boolean> {
   const end = async (reason: string): Promise<false> => {
-    await endCliToken(env.DB, row.id, reason, now);
-    createLogger().info('cli_token.ended', { code: 'CLI_TOKEN_ENDED', keyId: row.id, reason });
+    const ctx = createServiceContext(env);
+    if (await endCliToken(env.DB, row.id, reason, now))
+      await recordAudit(ctx, {
+        orgId: row.org_id,
+        actorType: 'system',
+        action: 'cli_token.revoked',
+        targetType: 'api_key',
+        targetId: row.id,
+        detail: { reason, by: 'system' },
+      });
+    ctx.log.info('cli_token.ended', { code: 'CLI_TOKEN_ENDED', keyId: row.id, reason });
     return false;
   };
   const state = row.cli ? (JSON.parse(row.cli) as CliState) : null;

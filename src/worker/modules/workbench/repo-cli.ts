@@ -185,13 +185,13 @@ export const liveCliTokens = (db: D1Database, membershipId: string, now: number)
     [membershipId, now],
   );
 
-/** Ends CLI tokens by who or where: a person, an org, a person's sandbox (`orgIds`), or every one. Returns how many. */
+/** Ends CLI tokens by who or where: a person, an org, a person's sandbox (`orgIds`), or every one. Returns each one ended. */
 export async function endCliTokensWhere(
   db: D1Database,
   where: { userId?: string; orgId?: string },
   reason: string,
   now: number,
-): Promise<number> {
+): Promise<{ token_id: string; org_id: string | null }[]> {
   const sql = ['token_id IS NOT NULL', 'token_revoked_at IS NULL'];
   const params: SqlValue[] = [now, reason];
   if (where.userId !== undefined) {
@@ -203,13 +203,12 @@ export async function endCliTokensWhere(
     params.push(where.orgId);
   }
   // Counted from the rows returned: `changes` would count the key each one's trigger ends too.
-  const ended = await all<{ token_id: string }>(
+  return all<{ token_id: string; org_id: string | null }>(
     db,
     `UPDATE cli_sessions SET token_revoked_at = ?, token_revoke_reason = ? WHERE ${sql.join(' AND ')}
-     RETURNING token_id`,
+     RETURNING token_id, org_id`,
     params,
   );
-  return ended.length;
 }
 
 /** The token `id` was approved by this person. */
@@ -228,3 +227,14 @@ export const markMismatch = (db: D1Database, id: string, now: number) =>
     now,
     id,
   ]);
+
+/** Approved sessions nobody polled for: their keys are live and nobody holds them. Ends them. */
+export async function endUnclaimedCliTokens(db: D1Database, now: number) {
+  return all<{ token_id: string; org_id: string | null }>(
+    db,
+    `UPDATE cli_sessions SET token_revoked_at = ?, token_revoke_reason = 'unclaimed'
+     WHERE state = 'approved' AND consumed_at IS NULL AND token_id IS NOT NULL AND token_revoked_at IS NULL
+       AND expires_at + 60000 < ? RETURNING token_id, org_id`,
+    [now, now],
+  );
+}

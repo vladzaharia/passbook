@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { fakeAuth } from '../../../../test/helpers/fake-auth.ts';
 import { makePass, makeSession, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
 import { CLI_LOGOUT_ROUTE, CLI_ROUTES } from '../../../shared/contracts/cli.ts';
 import { WORKBENCH_ROUTES } from '../../../shared/contracts/workbench.ts';
+import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { redact, redactString } from '../../platform/log.ts';
-import { requireStepUp } from '../../platform/sign-in-guard.ts';
+import { requireStepUp, stepUpOf } from '../../platform/sign-in-guard.ts';
 import { cliKit } from './cli-test-fixtures.ts';
 import { WORKBENCH_NEVER } from './inventory.ts';
 import { BROWSER, ORIGIN } from './workbench-test-fixtures.ts';
@@ -29,6 +31,15 @@ describe('the CLI route list', () => {
       expect(route).not.toMatch(/\/api-keys|\/cli\/|\/workbench\/token|device-passes/);
     }
     expect(CLI_LOGOUT_ROUTE).toBe('DELETE /api/v1/cli/tokens/:id');
+  });
+
+  it('holds no route with a declared step-up', () => {
+    const allowed = new Set([...CLI_ROUTES, CLI_LOGOUT_ROUTE]);
+    const app = createApp({ stores: fakeAuth(ORIGIN).stores });
+    const stepped = app.routes
+      .filter((r) => allowed.has(`${r.method} ${r.path}`) && stepUpOf(r.handler))
+      .map((r) => `${r.method} ${r.path}`);
+    expect(stepped).toEqual([]);
   });
 });
 

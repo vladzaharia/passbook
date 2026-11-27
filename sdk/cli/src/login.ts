@@ -85,6 +85,10 @@ export async function login(io: LoginIo, options: { switchAccount: boolean }): P
         account: t.account,
         expiresAt: t.expiresAt,
       });
+      if (io.os === 'Windows')
+        io.out(
+          'Windows keeps the token in your profile folder, not Credential Manager. Keep that folder private.',
+        );
       io.out(`Signed in as ${t.account.email} to ${t.context.name} (Test).`);
       return;
     }

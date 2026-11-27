@@ -40,6 +40,11 @@ export async function rotateApiKey(
     (old.expires_at !== null && old.expires_at <= now)
   )
     throw new ConflictError('The key is revoked, retiring or expired.', 'API_KEY_NOT_ROTATABLE');
+  if (old.origin === 'cli')
+    throw new ConflictError(
+      'A CLI sign-in is not rotated: run passbook login again.',
+      'API_KEY_NOT_ROTATABLE',
+    );
   // A personal key is its member's: no one else is handed its successor's secret.
   if (
     old.kind === 'personal' &&

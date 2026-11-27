@@ -26,7 +26,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deviceCodeHash, newUserCode, tokenTail, userCodeMac } from './cli-codes.ts';
-import { assertCodeOpen, chargeMiss, chargeStart } from './cli-limits.ts';
+import { chargeLookup, chargeStart, refundLookup } from './cli-limits.ts';
 import * as repo from './repo-cli.ts';
 
 const MAX_PENDING = 2_000;
@@ -74,7 +74,11 @@ export async function startCliSession(
       city: meta.city,
     });
     if (!stored) continue;
-    ctx.log.info('cli_session.started', { ipPrefix: meta.ipPrefix, cliSessionId: id });
+    ctx.log.info('cli_session.started', {
+      code: 'CLI_SESSION_STARTED',
+      ipPrefix: meta.ipPrefix,
+      cliSessionId: id,
+    });
     return {
       deviceCode,
       userCode: `${userCode.slice(0, 4)}-${userCode.slice(4)}`,
@@ -100,16 +104,16 @@ export async function lookupCliCode(
   userCode: string,
   meta: CliMeta,
 ) {
-  await assertCodeOpen(ctx, session.userId, meta.ratePrefix);
+  await chargeLookup(ctx, session.userId, meta.ratePrefix);
   const code = normalizeCliCode(userCode);
   const row = code
     ? await repo.pendingByCode(ctx.env.DB, await userCodeMac(ctx.env, code), ctx.clock.now())
     : null;
   if (!row) {
-    await chargeMiss(ctx, session.userId, meta.ratePrefix);
-    ctx.log.info('cli_session.code_miss', { ipPrefix: meta.ipPrefix });
+    ctx.log.info('cli_session.code_miss', { code: 'CLI_CODE_MISS', ipPrefix: meta.ipPrefix });
     throw notFound();
   }
+  await refundLookup(ctx, session.userId, meta.ratePrefix);
   const user = await repo.userOf(ctx.env.DB, session.userId);
   return {
     id: row.id,

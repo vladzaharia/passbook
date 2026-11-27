@@ -12,7 +12,7 @@ Needs Node 20+ and a sign-in (`login`) or a `pbp_test_` key in `PASSBOOK_KEY`, w
 
 `login` prints a code and opens `/workbench/cli`. Type the code there, check the account, where it started and the context, then approve. It keeps a `pbcli_test_` token for 30 days (7 days idle): Test data of your sandbox or one org, never Live, and it cannot make keys. `--switch` signs in as another account; `--no-browser` only prints. `logout` ends the token and forgets it.
 
-The token is kept in the OS keychain (macOS Keychain, libsecret), else in `~/.config/passbook/credentials.json` (mode 0600). It is sent only to the origin that issued it, never printed, and `PASSBOOK_BASE_URL` set to another host gets none.
+The token is kept in the OS keychain (macOS Keychain, libsecret), else in `~/.config/passbook/credentials.json` (mode 0600). Windows has no Credential Manager store: the file is used, and mode 0600 does nothing there, so keep your profile folder private; login says so once. It is sent only to the origin that issued it, never printed, and `PASSBOOK_BASE_URL` set to another host gets none.
 
 `open [id|tool]` opens the Workbench in your browser's own session: `passbook open logs`, or a pasted id. The URL carries no token or code.
 

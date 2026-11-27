@@ -61,6 +61,7 @@ export async function approveCliSession(
     }))
   )
     throw new NotFoundError('No such code. Check it against your terminal.', 'CLI_CODE_NOT_FOUND');
+  let attached: string | null = null;
   try {
     // A member's own Test-mode authority, as the personal-key route builds it.
     const authority = await authorizeApiKeys(
@@ -85,6 +86,7 @@ export async function approveCliSession(
       { tail: (prefix) => tokenTail(ctx.env, id, prefix) },
     );
     await repo.attachCliToken(ctx.env.DB, id, key.id);
+    attached = key.id;
     // The sixth live token of the person ends the oldest: five at most.
     const live = await repo.liveCliTokens(ctx.env.DB, target.membership_id, now);
     for (const old of live.slice(MAX_TOKENS))
@@ -126,7 +128,9 @@ export async function approveCliSession(
       detail: { expiresAt: key.expiresAt },
     });
   } catch (error) {
-    await repo.reopenCliSession(ctx.env.DB, id);
+    // Once the key is attached the CLI can collect it: end it rather than leave an unaudited token.
+    if (attached) await endCliToken(ctx.env.DB, attached, 'approve_failed', ctx.clock.now());
+    else await repo.reopenCliSession(ctx.env.DB, id);
     throw error;
   }
 }

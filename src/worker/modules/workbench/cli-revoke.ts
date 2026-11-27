@@ -39,7 +39,7 @@ export async function revokeCliTokens(
   admin: { userId: string },
   where: { orgId?: string | undefined; userId?: string | undefined },
 ): Promise<number> {
-  const revoked = await repo.endCliTokensWhere(
+  const ended = await repo.endCliTokensWhere(
     ctx.env.DB,
     {
       ...(where.orgId !== undefined ? { orgId: where.orgId } : {}),
@@ -48,6 +48,7 @@ export async function revokeCliTokens(
     'kill_switch',
     ctx.clock.now(),
   );
+  const revoked = ended.length;
   await recordAudit(ctx, {
     orgId: where.orgId ?? null,
     actorType: 'user',
@@ -60,9 +61,37 @@ export async function revokeCliTokens(
   return revoked;
 }
 
+/** A token ended by the system: one `cli_token.revoked` row each, `by: 'system'`. */
+export async function auditSystemEnds(
+  ctx: ServiceContext,
+  ended: { token_id: string; org_id: string | null }[],
+  reason: string,
+): Promise<void> {
+  for (const e of ended)
+    await recordAudit(ctx, {
+      orgId: e.org_id,
+      actorType: 'system',
+      action: 'cli_token.revoked',
+      targetType: 'api_key',
+      targetId: e.token_id,
+      detail: { reason, by: 'system' },
+    });
+}
+
 /** A person signed out everywhere, or their sandbox was reset: their CLI tokens end with it. */
-export const endCliTokensOf = (
+export async function endCliTokensOf(
   ctx: ServiceContext,
   where: { userId: string } | { orgId: string },
   reason: 'sign_out_everywhere' | 'sandbox_reset',
-) => repo.endCliTokensWhere(ctx.env.DB, where, reason, ctx.clock.now());
+) {
+  const ended = await repo.endCliTokensWhere(ctx.env.DB, where, reason, ctx.clock.now());
+  await auditSystemEnds(ctx, ended, reason);
+  return ended.length;
+}
+
+/** Ends approved keys nobody collected (cron). */
+export async function endUnclaimedCliTokens(ctx: ServiceContext): Promise<number> {
+  const ended = await repo.endUnclaimedCliTokens(ctx.env.DB, ctx.clock.now());
+  await auditSystemEnds(ctx, ended, 'unclaimed');
+  return ended.length;
+}

@@ -50,6 +50,7 @@ import { syncGoogleClassReviews } from '../modules/wallet-providers/google-revie
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
+import { endUnclaimedCliTokens } from '../modules/workbench/cli-revoke.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { sweepIdempotency } from '../platform/idempotency.ts';
@@ -105,6 +106,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
+    { name: 'cli.unclaimed_tokens', run: async (ctx) => void (await endUnclaimedCliTokens(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
     { name: 'idempotency.sweep', run: sweepIdempotency },

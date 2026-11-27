@@ -35,6 +35,26 @@ describe('L21: code misses', () => {
     );
   });
 
+  it('holds the lock under parallel wrong codes', async () => {
+    const m = await t.person();
+    const ip = t.fresh();
+    const res = await Promise.all(
+      Array.from({ length: 30 }, () => t.lookup(m.browser, 'BBBB-BBBB', ip)),
+    );
+    const statuses = res.map((r) => r.status);
+    expect(statuses.filter((s) => s === 429).length).toBeGreaterThanOrEqual(25);
+    expect(statuses.filter((s) => s === 404).length).toBeLessThanOrEqual(5);
+  });
+
+  it('caps parallel starts at 10 an hour per network', async () => {
+    const ip = '198.51.100.77';
+    const hour = Math.floor(t.kit.clock.now() / 3_600_000) * 3_600_000;
+    // Past the 60-second burst guard, so only the hour counter is under test.
+    await bump(t.db, 'cli.start:198.51.100.0/24', hour, 6);
+    const res = await Promise.all(Array.from({ length: 12 }, () => t.start(ip)));
+    expect(res.filter((r) => r.status === 201).length).toBeLessThanOrEqual(4);
+  });
+
   it('locks a network prefix at the 21st miss in an hour', async () => {
     const m = await t.person();
     const ip = t.fresh();
@@ -243,5 +263,51 @@ describe('L24: one token, polls that slow down', () => {
     expect((await interval())?.interval_s).toBe(15);
     t.kit.clock.advance(16_000);
     await expectProblem(await t.poll(s.deviceCode, s.ip), 400, 'CLI_AUTH_PENDING');
+  });
+});
+
+describe('R6 lows', () => {
+  const auditOf = (tokenId: string) =>
+    first<{ detail: string }>(
+      t.db,
+      "SELECT detail FROM audit_log WHERE action = 'cli_token.revoked' AND target_id = ?",
+      [tokenId],
+    );
+
+  it('L3: an idle end leaves a system audit row', async () => {
+    const m = await t.person();
+    const { issued } = await t.signIn(m.browser, m.orgId);
+    t.kit.clock.advance(8 * 86_400_000);
+    expect((await t.call('GET', '/passes', t.cli(issued.token))).status).toBe(401);
+    expect((await auditOf(issued.tokenId))?.detail).toContain('idle');
+  });
+
+  it('L2: an approved session nobody polled loses its key', async () => {
+    const m = await t.person();
+    const s = await t.started();
+    const id = await lookupId(m.browser, s.userCode, s.ip);
+    expect((await t.approve(m.browser, id, m.orgId, s.ip)).status).toBe(200);
+    t.kit.clock.advance(3 * 3_600_000);
+    const { endUnclaimedCliTokens } = await import('./cli-revoke.ts');
+    expect(await endUnclaimedCliTokens({ env: t.kit.env, clock: t.kit.clock } as never)).toBeGreaterThanOrEqual(1);
+    const row = await first<{ revoked_at: number | null }>(
+      t.db,
+      'SELECT k.revoked_at FROM api_keys k JOIN cli_sessions c ON c.token_id = k.id WHERE c.id = ?',
+      [id],
+    );
+    expect(row?.revoked_at).not.toBeNull();
+  });
+
+  it('L1: a CLI key is not rotated', async () => {
+    const m = await t.person();
+    const { issued } = await t.signIn(m.browser, m.orgId);
+    const res = await t.call('POST', `/api-keys/${issued.tokenId}/rotate`, m.browser, {});
+    expect(res.status).not.toBe(200);
+    const rotated = await first<{ n: number }>(
+      t.db,
+      'SELECT count(*) AS n FROM api_keys WHERE rotated_from = ?',
+      [issued.tokenId],
+    );
+    expect(rotated?.n).toBe(0);
   });
 });
