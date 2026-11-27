@@ -1,6 +1,6 @@
 import type { ValidationIssue } from '@/passkit/types.ts';
-import { planIndexOf } from './access/issues.ts';
 import { readAccess } from './access/model.ts';
+import { planIndexOf } from './access/plan-path.ts';
 import { bindingsOf, toOf } from './bindings.ts';
 import {
   type DesignDoc,
@@ -11,9 +11,9 @@ import {
   type Selection,
   styleOf,
 } from './model.ts';
-import { actionIndexOf } from './scan/actions/issues.ts';
+import { actionIndexOf } from './scan/actions/action-path.ts';
 import { readActions } from './scan/actions/model.ts';
-import { scanDisplayOf } from './scan/document.ts';
+import { scanDisplayOf } from './scan/display-of.ts';
 import { scanIssueTarget } from './scan/scan-issue-target.ts';
 import { walletsIssueTarget } from './wallets/issue-target.ts';
 

@@ -125,7 +125,7 @@ export const QS_COPY = {
     title: (time: string) => `First pass in ${time}`,
     env: 'Copy .env',
     copied: 'Copied',
-    workbench: 'Open your workbench',
+    workbench: 'Go to Home',
     cards: [
       { id: 'issue-on-purchase', title: 'Issue on purchase' },
       { id: 'react-to-events', title: 'React to events' },

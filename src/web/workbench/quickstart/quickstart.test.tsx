@@ -52,29 +52,29 @@ beforeEach(() => {
 });
 
 describe('Quickstart', () => {
-  it('shows the five steps and the stage while the track runs', () => {
+  it('shows the five steps and the stage while the track runs', async () => {
     q.value = base({ home: { state: 'open', progress: { startedAt: 1, passAt: null } } });
     render(<Quickstart session={ready} />);
     expect(screen.getByText('run-step')).toBeInTheDocument();
-    expect(screen.getByText('stage plain')).toBeInTheDocument();
+    expect(await screen.findByText('stage plain')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'sandbox-step' })).toHaveAttribute(
       'data-state',
       'done',
     );
   });
 
-  it('marks the line to change when the run was refused', () => {
+  it('marks the line to change when the run was refused', async () => {
     q.value = base({
       run: { state: 'fail', problem: { status: 422, code: 'PASS_INPUT_INVALID', detail: '' } },
     });
     render(<Quickstart session={ready} />);
-    expect(screen.getByText('stage with fix')).toBeInTheDocument();
+    expect(await screen.findByText('stage with fix')).toBeInTheDocument();
   });
 
-  it('marks a sandbox without a template as something to finish', () => {
+  it('marks a sandbox without a template as something to finish', async () => {
     q.value = base({ templateId: null });
     render(<Quickstart session={ready} />);
-    expect(screen.getByText('stage with fix')).toBeInTheDocument();
+    expect(await screen.findByText('stage with fix')).toBeInTheDocument();
   });
 
   it('a closed sandbox has an empty stage', () => {

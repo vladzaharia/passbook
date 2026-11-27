@@ -1,24 +1,22 @@
 import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS, twin } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { Example, Json, Method, Site } from '../model/types.ts';
 import { blockTexts, type GuideDoc, GuideError, linksIn } from './parse.ts';
 
-/** What the console opens with: the body and the query. Path ids are the reader's own, so never prefilled. */
+/** A snippet's query and body, read to prove the snippet is a request the Console can run. */
 export interface Prefill {
   body?: Json;
   query?: Record<string, string>;
 }
 
-/** The console on an operation, with the request filled in: `#<operationId>?body=<json>&q.<name>=<value>`. */
-export function consoleHref(opId: string, prefill: Prefill = {}): string {
-  const parts: string[] = [];
-  if (prefill.body !== undefined)
-    parts.push(`body=${encodeURIComponent(JSON.stringify(prefill.body))}`);
-  for (const [k, v] of Object.entries(prefill.query ?? {}))
-    parts.push(`q.${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
-  const hash = parts.length > 0 ? `${opId}?${parts.join('&')}` : opId;
-  return `${PATHS.console}#${hash}`;
+/**
+ * The Workbench's Console on an operation: `?op=<operationId>&sample=<snippetId>`. The body comes from
+ * the operation's own sample or the named snippet in the docs build, never from the URL (L19).
+ */
+export function consoleHref(opId: string, sample?: string): string {
+  return wbHref('console', { query: { op: opId, sample } });
 }
 
 /** A curl snippet's query and body. Anything else it carries (path ids, headers) is the reader's to set. */
@@ -49,10 +47,9 @@ export interface GuideOp {
   href: string;
 }
 
-/** One runnable step: the console link and what it opens. */
+/** One runnable step: the Workbench link and what it opens. */
 export interface RunStep {
   opId: string;
-  prefill: Prefill;
   href: string;
   /** Index of its block in the guide. */
   block: number;
@@ -113,17 +110,16 @@ export function resolveGuide(doc: GuideDoc, site: Site, examples: Example[]): Gu
         throw new GuideError(
           `${id}: run ${b.snippet} needs one operation and a curl snippet; use show`,
         );
-      const prefill = prefillFromCurl(e.curl, `${id}: ${b.snippet}`);
-      steps.push({ opId, prefill, href: consoleHref(opId, prefill), block, snippet: b.snippet });
+      prefillFromCurl(e.curl, `${id}: ${b.snippet}`);
+      steps.push({ opId, href: consoleHref(opId, b.snippet), block, snippet: b.snippet });
     } else if (b.kind === 'code' && b.run) {
       need(b.run, 'run fence');
-      let body: Json;
       try {
-        body = JSON.parse(b.text) as Json;
+        JSON.parse(b.text);
       } catch {
         throw new GuideError(`${id}: the run=${b.run} fence is not JSON`);
       }
-      steps.push({ opId: b.run, prefill: { body }, href: consoleHref(b.run, { body }), block });
+      steps.push({ opId: b.run, href: consoleHref(b.run), block });
     } else
       for (const text of blockTexts(b))
         for (const l of linksIn(text))

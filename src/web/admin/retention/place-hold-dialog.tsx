@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RETENTION_COPY } from '@/shared/copy/retention.ts';
+import { EntityPicker } from '@/web/ui/entity-picker.tsx';
 import {
-  EntityPicker,
   FormDialog,
   FormField,
   RadioGroup,

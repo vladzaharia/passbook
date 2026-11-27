@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext } from 'react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { groupByStep } from '../guide/group.ts';
 import { opPath, pagePath } from '../model/markdown.ts';
 import type { ResourcePage, Site } from '../model/types.ts';
@@ -79,10 +80,10 @@ export function SideNav({
       {top}
       <div className="stack">
         <h4>{c.getStarted}</h4>
-        <Item href={PATHS.quickstart} path={path}>
+        <Item href={wbHref('quickstart')} path={path}>
           {navLabel('quickstart')}
         </Item>
-        <Item href={PATHS.playground} path={path}>
+        <Item href={wbHref('design')} path={path}>
           {navLabel('playground')}
         </Item>
       </div>

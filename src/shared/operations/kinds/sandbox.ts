@@ -15,6 +15,7 @@ const errors = {
 } as const;
 
 const common = {
+  tokenActs: true,
   errors,
   audience: 'starter',
   read: null,

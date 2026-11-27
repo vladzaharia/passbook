@@ -1,6 +1,6 @@
 # Quickstart
 
-Your first pass in five steps. About five minutes. The page is `/developers/quickstart`; every step runs in your own sandbox, and a sandbox never issues a real pass.
+Your first pass in five steps. About five minutes. The page is `/workbench/quickstart`; every step runs in your own sandbox, and a sandbox never issues a real pass.
 
 1. **Sign in.** Polaris ID, with your passkey.
 2. **Sandbox.** One click. You get a test organization, the `Quickstart ticket` template released in Test, a capture endpoint for webhooks and a 30-day `pbp_test_` key. The key is shown once in a `.env` box; **Copy .env** copies it and hides it as `pbp_test_…amDQ`. Lost it? Roll it in Keys.

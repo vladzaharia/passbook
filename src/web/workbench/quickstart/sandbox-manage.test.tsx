@@ -24,7 +24,7 @@ afterEach(() => {
 const stubLocation = (hash = '') =>
   vi.stubGlobal('location', {
     ...window.location,
-    pathname: '/developers/quickstart',
+    pathname: '/workbench/quickstart',
     search: '',
     hash,
     assign,
@@ -129,7 +129,7 @@ describe('Start over and Delete sandbox', () => {
     expect(within(region).getByText('Data is erased by Dec 2.')).toBeTruthy();
     expect(assign).not.toHaveBeenCalled();
     await userEvent.click(within(region).getByRole('button', { name: 'Create sandbox' }));
-    expect(assign).toHaveBeenCalledWith('/developers/quickstart');
+    expect(assign).toHaveBeenCalledWith('/workbench/quickstart');
   });
 
   it('resumes the operation a reload names, without asking again', async () => {

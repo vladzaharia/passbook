@@ -3,16 +3,26 @@ import {
   WEBHOOK_MAX_TEMPLATES,
   type WebhookEndpointDto,
 } from '@/shared/contracts/webhooks.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
-import { Button, CheckboxField, FormField, Input, RadioGroup } from '../../../ui/index.ts';
-import { useTemplates } from '../../templates/api.ts';
+import { Button } from '../../../ui/button.tsx';
+import { CheckboxField } from '../../../ui/checkbox.tsx';
+import { FormField } from '../../../ui/field.tsx';
+import { Input } from '../../../ui/input.tsx';
+import { RadioGroup } from '../../../ui/radio-group.tsx';
+import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 import { EVENT_SETS, setOf } from './event-sets.ts';
 import type { FormErrors, FormState, SubscribableEventType } from './form-state.ts';
-import { EVENT_GROUP, EVENT_GROUPS, EVENT_LABEL } from './labels.ts';
+
+/** The templates an endpoint can be limited to: each host reads them through its own client. */
+export interface TemplateChoices {
+  /** The caller may list templates; otherwise only the count of a saved selection shows. */
+  canList: boolean;
+  items: readonly { id: string; name: string }[];
+  loading: boolean;
+}
 
 /**
- * URL, description, events and templates: the create page and the detail page's settings card
- * share it. A reader sees the same card disabled, with the masked URL.
+ * URL, description, events and templates: the create page, the detail page's settings card and the
+ * mounted wizard share it. A reader sees the same card disabled, with the masked URL.
  */
 export function EndpointFields({
   value,
@@ -23,7 +33,8 @@ export function EndpointFields({
   onUrlBlur,
   urlHelp,
   checking,
-  orgId,
+  templates,
+  hideDestination,
 }: {
   value: FormState;
   onChange: (patch: Partial<FormState>) => void;
@@ -34,7 +45,9 @@ export function EndpointFields({
   onUrlBlur?: () => void;
   urlHelp?: string;
   checking?: boolean;
-  orgId: string | undefined;
+  templates: TemplateChoices;
+  /** The wizard asks for the URL on its own step: only events and templates show. */
+  hideDestination?: boolean;
 }) {
   const toggle = (type: SubscribableEventType, on: boolean) =>
     onChange({
@@ -44,42 +57,46 @@ export function EndpointFields({
     });
   return (
     <div className="flex flex-col gap-5">
-      <FormField
-        label="URL"
-        required={!disabled}
-        error={errors.url}
-        help={errors.url ? undefined : (urlHelp ?? 'https only.')}
-      >
-        {(f) => (
-          <Input
-            {...f}
-            data-draft
-            type="url"
-            inputMode="url"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="https://example.com/hooks/passbook"
-            disabled={disabled}
-            readOnly={disabled}
-            value={disabled ? (masked ?? '') : value.url}
-            aria-busy={checking || undefined}
-            onChange={(e) => onChange({ url: e.target.value })}
-            onBlur={onUrlBlur}
-          />
-        )}
-      </FormField>
-      <FormField label="Description">
-        {(f) => (
-          <Input
-            {...f}
-            data-draft
-            maxLength={120}
-            disabled={disabled}
-            value={value.description}
-            onChange={(e) => onChange({ description: e.target.value })}
-          />
-        )}
-      </FormField>
+      {hideDestination ? null : (
+        <FormField
+          label="URL"
+          required={!disabled}
+          error={errors.url}
+          help={errors.url ? undefined : (urlHelp ?? 'https only.')}
+        >
+          {(f) => (
+            <Input
+              {...f}
+              data-draft
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="https://example.com/hooks/passbook"
+              disabled={disabled}
+              readOnly={disabled}
+              value={disabled ? (masked ?? '') : value.url}
+              aria-busy={checking || undefined}
+              onChange={(e) => onChange({ url: e.target.value })}
+              onBlur={onUrlBlur}
+            />
+          )}
+        </FormField>
+      )}
+      {hideDestination ? null : (
+        <FormField label="Description">
+          {(f) => (
+            <Input
+              {...f}
+              data-draft
+              maxLength={120}
+              disabled={disabled}
+              value={value.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+            />
+          )}
+        </FormField>
+      )}
       <fieldset
         className="min-w-0"
         aria-invalid={errors.eventTypes ? true : undefined}
@@ -133,7 +150,7 @@ export function EndpointFields({
         onChange={onChange}
         errors={errors}
         disabled={disabled}
-        orgId={orgId}
+        templates={templates}
       />
     </div>
   );
@@ -144,21 +161,15 @@ function TemplateFilter({
   onChange,
   errors,
   disabled,
-  orgId,
+  templates,
 }: {
   value: FormState;
   onChange: (patch: Partial<FormState>) => void;
   errors: FormErrors;
   disabled?: boolean | undefined;
-  orgId: string | undefined;
+  templates: TemplateChoices;
 }) {
-  const scope = useOrgScope();
-  const canList = Boolean(scope.membership?.capabilities.includes('templates:read'));
-  const templates = useTemplates(
-    { orgId },
-    Boolean(orgId) && canList && value.templateMode === 'selected',
-  );
-  const items = templates.data?.items ?? [];
+  const { canList, items } = templates;
   const full = value.templateIds.length >= WEBHOOK_MAX_TEMPLATES;
   return (
     <div className="flex flex-col gap-2">
@@ -182,7 +193,7 @@ function TemplateFilter({
             <p className="text-sm text-fg-muted">
               {value.templateIds.length} selected. Template access is needed to change them.
             </p>
-          ) : templates.isPending ? (
+          ) : templates.loading ? (
             <p role="status" className="text-sm text-fg-muted">
               Loading templates…
             </p>

@@ -7,6 +7,7 @@ import type { InputValues } from '../playground/model.ts';
 import { fromDetail, type PgTemplate } from '../playground/templates.ts';
 import { beacon } from './beacon.ts';
 import { firstInput, type Problem } from './model.ts';
+import { useTransport } from './transport.tsx';
 import type { Call, QsPass } from './types.ts';
 import { useHome } from './use-home.ts';
 import { markViewed } from './viewed.ts';
@@ -43,7 +44,7 @@ const problemOf = (e: unknown): Problem =>
  * The quickstart's state: who is looking, the sandbox's template, and the two calls it makes (create, change). The key
  * of a sandbox made on this page stays here, in memory, for the .env step; it is never stored.
  */
-export function useQuickstart(initial: Session) {
+export function useQuickstart(initial: Session, onContexts?: () => void) {
   const viewedAt = useRef(markViewed()).current;
   const session = initial;
   const [secret, setSecret] = useState<string | null>(null);
@@ -54,19 +55,24 @@ export function useQuickstart(initial: Session) {
   const [pass, setPass] = useState<QsPass | null>(null);
   const [renderedMs, setRenderedMs] = useState<number | null>(null);
   const [renderedAt, setRenderedAt] = useState<number | null>(null);
-  const { home, skew, refresh } = useHome();
-  const progress: DeveloperProgress | null = home?.progress ?? null;
   /** Same key for "Run again" (the pass comes back as it was); a failed run starts a new one. */
   const key = useRef(crypto.randomUUID());
 
   const csrf = session.kind === 'out' ? '' : session.csrf;
   const sandbox = made ?? (session.kind === 'ready' ? session.sandbox : null);
+  const transport = useTransport(sandbox?.orgId ?? null, csrf);
+  const { home, skew, refresh } = useHome();
+  const progress: DeveloperProgress | null = home?.progress ?? null;
   const client = useMemo(
     () =>
       sandbox
-        ? new LiveClient(csrf, { templateId: sandbox.templateId, orgSlug: sandbox.orgSlug })
+        ? new LiveClient(
+            csrf,
+            { templateId: sandbox.templateId, orgSlug: sandbox.orgSlug },
+            transport.token ?? undefined,
+          )
         : null,
-    [csrf, sandbox],
+    [csrf, sandbox, transport],
   );
   const templateId = sandbox?.templateId ?? null;
 
@@ -96,6 +102,9 @@ export function useQuickstart(initial: Session) {
   const sandboxMade = useCallback(
     (s: Sandbox, key_: string | null) => {
       setMade(s);
+      // A new key means the held token belongs to the old one; the nav and switcher read the sandbox again.
+      transport.forget();
+      onContexts?.();
       if (csrf)
         updateSession({
           kind: 'ready',
@@ -108,7 +117,7 @@ export function useQuickstart(initial: Session) {
       if (csrf) beacon(csrf, 'sandbox');
       void refresh();
     },
-    [csrf, session, refresh],
+    [csrf, session, refresh, transport, onContexts],
   );
 
   const create = useCallback(async () => {
@@ -270,6 +279,8 @@ export function useQuickstart(initial: Session) {
     session,
     csrf,
     sandbox,
+    transport,
+    onContexts,
     secret,
     client,
     template,

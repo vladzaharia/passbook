@@ -1,21 +1,10 @@
-import {
-  type ScanDisplayDoc,
-  ScanDisplayDocSchema,
-} from '@/passkit/template/scan-display/schema.ts';
+import { ScanDisplayDocSchema } from '@/passkit/template/scan-display/schema.ts';
 import { parseParts } from '@/passkit/template/scan-display/text.ts';
 import { scanDisplayIssues } from '@/passkit/template/scan-display/validate.ts';
 import { sourcesOf, walkDoc } from '@/passkit/template/scan-display/walk.ts';
 import type { TemplateManifest, ValidationIssue } from '@/passkit/types.ts';
 import { type DesignDoc, isRecord } from '../model.ts';
 import { previewPassFields, safePreviewText } from './scan-preview-policy.ts';
-
-/** Keep in-progress text even when it temporarily fails schema validation. */
-export function scanDisplayOf(doc: DesignDoc): ScanDisplayDoc | null {
-  const scan = isRecord(doc.manifest.scan) ? doc.manifest.scan : null;
-  const display = scan?.display;
-  if (!isRecord(display) || display.v !== 1 || !isRecord(display.header)) return null;
-  return display as unknown as ScanDisplayDoc;
-}
 
 /** Fast local validation complements the server dry run and gates saving while typing. */
 export function scanIssues(doc: DesignDoc): ValidationIssue[] {

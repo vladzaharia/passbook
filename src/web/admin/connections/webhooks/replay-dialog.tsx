@@ -9,8 +9,8 @@ import {
   Select,
   toast,
 } from '../../../ui/index.ts';
+import { queuedLine, replayError } from '../../../ui/webhooks/replay-errors.ts';
 import { type ReplayInput, useEndpointActions, useReplayPreview } from './api.ts';
-import { queuedLine, replayError } from './replay-errors.ts';
 
 const HOUR = 3_600_000;
 const RANGES = [

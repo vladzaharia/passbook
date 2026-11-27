@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import type { ApiRail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
+import { WB_STATES } from '../../../shared/copy/workbench-states.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import type { CopyAsItem } from '../../developers/ui/copy-as-menu.tsx';
 import { BenchCode } from '../bench/code-block.tsx';
@@ -11,8 +12,10 @@ import { BenchTime } from '../bench/time.tsx';
 import { Trace, type TraceNode, traceNodes } from '../bench/trace.tsx';
 import { COPY_LANGS } from '../console/copy-as.ts';
 import { codeOf } from './curl.ts';
+import { WbLink } from './link.tsx';
 import { keyTail, shownPath } from './model.ts';
-import { builderLink, type OpIndex, runAgainLink } from './ops.ts';
+import { consoleLink, type OpIndex, opOf } from './ops.ts';
+import { ClientChip } from './row.tsx';
 import { duration } from './row-format.ts';
 import { type Detail, useCausedEvents } from './use-detail.ts';
 
@@ -23,16 +26,23 @@ const TABS = [
 ] as const;
 const NO_CODES: ReadonlySet<string> = new Set();
 
-/** The strip's key by its name; another key by the end of its id. */
-const keyNode = (keyId: string | null, key: ApiRail['key']): TraceNode | null =>
-  keyId
-    ? {
-        kind: 'key',
-        id: keyId,
-        prefix: 'key',
-        text: key?.id === keyId ? `${key.name} ${key.prefix}…` : keyTail(keyId),
-      }
-    : null;
+/** A key by its name; one the list does not name by the end of its id. */
+const keyNode = (keyId: string | null, name: string | undefined): TraceNode | null =>
+  keyId ? { kind: 'key', id: keyId, prefix: 'key', text: name ?? keyTail(keyId) } : null;
+
+/** Bodies the org does not record: the one line, and for an admin the way to turn them on. */
+function BodiesOff({ adminHref }: { adminHref: string | null }) {
+  return (
+    <div className="logs-off" role="status">
+      <p>{WB_STATES.bodiesOff.title}</p>
+      {adminHref ? (
+        <a className="btn outline sm" href={adminHref}>
+          {WB_STATES.bodiesOff.admin}
+        </a>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * The selected request: its status and request id, the facts in one line, Request and Response as tabs (a
@@ -42,7 +52,9 @@ const keyNode = (keyId: string | null, key: ApiRail['key']): TraceNode | null =>
 export function LogInspector({
   row,
   detail,
-  rail,
+  orgId,
+  keyName,
+  adminHref,
   ops,
   tab,
   onTab,
@@ -51,7 +63,11 @@ export function LogInspector({
 }: {
   row: RequestLogEntry;
   detail: Detail | null;
-  rail: ApiRail['key'];
+  orgId: string;
+  /** The key's name, when the Key filter knows it. */
+  keyName?: string;
+  /** Where an admin turns bodies on, or null for anyone else. */
+  adminHref: string | null;
   ops: OpIndex;
   /** Kept by the tool: the pane is drawn again when the window changes shape. */
   tab: string;
@@ -73,8 +89,8 @@ export function LogInspector({
         : [],
     [full],
   );
-  const base = builderLink(ops, row.method, row.route);
-  const key = keyNode(row.keyId, rail);
+  const op = opOf(ops, row.method, row.route);
+  const key = keyNode(row.keyId, keyName);
   const nodes: TraceNode[] = [
     ...(key ? [key] : []),
     ...traceNodes({
@@ -90,17 +106,23 @@ export function LogInspector({
         </p>
       );
     }
+    if (!full.bodiesRecorded) return <BodiesOff adminHref={adminHref} />;
     if (!full.hasBodies) return <p className="logs-quiet">{C.bodiesGone}</p>;
-    return which === 'request' ? (
-      <BenchCode
-        label={C.body}
-        body={full.requestBody}
-        items={items}
-        codes={NO_CODES}
-        empty={C.noBody}
-      />
-    ) : (
-      <BenchCode label={C.body} body={full.responseBody} codes={NO_CODES} empty={C.noBody} />
+    return (
+      <>
+        {which === 'request' ? (
+          <BenchCode
+            label={C.body}
+            body={full.requestBody}
+            items={items}
+            codes={NO_CODES}
+            empty={C.noBody}
+          />
+        ) : (
+          <BenchCode label={C.body} body={full.responseBody} codes={NO_CODES} empty={C.noBody} />
+        )}
+        {full.bodiesTruncated ? <p className="logs-quiet logs-cut">{C.truncated}</p> : null}
+      </>
     );
   };
   return (
@@ -116,10 +138,10 @@ export function LogInspector({
       id={<IdChip kind="request" id={row.requestId} />}
       actions={
         <>
-          {base ? (
-            <a className="btn outline sm" href={runAgainLink(base, full?.requestBody ?? null)}>
-              {C.runAgain}
-            </a>
+          {op ? (
+            <WbLink className="btn outline sm" href={consoleLink(orgId, op, row.requestId)}>
+              {C.openInConsole}
+            </WbLink>
           ) : null}
           {row.code ? (
             <a
@@ -135,13 +157,8 @@ export function LogInspector({
         <span className="logs-facts">
           <BenchTime at={row.at} mode="full" />
           <span>{duration(row.durationMs)}</span>
-          {row.via === 'try' ? (
-            <span>
-              {row.client === 'portal' ? LOGS_BENCH_COPY.via.portal : LOGS_BENCH_COPY.via.try}
-            </span>
-          ) : row.client ? (
-            <span className="mono">{row.client}</span>
-          ) : null}
+          <ClientChip row={row} />
+          {row.apiVersion ? <span className="mono">{row.apiVersion}</span> : null}
           {full?.bodiesExpireAt ? (
             <span>
               {C.expires} <BenchTime at={full.bodiesExpireAt} mode="until" />

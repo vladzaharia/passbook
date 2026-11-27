@@ -15,8 +15,12 @@ export const WORKBENCH_NEVER: readonly (readonly [RegExp, string])[] = [
     'review, promotion and rollback move Live',
   ],
   [
-    /^(DELETE \/api\/v1\/templates\/:id|\w+ \/api\/v1\/templates\/:id\/(archive|restore|share|clone|channels.*))$/,
+    /^(DELETE \/api\/v1\/templates\/:id|\w+ \/api\/v1\/templates\/:id\/(archive|restore|share|clone))$/,
     'template delete, archive, assign and share',
+  ],
+  [
+    /^(POST|PUT|PATCH|DELETE) \/api\/v1\/templates\/:id\/channels.*$/,
+    'channel policy writes move what Live shows; only the read is allowed',
   ],
   [SHARED_WRITES, 'org, brand, member, identity, plan, settings and inbound connection writes'],
   [

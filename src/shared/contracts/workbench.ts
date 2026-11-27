@@ -61,6 +61,7 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/events/:id',
   'GET /api/v1/webhook-endpoints',
   'POST /api/v1/webhook-endpoints',
+  'GET /api/v1/webhook-endpoints/setup',
   'GET /api/v1/webhook-endpoints/:id',
   'PATCH /api/v1/webhook-endpoints/:id',
   'DELETE /api/v1/webhook-endpoints/:id',
@@ -102,4 +103,20 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/workbench/contexts',
   // Release a template version to Test only (`modes: ['test']`).
   'POST /api/v1/templates/:id/release',
+  // Design: read a template, its versions, files and the wallets' reports; save a version and run its dry
+  // run (template authoring is Test work: a save is a draft only a release moves); build a preview; read
+  // the releases, the stamps impact and the channels' policy. The designer's small reads: the org's
+  // website and time zone settings and its brand (`pass-setup`), both filtered for a token. Channel writes,
+  // review, promotion, rollback and the template's lifecycle stay out (`WORKBENCH_NEVER`).
+  'GET /api/v1/templates/:id',
+  'GET /api/v1/templates/:id/versions/:version',
+  'GET /api/v1/templates/:id/versions/:version/assets/:name',
+  'GET /api/v1/templates/:id/versions/:version/wallet-reports',
+  'POST /api/v1/templates/:id/preview',
+  'GET /api/v1/templates/:id/releases',
+  'POST /api/v1/templates/:id/versions',
+  'GET /api/v1/templates/:id/channels',
+  'GET /api/v1/templates/:id/stamps-impact',
+  'GET /api/v1/settings',
+  'GET /api/v1/orgs/:orgId/pass-setup',
 ];

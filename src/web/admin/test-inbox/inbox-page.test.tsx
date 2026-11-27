@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -29,6 +29,23 @@ describe('Test inbox', () => {
     );
     await userEvent.setup().click(screen.getByRole('button', { name: 'Turn on Test mode' }));
     expect(await screen.findByText('Your Gym pass')).toBeInTheDocument();
+  });
+
+  it('marks a message Simulate failed in its row and its details', async () => {
+    setMode('test');
+    await renderApp('/admin/test-inbox', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        ...handlers,
+        '/api/v1/test-inbox': () => json({ items: [email({ failed: true })], nextCursor: null }),
+        '/api/v1/test-inbox/e1': () => json({ ...detail(), failed: true }),
+      },
+    });
+    const row = (await screen.findByText('Your Gym pass')).closest('li') as HTMLElement;
+    expect(within(row).getByText('Failed')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Open Your Gym pass' }));
+    expect(await screen.findByText('Delivery')).toBeInTheDocument();
   });
 
   it('lists mail with the Test header and opens a sandboxed preview', async () => {

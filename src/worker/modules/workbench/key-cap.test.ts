@@ -112,12 +112,12 @@ describe('v1 and sandbox tokens: no key rotation, no shared writes', () => {
     const v2 = (await t.wbMint(d.browser, d.made.orgId)).token;
     for (const token of [v1, v2]) {
       const page = { ...d.browser, ...bearer(token) };
-      // The sandbox key holds no api-keys:write (its ceiling), so no token stands for a key that rotates.
-      await expectProblem(
-        await t.call('POST', '/api-keys/me/rotate', page, { overlapHours: 1 }),
-        403,
-        'MISSING_SCOPE',
-      );
+      // The sandbox key holds no api-keys:write (its ceiling). The v1 try token stays refused for it; a v2
+      // sandbox token passes the guard to manage keys under it, and rotating the key it stands for is not found
+      // (a key with no expiry is not one a token could have made). Before: both were 403 MISSING_SCOPE.
+      const rotateOwn = await t.call('POST', '/api-keys/me/rotate', page, { overlapHours: 1 });
+      if (token === v1) await expectProblem(rotateOwn, 403, 'MISSING_SCOPE');
+      else await expectProblem(rotateOwn, 404, 'API_KEY_NOT_FOUND');
       await expectProblem(
         await t.call('PATCH', '/brand', page, { accent: '#ff0000' }),
         403,

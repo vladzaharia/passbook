@@ -1,4 +1,0 @@
-/* The operation panel's compiled kit pieces (generated/operations-kit.css), in the `components` layer so the SPA's
-   own utilities (`hidden`, `lg:block`) still win over its `.hidden`. Unlayered, this chunk loading after the shell
-   hid the Workbench sidebar and squeezed every tool into the 15rem column. */
-@import "../../../generated/operations-kit.css" layer(components);

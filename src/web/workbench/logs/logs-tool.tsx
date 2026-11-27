@@ -1,28 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type {
-  ApiRail,
-  RequestLogDetail,
-  RequestLogEntry,
-} from '../../../shared/contracts/developer.ts';
+import type { RequestLogDetail, RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
 import { copyWithFeedback } from '../../developers/shell/copy.ts';
+import { useMemberships } from '../../lib/session.ts';
+import { useToolApi, useToolScope } from '../../lib/tool-api.tsx';
 import { FilterBar, FilterSelect } from '../bench/filter-select.tsx';
 import { useBenchKeys } from '../bench/keys.ts';
 import { BenchList } from '../bench/list.tsx';
 import { LiveIndicator, useLiveState } from '../bench/live.tsx';
-import { loadRail } from '../bench/rail.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { BenchSplit } from '../bench/split.tsx';
-import { BenchGate, BenchState } from '../bench/state.tsx';
+import { BenchState } from '../bench/state.tsx';
 import { toneOfStatus } from '../bench/status-chip.tsx';
+import { BenchTabs, benchPanelId, benchTabId } from '../bench/tabs.tsx';
 import { SearchField, Toolbar } from '../bench/toolbar.tsx';
 import { useBenchFilters } from '../bench/use-filters.ts';
 import { useBenchSelection } from '../bench/use-selection.ts';
+import { adminLink, useOptionalToolHost } from '../host/tool-host.tsx';
+import { type LogKey, readKeys, readOne } from './api.ts';
 import { codeOf } from './curl.ts';
 import { FirstCall, NoMatch } from './empty.tsx';
+import { codeOptions, keyOptions, ScopeChip, versionOptions } from './filter-options.tsx';
 import { LogInspector } from './inspector.tsx';
-import { FILTER_KEYS, keyTail, LOG_API } from './model.ts';
+import { FILTER_KEYS, keyTail, VIEW_KEY } from './model.ts';
 import { loadOps, type OpIndex } from './ops.ts';
 import { logRow } from './row.tsx';
 import { useDetail } from './use-detail.ts';
@@ -34,24 +35,10 @@ const NO_OPS: OpIndex = {};
 /** A call is selected by its request id: the id the console, the Trace and the search already link with. */
 const idOf = (r: RequestLogEntry) => r.requestId;
 
-/** One read of a call by its request id or its log id. */
-async function readOne(id: string): Promise<RequestLogEntry | null> {
-  const res = await fetch(`${LOG_API}/${encodeURIComponent(id)}`, {
-    headers: { accept: 'application/json' },
-  });
-  return res.ok ? ((await res.json()) as RequestLogDetail) : null;
-}
-
-/** The key filter's choices: the strip's key by name, any key a row shows, and the one in the address. */
-function keyOptions(rail: ApiRail['key'], rows: readonly RequestLogEntry[], chosen?: string) {
-  const ids = new Set<string>(rail ? [rail.id] : []);
-  for (const r of rows) if (r.keyId) ids.add(r.keyId);
-  if (chosen) ids.add(chosen);
-  return [...ids].map((id) => ({
-    value: id,
-    label: rail?.id === id ? `${rail.name} ${rail.prefix}…` : keyTail(id),
-  }));
-}
+const VIEWS = [
+  { id: 'all', label: C.views.all },
+  { id: 'errors', label: C.views.errors },
+] as const;
 
 /**
  * The Logs tool on the bench: Requests in the one list, the exchange in the one inspector (Request and
@@ -59,29 +46,42 @@ function keyOptions(rail: ApiRail['key'], rows: readonly RequestLogEntry[], chos
  * id or its request id, fetched when it is older than the page.
  */
 export function LogsTool() {
+  const api = useToolApi();
+  const host = useOptionalToolHost();
+  const orgId = useToolScope()?.orgId ?? '';
   const filters = useBenchFilters(FILTER_KEYS, { search: 'path' });
-  const log = useLog(filters.values);
-  const [rail, setRail] = useState<{ key: ApiRail['key']; known: boolean }>({
-    key: null,
-    known: false,
-  });
+  const view = useBenchFilters([VIEW_KEY]);
+  const errors = view.values.tab === 'errors';
+  const log = useLog({ ...filters.values, ...view.values });
+  const [keys, setKeys] = useState<{ list: LogKey[]; known: boolean }>({ list: [], known: false });
   const [ops, setOps] = useState<OpIndex>(NO_OPS);
   const [tab, setTab] = useState('request');
+  const memberships = useMemberships();
+  const adminHref =
+    host?.context.kind === 'org' &&
+    memberships.data?.items.some((m) => m.orgId === orgId && m.capabilities.includes('org:manage'))
+      ? `${adminLink(orgId).split('?')[0]}/settings?mode=test`
+      : null;
   useEffect(() => {
-    let live = true;
-    void loadRail().then((r) => live && setRail({ key: r.body?.key ?? null, known: true }));
-    return () => {
-      live = false;
-    };
-  }, []);
+    const ctl = new AbortController();
+    readKeys(api, orgId, ctl.signal).then(
+      (list) => setKeys({ list, known: true }),
+      // The filter then names keys by the end of their ids; the list reads on.
+      () => setKeys({ list: [], known: false }),
+    );
+    return () => ctl.abort();
+  }, [api, orgId]);
 
   // A hash that names the call by its log id (or a request id in other letters) becomes its request id.
   const selectRef = useRef<(id: string | null) => void>(() => undefined);
-  const fetchOne = useCallback(async (id: string) => {
-    const row = await readOne(id);
-    if (row && row.requestId !== id) selectRef.current(row.requestId);
-    return row;
-  }, []);
+  const fetchOne = useCallback(
+    async (id: string) => {
+      const row: RequestLogEntry | null = await readOne(api, id).catch(() => null);
+      if (row && row.requestId !== id) selectRef.current(row.requestId);
+      return row;
+    },
+    [api],
+  );
   const selection = useBenchSelection({
     items: log.items,
     idOf,
@@ -131,20 +131,21 @@ export function LogsTool() {
     filters.set('path', null);
   };
 
-  if (log.phase === 'out') return <BenchGate tool="logs" />;
-  if (log.phase === 'no-sandbox') return <BenchState scene="no-sandbox" />;
   if (log.phase === 'failed') return <BenchState scene="failed" onRetry={log.retry} />;
   if (log.phase === 'loading') return <BenchSkeleton rows={5} />;
 
   const nothing = narrowed ? (
     <NoMatch onClear={clearAll} />
+  ) : errors ? (
+    <BenchState scene="logs-idle" title={C.state.noErrors} />
   ) : (
     <FirstCall
-      hasKey={!rail.known || rail.key !== null}
+      orgId={orgId}
+      hasKey={!keys.known || keys.list.length > 0}
       onShowPortal={() => filters.set('source', 'try')}
     />
   );
-  const keys = keyOptions(rail.key, log.items, filters.values.key);
+  const keyChoices = keyOptions(keys.list, log.items, filters.values.key);
   const list = (
     <div className="logs-main" aria-busy={log.busy || undefined} data-busy={log.busy || undefined}>
       {log.capped ? (
@@ -175,7 +176,9 @@ export function LogsTool() {
     <LogInspector
       row={row}
       detail={detail}
-      rail={rail.key}
+      orgId={orgId}
+      keyName={keys.list.find((k) => k.id === row.keyId)?.name}
+      adminHref={adminHref}
       ops={ops}
       tab={tab}
       onTab={setTab}
@@ -199,7 +202,7 @@ export function LogsTool() {
           <FilterSelect
             label={C.filters.status}
             value={filters.values.status}
-            options={C.statusOptions}
+            options={errors ? C.statusOptions.filter((o) => o.value !== '2xx') : C.statusOptions}
             onChange={(v) => filters.set('status', v)}
           />
           <FilterSelect
@@ -217,38 +220,61 @@ export function LogsTool() {
           <FilterSelect
             label={C.filters.key}
             value={filters.values.key}
-            options={keys}
+            options={keyChoices}
             onChange={(v) => filters.set('key', v)}
           />
+          <FilterSelect
+            label={C.filters.version}
+            value={filters.values.version}
+            options={versionOptions(log.items, filters.values.version)}
+            onChange={(v) => filters.set('version', v)}
+          />
+          {filters.values.pass ? (
+            <ScopeChip
+              label={C.filters.pass}
+              value={keyTail(filters.values.pass)}
+              clear={C.filters.clearPass(keyTail(filters.values.pass))}
+              onClear={() => filters.set('pass', null)}
+            />
+          ) : null}
           <FilterSelect
             label={C.filters.source}
             value={filters.values.source}
             options={C.sources}
-            any={C.filters.yours}
+            any={C.filters.all}
             onChange={(v) => filters.set('source', v)}
           />
         </FilterBar>
       </Toolbar>
-      {log.items.length === 0 && !row ? (
-        <div className="logs-solo">{nothing}</div>
-      ) : (
-        <BenchSplit
-          main={list}
-          pane={pane}
-          open={selection.open && row !== null}
-          onClose={() => selection.setOpen(false)}
-          label={C.list}
-          bare
-        />
-      )}
-      <p className="bench-note">{C.retention}</p>
+      <div
+        id={benchPanelId('logs-view')}
+        role="tabpanel"
+        aria-labelledby={benchTabId('logs-view', errors ? 'errors' : 'all')}
+        className="logs-panel"
+      >
+        <div className="logs-views">
+          <BenchTabs
+            base="logs-view"
+            label={C.views.label}
+            tabs={VIEWS}
+            selected={errors ? 'errors' : 'all'}
+            onSelect={(id) => view.set('tab', id === 'errors' ? 'errors' : null)}
+          />
+        </div>
+        {log.items.length === 0 && !row ? (
+          <div className="logs-solo">{nothing}</div>
+        ) : (
+          <BenchSplit
+            main={list}
+            pane={pane}
+            open={selection.open && row !== null}
+            onClose={() => selection.setOpen(false)}
+            label={C.list}
+            bare
+          />
+        )}
+      </div>
+      {log.items.length > 0 ? <p className="bench-note">{C.retention}</p> : null}
     </>
   );
-}
-
-/** The Code filter lists the codes the rows (and the address) show. */
-function codeOptions(rows: readonly RequestLogEntry[], chosen?: string) {
-  const codes = new Set<string>(chosen ? [chosen.toUpperCase()] : []);
-  for (const r of rows) if (r.code) codes.add(r.code);
-  return [...codes].sort().map((c) => ({ value: c, label: c }));
 }

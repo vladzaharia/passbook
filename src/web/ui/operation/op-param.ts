@@ -4,6 +4,8 @@ const PARAM = 'op';
 
 const read = (): string | null => {
   if (typeof window === 'undefined') return null;
+  // On the Workbench Console `op` names an API operation (`?op=passes.getPasses`), not one of these.
+  if (/^\/workbench\/o\/[^/]+\/console\/?$/.test(window.location.pathname)) return null;
   const id = new URLSearchParams(window.location.search).get(PARAM);
   return id && id.length <= 64 ? id : null;
 };

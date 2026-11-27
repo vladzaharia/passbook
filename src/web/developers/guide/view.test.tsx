@@ -15,7 +15,7 @@ const guide = (over: Record<string, unknown> = {}) =>
   ({
     meta: { id: 'g1', title: 'Guide one', line: 'One line.', status: 'preview' },
     url: '/developers/guides/g1',
-    steps: [{ block: 5, href: '/developers/console#a' }],
+    steps: [{ block: 5, href: '/workbench/console?op=a' }],
     ops: [{ operationId: 'op', method: 'POST', path: '/passes', title: 'Make', href: '/ref/op' }],
     blocks: [
       { kind: 'h2', text: 'Part', id: 'part' },
@@ -65,7 +65,7 @@ describe('GuideView', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByText('Run it')).toBeInTheDocument();
     expect(screen.getByTestId('g1-s1-8')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /console/i })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /workbench/i })).toHaveLength(2);
     expect(screen.getByLabelText('Lifecycle diagram')).toBeInTheDocument();
     expect(screen.getByText('/passes')).toBeInTheDocument();
     expect(document.querySelector('[data-copy-text="# md"]')).not.toBeNull();

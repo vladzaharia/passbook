@@ -393,6 +393,7 @@ export type EventsListQuery = {
   passId?: string;
   requestId?: string;
   limit?: number;
+  order?: "asc" | "desc";
   apiVersion?: "2026-12-01" | "2026-11-20";
 };
 
