@@ -19,8 +19,11 @@ type Tab = VerifyLang | 'curl';
  */
 export function VerifyGuide({
   url = 'https://your.server/webhooks',
+  rules = true,
   className,
 }: {
+  /** The four rules above the code. Off where the guide's own steps already say them. */
+  rules?: boolean;
   /** The receiver's URL, for the curl test. */
   url?: string;
   className?: string;
@@ -28,19 +31,21 @@ export function VerifyGuide({
   const [tab, setTab] = useState<Tab>('node');
   return (
     <div className={className}>
-      <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-fg-muted">
-        <li>
-          Sign <code className={code}>{'{timestamp}.{raw body}'}</code> with HMAC-SHA256 and the
-          secret. Compare it to a <code className={code}>v1=</code> value in{' '}
-          <code className={code}>x-passbook-signature</code>.
-        </li>
-        <li>
-          During a rotation the header holds one <code className={code}>v1=</code> per live secret.
-          Accept any match.
-        </li>
-        <li>Reject a timestamp more than 5 minutes old. Each retry is signed again.</li>
-        <li>Use the raw bytes, before parsing. Compare in constant time.</li>
-      </ul>
+      {rules ? (
+        <ul className="mb-3 list-disc space-y-1 pl-5 text-sm text-fg-muted">
+          <li>
+            Sign <code className={code}>{'{timestamp}.{raw body}'}</code> with HMAC-SHA256 and the
+            secret. Compare it to a <code className={code}>v1=</code> value in{' '}
+            <code className={code}>x-passbook-signature</code>.
+          </li>
+          <li>
+            During a rotation the header holds one <code className={code}>v1=</code> per live
+            secret. Accept any match.
+          </li>
+          <li>Reject a timestamp more than 5 minutes old. Each retry is signed again.</li>
+          <li>Use the raw bytes, before parsing. Compare in constant time.</li>
+        </ul>
+      ) : null}
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList aria-label="Language">
           {VERIFY_LANGS.map((l) => (
@@ -56,6 +61,7 @@ export function VerifyGuide({
               code={verifySnippet(l)}
               label={`${SNIPPET_LABEL[l]} verify snippet`}
               maxHeight="max-h-72"
+              wrap
             />
           </TabsContent>
         ))}
@@ -63,7 +69,7 @@ export function VerifyGuide({
           <p className="mb-2 text-sm text-fg-muted">
             Sends a made-up signature. Your receiver should answer 401 or 400, never 2xx.
           </p>
-          <CodeBlock code={selfTestSnippet(url)} label="curl test" maxHeight="max-h-72" />
+          <CodeBlock code={selfTestSnippet(url)} label="curl test" maxHeight="max-h-72" wrap />
         </TabsContent>
       </Tabs>
     </div>

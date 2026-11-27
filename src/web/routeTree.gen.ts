@@ -89,6 +89,7 @@ import { Route as WorkbenchOOrgIdKeysRouteImport } from './routes/workbench/o/$o
 import { Route as WorkbenchOOrgIdLogsRouteImport } from './routes/workbench/o/$orgId/logs'
 import { Route as WorkbenchOOrgIdPassesRouteImport } from './routes/workbench/o/$orgId/passes'
 import { Route as WorkbenchOOrgIdSandboxRouteImport } from './routes/workbench/o/$orgId/sandbox'
+import { Route as AdminConnectionsWebhooksEndpointIdSetupRouteImport } from './routes/admin/connections/webhooks.$endpointId_.setup'
 import { Route as AdminOOrgIdApiKeysIndexRouteImport } from './routes/admin/o/$orgId/api-keys/index'
 import { Route as AdminOOrgIdApiKeysKeyIdRouteImport } from './routes/admin/o/$orgId/api-keys/$keyId'
 import { Route as AdminOOrgIdAuditIndexRouteImport } from './routes/admin/o/$orgId/audit/index'
@@ -133,6 +134,7 @@ import { Route as AdminOOrgIdScanningScannersScannerIdRouteImport } from './rout
 import { Route as AdminOOrgIdScanningSessionsSessionIdRouteImport } from './routes/admin/o/$orgId/scanning/sessions.$sessionId'
 import { Route as AdminOOrgIdTemplatesTemplateIdDesignRouteImport } from './routes/admin/o/$orgId/templates/$templateId_.design'
 import { Route as AdminOOrgIdTemplatesTemplateIdJoinSignRouteImport } from './routes/admin/o/$orgId/templates/$templateId_.join-sign'
+import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId_.setup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -557,6 +559,12 @@ const WorkbenchOOrgIdSandboxRoute = WorkbenchOOrgIdSandboxRouteImport.update({
   path: '/sandbox',
   getParentRoute: () => WorkbenchOOrgIdRouteRoute,
 } as any)
+const AdminConnectionsWebhooksEndpointIdSetupRoute =
+  AdminConnectionsWebhooksEndpointIdSetupRouteImport.update({
+    id: '/connections/webhooks/$endpointId_/setup',
+    path: '/connections/webhooks/$endpointId/setup',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminOOrgIdApiKeysIndexRoute = AdminOOrgIdApiKeysIndexRouteImport.update({
   id: '/api-keys/',
   path: '/api-keys/',
@@ -809,6 +817,12 @@ const AdminOOrgIdTemplatesTemplateIdJoinSignRoute =
     path: '/templates/$templateId/join-sign',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute =
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport.update({
+    id: '/connections/webhooks/$endpointId_/setup',
+    path: '/connections/webhooks/$endpointId/setup',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -891,6 +905,7 @@ export interface FileRoutesByFullPath {
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
   '/workbench/o/$orgId/': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -935,6 +950,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1012,6 +1028,7 @@ export interface FileRoutesByTo {
   '/admin/platform/users': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts': typeof AdminPlatformWalletAccountsIndexRoute
   '/workbench/o/$orgId': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -1056,6 +1073,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1139,6 +1157,7 @@ export interface FileRoutesById {
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
   '/workbench/o/$orgId/': typeof WorkbenchOOrgIdIndexRoute
+  '/admin/connections/webhooks/$endpointId_/setup': typeof AdminConnectionsWebhooksEndpointIdSetupRoute
   '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
@@ -1183,6 +1202,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/templates/$templateId_/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
+  '/admin/o/$orgId/connections/webhooks/$endpointId_/setup': typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1267,6 +1287,7 @@ export interface FileRouteTypes {
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
     | '/workbench/o/$orgId/'
+    | '/admin/connections/webhooks/$endpointId/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1311,6 +1332,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId/join-sign'
     | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1388,6 +1410,7 @@ export interface FileRouteTypes {
     | '/admin/platform/users'
     | '/admin/platform/wallet-accounts'
     | '/workbench/o/$orgId'
+    | '/admin/connections/webhooks/$endpointId/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1432,6 +1455,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId/join-sign'
     | '/admin/o/$orgId/passes/change'
     | '/admin/o/$orgId/passes/import'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
   id:
     | '__root__'
     | '/'
@@ -1514,6 +1538,7 @@ export interface FileRouteTypes {
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
     | '/workbench/o/$orgId/'
+    | '/admin/connections/webhooks/$endpointId_/setup'
     | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
@@ -1558,6 +1583,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/templates/$templateId_/join-sign'
     | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
+    | '/admin/o/$orgId/connections/webhooks/$endpointId_/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2132,6 +2158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkbenchOOrgIdSandboxRouteImport
       parentRoute: typeof WorkbenchOOrgIdRouteRoute
     }
+    '/admin/connections/webhooks/$endpointId_/setup': {
+      id: '/admin/connections/webhooks/$endpointId_/setup'
+      path: '/connections/webhooks/$endpointId/setup'
+      fullPath: '/admin/connections/webhooks/$endpointId/setup'
+      preLoaderRoute: typeof AdminConnectionsWebhooksEndpointIdSetupRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/o/$orgId/api-keys/': {
       id: '/admin/o/$orgId/api-keys/'
       path: '/api-keys'
@@ -2440,6 +2473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdTemplatesTemplateIdJoinSignRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/connections/webhooks/$endpointId_/setup': {
+      id: '/admin/o/$orgId/connections/webhooks/$endpointId_/setup'
+      path: '/connections/webhooks/$endpointId/setup'
+      fullPath: '/admin/o/$orgId/connections/webhooks/$endpointId/setup'
+      preLoaderRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
   }
 }
 
@@ -2527,6 +2567,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdTemplatesTemplateIdJoinSignRoute: typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
   AdminOOrgIdPassesChangeIndexRoute: typeof AdminOOrgIdPassesChangeIndexRoute
   AdminOOrgIdPassesImportIndexRoute: typeof AdminOOrgIdPassesImportIndexRoute
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute
 }
 
 const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
@@ -2582,6 +2623,8 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
     AdminOOrgIdTemplatesTemplateIdJoinSignRoute,
   AdminOOrgIdPassesChangeIndexRoute: AdminOOrgIdPassesChangeIndexRoute,
   AdminOOrgIdPassesImportIndexRoute: AdminOOrgIdPassesImportIndexRoute,
+  AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute:
+    AdminOOrgIdConnectionsWebhooksEndpointIdSetupRoute,
 }
 
 const AdminOOrgIdRouteRouteWithChildren =
@@ -2631,6 +2674,7 @@ interface AdminRouteRouteChildren {
   AdminTemplatesTemplateIdJoinSignRoute: typeof AdminTemplatesTemplateIdJoinSignRoute
   AdminPassesChangeIndexRoute: typeof AdminPassesChangeIndexRoute
   AdminPassesImportIndexRoute: typeof AdminPassesImportIndexRoute
+  AdminConnectionsWebhooksEndpointIdSetupRoute: typeof AdminConnectionsWebhooksEndpointIdSetupRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -2679,6 +2723,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminTemplatesTemplateIdJoinSignRoute: AdminTemplatesTemplateIdJoinSignRoute,
   AdminPassesChangeIndexRoute: AdminPassesChangeIndexRoute,
   AdminPassesImportIndexRoute: AdminPassesImportIndexRoute,
+  AdminConnectionsWebhooksEndpointIdSetupRoute:
+    AdminConnectionsWebhooksEndpointIdSetupRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

@@ -79,7 +79,7 @@ export function OutboundVerifyStep({
           ) : null}
           <section aria-label="Verify in code" className="flex flex-col gap-3">
             <h3 className="text-sm font-medium text-fg-strong">Verify in code</h3>
-            <VerifyGuide url={url} />
+            <VerifyGuide url={url} rules={steps.length === 0} />
           </section>
         </div>
       }

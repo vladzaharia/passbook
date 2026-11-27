@@ -22,7 +22,7 @@ import {
   useSecretCalls,
   useValidateEndpoint,
 } from './api.ts';
-import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
+import { checkForm, draftOf, emptyForm, type FormState, formOf } from './form-state.ts';
 import { endpointHost } from './health.ts';
 import {
   OUTBOUND_STEPS,
@@ -56,25 +56,30 @@ export function OutboundFlow({
   canManage,
   returnTo,
   onBackToPicker,
+  resume,
 }: {
   orgId: string;
   canManage: boolean;
   returnTo?: string | undefined;
   /** Back from the first step: the picker, in Live (a Test org has no picker). */
   onBackToPicker?: (() => void) | undefined;
+  /** An endpoint that exists: open at Verify (its secret was shown once, at Create). */
+  resume?: WebhookEndpointDto | undefined;
 }) {
   const navigate = useNavigate();
   const { create } = useSecretCalls();
   const validate = useValidateEndpoint();
   const guide = useOutboundSetup(orgId);
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [step, setStep] = useState(resume ? SERVER_PHASE + 1 : 0);
+  const [form, setForm] = useState<FormState>(() => (resume ? formOf(resume) : emptyForm()));
   const [showErrors, setShowErrors] = useState(false);
   const [serverUrl, setServerUrl] = useState<string>();
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [created, setCreated] = useState<Created>();
-  const [saved, setSaved] = useState(false);
+  const [created, setCreated] = useState<Created | undefined>(
+    resume ? { endpoint: resume, secret: '' } : undefined,
+  );
+  const [saved, setSaved] = useState(Boolean(resume));
   const [delivered, setDelivered] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const templates = useAdminTemplateChoices(orgId, form.templateMode === 'selected');
@@ -180,6 +185,7 @@ export function OutboundFlow({
     return result;
   };
   const secret = created?.secret ?? '';
+  const floor = resume ? SERVER_PHASE + 1 : SERVER_PHASE;
   const crumbs = [
     { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
     { label: 'Add endpoint' },
@@ -195,11 +201,11 @@ export function OutboundFlow({
           summaries: { where: form.url.trim() ? host : undefined },
         })}
         current={step}
-        onStep={(i) => (!created || i >= SERVER_PHASE) && setStep(i)}
+        onStep={(i) => (!created || i >= floor) && setStep(i)}
         lockedReason="Change this on the endpoint."
         onCancel={() => (created ? setLeaving(true) : open())}
         onBack={
-          step > (created ? SERVER_PHASE : 0)
+          step > (created ? floor : 0)
             ? () => setStep(step - 1)
             : !created && onBackToPicker
               ? onBackToPicker

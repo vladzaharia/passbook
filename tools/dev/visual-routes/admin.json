@@ -66,6 +66,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}/setup",
+    "name": "admin-webhook-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/connections/webhooks/new",
     "name": "admin-webhook-new"
   },
@@ -323,6 +328,11 @@
     "role": "org",
     "path": "/admin/connections/webhooks/{endpointId}?orgId={northwindId}",
     "name": "legacy-webhook-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/{endpointId}/setup?orgId={northwindId}",
+    "name": "legacy-webhook-setup"
   },
   {
     "role": "org",

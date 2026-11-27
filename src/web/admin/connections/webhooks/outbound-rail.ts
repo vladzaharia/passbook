@@ -17,11 +17,15 @@ export const SERVER_PHASE = OUTBOUND_STEPS.findIndex((s) => s.id === 'secret');
 /** The rail: PassBook's three steps, then your server's three. Once created the first phase is locked. */
 export function outboundRail(opts: {
   locked: boolean;
+  /** The secret was shown once, at Create: resuming opens at Verify and the Secret step is done too. */
+  resumed?: boolean;
   summaries: Partial<Record<OutboundStepId, string | undefined>>;
 }): WizardStepDef[] {
   return OUTBOUND_STEPS.map((s, i) => ({
     ...s,
-    ...(opts.locked && i < SERVER_PHASE ? { locked: true } : {}),
+    ...(opts.locked && i < (opts.resumed ? SERVER_PHASE + 1 : SERVER_PHASE)
+      ? { locked: true }
+      : {}),
     ...(opts.summaries[s.id] ? { summary: opts.summaries[s.id] } : {}),
   }));
 }

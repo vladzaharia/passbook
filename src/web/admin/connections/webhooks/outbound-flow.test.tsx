@@ -55,6 +55,20 @@ describe('every way in lands in the wizard, on the outbound path', () => {
   });
 });
 
+describe('resuming an endpoint that exists', () => {
+  it.each([
+    '/admin/connections/webhooks/we1/setup',
+    '/admin/o/org1/connections/webhooks/we1/setup',
+  ])('%s opens at Verify, with the first phase and the secret done', async (path) => {
+    await open(path, []);
+    expect(
+      await screen.findByRole('heading', { name: 'Check the signature', level: 2 }),
+    ).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Copy signing secret' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add endpoint' })).toBeNull();
+  });
+});
+
 describe('the way back', () => {
   it('goes only to the developer site', () => {
     expect(returnTarget('/developers/webhooks')).toBe('/developers/webhooks');
