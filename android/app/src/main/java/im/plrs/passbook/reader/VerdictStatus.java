@@ -32,8 +32,9 @@ final class VerdictStatus {
 
     /** Call after the gate accepted the verdict. */
     Write result(String id, String outcome) {
+        if (!id.equals(lastDeliveredId)) return null;
         lastResultId = id;
-        return id.equals(lastDeliveredId) ? outcome(outcome) : null;
+        return outcome(outcome);
     }
 
     /** Call after the gate released the id. Unknown reasons read as {@code closed}. */

@@ -41,7 +41,15 @@ public class VerdictStatusTest {
         assertEquals(VerdictStatus.GOOD, status.revise("B", "accepted").color());
         assertNull(status.revise("A", "accepted"));
         status.result("A", "accepted");
-        assertNull(status.revise("B", "rejected"));
+        assertEquals("Rejected", status.revise("B", "rejected").text());
+    }
+
+    @Test public void aLateResultForAnOlderReadKeepsTheLatestAnswered() {
+        VerdictStatus status = two();
+        status.result("B", "error");
+        assertNull(status.result("A", "accepted"));
+        assertNull(status.revise("A", "accepted"));
+        assertEquals("Accepted", status.revise("B", "accepted").text());
     }
 
     @Test public void reviseWithAnUnknownOutcomeOrIdIsIgnored() {
