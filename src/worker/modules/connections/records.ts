@@ -14,6 +14,7 @@ import {
   holderEmailOf,
   type Incoming,
   MAX_SAMPLES,
+  signCauseOf,
 } from './record-helpers.ts';
 import {
   type ConnectionReleaseSnapshot,
@@ -231,10 +232,10 @@ export async function applyIncoming(
     if (snapshot && !(await markPassSyncError(sctx, { ...snapshot, code, nextSyncAt }))) {
       return { outcome: 'fenced' };
     }
-    if (options.samples && options.samples.length < MAX_SAMPLES) {
+    if (options.samples && options.samples.length < MAX_SAMPLES)
       options.samples.push(describeFailure(ref, error));
-    }
-    sctx.log.warn('connection.record_invalid', { connectionId: conn.id, code });
+    const log = { connectionId: conn.id, code, ...signCauseOf(error) };
+    sctx.log.warn('connection.record_invalid', log);
     return snapshot ? appliedSnapshot('invalid', snapshot, pass) : { outcome: 'invalid' };
   };
 

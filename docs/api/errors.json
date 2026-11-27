@@ -1957,6 +1957,15 @@
       ]
     },
     {
+      "code": "IDENTITY_CERT_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IDENTITY_CERT_NOT_FOUND",
       "statuses": [
         404
@@ -1972,6 +1981,15 @@
       ],
       "modules": [
         "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CHAIN_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -2007,7 +2025,8 @@
         409
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {
@@ -2053,6 +2072,15 @@
       ],
       "modules": [
         "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_INTERMEDIATE_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -2115,7 +2143,8 @@
         404
       ],
       "modules": [
-        "identities"
+        "identities",
+        "passes"
       ]
     },
     {

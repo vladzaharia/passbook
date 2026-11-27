@@ -20,6 +20,7 @@ import {
   KeyValue,
 } from '../../ui/index.ts';
 import type { SourceField } from '../mapping/mapping.ts';
+import { senderIcon } from './connector-tiles.ts';
 import { datasetOfSample } from './demo/datasets.ts';
 import { RecordCard } from './demo/record-card.tsx';
 import { MODE_LABEL } from './labels.ts';
@@ -163,7 +164,7 @@ export function WizardAside({
   /** The wizard's step: the empty sample hint belongs to Configuration and Mapping only. */
   step: number;
 }) {
-  const Icon = connectorIcon(connector?.type ?? '');
+  const Icon = sender ? senderIcon(sender.id) : connectorIcon(connector?.type ?? '');
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-5">
       {connector ? (
