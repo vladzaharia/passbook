@@ -215,6 +215,7 @@ export function OutboundFlow({
       </>
     );
 
+  const skip = { label: 'Skip for now', icon: SkipForward, onSelect: () => open() };
   return (
     <>
       <PageHeader title={title} breadcrumbs={crumbs} />
@@ -252,14 +253,7 @@ export function OutboundFlow({
                 ? 'Confirm you saved it.'
                 : 'Send a test first.'
         }
-        barMenu={
-          // The Test step keeps one bar before and after the delivery: the menu stays, Skip leaves it.
-          id === 'test'
-            ? delivered
-              ? []
-              : [{ label: 'Skip for now', icon: SkipForward, onSelect: () => open() }]
-            : undefined
-        }
+        barMenu={id === 'test' ? (delivered ? [] : [skip]) : undefined}
         busy={saving}
       >
         {id === 'where' ? (
