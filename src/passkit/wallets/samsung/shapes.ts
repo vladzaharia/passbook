@@ -39,16 +39,25 @@ const SUBTYPES = {
   ticket: ['performances', 'sports', 'movies', 'entrances', 'others'],
   coupon: ['others'],
 } as const;
-export const CARD_STATES = ['ACTIVE', 'CANCELED', 'EXPIRED'] as const;
+/** Get Card Data: each data[] carries a state (samsung-wallet.md section 4 and 5). */
+export const CARD_STATES = [
+  'ACTIVE',
+  'CANCELED',
+  'EXPIRED',
+  'SUSPENDED',
+  'HELD',
+  'REDEEMED',
+] as const;
+/** Update Notification states, exactly as section 4 lists them. */
 export const NOTIFICATION_STATES = [
   'ACTIVE',
   'UPDATED',
   'EXPIRED',
-  'CANCELED',
   'REDEEMED',
   'HELD',
   'DELETED',
   'SUSPENDED',
+  'MIGRATED',
 ] as const;
 
 const attributes = (type: keyof typeof REQUIRED) =>
@@ -71,16 +80,17 @@ export const cardBody = (type: keyof typeof REQUIRED) =>
       data: z
         .array(
           z.strictObject({
+            // 32 is the token and Get Card Data limit; S-ov's 128 is unconfirmed [U].
             refId: z.string().min(1).max(32),
             state: z.enum(CARD_STATES),
-            createdAt: z.number().int().positive(),
-            updatedAt: z.number().int().positive(),
-            language: z.string().min(2).max(8),
+            createdAt: z.number(),
+            updatedAt: z.number(),
+            language: z.string().max(8),
             attributes: attributes(type),
             localization: z
               .array(
                 z.strictObject({
-                  language: z.string().min(2).max(8),
+                  language: z.string().max(8),
                   attributes: z.record(z.string(), z.string()),
                 }),
               )

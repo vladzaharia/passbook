@@ -88,6 +88,21 @@ describe('shape checks reject what Samsung rejects', () => {
     expect(cardBody('loyalty').safeParse({ ...good(), extra: 1 }).success).toBe(false);
   });
 
+  it('accepts SUSPENDED, HELD and REDEEMED in Get Card Data and MIGRATED in an Update Notification', () => {
+    for (const state of ['SUSPENDED', 'HELD', 'REDEEMED']) {
+      const card = good();
+      (card.card.data[0] as { state: string }).state = state;
+      expect(cardBody('loyalty').safeParse(card).success, state).toBe(true);
+    }
+    const migrated = { card: { type: 'loyalty', data: [{ refId: 'r', state: 'MIGRATED' }] } };
+    expect(updateNotification.safeParse(migrated).success).toBe(true);
+  });
+
+  it('rejects CANCELED in an Update Notification, which section 4 does not list', () => {
+    const body = { card: { type: 'loyalty', data: [{ refId: 'r', state: 'CANCELED' }] } };
+    expect(updateNotification.safeParse(body).success).toBe(false);
+  });
+
   it('rejects an Update Notification state Samsung does not list', () => {
     const body = { card: { type: 'loyalty', data: [{ refId: 'r', state: 'REMOVED' }] } };
     expect(updateNotification.safeParse(body).success).toBe(false);
@@ -103,7 +118,7 @@ describe('fixtures', () => {
         all.some((f) => f.name === `${type}-get-card-data`),
         type,
       ).toBe(true);
-      for (const state of ['updated', 'canceled', 'active', 'expired', 'deleted'])
+      for (const state of ['updated', 'active', 'expired', 'deleted'])
         expect(
           all.some((f) => f.name === `${type}-update-${state}`),
           `${type} ${state}`,
