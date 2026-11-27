@@ -631,75 +631,75 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"platform.identities.create", "POST", "/api/v1/identities", false,
+		"identities.create", "POST", "/api/v1/identities", false,
 		`{"label":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b PlatformIdentitiesCreateBody
+			var b IdentitiesCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Platform.Identities.Create(ctx, &b)
+			return c.Identities.Create(ctx, &b)
 		},
 	},
 	{
-		"platform.identities.retrieve", "GET", "/api/v1/identities/id1", false,
+		"identities.retrieve", "GET", "/api/v1/identities/id1", false,
 		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Platform.Identities.Retrieve(ctx, "id1")
+			return c.Identities.Retrieve(ctx, "id1")
 		},
 	},
 	{
-		"platform.identities.update", "PATCH", "/api/v1/identities/id1", false,
+		"identities.update", "PATCH", "/api/v1/identities/id1", false,
 		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b PlatformIdentitiesUpdateBody
+			var b IdentitiesUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Platform.Identities.Update(ctx, "id1", &b)
+			return c.Identities.Update(ctx, "id1", &b)
 		},
 	},
 	{
-		"platform.identities.checkApns", "POST", "/api/v1/identities/id1/apns-check", false,
+		"identities.checkApns", "POST", "/api/v1/identities/id1/apns-check", false,
 		"", `{"health":"healthy","status":0,"reason":"x","checkedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Platform.Identities.CheckApns(ctx, "id1")
+			return c.Identities.CheckApns(ctx, "id1")
 		},
 	},
 	{
-		"platform.identities.pushKey.upload", "PUT", "/api/v1/identities/id1/push-key", false,
+		"identities.pushKey.upload", "PUT", "/api/v1/identities/id1/push-key", false,
 		`{"keyId":"x","p8":"x"}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b PlatformIdentitiesPushKeyUploadBody
+			var b IdentitiesPushKeyUploadBody
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Platform.Identities.PushKey.Upload(ctx, "id1", &b)
+			return c.Identities.PushKey.Upload(ctx, "id1", &b)
 		},
 	},
 	{
-		"platform.identities.pushKey.delete", "DELETE", "/api/v1/identities/id1/push-key", false,
+		"identities.pushKey.delete", "DELETE", "/api/v1/identities/id1/push-key", false,
 		"", `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Platform.Identities.PushKey.Delete(ctx, "id1")
+			return c.Identities.PushKey.Delete(ctx, "id1")
 		},
 	},
 	{
-		"platform.identities.renew", "POST", "/api/v1/identities/id1/renew", false,
+		"identities.renew", "POST", "/api/v1/identities/id1/renew", false,
 		"", `{"id":"x","orgId":"x","kind":"provision","targetType":"identity","targetId":"x","state":"queued","step":"x","attempt":0,"waitingFor":"x","errorCode":"x","createdAt":0,"updatedAt":0,"finishedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Platform.Identities.Renew(ctx, "id1")
+			return c.Identities.Renew(ctx, "id1")
 		},
 	},
 	{
-		"platform.identities.rotate", "POST", "/api/v1/identities/id1/rotate", false,
+		"identities.rotate", "POST", "/api/v1/identities/id1/rotate", false,
 		`{}`, `{"id":"x","orgId":"x","label":"x","passTypeIdentifier":"x","teamIdentifier":"x","source":"env","certSha256":"x","certSubject":"x","certSerial":"x","notBefore":0,"notAfter":0,"daysRemaining":0,"apnsBinding":"x","apnsAvailable":false,"apnsHealth":"unknown","nfcEnabled":false,"isDefault":false,"createdAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b PlatformIdentitiesRotateBody
+			var b IdentitiesRotateBody
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Platform.Identities.Rotate(ctx, "id1", &b)
+			return c.Identities.Rotate(ctx, "id1", &b)
 		},
 	},
 	{

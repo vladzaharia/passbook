@@ -554,19 +554,19 @@
     "method": "unassign"
   },
   "identities.deleteIdentitiesById": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "delete"
   },
   "identities.deleteIdentitiesByIdPushKey": {
-    "resource": "platform.identities.pushKey",
+    "resource": "identities.pushKey",
     "method": "delete"
   },
   "identities.getIdentities": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "list"
   },
   "identities.getIdentitiesById": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "retrieve"
   },
   "identities.getIdentitiesByIdCertificates": {
@@ -574,31 +574,31 @@
     "method": "list"
   },
   "identities.patchIdentitiesById": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "update"
   },
   "identities.postIdentities": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "create"
   },
   "identities.postIdentitiesByIdApnsCheck": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "checkApns"
   },
   "identities.postIdentitiesByIdRenew": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "renew"
   },
   "identities.postIdentitiesByIdRevokeCertificate": {
-    "resource": "platform.identities.certificates",
+    "resource": "identities.certificates",
     "method": "revoke"
   },
   "identities.postIdentitiesByIdRotate": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "rotate"
   },
   "identities.putIdentitiesByIdPushKey": {
-    "resource": "platform.identities.pushKey",
+    "resource": "identities.pushKey",
     "method": "upload"
   },
   "identity-runs.getIdentityRuns": {

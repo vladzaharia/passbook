@@ -47,6 +47,7 @@ export const isPublished = (op: RawOp) =>
   accepts(op, 'apiKey') &&
   op['x-sdk'] !== undefined &&
   op['x-sdk'].sdk !== false &&
+  op['x-platform-scope'] === undefined &&
   !op['x-sdk'].resource.startsWith('platform');
 
 const isConsoleOnly = (op: RawOp) =>

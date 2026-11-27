@@ -3088,7 +3088,7 @@
  },
  {
   "id": "identities.postIdentities",
-  "call": "platform.identities.create",
+  "call": "identities.create",
   "http": "POST",
   "path": "/api/v1/identities",
   "pathParams": [],
@@ -3123,7 +3123,7 @@
  },
  {
   "id": "identities.getIdentitiesById",
-  "call": "platform.identities.retrieve",
+  "call": "identities.retrieve",
   "http": "GET",
   "path": "/api/v1/identities/{id}",
   "pathParams": [
@@ -3161,7 +3161,7 @@
  },
  {
   "id": "identities.patchIdentitiesById",
-  "call": "platform.identities.update",
+  "call": "identities.update",
   "http": "PATCH",
   "path": "/api/v1/identities/{id}",
   "pathParams": [
@@ -3200,7 +3200,7 @@
  },
  {
   "id": "identities.postIdentitiesByIdApnsCheck",
-  "call": "platform.identities.check_apns",
+  "call": "identities.check_apns",
   "http": "POST",
   "path": "/api/v1/identities/{id}/apns-check",
   "pathParams": [
@@ -3224,7 +3224,7 @@
  },
  {
   "id": "identities.putIdentitiesByIdPushKey",
-  "call": "platform.identities.push_key.upload",
+  "call": "identities.push_key.upload",
   "http": "PUT",
   "path": "/api/v1/identities/{id}/push-key",
   "pathParams": [
@@ -3266,7 +3266,7 @@
  },
  {
   "id": "identities.deleteIdentitiesByIdPushKey",
-  "call": "platform.identities.push_key.delete",
+  "call": "identities.push_key.delete",
   "http": "DELETE",
   "path": "/api/v1/identities/{id}/push-key",
   "pathParams": [
@@ -3304,7 +3304,7 @@
  },
  {
   "id": "identities.postIdentitiesByIdRenew",
-  "call": "platform.identities.renew",
+  "call": "identities.renew",
   "http": "POST",
   "path": "/api/v1/identities/{id}/renew",
   "pathParams": [
@@ -3337,7 +3337,7 @@
  },
  {
   "id": "identities.postIdentitiesByIdRotate",
-  "call": "platform.identities.rotate",
+  "call": "identities.rotate",
   "http": "POST",
   "path": "/api/v1/identities/{id}/rotate",
   "pathParams": [
