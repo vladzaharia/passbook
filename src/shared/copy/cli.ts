@@ -14,3 +14,23 @@ export const CLI_MISMATCH_WARNING =
   'This was started on a different network. Approve only if you ran passbook login yourself just now.';
 export const cliAllows = (context: string) =>
   `Test data in ${context} for 30 days. Can't make keys or reach Live.`;
+
+/** The approve page (`/workbench/cli`). */
+export const CLI_PAGE = {
+  title: 'Sign in the CLI',
+  code: 'Code from your terminal',
+  codeError: CLI_CODE_NOT_FOUND_COPY,
+  next: 'Continue',
+  account: 'Account',
+  notYou: 'Not you? Sign in as someone else',
+  started: 'Started',
+  device: 'Reported by the device',
+  context: 'Context',
+  noContext: 'No Test context. Make a sandbox first.',
+  approve: 'Approve',
+  deny: 'Deny',
+  approved: 'Approved. Return to your terminal.',
+  denied: 'Denied.',
+  accountMismatch: 'The CLI asked for a different account than this one.',
+  unknownPlace: 'an unknown place',
+} as const;
