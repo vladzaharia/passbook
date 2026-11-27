@@ -207,7 +207,7 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
     await expect(phone).toBeVisible();
   };
   await openPhone();
-  await shots(page, 'passes-phone', { show: '.wb-pass-stage', prep: openPhone });
+  await shots(page, 'passes-phone', { show: 'a:has-text("Open on this phone")', prep: openPhone });
 
   // Open in Console hands the operation over by nonce, never a body in the URL.
   await page.getByRole('button', { name: 'Open in Console' }).click();

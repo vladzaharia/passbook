@@ -31,7 +31,7 @@ export function CallsTab({ orgId, passId }: { orgId: string; passId: string }) {
       {rows.length === 0 ? (
         <p className="text-sm text-fg-muted">{WB_PASSES.calls.empty}</p>
       ) : (
-        <ul aria-label="Calls" className="flex flex-col divide-y divide-border-subtle">
+        <ul aria-label="Calls" className="flex flex-col divide-y divide-border">
           {rows.map((r) => (
             <li key={r.id}>
               <WbLink

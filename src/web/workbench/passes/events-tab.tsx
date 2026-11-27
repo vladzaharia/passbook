@@ -53,7 +53,7 @@ export function PassEventsTab({ pass, orgId }: { pass: PassDetailDto; orgId: str
         ) : feed.data.items.length === 0 ? (
           <p className="text-sm text-fg-muted">{WB_PASSES.events.empty}</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-border-subtle">
+          <ul className="flex flex-col divide-y divide-border">
             {feed.data.items.map((e) => (
               <li key={e.id} className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-3 py-2">
                 <WbLink
