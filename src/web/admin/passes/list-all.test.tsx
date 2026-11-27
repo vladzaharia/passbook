@@ -148,6 +148,21 @@ describe('the All organizations passes list', () => {
     expect(screen.getAllByRole('button', { name: /clear/i }).length).toBeGreaterThan(0);
   });
 
+  const email = encodeURIComponent(JSON.stringify([{ k: '$email', o: 'is', v: 'a@b.co' }]));
+  it.each([
+    ['holder email chip', `m=${email}`],
+    ['organization chip', 'orgIds=o2'],
+    ['status', 'status=voided'],
+    ['holder state', 'holderState=owned'],
+    ['on device', 'onDevice=true'],
+    ['scan', 'noScanDays=30'],
+    ['free text', 'q=zz'],
+  ])('shows the filtered empty state for the %s', async (_name, query) => {
+    await open(`/admin/all/passes?${query}`, () => page([]));
+    expect(await screen.findByText(/no .*match/i)).toBeInTheDocument();
+    expect(screen.queryByText('No passes yet')).toBeNull();
+  });
+
   it('shows the server message for too many organizations, with no retry', async () => {
     await open('/admin/all/passes', () =>
       problem(
