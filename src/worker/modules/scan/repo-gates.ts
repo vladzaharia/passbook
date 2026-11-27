@@ -6,8 +6,7 @@ import type { ScanActor } from './actor.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import type { ActionPassFence } from './repo-act-pass-fence.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
-import { liveEventPresenceSql } from './repo-event-attendance.ts';
-import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
+import { verifiedPresenceCtesSql } from './repo-event-attendance.ts';
 import type { ScanEffectSnapshot } from './repo-scan-effect.ts';
 import { retainedEventCountSql } from './repo-scan-retention.ts';
 import type { ScanEventRow } from './repo-scope.ts';
@@ -83,29 +82,12 @@ export function capacityFullPredicate(
   reentry: boolean,
   passId: string,
 ) {
-  const org = '(SELECT org_id FROM capacity_scope)';
-  const modeScope = '(SELECT mode FROM capacity_scope)';
-  const event = '(SELECT event_id FROM capacity_scope)';
-  const witness = `SELECT witness.id AS witness_id FROM scans witness JOIN capacity_scope scope
-    ON witness.org_id=scope.org_id AND witness.mode=scope.mode AND witness.event_id=scope.event_id
-    WHERE witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
-      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
-      AND witness.id IN (SELECT witness_id FROM live)`;
   const eligible = reentry ? "WHERE verified.state='in'" : '';
   return {
     sql: `(WITH capacity_scope AS MATERIALIZED (
       SELECT ? AS org_id, ? AS mode, ? AS event_id,
         ? AS pass_id, ? AS maximum
-    ), live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, modeScope, event, '1', true, true)}
-    ), common AS MATERIALIZED (
-      ${witness} AND ${scanLedgerCommonScopeSql('witness')}
-    ), candidate AS MATERIALIZED (
-      ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
-    ), verified AS MATERIALIZED (
-      SELECT live.pass_id,live.state FROM live
-      JOIN common USING(witness_id) JOIN candidate USING(witness_id)
-    ), totals AS MATERIALIZED (
+    ), ${verifiedPresenceCtesSql('capacity_scope', true)}, totals AS MATERIALIZED (
       SELECT COUNT(DISTINCT verified.pass_id) AS occupied,
         COALESCE(MAX(CASE WHEN verified.pass_id=capacity_scope.pass_id THEN 1 ELSE 0 END),0) AS has_pass
       FROM verified CROSS JOIN capacity_scope ${eligible}

@@ -9,6 +9,7 @@ import {
   makeScanStaff,
   TEST_NOW,
 } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -361,7 +362,7 @@ describe('atomic PIN reservations', () => {
       const oldHash = captured!.pinHash;
       expect(Object.isFrozen(captured)).toBe(true);
       expect(JSON.stringify(captured)).not.toContain(oldHash);
-      expect(JSON.stringify(captured)).not.toContain(manager.pin);
+      expectSecretAbsent(JSON.stringify(captured), manager.pin);
       if (change === 'role')
         await run(f.env.DB, "UPDATE scan_staff SET role='door' WHERE id=?", [manager.id]);
       if (change === 'disabled')
@@ -384,7 +385,7 @@ describe('atomic PIN reservations', () => {
         expect(Object.isFrozen(verified)).toBe(true);
         expect(verified!.pinHash).toBe(oldHash);
         expect(JSON.stringify(verified)).not.toContain(oldHash);
-        expect(JSON.stringify(verified)).not.toContain(manager.pin);
+        expectSecretAbsent(JSON.stringify(verified), manager.pin);
         const fence = await first<{ allowed: number }>(
           f.env.DB,
           `SELECT EXISTS (

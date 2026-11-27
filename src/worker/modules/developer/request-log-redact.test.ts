@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { BODY_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
 const S = 'SENTINEL';
@@ -181,7 +182,7 @@ describe('free-form maps are blanked whole', () => {
       [`user-${S}@example.com`]: { id: 'x' },
     });
     expect(out).not.toContain(S);
-    expect(out).not.toContain('998877');
+    expectSecretAbsent(out, '998877');
     expect(JSON.parse(out)).toMatchObject({ id: 'p1', input: '[redacted]', config: '[redacted]' });
   });
 
@@ -200,7 +201,7 @@ describe('free-form maps are blanked whole', () => {
     });
     expect(out).not.toContain(S);
     expect(out).not.toContain('Ada');
-    expect(out).not.toContain('315532800000');
+    expectSecretAbsent(out, '315532800000');
     expect(JSON.parse(out)).toMatchObject({ id: 'ok', Input: '[redacted]', scope: '[redacted]' });
   });
 
@@ -230,5 +231,26 @@ describe('redactQuery', () => {
     for (const kept of ['limit=20', 'status=active', 'templateId=t1']) expect(q).toContain(kept);
     expect(redactQuery('')).toBeNull();
     expect(redactQuery('?')).toBeNull();
+  });
+});
+
+describe('redactBody blanks caller-shaped maps, nested and in arrays', () => {
+  it('blanks scope, overrides, manifest and case variants, however deep', () => {
+    const out = JSON.parse(
+      redacted({
+        scope: { a: `${S}-a` },
+        overrides: { b: `${S}-b` },
+        manifest: { c: `${S}-c` },
+        Metadata: { d: `${S}-d` },
+        PAYLOAD: { e: `${S}-e` },
+        items: [{ id: 'x', Scope: { f: `${S}-f` }, nested: { overrides: [`${S}-g`] } }],
+        key: { Manifest: { h: `${S}-h` } },
+      }),
+    );
+    for (const key of ['scope', 'overrides', 'manifest', 'Metadata', 'PAYLOAD'])
+      expect(out[key]).toBe('[redacted]');
+    expect(out.items[0]).toEqual({ id: 'x', Scope: '[redacted]', nested: '[redacted]' });
+    expect(out.key.Manifest).toBe('[redacted]');
+    expect(JSON.stringify(out)).not.toContain(S);
   });
 });
