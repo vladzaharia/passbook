@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, Outlet, stripSearchParams } from '@tanstack/react-router';
+import { createFileRoute, Navigate, Outlet } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { canUseAllScope, readablePassOrgs } from '../../../lib/org-lists.ts';
@@ -33,6 +33,5 @@ function AllScopeGate() {
 }
 
 export const Route = createFileRoute('/admin/all')({
-  search: { middlewares: [stripSearchParams<{ orgId?: string | undefined }>(['orgId'])] },
   component: AllScopeGate,
 });
