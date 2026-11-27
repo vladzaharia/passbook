@@ -11,18 +11,22 @@ export function useHome() {
   const [home, setHome] = useState<DeveloperHome | null>(null);
   const [skew, setSkew] = useState(0);
   const live = useRef(true);
+  /** Reads the home; a failure throws, for the page's poll loop to weigh. */
+  const poll = useCallback(async (): Promise<DeveloperHome | null> => {
+    const next = await fetchHome();
+    if (!live.current) return null;
+    setSkew(next.now - Date.now());
+    setHome(next);
+    return next;
+  }, []);
   const refresh = useCallback(async (): Promise<DeveloperHome | null> => {
     try {
-      const next = await fetchHome();
-      if (!live.current) return null;
-      setSkew(next.now - Date.now());
-      setHome(next);
-      return next;
+      return await poll();
     } catch {
       // The page keeps what it has; the next read or poll tries again.
       return null;
     }
-  }, []);
+  }, [poll]);
   useEffect(() => {
     live.current = true;
     void refresh();
@@ -30,18 +34,5 @@ export function useHome() {
       live.current = false;
     };
   }, [refresh]);
-  return { home, skew, refresh };
-}
-
-/** Runs `tick` every `ms` while `active` and the tab is in view. */
-export function usePoll(active: boolean, tick: () => void, ms: number): void {
-  const fn = useRef(tick);
-  fn.current = tick;
-  useEffect(() => {
-    if (!active) return;
-    const t = setInterval(() => {
-      if (document.visibilityState === 'visible') fn.current();
-    }, ms);
-    return () => clearInterval(t);
-  }, [active, ms]);
+  return { home, skew, refresh, poll };
 }

@@ -2210,6 +2210,7 @@ export type EmailFailedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type EventPage = {
@@ -5052,6 +5053,7 @@ export type PassChannelsChangedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassDetail = {
@@ -6146,6 +6148,7 @@ export type PassInstalledEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassIssuedEvent = {
@@ -6162,6 +6165,7 @@ export type PassIssuedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassPage = {
@@ -6184,6 +6188,7 @@ export type PassPrintVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassPrintedEvent = {
@@ -6201,6 +6206,7 @@ export type PassPrintedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassRemovedEvent = {
@@ -6218,6 +6224,7 @@ export type PassRemovedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassReplacedEvent = {
@@ -6233,6 +6240,7 @@ export type PassReplacedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassRestoredEvent = {
@@ -6248,6 +6256,7 @@ export type PassRestoredEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScanRefusedEvent = {
@@ -6268,6 +6277,7 @@ export type PassScanRefusedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScanUndoneEvent = {
@@ -6285,6 +6295,7 @@ export type PassScanUndoneEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassScannedEvent = {
@@ -6312,6 +6323,7 @@ export type PassScannedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassSetup = {
@@ -6797,6 +6809,7 @@ export type PassUninstalledEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassUnvoidedEvent = {
@@ -6812,6 +6825,7 @@ export type PassUnvoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassUpdatedEvent = {
@@ -6830,6 +6844,7 @@ export type PassUpdatedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassVersion = {
@@ -6876,6 +6891,7 @@ export type PassVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type PassesActivityListResponse = {
@@ -9786,6 +9802,7 @@ export type PushFailedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type ReleaseResponse = {
@@ -14911,6 +14928,7 @@ export type WebhookTestEvent = {
   data: Record<string, unknown>;
   requestId?: string;
   sample?: true;
+  simulated?: boolean;
 };
 
 export type WebhookTestResult = {

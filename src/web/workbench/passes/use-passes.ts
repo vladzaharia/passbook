@@ -7,10 +7,13 @@ import {
   PassListSchema,
 } from '@/shared/contracts/passes.ts';
 import { syncKeys } from '../../admin/passes/detail/sync-api.ts';
+import { pollEvery } from '../../lib/poll-backoff.ts';
 import { useToolApi, useToolKey } from '../../lib/tool-api.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
 
-const LIST_POLL_MS = 8000;
+export const LIST_POLL_MS = 8000;
+/** The calls and events tabs. */
+export const TAB_POLL_MS = 8000;
 const PAGE = 50;
 
 /** One key family for the tool: a void or a simulated event refreshes all of it. */
@@ -30,7 +33,7 @@ export function usePassList() {
         signal,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    refetchInterval: LIST_POLL_MS,
+    refetchInterval: pollEvery(LIST_POLL_MS),
     refetchIntervalInBackground: false,
   });
 }
@@ -51,7 +54,7 @@ export function usePassDetail(id: string | undefined, opts: { poll?: boolean } =
     queryFn: ({ signal }) => api.get(`/api/v1/passes/${id}`, PassDetailSchema, { signal }),
     enabled: id !== undefined,
     ...(poll
-      ? { refetchInterval: LIST_POLL_MS, refetchIntervalInBackground: false }
+      ? { refetchInterval: pollEvery(LIST_POLL_MS), refetchIntervalInBackground: false }
       : { refetchInterval: false as const, staleTime: LINK_STALE_MS }),
   });
 }

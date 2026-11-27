@@ -5,11 +5,13 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
 import { wbEventsPath, wbPath } from '@/shared/workbench.ts';
 import { SyncTab } from '../../admin/passes/detail/sync-tab.tsx';
+import { pollEvery } from '../../lib/poll-backoff.ts';
 import { useToolApi, useToolKey } from '../../lib/tool-api.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { WbLink } from '../logs/link.tsx';
 import { ToolFailed } from '../states/states.tsx';
+import { TAB_POLL_MS } from './use-passes.ts';
 
 const SHOWN = 20;
 
@@ -40,7 +42,7 @@ export function PassEventsTab({ pass, orgId }: { pass: PassDetailDto; orgId: str
         query: { orgId, passId: pass.id, order: 'desc', limit: SHOWN },
         signal,
       }),
-    refetchInterval: 8000,
+    refetchInterval: pollEvery(TAB_POLL_MS),
     refetchIntervalInBackground: false,
   });
   return (

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight } from 'lucide-react';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
 import { wbPath } from '@/shared/workbench.ts';
+import { pollEvery } from '../../lib/poll-backoff.ts';
 import { useToolApi, useToolKey } from '../../lib/tool-api.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
 import { StatusChip } from '../bench/status-chip.tsx';
@@ -10,6 +11,7 @@ import { readLog } from '../logs/api.ts';
 import { WbLink } from '../logs/link.tsx';
 import { shownPath } from '../logs/model.ts';
 import { ToolFailed } from '../states/states.tsx';
+import { TAB_POLL_MS } from './use-passes.ts';
 
 const SHOWN = 20;
 
@@ -20,7 +22,7 @@ export function CallsTab({ orgId, passId }: { orgId: string; passId: string }) {
   const calls = useQuery({
     queryKey: ['workbench', 'passes', 'calls', passId, ...key],
     queryFn: ({ signal }) => readLog(api, { pass: passId }, { signal }),
-    refetchInterval: 8000,
+    refetchInterval: pollEvery(TAB_POLL_MS),
     refetchIntervalInBackground: false,
   });
   if (calls.isPending) return <Skeleton className="h-24 w-full" />;
