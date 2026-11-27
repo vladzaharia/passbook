@@ -6,8 +6,8 @@
   display: grid;
   grid-template-rows: repeat(3, 4px) 1fr;
   gap: 4px;
-  inline-size: 36px;
-  block-size: 46px;
+  inline-size: 44px;
+  block-size: 58px;
   padding: 6px;
   border-radius: 6px;
   background: color-mix(in oklab, var(--pk-text-strong) 72%, var(--pk-accent));

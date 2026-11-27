@@ -21,6 +21,7 @@ const FeedSchema = z.object({
       type: z.string(),
       createdAt: z.number(),
       requestId: z.string().optional(),
+      simulated: z.boolean().optional(),
     }),
   ),
 });
@@ -62,6 +63,11 @@ export function PassEventsTab({ pass, orgId }: { pass: PassDetailDto; orgId: str
                 >
                   {e.type}
                 </WbLink>
+                {e.simulated ? (
+                  <span className="rounded-sm border border-border px-1.5 text-xs text-fg-muted">
+                    {WB_PASSES.events.simulated}
+                  </span>
+                ) : null}
                 {e.requestId ? (
                   <WbLink
                     href={wbPath(orgId, 'logs', { hash: e.requestId })}

@@ -1,9 +1,10 @@
 import { useRouter } from '@tanstack/react-router';
 import { Ban, ChevronDown, QrCode, Terminal } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { SimulatePassInput } from '@/shared/contracts/events.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
+import { useKept } from '../../admin/templates/designer/ui-keep.tsx';
 import { cn } from '../../lib/cn.ts';
 import { Button } from '../../ui/button.tsx';
 import { buttonVariants } from '../../ui/button-variants.ts';
@@ -55,8 +56,9 @@ export function PassActions({
   const router = useRouter();
   const simulate = useSimulate(pass.id);
   const voidPass = useVoidPass(pass.id);
-  const [phone, setPhone] = useState(false);
-  const [asking, setAsking] = useState(false);
+  // Kept by pass: crossing 1180 px swaps the pane for a sheet, and what was open stays open.
+  const [phone, setPhone] = useKept(`wb-pass:${pass.id}:phone`, false);
+  const [asking, setAsking] = useKept(`wb-pass:${pass.id}:void`, false);
   const voided = pass.status !== 'active';
   const title = titleOf(pass);
   useSimulateKey();

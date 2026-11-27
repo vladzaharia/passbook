@@ -239,3 +239,41 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
     expect(c.mode, c.path).toBeUndefined();
   }
 });
+
+/** An org's On my phone view, and the empty list: the context is read as an org's, the list as empty. */
+test('Passes: an org lists its Test passes as QR links, and an empty list says so', async ({
+  page,
+}) => {
+  test.setTimeout(600_000);
+  await signIn(page);
+  const org = await sandboxOrgId(page);
+  await issuePass(page, org);
+  await page.route('**/api/v1/workbench/contexts', async (route) => {
+    const res = await route.fetch();
+    const body = (await res.json()) as {
+      sandbox: { orgId: string; name: string } | null;
+      orgs: unknown[];
+    };
+    const as = body.sandbox;
+    await route.fulfill({
+      response: res,
+      json: {
+        sandbox: null,
+        orgs: as ? [{ orgId: as.orgId, name: as.name, slug: 'test-org', tools: ['passes'] }] : [],
+      },
+    });
+  });
+  await page.goto(`/workbench/o/${org}/passes?view=phone`);
+  await expect(page.getByRole('radio', { name: 'On my phone', checked: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open on this phone' }).first()).toBeVisible({
+    timeout: 20_000,
+  });
+  await shots(page, 'passes-org-phone');
+
+  await page.route('**/api/v1/passes?*', (route) =>
+    route.fulfill({ json: { items: [], nextCursor: null } }),
+  );
+  await page.goto(`/workbench/o/${org}/passes`);
+  await expect(page.getByText('No passes').first()).toBeVisible({ timeout: 20_000 });
+  await shots(page, 'passes-empty');
+});

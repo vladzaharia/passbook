@@ -54,6 +54,7 @@ export const WB_PASSES = {
     sync: 'Sync log',
     empty: 'No events yet',
     request: 'request',
+    simulated: 'simulated',
     all: 'All in Events',
   },
   calls: {

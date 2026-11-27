@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderApp } from '../../lib/test-utils.tsx';
 import { wideWindow } from '../events/test-fixtures.ts';
@@ -65,6 +66,7 @@ describe('Passes', () => {
     expect(await screen.findByRole('tab', { name: 'Events', selected: true })).toBeInTheDocument();
     const events = await screen.findByRole('region', { name: 'Events' });
     expect(await within(events).findByText('pass.installed')).toBeInTheDocument();
+    expect(within(events).getByText('simulated')).toBeInTheDocument();
     expect(within(events).getByRole('link', { name: /request/ })).toHaveAttribute(
       'href',
       '/workbench/o/sbx/logs#req1',
@@ -90,6 +92,41 @@ describe('Passes', () => {
       expect(sent?.body).toEqual({ event: 'installed' });
       expect(sent?.headers.authorization).toBe('Bearer pbtry_sbx');
     });
+  });
+
+  it('keeps the phone and void panels open when the window crosses 1180 px', async () => {
+    const user = userEvent.setup();
+    Object.assign(HTMLDialogElement.prototype, {
+      showModal(this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+      },
+      close(this: HTMLDialogElement) {
+        this.removeAttribute('open');
+      },
+    });
+    let wide = true;
+    const listeners = new Set<() => void>();
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      get matches() {
+        return q.includes('1180') ? wide : q.includes('720') || q.includes('reduce');
+      },
+      addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+      removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
+    }));
+    await open('/workbench/o/sbx/passes#p1');
+    await user.click(await screen.findByRole('button', { name: 'Test preview' }));
+    await user.click(screen.getByRole('button', { name: 'Void' }));
+    expect(screen.getByRole('button', { name: 'Test preview' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    wide = false;
+    act(() => {
+      for (const fn of listeners) fn();
+    });
+    const phone = await screen.findByRole('button', { name: 'Test preview' });
+    expect(phone).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Void' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('Open in Console prefills by nonce and never puts a body in the URL', async () => {

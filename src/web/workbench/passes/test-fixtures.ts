@@ -51,6 +51,7 @@ export function passesHandlers(world: World): Record<string, FetchHandler> {
             type: 'pass.installed',
             createdAt: 1_700_000_000_000,
             requestId: 'req1',
+            simulated: true,
           },
         ],
       }),

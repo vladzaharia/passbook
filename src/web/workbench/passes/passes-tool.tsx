@@ -13,6 +13,7 @@ import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
 import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
 import { wbPath } from '@/shared/workbench.ts';
+import { KeepProvider } from '../../admin/templates/designer/ui-keep.tsx';
 import { copyWithFeedback } from '../../developers/shell/copy.ts';
 import { useInsertHighlight } from '../../lib/motion.ts';
 import { Button } from '../../ui/button.tsx';
@@ -187,7 +188,7 @@ export function PassesTool() {
             className="self-start"
           />
         )}
-        {body}
+        <KeepProvider>{body}</KeepProvider>
       </div>
     </ToolPage>
   );
