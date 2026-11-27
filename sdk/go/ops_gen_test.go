@@ -1881,7 +1881,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"requestLogs.retrieve", "GET", "/api/v1/request-logs/id1", false,
-		"", `{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false},"requestBody":"x","responseBody":"x","bodiesExpireAt":0,"bodiesRecorded":false,"bodiesTruncated":false}`,
+		"", `{"id":"x","requestId":"x","at":0,"method":"x","route":"x","path":"x","query":"x","status":0,"code":"x","durationMs":0,"keyId":"x","mode":"live","via":"try","client":"x","hasBodies":false,"resourceId":"x","apiVersion":"x","flags":{"idempotencyKey":false,"ifMatch":false,"version":false},"requestBody":"x","responseBody":"x","bodiesExpireAt":0,"bodiesRecorded":false,"bodiesTruncated":false,"headers":{"req":{},"res":{}}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.RequestLogs.Retrieve(ctx, "id1")
 		},

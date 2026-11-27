@@ -10007,6 +10007,10 @@ export type RequestLogsRetrieveResponse = {
   bodiesExpireAt: number | null;
   bodiesRecorded: boolean;
   bodiesTruncated: boolean;
+  headers: {
+    req: Record<string, string>;
+    res: Record<string, string>;
+  } | null;
 };
 
 export type RetentionReceiptsDownloadResponse = {
