@@ -23330,6 +23330,106 @@
           "footer"
         ]
       },
+      "WalletHealthListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "google",
+                    "samsung"
+                  ]
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "live",
+                    "test"
+                  ]
+                },
+                "tone": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "attention",
+                    "failing",
+                    "idle"
+                  ]
+                },
+                "lastSuccessAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "queued": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "failed24h": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertain": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertainWaiting": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "callbackAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "provider",
+                "mode",
+                "tone",
+                "lastSuccessAt",
+                "queued",
+                "failed24h",
+                "uncertain",
+                "uncertainWaiting",
+                "callbackAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "WalletHealthRetryResponse": {
+        "type": "object",
+        "properties": {
+          "due": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "waiting": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "due",
+          "waiting"
+        ],
+        "additionalProperties": false
+      },
       "DeveloperInvitationsCreateParams": {
         "type": "object",
         "properties": {
@@ -100319,6 +100419,183 @@
           "method": "retrieve"
         },
         "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "wallet:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Health of the wallets open to an organization, in the caller's mode",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "provider": "google",
+                      "mode": "live",
+                      "tone": "attention",
+                      "lastSuccessAt": 1795571880000,
+                      "queued": 2,
+                      "failed24h": 0,
+                      "uncertain": 4,
+                      "uncertainWaiting": 1,
+                      "callbackAt": 1795568400000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "list"
+        },
+        "description": "The health of each wallet open to the organization in the key's mode: the last update the provider accepted, updates queued, failed in the last 24 hours and with an unknown outcome, and the provider's last report. A wallet that is not released, not in the plan or not enrolled is left out. A key needs wallet:read.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health/{provider}/recheck": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Queue the settling of a wallet's uncertain updates that are past their grace window",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "samsung"
+              ]
+            },
+            "required": true,
+            "name": "provider",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthRetryResponse"
+                },
+                "example": {
+                  "due": 3,
+                  "waiting": 1
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "retry"
+        },
+        "description": "Sends a wallet's updates with an unknown outcome to settle, once they are past the 10 minute window; those still inside it settle by themselves. Answers how many were sent (at most 50) and how many are still waiting. A key needs passes:write; ten calls an hour per wallet.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",

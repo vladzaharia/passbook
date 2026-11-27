@@ -2375,6 +2375,28 @@ class MembershipsResource:
         return self._core.request("PATCH", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", body=body, result=m.MembershipsUpdateRolesResult, **opts)
 
 
+class WalletHealthResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        org_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WalletHealthListResult:
+        """Health of the wallets open to an organization, in the caller's mode `GET /api/v1/orgs/{orgId}/wallet-health`"""
+        return self._core.request("GET", f"/api/v1/orgs/{_p(org_id)}/wallet-health", result=m.WalletHealthListResult, **opts)
+
+    def retry(
+        self,
+        org_id: str,
+        provider: _Literal["google", "samsung"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WalletHealthRetryResult:
+        """Queue the settling of a wallet's uncertain updates that are past their grace window `POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(org_id)}/wallet-health/{_p(provider)}/recheck", result=m.WalletHealthRetryResult, **opts)
+
+
 class PassImportsMappingsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -4143,6 +4165,7 @@ class Resources:
         self.orgs = OrgsResource(core)
         self.invitations = InvitationsResource(core)
         self.memberships = MembershipsResource(core)
+        self.wallet_health = WalletHealthResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)

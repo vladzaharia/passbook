@@ -94,6 +94,11 @@ export function formatShortDate(ms: number): string {
   return SHORT.format(ms);
 }
 
+/** Nov 27, 2026, 2:53 AM, on the clock of `timeZone`: the one date-time shape, in the org's zone. */
+export function formatDateTimeIn(ms: number, timeZone: string): string {
+  return `${formatDayIn(ms, timeZone)}, ${formatTime(ms, timeZone)}`;
+}
+
 /** 6:17 PM. */
 export function formatTime(ms: number, timeZone?: string): string {
   if (!timeZone) return TIME.format(ms);
