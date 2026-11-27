@@ -9,6 +9,7 @@ import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { checkDeprecation, deprecationMiddleware, type RouteDeprecation } from './deprecation.ts';
 import { AppError } from './errors.ts';
+import { innerOf } from './router-scope.ts';
 import './openapi-names.ts';
 import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
@@ -64,7 +65,7 @@ export interface RouteSpec {
 }
 
 const publicHandlers = new WeakSet<object>();
-export const isPublicHandler = (handler: object): boolean => publicHandlers.has(handler);
+export const isPublicHandler = (handler: object): boolean => publicHandlers.has(innerOf(handler));
 
 /** A `capability` on a scope declaration must be one every scope the route's method accepts exercises. */
 function checkDeclaration(spec: RouteSpec): void {

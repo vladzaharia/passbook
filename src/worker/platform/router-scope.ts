@@ -3,6 +3,10 @@ import type { Env, Hono, MiddlewareHandler } from 'hono';
 type Own = { readonly routes: ReadonlyArray<{ method: string; path: string }> };
 type Entry = { method: string; re: RegExp };
 
+const inner = new WeakMap<object, object>();
+/** The middleware behind an `ownRoutesOnly` wrapper, so the guard registries still recognise it. */
+export const innerOf = (handler: object): object => inner.get(handler) ?? handler;
+
 const owners = new WeakMap<object, (base: string, method: string, path: string) => boolean>();
 
 /** A Hono route pattern as a regex; a trailing slash is optional. */
@@ -57,6 +61,7 @@ export function ownRoutesOnly<E extends Env>(
     return owns(base, c.req.method, c.req.path) ? mw(c, next) : next();
   };
   owners.set(scoped, owns);
+  inner.set(scoped, innerOf(mw));
   return scoped;
 }
 
@@ -75,6 +80,7 @@ const wholeMount = new WeakSet<object>();
 export const wholeMountUse = <E extends Env>(router: Hono<E>, mw: MiddlewareHandler<E>): void => {
   const marked: MiddlewareHandler<E> = (c, next) => mw(c, next);
   wholeMount.add(marked);
+  inner.set(marked, innerOf(mw));
   router.use('*', marked);
 };
 
