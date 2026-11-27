@@ -129,7 +129,7 @@ export const ownedPasses = (db: Db, userId: string, viewerId: string) =>
        AND o.status IN ('active', 'suspended')
        AND (o.personal_user_id IS NULL OR o.personal_user_id = ?)
      ORDER BY p.id DESC LIMIT 100`,
-    [userId, excludePersonal ? 1 : 0],
+    [userId, viewerId],
   );
 
 export async function ownedPassCount(db: Db, userId: string, viewerId: string): Promise<number> {
@@ -152,7 +152,7 @@ export const recentAudit = (db: Db, userId: string, excludePersonal = false) =>
      WHERE target_type = 'user' AND target_id = ?
        AND (? = 0 OR org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))
      ORDER BY at DESC, id DESC LIMIT 20`,
-    [userId, viewerId],
+    [userId, excludePersonal ? 1 : 0],
   );
 
 /** The same change as a `platform.user.*` grant: the acting admin's session must be live at commit. */
