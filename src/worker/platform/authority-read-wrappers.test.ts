@@ -209,6 +209,36 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         ),
       /appear only as/,
     ],
+    [
+      'top-level OR after the stamp gate and ao.org_id IS NULL',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${c.P} = 1 AND ao.org_id IS NULL OR x.id > 0`,
+        ),
+      /no OR|OR over ao/,
+    ],
+    [
+      'top-level OR with no stamp gate on ao.org_id IS NULL',
+      (c) =>
+        c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ao.org_id IS NULL OR x.id > 0`),
+      /no OR|OR over ao/,
+    ],
+    [
+      'top-level OR after the tenant comparison',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE x.org_id = ao.org_id OR x.id > 0`,
+        ),
+      /no OR|OR over ao/,
+    ],
+    [
+      'parenthesised OR over ao.* without the stamp gate',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE (ao.org_id IS NULL OR x.id > 0) AND x.id IS NOT NULL`,
+        ),
+      /no OR|OR over ao/,
+    ],
   ];
 
   it.each(cases)('%s', async (_n, build_, why) => {
@@ -217,6 +247,24 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
     // Without the guard the statement reads foreign rows for a key that does not exist.
     expect(await c.leaks(sql), 'leaks without the guard').toBeGreaterThan(0);
     expect(() => assertActorOnce(sql)).toThrow(why);
+  });
+
+  it('accepts a parenthesised OR that does not involve ao.* beside the stamp gate', async () => {
+    const c = await build();
+    const sql = c.stmt(
+      `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${c.P} = 1 AND (x.id > 0 OR x.id = 'k')`,
+    );
+    expect(await c.leaks(sql)).toBe(0);
+    expect(() => assertActorOnce(sql)).not.toThrow();
+  });
+
+  it('accepts a parenthesised OR over ao.* when the stamp gate is a top-level AND term', async () => {
+    const c = await build();
+    const sql = c.stmt(
+      `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${c.P} = 1 AND (ao.limit_key IS NULL OR x.org_id = ao.org_id)`,
+    );
+    expect(await c.leaks(sql)).toBe(0);
+    expect(() => assertActorOnce(sql)).not.toThrow();
   });
 
   it('a plain presence gate returns no foreign row for the same absent actor', async () => {

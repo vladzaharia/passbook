@@ -158,11 +158,59 @@ export function assertAnchorShape(blanked: string): void {
   for (const m of core.text.matchAll(new RegExp(`${esc(TERM)}`, 'g')))
     if (OUTER_BEFORE.test(core.text.slice(0, m.index ?? 0)))
       refuse('the anchor is never the outer side of a LEFT join');
+  for (const c of core.kind === 'cte' ? [core, root] : [core]) assertFilters(c);
   if (core.kind === 'cte') {
     const q = readOnceBy(root, core, cores);
     for (const alias of aliases) aliasOnlyOut(root, q, alias, cores);
     qualifiedOnlyOut(root, q, cores);
   } else for (const alias of aliases) aliasOnlyOut(root, null, alias, cores);
+}
+
+/**
+ * WHERE, ON and HAVING of the holder (and of the root that reads a holder CTE) are one AND chain: an OR at paren depth 0
+ * lets the other arm pass for an absent actor. A parenthesised OR that touches `ao.*` needs the stamp gate
+ * `ao.authority_present_k7 = 1` or `<col> = ao.org_id` as a depth-0 term of those clauses.
+ */
+function assertFilters(core: Core): void {
+  const text = core.text;
+  const tokens =
+    /\b(WHERE|ON|HAVING|JOIN|GROUP|ORDER|LIMIT|FROM|WINDOW|SELECT|UNION|INTERSECT|EXCEPT|OR)\b|[()]/gi;
+  const opens: number[] = [];
+  let depth = 0;
+  let filter = false;
+  let top = '';
+  let last = 0;
+  let nestedOrAo = false;
+  for (const m of text.matchAll(tokens)) {
+    const at = m.index ?? 0;
+    if (filter && depth === 0) top += text.slice(last, at);
+    last = at + m[0].length;
+    if (m[0] === '(') {
+      opens.push(at);
+      depth++;
+    } else if (m[0] === ')') {
+      const from = opens.pop() ?? 0;
+      const group = text.slice(from, at);
+      if (filter && /\bOR\b/i.test(group) && /\bao\./i.test(group)) nestedOrAo = true;
+      depth = Math.max(0, depth - 1);
+    } else if (depth === 0) {
+      const kw = m[0].toUpperCase();
+      if (kw === 'OR') {
+        if (filter) refuse('no OR at the top level of WHERE, ON or HAVING beside the anchor');
+      } else filter = kw === 'WHERE' || kw === 'ON' || kw === 'HAVING';
+      if (filter) top += ` ${kw} `;
+    }
+  }
+  if (filter) top += text.slice(last);
+  if (
+    nestedOrAo &&
+    !/\bao\.authority_present_k7\s*=\s*1\b|[\w.]+\s*=\s*(?:''\s*\|\|\s*)?ao\.org_id\b|\bao\.org_id\s*=\s*[\w.]+/i.test(
+      top,
+    )
+  )
+    refuse(
+      'an OR over ao columns needs the presence gate or the org comparison as a top-level AND term',
+    );
 }
 
 /** The top-level core reads the CTE once by FROM/JOIN and nowhere else reaches it; returns its qualifier. */
