@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
-import { legacyWalletOfferSnapshotCurrent } from './offers-legacy-fixture.ts';
+import { legacyWalletOfferSnapshotCurrent } from './offers-legacy-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { type WalletOfferFence, walletOfferSnapshotCurrent } from './repo-offers.ts';
