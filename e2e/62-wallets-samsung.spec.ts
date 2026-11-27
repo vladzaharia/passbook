@@ -205,3 +205,42 @@ test('an expired coupon is sent to Samsung as EXPIRED', async () => {
   );
   await syncUntil(async () => (await sentState(ref)) === 'EXPIRED', 'Samsung got EXPIRED');
 });
+
+test('an upcoming event that has ended rolls over on the Samsung card with no edit', async () => {
+  test.setTimeout(150_000);
+  const samsung = await samsungKit('ticket');
+  const events = await walletOrg(admin, 's-roll', samsung.credential, {
+    blueprint: 'baked:starter-event-ticket',
+  });
+  await releaseSystem(admin, events, 'samsung');
+  // With a local offset: a bare Z time is refused ("no local offset").
+  const at = (ms: number) => new Date(Date.now() + ms).toISOString().replace('Z', '+00:00');
+  const venue = { venueName: 'Sample Hall', venueRegion: 'Cupertino, CA' };
+  const holder = await samplePass(admin, events, {
+    venueTimeZone: 'UTC',
+    startsAt: at(7_200_000),
+    endsAt: at(10_800_000),
+    doorsAt: at(7_000_000),
+    upcomingEvents: [
+      { name: 'Opening night', startsAt: at(4_000), endsAt: at(14_000), ...venue },
+      { name: 'Closing night', startsAt: at(7_200_000), endsAt: at(10_800_000), ...venue },
+    ],
+  });
+  const ref = await samsung.add(holder.path);
+  const startOf = async () =>
+    Number((await samsung.card(ref)).card.data[0]?.attributes?.startDate ?? 0);
+  const updates = async () =>
+    (await mockRequests()).filter(
+      (r) =>
+        r.provider === 'samsung' &&
+        r.method === 'POST' &&
+        r.path === `/US/wltex/cards/${samsung.cardId}/updates` &&
+        r.status === 200,
+    ).length;
+  const opening = await startOf();
+  expect(opening).toBeLessThan(Date.now() + 60_000);
+  // Nobody edits the pass: the first event's end is a boundary the platform sends by itself.
+  await syncUntil(async () => (await startOf()) > opening, 'the card moves to the next event');
+  expect(await startOf()).toBeGreaterThan(Date.now() + 3_600_000);
+  expect(await updates()).toBeGreaterThan(0);
+});
