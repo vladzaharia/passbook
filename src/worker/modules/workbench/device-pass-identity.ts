@@ -18,14 +18,15 @@ const unavailable = () =>
  * The dedicated device-test identity (`pass.mobile.passbook.devtest`) and nothing else: there is no fallback to the
  * platform identity, so an unset or lapsed identity stops device passes and touches no other pass.
  * The certificate is checked with `assertCanSign` before anything is made; `signPass` checks it again.
+ * @absorbs DEVICE_PASS_IDENTITY_NOT_READY. Every resolver or certificate refusal is logged and answered as `DEVICE_PASS_IDENTITY_NOT_READY`.
  */
 export async function deviceTestIdentity(ctx: ServiceContext): Promise<ResolvedIdentity> {
-  const db = ctx.env.DB;
-  const found = await findByPassType(db, PLATFORM_SLOTS.devtest.passType);
-  const row = found ? await getIdentityRow(db, found.id) : null;
-  if (row?.purpose !== 'device_test' || row.org_id !== null || row.issuing !== 1)
-    throw unavailable();
   try {
+    const db = ctx.env.DB;
+    const found = await findByPassType(db, PLATFORM_SLOTS.devtest.passType);
+    const row = found ? await getIdentityRow(db, found.id) : null;
+    if (row?.purpose !== 'device_test' || row.org_id !== null || row.issuing !== 1)
+      throw unavailable();
     const identity = await depsOf(ctx.env).identities.byId(row.id);
     await assertCanSign(identity.material, {
       now: new Date(ctx.clock.now()),

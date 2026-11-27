@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
 import { unzipSync } from 'fflate';
 import { startOidcAs } from './helpers/auth.ts';
+import { axeShots } from './helpers/axe-shots.ts';
 import { seedDeviceTest } from './helpers/platform-root.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
@@ -271,4 +272,140 @@ test('Device pass: make, open once, add to a phone, update, void, add again', as
     [dp.id]: 'voided',
     [again.body.devicePass.id]: 'active',
   });
+});
+
+test('Device pass in the Workbench: make, QR, phones, void, add again, blocked', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(420_000);
+  await seedDeviceTest();
+  const org = await sandbox(page);
+  const minted = await call<{ token: string }>(page, 'POST', '/workbench/token', { orgId: org });
+  const token = minted.body.token;
+  const templates = await call<{ items: { id: string }[] }>(
+    page,
+    'GET',
+    '/templates',
+    undefined,
+    token,
+  );
+  const templateId = templates.body.items[0]?.id ?? '';
+  const detail = await call<{ manifest: { sample?: Record<string, unknown> } }>(
+    page,
+    'GET',
+    `/templates/${templateId}`,
+    undefined,
+    token,
+  );
+  const made = await call<{ id: string }>(
+    page,
+    'POST',
+    '/passes',
+    { templateId, input: detail.body.manifest.sample ?? {} },
+    token,
+  );
+  expect(made.status, JSON.stringify(made.body)).toBe(201);
+
+  // The first test left device passes open: start with none, so the list's newest row is this test's.
+  const left = await call<{ items: { id: string; state: string }[] }>(
+    page,
+    'GET',
+    '/developer/device-passes',
+  );
+  for (const item of left.body.items)
+    if (item.state === 'pending' || item.state === 'active')
+      await call(page, 'DELETE', `/developer/device-passes/${item.id}`);
+
+  let shots = 0;
+  const makeResponse = () =>
+    page.waitForResponse(
+      (r) =>
+        r.request().method() === 'POST' &&
+        /\/developer\/device-passes(\/[^/]+\/again)?$/.test(r.url()),
+    );
+  const takeCode = async (res: Awaited<ReturnType<typeof makeResponse>>) =>
+    new URL(((await res.json()) as { devicePass: { code: { url: string } } }).devicePass.code.url)
+      .pathname;
+  /** Opens the code as a phone would and returns what Wallet needs to register it. */
+  const openOnPhone = async (path: string) => {
+    const { res, files } = await pkpass(request, path);
+    expect(res.status()).toBe(200);
+    return passJsonOf(files);
+  };
+
+  await page.goto(`/workbench/o/${org}/passes?view=phone`);
+  await expect(page.getByRole('radio', { name: 'On my phone' })).toBeChecked();
+  const add = page.getByRole('button', { name: 'Add to my phone' }).first();
+  await expect(add).toBeEnabled();
+  shots += await axeShots(page, 'device-ui-list');
+
+  // Make: the dialog shows the QR and the code's 10 minutes.
+  const first = makeResponse();
+  await add.click();
+  const code1 = await takeCode(await first);
+  const dialog = page.getByRole('dialog', { name: 'Add to your phone' });
+  await expect(dialog.getByText(/Code works once · (9:\d\d|10:00)/)).toBeVisible();
+  await expect(dialog.getByText('Expires in 24 h, then voids')).toBeVisible();
+  await expect(dialog.getByText(/\d of 5 on phones/)).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(dialog.getByRole('img', { name: /QR code to add/ })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(dialog.getByRole('img', { name: /QR code to add/ })).toBeHidden();
+  await expect(dialog.getByRole('link', { name: 'Open on this phone' })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  shots += await axeShots(page, 'device-ui-qr');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await expect(dialog).toBeHidden();
+
+  // A phone opens the code and registers: the list reads the phone.
+  const one = await openOnPhone(code1);
+  expect(
+    (
+      await wallet(request, 'POST', 'ui-phone-1', one.serialNumber, one.authenticationToken)
+    ).status(),
+  ).toBe(201);
+  await page.reload();
+  const list = page.getByRole('region', { name: 'Device passes' });
+  const newest = list.getByRole('listitem').first();
+  await expect(newest.getByText('1 of 3 phones', { exact: false })).toBeVisible();
+  await expect(newest.getByText('On phone')).toBeVisible();
+  shots += await axeShots(page, 'device-ui-phones');
+
+  // Void asks first, then ends it; Add again is offered.
+  await newest.getByRole('button', { name: 'Void', exact: true }).click();
+  await expect(page.getByText('Void this device pass?')).toBeVisible();
+  shots += await axeShots(page, 'device-ui-void-ask');
+  await page.getByRole('button', { name: 'Void device pass' }).click();
+  await expect(newest.getByText('You voided it')).toBeVisible();
+  shots += await axeShots(page, 'device-ui-voided');
+
+  // Add again: a new device pass with a code; a 4th phone on it voids it and blocks making more.
+  const second = makeResponse();
+  await newest.getByRole('button', { name: 'Add again' }).click();
+  const code2 = await takeCode(await second);
+  await page
+    .getByRole('dialog', { name: 'Add to your phone' })
+    .getByRole('button', { name: 'Done' })
+    .click();
+  const two = await openOnPhone(code2);
+  for (const n of [1, 2, 3])
+    expect(
+      (
+        await wallet(request, 'POST', `ui-over-${n}`, two.serialNumber, two.authenticationToken)
+      ).status(),
+    ).toBe(201);
+  expect(
+    (
+      await wallet(request, 'POST', 'ui-over-4', two.serialNumber, two.authenticationToken)
+    ).status(),
+  ).toBe(401);
+  await page.reload();
+  await expect(newest.getByText('Shared on a 4th phone')).toBeVisible();
+  await page.getByRole('button', { name: 'Add to my phone' }).first().click();
+  await expect(page.getByText(/paused for your account/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add to my phone' }).first()).toBeDisabled();
+  shots += await axeShots(page, 'device-ui-blocked');
+  if (process.env.SHOTS_DIR) expect(shots).toBe(36);
 });
