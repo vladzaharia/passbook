@@ -35,7 +35,11 @@ export function assertActorOnce(sql: string): void {
   const defined = (n: string) =>
     count(text, new RegExp(`(?<![.\\w])${n}\\s+AS\\s+(?:NOT\\s+)?(?:MATERIALIZED\\s*)?\\(`, 'gi'));
   const usedFrom = count(text, /\b(?:FROM|JOIN)\s+actor_ok(?![\w])/gi);
-  const bareNull = /(?<!\bao\.present\s*=\s*1\s+AND\s+)\bao\.org_id\s+IS\s+NULL\b/i.test(text);
+  // Structural: an `ao.org_id` outside `= ao.org_id` / `ao.org_id =` (NULL-safe equality) needs `ao.present = 1`
+  // in the statement, whatever the spelling (ISNULL, COALESCE, IS NOT NOT NULL ...).
+  const bareNull =
+    /\bao\.org_id\b/i.test(text.replace(/(?:=|\|\|)\s*ao\.org_id\b|\bao\.org_id\s*=(?!=)/gi, '')) &&
+    !/\bao\.present\s*=\s*1\b/i.test(text);
   const aliases = [...text.matchAll(/(?<![.\w])([A-Za-z_]\w*|\))\s+(?:AS\s+)?ao(?![\w.])/gi)];
   const shadowed = aliases.some((m) => m[1]?.toLowerCase() !== 'actor_ok');
   const bad =
@@ -50,6 +54,6 @@ export function assertActorOnce(sql: string): void {
   if (bad)
     throw new AuthorityError(
       'SQL_ACTOR_REUSE',
-      'A read statement joins actor_ok once, as ao, and references no other actor CTE; ao.org_id IS NULL needs ao.present = 1.',
+      'A read statement joins actor_ok once, as ao, and references no other actor CTE; any other use of ao.org_id needs ao.present = 1.',
     );
 }
