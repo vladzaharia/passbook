@@ -16,6 +16,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   broadcast_targets: BOOKKEEPING,
   bundle_remac_marks: BOOKKEEPING,
   bundle_token_seals: SEALED,
+  cli_sessions: 'credential material; not org data',
   captured_emails: 'Test mode mail capture, not org data',
   channel_apply_marks: BOOKKEEPING,
   channel_apply_runs: BOOKKEEPING,

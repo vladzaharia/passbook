@@ -137,9 +137,12 @@ test('Passes: a pass, its events and devices, simulate, Open in Console, and voi
   const list = page.getByRole('listbox', { name: 'Passes' });
   await expect(list.getByRole('option')).toHaveCount(total);
   await expect(page.getByText(`${total} passes`).first()).toBeVisible();
-  // No mode switch, and a sandbox has no On my phone view while the device pass is off.
+  // No mode switch. The e2e server has the device pass on, so a sandbox offers the All and On my phone
+  // views (the off state is the unit test's: passes-tool.test.tsx).
   await expect(page.getByRole('radio', { name: 'Live' })).toHaveCount(0);
-  await expect(page.getByRole('radiogroup', { name: 'Passes view' })).toHaveCount(0);
+  const views = page.getByRole('radiogroup', { name: 'Passes view' });
+  await expect(views.getByRole('radio')).toHaveCount(2);
+  await expect(views.getByRole('radio', { name: 'All' })).toBeChecked();
   await shots(page, 'passes-list');
 
   // Keyboard: the list takes the arrows, Enter opens the inspector.

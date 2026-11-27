@@ -10,6 +10,11 @@
     "name": "workbench-entry-tool"
   },
   {
+    "role": "org",
+    "path": "/workbench/cli",
+    "name": "workbench-cli-approve"
+  },
+  {
     "role": "anon",
     "path": "/workbench/design",
     "name": "workbench-design-public"

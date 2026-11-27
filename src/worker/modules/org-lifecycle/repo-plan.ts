@@ -51,6 +51,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
     where: 'invitation_id IN (SELECT id FROM developer_invitations WHERE org_id = ?1)',
   },
   inOrg('developer_invitations'),
+  inOrg('cli_sessions'),
   inOrg('api_keys'),
   inOrg('outbox'),
   inOrg('captured_emails'),
