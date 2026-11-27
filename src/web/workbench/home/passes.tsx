@@ -1,43 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { type ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { WB_HOME_COPY as C } from '../../../shared/copy/workbench-home.ts';
 import { wbPath } from '../../../shared/workbench.ts';
-import { getBarcodeEngine, loadBarcodeEngine, type ToSvg } from '../../pass-card/barcode-engine.ts';
 import { Button } from '../../ui/button.tsx';
 import { CardBody, CardLink } from '../../ui/card.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
 import { ToolFailed } from '../states/states.tsx';
+import { QrTile } from '../ui/qr-tile.tsx';
 import type { PassRow } from './data.ts';
 import { Panel } from './panel.tsx';
-
-/** The link as a QR on a white tile, drawn as an image: the CSP allows data: images, not inline styles. */
-function Qr({ value }: { value: string }) {
-  const [engine, setEngine] = useState<ToSvg | undefined>(getBarcodeEngine);
-  useEffect(() => {
-    if (engine) return;
-    let live = true;
-    loadBarcodeEngine().then(
-      (e) => live && setEngine(() => e),
-      // Without the encoder the link beside it is the way in.
-      () => undefined,
-    );
-    return () => {
-      live = false;
-    };
-  }, [engine]);
-  const tile = 'grid size-32 shrink-0 place-items-center rounded-md bg-white p-2';
-  if (!engine) return <span className={tile} aria-hidden />;
-  const svg = engine({ bcid: 'qrcode', text: value, scale: 4, eclevel: 'M' });
-  return (
-    <span className={tile}>
-      <img
-        src={`data:image/svg+xml;base64,${btoa(svg)}`}
-        alt={C.phone.qrAlt}
-        className="size-full"
-      />
-    </span>
-  );
-}
 
 /** The latest pass's Test preview as a QR; until the device pass ships it is the whole card. */
 export function PhoneCard({
@@ -55,7 +26,7 @@ export function PhoneCard({
   if (link)
     body = (
       <CardBody className="flex flex-wrap items-center gap-4">
-        <Qr value={link} />
+        <QrTile value={link} alt={C.phone.qrAlt} />
         <div className="flex min-w-0 flex-1 basis-32 flex-col items-start gap-2">
           <a
             href={link}

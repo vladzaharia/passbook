@@ -112,7 +112,8 @@
   border-radius: 50%;
   background: var(--pk-success);
 }
-.bench-live[data-state="paused"] .bench-live-d {
+.bench-live[data-state="paused"] .bench-live-d,
+.bench-live[data-state="limited"] .bench-live-d {
   background: var(--pk-text-subtle);
 }
 .bench-live[data-state="offline"] .bench-live-d {

@@ -6,11 +6,10 @@ import { Button } from '../../ui/button.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { StatusPill } from '../../ui/status-pill.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx';
+import { VerifyGuide } from '../../ui/webhook-setup/verify-guide.tsx';
 import { BenchCode } from '../bench/code-block.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { curlOf } from './format.ts';
-import { VERIFY_SAMPLES } from './samples.ts';
-import { Samples } from './samples-tabs.tsx';
 import { VerifyPanel } from './verify.tsx';
 
 const I = BENCH_WEBHOOKS_COPY.inspector;
@@ -69,10 +68,7 @@ export function CaptureView({
         </TabsList>
         <TabsContent value="verify" className="flex flex-col gap-3 pt-3">
           <VerifyPanel key={capture.id} capture={capture} loadSecret={loadSecret} next={next} />
-          <div className="wh-pane">
-            <h4 className="wh-h">{BENCH_WEBHOOKS_COPY.verify.in}</h4>
-            <Samples samples={VERIFY_SAMPLES} />
-          </div>
+          <VerifyGuide />
         </TabsContent>
         <TabsContent value="headers" className="pt-3">
           <BenchCode

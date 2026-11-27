@@ -21,7 +21,7 @@ describe('useListener', () => {
       }),
     );
     const { result } = renderHook(() => useListener(true, 'a'));
-    await act(async () => vi.advanceTimersByTimeAsync(0));
+    await act(async () => vi.advanceTimersByTimeAsync(2000));
     await act(async () => vi.advanceTimersByTimeAsync(2000));
     expect(urls[0]).toContain('source=key');
     expect(urls[0]).toContain('after=a');
