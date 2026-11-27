@@ -17,12 +17,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as WorkbenchRouteRouteImport } from './routes/workbench/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAccountRouteImport } from './routes/admin/account'
+import { Route as AdminAllRouteRouteImport } from './routes/admin/all/route'
 import { Route as AdminPlatformRouteRouteImport } from './routes/admin/platform/route'
 import { Route as PassesPassIdRouteImport } from './routes/passes/$passId'
 import { Route as WorkbenchIndexRouteImport } from './routes/workbench/index'
 import { Route as WorkbenchToolRouteImport } from './routes/workbench/$tool'
 import { Route as WorkbenchDesignRouteImport } from './routes/workbench/design'
 import { Route as WorkbenchQuickstartRouteImport } from './routes/workbench/quickstart'
+import { Route as AdminAllIndexRouteImport } from './routes/admin/all/index'
 import { Route as AdminApiKeysIndexRouteImport } from './routes/admin/api-keys/index'
 import { Route as AdminAuditIndexRouteImport } from './routes/admin/audit/index'
 import { Route as AdminBlueprintsIndexRouteImport } from './routes/admin/blueprints/index'
@@ -54,6 +56,7 @@ import { Route as AdminTestInboxIndexRouteImport } from './routes/admin/test-inb
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as WorkbenchOOrgIdRouteRouteImport } from './routes/workbench/o/$orgId/route'
+import { Route as AdminAllPassesIndexRouteImport } from './routes/admin/all/passes/index'
 import { Route as AdminConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/connections/webhooks.$endpointId'
 import { Route as AdminConnectionsWebhooksNewRouteImport } from './routes/admin/connections/webhooks.new'
 import { Route as AdminOOrgIdIndexRouteImport } from './routes/admin/o/$orgId/index'
@@ -171,6 +174,11 @@ const AdminAccountRoute = AdminAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAllRouteRoute = AdminAllRouteRouteImport.update({
+  id: '/all',
+  path: '/all',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminPlatformRouteRoute = AdminPlatformRouteRouteImport.update({
   id: '/platform',
   path: '/platform',
@@ -200,6 +208,11 @@ const WorkbenchQuickstartRoute = WorkbenchQuickstartRouteImport.update({
   id: '/quickstart',
   path: '/quickstart',
   getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const AdminAllIndexRoute = AdminAllIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAllRouteRoute,
 } as any)
 const AdminApiKeysIndexRoute = AdminApiKeysIndexRouteImport.update({
   id: '/api-keys/',
@@ -360,6 +373,11 @@ const WorkbenchOOrgIdRouteRoute = WorkbenchOOrgIdRouteRouteImport.update({
   id: '/o/$orgId',
   path: '/o/$orgId',
   getParentRoute: () => WorkbenchRouteRoute,
+} as any)
+const AdminAllPassesIndexRoute = AdminAllPassesIndexRouteImport.update({
+  id: '/passes/',
+  path: '/passes/',
+  getParentRoute: () => AdminAllRouteRoute,
 } as any)
 const AdminConnectionsWebhooksEndpointIdRoute =
   AdminConnectionsWebhooksEndpointIdRouteImport.update({
@@ -795,6 +813,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/admin/all': typeof AdminAllRouteRouteWithChildren
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
@@ -819,6 +838,7 @@ export interface FileRoutesByFullPath {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all/': typeof AdminAllIndexRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -856,6 +876,7 @@ export interface FileRoutesByFullPath {
   '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
   '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
   '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes/': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
@@ -937,6 +958,7 @@ export interface FileRoutesByTo {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all': typeof AdminAllIndexRoute
   '/admin/api-keys': typeof AdminApiKeysIndexRoute
   '/admin/audit': typeof AdminAuditIndexRoute
   '/admin/blueprints': typeof AdminBlueprintsIndexRoute
@@ -974,6 +996,7 @@ export interface FileRoutesByTo {
   '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
   '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
   '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import': typeof AdminPassesImportIndexRoute
@@ -1037,6 +1060,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/admin/all': typeof AdminAllRouteRouteWithChildren
   '/admin/platform': typeof AdminPlatformRouteRouteWithChildren
   '/admin/account': typeof AdminAccountRoute
   '/passes/$passId': typeof PassesPassIdRoute
@@ -1061,6 +1085,7 @@ export interface FileRoutesById {
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/all/': typeof AdminAllIndexRoute
   '/admin/api-keys/': typeof AdminApiKeysIndexRoute
   '/admin/audit/': typeof AdminAuditIndexRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -1098,6 +1123,7 @@ export interface FileRoutesById {
   '/workbench/o/$orgId/logs': typeof WorkbenchOOrgIdLogsRoute
   '/workbench/o/$orgId/passes': typeof WorkbenchOOrgIdPassesRoute
   '/workbench/o/$orgId/sandbox': typeof WorkbenchOOrgIdSandboxRoute
+  '/admin/all/passes/': typeof AdminAllPassesIndexRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
   '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
@@ -1162,6 +1188,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/invite'
     | '/login'
+    | '/admin/all'
     | '/admin/platform'
     | '/admin/account'
     | '/passes/$passId'
@@ -1186,6 +1213,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all/'
     | '/admin/api-keys/'
     | '/admin/audit/'
     | '/admin/blueprints/'
@@ -1223,6 +1251,7 @@ export interface FileRouteTypes {
     | '/workbench/o/$orgId/logs'
     | '/workbench/o/$orgId/passes'
     | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes/'
     | '/admin/o/$orgId/'
     | '/admin/passes/change/'
     | '/admin/passes/import/'
@@ -1304,6 +1333,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all'
     | '/admin/api-keys'
     | '/admin/audit'
     | '/admin/blueprints'
@@ -1341,6 +1371,7 @@ export interface FileRouteTypes {
     | '/workbench/o/$orgId/logs'
     | '/workbench/o/$orgId/passes'
     | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes'
     | '/admin/o/$orgId'
     | '/admin/passes/change'
     | '/admin/passes/import'
@@ -1403,6 +1434,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/invite'
     | '/login'
+    | '/admin/all'
     | '/admin/platform'
     | '/admin/account'
     | '/passes/$passId'
@@ -1427,6 +1459,7 @@ export interface FileRouteTypes {
     | '/admin/templates/new'
     | '/admin/templates/upload'
     | '/admin/users/$userId'
+    | '/admin/all/'
     | '/admin/api-keys/'
     | '/admin/audit/'
     | '/admin/blueprints/'
@@ -1464,6 +1497,7 @@ export interface FileRouteTypes {
     | '/workbench/o/$orgId/logs'
     | '/workbench/o/$orgId/passes'
     | '/workbench/o/$orgId/sandbox'
+    | '/admin/all/passes/'
     | '/admin/o/$orgId/'
     | '/admin/passes/change/'
     | '/admin/passes/import/'
@@ -1588,6 +1622,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAccountRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/all': {
+      id: '/admin/all'
+      path: '/all'
+      fullPath: '/admin/all'
+      preLoaderRoute: typeof AdminAllRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/platform': {
       id: '/admin/platform'
       path: '/platform'
@@ -1629,6 +1670,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workbench/quickstart'
       preLoaderRoute: typeof WorkbenchQuickstartRouteImport
       parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/admin/all/': {
+      id: '/admin/all/'
+      path: '/'
+      fullPath: '/admin/all/'
+      preLoaderRoute: typeof AdminAllIndexRouteImport
+      parentRoute: typeof AdminAllRouteRoute
     }
     '/admin/api-keys/': {
       id: '/admin/api-keys/'
@@ -1846,6 +1894,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workbench/o/$orgId'
       preLoaderRoute: typeof WorkbenchOOrgIdRouteRouteImport
       parentRoute: typeof WorkbenchRouteRoute
+    }
+    '/admin/all/passes/': {
+      id: '/admin/all/passes/'
+      path: '/passes'
+      fullPath: '/admin/all/passes/'
+      preLoaderRoute: typeof AdminAllPassesIndexRouteImport
+      parentRoute: typeof AdminAllRouteRoute
     }
     '/admin/connections/webhooks/$endpointId': {
       id: '/admin/connections/webhooks/$endpointId'
@@ -2382,6 +2437,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminAllRouteRouteChildren {
+  AdminAllIndexRoute: typeof AdminAllIndexRoute
+  AdminAllPassesIndexRoute: typeof AdminAllPassesIndexRoute
+}
+
+const AdminAllRouteRouteChildren: AdminAllRouteRouteChildren = {
+  AdminAllIndexRoute: AdminAllIndexRoute,
+  AdminAllPassesIndexRoute: AdminAllPassesIndexRoute,
+}
+
+const AdminAllRouteRouteWithChildren = AdminAllRouteRoute._addFileChildren(
+  AdminAllRouteRouteChildren,
+)
+
 interface AdminPlatformRouteRouteChildren {
   AdminPlatformIndexRoute: typeof AdminPlatformIndexRoute
   AdminPlatformApiKeysKeyIdRoute: typeof AdminPlatformApiKeysKeyIdRoute
@@ -2524,6 +2593,7 @@ const AdminOOrgIdRouteRouteWithChildren =
   AdminOOrgIdRouteRoute._addFileChildren(AdminOOrgIdRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
+  AdminAllRouteRoute: typeof AdminAllRouteRouteWithChildren
   AdminPlatformRouteRoute: typeof AdminPlatformRouteRouteWithChildren
   AdminAccountRoute: typeof AdminAccountRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -2569,6 +2639,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAllRouteRoute: AdminAllRouteRouteWithChildren,
   AdminPlatformRouteRoute: AdminPlatformRouteRouteWithChildren,
   AdminAccountRoute: AdminAccountRoute,
   AdminIndexRoute: AdminIndexRoute,

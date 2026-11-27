@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALL,
+  allPath,
   orgPath,
   PLATFORM,
   parseAdminPath,
@@ -122,5 +124,28 @@ describe('switchTarget', () => {
       '/admin/o/o2/templates',
     );
     expect(switchTarget('/admin/account', target, all)).toBe('/admin/o/o2');
+  });
+});
+
+describe('the All scope', () => {
+  it('parses and formats /admin/all/passes', () => {
+    expect(parseAdminPath('/admin/all/passes')).toEqual({ scope: ALL, rest: '/passes' });
+    expect(parseAdminPath('/admin/all')).toEqual({ scope: ALL, rest: '' });
+    expect(parseAdminPath('/admin/allx')).toEqual({ rest: '/admin/allx' });
+    expect(allPath('/passes')).toBe('/admin/all/passes');
+    expect(scopeKey(ALL)).toBe('all');
+    expect(parseScopeKey('all')).toEqual(ALL);
+  });
+
+  it('always lands on Passes when the target is All', () => {
+    for (const from of ['/admin/o/o1/templates', '/admin/platform/users', '/admin/o/o1']) {
+      expect(switchTarget(from, ALL, () => false)).toBe('/admin/all/passes');
+    }
+  });
+
+  it('keeps Passes leaving All for an organization, and opens the platform overview', () => {
+    const org = { kind: 'org', orgId: 'o1' } as const;
+    expect(switchTarget('/admin/all/passes', org, () => true)).toBe('/admin/o/o1/passes');
+    expect(switchTarget('/admin/all/passes', PLATFORM, () => true)).toBe('/admin/platform');
   });
 });
