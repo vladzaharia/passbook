@@ -10,12 +10,14 @@ import {
   presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
+import type { PlatformCaller } from '../../platform/actor.ts';
 import type { Actor } from '../../platform/context.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
+import { byUserOfCaller } from '../idp/actor.ts';
 import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   orgEntitlementsRow,
@@ -184,9 +186,10 @@ export async function setOrgEntitlements(
   actor: Actor,
   orgId: string,
   input: Input,
-  admin: { userId: string; sessionId: string },
+  admin: PlatformCaller,
 ): Promise<OrgEntitlementsDto> {
   const now = ctx.clock.now();
+  const by = await byUserOfCaller(ctx.env.DB, admin);
   const before = await stateOf(ctx, orgId);
   const target = before.presets.find((p) => p.preset === input.preset);
   if (!target)
@@ -231,6 +234,7 @@ export async function setOrgEntitlements(
     await writeEntitlements(ctx, {
       orgId,
       admin,
+      by,
       expectedRevision: before.revision,
       preset: input.preset,
       presetRevision: target.revision,
@@ -271,15 +275,7 @@ export async function setOrgEntitlements(
     throw error;
   }
   // Delivery channels the plan gates converge their passes: one channel-apply run per template.
-  await onEntitlementsChanged(
-    ctx,
-    orgId,
-    was,
-    after,
-    admin.userId,
-    before.revision + 1,
-    before.gap,
-  );
+  await onEntitlementsChanged(ctx, orgId, was, after, by, before.revision + 1, before.gap);
   ctx.log.info('org.entitlements_set', { orgId, preset: input.preset });
   return readOrgEntitlements(ctx, orgId);
 }

@@ -105,7 +105,12 @@ async function endAccess(
     await endSandboxDevicePasses(ctx, plan.sandboxOrgId);
   }
   // Disabling revokes every session and marks the user for the drain, which takes the roles away.
-  await setUserStatus(ctx, auth.userId, plan.userId, 'disabled', auth.sessionId);
+  await setUserStatus(
+    ctx,
+    { userId: auth.userId, sessionId: auth.sessionId },
+    plan.userId,
+    'disabled',
+  );
 }
 
 /**

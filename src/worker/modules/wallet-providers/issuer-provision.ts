@@ -65,7 +65,7 @@ export function runDto(run: RunRow): GoogleIssuerRun {
 /** Starts the run that gives the org a child issuer, or returns the open one. */
 export async function startManagedIssuer(
   ctx: ServiceContext,
-  input: { orgId: string; createdBy: string | null },
+  input: { orgId: string; createdBy: string | null; keyId?: string },
 ): Promise<{ run: GoogleIssuerRun; created: boolean }> {
   const db = ctx.env.DB;
   const org = await getOrgRow(db, input.orgId);
@@ -101,13 +101,13 @@ export async function startManagedIssuer(
   }
   await enqueue(ctx, id);
   await recordAudit(ctx, {
-    actorType: input.createdBy ? 'user' : 'system',
-    actorId: input.createdBy,
+    actorType: input.keyId ? 'api_key' : input.createdBy ? 'user' : 'system',
+    actorId: input.keyId ?? input.createdBy,
     orgId: input.orgId,
     action: 'wallet.google_issuer_requested',
     targetType: 'org',
     targetId: input.orgId,
-    detail: { runId: id },
+    detail: { runId: id, ...(input.keyId ? { via: 'api' } : {}) },
   });
   const run = await getRun(db, id, GOOGLE);
   if (!run) throw new NotFoundError();
@@ -136,7 +136,7 @@ export async function latestManagedRun(
 /** A platform admin finishes a parked run with an issuer made in the Console and shared with PassBook. */
 export async function completeManualIssuer(
   ctx: ServiceContext,
-  input: { orgId: string; issuerId: string; adminId: string },
+  input: { orgId: string; issuerId: string; adminId: string | null; keyId?: string },
 ): Promise<GoogleIssuerRun> {
   const db = ctx.env.DB;
   const open = await findOpenRun(db, TARGET, managedTargetId(input.orgId), 'provision');
@@ -161,13 +161,17 @@ export async function completeManualIssuer(
   await patchRunRef(db, open.id, { issuerId: input.issuerId, how: 'manual' }, ctx.clock.now());
   if (await resumeRun(db, open.id, ctx.clock.now())) await enqueue(ctx, open.id);
   await recordAudit(ctx, {
-    actorType: 'user',
-    actorId: input.adminId,
+    actorType: input.keyId ? 'api_key' : 'user',
+    actorId: input.keyId ?? input.adminId,
     orgId: input.orgId,
     action: 'wallet.google_issuer_entered',
     targetType: 'org',
     targetId: input.orgId,
-    detail: { runId: open.id, issuerId: input.issuerId },
+    detail: {
+      runId: open.id,
+      issuerId: input.issuerId,
+      ...(input.keyId ? { via: 'api' } : {}),
+    },
   });
   const run = await getRun(db, open.id, GOOGLE);
   if (!run) throw new NotFoundError();

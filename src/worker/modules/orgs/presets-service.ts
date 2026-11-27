@@ -10,11 +10,13 @@ import {
   presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
+import type { PlatformCaller } from '../../platform/actor.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
+import { byUserOfCaller } from '../idp/actor.ts';
 import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   presetRows,
@@ -68,7 +70,8 @@ export async function listPresets(ctx: ServiceContext): Promise<EntitlementPrese
 /** One organization moves with its preset: its revision, an audit row, and the channel runs the plan change asks for. */
 async function moveOrg(
   ctx: ServiceContext,
-  admin: { userId: string; sessionId: string },
+  admin: PlatformCaller,
+  by: string,
   actor: Actor,
   p: {
     preset: string;
@@ -104,6 +107,7 @@ async function moveOrg(
     await writeEntitlements(ctx, {
       orgId: org.org_id,
       admin,
+      by,
       expectedRevision: org.revision,
       preset: p.preset,
       presetRevision: p.presetRevision,
@@ -142,7 +146,7 @@ async function moveOrg(
     }
     throw error;
   }
-  await onEntitlementsChanged(ctx, org.org_id, was, after, admin.userId, revision, gap);
+  await onEntitlementsChanged(ctx, org.org_id, was, after, by, revision, gap);
   return true;
 }
 
@@ -155,11 +159,12 @@ async function moveOrg(
 export async function setPreset(
   ctx: ServiceContext,
   actor: Actor,
-  admin: { userId: string; sessionId: string },
+  admin: PlatformCaller,
   input: SetEntitlementPresetInput,
   limit = FANOUT_MAX,
 ): Promise<SetEntitlementPresetResult> {
   const db = ctx.env.DB;
+  const by = await byUserOfCaller(db, admin);
   const meta = (await presetRows(db)).find((p) => p.preset === input.preset);
   if (!meta) throw new NotFoundError('Preset not found.', 'PRESET_NOT_FOUND');
   if (input.expectedRevision !== meta.revision) throw changed();
@@ -190,6 +195,7 @@ export async function setPreset(
     try {
       await writePreset(ctx, {
         admin,
+        by,
         preset: input.preset,
         expectedRevision: meta.revision,
         now,
@@ -226,7 +232,7 @@ export async function setPreset(
   const move = { preset: input.preset, presetRevision: revision, before, after };
   for (const org of await pendingOrgs(db, input.preset, revision, limit)) {
     try {
-      if (await moveOrg(ctx, admin, actor, move, org)) moved++;
+      if (await moveOrg(ctx, admin, by, actor, move, org)) moved++;
     } catch (error) {
       // The edit is committed: report what moved, and the rest stays pending for the next call.
       ctx.log.error('entitlement.preset_move_failed', {

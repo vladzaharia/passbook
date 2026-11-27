@@ -71868,8 +71868,10 @@
                 "members:write",
                 "platform:read",
                 "platform:users",
+                "platform:orgs",
                 "platform:groups",
                 "platform:claims",
+                "platform:identities",
                 "platform:status",
                 "platform:audit",
                 "platform:settings",
@@ -73582,6 +73584,62 @@
           "setup",
           "live",
           "recent"
+        ]
+      },
+      "PlatformMetricsRetrieveDeveloperResponse": {
+        "type": "object",
+        "properties": {
+          "windowDays": {
+            "type": "integer"
+          },
+          "sandboxes": {
+            "type": "integer"
+          },
+          "viewed": {
+            "type": "integer"
+          },
+          "called": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "previewed": {
+            "type": "integer"
+          },
+          "completion": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "ttfpP50Ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ttfpP90Ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ttfpSamples": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "windowDays",
+          "sandboxes",
+          "viewed",
+          "called",
+          "passed",
+          "previewed",
+          "completion",
+          "ttfpP50Ms",
+          "ttfpP90Ms",
+          "ttfpSamples"
         ]
       },
       "MetricsRetrieveOverviewResponse": {
@@ -102888,10 +102946,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "List organizations (personal organizations are never listed)",
         "tags": [
@@ -102992,8 +103059,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -103002,10 +103072,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Create an organization",
         "tags": [
@@ -103100,9 +103174,13 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_ADD_ME_NEEDS_PERSON",
           "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "RATE_LIMITED",
@@ -103115,10 +103193,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Get an organization for platform provisioning",
         "tags": [
@@ -103182,8 +103269,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
@@ -103390,10 +103480,15 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
+        "x-human-only": "apply",
         "x-platform-scope": "platform:orgs",
         "summary": "Suspend or reactivate an organization",
         "tags": [
@@ -103474,8 +103569,11 @@
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
@@ -111194,10 +111292,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Start a managed Google issuer for an organization",
         "tags": [
@@ -111266,8 +111368,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -111282,10 +111387,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Finish a parked managed Google issuer with an issuer id made in the console",
         "tags": [
@@ -111354,9 +111463,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "GOOGLE_ISSUER_NOT_SHARED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -111371,10 +111483,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Rotate a platform Google credential's service-account key now",
         "tags": [
@@ -111428,8 +111544,11 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -111443,10 +111562,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "List the platform wallet credentials",
         "tags": [
@@ -111541,8 +111669,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -111551,10 +111682,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Create or rotate a platform wallet credential",
         "tags": [
@@ -111634,9 +111769,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION",
@@ -111651,10 +111789,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Name the Samsung card of one more type on a platform credential",
         "tags": [
@@ -111738,9 +111880,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -111858,10 +112003,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Check a platform wallet credential with its provider",
         "tags": [
@@ -111912,8 +112061,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "RATE_LIMITED",
@@ -111929,10 +112081,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Read the result of a platform wallet credential check",
         "tags": [
@@ -111995,8 +112156,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "RATE_LIMITED",
@@ -112211,10 +112375,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "List every organization enrollment of a wallet provider",
         "tags": [
@@ -112298,8 +112471,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -112310,10 +112486,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Report the legacy wallet accounts waiting for a credential source",
         "tags": [
@@ -112394,8 +112579,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -112404,10 +112592,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:wallet"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:wallet",
         "summary": "Queue the migration of legacy wallet accounts onto credential sources",
         "tags": [
@@ -112445,8 +112637,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -112532,10 +112727,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Read an organization's features: preset, overrides and the presets to choose from",
         "tags": [
@@ -112609,8 +112813,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
@@ -112622,10 +112829,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Set an organization's preset and overrides, against the revision the caller read",
         "tags": [
@@ -112720,9 +112931,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
@@ -112736,10 +112950,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Read every preset with its values and the organizations on it",
         "tags": [
@@ -112789,8 +113012,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -112798,10 +113024,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue)",
         "tags": [
@@ -112871,9 +113101,12 @@
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "PRESET_MOVING",
           "PRESET_NOT_FOUND",
           "RATE_LIMITED",
@@ -112887,10 +113120,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Names of the personal organizations, which are not listed, for views that show an org by id",
         "tags": [
@@ -112945,8 +113187,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -112957,10 +113202,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "List the legal holds of an organization",
         "tags": [
@@ -113033,8 +113287,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -113044,10 +113301,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Place a platform legal hold; only a platform administrator releases it",
         "tags": [
@@ -113111,8 +113372,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -113126,10 +113390,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "List the retention receipts of an organization",
         "tags": [
@@ -113212,9 +113485,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -113226,10 +113502,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Download one retention receipt of an organization",
         "tags": [
@@ -113305,8 +113590,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "RECEIPT_NOT_FOUND",
@@ -113319,10 +113607,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "List retention receipts of platform-scope deletions",
         "tags": [
@@ -113395,9 +113692,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -113408,10 +113708,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "Download one platform-scope retention receipt",
         "tags": [
@@ -113477,8 +113786,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "RECEIPT_NOT_FOUND",
@@ -113491,10 +113803,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:orgs"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:orgs",
         "summary": "List closed organizations",
         "tags": [
@@ -113554,8 +113875,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -143902,10 +144226,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Upload an Apple identity",
         "tags": [
@@ -143992,6 +144320,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXISTS",
           "IDENTITY_NOT_CONFIGURED",
@@ -143999,6 +144328,8 @@
           "IDENTITY_PROTECTED",
           "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144011,10 +144342,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Get an Apple identity",
         "tags": [
@@ -144093,9 +144433,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -144105,10 +144448,15 @@
       "patch": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
+        "x-human-only": "apply",
         "x-platform-scope": "platform:identities",
         "summary": "Update an Apple identity",
         "tags": [
@@ -144202,6 +144550,7 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "APNS_BINDING_MANAGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
@@ -144209,6 +144558,8 @@
           "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PROTECTED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -144287,10 +144638,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Replace the certificate and key of an Apple identity",
         "tags": [
@@ -144388,10 +144743,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDENTITY_PROTECTED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144404,10 +144762,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Probe APNs with the identity certificate using a dummy token",
         "tags": [
@@ -144461,9 +144823,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -144475,10 +144840,14 @@
       "put": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Set or replace the APNs push key (.p8) of the identity team",
         "tags": [
@@ -144575,9 +144944,12 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "STEP_UP_REQUIRED",
@@ -144588,10 +144960,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Remove the APNs push key of the identity team",
         "tags": [
@@ -144670,9 +145046,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "PUSH_KEY_NONE",
           "RATE_LIMITED",
@@ -144685,10 +145064,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Get a new certificate now (managed identities)",
         "tags": [
@@ -144750,11 +145133,14 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
           "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -145501,10 +145887,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:identities"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:identities",
         "summary": "Apple provisioner's call ledger",
         "tags": [
@@ -145570,8 +145965,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -147085,10 +147483,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "List users",
         "tags": [
@@ -147185,8 +147592,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -147197,10 +147607,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Get a user",
         "tags": [
@@ -147314,8 +147733,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -147326,10 +147748,14 @@
       "patch": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Disable or enable a user",
         "tags": [
@@ -147400,8 +147826,20 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
@@ -147418,10 +147856,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "List a user's passes in every organization",
         "tags": [
@@ -147509,8 +147956,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -147957,10 +148407,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Revoke all sessions",
         "tags": [
@@ -148010,8 +148464,20 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -148024,10 +148490,14 @@
       "delete": {
         "security": [
           {
+            "apiKey": [
+              "platform:users"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:users",
         "summary": "Revoke one session",
         "tags": [
@@ -148087,8 +148557,20 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
+          "IDP_BUDGET",
+          "IDP_CLIENT",
+          "IDP_CONFLICT",
+          "IDP_IN_USE",
+          "IDP_NOT_MANAGED",
+          "IDP_PLATFORM_ADMIN",
+          "IDP_REFUSED",
+          "IDP_SCIM_FOREIGN",
+          "IDP_SCIM_MISSING",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "SESSION_NOT_FOUND",
@@ -150440,10 +150922,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Component health",
         "tags": [
@@ -150582,9 +151073,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_NOT_CONFIGURED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -150595,10 +151089,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Recent workflow runs",
         "tags": [
@@ -150659,8 +151162,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -150671,10 +151177,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Incident notes on the public status page",
         "tags": [
@@ -150743,8 +151258,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -150753,10 +151271,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Open an incident note on the public status page",
         "tags": [
@@ -150816,8 +151338,11 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -150828,10 +151353,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Resolve an incident note",
         "tags": [
@@ -150887,9 +151416,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INCIDENT_NOT_FOUND",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -150901,10 +151433,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Platform overview metrics (filtered results are aggregate-only)",
         "tags": [
@@ -151433,9 +151974,12 @@
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "METRICS_NOT_FOUND",
+          "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "ORG_PERSONAL",
           "RATE_LIMITED",
@@ -151448,10 +151992,19 @@
       "get": {
         "security": [
           {
+            "apiKey": [
+              "platform:status"
+            ]
+          },
+          {
+            "apiKey": [
+              "platform:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-platform-scope": "platform:status",
         "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
         "tags": [
@@ -151463,60 +152016,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "windowDays": {
-                      "type": "integer"
-                    },
-                    "sandboxes": {
-                      "type": "integer"
-                    },
-                    "viewed": {
-                      "type": "integer"
-                    },
-                    "called": {
-                      "type": "integer"
-                    },
-                    "passed": {
-                      "type": "integer"
-                    },
-                    "previewed": {
-                      "type": "integer"
-                    },
-                    "completion": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    },
-                    "ttfpP50Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpP90Ms": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "ttfpSamples": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": [
-                    "windowDays",
-                    "sandboxes",
-                    "viewed",
-                    "called",
-                    "passed",
-                    "previewed",
-                    "completion",
-                    "ttfpP50Ms",
-                    "ttfpP90Ms",
-                    "ttfpSamples"
-                  ]
+                  "$ref": "#/components/schemas/PlatformMetricsRetrieveDeveloperResponse"
                 },
                 "example": {
                   "windowDays": 36,
@@ -151547,14 +152047,15 @@
         "operationId": "metrics.getMetricsPlatformDeveloper",
         "x-sdk": {
           "resource": "platform.metrics",
-          "method": "retrieveDeveloper",
-          "sdk": false,
-          "reason": "Platform admin console card; needs an admin's session."
+          "method": "retrieveDeveloper"
         },
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]

@@ -1,4 +1,5 @@
 // Single-purpose file: every grant here is `platform.entitlement_preset.update`, written by a live platform admin.
+import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -44,7 +45,9 @@ export const pendingCount = async (db: D1Database, preset: string, revision: num
   )?.n ?? 0;
 
 export interface PresetWrite {
-  admin: { userId: string; sessionId: string };
+  admin: PlatformCaller;
+  /** The user the `updated_by` column names: the admin, or the key's creator. */
+  by: string;
   preset: string;
   /** The revision read; the edit commits only while it still stands. */
   expectedRevision: number;
@@ -62,11 +65,11 @@ export interface PresetWrite {
 export async function writePreset(ctx: ServiceContext, w: PresetWrite): Promise<void> {
   const g = grant(ctx, {
     purpose: 'platform.entitlement_preset.update',
-    principal: { kind: 'platform', userId: w.admin.userId, sessionIdHash: w.admin.sessionId },
+    principal: callerPrincipal(w.admin),
     codes: { lineage: 'ENTITLEMENTS_CHANGED' },
   });
   g.update('entitlement_preset_meta', {
-    set: { updated_at: w.now, updated_by: w.admin.userId, previous_values: w.previousValues },
+    set: { updated_at: w.now, updated_by: w.by, previous_values: w.previousValues },
     inc: ['revision'],
     where: { preset: w.preset, revision: w.expectedRevision },
     require: 'one',

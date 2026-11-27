@@ -1,6 +1,7 @@
 // Single-purpose file: every grant here is `platform.org.entitlements_set`, written by a live platform admin.
 // The authority-scope allowlist exempts this file from the "names org_id" lint on that basis; a tenant grant
 // does not belong here.
+import { callerPrincipal, type PlatformCaller } from '../../platform/actor.ts';
 import { grant } from '../../platform/authority.ts';
 import { inList } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
@@ -84,7 +85,9 @@ export const presetValueRows = (db: D1Database) =>
 
 export interface EntitlementsWrite {
   orgId: string;
-  admin: { userId: string; sessionId: string };
+  admin: PlatformCaller;
+  /** The user the `updated_by` column names: the admin, or the key's creator. */
+  by: string;
   /** The revision read; 0 creates the missing row instead of moving an existing one. */
   expectedRevision: number;
   preset: string;
@@ -104,10 +107,10 @@ export interface EntitlementsWrite {
  * (`ENTITLEMENTS_CHANGED`) with nothing written.
  */
 export async function writeEntitlements(ctx: ServiceContext, w: EntitlementsWrite): Promise<void> {
-  const who = w.admin.userId;
+  const who = w.by;
   const g = grant(ctx, {
     purpose: 'platform.org.entitlements_set',
-    principal: { kind: 'platform', userId: who, sessionIdHash: w.admin.sessionId },
+    principal: callerPrincipal(w.admin),
     target: w.orgId,
     codes: { lineage: 'ENTITLEMENTS_CHANGED' },
   });

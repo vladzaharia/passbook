@@ -47,7 +47,7 @@ register(
     summary: "Apple provisioner's call ledger",
     query: AppleCallQuerySchema,
     response: AppleCallListSchema,
-    auth: { platform: 'platform:identities' },
+    auth: { platform: 'platform:identities', key: true },
   },
   async (c) => {
     const ctx = serviceContext(c);
