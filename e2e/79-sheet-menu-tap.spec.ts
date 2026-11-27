@@ -71,3 +71,43 @@ test('Account menu sheet: a tap on the trigger opens it and selects nothing', as
   await expect(page).toHaveURL(new RegExp(`/admin/o/${org}/?$`));
   await shot(page, 'account-menu-tapped');
 });
+
+test.describe('mouse', () => {
+  test.use({ hasTouch: false, isMobile: false });
+
+  test('Account menu sheet: a mouse click on the trigger selects nothing, a fresh click does', async ({
+    page,
+  }) => {
+    const org = encodeURIComponent(readSeed().org.id);
+    await page.goto(`/admin/o/${org}`);
+    const trigger = page.getByRole('button', { name: 'Account menu' });
+    await trigger.click();
+    const sheet = page.getByRole('menu');
+    await expect(sheet).toBeVisible();
+    await settle(page);
+    await expect(sheet).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/admin/o/${org}/?$`));
+    await page.getByRole('menuitem').first().click();
+    await expect(sheet).toHaveCount(0);
+  });
+
+  test('Wizard bar menu: a mouse click on the trigger selects nothing', async ({ page }) => {
+    test.setTimeout(120_000);
+    const org = encodeURIComponent(readSeed().org.id);
+    await page.goto(`/admin/o/${org}/connections/new?source=shopify-orders`);
+    await page.getByLabel(/^Name/).fill(`E2E Mouse ${uid('m')}`);
+    const next = page.getByRole('button', { name: 'Next', exact: true });
+    await next.click();
+    await next.click();
+    await next.click();
+    await page.getByRole('button', { name: /^Create/ }).click();
+    await page.waitForURL(/\/connections\/[^/]+\/setup$/);
+    await page.getByRole('button', { name: 'More actions' }).click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await settle(page);
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(page.getByRole('alertdialog', { name: 'Leave setup?' })).toHaveCount(0);
+    await page.getByRole('menuitem', { name: 'Cancel' }).click();
+    await expect(page.getByRole('alertdialog', { name: 'Leave setup?' })).toBeVisible();
+  });
+});
