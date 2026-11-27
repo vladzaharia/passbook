@@ -154,6 +154,61 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         ),
       /alias|ao CTE|top-level/,
     ],
+    [
+      'LEFT JOIN of the anchor read by ao.org_id IS NULL, ON <P> = 1',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM passes x LEFT JOIN ${c.A} ON ${c.P} = 1 AND 1 WHERE ao.org_id IS NULL`,
+        ),
+      /inner-join|joins actor_ok once|misplaced/,
+    ],
+    [
+      'LEFT JOIN of the anchor on the tenant column',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM passes x LEFT JOIN ${c.A} ON x.org_id = ao.org_id WHERE ao.org_id IS NULL`,
+        ),
+      /inner-join|joins actor_ok once|misplaced/,
+    ],
+    [
+      'RIGHT JOIN of the passes onto the anchor',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} RIGHT JOIN passes x ON ${c.P} = 1 AND x.org_id = ao.org_id WHERE ao.org_id IS NULL`,
+        ),
+      /inner-join|joins actor_ok once|misplaced/,
+    ],
+    [
+      'LEFT JOIN of the rows form',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM passes x LEFT JOIN actor_ok ao CROSS JOIN passes k WHERE ao.org_id IS NULL`,
+        ),
+      /inner-join|joins actor_ok once|misplaced/,
+    ],
+    [
+      'LEFT JOIN of a CTE that reads the anchor',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM passes x LEFT JOIN page ON 1 = 1 WHERE page.k IS NULL`,
+          `, page AS (SELECT 1 AS k FROM ${c.A} WHERE ${c.P} = 1)`,
+        ),
+      /inner-join|joins actor_ok once|misplaced/,
+    ],
+    [
+      'rev-1 negation: (x.org_id = ao.org_id) IS NOT 1',
+      (c) =>
+        c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE (x.org_id = ao.org_id) IS NOT 1`),
+      /appear only as/,
+    ],
+    [
+      'rev-1 negation: CASE THEN 0 ELSE 1 on the org comparison',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE CASE WHEN x.org_id = ao.org_id THEN 0 ELSE 1 END = 1`,
+        ),
+      /appear only as/,
+    ],
   ];
 
   it.each(cases)('%s', async (_n, build_, why) => {
@@ -186,7 +241,7 @@ describe('accepted forms of authorized()', () => {
     [
       'beside tenant columns',
       (c: Awaited<ReturnType<typeof build>>) =>
-        c.stmt(`SELECT ${c.x('authz')}, x.id FROM ${c.A} LEFT JOIN passes x ON ${c.P} = 1`),
+        c.stmt(`SELECT ${c.x('authz')}, x.id FROM ${c.A} JOIN passes x ON ${c.P} = 1`),
     ],
     [
       'in a top-level CTE read once and selected as page.*',

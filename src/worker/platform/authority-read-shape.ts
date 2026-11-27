@@ -13,6 +13,9 @@ import { AuthorityError } from './authority-error.ts';
  */
 export const TERM = 'ao_term ao';
 const STAMP = 'authority_present_k7';
+const NULL_EXTENDS = /\b(?:RIGHT|FULL|NATURAL)\b(?!\s*\()/i;
+const OUTER_BEFORE =
+  /\b(?:(?:LEFT|RIGHT|FULL|NATURAL)\s+)+(?:OUTER\s+)?JOIN\s*$|\bOUTER\s+JOIN\s*$/i;
 const ANCHOR_COLS = /(?<![.\w])(?:org_id|mode|limit_key|authority_present_k7)(?![\w])/gi;
 const KEYWORDS =
   /^(?:LEFT|RIGHT|INNER|OUTER|CROSS|NATURAL|JOIN|WHERE|GROUP|ORDER|LIMIT|ON|UNION|INTERSECT|EXCEPT|USING|WINDOW|HAVING)$/i;
@@ -147,6 +150,14 @@ export function assertAnchorShape(blanked: string): void {
   for (const m of masked.matchAll(ANCHOR_COLS))
     if (!/\bAS\s+$/i.test(masked.slice(0, m.index ?? 0))) refuse('no unqualified anchor column');
   if (/\b(?:UNION|INTERSECT|EXCEPT)\b/i.test(core.text)) refuse('not an arm of a compound select');
+  // `ao.org_id IS NULL` reads true on a NULL-extended anchor side, so the anchor is the FROM item or inner-joined:
+  // never the right side of a LEFT or OUTER join, and never on the left of a RIGHT, FULL or NATURAL join.
+  for (const c of core.kind === 'cte' ? [core, root] : [core])
+    if (NULL_EXTENDS.test(c.text))
+      refuse('the anchor and its reader never RIGHT, FULL or NATURAL join');
+  for (const m of core.text.matchAll(new RegExp(`${esc(TERM)}`, 'g')))
+    if (OUTER_BEFORE.test(core.text.slice(0, m.index ?? 0)))
+      refuse('the anchor is never the outer side of a LEFT join');
   if (core.kind === 'cte') {
     const q = readOnceBy(root, core, cores);
     for (const alias of aliases) aliasOnlyOut(root, q, alias, cores);
@@ -159,6 +170,11 @@ function readOnceBy(root: Core, cte: Core, cores: Core[]): string {
   const name = esc(cte.name);
   const use = new RegExp(`\\b(?:FROM|JOIN)\\s+${name}(?![\\w.])(?:\\s+(?:AS\\s+)?(\\w+))?`, 'gi');
   const reads = [...root.text.matchAll(use)];
+  for (const r of reads)
+    if (
+      OUTER_BEFORE.test(root.text.slice(0, r.index ?? 0) + (/^\s*JOIN/i.test(r[0]) ? ' JOIN' : ''))
+    )
+      refuse('the ao CTE is never the outer side of a LEFT join');
   // `name.col` is a qualified column of the one read, not a second read.
   const any = new RegExp(`(?<![.\\w])${name}(?![\\w.])`, 'gi');
   const total = cores
@@ -223,4 +239,17 @@ export function assertAnchorOperands(blanked: string): void {
     'i',
   );
   if (bad.test(blanked)) refuse('ao columns are compared with = only');
+  // Each predicate that holds an `ao` column is exactly `<operand> = ao.<c>` (either side) or `ao.org_id IS NULL`:
+  // IS, IS NOT, CASE, NOT, arithmetic or a function around it can turn the sentinel's 0 into a pass.
+  const operand = String.raw`\+?[\w.?]+`;
+  const plain = new RegExp(
+    String.raw`^\s*\(*\s*(?:${operand}\s*=\s*(?:''\s*\|\|\s*)?${OPERAND}|${OPERAND}\s*=\s*${operand}|${OPERAND}\s+IS\s+NULL)\s*\)*\s*$`,
+    'i',
+  );
+  for (const c of splitCores(blanked))
+    for (const part of c.text.split(
+      /\b(?:WHERE|ON|AND|OR|FROM|JOIN|GROUP|ORDER|HAVING|LIMIT|SELECT)\b/i,
+    ))
+      if (new RegExp(String.raw`\b${OPERAND}\b`, 'i').test(part) && !plain.test(part))
+        refuse('ao columns appear only as <col> = ao.<c> or ao.<c> IS NULL:' + part);
 }

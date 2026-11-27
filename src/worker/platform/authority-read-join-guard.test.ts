@@ -126,7 +126,7 @@ describe('the join alone fences', () => {
           const forms = {
             rows: `FROM ${p.rows}${table} x WHERE ${tn}`,
             where: `FROM ${p.anchor} CROSS JOIN ${table} x WHERE ${tn}`,
-            on: `FROM ${p.anchor} LEFT JOIN ${table} x ON ${tn}`,
+            on: `FROM ${p.anchor} JOIN ${table} x ON ${tn}`,
           };
           const read = async (from: string) => {
             const sql = `WITH ${p.ctes} SELECT x.* ${from}`;
