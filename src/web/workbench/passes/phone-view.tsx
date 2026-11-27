@@ -15,7 +15,7 @@ import { usePassDetail } from './use-passes.ts';
 const SHOWN = 12;
 
 function PhoneCard({ pass }: { pass: PassSummaryDto }) {
-  const detail = usePassDetail(pass.id);
+  const detail = usePassDetail(pass.id, { poll: false });
   const title = titleOf(pass);
   return (
     <li className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface-raised p-4 shadow-elevation-1">

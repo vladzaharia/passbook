@@ -198,6 +198,23 @@ describe('On my phone', () => {
     expect(screen.getByRole('radio', { name: 'On my phone' })).toBeChecked();
   });
 
+  it('reads each card link once and makes no repeat calls', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { world: w } = await org();
+      await screen.findAllByRole('link', { name: 'Open on this phone' });
+      const reads = () => w.calls.filter((c) => /^\/api\/v1\/passes\/[^/]+$/.test(c.path)).length;
+      const before = reads();
+      expect(before).toBeGreaterThan(0);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+      expect(reads()).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('a sandbox has no On my phone view while the device pass is off, and says Test preview', async () => {
     await open('/workbench/o/sbx/passes?view=phone');
     expect(await list()).toBeInTheDocument();

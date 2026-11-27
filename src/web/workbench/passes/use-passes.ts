@@ -35,16 +35,24 @@ export function usePassList() {
   });
 }
 
-/** One pass in full: its preview, versions and links. Absent while nothing is selected. */
-export function usePassDetail(id: string | undefined) {
+const LINK_STALE_MS = 5 * 60_000;
+
+/**
+ * One pass in full: its preview, versions and links. Absent while nothing is selected. `poll: false`
+ * is for a view that wants only the link, which does not change: a dozen cards must not each read
+ * every 8 s against the token's rate limit.
+ */
+export function usePassDetail(id: string | undefined, opts: { poll?: boolean } = {}) {
+  const poll = opts.poll ?? true;
   const api = useToolApi();
   const key = useToolKey();
   return useQuery({
     queryKey: [...ALL, 'detail', id, ...key],
     queryFn: ({ signal }) => api.get(`/api/v1/passes/${id}`, PassDetailSchema, { signal }),
     enabled: id !== undefined,
-    refetchInterval: LIST_POLL_MS,
-    refetchIntervalInBackground: false,
+    ...(poll
+      ? { refetchInterval: LIST_POLL_MS, refetchIntervalInBackground: false }
+      : { refetchInterval: false as const, staleTime: LINK_STALE_MS }),
   });
 }
 
