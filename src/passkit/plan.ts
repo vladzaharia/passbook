@@ -36,7 +36,7 @@ export interface AssetOverride {
   sha1?: string;
 }
 
-/** What planning a pass takes. No signing material exists to pass. */
+/** What planning a pass takes. Signing material, when a caller passes it, is never read. */
 export interface PlanInput {
   template: ResolvedTemplate;
   registry: TemplateRegistry;

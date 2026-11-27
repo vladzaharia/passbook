@@ -1,4 +1,5 @@
-import type { BehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
+import { behaviorPlugins } from '../../../generated/behaviors.ts';
+import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
 import { planPass } from '../../../passkit/plan.ts';
 import { FIELD_GROUPS } from '../../../passkit/schema/constants.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
@@ -8,6 +9,8 @@ import { PASS_STYLES, type PassJson, type Personalization } from '../../../passk
 export const PREVIEW_NOW = new Date(Date.UTC(2026, 0, 1));
 const IDENTITY = { passTypeIdentifier: 'pass.preview', teamIdentifier: 'PREVIEW000' };
 const SLOT = /^(contact|pass-service)(-poster)?$/;
+
+const behaviors = createBehaviorRegistry([...behaviorPlugins]);
 
 /** Planning reads no files: the bytes of a preview are never asked for. */
 const noRegistry: TemplateRegistry = {
@@ -48,10 +51,9 @@ function withPassService(base: PassJson, passService: string): PassJson {
 export function planPreview(args: {
   template: ResolvedTemplate;
   input: Personalization;
-  behaviors: BehaviorRegistry;
   origin: string;
 }): PassJson {
-  const { template, input, behaviors, origin } = args;
+  const { template, input, origin } = args;
   const plan = planPass({
     template,
     registry: noRegistry,

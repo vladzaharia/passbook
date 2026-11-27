@@ -103,4 +103,40 @@ describe('Design signed out: a blueprint on the anonymous host', () => {
     for (const { url } of seen.slice(before)) expect(url, url).toMatch(/^\/templates\//);
     expect(seen.every((r) => !r.url.includes('/api/'))).toBe(true);
   });
+
+  it('says so and keeps the stored card when the planner fails to load', async () => {
+    vi.resetModules();
+    vi.doMock('./live-plan.ts', () => {
+      throw new Error('chunk');
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { AnonDesign: Fresh } = await import('./anon-design.tsx');
+    const { AnonProvider: Provider } = await import('./anon-context.tsx');
+    const { useAnonValue: useValue } = await import('./use-anon-value.ts');
+    function Broken() {
+      const { value } = useValue(data, false);
+      return (
+        <Provider value={value}>
+          <Fresh blueprint={value.blueprint} />
+        </Provider>
+      );
+    }
+    const queryClient = createQueryClient();
+    const root = createRootRoute({ component: Broken });
+    const router = createRouter({
+      routeTree: root,
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    });
+    render(
+      <AppProviders queryClient={queryClient}>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    );
+    const name = await screen.findByRole('textbox', { name: /^Name/ });
+    await userEvent.type(name, 'x');
+    expect(await screen.findByText('The preview did not update. Reload the page.')).toBeVisible();
+    expect(error).toHaveBeenCalledWith('design.live_plan_failed', expect.anything());
+    vi.doUnmock('./live-plan.ts');
+    error.mockRestore();
+  });
 });

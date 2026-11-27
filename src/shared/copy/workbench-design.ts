@@ -44,6 +44,7 @@ export const WB_DESIGN = {
     signIn: 'Sign in to design',
     badLink: (name: string) => `That link did not match a blueprint. Showing ${name}.`,
     loadFailed: 'The blueprints did not load.',
+    liveFailed: 'The preview did not update. Reload the page.',
     saving: 'Saving to your sandbox',
     saved: (name: string) => `Saved as ${name}`,
     saveFailed: 'Could not save to your sandbox.',

@@ -8,8 +8,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
-import { behaviorPlugins } from '../../../generated/behaviors.ts';
-import { createBehaviorRegistry } from '../../../passkit/behaviors/registry.ts';
 import { stampedView } from '../../../passkit/build-assets.ts';
 import { resolvePaper } from '../../../passkit/template/paper.ts';
 import { bestImage, imageSlots } from '../../../passkit/template/paper-assets.ts';
@@ -30,7 +28,6 @@ const PAPER_WIDTH = 520;
 const PAGE_GAP = 28;
 /** The sheet is XML inside the image, so its drawings need their namespace spelled out. */
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const behaviors = createBehaviorRegistry([...behaviorPlugins]);
 const dataUri = (root: string, slug: string, name: string | undefined): string | undefined => {
   if (!name) return undefined;
   const bytes = readFileSync(join(root, 'templates', slug, name));
@@ -94,7 +91,7 @@ export function blueprintPreviews(
     };
     const { inputs, sample, ...manifest } = b.manifest as unknown as Record<string, unknown>;
     const input = (sample ?? {}) as Record<string, never>;
-    const passJson = planPreview({ template, input, behaviors, origin });
+    const passJson = planPreview({ template, input, origin });
     const names = new Set([
       ...(stampedView(template, input) ?? template.assets).map((a) => a.name),
       ...((b.manifest as TemplateManifest).previewOnlyAssets ?? []),
@@ -111,6 +108,7 @@ export function blueprintPreviews(
       sample: input,
       manifest,
       source: b.passJson as Record<string, unknown>,
+      origin,
       passJson: passJson as unknown as Record<string, unknown>,
       assetBaseUrl: `/templates/${b.slug}/${b.version}`,
       assetNames: [...names],

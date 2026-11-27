@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import { Designer } from '../../../admin/templates/designer/designer.tsx';
 import {
   DesignerHostProvider,
@@ -7,6 +8,7 @@ import {
 } from '../../../admin/templates/designer/host.tsx';
 import { anonymousDesignerHost } from '../../../admin/templates/designer/hosts.tsx';
 import { ApiError } from '../../../lib/errors.ts';
+import { Callout } from '../../../ui/callout.tsx';
 import { TemplateProvider } from '../template-context.tsx';
 import { useAnon } from './anon-context.tsx';
 import { ANON_EXTRAS } from './anon-extras.tsx';
@@ -36,8 +38,19 @@ export function AnonDesign({ blueprint }: { blueprint: AnonBlueprint }) {
     };
   }, [folder]);
   const { values } = useAnon();
-  const passJson = useLivePass(blueprint, values);
-  const readOnly = useMemo(() => ({ notice: null, passJson, issues: [] }), [passJson]);
+  const { pass, failed } = useLivePass(blueprint, values);
+  const readOnly = useMemo(
+    () => ({
+      notice: failed ? (
+        <Callout className="mb-4" tone="warning">
+          {WB_DESIGN.anon.liveFailed}
+        </Callout>
+      ) : null,
+      passJson: pass,
+      issues: [],
+    }),
+    [pass, failed],
+  );
   const open = useMemo(() => ({ id: template.id, name: template.name }), [template]);
   return (
     <DesignerHostProvider host={host}>
