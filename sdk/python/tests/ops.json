@@ -368,6 +368,7 @@
  {
   "id": "audit.getAuditPlatform",
   "call": "platform.audit_entries.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/audit/platform",
   "pathParams": [],
@@ -396,6 +397,7 @@
  {
   "id": "audit.getAuditPlatformExport",
   "call": "platform.audit_entries.export",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/audit/platform/export",
   "pathParams": [],
@@ -9061,6 +9063,7 @@
  {
   "id": "wallet-identities.getPlatformAppleIdentities",
   "call": "platform.apple_identities.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/apple/identities",
   "pathParams": [],
@@ -9119,6 +9122,7 @@
  {
   "id": "wallet-identities.getPlatformAppleIdentityMoves",
   "call": "platform.apple_identity_moves.list",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/apple/identity-moves",
   "pathParams": [],
@@ -9152,6 +9156,7 @@
  {
   "id": "wallet-identities.getPlatformAppleIdentityMovesPreview",
   "call": "platform.apple_identity_moves.preview",
+  "published": false,
   "http": "GET",
   "path": "/api/v1/platform/apple/identity-moves/preview",
   "pathParams": [],
