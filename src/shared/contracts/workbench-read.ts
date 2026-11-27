@@ -110,6 +110,7 @@ export const WorkbenchContextsSchema = z.object({
       name: z.string(),
       slug: z.string(),
       closed: z.boolean(),
+      timeZone: z.string().describe("The sandbox org's IANA zone; every time shows in it."),
     })
     .nullable()
     .describe('Your developer sandbox, or null before you make one.'),
@@ -118,6 +119,7 @@ export const WorkbenchContextsSchema = z.object({
       orgId: IdSchema,
       name: z.string(),
       slug: z.string(),
+      timeZone: z.string().describe("The organization's IANA zone."),
       tools: z.array(WorkbenchToolSchema).describe('The tools your roles may read there.'),
     }),
   ),

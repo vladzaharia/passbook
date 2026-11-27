@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import {
@@ -12,14 +12,17 @@ import { type CodeLang, LANGS } from '../playground/hash.ts';
 import { beacon } from './beacon.ts';
 import { RunStep } from './call-step.tsx';
 import { ChangeStep } from './change-step.tsx';
-import { Done } from './done.tsx';
 import { HearStep } from './hear-step.tsx';
 import { ADMISSIONS, fixFor } from './model.ts';
 import { EmptyStage, Layout, Progress, Step, type StepState } from './parts.tsx';
 import { SandboxStep } from './sandbox-step.tsx';
-import { Stage } from './stage.tsx';
+import { QsTransport } from './transport.tsx';
 import { usePoll } from './use-home.ts';
 import { useQuickstart } from './use-quickstart.ts';
+
+// The pass cards, the wallets' previews and the finished page load when there is a pass to draw, not with the steps.
+const Stage = lazy(() => import('./stage.tsx').then((m) => ({ default: m.Stage })));
+const Done = lazy(() => import('./done.tsx').then((m) => ({ default: m.Done })));
 
 /** curl is the default while no SDK is published: it is the request that runs today. */
 const firstLang = (): CodeLang =>
@@ -47,8 +50,15 @@ function useRunTime(startedAt: number | null, skew: number, stopAt: number | nul
  * The signed-in quickstart. Five steps whose ticks come from the server (`GET /developer/home`): a reload shows
  * the same page. The page counts the steps done and the time since the track started; Done replaces the steps.
  */
-export function Quickstart({ session }: { session: Exclude<Session, { kind: 'out' }> }) {
-  const q = useQuickstart(session);
+export function Quickstart({
+  session,
+  onContexts,
+}: {
+  session: Exclude<Session, { kind: 'out' }>;
+  /** A sandbox was made: the shell reads its contexts again. */
+  onContexts?: () => void;
+}) {
+  const q = useQuickstart(session, onContexts);
   const [lang, setLangState] = useState<CodeLang>(defaultLang);
   const setLang = useCallback((l: CodeLang) => {
     setLangState(l);
@@ -100,28 +110,50 @@ export function Quickstart({ session }: { session: Exclude<Session, { kind: 'out
 
   const time = duration(elapsed);
   if (finished === true && progress?.doneAt != null)
-    return <Layout wide progress={<Progress done={5} elapsed={time} />} steps={<Done q={q} />} />;
+    return (
+      <QsTransport transport={q.transport} csrf={q.csrf}>
+        <Layout
+          wide
+          progress={<Progress done={5} elapsed={time} />}
+          steps={
+            <Suspense fallback={null}>
+              <Done q={q} />
+            </Suspense>
+          }
+        />
+      </QsTransport>
+    );
   const signed = session.kind !== 'closed';
   return (
-    <Layout
-      progress={<Progress done={count} elapsed={time} />}
-      steps={
-        <>
-          <Step n={1} state="done" title={QS_COPY.steps.signIn.title} />
-          <SandboxStep q={q} state={stateOf(1)} onNext={() => setAdvanced(true)} />
-          <RunStep q={q} lang={lang} onLang={setLang} state={stateOf(2)} />
-          <ChangeStep
-            q={q}
-            lang={lang}
-            onLang={setLang}
-            state={stateOf(3)}
-            admission={admission}
-            onAdmission={setAdmission}
-          />
-          <HearStep q={q} state={stateOf(4)} onFinish={onFinish} />
-        </>
-      }
-      stage={signed ? <Stage q={q} fix={fix} /> : <EmptyStage line={QS_COPY.signedOutStage} />}
-    />
+    <QsTransport transport={q.transport} csrf={q.csrf}>
+      <Layout
+        progress={<Progress done={count} elapsed={time} />}
+        steps={
+          <>
+            <Step n={1} state="done" title={QS_COPY.steps.signIn.title} />
+            <SandboxStep q={q} state={stateOf(1)} onNext={() => setAdvanced(true)} />
+            <RunStep q={q} lang={lang} onLang={setLang} state={stateOf(2)} />
+            <ChangeStep
+              q={q}
+              lang={lang}
+              onLang={setLang}
+              state={stateOf(3)}
+              admission={admission}
+              onAdmission={setAdmission}
+            />
+            <HearStep q={q} state={stateOf(4)} onFinish={onFinish} />
+          </>
+        }
+        stage={
+          signed ? (
+            <Suspense fallback={<EmptyStage line={QS_COPY.signedOutStage} />}>
+              <Stage q={q} fix={fix} />
+            </Suspense>
+          ) : (
+            <EmptyStage line={QS_COPY.signedOutStage} />
+          )
+        }
+      />
+    </QsTransport>
   );
 }

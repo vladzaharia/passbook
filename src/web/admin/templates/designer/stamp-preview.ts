@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { renderStrip, type StampArt } from '@/passkit/stamps/compose.ts';
-import { decodePng, encodePng, type Rgba } from '@/passkit/stamps/png.ts';
+import type { StampArt } from '@/passkit/stamps/compose.ts';
+import type { Rgba } from '@/passkit/stamps/png.ts';
 import { type DesignerHost, useDesignerHost } from './host.tsx';
 import { previewAssetMap, toBase64 } from './images.ts';
 import type { DesignDoc, DraftAsset } from './model.ts';
 import { ART_SLOTS, readStamps, sampleCount } from './stamps.ts';
+
+// The compositor and the PNG codec (with its inflate) load with the first strip, not with the designer.
+const compositor = () => import('@/passkit/stamps/compose.ts');
+const codec = () => import('@/passkit/stamps/png.ts');
 
 const decoded = new Map<string, Promise<Rgba>>();
 
@@ -22,6 +26,7 @@ function load(asset: DraftAsset, assetBase: string, loadAsset: Loader): Promise<
   let hit = decoded.get(id);
   if (!hit) {
     hit = (async () => {
+      const { decodePng } = await codec();
       if (asset.upload !== undefined) return decodePng(fromBase64(asset.upload));
       const url = previewAssetMap([asset], assetBase)[asset.name] ?? '';
       const blob = await loadAsset(url);
@@ -66,6 +71,7 @@ export async function drawStrip(
   } catch {
     base = undefined;
   }
+  const [{ renderStrip }, { encodePng }] = await Promise.all([compositor(), codec()]);
   const strip = renderStrip({
     goal: view.goal,
     count,

@@ -114,7 +114,7 @@ developerPortalRoutes.get('/*', async (c) => {
   // One URL per page: a trailing slash is the page without it.
   if (reading && url.pathname !== key && url.pathname.endsWith('/'))
     return c.redirect(`${key}${url.search}`, 308);
-  // A fragment survives a 3xx, so `#op` links to the Console keep working.
+  // The tools live in the Workbench now: the old page goes there, query kept (a fragment survives a 3xx).
   if (reading && Object.hasOwn(MOVED, key)) return c.redirect(`${MOVED[key]}${url.search}`, 301);
   let pending = manifests.get(c.env.ASSETS);
   if (!pending) {

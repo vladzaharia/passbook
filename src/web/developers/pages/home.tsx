@@ -2,6 +2,7 @@ import { ArrowRight, Braces, FlaskConical, LayoutTemplate, Zap } from 'lucide-re
 import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
+import { wbHref } from '../../../shared/workbench.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
 import { GuideTile } from '../guide/tile.tsx';
 import { shortDate } from '../model/dates.ts';
@@ -11,7 +12,6 @@ import { CodeRegion, CopyButton } from '../ui/code.tsx';
 import { PassStub } from '../ui/pass-stub.tsx';
 import { Stamp } from '../ui/stamp.tsx';
 import { Ticket } from '../ui/ticket.tsx';
-import { SIGN_IN } from './layout.tsx';
 
 /** The guides the home page features, by id: one per step of the journey that matters first. */
 export const HOME_GUIDES = [
@@ -23,8 +23,8 @@ export const HOME_GUIDES = [
 
 const TILE_ICON = { quickstart: Zap, playground: LayoutTemplate, reference: Braces } as const;
 const TILE_HREF = {
-  quickstart: PATHS.quickstart,
-  playground: PATHS.playground,
+  quickstart: wbHref('quickstart'),
+  playground: wbHref('design'),
   reference: PATHS.reference,
 } as const;
 
@@ -69,7 +69,7 @@ function Hero() {
           {h.title} <em>{h.titleFoil}</em>
         </h1>
         <div className="wrap-row g2 mt2">
-          <a className="btn" href={PATHS.quickstart} data-hero-start data-island="hero-start">
+          <a className="btn" href={wbHref('quickstart')}>
             {h.start}
             <ArrowRight aria-hidden="true" />
           </a>
@@ -102,8 +102,11 @@ function Hero() {
           body={
             <div className="row g3 try-foot">
               <Stamp status="201 Created" />
-              <a className="btn push" href={SIGN_IN} data-hero-try>
-                {DEV_COPY.reference.signInToTry}
+              <a
+                className="btn push"
+                href={wbHref('console', { query: { op: 'passes.postPasses' } })}
+              >
+                {DEV_COPY.reference.tryIt}
               </a>
             </div>
           }
@@ -145,7 +148,7 @@ function Tiles() {
 
 function Sandbox() {
   return (
-    <div className="card" data-island="sandbox">
+    <div className="card">
       <div className="card-h">
         <span className="h3">{DEV_COPY.home.sandbox}</span>
         <span className="pill info">
@@ -161,8 +164,8 @@ function Sandbox() {
           </div>
         ))}
         <div className="kv cta">
-          <a className="btn" href={SIGN_IN}>
-            {DEV_COPY.signIn}
+          <a className="btn" href={wbHref('quickstart')} data-wb-link>
+            <span data-wb-label>{DEV_COPY.home.openWorkbench}</span>
           </a>
         </div>
       </div>
@@ -216,21 +219,15 @@ function Changelog({ site }: { site: Site }) {
   );
 }
 
-/**
- * The landing is the same for everyone and is never replaced. Under the hero and the tiles sits the sandbox slot: the
- * signed-out card here is what the Workbench island fills in place for a signed-in developer (the slot's box is
- * reserved from the first paint, so nothing below it jumps before the session is known).
- */
+/** The landing is the same for everyone. Under the hero and the tiles, the Workbench card opens the Workbench. */
 export function HomeView({ site }: { site: Site }) {
   return (
     <>
       <Hero />
       <Tiles />
-      <div id="workbench" className="wb-slot" data-island="workbench">
-        <section className="sect">
-          <Sandbox />
-        </section>
-      </div>
+      <section className="sect">
+        <Sandbox />
+      </section>
       <section className="sect">
         <div className="two">
           <Guides />

@@ -1,7 +1,5 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { KEYS_COPY } from '../../../shared/copy/developers-keys.ts';
-import { LOGS_COPY, STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
-import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
+import { STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
 import { operations } from './dates.ts';
 import { pagePath } from './markdown.ts';
@@ -26,7 +24,6 @@ export function referenceIndexMarkdown(site: Site): string {
     '',
     `- [Errors](${twin(PATHS.errors)})`,
     `- [Protocols](${twin(PATHS.protocols)})`,
-    `- [Console](${twin(PATHS.console)})`,
   );
   return end(out);
 }
@@ -65,25 +62,6 @@ export function errorMarkdown(e: ErrorEntry): string {
   return end(out);
 }
 
-export function webhooksMarkdown(site: Site): string {
-  const out = [
-    '# Webhook tester',
-    '',
-    'Capture signed webhooks in your sandbox, verify them and replay them. Sign in to use the tester.',
-    '',
-    '## Events',
-    '',
-    'Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and dedupe on x-passbook-event-id.',
-    '',
-  ];
-  for (const e of site.webhookEvents) out.push(`- \`${e.type}\`: ${e.summary}`);
-  out.push(
-    '',
-    `Endpoints are managed with the [webhook endpoints](${twin(`${PATHS.reference}/webhook-endpoints`)}) API.`,
-  );
-  return end(out);
-}
-
 export function changelogMarkdown(site: Site): string {
   const out = [
     '# Changelog',
@@ -102,35 +80,7 @@ export function changelogMarkdown(site: Site): string {
   return end(out);
 }
 
-export function quickstartMarkdown(): string {
-  const s = QS_COPY.steps;
-  return end([
-    `# ${QS_COPY.title}`,
-    '',
-    QS_COPY.lede,
-    '',
-    `1. **${s.signIn.title}.** ${s.signIn.line}`,
-    `2. **${s.sandbox.title}.** ${s.sandbox.line} ${s.sandbox.keyOnce}`,
-    `3. **${s.run.title}.** \`POST /api/v1/passes\` with the template id and its fields. Expect \`201\`.`,
-    `4. **${s.change.title}.** \`PATCH /api/v1/passes/{id}\` with \`If-Match\` set to the version you read.`,
-    `5. **${QS_COPY.hear.title}.** ${QS_COPY.hear.line}`,
-    '',
-    'Every step runs in your own sandbox; a sandbox never issues a real pass.',
-  ]);
-}
-
 /** Pages that run in the browser: the twin says what the page is and where its data comes from. */
 export const appTwins = {
-  playground: () =>
-    note(
-      DEV_COPY.slots.playground.title,
-      DEV_COPY.slots.playground.line,
-      `The API is described in the [reference](${twin(PATHS.reference)}).`,
-    ),
-  console: () =>
-    note(DEV_COPY.console.title, DEV_COPY.console.line, 'Sign in to run requests in your sandbox.'),
-  keys: () =>
-    note(KEYS_COPY.title, 'Make, roll and revoke the keys of your sandbox.', KEYS_COPY.signedOut),
-  logs: () => note(LOGS_COPY.title, LOGS_COPY.lede, 'Sign in to see your sandbox requests.'),
   status: () => note(STATUS_COPY.title, STATUS_COPY.lede, `Live data: ${PATHS.statusJson}`),
 };

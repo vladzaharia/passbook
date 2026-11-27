@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ApiKeysPage } from '../../../../admin/api-keys/api-keys-page.tsx';
+import { ApiKeysPage } from '../../../../admin/api-keys/admin-pages.tsx';
 
 export const Route = createFileRoute('/admin/platform/api-keys/')({
   validateSearch: (raw: Record<string, unknown>) => ({

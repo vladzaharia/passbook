@@ -219,6 +219,11 @@ describe('Use blueprint', () => {
     expect(screen.getByText('From Balance card')).toBeInTheDocument();
     await waitFor(() => expect(checks.length).toBeGreaterThan(0));
     expect(checks[0]).toMatchObject({ orgId: ORG.id, name: 'Gym balance' });
+    // Create template refuses until the check has answered and the local validators have loaded.
+    const issues = screen.getByRole('region', { name: 'Issues' });
+    await waitFor(() =>
+      expect(within(issues).getByRole('status')).not.toHaveTextContent('Checking'),
+    );
     await user.click(await screen.findByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect(bodies[0]).toMatchObject({ orgId: ORG.id, name: 'Gym balance' });

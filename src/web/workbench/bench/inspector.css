@@ -38,6 +38,34 @@
   gap: 2px;
   margin-block: -6px;
 }
+/* Previous, Next and Close are 36 px targets (44 on touch): the docs' .iconbtn is not loaded here. */
+.bench-insp-nav .iconbtn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-muted);
+}
+.bench-insp-nav .iconbtn:hover:not(:disabled) {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+}
+.bench-insp-nav .iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.bench-insp-nav .iconbtn svg {
+  width: 16px;
+  height: 16px;
+}
+@media (pointer: coarse) {
+  .bench-insp-nav .iconbtn {
+    width: 44px;
+    height: 44px;
+  }
+}
 .bench-insp-meta {
   display: flex;
   flex-wrap: wrap;

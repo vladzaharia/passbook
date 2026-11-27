@@ -12,6 +12,7 @@ import {
   DesignerHostProvider,
   type DesignerLinkProps,
   fetchBytes,
+  sharedLoader,
   useDesignerHost,
 } from '../host.tsx';
 import { useAdminReleaseStep } from './release-step.tsx';
@@ -47,8 +48,7 @@ export function AdminDesignerHost({ children }: { children: ReactNode }) {
       orgName,
       mode,
       api,
-      loadAsset: (path, signal) =>
-        fetchBytes(path, { credentials: 'same-origin', ...(signal ? { signal } : {}) }),
+      loadAsset: sharedLoader((path) => fetchBytes(path, { credentials: 'same-origin' })),
       searchPasses: async (q, signal) =>
         orgId && readsPasses
           ? (

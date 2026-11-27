@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router';
-import { WB_SHELL_COPY } from '@/shared/copy/workbench-shell.ts';
 import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
 import { type WbTool, wbPath } from '@/shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
@@ -22,9 +21,6 @@ export function ToolPlaceholder({ tool }: { tool: WbTool }) {
   const empty = WB_EMPTY[tool];
   return (
     <ToolPage tool={tool}>
-      {tool === 'home' && host?.context.kind === 'org' ? (
-        <p className="mb-3 text-sm text-fg-muted">{WB_SHELL_COPY.testDataOnly}</p>
-      ) : null}
       {empty ? (
         <ToolEmpty
           tool={tool}

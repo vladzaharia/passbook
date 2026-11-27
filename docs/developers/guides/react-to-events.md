@@ -22,7 +22,7 @@ Read the secret from the endpoint. Paste its `id` into the path, then store the 
 
 {{run send-test-event}}
 
-Read the capture with the endpoint `id` and the `captureId`. It holds the headers and the raw body, exactly as signed. The [webhook tester](/developers/webhooks) shows the same capture and checks it in the page.
+Read the capture with the endpoint `id` and the `captureId`. It holds the headers and the raw body, exactly as signed. The [webhook tester](/workbench/events) shows the same capture and checks it in the page.
 
 {{run read-capture}}
 

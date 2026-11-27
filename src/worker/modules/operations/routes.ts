@@ -12,7 +12,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { assertStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { etagOf } from './dto.ts';
 import { getOperation, listOperations } from './service.ts';
 import { cancelOperation, mayAct, retryOperation } from './service-act.ts';
@@ -101,7 +101,12 @@ register(
     auth: { scope: WRITE_SCOPES, stepUp },
     codes: ['OPERATION_NOT_CANCELABLE'],
   },
-  async (c) => c.json(await cancelOperation(serviceContext(c), authOf(c), c.req.valid('param').id)),
+  async (c) =>
+    c.json(
+      await cancelOperation(serviceContext(c), authOf(c), c.req.valid('param').id, (session) =>
+        assertStepUp(c, session, STEP_UP_SECONDS),
+      ),
+    ),
 );
 
 register(
@@ -123,6 +128,7 @@ register(
         authOf(c),
         c.req.valid('param').id,
         idempotencyKeyHeader(c.req.header('idempotency-key')),
+        (session) => assertStepUp(c, session, STEP_UP_SECONDS),
       ),
     ),
 );

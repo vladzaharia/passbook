@@ -1361,6 +1361,14 @@
     "note": "Webhook events carry requestId, the x-request-id of the API request that caused them. Absent when no request did."
   },
   {
+    "key": "GET /api/v1/events optional parameter query:order added",
+    "class": "additive",
+    "operationId": "events.getEvents",
+    "op": "GET /api/v1/events",
+    "change": "optional parameter query:order added",
+    "note": "order=desc reads the newest events first in one page. Its nextCursor is the newest event's: pass it as after to read what comes next."
+  },
+  {
     "key": "GET /api/v1/events optional parameter query:requestId added",
     "class": "additive",
     "operationId": "events.getEvents",
@@ -3207,6 +3215,22 @@
     "op": "GET /api/v1/webhook-endpoints/setup",
     "change": "new operation",
     "note": "The setup guide for the server that receives webhooks: store the secret, verify the signature, answer 2xx."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts 200.orgs[].timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.orgs[].timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
+  },
+  {
+    "key": "GET /api/v1/workbench/contexts 200.sandbox.timeZone: field added",
+    "class": "additive",
+    "operationId": "workbench.getContexts",
+    "op": "GET /api/v1/workbench/contexts",
+    "change": "200.sandbox.timeZone: field added",
+    "note": "Contexts carry timeZone: the org's IANA zone, America/Los_Angeles when it has none. Show times in it, never UTC."
   },
   {
     "key": "GET /api/v1/workbench/contexts new operation",
@@ -7375,5 +7399,13 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "Workbench token: file reads rate limit",
+    "class": "notable",
+    "operationId": "",
+    "op": "Workbench token",
+    "change": "template file reads: own rate limit",
+    "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
   }
 ]

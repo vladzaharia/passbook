@@ -14,7 +14,7 @@ import {
   readFenceFor,
   starterFenceFor,
 } from './authz.ts';
-import { toDto } from './dto.ts';
+import { forCaller, toDto } from './dto.ts';
 import { orgKinds } from './kinds.ts';
 import type { OperationRow } from './repo.ts';
 import { rowById } from './repo.ts';
@@ -31,7 +31,7 @@ export async function getOperation(
   auth: AuthContext,
   id: string,
 ): Promise<OperationDto> {
-  return toDto((await readable(ctx, auth, id)).row);
+  return forCaller(toDto((await readable(ctx, auth, id)).row), auth);
 }
 
 export async function readable(
@@ -132,7 +132,7 @@ export async function listOperations(
   const page = rows.slice(0, query.limit);
   const last = page[page.length - 1];
   return {
-    items: page.map(toDto),
+    items: page.map((row) => forCaller(toDto(row), auth)),
     nextCursor: rows.length > query.limit && last ? `${last.created_at}.${last.id}` : null,
   };
 }

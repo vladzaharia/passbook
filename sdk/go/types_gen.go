@@ -2904,6 +2904,7 @@ type EventsListQuery struct {
 	PassID     *string `json:"passId,omitempty"`
 	RequestID  *string `json:"requestId,omitempty"`
 	Limit      *int64  `json:"limit,omitempty"`
+	Order      *string `json:"order,omitempty"`
 	APIVersion *string `json:"apiVersion,omitempty"`
 }
 

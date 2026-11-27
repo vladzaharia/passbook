@@ -59,6 +59,8 @@
   min-width: 0;
 }
 .qs-url {
+  display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

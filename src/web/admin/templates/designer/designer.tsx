@@ -28,6 +28,7 @@ import {
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
 import { useStampsPreview } from './stamp-preview.ts';
+import { KeepProvider } from './ui-keep.tsx';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import type { WalletName } from './wallets/roles-model.ts';
@@ -78,7 +79,7 @@ export function Designer({
   const templateId = template.id;
   const name = template.name;
   const phone = useMediaQuery(PHONE);
-  const { orgId: selectedOrg, allows } = useDesignerHost();
+  const { orgId: selectedOrg, allows, extras } = useDesignerHost();
   // A host that cannot edit gets a read-only designer whatever the page asked for.
   const readOnly = useMemo<ReadOnlyDesign | undefined>(
     () =>
@@ -129,18 +130,29 @@ export function Designer({
 
   useDraftPersistence(readOnly ? null : draftKey, version, state.doc, dirty);
 
-  const { issues, blocking } = useDesignerIssues(state.doc, readOnly, check.data?.report.issues);
+  const { issues, blocking, ready, loadFailed } = useDesignerIssues(
+    state.doc,
+    readOnly,
+    check.data?.report.issues,
+  );
+  const checking = (readOnly ? false : check.checking) || !ready;
   const blocked = () =>
-    check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
+    !ready || check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
-  const live = useRef({ blocked, checking: check.checking });
-  live.current = { blocked, checking: check.checking };
+  const live = useRef({ blocked, checking: check.checking || !ready });
+  live.current = { blocked, checking: check.checking || !ready };
   const issuesList = (
     <Issues
       issues={issues}
-      checking={readOnly ? false : check.checking}
-      failed={check.isError && !readOnly ? errorMessage(check.error) : undefined}
+      checking={checking}
+      failed={
+        check.isError && !readOnly
+          ? errorMessage(check.error)
+          : loadFailed
+            ? 'The checks did not load. Reload the page.'
+            : undefined
+      }
     />
   );
   const created = useCreateFlow(create, blocked);
@@ -193,67 +205,76 @@ export function Designer({
 
   return (
     <DesignerProvider value={api}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
-      <div ref={root} data-designer="" onKeyDown={undoKeys(phone || Boolean(readOnly), dispatch)}>
-        <DesignerHeader
-          templateId={templateId}
-          name={name}
-          create={create}
-          template={template}
-          undoRedo={
-            phone || readOnly
-              ? null
-              : { canUndo: canUndo(state), canRedo: canRedo(state), dispatch }
-          }
-        />
-        {readOnly?.notice}
-        {prompt}
-        <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
-        {restored && !phone && !readOnly ? (
-          <RestoredNotice
-            onDiscard={() => {
-              dispatch({ type: 'reset', doc: state.saved });
-              clearDraft(draftKey);
-              setRestored(false);
-            }}
+      <KeepProvider>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
+        <div ref={root} data-designer="" onKeyDown={undoKeys(phone || Boolean(readOnly), dispatch)}>
+          <DesignerHeader
+            templateId={templateId}
+            name={name}
+            create={create}
+            template={template}
+            undoRedo={
+              phone || readOnly
+                ? null
+                : { canUndo: canUndo(state), canRedo: canRedo(state), dispatch }
+            }
           />
-        ) : null}
-        <DesignerModeView
-          mode={mode}
-          onPass={() => setMode('pass')}
-          templateId={templateId}
-          creating={Boolean(create)}
-          orgId={selectedOrg}
-          readOnly={readOnly}
-          phone={phone}
-          doc={state.doc}
-          passJson={shownPass}
-          checking={check.checking}
-          issues={issues}
-          issuesList={issuesList}
-          wallets={wallets}
-          wallet={modes.wallet}
-          onWallet={modes.setWallet}
-          edit={edit}
-          assetBase={base_}
-          stripUrl={stamps.stripUrl}
-        />
-        {phone || readOnly || !allows.save ? null : (
-          <SaveBar
-            dirty={create ? created.made === null : dirty}
-            saving={create ? created.saving : flow.saving}
-            saveLabel={create ? 'Create template' : 'Save version'}
-            onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
-            onDiscard={() => {
-              dispatch({ type: 'reset', doc: state.saved });
-              clearDraft(draftKey);
-              setRestored(false);
-            }}
+          {readOnly?.notice}
+          {prompt}
+          <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
+          {restored && !phone && !readOnly ? (
+            <RestoredNotice
+              onDiscard={() => {
+                dispatch({ type: 'reset', doc: state.saved });
+                clearDraft(draftKey);
+                setRestored(false);
+              }}
+            />
+          ) : null}
+          <DesignerModeView
+            mode={mode}
+            onPass={() => setMode('pass')}
+            templateId={templateId}
+            creating={Boolean(create)}
+            orgId={selectedOrg}
+            readOnly={readOnly}
+            phone={phone}
+            doc={state.doc}
+            passJson={shownPass}
+            checking={check.checking}
+            issues={issues}
+            issuesList={issuesList}
+            wallets={wallets}
+            wallet={modes.wallet}
+            onWallet={modes.setWallet}
+            edit={edit}
+            assetBase={base_}
+            stripUrl={stamps.stripUrl}
           />
-        )}
-        {goalFlow.dialog}
-        <UnsavedChangesDialog blocker={guard} />
-      </div>
+          {extras && phone ? (
+            <extras.PhoneBar
+              dirty={create ? created.made === null : dirty}
+              saving={create ? created.saving : flow.saving}
+              onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
+            />
+          ) : null}
+          {phone || readOnly || !allows.save ? null : (
+            <SaveBar
+              dirty={create ? created.made === null : dirty}
+              saving={create ? created.saving : flow.saving}
+              saveLabel={create ? 'Create template' : 'Save version'}
+              onSave={create ? () => created.run(state.doc) : goalFlow.onSave}
+              onDiscard={() => {
+                dispatch({ type: 'reset', doc: state.saved });
+                clearDraft(draftKey);
+                setRestored(false);
+              }}
+            />
+          )}
+          {goalFlow.dialog}
+          <UnsavedChangesDialog blocker={guard} />
+        </div>
+      </KeepProvider>
     </DesignerProvider>
   );
 }

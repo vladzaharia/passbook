@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PATHS } from '../../shared/developers.ts';
+import { MOVED, PATHS } from '../../shared/developers.ts';
 import { loadGuideInputs } from './guide/load.ts';
 import { loadInputs } from './model/load.ts';
 import { buildSite } from './model/site.ts';
@@ -40,55 +40,68 @@ describe('the prerendered portal', () => {
     }
   });
 
-  it('lights the section a page belongs to: Workbench for tools, Playground for itself, nothing for the console-less pages', () => {
+  it('lights the docs section a page belongs to and keeps the Workbench areas out of the bar', () => {
     const bar = (file: string) => {
       const html = body(file);
       return html.slice(html.indexOf('aria-label="Sections"'), html.indexOf('</nav>'));
     };
     const lit = (file: string) =>
       [...bar(file).matchAll(/aria-current="page"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]);
-    expect([...bar(`${PATHS.console}.html`).matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1])).toEqual([
+    const guides = bar(`${PATHS.guides}/index.html`);
+    expect([...guides.matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1])).toEqual([
       'Quickstart',
       'Guides',
       'Reference',
       'Playground',
-      'Workbench',
     ]);
-    expect(lit(`${PATHS.console}.html`)).toEqual(['Workbench']);
-    for (const p of [PATHS.keys, PATHS.logs, PATHS.webhooks])
-      expect(lit(`${p}.html`), p).toEqual(['Workbench']);
-    expect(lit(`${PATHS.playground}.html`)).toEqual(['Playground']);
+    expect(guides).toContain('href="/workbench/quickstart"');
+    expect(guides).toContain('href="/workbench/design"');
     expect(lit(`${PATHS.errors}/index.html`).concat(lit(`${PATHS.protocols}.html`))).toEqual([
       'Reference',
       'Reference',
     ]);
     expect(lit(`${PATHS.changelog}.html`)).toEqual([]);
-    expect(body(`${PATHS.console}.html`)).toContain('Run any call against your sandbox.');
   });
 
-  it('frames the four tools as one bench: one h1, Skip to tool, the strip, no sandbox chip in the bar', () => {
-    for (const [path, label] of [
-      [PATHS.console, 'Console'],
-      [PATHS.webhooks, 'Webhooks'],
-      [PATHS.logs, 'Logs'],
-      [PATHS.keys, 'Keys'],
-    ] as const) {
-      const html = page(path);
-      expect(html.match(/<h1\b[^>]*>[^<]*<\/h1>/g), path).toEqual([`<h1 class="h1">${label}</h1>`]);
-      expect(html, path).toContain(`<title>${label} · Developers · PassBook</title>`);
-      expect(html, path).toContain(
-        '<a class="skip" href="#main">Skip to content</a><a class="skip" href="#tool">Skip to tool</a>',
-      );
-      expect(html, path).toContain('data-island="bench-strip"');
-      expect(html, path).not.toContain('data-island="org-chip"');
-      expect(html, path).toContain(
-        '<script async blocking="render" src="/developers/bench-vt.js">',
-      );
-    }
-    // Docs pages keep the chip in the bar and run no tool switch.
-    expect(page(PATHS.quickstart)).toContain('data-island="org-chip"');
-    expect(page(PATHS.quickstart)).not.toContain('bench-vt.js');
-    expect(body('/developers/bench-vt.js')).toContain("addEventListener('pagereveal'");
+  it('builds no page for the moved tools; the Worker redirects their paths', () => {
+    const built = new Set(files.map((f) => f.url));
+    for (const from of Object.keys(MOVED)) expect(built.has(from), from).toBe(false);
+    expect(files.some((f) => f.file.includes('bench-vt'))).toBe(false);
+  });
+
+  it('links Run in Workbench and See in Logs with no body in any URL (L19)', () => {
+    const res = site.pages[0];
+    const op = res?.ops[0];
+    const err = site.errors[0];
+    if (!res || !op || !err) throw new Error('no operation');
+    const opHtml = page(`${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`);
+    expect(opHtml).toContain(`href="/workbench/console?op=${op.operationId}"`);
+    expect(opHtml).not.toContain('data-island="run"');
+    expect(opHtml).not.toContain('data-try-bar');
+    expect(page(`${PATHS.errors}/${err.code}`)).toContain(
+      `href="/workbench/logs?code=${err.code}"`,
+    );
+    for (const f of files.filter((x) => x.file.endsWith('.html')))
+      expect(f.body, f.file).not.toMatch(/href="\/workbench\/[^"]*[?&#]body=/);
+  });
+
+  it('opens the front page onto the Workbench: the hero and the card', () => {
+    const home = page(PATHS.home);
+    expect(home).toContain('href="/workbench/quickstart"');
+    expect(home).toContain('href="/workbench/console?op=passes.postPasses"');
+    expect(home).toContain('Open Workbench');
+    expect(home).not.toContain('data-island="workbench"');
+  });
+
+  it('carries the companion link once in the bar and first in the sheet', () => {
+    const html = page(PATHS.reference);
+    const bar = /<header data-menubar[\s\S]*?<\/header>/.exec(html)?.[0] ?? '';
+    expect(bar.match(/data-wb-link/g)).toHaveLength(1);
+    expect(bar).toContain('href="/workbench/quickstart"');
+    expect(bar).toContain('>Workbench<');
+    expect(html.split('menu-sections')[1]).toMatch(
+      /^"><a class="menu-wb" href="\/workbench\/quickstart"/,
+    );
   });
 
   it('puts one tree on every page, with the page lit and its group open', () => {
@@ -103,11 +116,12 @@ describe('the prerendered portal', () => {
     const opHref = `${PATHS.reference}/${res.slug}/${op.anchor.toLowerCase()}`;
     expect(tree(opHref)).toContain(`<a href="${opHref}" aria-current="page"`);
     expect(tree(opHref)).toContain('<details class="navg" open="">');
-    expect(tree(PATHS.quickstart)).toContain(`<a href="${PATHS.quickstart}" aria-current="page"`);
     expect(tree(PATHS.changelog)).toContain(`<a href="${PATHS.changelog}" aria-current="page"`);
-    // The Workbench group is in every tree, the sheet's too.
-    for (const url of [PATHS.home, PATHS.keys, PATHS.console, PATHS.guides, PATHS.playground])
+    // The Workbench group is in every tree, the sheet's too, and its links are Workbench paths.
+    for (const url of [PATHS.home, PATHS.guides, PATHS.errors]) {
       expect(tree(url), url).toContain('>Webhooks<');
+      expect(tree(url), url).toContain('href="/workbench/events"');
+    }
   });
 
   it('adds crumbs, Previous and Next, and "On this page" where the page is long', () => {
@@ -124,44 +138,17 @@ describe('the prerendered portal', () => {
     // Every entry points at an id on the page.
     for (const m of html.matchAll(/<li><a href="#([^"]+)">/g))
       expect(html, m[1]).toContain(`id="${m[1]}"`);
-    expect(page(PATHS.quickstart)).not.toContain('aria-label="Breadcrumb"');
   });
 
-  it('prerenders the playground with a sample pass and its fields when the previews are known', () => {
-    const withSample = renderSite(site, ORIGIN, '', undefined, {
-      schema: 1,
-      items: [
-        {
-          id: 'baked:starter-store-card',
-          slug: 'starter-store-card',
-          name: 'Balance card',
-          description: null,
-          inputs: { properties: { balance: { 'x-label': 'Balance' } } },
-          sample: { balance: 25 },
-          manifest: {},
-          passJson: {},
-          assetBaseUrl: '',
-          assetNames: [],
-          assets: [],
-          paper: { src: '/developers/paper/starter-store-card.svg', width: 520, height: 300 },
-        },
-      ],
-    });
-    const html = withSample.find((f) => f.url === PATHS.playground)?.body ?? '';
-    expect(html).toContain('/developers/paper/starter-store-card.svg');
-    expect(html).toMatch(/<dt>Balance<\/dt><dd>25<\/dd>/);
-  });
-
-  it('has the console, logs, status, playground and changelog pages and the feed', () => {
+  it('has the status and changelog pages and the feed', () => {
     const urls = files.map((f) => f.url).filter(Boolean);
-    for (const path of [PATHS.console, PATHS.logs, PATHS.status, PATHS.playground, PATHS.changelog])
-      expect(urls, path).toContain(path);
+    for (const path of [PATHS.status, PATHS.changelog]) expect(urls, path).toContain(path);
     expect(files.some((f) => f.file === PATHS.changelogFeed)).toBe(true);
     expect(body(PATHS.changelogFeed)).toContain('<feed');
     expect(body(PATHS.logsOps)).toContain('passes.');
   });
 
-  it('writes the run files the Try it island reads, one per page and an index', () => {
+  it('writes the run files the Console reads, one per page and an index', () => {
     const runs = files.filter((f) => f.file.startsWith('/developers/run/'));
     expect(runs.length).toBe(site.pages.length + 1);
     expect(runs.some((f) => f.file.endsWith('/index.json'))).toBe(true);
@@ -239,8 +226,7 @@ describe("the frame's current marks", () => {
       )?.[2];
     expect(chip(PATHS.reference, 'Reference')).toBe('page');
     expect(chip(PATHS.errors, 'Reference')).toBe('true');
-    expect(chip(PATHS.keys, 'Workbench')).toBe('true');
-    expect(chip(PATHS.keys, 'Guides')).toBeUndefined();
+    expect(chip(PATHS.errors, 'Guides')).toBeUndefined();
   });
 
   it('opens Reference in the tree on Protocols', () => {

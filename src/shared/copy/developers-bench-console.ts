@@ -21,6 +21,17 @@ export const CONSOLE_COPY = {
   truncated: 'Showing the first 256 kB.',
   runsLeft: 'Runs left',
   runFailed: 'Something went wrong. Run again.',
+  reason: {
+    testOnly: 'Not available in Test',
+    testOnlyWhy: 'A Test token cannot call this. Copy it as code to run it with your key.',
+    noSandbox: 'No sandbox to run against',
+    closed: 'Your sandbox is closed',
+  },
+  fromLog: (id: string) => `From ${id}`,
+  bodiesOff: 'Bodies are off, so this is the sample.',
+  logGone: 'That call is gone. This is the sample.',
+  issued: 'Pass issued',
+  created: 'Created',
   secret: 'A new key or secret shows in full here. Copy it now.',
   request: {
     view: 'Request view',
