@@ -121,17 +121,11 @@ export async function countScanRows(
   const w = where(f);
   const [authorized, count] = await db.batch([
     scanAuthorizedStmt(db, auth),
-    scanRead(
-      db,
-      auth,
-      `${RACE_EXPORT_COUNT} SELECT count(*) AS n FROM capped`,
-      [],
-      {
-        ctes: `capped AS MATERIALIZED (SELECT 1 FROM ${auth.rows}scans s
+    scanRead(db, auth, `${RACE_EXPORT_COUNT} SELECT count(*) AS n FROM capped`, [], {
+      ctes: `capped AS MATERIALIZED (SELECT 1 FROM ${auth.rows}scans s
         WHERE ${auth.present} AND ${narrowTenant(f, auth) ?? auth.tenantOnce('s', 'scans')} AND ${w.sql} LIMIT ?)`,
-        params: [...w.params, cap + 1],
-      },
-    ),
+      params: [...w.params, cap + 1],
+    }),
   ]);
   const ok = (authorized?.results[0] as { authorized: number } | undefined)?.authorized === 1;
   return { authorized: ok, n: ok ? ((count?.results[0] as { n: number } | undefined)?.n ?? 0) : 0 };

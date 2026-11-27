@@ -32,7 +32,8 @@ describe('assertActorOnce evasions', () => {
     ],
     [
       'IFNULL around a comparison after present',
-      (r) => `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND IFNULL(x.org_id = ao.org_id, 1)`,
+      (r) =>
+        `FROM ${r}passes x WHERE ao.authority_present_k7 = 1 AND IFNULL(x.org_id = ao.org_id, 1)`,
     ],
     ['IS NOT NOT NULL', (r) => `FROM ${r}passes x WHERE ao.org_id IS NOT NOT NULL`],
     [

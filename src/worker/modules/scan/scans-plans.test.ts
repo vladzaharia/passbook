@@ -1,17 +1,20 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
-import { authorityPredicate } from '../../platform/authority-read.ts';
+import { authorityPredicate, PRESENT } from '../../platform/authority-read.ts';
 import type { ScanActor } from './actor.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { listConsoleEvents } from './repo-events.ts';
 import { countScanRows, getScanRow, listScanRows, type ScanLogFilter } from './repo-feed.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
-import { type ScanReadAuthority, withSessionRow } from './repo-read-authority.ts';
+import { type ScanReadAuthority, seal, withSessionRow } from './repo-read-authority.ts';
 import { ownScansWhere, readSummary } from './repo-scan-history.ts';
 import { listConsoleScanners } from './repo-scanners.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { activitySelector } from './repo-session-activity.ts';
 import { readStaffActivity } from './repo-staff-activity.ts';
+
+/** The CTE's stamp column, named as the builder reads it. */
+const STAMP = PRESENT.slice('ao.'.length);
 
 /** The join-once fragments of a real predicate; the fixtures below bring their own CTEs. */
 const fragments = authorityPredicate(
@@ -22,20 +25,21 @@ const fragments = authorityPredicate(
 /** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
 const fixedAuth: ScanReadAuthority = {
   ctes: `actor AS MATERIALIZED (SELECT 'o' AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT 1 AS ${STAMP}, org_id, mode, NULL AS limit_key FROM actor)`,
   params: [],
-  rows: fragments.rows,
-  anchor: fragments.anchor,
-  present: fragments.ok,
-  platform: fragments.platform,
-  tenantOnce: (alias, table) => fragments.tenant(alias, table, 'org_mode'),
+  ...seal({
+    rows: fragments.rows,
+    anchor: fragments.anchor,
+    platform: fragments.platform,
+    tenantOnce: (alias: string, table: string) => fragments.tenant(alias, table, 'org_mode'),
+  }),
 };
 
 /** A platform key naming no org: the mode only, as `apiKeyReadAuthority` gives it. */
 const platformAuth: ScanReadAuthority = {
   ...fixedAuth,
   ctes: `actor AS MATERIALIZED (SELECT NULL AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT 1 AS ${STAMP}, org_id, mode, NULL AS limit_key FROM actor)`,
   tenantOnce: (alias) => `${fragments.platform} AND ${alias}.mode = ao.mode`,
 };
 

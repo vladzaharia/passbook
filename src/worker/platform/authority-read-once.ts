@@ -40,7 +40,10 @@ export function assertActorOnce(sql: string): void {
   const blanked = flat(sql)
     .replace(new RegExp(exact(ANCHOR), 'g'), ` ${TERM} `)
     .replace(new RegExp(`(?<![.\\w])${exact(ROWS)}`, 'g'), ` ${TERM} CROSS JOIN `)
-    .replace(new RegExp(`\\bFROM ${exact(ROWS_ALONE)}(?= WHERE\\b|\\s*\\)|\\s*$)`, 'g'), ` FROM ${TERM}`);
+    .replace(
+      new RegExp(`\\bFROM ${exact(ROWS_ALONE)}(?= WHERE\\b|\\s*\\)|\\s*$)`, 'g'),
+      ` FROM ${TERM}`,
+    );
   // `AS actor_ok` is the actor row's own column alias, not a reference to the CTE.
   const shape = scrub(blanked);
   const text = shape.replace(/\bAS\s+actor_ok(?![\w])/gi, 'AS col');
@@ -74,7 +77,7 @@ export function assertActorOnce(sql: string): void {
   if (bad)
     throw new AuthorityError(
       'SQL_ACTOR_REUSE',
-      'A read statement joins actor_ok once, as ao, through the builder\'s own FROM text, and references no other actor CTE; the presence column is read only as WHERE/ON <P> = 1 or through authorized().',
+      "A read statement joins actor_ok once, as ao, through the builder's own FROM text, and references no other actor CTE; the presence column is read only as WHERE/ON <P> = 1 or through authorized().",
     );
   assertAnchorShape(shape);
   assertAnchorOperands(shape);

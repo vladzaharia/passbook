@@ -110,13 +110,11 @@ describe('scan read corpus', () => {
   it('actor_ok is a positive control for the live actor and empty once revoked', async () => {
     const s = await makeScanner(f, { orgId });
     const actor = await capture(s.headers);
-    const read = () =>
-      scanRead(
-        env.DB,
-        scanReadAuthority(actor, { now: clock.now() }),
-        'SELECT ao.present FROM actor_ok ao',
-      ).all();
-    expect((await read()).results).toHaveLength(1);
+    const read = () => {
+      const auth = scanReadAuthority(actor, { now: clock.now() });
+      return scanRead(env.DB, auth, `SELECT ${auth.authorized('p')} FROM actor_ok ao`).all();
+    };
+    expect((await read()).results).toEqual([{ p: 1 }]);
     await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), s.id]);
     expect((await read()).results).toHaveLength(0);
   });
@@ -131,7 +129,7 @@ describe('scan read corpus', () => {
     const strict = scanReadAuthority(paused, { now: clock.now() });
     const relaxed = scanReadAuthority(paused, { now: clock.now(), read: { pausedSession: true } });
     expect(relaxed.params.length).toBeGreaterThan(strict.params.length);
-    await scanRead(env.DB, relaxed, 'SELECT ao.present FROM actor_ok ao').all();
+    await scanRead(env.DB, relaxed, `SELECT ${relaxed.authorized('p')} FROM actor_ok ao`).all();
 
     const monitor: ScanActor = {
       ...actor,

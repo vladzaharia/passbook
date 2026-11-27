@@ -47,7 +47,7 @@ const once = (p: ReturnType<typeof authorityPredicate>) =>
 type Unsealed = Omit<ScanReadAuthority, 'present' | 'gates' | 'authorized' | 'ctes' | 'params'>;
 
 /** `present` and `authorized` come from one gate list, so no caller can set one without the other. */
-function seal<A extends Unsealed>(
+export function seal<A extends Unsealed>(
   base: A,
   gates: readonly string[] = [],
 ): A & Pick<ScanReadAuthority, 'present' | 'gates' | 'authorized'> {
@@ -197,10 +197,10 @@ export function apiKeyReadAuthority(
   return {
     ctes: named ? `${ctes},\n    named AS MATERIALIZED (SELECT ? AS org_id)` : ctes,
     params: named ? [...params, namedOrgId] : params,
-    // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
-    rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
-    anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
     ...seal({
+      // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
+      rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
+      anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
       platform: predicate.platform,
       tenantOnce: (alias: string, table: string) =>
         bound

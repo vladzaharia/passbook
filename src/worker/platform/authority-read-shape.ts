@@ -27,7 +27,10 @@ interface Core {
 }
 
 const refuse = (why: string): never => {
-  throw new AuthorityError('SQL_ACTOR_REUSE', `A read statement's actor term is misplaced: ${why}.`);
+  throw new AuthorityError(
+    'SQL_ACTOR_REUSE',
+    `A read statement's actor term is misplaced: ${why}.`,
+  );
 };
 
 /** Split at parentheses: each `(SELECT` or `(WITH` group is a core, masked in its parent as ` #n `. */
@@ -42,8 +45,7 @@ function splitCores(text: string): Core[] {
       if (/^\s*(?:SELECT|WITH)\b/i.test(text.slice(i + 1, i + 12))) {
         const cte = /(?<![)\w])(\w+)\s+AS\s+(?:NOT\s+)?(?:MATERIALIZED\s*)?$/i.exec(top.core.text);
         const cols = /\)\s*AS\s+(?:NOT\s+)?(?:MATERIALIZED\s*)?$/i.test(top.core.text);
-        const kind =
-          top.core.kind !== 'root' ? 'nested' : cte ? 'cte' : cols ? 'cols' : 'nested';
+        const kind = top.core.kind !== 'root' ? 'nested' : cte ? 'cte' : cols ? 'cols' : 'nested';
         const core: Core = {
           id: cores.length,
           parent: top.core,
@@ -92,7 +94,8 @@ function outputForm(text: string, at: number): { alias: string; end: number } | 
         prev = flat;
         flat = flat.replace(/\([^()]*\)/g, ' ');
       }
-      if (!/^ = 1(?: AND [^]*)?$/.test(between) || /\b(?:OR|NOT)\b|[<>!=]/.test(flat.slice(4))) return null;
+      if (!/^ = 1(?: AND [\s\S]*)?$/.test(between) || /\b(?:OR|NOT)\b|[<>!=]/.test(flat.slice(4)))
+        return null;
       const m = /^\sTHEN 1 ELSE 0 END AS (\w+)\s*(?:,|\bFROM\b|$)/i.exec(text.slice(i));
       return m ? { alias: m[1] as string, end: i } : null;
     } else if (depth < 0) return null;
@@ -104,14 +107,15 @@ function outputForm(text: string, at: number): { alias: string; end: number } | 
 export function assertAnchorShape(blanked: string): void {
   const cores = splitCores(blanked);
   const holder = cores.filter((c) => c.text.includes(TERM));
-  if (holder.length !== 1) return refuse('one core holds it');
+  if (holder.length !== 1) refuse('one core holds it');
   const core = holder[0] as Core;
   const root = cores[0] as Core;
   if (core.kind === 'nested') refuse('not in a subquery, FROM sub-select or nested CTE');
   if (core.kind === 'cols') refuse('not in a CTE with a column list');
   // Stamps: only in the holder, in form (a) or (b).
   for (const c of cores)
-    if (c !== core && c.name.toLowerCase() !== 'actor_ok' && new RegExp(STAMP, 'i').test(c.text)) refuse('presence outside the ao core');
+    if (c !== core && c.name.toLowerCase() !== 'actor_ok' && new RegExp(STAMP, 'i').test(c.text))
+      refuse('presence outside the ao core');
   const aliases: string[] = [];
   for (const m of core.text.matchAll(new RegExp(`(?<![.\\w])ao\\.${STAMP}`, 'gi'))) {
     const at = (m.index ?? 0) + 3;
@@ -126,13 +130,20 @@ export function assertAnchorShape(blanked: string): void {
     const ends = /^ = 1(?: AND |\s*$|\s+(?:GROUP|ORDER|LIMIT)\b)/i.test(after);
     if (!clause || !ends) refuse('presence is WHERE/ON <P> = 1 or authorized()');
   }
-  if (/\bao\.(?!org_id\b|mode\b|limit_key\b|authority_present_k7\b)/i.test(core.text.replace(TERM, '')))
+  if (
+    /\bao\.(?!org_id\b|mode\b|limit_key\b|authority_present_k7\b)/i.test(
+      core.text.replace(TERM, ''),
+    )
+  )
     refuse('ao has only its anchor columns');
   // Sealed core.
   const list = core.text.slice(selectList(core).start, selectList(core).end);
   if (/(?:^|,|\bSELECT\b|\bDISTINCT\b)\s*\*|\bao\.\*/i.test(list.replace(/\([^()]*\)/g, '()')))
     refuse('no * in the ao core');
-  const masked = core.text.replace(new RegExp(`\\bao\\.(?:org_id|mode|limit_key|${STAMP})\\b`, 'gi'), ' ');
+  const masked = core.text.replace(
+    new RegExp(`\\bao\\.(?:org_id|mode|limit_key|${STAMP})\\b`, 'gi'),
+    ' ',
+  );
   for (const m of masked.matchAll(ANCHOR_COLS))
     if (!/\bAS\s+$/i.test(masked.slice(0, m.index ?? 0))) refuse('no unqualified anchor column');
   if (/\b(?:UNION|INTERSECT|EXCEPT)\b/i.test(core.text)) refuse('not an arm of a compound select');
@@ -154,7 +165,8 @@ function readOnceBy(root: Core, cte: Core, cores: Core[]): string {
     .filter((c) => c !== cte)
     .reduce((n, c) => n + (c.text.match(any)?.length ?? 0), 0);
   // The definition itself (`name AS`) is the one mention in the root core.
-  if (reads.length !== 1 || total !== 2) refuse('the ao CTE is read once, by FROM, from the top-level core');
+  if (reads.length !== 1 || total !== 2)
+    refuse('the ao CTE is read once, by FROM, from the top-level core');
   const alias = reads[0]?.[1];
   return alias && !KEYWORDS.test(alias) ? alias : cte.name;
 }
@@ -166,7 +178,8 @@ function aliasOnlyOut(root: Core, q: string | null, alias: string, cores: Core[]
     // The alias is the output name in the ao core, which is the top-level core.
     if ((root.text.match(new RegExp(bare, 'gi'))?.length ?? 0) !== 1)
       refuse('the authorized() alias appears once');
-    for (const c of cores) if (c !== root && bare.test(c.text)) refuse('the authorized() alias is not reused');
+    for (const c of cores)
+      if (c !== root && bare.test(c.text)) refuse('the authorized() alias is not reused');
     return;
   }
   const qual = new RegExp(`(?<![.\\w])${esc(q)}\\.${esc(alias)}(?![\\w])`, 'gi');
@@ -188,7 +201,10 @@ function qualifiedOnlyOut(root: Core, q: string, cores: Core[]): void {
   const star = new RegExp(`(?<![.\\w])${esc(q)}\\.\\*`, 'gi');
   for (const c of cores)
     for (const m of c.text.matchAll(star)) {
-      const inList = c === root && (m.index ?? 0) >= selectList(root).start && (m.index ?? 0) < selectList(root).end;
+      const inList =
+        c === root &&
+        (m.index ?? 0) >= selectList(root).start &&
+        (m.index ?? 0) < selectList(root).end;
       if (!inList) refuse('the CTE is selected only in the top-level select list');
     }
 }
@@ -199,7 +215,8 @@ const OPERAND = String.raw`ao\.(?:org_id|mode|limit_key)`;
 export function assertAnchorOperands(blanked: string): void {
   for (const c of splitCores(blanked)) {
     const list = c.text.slice(selectList(c).start, selectList(c).end);
-    if (new RegExp(`\\b${OPERAND}\\b`, 'i').test(list)) refuse('ao columns stay out of select lists');
+    if (new RegExp(`\\b${OPERAND}\\b`, 'i').test(list))
+      refuse('ao columns stay out of select lists');
   }
   const bad = new RegExp(
     String.raw`\b${OPERAND}\b\s+(?:NOT\s+)?(?:LIKE|GLOB)\b|\b(?:LIKE|GLOB)\s*\(?\s*${OPERAND}\b|\b(?:substr|substring|replace|trim|ltrim|rtrim|unicode)\s*\([^)]*\b${OPERAND}\b`,
