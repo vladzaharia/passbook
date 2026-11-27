@@ -63,8 +63,8 @@ export interface ApiKeyAuth {
   mode: Mode;
   /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
   limited?: true;
-  /** Presented as a developer try token (`pbtry_`), not the key's secret. */
-  via?: 'try';
+  /** `try`: presented as a developer try token (`pbtry_`). `cli`: a CLI sign-in's token (`pbcli_`), which no step-up or credential route accepts. */
+  via?: 'try' | 'cli';
   /** For a try token: `auth_time` of the session it stands for (null: none recorded), so step-up applies to it. */
   sessionAuthTime?: number | null;
   /** For a try token: how that session signed in, so a break-glass step-up goes to break-glass. */

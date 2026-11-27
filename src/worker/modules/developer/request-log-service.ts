@@ -40,7 +40,8 @@ export async function orgOfCaller(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
 ): Promise<string> {
-  if (auth?.kind === 'api_key' && auth.via === 'try' && auth.orgId) return auth.orgId;
+  if (auth?.kind === 'api_key' && (auth.via === 'try' || auth.via === 'cli') && auth.orgId)
+    return auth.orgId;
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   const sandbox = await sandboxOfUser(ctx.env.DB, auth.userId);
   if (!sandbox) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');

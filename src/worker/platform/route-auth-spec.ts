@@ -89,9 +89,10 @@ export type RouteAuth =
       feature?: FeatureRule;
       /**
        * Deny by default: a session needs a strong sign-in (Polaris ID), or an email link inside the console
-       * grace. `any` admits an email link (holder features); `strict` takes no grace.
+       * grace. `any` admits an email link (holder features); `strict` takes no grace; `oidc` admits Polaris ID
+       * only (no break-glass), `x-sign-in: oidc` in the document.
        */
-      signIn?: 'any' | 'strict';
+      signIn?: 'any' | 'strict' | 'oidc';
       stepUp?: StepUp;
       /** Needs developer access (the `developer` role, or a platform admin): else 403 DEVELOPER_ACCESS_REQUIRED. */
       developer?: true;

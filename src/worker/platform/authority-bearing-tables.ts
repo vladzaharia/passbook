@@ -22,6 +22,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_check_in',
   'pass_simulated_devices',
   'request_log',
+  'cli_sessions',
   'request_log_budget',
   'scanner_setups',
   'template_release_reissues',

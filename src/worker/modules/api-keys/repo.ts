@@ -237,6 +237,8 @@ export type ResolvedKeyRow = ApiKeyRow & {
   parent: string | null;
   /** 1 while the creator is still the admin who made the key (`creatorLiveSql`), else 0: a platform key lives only so long. */
   creator_active: number | null;
+  /** A CLI token's session, as JSON (null on every other key): see `cliOf`. */
+  cli: string | null;
 };
 
 /** The columns of a `ResolvedKeyRow`, over `api_keys k` and `orgs o`: also read by the try-token resolver. */
@@ -251,7 +253,13 @@ export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status, o.kind AS org_
         WHERE m.id = k.membership_id AND st.scope = 'platform' AND st.key = 'auth.consoleEmailUntil') AS owner_grace_until,
        (SELECT json_object('revoked_at', q.revoked_at, 'expires_at', q.expires_at, 'retire_at', q.retire_at)
         FROM api_keys q WHERE q.id = k.parent_key_id) AS parent,
-       (SELECT ${creatorLiveSql('k')}) AS creator_active`;
+       (SELECT ${creatorLiveSql('k')}) AS creator_active,
+       CASE WHEN k.origin = 'cli' THEN
+         (SELECT json_object('revoked_at', c.token_revoked_at,
+            'last_roles', (SELECT u.last_roles FROM org_memberships m JOIN users u ON u.id = m.user_id WHERE m.id = k.membership_id),
+            'sandbox_open', (SELECT 1 FROM developer_sandboxes d JOIN org_memberships m ON m.user_id = d.user_id
+               WHERE d.org_id = k.org_id AND d.closed_at IS NULL AND m.id = k.membership_id))
+          FROM cli_sessions c WHERE c.token_id = k.id) END AS cli`;
 
 export const findByPrefix = (db: Db, prefix: string) =>
   first<ResolvedKeyRow>(

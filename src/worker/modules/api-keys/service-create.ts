@@ -30,11 +30,21 @@ export const MAX_LIFETIME_MS = 91 * 86_400_000;
 const MAX_CHILDREN = 50;
 const RESTRICTABLE = /^(passes|nfc):|^templates:read$|^holders:write$/;
 
+/** A CLI sign-in's key: its secret tail is derived from the session, so the poll that wins can hand it over. */
+export interface CliMint {
+  tail(prefix: string): Promise<string>;
+}
+
 /** A fresh secret: shown once, stored only as its hash. */
-export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'live' | 'test') {
+export async function newSecret(
+  ctx: ServiceContext,
+  kind: ApiKeyKind,
+  mode: 'live' | 'test',
+  cli?: CliMint,
+) {
   const prefix = ctx.ids.token(6);
-  const label = secretLabel(kind, mode);
-  const secret = `${label}_${prefix}_${ctx.ids.token(32)}`;
+  const label = secretLabel(kind, mode, cli ? 'cli' : 'app');
+  const secret = `${label}_${prefix}_${cli ? await cli.tail(prefix) : ctx.ids.token(32)}`;
   return { prefix, label, secret, hash: await sha256Hex(secret) };
 }
 
@@ -206,6 +216,7 @@ export async function createApiKey(
   ctx: ServiceContext,
   authority: ApiKeyAuthority,
   raw: z.input<typeof CreateApiKeySchema>,
+  cli?: CliMint,
 ): Promise<ApiKeyDto & { secret: string }> {
   const given: z.infer<typeof CreateApiKeySchema> = {
     ...raw,
@@ -276,7 +287,7 @@ export async function createApiKey(
   assertCredentialKey(held, kind, mode, input.expiresAt, now);
   assertOrgBoundScopes(held, kind);
   assertPlatformKey(authority, kind, mode, held, input.expiresAt, now);
-  const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
+  const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode, cli);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),
     org_id: orgId,
@@ -305,6 +316,7 @@ export async function createApiKey(
     created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
     last_ip_prefix: null,
     created_amr: authority.kind === 'api_key' ? null : authority.amr,
+    origin: cli ? 'cli' : 'app',
   };
   const audit: AuditEntry = {
     orgId,
@@ -323,6 +335,7 @@ export async function createApiKey(
       ...(terminalIds.length ? { terminalIds } : {}),
       ...(row.parent_key_id ? { parentKeyId: row.parent_key_id } : {}),
       ...(restricted ? { templateIds, passStyles } : {}),
+      ...(cli ? { origin: 'cli' } : {}),
     },
   };
   await createKey(ctx, row, authority, audit, { terminalIds, templateIds, passStyles });

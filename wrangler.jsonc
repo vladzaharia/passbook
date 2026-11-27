@@ -255,7 +255,10 @@
       "name": "RL_SANDBOX_DELIVERY",
       "namespace_id": "1031",
       "simple": { "limit": 60, "period": 60 }
-    }
+    },
+    // CLI sign-in (`passbook login`): starts per network (a burst guard on top of 10 an hour), and polls per network.
+    { "name": "RL_CLI_START", "namespace_id": "1034", "simple": { "limit": 5, "period": 60 } },
+    { "name": "RL_CLI_POLL", "namespace_id": "1035", "simple": { "limit": 30, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

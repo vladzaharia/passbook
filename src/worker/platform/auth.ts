@@ -3,6 +3,7 @@ import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { ApiScopeSchema, MODE_HEADER, type Mode } from '../../shared/contracts/common.ts';
 import type { SignInLevel } from '../../shared/sign-in.ts';
+import { CLI_TOKEN_PREFIX } from './api-key-token.ts';
 import {
   authorityUnproven,
   capabilityState,
@@ -90,7 +91,8 @@ export const apiKeyMissing = (): UnauthenticatedError =>
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
   // A Workbench call never falls back to the cookie: a `pbtry_` anywhere in Authorization, parsed or not, refuses it.
-  if (c.req.header('authorization')?.toLowerCase().includes(TRY_TOKEN_PREFIX))
+  const sent = c.req.header('authorization')?.toLowerCase();
+  if (sent?.includes(TRY_TOKEN_PREFIX) || sent?.includes(CLI_TOKEN_PREFIX))
     throw new UnauthenticatedError();
   const cookie = getCookie(c, SESSION_COOKIE);
   const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
@@ -204,8 +206,13 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const platformDecl = 'platform' in auth ? auth : null;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
-  const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
-  const level: SignInLevel = 'human' in auth || 'scope' in auth ? (auth.signIn ?? 'idp') : 'idp';
+  const oidcOnly = ('platform' in auth || 'human' in auth) && auth.signIn === 'oidc';
+  const level: SignInLevel =
+    'human' in auth || 'scope' in auth
+      ? auth.signIn === 'oidc'
+        ? 'strict'
+        : (auth.signIn ?? 'idp')
+      : 'idp';
   const ownOnlyAdmitted = 'scope' in auth && auth.signIn === 'any';
   const platformKeysOwn = 'scope' in auth && auth.platformKeys === 'own';
   if (
