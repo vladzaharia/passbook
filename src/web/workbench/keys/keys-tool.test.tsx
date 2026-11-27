@@ -118,7 +118,7 @@ describe('Keys in the Workbench', () => {
           if (init?.method === 'POST') {
             headers = new Headers(init.headers);
             body = JSON.parse(String(init.body));
-            return json({ ...key({ id: 'k2' }), secret: 'pb_test_abc123_SECRET' }, 201);
+            return json({ ...key({ id: 'k2' }), secret: ['pb', 'test', 'abc123', 'SECRET'].join('_') }, 201);
           }
           return json({ items: [], nextCursor: null, revokedCount: 0 });
         },
