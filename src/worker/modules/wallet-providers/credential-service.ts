@@ -130,21 +130,16 @@ export async function orgWriter(
 
 /** A key's event rows name the key as a `platform` actor: the event tables allow no other type. */
 export function platformWriter(by: PlatformCaller, purpose: string): CredentialWriter {
-  if (isActor(by))
-    return {
-      purpose,
-      principal: by.principal,
-      checks: by.checks,
-      actor: { type: 'platform', id: by.actorId },
-      platform: true,
-    };
-  const session = sessionOf(by);
-  if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
+  const session = isActor(by) ? null : sessionOf(by);
+  if (session && !session.roles.includes('admin'))
+    throw new ForbiddenError('Admin access is required.');
   return {
     purpose,
-    principal: { kind: 'platform', userId: session.userId, sessionIdHash: session.sessionId },
-    checks: [],
-    actor: { type: 'platform', id: session.userId },
+    principal: isActor(by)
+      ? by.principal
+      : { kind: 'platform', userId: by.userId, sessionIdHash: by.sessionId },
+    checks: isActor(by) ? by.checks : [],
+    actor: { type: 'platform', id: isActor(by) ? by.actorId : by.userId },
     platform: true,
   };
 }
