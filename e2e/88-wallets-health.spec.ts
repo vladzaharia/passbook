@@ -67,6 +67,32 @@ test('a saved pass makes the wallet healthy', async ({ page, browser }) => {
   expect(await seriousViolations(page)).toEqual([]);
 });
 
+test('the loading skeleton is as tall as the loaded panel', async ({ page }) => {
+  let release = () => {};
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  await page.route('**/wallet-health', async (route) => {
+    await gate;
+    await route.continue();
+  });
+  await page.addInitScript(() => localStorage.setItem('passbook-mode', 'test'));
+  await page.goto(`/admin/o/${w.org.id}/brand`);
+  const row = page.getByRole('button', { name: /^Google Wallet/ });
+  if ((await row.getAttribute('aria-expanded')) !== 'true') await row.click();
+  const skeleton = page.getByRole('status', { name: 'Loading' });
+  await expect(skeleton).toBeVisible();
+  const before = await skeleton.boundingBox();
+  release();
+  const panel = page.getByRole('region', { name: 'Health' });
+  await expect(panel.getByText('Healthy')).toBeVisible();
+  const after = await panel.boundingBox();
+  console.log(`skeleton ${before?.height} loaded ${after?.height}`);
+  expect(Math.abs((before?.height ?? 0) - (after?.height ?? 1))).toBeLessThanOrEqual(1);
+  const tile = panel.getByText('Last update').locator('xpath=..');
+  expect((await tile.boundingBox())?.height).toBe(54);
+});
+
 test('an unknown outcome inside the window settles by itself', async ({ page }) => {
   localSql(
     `UPDATE wallet_provider_instance_operations SET state = 'uncertain', claim_hash = lower(hex(randomblob(32))), claim_expires_at = 1, last_attempt_at = CAST(strftime('%s','now') AS INTEGER) * 1000 WHERE ${ops()}`,

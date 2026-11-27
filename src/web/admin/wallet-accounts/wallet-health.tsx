@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { WalletHealth } from '@/shared/contracts/wallet-health.ts';
 import type { WalletProvider } from '@/shared/contracts/wallet-providers.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { formatDateTimeIn, formatFullIn } from '@/web/lib/format.ts';
+import { formatFullIn } from '@/web/lib/format.ts';
+import { formatRecentDateTimeIn } from '@/web/lib/format-recent.ts';
 import type { Tone } from '@/web/lib/status.ts';
 import {
   Button,
@@ -35,7 +36,7 @@ function Fact({
   hot?: 'warning' | 'danger' | false;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 rounded-md bg-surface-sunken px-3 py-2">
+    <div className="flex h-[3.375rem] min-w-0 flex-col gap-0.5 rounded-md bg-surface-sunken px-3 py-2">
       <dt className="text-xs text-fg-muted">{label}</dt>
       <dd
         className={cn(
@@ -52,8 +53,12 @@ function Fact({
 function Moment({ at, zone }: { at: number | null; zone: string }) {
   if (at === null) return <span className="text-fg-muted">{HEALTH.none}</span>;
   return (
-    <time dateTime={new Date(at).toISOString()} title={formatFullIn(at, zone)}>
-      {formatDateTimeIn(at, zone)}
+    <time
+      className="block truncate whitespace-nowrap"
+      dateTime={new Date(at).toISOString()}
+      title={formatFullIn(at, zone)}
+    >
+      {formatRecentDateTimeIn(at, zone)}
     </time>
   );
 }
