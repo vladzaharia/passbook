@@ -11,6 +11,7 @@ import { first } from '../platform/db.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createServiceContext } from '../platform/service-context.ts';
 import { CRON_HOOKS, DAILY_CRON, handleScheduled, MINUTE_CRON } from './cron.ts';
+import * as deadLetter from './dead-letter.ts';
 import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
 import { handleQueue } from './queue.ts';
 import { JOB_HANDLERS } from './registry.ts';
@@ -237,6 +238,23 @@ describe('dead-letter consumer', () => {
     const { dead, logged } = await failing(2);
     expect(dead.retried).toEqual({ delaySeconds: 300 });
     expect(logged.some((l) => l.includes('queue.dlq_failed') && l.includes('code'))).toBe(true);
+  });
+
+  it('acks instead of retrying when only the outcome write fails', async () => {
+    const dead = message({ kind: 'push.deliver', outboxId: 'o1' }, 1);
+    const settle = vi.spyOn(deadLetter, 'settleDroppedJob').mockRejectedValue(new Error('d1'));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await handleQueue(batch(DLQ_QUEUE, [dead]), env as AppEnv, createExecutionContext());
+      expect(error.mock.calls.some((c) => String(c[0]).includes('queue.dlq_settle_failed'))).toBe(
+        true,
+      );
+    } finally {
+      settle.mockRestore();
+      error.mockRestore();
+    }
+    expect(dead.acked).toBe(true);
+    expect(dead.retried).toBeNull();
   });
 
   it('logs queue.dlq_dropped with a code and acks on the third attempt', async () => {

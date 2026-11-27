@@ -147,13 +147,16 @@ export async function countPasses(db: D1Database, filter: PassListFilter): Promi
 }
 
 /** The page statement of a list: one more row than the limit, so the caller can tell there is a next page. */
-export function listPassesSql(filter: PassListFilter): {
+export function listPassesSql(
+  filter: PassListFilter,
+  idsOnly = false,
+): {
   sql: string;
   params: (string | number)[];
 } {
   const { where, params } = passFilterSql(filter);
   return {
-    sql: `${PASS_SELECT} WHERE ${where.join(' AND ')}
+    sql: `${idsOnly ? 'SELECT id FROM passes' : PASS_SELECT} WHERE ${where.join(' AND ')}
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = passes.id AND t.state = 'pending')
       ORDER BY id DESC LIMIT ?`,

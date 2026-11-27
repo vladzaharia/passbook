@@ -70,7 +70,15 @@ export async function handleQueue(
           if (parsed.data.kind === 'connection.webhook')
             await retainDeadLetterWebhook(base, parsed.data);
           else await handleDeadLetter(parsed.data, base);
-          await settleDroppedJob(base, parsed.data, message.id, 'DEAD_LETTER');
+          // The handler already ran: a failed outcome write must not retry and re-run it.
+          try {
+            await settleDroppedJob(base, parsed.data, message.id, 'DEAD_LETTER');
+          } catch (settleError) {
+            base.log.error('queue.dlq_settle_failed', {
+              id: message.id,
+              code: safeCode(settleError, 'DLQ_SETTLE_FAILED'),
+            });
+          }
         } else if (!(await retainLegacyJob(base, message))) {
           base.log.error('queue.invalid_message', { id: message.id, code: 'INVALID_MESSAGE' });
           await settleDroppedJob(base, null, message.id, 'INVALID_MESSAGE');
