@@ -26,6 +26,14 @@ describe('assertActorOnce evasions', () => {
     ['ISNULL postfix', (r) => `FROM ${r}passes x WHERE ao.org_id ISNULL`],
     ['parenthesised', (r) => `FROM ${r}passes x WHERE (ao.org_id) IS NULL`],
     ['COALESCE', (r) => `FROM ${r}passes x WHERE COALESCE(ao.org_id, '') = ''`],
+    [
+      'IFNULL around a comparison',
+      (r) => `FROM ${r}passes x WHERE IFNULL(ao.org_id = x.org_id, 1)`,
+    ],
+    [
+      'IFNULL around a comparison after present',
+      (r) => `FROM ${r}passes x WHERE ao.present = 1 AND IFNULL(x.org_id = ao.org_id, 1)`,
+    ],
     ['IS NOT NOT NULL', (r) => `FROM ${r}passes x WHERE ao.org_id IS NOT NOT NULL`],
     ['bare platform term', (r) => `FROM ${r}passes x WHERE ao.org_id IS NULL`],
     [
@@ -106,6 +114,12 @@ describe('the join alone fences', () => {
     for (const actor of await actors(s)) {
       if (actor.scope === 'platform' || actor.check) continue;
       const p = authorityPredicate(actor.principal, { scope: actor.scope, now });
+      // The actor's own org, read from its CTE: independent of the tenant term under test.
+      const [own] = await all<{ org_id: string | null }>(
+        db,
+        `WITH ${p.ctes} SELECT org_id FROM actor_ok`,
+        p.params,
+      );
       for (const [table, t] of Object.entries(GUARDED_TABLES)) {
         if (t.org === null) continue;
         for (const scope of ['org', 'org_mode'] as const) {
@@ -123,6 +137,21 @@ describe('the join alone fences', () => {
           const base = await read(forms.rows);
           for (const [form, from] of Object.entries(forms))
             expect(await read(from), `${actor.name} ${table} ${scope} ${form}`).toEqual(base);
+          const col = t.org === 'scope' ? 'scope' : t.org;
+          const mine = t.org === 'scope' ? `org:${own?.org_id}` : own?.org_id;
+          // Oracle: no row of another org, and never more rows than the org owns.
+          const owned = await all<{ n: number }>(
+            db,
+            `SELECT count(*) AS n FROM ${table} WHERE ${col} = ?`,
+            [mine ?? ''],
+          );
+          expect(
+            base.length,
+            `${actor.name} ${table} ${scope} never exceeds own rows`,
+          ).toBeLessThanOrEqual(owned[0]?.n ?? 0);
+          const rowsRead = base.map((r) => JSON.parse(r) as Record<string, unknown>);
+          for (const r of rowsRead)
+            expect(r[col], `${actor.name} ${table} ${scope} foreign row`).toBe(mine);
           if (base.length > 0) nonEmpty++;
         }
       }

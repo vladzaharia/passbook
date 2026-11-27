@@ -42,6 +42,11 @@ export function assertActorOnce(sql: string): void {
       .replace(/\bao\.present\s*=\s*1\s+AND\s+ao\.org_id\s+IS\s+NULL\b/gi, ' ')
       .replace(/(?:=|\|\|)\s*ao\.org_id\b|\bao\.org_id\s*=(?!=)/gi, ' '),
   );
+  // A comparison absorbed by a function (`IFNULL(ao.org_id = x, 1)`) is true on an absent anchor row.
+  const wrapped =
+    /\b(?:IFNULL|COALESCE|NULLIF|IIF|MAX|MIN|TOTAL|SUM|COUNT)\s*\([^)]*\bao\.(?:org_id|mode|limit_key)\b/i.test(
+      text,
+    ) || /\bNOT\s*\(\s*ao\.present\b/i.test(text);
   const aliases = [...text.matchAll(/(?<![.\w])([A-Za-z_]\w*|\))\s+(?:AS\s+)?ao(?![\w.])/gi)];
   const shadowed = aliases.some((m) => m[1]?.toLowerCase() !== 'actor_ok');
   const bad =
@@ -52,6 +57,7 @@ export function assertActorOnce(sql: string): void {
     count(text, name('actor')) !== 2 ||
     count(text, name('key_tpl')) !== 0 ||
     bareNull ||
+    wrapped ||
     shadowed;
   if (bad)
     throw new AuthorityError(

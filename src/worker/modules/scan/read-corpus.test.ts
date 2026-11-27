@@ -167,6 +167,16 @@ describe('scan read corpus', () => {
     expect((await countScanRows(env.DB, auth, filter, 10)).n).toBe(0);
   });
 
+  it('a scanner whose claimed org is not its own org is not authorised', async () => {
+    const { real } = await maximal();
+    const other = await makeOrg(f);
+    const forged: ScanActor = { ...real, orgId: other.id };
+    const read = async (a: ScanActor) =>
+      (await scanAuthorizedStmt(env.DB, scanReadAuthority(a, { now: clock.now() })).all()).results;
+    expect(await read(real)).toEqual([{ authorized: 1 }]);
+    expect(await read(forged)).toEqual([{ authorized: 0 }]);
+  });
+
   it('a place read fences the event to the actor org whatever org the binds name', async () => {
     const { real } = await maximal();
     const auth = scanReadAuthority(real, { now: clock.now() });
