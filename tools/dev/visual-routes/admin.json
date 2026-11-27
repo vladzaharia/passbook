@@ -61,6 +61,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/connections/{connectionId}/setup",
+    "name": "admin-connection-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}",
     "name": "admin-webhook-detail"
   },
@@ -323,6 +328,11 @@
     "role": "org",
     "path": "/admin/connections/new",
     "name": "legacy-connection-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/{connectionId}/setup",
+    "name": "legacy-connection-setup"
   },
   {
     "role": "org",
