@@ -18,12 +18,17 @@ const NONE: ReadonlySet<WalletName> = new Set();
  * template or the pass turns off stays (hatched); one the organization, the plan or PassBook
  * withholds has no tile. Without an organization (a platform template) both are listed.
  */
-export function useWalletChannels(templateId: string | undefined, orgId: string | undefined) {
+export function useWalletChannels(
+  templateId: string | undefined,
+  orgId: string | undefined,
+  unreleased: ReadonlySet<WalletName> = NONE,
+) {
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   return useMemo<WalletChannels>(() => {
-    if (!templateId || !orgId) return { listed: BOTH, templateOff: NONE };
+    const open = BOTH.filter((w) => !unreleased.has(w));
+    if (!templateId || !orgId) return { listed: open, templateOff: NONE };
     const all = channels.data?.effective;
-    if (!all) return { listed: channels.isError ? BOTH : null, templateOff: NONE };
+    if (!all) return { listed: channels.isError ? open : null, templateOff: NONE };
     const listed: WalletName[] = [];
     const off = new Set<WalletName>();
     for (const wallet of BOTH) {
@@ -34,6 +39,6 @@ export function useWalletChannels(templateId: string | undefined, orgId: string 
         off.add(wallet);
       }
     }
-    return { listed, templateOff: off };
-  }, [channels.data, channels.isError, templateId, orgId]);
+    return { listed: listed.filter((w) => !unreleased.has(w)), templateOff: off };
+  }, [channels.data, channels.isError, templateId, orgId, unreleased]);
 }
