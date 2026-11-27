@@ -6,7 +6,7 @@ import { Button } from '../../ui/button.tsx';
 import { CardBody, CardLink } from '../../ui/card.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
 import { ToolFailed } from '../states/states.tsx';
-import { QrTile } from '../ui/preview-qr.tsx';
+import { QrTile } from '../ui/qr-tile.tsx';
 import type { PassRow } from './data.ts';
 import { Panel } from './panel.tsx';
 

@@ -8,7 +8,7 @@ import { copyToClipboard } from '../playground/copy.ts';
 import { ApplePane, PaperPane, WalletPane } from '../playground/panes.tsx';
 import { Seg } from '../playground/seg.tsx';
 import { sourceOf } from '../playground/templates.ts';
-import { QrTile } from '../ui/preview-qr.tsx';
+import { QrTile } from '../ui/qr-tile.tsx';
 import { MakeSandbox } from './make-sandbox.tsx';
 import type { Fix } from './model.ts';
 import { GhostCard } from './parts.tsx';

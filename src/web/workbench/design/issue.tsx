@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useOptionalToolHost } from '../host/tool-host.tsx';
-import { QrTile } from '../ui/preview-qr.tsx';
+import { QrTile } from '../ui/qr-tile.tsx';
 import { sampleOf } from './sample.ts';
 import { useOpenTemplate } from './template-context.tsx';
 

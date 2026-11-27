@@ -1,5 +1,14 @@
 import { Plus } from 'lucide-react';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  lazy,
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { WB_PASSES } from '@/shared/copy/workbench-passes.ts';
 import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
@@ -21,11 +30,16 @@ import { ToolPage } from '../shell/tool-page.tsx';
 import { ToolEmpty, ToolFailed } from '../states/states.tsx';
 import { useDevicePassEnabled } from './flags.ts';
 import { stateOf, titleOf, toneOf } from './model.ts';
-import { PassInspector } from './pass-inspector.tsx';
 import { PassThumb } from './pass-thumb.tsx';
-import { PhoneView } from './phone-view.tsx';
 import { useAddress } from './use-address.ts';
 import { usePassList } from './use-passes.ts';
+
+// The inspector carries the card renderer, the shared tabs and the menus; the phone view the QR cards.
+// Each loads when it is first shown, so the route's own weight is the list.
+const PassInspector = lazy(() =>
+  import('./pass-inspector.tsx').then((m) => ({ default: m.PassInspector })),
+);
+const PhoneView = lazy(() => import('./phone-view.tsx').then((m) => ({ default: m.PhoneView })));
 
 const idOf = (p: PassSummaryDto) => p.id;
 /** The buddy reacts to what this tab caused at most once every 2 s, and for as long as it takes to read. */
@@ -94,7 +108,12 @@ export function PassesTool() {
   if (list.isPending) body = <BenchSkeleton rows={6} />;
   else if (list.isError)
     body = <ToolFailed error={list.error} onRetry={() => void list.refetch()} />;
-  else if (showPhone) body = <PhoneView orgId={orgId} passes={items} />;
+  else if (showPhone)
+    body = (
+      <Suspense fallback={<BenchSkeleton rows={3} />}>
+        <PhoneView orgId={orgId} passes={items} />
+      </Suspense>
+    );
   else
     body = (
       <BenchSplit
@@ -131,17 +150,19 @@ export function PassesTool() {
         }
         pane={
           selected ? (
-            <PassInspector
-              pass={selected}
-              orgId={orgId}
-              sandbox={sandbox}
-              tab={params.tab}
-              onTab={(tab) => write({ tab: tab === 'events' ? null : tab })}
-              cheering={cheer.on}
-              onCheer={cheer.cheer}
-              onPrev={at > 0 ? () => selection.step(-1) : undefined}
-              onNext={at >= 0 && at < ids.length - 1 ? () => selection.step(1) : undefined}
-            />
+            <Suspense fallback={<BenchSkeleton rows={4} />}>
+              <PassInspector
+                pass={selected}
+                orgId={orgId}
+                sandbox={sandbox}
+                tab={params.tab}
+                onTab={(tab) => write({ tab: tab === 'events' ? null : tab })}
+                cheering={cheer.on}
+                onCheer={cheer.cheer}
+                onPrev={at > 0 ? () => selection.step(-1) : undefined}
+                onNext={at >= 0 && at < ids.length - 1 ? () => selection.step(1) : undefined}
+              />
+            </Suspense>
           ) : null
         }
       />
