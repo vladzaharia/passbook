@@ -47,14 +47,17 @@ WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.pass_id IS NOT 
   OR (OLD.state IN ('voided', 'expired') AND NEW.state IS NOT OLD.state)
 BEGIN SELECT RAISE(ABORT, 'immutable device pass'); END;
 
--- The phones that registered a device pass (at most 3 distinct; a fourth voids it).
+-- The phones that registered a device pass (at most 3 distinct, counting removed ones; a fourth voids it).
+-- Unregistering sets removed_at and keeps the row, so rotating phones cannot get around the limit.
 CREATE TABLE device_pass_devices (
   device_pass_id TEXT NOT NULL REFERENCES device_passes (id) ON DELETE CASCADE,
   device_id TEXT NOT NULL,
   push_token TEXT NOT NULL,
   created_at INTEGER NOT NULL,
+  removed_at INTEGER,
   PRIMARY KEY (device_pass_id, device_id)
 );
+CREATE INDEX device_pass_devices_device ON device_pass_devices (device_id);
 
 -- A developer whose device passes were shared: no new ones until a platform admin clears the row.
 CREATE TABLE device_pass_blocks (
@@ -95,7 +98,7 @@ BEGIN
         -- The developer's own phones holding an open device pass of the pass count in Test too (0244).
         + CASE WHEN p.mode = 'test' THEN (SELECT count(*) FROM device_pass_devices x
           JOIN device_passes d ON d.id = x.device_pass_id
-          WHERE d.pass_id = p.id AND d.state IN ('pending', 'active')) ELSE 0 END END,
+          WHERE d.pass_id = p.id AND d.state IN ('pending', 'active') AND x.removed_at IS NULL) ELSE 0 END END,
     NEW.actor_type, NEW.data, NEW.at
   FROM passes p JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
   WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode

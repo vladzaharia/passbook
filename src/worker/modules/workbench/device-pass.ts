@@ -193,7 +193,13 @@ export async function addAgain(
   id: string,
 ): Promise<DevicePassDto> {
   const row = await ownedRow(ctx, auth, id);
-  if (row.state === 'pending' || row.state === 'active')
+  if ((row.state === 'pending' || row.state === 'active') && row.expires_at <= ctx.clock.now()) {
+    // Past its expiry the pass is ended here, not left for the sweep.
+    if (await endDevicePass(ctx.env.DB, id, 'expired', ctx.clock.now())) {
+      await audit(ctx, row, { type: 'system', id: null }, 'expired');
+      ctx.waitUntil(pushDevicePass(ctx, id));
+    }
+  } else if (row.state === 'pending' || row.state === 'active')
     throw new ConflictError('This device pass is still open.', 'DEVICE_PASS_STILL_OPEN');
   return createDevicePass(ctx, auth, row.pass_id, row.id);
 }

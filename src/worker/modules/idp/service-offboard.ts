@@ -9,6 +9,7 @@ import { closeSandbox } from '../developer/repo-grants.ts';
 import { managerOf } from '../orgs/actor.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';
 import { setUserStatus } from '../users/service.ts';
+import { endSandboxDevicePasses } from '../workbench/device-pass-end.ts';
 import { offboardable, offboardPlan } from './offboard-plan.ts';
 import { type Caller, limited, needBinding, replay, startIdpOp } from './ops-start.ts';
 import { revokeAllGrants } from './repo-role-grants.ts';
@@ -99,7 +100,10 @@ async function endAccess(
     amr: auth.amr,
   } as const;
   for (const id of plan.platformKeys) await revokeApiKey(ctx, platform, id);
-  if (plan.sandboxOrgId) await closeSandbox(ctx, plan.sandboxOrgId, undefined, 'admin');
+  if (plan.sandboxOrgId) {
+    await closeSandbox(ctx, plan.sandboxOrgId, undefined, 'admin');
+    await endSandboxDevicePasses(ctx, plan.sandboxOrgId);
+  }
   // Disabling revokes every session and marks the user for the drain, which takes the roles away.
   await setUserStatus(ctx, auth.userId, plan.userId, 'disabled', auth.sessionId);
 }

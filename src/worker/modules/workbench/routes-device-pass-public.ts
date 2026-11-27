@@ -26,5 +26,13 @@ register(
     params: z.object({ code: z.string().min(16).max(128) }),
     public: true,
   },
-  async (c) => downloadByCode(serviceContext(c), c.req.valid('param').code),
+  async (c) => {
+    // Link previewers send HEAD; it must not spend the one-time code.
+    if (c.req.method === 'HEAD')
+      return new Response(null, {
+        status: 200,
+        headers: { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' },
+      });
+    return downloadByCode(serviceContext(c), c.req.valid('param').code);
+  },
 );

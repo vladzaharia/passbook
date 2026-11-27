@@ -6,6 +6,7 @@ import {
   type DevicePassOverrides,
   devicePassViolations,
 } from './device-pass.ts';
+import { AIRLINE_URL_KEYS, EVENT_URL_KEYS } from './schema/constants.ts';
 import type { PassJson } from './schema/pass-types.ts';
 
 const overrides: DevicePassOverrides = {
@@ -127,5 +128,68 @@ describe('device pass overrides', () => {
     expect(devicePassViolations(sound, { ...overrides, serialNumber: 'real-serial' })).toContain(
       'serialNumber',
     );
+  });
+
+  it('strips and reports every link-bearing key the schema knows, top level and per upcoming entry', () => {
+    const urls = Object.fromEntries([...EVENT_URL_KEYS, ...AIRLINE_URL_KEYS].map((k) => [k, 'x']));
+    const field = {
+      key: 'f',
+      value: 'v',
+      attributedValue: '<a href="https://e.example">x</a>',
+      dataDetectorTypes: ['PKDataDetectorTypeLink'],
+      semantics: {
+        wifiAccess: [{ ssid: 's', password: 'p', captiveTokenAuthURL: 'https://e.example' }],
+      },
+    };
+    const entry = {
+      identifier: 'e',
+      name: 'n',
+      type: 'event',
+      URLs: { accessibilityURL: 'https://e.example' },
+      auxiliaryStoreIdentifiers: [1],
+      ...urls,
+      additionalInfoFields: [{ ...field }],
+      backFields: [{ ...field }],
+    };
+    const dirty = {
+      ...source(),
+      ...urls,
+      auxiliaryStoreIdentifiers: [2],
+      featuredActions: [{ identifier: 'a', type: 'call', url: 'tel:+15550100' }],
+      upcomingPassInformation: [entry],
+    } as unknown as PassJson;
+    const reported = devicePassViolations(dirty, overrides);
+    for (const key of [
+      ...EVENT_URL_KEYS,
+      ...AIRLINE_URL_KEYS,
+      'auxiliaryStoreIdentifiers',
+      'featuredActions',
+    ])
+      expect(reported, key).toContain(key);
+    expect(reported).toEqual(
+      expect.arrayContaining([
+        'upcomingPassInformation.URLs',
+        'upcomingPassInformation.auxiliaryStoreIdentifiers',
+        'upcomingPassInformation.contactVenueWebsite',
+        'captiveTokenAuthURL',
+      ]),
+    );
+    const pass = applyDevicePassOverrides(dirty, overrides) as Record<string, unknown>;
+    for (const key of [
+      ...EVENT_URL_KEYS,
+      ...AIRLINE_URL_KEYS,
+      'auxiliaryStoreIdentifiers',
+      'featuredActions',
+    ])
+      expect(pass, key).not.toHaveProperty(key);
+    const out = (pass.upcomingPassInformation as Record<string, unknown>[])[0] ?? {};
+    for (const key of ['URLs', 'auxiliaryStoreIdentifiers', ...EVENT_URL_KEYS])
+      expect(out, key).not.toHaveProperty(key);
+    for (const f of [...(out.additionalInfoFields as object[]), ...(out.backFields as object[])]) {
+      expect(f).not.toHaveProperty('attributedValue');
+      expect(f).toMatchObject({ dataDetectorTypes: [] });
+      expect(JSON.stringify(f)).not.toContain('captiveTokenAuthURL');
+    }
+    expect(devicePassViolations(pass as unknown as PassJson, overrides)).toEqual([]);
   });
 });

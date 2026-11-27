@@ -7,7 +7,7 @@ import { recordPassEvent } from '../events/record.ts';
 import { PLATFORM_SLOTS } from '../identities/provision-platform.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { buildDevicePass } from './device-pass-build.ts';
-import { devicePassEnabled, deviceTestIdentity } from './device-pass-identity.ts';
+import { devicePassEnabled } from './device-pass-identity.ts';
 import { deviceEvent, pushDevicePass } from './device-pass-push.ts';
 import { devicePassIdOf, tokenIsValid } from './device-pass-token.ts';
 import {
@@ -26,6 +26,8 @@ const MAX_SERIALS = 200;
 export const isDeviceTestPassType = (passTypeId: string): boolean =>
   passTypeId === PLATFORM_SLOTS.devtest.passType;
 
+const isEnded = (row: { state: string }) => row.state === 'voided' || row.state === 'expired';
+
 const unauthorized = () => new UnauthenticatedError('Unauthorized.', 'APPLE_UNAUTHORIZED');
 
 /** The device pass a request is for, proved by its token. Every refusal is the same 401: nothing says why. */
@@ -36,7 +38,9 @@ async function authorize(
   authorization: string | undefined,
 ): Promise<DevicePassRow> {
   const id = devicePassIdOf(serial);
-  const row = id && devicePassEnabled(ctx.env) ? await getDevicePass(ctx.env.DB, id) : null;
+  const found = id ? await getDevicePass(ctx.env.DB, id) : null;
+  // With the flag off an ended pass is still served, so a phone gets the voided copy after a rollback.
+  const row = found && (devicePassEnabled(ctx.env) || isEnded(found)) ? found : null;
   const presented = authorization?.startsWith(SCHEME) ? authorization.slice(SCHEME.length) : '';
   const ok = await tokenIsValid(ctx.env, row, presented);
   if (!row || !ok || !isDeviceTestPassType(passTypeId)) throw unauthorized();
@@ -122,7 +126,7 @@ export async function unregisterDevicePass(
 ): Promise<void> {
   const row = await authorize(ctx, input.passTypeId, input.serial, input.authorization);
   checkDevice(input.deviceId);
-  if (await removeDevice(ctx.env.DB, row.id, input.deviceId))
+  if (await removeDevice(ctx.env.DB, row.id, input.deviceId, ctx.clock.now()))
     await recordPassEvent(
       ctx,
       deviceEvent(row, 'device.unregistered', input.deviceId, { reason: 'device' }),
@@ -137,13 +141,13 @@ export async function updatedDevicePasses(
   checkDevice(input.deviceId);
   if (input.since !== undefined && !/^\d{1,15}$/.test(input.since))
     throw new BadRequestError('Invalid update tag.', 'TAG_INVALID');
-  if (!devicePassEnabled(ctx.env)) return null;
-  const rows = await changedSince(
+  const all = await changedSince(
     ctx.env.DB,
     input.deviceId,
     Number(input.since ?? '0'),
     MAX_SERIALS,
   );
+  const rows = devicePassEnabled(ctx.env) ? all : all.filter(isEnded);
   const last = rows.at(-1);
   return last
     ? { serialNumbers: rows.map((r) => `dp_${r.id}`), lastUpdated: String(last.updated_at) }
@@ -175,7 +179,7 @@ export async function serveDevicePass(
     return new Response(null, { status: 304, headers });
   const source = await getPass(ctx.env.DB, row.pass_id);
   if (!source) throw unauthorized();
-  const built = await buildDevicePass(ctx, row, source, await deviceTestIdentity(ctx));
+  const built = await buildDevicePass(ctx, row, source);
   const now = ctx.clock.now();
   await markServed(ctx.env.DB, row.id, now, built.hash);
   headers.set('content-type', 'application/vnd.apple.pkpass');

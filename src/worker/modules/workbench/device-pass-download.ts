@@ -4,7 +4,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { buildDevicePass } from './device-pass-build.ts';
-import { deviceTestIdentity } from './device-pass-identity.ts';
 import {
   consumeCode,
   endDevicePass,
@@ -40,10 +39,19 @@ export async function downloadByCode(ctx: ServiceContext, code: string): Promise
     const source = row ? await getPass(db, row.pass_id) : null;
     if (!row || !source) return codeGone();
     if (source.status !== 'active' || source.removedAt !== null || source.deletedAt !== null) {
-      await endDevicePass(db, id, 'pass_gone', ctx.clock.now());
+      if (await endDevicePass(db, id, 'pass_gone', ctx.clock.now()))
+        await recordAudit(ctx, {
+          orgId: row.org_id,
+          actorType: 'system',
+          actorId: null,
+          action: 'device_pass.voided',
+          targetType: 'device_pass',
+          targetId: id,
+          detail: { reason: 'pass_gone' },
+        });
       return codeGone();
     }
-    const built = await buildDevicePass(ctx, row, source, await deviceTestIdentity(ctx));
+    const built = await buildDevicePass(ctx, row, source);
     await markServed(db, id, ctx.clock.now(), built.hash);
     await recordAudit(ctx, {
       orgId: row.org_id,

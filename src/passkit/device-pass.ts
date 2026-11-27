@@ -1,3 +1,4 @@
+import { AIRLINE_URL_KEYS, EVENT_URL_KEYS } from './schema/constants.ts';
 import type { PassJson } from './schema/pass-types.ts';
 import { PASS_STYLES } from './types.ts';
 
@@ -27,18 +28,37 @@ const STRIPPED = [
   'nfc',
   'sharing',
   'businessChatIdentifier',
+  'featuredActions',
+  ...EVENT_URL_KEYS,
+  ...AIRLINE_URL_KEYS,
 ] as const;
+/** Per upcoming-event entry: the remote URL map and the store ids. */
+const ENTRY_STRIPPED = ['URLs', 'auxiliaryStoreIdentifiers', ...EVENT_URL_KEYS] as const;
+const CAPTIVE_URL = 'captiveTokenAuthURL';
 const LINK_KEY = /(?:URL|Email|PhoneNumber)$/;
 const prefixed = (text: string) =>
   text.startsWith(DEVICE_PASS_PREFIX) ? text : DEVICE_PASS_PREFIX + text;
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+const entriesOf = (pass: Record<string, unknown>): Record<string, unknown>[] =>
+  Array.isArray(pass.upcomingPassInformation) ? pass.upcomingPassInformation.filter(isObject) : [];
+const wifiOf = (holder: Record<string, unknown>): Record<string, unknown>[] =>
+  isObject(holder.semantics) && Array.isArray(holder.semantics.wifiAccess)
+    ? holder.semantics.wifiAccess.filter(isObject)
+    : [];
 const styleDicts = (pass: PassJson): Record<string, unknown>[] =>
   PASS_STYLES.map((style) => (pass as Record<string, unknown>)[style]).filter(isObject);
 const fieldsOf = (dict: Record<string, unknown>): Record<string, unknown>[] =>
   Object.entries(dict).flatMap(([name, value]) =>
     name.endsWith('Fields') && Array.isArray(value) ? value.filter(isObject) : [],
   );
+
+function sanitizeField(field: Record<string, unknown>): void {
+  field.dataDetectorTypes = [];
+  delete field.attributedValue;
+  for (const wifi of wifiOf(field)) delete wifi[CAPTIVE_URL];
+  if (typeof field.changeMessage === 'string') field.changeMessage = prefixed(field.changeMessage);
+}
 
 /**
  * The source pass.json as a device pass: PassBook Test as issuer, not shareable, 24 h to live, this device
@@ -52,6 +72,12 @@ export function applyDevicePassOverrides(
   const pass = structuredClone(source) as Record<string, unknown>;
   for (const key of STRIPPED) delete pass[key];
   for (const key of Object.keys(pass)) if (LINK_KEY.test(key)) delete pass[key];
+  for (const wifi of wifiOf(pass)) delete wifi[CAPTIVE_URL];
+  for (const entry of entriesOf(pass)) {
+    for (const key of ENTRY_STRIPPED) delete entry[key];
+    for (const wifi of wifiOf(entry)) delete wifi[CAPTIVE_URL];
+    for (const field of fieldsOf(entry)) sanitizeField(field);
+  }
   Object.assign(pass, {
     passTypeIdentifier: overrides.passTypeIdentifier,
     teamIdentifier: overrides.teamIdentifier,
@@ -65,12 +91,7 @@ export function applyDevicePassOverrides(
   delete pass.voided;
   const typed = pass as unknown as PassJson;
   for (const dict of styleDicts(typed)) {
-    for (const field of fieldsOf(dict)) {
-      field.dataDetectorTypes = [];
-      delete field.attributedValue;
-      if (typeof field.changeMessage === 'string')
-        field.changeMessage = prefixed(field.changeMessage);
-    }
+    for (const field of fieldsOf(dict)) sanitizeField(field);
     const back = Array.isArray(dict.backFields) ? dict.backFields.filter(isObject) : [];
     dict.backFields = [
       {
@@ -110,6 +131,13 @@ export function devicePassViolations(pass: PassJson, overrides: DevicePassOverri
   for (const key of STRIPPED) if (key in json) broken.push(key);
   for (const key of Object.keys(json))
     if (LINK_KEY.test(key) && key !== 'webServiceURL') broken.push(key);
+  if (wifiOf(json).some((wifi) => CAPTIVE_URL in wifi)) broken.push(CAPTIVE_URL);
+  for (const entry of entriesOf(json)) {
+    for (const key of ENTRY_STRIPPED)
+      if (key in entry) broken.push(`upcomingPassInformation.${key}`);
+    if (wifiOf(entry).some((wifi) => CAPTIVE_URL in wifi)) broken.push(CAPTIVE_URL);
+    broken.push(...fieldViolations(entry));
+  }
   const dicts = styleDicts(pass);
   if (dicts.length === 0) broken.push('style');
   for (const dict of dicts) {
@@ -121,16 +149,23 @@ export function devicePassViolations(pass: PassJson, overrides: DevicePassOverri
       first.value !== DEVICE_PASS_NOTICE
     )
       broken.push('backFields');
-    for (const field of fieldsOf(dict)) {
-      const detectors = field.dataDetectorTypes;
-      if (!Array.isArray(detectors) || detectors.length !== 0) broken.push('dataDetectorTypes');
-      if ('attributedValue' in field) broken.push('attributedValue');
-      if (
-        typeof field.changeMessage === 'string' &&
-        !field.changeMessage.startsWith(DEVICE_PASS_PREFIX)
-      )
-        broken.push('changeMessage');
-    }
+    broken.push(...fieldViolations(dict));
   }
   return [...new Set(broken)];
+}
+
+function fieldViolations(dict: Record<string, unknown>): string[] {
+  const broken: string[] = [];
+  for (const field of fieldsOf(dict)) {
+    const detectors = field.dataDetectorTypes;
+    if (!Array.isArray(detectors) || detectors.length !== 0) broken.push('dataDetectorTypes');
+    if ('attributedValue' in field) broken.push('attributedValue');
+    if (wifiOf(field).some((wifi) => CAPTIVE_URL in wifi)) broken.push(CAPTIVE_URL);
+    if (
+      typeof field.changeMessage === 'string' &&
+      !field.changeMessage.startsWith(DEVICE_PASS_PREFIX)
+    )
+      broken.push('changeMessage');
+  }
+  return broken;
 }

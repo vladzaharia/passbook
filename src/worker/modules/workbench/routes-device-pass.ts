@@ -53,6 +53,11 @@ function requireKey(c: { req: { header(name: string): string | undefined } }): v
     throw new BadRequestError('Send an Idempotency-Key header.', 'IDEMPOTENCY_KEY_REQUIRED');
 }
 
+/** Idempotency keeps the response 24 h; the one-time code is not kept, so a replay answers `code: null`. */
+const withoutCode = <T extends { devicePass: object }>(body: T) => ({
+  devicePass: { ...body.devicePass, code: null },
+});
+
 register(
   developerDevicePassRoutes,
   TAG,
@@ -80,6 +85,8 @@ register(
       { orgId: 'device-pass', mode: 'test', principal: principalOf(auth), body },
       201,
       async () => ({ devicePass: await createDevicePass(ctx, auth, body.passId) }),
+      undefined,
+      withoutCode,
     );
   },
 );
@@ -134,6 +141,8 @@ register(
       { orgId: 'device-pass', mode: 'test', principal: principalOf(auth), body: { id } },
       201,
       async () => ({ devicePass: await issueCode(ctx, auth, id) }),
+      undefined,
+      withoutCode,
     );
   },
 );
@@ -165,6 +174,8 @@ register(
       { orgId: 'device-pass', mode: 'test', principal: principalOf(auth), body: { id } },
       201,
       async () => ({ devicePass: await addAgain(ctx, auth, id) }),
+      undefined,
+      withoutCode,
     );
   },
 );

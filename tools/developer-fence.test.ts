@@ -195,6 +195,20 @@ const hits = scan();
 const text = (file: string) => strip(readFileSync(join(root, file), 'utf8'));
 
 describe('the developer fence', () => {
+  it('pins the device-pass exemption to the device-test identity', () => {
+    const exempt = Object.keys(EXEMPT).filter((file) => /workbench\/device-pass-/.test(file));
+    expect(exempt.length).toBeGreaterThan(0);
+    for (const file of exempt) expect(text(file), file).toContain('deviceTestIdentity(');
+    const importers: string[] = [];
+    for (const path of sourceFiles(join(root, 'src')))
+      if (/\bbuildDevicePass\b/.test(readFileSync(path, 'utf8')))
+        importers.push(relative(root, path));
+    expect(importers.filter((f) => !f.endsWith('device-pass-build.ts')).sort()).toEqual([
+      'src/worker/modules/workbench/device-pass-download.ts',
+      'src/worker/modules/workbench/device-pass-wallet.ts',
+    ]);
+  });
+
   it('finds the entry points in the code', () => {
     // A guard against a pattern that stopped matching: these places exist today.
     const files = hits.map((h) => h.file);

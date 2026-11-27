@@ -8,12 +8,12 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { ResolvedIdentity } from '../identities/env-identity.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { applyRemoval } from '../passes/remove-build.ts';
 import type { Pass } from '../passes/repo.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
 import { openPublicAsset, passImages } from '../public/service.ts';
+import { deviceTestIdentity } from './device-pass-identity.ts';
 import { devicePassSerial, devicePassToken } from './device-pass-token.ts';
 import type { DevicePassRow } from './repo-device-pass.ts';
 
@@ -43,8 +43,10 @@ export async function buildDevicePass(
   ctx: ServiceContext,
   row: DevicePassRow,
   source: Pass,
-  identity: ResolvedIdentity,
 ): Promise<{ bytes: Uint8Array; hash: string }> {
+  // Defense in depth: the tenant and mode fences already hold this.
+  if (source.mode !== 'test' || source.orgId !== row.org_id) throw new NotFoundError();
+  const identity = await deviceTestIdentity(ctx);
   const raw = await passJsonAtVersion(ctx.env.DB, source.id, source.version);
   if (!raw) throw new NotFoundError('The pass has no stored version.', 'PASS_VERSION_MISSING');
   const ended = row.state === 'voided' || row.state === 'expired';

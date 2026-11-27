@@ -20,6 +20,7 @@ import { createCandidate } from '../templates/releases-create.ts';
 import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
 import { authorizeWebhooks } from '../webhooks/access.ts';
 import { ensureCapture } from '../webhooks/service-captures.ts';
+import { endSandboxDevicePasses } from '../workbench/device-pass-end.ts';
 import { recordSandboxMade } from './funnel.ts';
 import { KEY_SCOPES } from './key-scopes.ts';
 import {
@@ -288,6 +289,7 @@ export async function closeOwnSandbox(
     });
     if (!closed)
       throw new ConflictError('The sandbox changed. Reload and retry.', 'SANDBOX_CONFLICT');
+    await endSandboxDevicePasses(ctx, row.org_id);
   }
   const after = await sandboxOfUser(ctx.env.DB, session.userId);
   return dto(

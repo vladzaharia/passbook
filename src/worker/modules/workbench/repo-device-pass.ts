@@ -32,7 +32,7 @@ export interface DevicePassRow {
 const COLUMNS = `d.id, d.org_id, d.pass_id, d.user_id, d.state, d.void_reason, d.auth_nonce, d.code_expires_at,
   d.code_used_at, d.codes_issued, d.source_version, d.updated_at, d.created_at, d.expires_at, d.downloaded_at,
   d.last_seen_at, d.voided_at,
-  (SELECT count(*) FROM device_pass_devices x WHERE x.device_pass_id = d.id) AS device_count`;
+  (SELECT count(*) FROM device_pass_devices x WHERE x.device_pass_id = d.id AND x.removed_at IS NULL) AS device_count`;
 
 export interface NewDevicePass {
   id: string;
@@ -182,6 +182,22 @@ export function endDevicePassesOf(
        updated_at = MAX(updated_at + 1, ?)
      WHERE user_id = ? AND state IN ('pending', 'active') RETURNING id, org_id, pass_id`,
     [reason, now, now, userId],
+  );
+}
+
+/** Every open pass made in one sandbox org (its developer lost access or it closed). */
+export function endDevicePassesOfOrg(
+  db: D1Database,
+  orgId: string,
+  reason: DevicePassVoidReason,
+  now: number,
+) {
+  return all<{ id: string; org_id: string; pass_id: string }>(
+    db,
+    `UPDATE device_passes SET state = 'voided', void_reason = ?, voided_at = ?, code_hash = NULL,
+       updated_at = MAX(updated_at + 1, ?)
+     WHERE org_id = ? AND state IN ('pending', 'active') RETURNING id, org_id, pass_id`,
+    [reason, now, now, orgId],
   );
 }
 
