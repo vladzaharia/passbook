@@ -14,6 +14,7 @@ import {
   scanCapabilityChecks,
   scanPrincipal,
 } from './authority-checks.ts';
+import { RACE_AUTHORIZED } from './race-tags.ts';
 
 export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
@@ -122,7 +123,11 @@ export function scanRead(
 
 /** `authorized` is 1 when the actor's checks all hold now. */
 export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
-  scanRead(db, auth, `SELECT COALESCE(${auth.present}, 0) AS authorized FROM ${auth.anchor}`);
+  scanRead(
+    db,
+    auth,
+    `${RACE_AUTHORIZED} SELECT COALESCE(${auth.present}, 0) AS authorized FROM ${auth.anchor}`,
+  );
 
 /** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
 export function scanReadFence(auth: StrictReadAuthority): { sql: string; params: SqlValue[] } {

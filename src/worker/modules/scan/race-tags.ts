@@ -2,3 +2,4 @@
 export const RACE_KEYSET = '/* race:keyset */';
 export const RACE_EVENT_ROWS = '/* race:event-rows */';
 export const RACE_EXPORT_COUNT = '/* race:export-count */';
+export const RACE_AUTHORIZED = '/* race:authorized */';

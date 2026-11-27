@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { RACE_AUTHORIZED } from './race-tags.ts';
 import {
   ACTIVITY_NAME,
   activityFixture,
@@ -82,12 +83,7 @@ async function resolveDuring(
       if (prop === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          if (
-            fired ||
-            !sql.startsWith('WITH actor AS MATERIALIZED') ||
-            !sql.endsWith('AS authorized')
-          )
-            return statement;
+          if (fired || !sql.includes(RACE_AUTHORIZED)) return statement;
           return new Proxy(statement, {
             get(inner, member) {
               if (member === 'bind')
