@@ -7,8 +7,8 @@ import { WB_AREA_WORDS } from './workbench-areas.ts';
  */
 export const WB_AREA = WB_AREA_WORDS;
 
-/** The nav label: the title, bar the Test inbox, which reads "Inbox" there. */
-export const wbLabel = (t: WbTool): string => (t === 'inbox' ? 'Inbox' : WB_AREA[t].title);
+/** The nav label: the area's title. */
+export const wbLabel = (t: WbTool): string => WB_AREA[t].title;
 
 /** The tab title when it says more than the h1: Events is where webhooks live. */
 export const WB_TAB_TITLE: Partial<Record<WbTool, string>> = { events: 'Events and webhooks' };

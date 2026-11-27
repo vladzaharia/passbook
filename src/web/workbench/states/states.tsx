@@ -173,11 +173,7 @@ export function ToolEmpty({ tool, action }: { tool: WbTool; action?: ReactNode }
       surface="stage"
       titleClassName={STATE_TITLE}
       title={empty.title}
-      action={
-        action ? (
-          <div className="flex justify-center [&>*]:justify-center">{action}</div>
-        ) : undefined
-      }
+      action={action}
     />
   );
 }
@@ -206,6 +202,7 @@ export function ToolFailed({
       error={error}
       title={reason ?? failedLine(error)}
       titleClassName={STATE_TITLE}
+      surface="stage"
       onRetry={onRetry}
     />
   );

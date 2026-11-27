@@ -71,7 +71,7 @@ export function RecentCalls({
                 {call.method}
               </span>
               <code className="min-w-0 flex-1 truncate font-mono text-[0.8125rem] text-fg-strong">
-                {call.route ?? call.path}
+                {(call.route ?? call.path).replace(/^\/api\/v1(?=\/)/, '')}
               </code>
               <StatusChip status={call.status} />
               <span className="hidden w-14 shrink-0 text-right font-mono text-xs text-fg-muted sm:block">

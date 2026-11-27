@@ -4,7 +4,6 @@ export const WB_DESIGN = {
   json: 'JSON',
   jsonInput: 'Sample as JSON',
   noInputs: 'This template has no inputs.',
-  list: 'A list. Edit in JSON.',
   code: { label: 'Language', copy: 'Copy code', sample: 'POST /passes with this sample' },
   phone: {
     action: 'Try on my phone',

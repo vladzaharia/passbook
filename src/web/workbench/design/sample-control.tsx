@@ -1,4 +1,3 @@
-import { WB_DESIGN } from '@/shared/copy/workbench-design.ts';
 import type { InputSpec } from '../../admin/templates/designer/inputs.ts';
 import { Input, Textarea } from '../../ui/input.tsx';
 import { Select } from '../../ui/select.tsx';
@@ -23,12 +22,7 @@ export function Control({
   disabled: boolean;
   onSet: (value: string) => void;
 }) {
-  if (spec.type === 'list')
-    return (
-      <span id={id} className="text-sm text-fg-muted">
-        {WB_DESIGN.list}
-      </span>
-    );
+  if (spec.type === 'list') return <span id={id} />;
   if (spec.type === 'boolean')
     return (
       <Switch
