@@ -115,8 +115,11 @@ describe('Events', () => {
   it('says it is listening when nothing has arrived, with Add endpoint as its one way on', async () => {
     await open('/workbench/o/sbx/events', { ...world(), events: [] });
     expect(await screen.findByText('Listening for events')).toBeInTheDocument();
+    // The head gives its Add endpoint up once the empty state shows its own.
+    await waitFor(() =>
+      expect(screen.getAllByRole('link', { name: 'Add endpoint' })).toHaveLength(1),
+    );
     const add = screen.getAllByRole('link', { name: 'Add endpoint' });
-    expect(add).toHaveLength(1);
     // One wizard: the admin Connections path, back here when it is done.
     expect(add[0]).toHaveAttribute(
       'href',
