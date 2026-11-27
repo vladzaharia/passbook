@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ArrowUpRight, KeyRound } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
+import { POLARIS_ID_COPY } from '@/shared/copy/auth-page.ts';
 import { WB_AREA } from '@/shared/copy/workbench-shell.ts';
 import { WB_EMPTY, WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { MARKETING_PATHS } from '@/shared/marketing.ts';
