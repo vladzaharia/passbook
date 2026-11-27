@@ -149,6 +149,12 @@
     "fix": "Send a version from GET /api/v1/versions, or omit the header.",
     "retryable": false
   },
+  "APNS_BINDING_MANAGED": {
+    "title": "APNs binding is managed",
+    "when": "The identity comes from the deployment, so its APNs binding is not editable.",
+    "fix": "Leave apnsBinding out of the request.",
+    "retryable": false
+  },
   "ARCHIVE_TOO_LARGE": {
     "title": "Archive too large",
     "when": "The uploaded template archive is over 15 MB.",
@@ -893,6 +899,12 @@
     "fix": "Send the pass type ID exactly as shown.",
     "retryable": false
   },
+  "IDENTITY_EXISTS": {
+    "title": "Identity already exists",
+    "when": "An identity for this pass type ID is already stored.",
+    "fix": "Rotate the stored identity with POST /api/v1/identities/{id}/rotate instead of uploading again.",
+    "retryable": false
+  },
   "IDENTITY_EXPIRED": {
     "title": "Identity expired",
     "when": "The signing identity certificate has expired.",
@@ -963,6 +975,12 @@
     "title": "Platform identity mismatch",
     "when": "The platform identity row does not match the deployed signing identity.",
     "fix": "Ask the platform owner to align the deployed identity with the database.",
+    "retryable": false
+  },
+  "IDENTITY_PROTECTED": {
+    "title": "Identity is protected",
+    "when": "The change touches a platform pass type or the platform default identity, which only a platform run or another default may change.",
+    "fix": "Make another identity the default first, or change the slot through its platform run.",
     "retryable": false
   },
   "IDENTITY_PTI_TAKEN": {
@@ -1193,6 +1211,12 @@
     "fix": "Wait for the undo to finish, then read the result from GET /api/v1/pass-imports/{id}.",
     "retryable": false
   },
+  "INCIDENT_NOT_FOUND": {
+    "title": "Incident not found",
+    "when": "No incident note with this id exists.",
+    "fix": "List them with GET /api/v1/status/incidents.",
+    "retryable": false
+  },
   "INVALID_API_KEY": {
     "title": "Invalid API key",
     "when": "The key is unknown, revoked or expired.",
@@ -1409,6 +1433,12 @@
     "fix": "Use a template that defines a message field, or add one to it.",
     "retryable": false
   },
+  "METRICS_NOT_FOUND": {
+    "title": "Metrics not found",
+    "when": "The template is not usable by that organization.",
+    "fix": "Leave templateId out, or pick a template the organization can use.",
+    "retryable": false
+  },
   "MISSING_SCOPE": {
     "title": "Missing scope",
     "when": "The key lacks a scope this operation needs.",
@@ -1558,6 +1588,12 @@
     "when": "The caller's membership or key access changed while the request ran.",
     "fix": "Check access with GET /api/v1/api-keys/me, then send the request again.",
     "retryable": true
+  },
+  "ORG_ADD_ME_NEEDS_PERSON": {
+    "title": "addMe needs a person",
+    "when": "A platform key sent addMe true; a key is nobody's member.",
+    "fix": "Send addMe false, or leave it out.",
+    "retryable": false
   },
   "ORG_CONFLICT": {
     "title": "Organization changed",
@@ -1769,6 +1805,18 @@
     "fix": "Name a manager in the request.",
     "retryable": false
   },
+  "PRESET_MOVING": {
+    "title": "Preset still moving",
+    "when": "Organizations are still moving to the last change of this preset.",
+    "fix": "Send the same request with no values to carry the move on, then change it again.",
+    "retryable": false
+  },
+  "PRESET_NOT_FOUND": {
+    "title": "Preset not found",
+    "when": "No preset with this name exists.",
+    "fix": "Read the names with GET /api/v1/platform/entitlement-presets.",
+    "retryable": false
+  },
   "PRINTING_OFF": {
     "title": "Printing is off",
     "when": "Printing is turned off for this template or organization.",
@@ -1805,11 +1853,23 @@
     "fix": "List the prints and use an id from the list.",
     "retryable": false
   },
+  "PUSH_KEY_NONE": {
+    "title": "No push key",
+    "when": "The identity team has no push key to remove.",
+    "fix": "Upload one with PUT /api/v1/identities/{id}/push-key if you need one.",
+    "retryable": false
+  },
   "RATE_LIMITED": {
     "title": "Rate limited",
     "when": "The key went over its request limit.",
     "fix": "Wait for Retry-After seconds, then retry. Back off on repeats.",
     "retryable": true
+  },
+  "RECEIPT_NOT_FOUND": {
+    "title": "Receipt not found",
+    "when": "No retention receipt with this id exists.",
+    "fix": "List them with GET /api/v1/platform/retention/receipts.",
+    "retryable": false
   },
   "RECIPIENT_NOT_HOLDER": {
     "title": "Recipient is not the holder",
@@ -2535,6 +2595,12 @@
     "title": "Serial in use",
     "when": "Another pass already has this serial.",
     "fix": "Send a different serial, or leave it out to have one generated.",
+    "retryable": false
+  },
+  "SESSION_NOT_FOUND": {
+    "title": "Session not found",
+    "when": "The user has no session with this id.",
+    "fix": "Read the user with GET /api/v1/users/{id} for its sessions.",
     "retryable": false
   },
   "SESSION_OPEN_FORBIDDEN": {
@@ -3297,6 +3363,12 @@
     "title": "Wallet art cannot be resized",
     "when": "An image cannot be cut to the size the wallet provider needs.",
     "fix": "Replace the image with one at the size shown in issues.",
+    "retryable": false
+  },
+  "WALLET_CARD_SET": {
+    "title": "Card already named",
+    "when": "This type already has a different card on the credential.",
+    "fix": "Keep the existing card, or name the card for another type.",
     "retryable": false
   },
   "WALLET_CREDENTIALS_INVALID": {

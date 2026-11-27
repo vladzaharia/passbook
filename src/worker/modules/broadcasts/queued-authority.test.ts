@@ -69,14 +69,24 @@ describe('queued work and revocation (owner answers 2, 3 and 9)', () => {
     const theirs = await t.queue(org.id, { type: 'user', id: colleague.id }, 'scheduled', false);
     const foreignSystem = await t.queue(other.id, { type: 'system', id: null }, 'scheduled', false);
 
-    await setUserStatus(t.ctx, t.admin.id, user.id, 'disabled', t.adminSessionId);
+    await setUserStatus(
+      t.ctx,
+      { userId: t.admin.id, sessionId: t.adminSessionId },
+      user.id,
+      'disabled',
+    );
     expect(await t.state(mine)).toEqual({ state: 'cancelled', error_code: 'CREATOR_REVOKED' });
     // A draft is not queued work, and nobody else's work is touched.
     expect((await t.state(mineDraft)).state).toBe('draft');
     expect((await t.state(theirs)).state).toBe('scheduled');
     expect((await t.state(foreignSystem)).state).toBe('scheduled');
 
-    await setUserStatus(t.ctx, t.admin.id, user.id, 'active', t.adminSessionId);
+    await setUserStatus(
+      t.ctx,
+      { userId: t.admin.id, sessionId: t.adminSessionId },
+      user.id,
+      'active',
+    );
     expect((await t.state(mine)).state).toBe('cancelled');
     await startDueBroadcasts(t.ctx);
     expect((await t.state(mine)).state).toBe('cancelled');
@@ -92,7 +102,12 @@ describe('queued work and revocation (owner answers 2, 3 and 9)', () => {
       t.adminSessionId,
     ]);
     await expect(
-      setUserStatus(t.ctx, t.admin.id, user.id, 'disabled', t.adminSessionId),
+      setUserStatus(
+        t.ctx,
+        { userId: t.admin.id, sessionId: t.adminSessionId },
+        user.id,
+        'disabled',
+      ),
     ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });
     expect((await t.state(mine)).state).toBe('scheduled');
     expect(
@@ -109,10 +124,9 @@ describe('queued work and revocation (owner answers 2, 3 and 9)', () => {
     await expect(
       setUserStatus(
         t.ctx,
-        plain.id,
+        { userId: plain.id, sessionId: await hashSessionCookie(session.cookieValue) },
         user.id,
         'disabled',
-        await hashSessionCookie(session.cookieValue),
       ),
     ).rejects.toMatchObject({ status: 403 });
     expect(
