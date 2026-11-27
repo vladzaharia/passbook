@@ -31,7 +31,7 @@ async function provisionFirstTap(
   ctx: ServiceContext,
   operation: WalletOperation,
   pass: Pass,
-): Promise<WalletOperation | null> {
+): Promise<{ ready: WalletOperation | null; outcome: string }> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const outcome = await Promise.race([
@@ -46,7 +46,10 @@ async function provisionFirstTap(
       }),
     ]);
     ctx.log.info('wallet.google_first_tap_ran', { code: 'WALLET_GOOGLE_FIRST_TAP', outcome });
-    return outcome === 'timeout' ? null : await getWalletOperation(ctx.env.DB, operation);
+    return {
+      ready: outcome === 'timeout' ? null : await getWalletOperation(ctx.env.DB, operation),
+      outcome,
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -72,13 +75,17 @@ export async function googleSaveLocation(
   let { operation } = p;
   const projection = eligible.approved.projection;
   if (operation.state !== 'succeeded') {
-    const ready = await provisionFirstTap(ctx, operation, pass);
+    const { ready, outcome } = await provisionFirstTap(ctx, operation, pass);
     if (ready?.state !== 'succeeded' || ready.id !== operation.id) {
       // A failed operation is final until the pass changes; a bundle leaves such a pass out.
       const failed = ready?.id === operation.id && ready.state === 'failed';
       ctx.log.warn('wallet.google_first_tap_pending', {
         code: failed ? 'WALLET_GOOGLE_FIRST_TAP_FAILED' : 'WALLET_GOOGLE_FIRST_TAP',
         orgId: pass.orgId,
+        // Why a first tap ended non-final: the run result, the row it left, and whether a newer row replaced it.
+        outcome,
+        state: ready?.state ?? 'none',
+        superseded: ready !== null && ready.id !== operation.id,
       });
       throw new (failed ? GoogleMemberFailedError : UnavailableError)(
         'Google Wallet is not ready. Try again in a minute.',
