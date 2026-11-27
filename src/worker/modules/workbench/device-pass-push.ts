@@ -69,7 +69,10 @@ export async function pushDevicePass(ctx: ServiceContext, id: string): Promise<v
         events.push(
           deviceEvent(row, outcome === 'ok' ? 'push.sent' : 'push.failed', device.device_id, data),
         );
-        if (outcome === 'gone' && (await removeDevice(ctx.env.DB, id, device.device_id)))
+        if (
+          outcome === 'gone' &&
+          (await removeDevice(ctx.env.DB, id, device.device_id, ctx.clock.now()))
+        )
           events.push(
             deviceEvent(row, 'device.unregistered', device.device_id, { reason: 'push_gone' }),
           );
