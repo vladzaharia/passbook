@@ -23,6 +23,7 @@ import {
   WebhookSecretSchema,
   WebhookTestResultSchema,
 } from '@/shared/contracts/webhooks.ts';
+import { WorkbenchSummarySchema } from '@/shared/contracts/workbench-read.ts';
 import { useToolApi, useToolKey, useToolMode } from '../../../lib/tool-api.tsx';
 
 const BASE = '/api/v1/webhook-endpoints';
@@ -208,4 +209,17 @@ export function useOutboundSetup(orgId: string | undefined) {
     enabled: Boolean(orgId),
     staleTime: 5 * 60_000,
   });
+}
+
+/** A sandbox's endpoint count against its plan; null in an organization, which has none. */
+export function useEndpointQuota(orgId: string | undefined, sandbox: boolean) {
+  const api = useToolApi();
+  const toolKey = useToolKey();
+  const q = useQuery({
+    queryKey: ['admin', 'webhooks', 'quota', orgId ?? null, ...toolKey] as const,
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/workbench/summary', WorkbenchSummarySchema, { query: { orgId }, signal }),
+    enabled: Boolean(orgId) && sandbox,
+  });
+  return q.data?.quotas?.endpoints ?? null;
 }

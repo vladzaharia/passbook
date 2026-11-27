@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolScopeProvider } from '../../lib/tool-api.tsx';
 import { refusingApi } from '../host/refusing.ts';
+import { codeOf } from './curl.ts';
 import { LogsTool } from './logs-tool.tsx';
 
 const hosted = vi.hoisted(() => ({ kind: 'org' as 'org' | 'sandbox', admin: false }));
@@ -250,6 +251,67 @@ describe('Logs on the Workbench token', () => {
     await waitFor(() => expect(within(trace).getByText('pass.issued')).toBeInTheDocument());
   });
 
+  it('lists the stored headers on the Headers tab, and the curl keeps them without a secret', async () => {
+    stubApi({
+      lists: [page([entry(1)])],
+      rows: {
+        'log-1': detail(1, {
+          headers: {
+            req: {
+              'content-type': 'application/json',
+              'idempotency-key': 'idem-1',
+              'content-length': '9',
+            },
+            res: { etag: '"v2"' },
+          },
+        }),
+      },
+    });
+    open();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    fireEvent.click(rows()[0] as HTMLElement);
+    const pane = await screen.findByRole('complementary', { name: 'Requests' });
+    fireEvent.click(await within(pane).findByRole('tab', { name: 'Headers' }));
+    expect(within(pane).getByText('idempotency-key')).toBeInTheDocument();
+    expect(within(pane).getByText('idem-1')).toBeInTheDocument();
+    expect(within(pane).getByText('"v2"')).toBeInTheDocument();
+    const text = codeOf(
+      'curl',
+      detail(1, {
+        headers: {
+          req: {
+            'idempotency-key': 'idem-1',
+            'if-match': '"v1"',
+            accept: 'application/json',
+            'content-type': 'application/json',
+            'content-length': '9',
+          },
+          res: {},
+        },
+      }),
+      'https://x.test',
+    );
+    expect(text).toContain('Authorization: Bearer $PASSBOOK_KEY');
+    expect(text).toContain("'accept: application/json'");
+    expect(text).not.toContain('idempotency-key');
+    expect(text).not.toContain('if-match');
+    const sneaky = detail(1, {
+      headers: { req: { authorization: 'Bearer SECRET-TOKEN' }, res: {} },
+    });
+    expect(codeOf('curl', sneaky, 'https://x.test')).not.toContain('SECRET-TOKEN');
+    expect(text).not.toContain('content-length');
+  });
+
+  it('says No headers recorded on an older row', async () => {
+    stubApi({ lists: [page([entry(1)])], rows: { 'log-1': detail(1) } });
+    open();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    fireEvent.click(rows()[0] as HTMLElement);
+    const pane = await screen.findByRole('complementary', { name: 'Requests' });
+    fireEvent.click(await within(pane).findByRole('tab', { name: 'Headers' }));
+    expect(within(pane).getByText('No headers recorded')).toBeInTheDocument();
+  });
+
   it('says the body is gone once it has expired', async () => {
     stubApi({
       lists: [page([entry(1, { hasBodies: false })])],
@@ -384,6 +446,7 @@ describe('Logs on the Workbench token', () => {
     stubApi({ lists: [page([])] });
     open();
     expect(await screen.findByText('Waiting for your first call')).toBeInTheDocument();
+    expect(document.querySelector('.wl-buddy')?.getAttribute('data-scene')).toBe('listen');
     expect(screen.getByText(/PASSBOOK_KEY/)).toBeInTheDocument();
     expect(screen.getByText('Calls are kept 7 days')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Run in Console' }).getAttribute('href')).toBe(

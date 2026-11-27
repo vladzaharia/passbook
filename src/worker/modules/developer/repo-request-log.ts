@@ -29,7 +29,12 @@ export interface LogRow {
   has_bodies: number;
   request_body: string | null;
   response_body: string | null;
+  /** JSON `{req, res}` of allowlisted header values; null on older rows. */
+  headers: string | null;
 }
+
+/** A list row: no bodies, no headers. */
+export type ListRow = Omit<LogRow, 'request_body' | 'response_body' | 'headers'>;
 
 export interface NewLog {
   id: string;
@@ -59,6 +64,8 @@ export interface NewLog {
   bodiesTruncated?: boolean;
   requestBody: string | null;
   responseBody: string | null;
+  /** `headersJson` of the call. */
+  headers?: string | null;
 }
 
 export const FLAG_IDEMPOTENCY_KEY = 1;
@@ -80,12 +87,12 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
     await run(
       db,
       `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
-         duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags, bodies_truncated)
+         duration_ms, at, has_bodies, request_body, response_body, client, resource_id, api_version, flags, bodies_truncated, headers)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
          CASE WHEN ?5 = 'test' AND o.rec = 1 AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
          CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?15 END,
          CASE WHEN ?5 = 'test' AND o.rec = 1 THEN ?16 END, ?17
-         , ?18, ?19, ?20, ?21
+         , ?18, ?19, ?20, ?21, ?22
        FROM (SELECT id, CASE WHEN kind = 'developer' OR EXISTS (SELECT 1 FROM settings s
                 WHERE s.scope = 'org:' || orgs.id AND s.key = 'requestLog.bodies' AND s.value = 'true')
               THEN 1 ELSE 0 END AS rec FROM orgs) o WHERE o.id = ?2
@@ -114,6 +121,7 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
         l.apiVersion ?? null,
         l.flags ?? 0,
         l.bodiesTruncated ? 1 : 0,
+        l.headers ?? null,
       ],
     )
   ).changes > 0;
@@ -198,7 +206,7 @@ export const listLogs = (
   cursor?: string,
 ) => {
   const w = where(orgId, filter, now, cursor);
-  return all<Omit<LogRow, 'request_body' | 'response_body'>>(
+  return all<ListRow>(
     db,
     `SELECT ${LIST_COLUMNS(now)} FROM request_log WHERE ${w.sql} ORDER BY id DESC LIMIT ?`,
     [...w.params, limit],
@@ -209,7 +217,7 @@ export const getLog = (db: D1Database, orgId: string, id: string, now: number) =
   first<LogRow>(
     db,
     `SELECT id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
-       resource_id, api_version, flags, bodies_truncated,
+       resource_id, api_version, flags, bodies_truncated, headers,
        CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies,
        CASE WHEN ${readable(now)} THEN request_body END AS request_body,
        CASE WHEN ${readable(now)} THEN response_body END AS response_body

@@ -54,7 +54,7 @@ export function FirstCall({
       </BenchState>
     );
   return (
-    <BenchState scene="logs-idle" title={hasKey ? WB_EMPTY.logs?.title : S.noCalls}>
+    <BenchState scene="logs-listen" title={hasKey ? WB_EMPTY.logs?.title : S.noCalls}>
       {hasKey ? (
         <div className="logs-first">
           <BenchCode label="curl" lang="curl" body={firstCall(location.origin)} empty={S.noCalls} />

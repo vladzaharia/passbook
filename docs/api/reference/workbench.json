@@ -80,7 +80,7 @@
     }
   },
   "workbench.listRequestLogs": {
-    "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. No header value is kept. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
+    "description": "Test calls only, kept 7 days. Each entry has the route, status, error code, duration, the pass, template or key the call touched, the PassBook-Version it pinned, and whether it sent Idempotency-Key, If-Match and PassBook-Version. The detail adds a fixed allowlist of non-secret request and response header values, redacted; never Authorization or cookies. Filter with `passId`, `version`, `keyId`, `status` and `code`; poll with `after` to tail. A key needs the `logs:read` scope; a signed-in member names the organization with `orgId`.",
     "response": {
       "items": [
         {
@@ -142,7 +142,18 @@
       "responseBody": "{\"items\":[],\"nextCursor\":null}",
       "bodiesExpireAt": 1796175300000,
       "bodiesRecorded": true,
-      "bodiesTruncated": false
+      "bodiesTruncated": false,
+      "headers": {
+        "req": {
+          "accept": "application/json",
+          "passbook-version": "2026-11-01",
+          "user-agent": "@passbook/sdk 1.4.2"
+        },
+        "res": {
+          "content-type": "application/json",
+          "etag": "\"3\""
+        }
+      }
     }
   }
 }

@@ -1,9 +1,9 @@
 import { Check } from 'lucide-react';
 import type { ConnectionSetup } from '@/shared/contracts/connection-setup.ts';
-import { Button, Callout, CheckboxField, CopyField } from '../../ui/index.ts';
+import { Button } from '../../ui/index.ts';
 import {
+  HeldSecret,
   OVERLAP_CHOICES,
-  RotateSecretForm,
   type RotateSecretState,
 } from '../../ui/webhook-setup/index.ts';
 import { groupParts, SetupPartView } from '../../ui/webhook-setup/setup-part.tsx';
@@ -83,32 +83,14 @@ export function SecretStep({
       </div>
     );
   }
-  if (held)
-    return (
-      <div className="flex max-w-xl min-w-0 flex-col gap-4">
-        <Callout tone="warning">Copy the secret now. It is not shown again.</Callout>
-        <CopyField label="Signing secret" value={held} copyLabel="Copy signing secret" />
-        <CheckboxField
-          label="I saved the secret"
-          checked={saved}
-          onCheckedChange={(v) => onSaved(v === true)}
-          className="w-fit"
-        />
-      </div>
-    );
   return (
-    <div className="flex max-w-md min-w-0 flex-col gap-4">
-      <p className="text-sm text-fg-muted">
-        The secret was shown once, at Create. Make a new one to copy.
-      </p>
-      <RotateSecretForm state={rotate} onDone={onRotated} choices={INBOUND_CHOICES} />
-      {rotate.secret ? null : (
-        <div>
-          <Button type="submit" form={rotate.formId} loading={rotate.busy}>
-            New secret
-          </Button>
-        </div>
-      )}
-    </div>
+    <HeldSecret
+      held={held}
+      saved={saved}
+      onSaved={onSaved}
+      rotate={rotate}
+      onRotated={onRotated}
+      choices={INBOUND_CHOICES}
+    />
   );
 }

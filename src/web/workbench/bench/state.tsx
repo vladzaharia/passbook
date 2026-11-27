@@ -32,6 +32,7 @@ export type BenchScene =
   | 'console-idle'
   | 'webhooks-idle'
   | 'logs-idle'
+  | 'logs-listen'
   | 'keys-none'
   | 'no-match'
   | 'failed';
@@ -58,6 +59,12 @@ const SCENES: Record<
   'logs-idle': {
     mood: 'curious',
     scene: 'inspect',
+    prop: () => <LogArt size="sm" />,
+    title: S.logsIdle,
+  },
+  'logs-listen': {
+    mood: 'curious',
+    scene: 'listen',
     prop: () => <LogArt size="sm" />,
     title: S.logsIdle,
   },

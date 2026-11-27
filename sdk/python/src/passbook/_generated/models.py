@@ -11948,6 +11948,7 @@ class RequestLogsRetrieveResponse(_Model):
     bodiesExpireAt: int | None
     bodiesRecorded: bool
     bodiesTruncated: bool
+    headers: _Dict[str, _Any] | None
 
 class RequestLogsRetrieveResponseFlags(_Model):
     idempotencyKey: bool

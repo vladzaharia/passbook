@@ -21,12 +21,14 @@ import {
 import { EVENT_LABEL } from '../../../ui/webhooks/labels.ts';
 import { useWebhookEndpoints } from './api.ts';
 import { EndpointStatus } from './endpoint-status.tsx';
-import { lastDelivery } from './health.ts';
+import { endpointState, lastDelivery } from './health.ts';
 
 export function AddEndpointButton({ variant = 'primary' }: { variant?: 'primary' | 'outline' }) {
   return (
     <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
-      <Link to="/admin/connections/webhooks/new">Add endpoint</Link>
+      <Link to="/admin/connections/new" search={{ source: 'outbound' }}>
+        Add endpoint
+      </Link>
     </Button>
   );
 }
@@ -55,6 +57,15 @@ export function WebhooksTab() {
             </RowLink>
             {e.description ? (
               <span className="block truncate text-xs text-fg-muted">{e.description}</span>
+            ) : null}
+            {canManage && endpointState(e) === 'untested' ? (
+              <Link
+                to="/admin/connections/webhooks/$endpointId/setup"
+                params={{ endpointId: e.id }}
+                className="text-xs text-accent-fg underline-offset-2 hover:underline"
+              >
+                Finish setup
+              </Link>
             ) : null}
           </div>
         ),
@@ -96,7 +107,7 @@ export function WebhooksTab() {
         },
       },
     ],
-    [now],
+    [now, canManage],
   );
 
   if (!orgId) return <OrgChooser inline />;

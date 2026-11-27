@@ -54,6 +54,8 @@ export const LOGS_BENCH_COPY = {
   inspector: {
     request: 'Request',
     response: 'Response',
+    headers: 'Headers',
+    noHeaders: 'No headers recorded',
     body: 'Body',
     noBody: 'No body',
     bodiesGone: 'Body kept 24 h',

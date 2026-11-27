@@ -20,6 +20,8 @@ export interface SendProps {
   canSend?: boolean;
   /** One line under the title: what a test is. */
   hint?: ReactNode;
+  /** Off where a step heading already says it: the title stays for screen readers only. */
+  title?: boolean;
   onChange?: (state: {
     phase: 'idle' | 'sending' | 'delivered' | 'failed';
     result: SendResult | null;
@@ -43,6 +45,7 @@ export function SendCheck({
   host,
   canSend = true,
   hint,
+  title = true,
   onChange,
   buddy,
   className,
@@ -97,7 +100,11 @@ export function SendCheck({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h4 className="text-base font-semibold text-fg-strong">Send a test</h4>
+          {title ? (
+            <h4 className="text-base font-semibold text-fg-strong">Send a test</h4>
+          ) : (
+            <h3 className="sr-only">Send a test</h3>
+          )}
           {hint ? <p className="text-sm text-fg-muted">{hint}</p> : null}
         </div>
         {canSend ? (
