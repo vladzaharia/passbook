@@ -176,7 +176,6 @@ describe('route guards in the app', () => {
     await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     expect(await screen.findByRole('option', { name: 'Harbor' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Platform' })).toBeNull();
-    expect(screen.queryByRole('option', { name: 'All organizations' })).toBeNull();
   });
 
   it('keeps API keys available to a platform admin without membership', async () => {
@@ -873,6 +872,7 @@ describe('admin layout', () => {
     await user.click(scope);
     expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual([
       'Platform',
+      'All organizations',
       'Henrys',
       'Harbor',
     ]);
@@ -901,7 +901,7 @@ describe('developer sandboxes in admin lists', () => {
     await renderApp('/admin/o/o1', { session: 'user', memberships: orgs() });
     await user.click(await screen.findByRole('combobox', { name: 'Scope: Henrys' }));
     const options = within(await screen.findByRole('listbox')).getAllByRole('option');
-    expect(options.map((o) => o.textContent)).toEqual(['Henrys', 'Harbor']);
+    expect(options.map((o) => o.textContent)).toEqual(['All organizations', 'Henrys', 'Harbor']);
   });
 
   it('leaves them out of the /admin chooser', async () => {
@@ -941,11 +941,17 @@ describe('scope switcher with a personal organization', () => {
       'separator',
       'Organizations',
       'option',
+      'option',
     ]);
     const options = within(list).getAllByRole('option');
-    expect(options.map((o) => o.textContent)).toEqual(['Platform', 'Personal', 'Henrys']);
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Platform',
+      'Personal',
+      'All organizations',
+      'Henrys',
+    ]);
     expect(options[1]?.querySelector('.lucide-user')).not.toBeNull();
-    expect(options[2]?.querySelector('.lucide-user')).toBeNull();
+    expect(options[3]?.querySelector('.lucide-user')).toBeNull();
   });
 
   it('uses the user icon on the trigger when Personal is current', async () => {
@@ -970,7 +976,7 @@ describe('scope switcher with a personal organization', () => {
       within(list)
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['Personal', 'Henrys']);
+    ).toEqual(['Personal', 'All organizations', 'Henrys']);
   });
 
   it('shows a lone Personal as a label with the user icon', async () => {
