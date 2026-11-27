@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { PUBLIC_AUDIT_SQL } from '../../platform/repo-audit-public.ts';
 
 export interface Scope {
   orgId?: string;
@@ -185,10 +186,6 @@ export interface RecentRow {
   target_id: string | null;
 }
 
-/** A Platform key's feed leaves out personal orgs, which are private to their owner. */
-const PUBLIC_ORG =
-  '(org_id IS NULL OR org_id NOT IN (SELECT id FROM orgs WHERE personal_user_id IS NOT NULL))';
-
 /** Audit rows carry no mode, so test mode shows none, like the sign-in series. */
 export async function recentAudit(
   db: D1Database,
@@ -202,7 +199,7 @@ export async function recentAudit(
   return all<RecentRow>(
     db,
     `SELECT at, action, org_id, ${tenant ? 'NULL AS target_id' : 'target_id'} FROM audit_log
-     WHERE ${scope.orgId ? 'org_id = ?' : excludePersonal ? PUBLIC_ORG : '1'}
+     WHERE ${scope.orgId ? 'org_id = ?' : excludePersonal ? PUBLIC_AUDIT_SQL : '1'}
      ORDER BY at DESC LIMIT ?`,
     [...(scope.orgId ? [scope.orgId] : []), limit],
   );

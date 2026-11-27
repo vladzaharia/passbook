@@ -17,6 +17,15 @@ export async function settleDroppedJob(
   code: string,
 ): Promise<void> {
   const operationId = job && 'operationId' in job ? job.operationId : undefined;
+  // Status reads the outcome row: write it first, so a failing operation update cannot hide the drop.
+  await recordDlqOutcome(ctx.env.DB, {
+    messageId,
+    jobKind: job?.kind ?? 'invalid',
+    orgId: job && 'orgId' in job ? job.orgId : null,
+    targetId: operationId ?? null,
+    code,
+    at: ctx.clock.now(),
+  });
   if (operationId) {
     const row = await rowById(ctx.env.DB, operationId);
     if (row && isActive(row.status))
@@ -24,13 +33,4 @@ export async function settleDroppedJob(
         new AppError('DEAD_LETTER', 500, 'The job was dropped after its retries.'),
       );
   }
-  const now = ctx.clock.now();
-  await recordDlqOutcome(ctx.env.DB, {
-    messageId,
-    jobKind: job?.kind ?? 'invalid',
-    orgId: job && 'orgId' in job ? job.orgId : null,
-    targetId: operationId ?? null,
-    code,
-    at: now,
-  });
 }
