@@ -4,6 +4,8 @@
 // here inside HEADROOM extra levels, so a view or reference that grows fails this test instead of a route.
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { authorityPredicate } from './authority-read.ts';
+import { assertActorOnce } from './authority-read-once.ts';
 import { restrictRow, TEMPLATE_REFS } from './authority-restrict.ts';
 import { all } from './db.ts';
 
@@ -46,5 +48,26 @@ describe('limited-key conditions leave depth headroom on D1', () => {
     }
     expect(lo).toBeGreaterThan(HEADROOM);
     expect(lo).toBeLessThan(100);
+  });
+});
+
+describe('the join-once tenant filter', () => {
+  const p = authorityPredicate(
+    { kind: 'scanner', scannerId: 's', credentialEpoch: 1 },
+    { scope: 'org_mode', now: 1 },
+  );
+
+  it.each(Object.keys(TEMPLATE_REFS))('%s reads the actor only through ao, and no CTE', (table) => {
+    const text = p.tenant('x', table);
+    expect(text).toContain('ao.');
+    expect(text).not.toMatch(/actor_ok|\bactor\b|key_tpl/);
+  });
+
+  it('assertActorOnce refuses a statement with two actor joins', () => {
+    const once = `WITH ${p.ctes} SELECT 1 FROM ${p.rows}passes x WHERE ${p.tenant('x', 'passes')}`;
+    expect(() => assertActorOnce(once)).not.toThrow();
+    expect(() => assertActorOnce(`${once} AND EXISTS (SELECT 1 FROM actor_ok)`)).toThrow(
+      /SQL_ACTOR_REUSE|joins actor_ok once/,
+    );
   });
 });
