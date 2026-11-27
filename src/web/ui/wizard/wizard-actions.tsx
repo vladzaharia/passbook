@@ -11,7 +11,8 @@ import type { WizardModel } from './wizard-types.ts';
 
 /**
  * Cancel (ghost, pushed left) and the hint while Next is blocked, then Back and the primary.
- * Under 640 one row: the "..." menu (a page has no X, so `keepCancel` gives it Cancel), Back and the primary. Next is never hard-disabled for an incomplete step: it carries `aria-disabled` and its
+ * Under 640 one row: Back and the primary (equal buttons), with Cancel before them when `keepCancel`
+ * (a page has no X) and no menu holds it. Next is never hard-disabled for an incomplete step: it carries `aria-disabled` and its
  * hint, and a press shows the errors. `busy` is the only hard-disabled state.
  */
 /** An action of the page beside Back and Next: inline on a wide screen, in the bar's menu on a phone. */
@@ -58,13 +59,12 @@ export function WizardButtons({
 }) {
   const hintId = useId();
   const why = blocked && hint ? hint : undefined;
-  const phoneMenu = menu ?? (keepCancel ? [] : undefined);
   return (
     <>
       <Button
         variant="ghost"
         disabled={working}
-        className="max-sm:hidden sm:mr-auto"
+        className={keepCancel && !menu ? 'mr-auto max-sm:flex-none' : 'max-sm:hidden sm:mr-auto'}
         onClick={onCancel}
       >
         Cancel
@@ -81,8 +81,8 @@ export function WizardButtons({
             {a.label}
           </Button>
         ))}
-      <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:basis-full max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
-        {phoneMenu ? (
+      <div className="flex gap-2 max-sm:min-w-0 max-sm:flex-1 max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:whitespace-normal max-sm:[&>*]:leading-tight">
+        {menu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -93,7 +93,7 @@ export function WizardButtons({
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="top">
-              {phoneMenu.map((a) => (
+              {menu.map((a) => (
                 <DropdownMenuItem key={a.label} onSelect={a.onSelect}>
                   <a.icon aria-hidden />
                   {a.label}

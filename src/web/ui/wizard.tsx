@@ -62,7 +62,7 @@ export interface WizardProps {
 
 /**
  * Fixed at the bottom like SaveBar (beside the sidebar at 1024 and up): Cancel left, Back and
- * Next or Create right. on a phone Cancel sits in the "..." menu, so the bar is one row.
+ * Next or Create right. one row on a phone too.
  */
 export function WizardBar({
   onCancel,

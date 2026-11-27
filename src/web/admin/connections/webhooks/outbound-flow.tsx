@@ -253,8 +253,11 @@ export function OutboundFlow({
                 : 'Send a test first.'
         }
         barMenu={
-          id === 'test' && !delivered
-            ? [{ label: 'Skip for now', icon: SkipForward, onSelect: () => open() }]
+          // The Test step keeps one bar before and after the delivery: the menu stays, Skip leaves it.
+          id === 'test'
+            ? delivered
+              ? []
+              : [{ label: 'Skip for now', icon: SkipForward, onSelect: () => open() }]
             : undefined
         }
         busy={saving}
