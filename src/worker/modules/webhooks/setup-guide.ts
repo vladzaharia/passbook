@@ -4,7 +4,7 @@ import { SetupGuideSchema } from '../../../shared/contracts/connection-setup.ts'
 export const outboundSetup = SetupGuideSchema.parse({
   direction: 'outbound',
   recipe: 'outbound',
-  version: '2026-11-25',
+  version: '2026-11-27',
   checkedAt: '2026-11-25',
   provider: { name: 'Your server', consoleUrl: null, docs: [] },
   secret: {
@@ -20,10 +20,7 @@ export const outboundSetup = SetupGuideSchema.parse({
       id: 'store',
       side: 'provider',
       title: 'Store the secret',
-      parts: [
-        { t: 'field', label: 'Secret', copy: 'secret' },
-        { t: 'text', text: "Keep it in your server's environment, not in code." },
-      ],
+      parts: [{ t: 'field', label: 'Secret', copy: 'secret' }],
     },
     {
       id: 'verify',
@@ -31,7 +28,7 @@ export const outboundSetup = SetupGuideSchema.parse({
       title: 'Verify each request',
       parts: [
         { t: 'field', label: 'Signature header', value: 'x-passbook-signature' },
-        { t: 'field', label: 'Timestamp header', value: 'x-passbook-timestamp' },
+        { t: 'field', label: 'Timestamp', value: 'x-passbook-timestamp' },
         {
           t: 'text',
           text: 'Sign `{timestamp}.{raw body}` with HMAC-SHA256 and the secret, in hex. Compare it with the `v1=` value in constant time.',

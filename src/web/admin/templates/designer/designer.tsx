@@ -3,6 +3,7 @@ import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { SaveBar, toast, UnsavedChangesDialog, useUnsavedChangesGuard } from '../../../ui/index.ts';
+import { KeepProvider } from '../../../ui/keep.tsx';
 import { type Template, versionNumber } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
@@ -28,7 +29,6 @@ import {
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
 import { useStampsPreview } from './stamp-preview.ts';
-import { KeepProvider } from './ui-keep.tsx';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import type { WalletName } from './wallets/roles-model.ts';

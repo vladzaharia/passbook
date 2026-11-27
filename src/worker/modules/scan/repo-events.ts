@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, prefixMatch, type SqlValue } from '../../platform/db.ts';
+import { RACE_EVENT_ROWS } from './race-tags.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -70,10 +71,8 @@ const scopedEventTemplates = `SELECT x.template_id FROM scan_event_templates x
   WHERE x.event_id=e.id`;
 
 /** Relationship counts and returned identifiers must belong to the event's scope. */
-const eventSelect = (
-  expectedSql: string,
-  arrivedSql: string,
-) => `SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
+const eventSelect = (expectedSql: string, arrivedSql: string, from = '') => `${RACE_EVENT_ROWS}
+  SELECT e.id, e.org_id, e.mode, e.name, e.match_input, e.match_values, e.opens_at, e.closes_at,
     e.time_zone, e.capacity, e.reentry, e.hard_limit, e.note, e.expected, e.expected_at, ${expectedSql} AS live_expected, e.archived_at, e.updated_at, e.config_epoch,
     (SELECT json_group_array(template_id) FROM (${scopedEventTemplates} ORDER BY x.template_id)) AS template_ids,
     (SELECT json_group_array(template_id) FROM (
@@ -87,9 +86,14 @@ const eventSelect = (
     ${arrivedSql} AS arrived,
     (SELECT count(*) FROM scanners s WHERE s.event_id=e.id AND s.org_id=e.org_id
        AND s.mode=e.mode AND s.revoked_at IS NULL) AS scanners
-  FROM scan_events e`;
+  FROM ${from}scan_events e`;
 
-const SELECT_WITH_COUNT = eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'));
+export const SELECT_WITH_COUNT = eventSelect(
+  eventExpectedCountSql('e', '?'),
+  eventArrivedCountSql('e'),
+);
+const selectUnder = (auth: ScanReadAuthority) =>
+  eventSelect(eventExpectedCountSql('e', '?'), eventArrivedCountSql('e'), auth.rows);
 
 const toRow = (r: Raw): ConsoleEventRow => ({
   id: r.id,
@@ -145,6 +149,19 @@ export async function getCommittedConsoleEvent(
   return row ? toRow(row) : null;
 }
 
+/** The events under the actor's tenant: `filter` follows the tenant term, `params` bind it after `now`. */
+export const eventsStmt = (
+  db: Db,
+  auth: ScanReadAuthority,
+  filter: string,
+  params: SqlValue[],
+  now: number,
+) =>
+  scanRead(db, auth, `${selectUnder(auth)} WHERE ${auth.tenantOnce('e', 'scan_events')}${filter}`, [
+    now,
+    ...params,
+  ]);
+
 /** Rows with their occupancy counts under one fence and filter, and whether the fence holds, in one batch. */
 async function readEvents(
   db: Db,
@@ -153,9 +170,8 @@ async function readEvents(
   params: SqlValue[],
   now: number,
 ): Promise<{ authorized: boolean; rows: ConsoleEventRow[] }> {
-  const where = `WHERE ${auth.ok} AND ${auth.tenant('e', 'scan_events')}${filter}`;
   const [rows, status] = await db.batch([
-    scanRead(db, auth, `${SELECT_WITH_COUNT} ${where}`, [now, ...params]),
+    eventsStmt(db, auth, filter, params, now),
     scanAuthorizedStmt(db, auth),
   ]);
   return {
@@ -206,7 +222,7 @@ export async function listConsoleEvents(
   }
   if (f.cursor) {
     where.push(`(e.opens_at, e.id) < (
-      SELECT c.opens_at, c.id FROM scan_events c WHERE c.id = ? AND ${auth.tenant('c', 'scan_events')}
+      SELECT c.opens_at, c.id FROM scan_events c WHERE c.id = ? AND ${auth.tenantOnce('c', 'scan_events')}
     )`);
     params.push(f.cursor);
   }

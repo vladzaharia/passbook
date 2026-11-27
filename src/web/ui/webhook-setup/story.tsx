@@ -72,7 +72,6 @@ function Listen({ state, buddy }: { state: StoryState; buddy?: boolean }) {
       zone={ZONE}
       buddy={buddy}
       {...(marks ? { marks } : {})}
-      hint="In Shopify: row menu › Send test."
       actions={{ replaceSecret: () => undefined, turnOnTestEvents: () => undefined }}
       onInspect={() => undefined}
     />
@@ -98,12 +97,7 @@ function Send({ state }: { state: StoryState }) {
         }
       }}
     >
-      <LiveCheck
-        mode="send"
-        send={send}
-        host="api.example.com"
-        hint="PassBook posts a signed sample event."
-      />
+      <LiveCheck mode="send" send={send} host="api.example.com" />
     </div>
   );
 }

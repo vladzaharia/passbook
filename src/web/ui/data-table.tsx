@@ -200,7 +200,11 @@ export function DataTable<T extends RowData>({
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="min-w-0 truncate text-sm">{render(titleCol.id)}</div>
                     {lines.map((c) => (
-                      <div key={c.id} className="flex min-w-0 items-baseline gap-2 text-xs">
+                      <div
+                        key={c.id}
+                        // A pill is 24 px tall: it takes the line's 16 px, so every line keeps one rhythm.
+                        className="flex min-w-0 items-baseline gap-2 text-xs has-[.rounded-full]:-my-1 has-[.rounded-full]:items-center"
+                      >
                         {metaOf(c).stackNoLabel ? null : (
                           <span className="w-20 shrink-0 text-fg-muted">
                             {c.columnDef.header as string}

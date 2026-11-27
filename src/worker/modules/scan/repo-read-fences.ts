@@ -18,12 +18,12 @@ export interface Fence {
   from?: string;
 }
 
-/** The tenant of the actor's own read: the `actor_ok` row of its authority. */
-export const ACTOR_TENANT = { org: 'actor_ok.org_id', mode: 'actor_ok.mode' } as const;
+/** The tenant of the actor's own read: the `actor_ok` row of its authority, aliased `ao`. */
+export const ACTOR_TENANT = { org: 'ao.org_id', mode: 'ao.mode' } as const;
 
 /**
  * A scalar fence for a caller that takes a predicate (a batch's authority term): the actor's authority
- * holds, and so does `inner`, which may name the tenant as `actor_ok.org_id` and `actor_ok.mode`.
+ * holds, and so does `inner`, which may name the tenant as `ao.org_id` and `ao.mode`.
  */
 export function underAuthority(auth: StrictReadAuthority, inner: Fence): Fence {
   const staged = underAuthorityCtes(auth, inner);
@@ -44,7 +44,7 @@ export function underAuthorityCtes(
 ): { ctes: string; params: SqlValue[]; sql: string } {
   return {
     ctes: `${auth.ctes}${inner.ctes ? `, ${inner.ctes}` : ''}, under_inner AS MATERIALIZED (
-      SELECT 1 AS fenced FROM actor_ok${inner.from ? `, ${inner.from}` : ''} WHERE ${inner.sql})`,
+      SELECT 1 AS fenced FROM actor_ok ao${inner.from ? `, ${inner.from}` : ''} WHERE ${inner.sql})`,
     params: [...auth.params, ...(inner.cteParams ?? []), ...inner.params],
     sql: 'EXISTS (SELECT 1 FROM under_inner)',
   };

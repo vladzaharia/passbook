@@ -215,6 +215,7 @@ export function OutboundFlow({
       </>
     );
 
+  const skip = { label: 'Skip for now', icon: SkipForward, onSelect: () => open() };
   return (
     <>
       <PageHeader title={title} breadcrumbs={crumbs} />
@@ -252,11 +253,7 @@ export function OutboundFlow({
                 ? 'Confirm you saved it.'
                 : 'Send a test first.'
         }
-        barMenu={
-          id === 'test' && !delivered
-            ? [{ label: 'Skip for now', icon: SkipForward, onSelect: () => open() }]
-            : undefined
-        }
+        barMenu={id === 'test' ? (delivered ? [] : [skip]) : undefined}
         busy={saving}
       >
         {id === 'where' ? (
@@ -307,7 +304,6 @@ export function OutboundFlow({
                   host={host}
                   canSend={canManage}
                   title={false}
-                  hint="Done after one 2xx."
                   send={sendTest}
                 />
               </div>

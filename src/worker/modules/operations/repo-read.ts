@@ -1,3 +1,4 @@
+import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 import { COLUMNS, type OperationRow } from './repo.ts';
 import type { Fence } from './repo-fence.ts';
@@ -8,13 +9,20 @@ const O_COLUMNS = COLUMNS.split(',')
 
 const prefix = (fence: Fence) => (fence.ctes ? `WITH ${fence.ctes}\n` : '');
 
+/** A fenced read: the actor joins once, in the FROM (`assertActorOnce`). */
+function fencedSql(fence: Fence, where: string, tail = ''): string {
+  const sql = `${prefix(fence)}SELECT ${O_COLUMNS} FROM ${fence.from} WHERE ${where}${tail}`;
+  if (fence.ctes) assertActorOnce(sql);
+  return sql;
+}
+
 /** One row the fence lets the caller read; null for unknown and unreadable alike. */
 export function getFenced(db: D1Database, fence: Fence, id: string): Promise<OperationRow | null> {
-  return first<OperationRow>(
-    db,
-    `${prefix(fence)}SELECT ${O_COLUMNS} FROM operations o WHERE o.id = ? AND ${fence.where}`,
-    [...fence.ctesParams, id, ...fence.whereParams],
-  );
+  return first<OperationRow>(db, fencedSql(fence, `o.id = ? AND ${fence.where}`), [
+    ...fence.ctesParams,
+    id,
+    ...fence.whereParams,
+  ]);
 }
 
 export interface ListFilter {
@@ -57,8 +65,7 @@ export function listFenced(db: D1Database, fence: Fence, f: ListFilter): Promise
   params.push(f.limit);
   return all<OperationRow>(
     db,
-    `${prefix(fence)}SELECT ${O_COLUMNS} FROM operations o WHERE ${where.join(' AND ')}
-     ORDER BY o.created_at DESC, o.id DESC LIMIT ?`,
+    fencedSql(fence, where.join(' AND '), '\n     ORDER BY o.created_at DESC, o.id DESC LIMIT ?'),
     params,
   );
 }

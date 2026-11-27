@@ -24,7 +24,6 @@ function listen(rows: () => Arrival[], over: Record<string, unknown> = {}) {
       load={load}
       since={0}
       topics={TOPICS}
-      hint="In Shopify: row menu › Send test."
       onChange={onChange}
       {...over}
     />,
@@ -43,11 +42,10 @@ afterEach(() => {
 });
 
 describe('LiveCheck listen', () => {
-  it('starts by listening, says so once, and shows where to press Send test', async () => {
+  it('starts by listening and says so once', async () => {
     listen(() => []);
     await tick(0);
     expect(screen.getByRole('heading', { name: 'Listening · nothing yet' })).toBeInTheDocument();
-    expect(screen.getByText('In Shopify: row menu › Send test.')).toBeInTheDocument();
     expect(said()).toBe('Listening for Shopify.');
   });
 
@@ -141,10 +139,14 @@ describe('LiveCheck listen', () => {
   });
 
   it('pauses polling at 15 minutes, says so, and Resume starts a fresh run', async () => {
-    const { load } = listen(() => []);
+    const { load, onChange } = listen(() => []);
     await tick(15 * 60_000);
     expect(screen.getByRole('heading', { name: 'Paused listening' })).toBeInTheDocument();
     expect(said()).toBe('Paused.');
+    // The strip elsewhere says what the panel says.
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ head: 'Paused listening' }),
+    );
     const paused = load.mock.calls.length;
     await tick(60_000);
     expect(load).toHaveBeenCalledTimes(paused);

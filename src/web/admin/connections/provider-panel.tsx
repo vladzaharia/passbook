@@ -10,9 +10,9 @@ import {
   TopicChecklist,
   topicProgress,
 } from '../../ui/webhook-setup/index.ts';
-import { Rich } from '../../ui/webhook-setup/rich.tsx';
+import { LISTENING } from '../../ui/webhook-setup/listen-state.ts';
 import type { SetupTopic } from '../../ui/webhook-setup/types.ts';
-import { recordNoun, testLine } from './setup-api.ts';
+import { recordNoun } from './setup-api.ts';
 
 type Detail = z.infer<typeof ConnectionDetailSchema>;
 type State = Parameters<NonNullable<ListenProps['onChange']>>[0];
@@ -28,7 +28,6 @@ export function ProviderLive({
   load,
   zone,
   notIssued,
-  withHint,
   onState,
   actions,
 }: {
@@ -37,8 +36,6 @@ export function ProviderLive({
   load: ArrivalLoader;
   zone: string;
   notIssued?: ReadonlySet<string> | undefined;
-  /** Say where to send the test, led by the provider. */
-  withHint?: boolean;
   onState: (state: State) => void;
   actions: NonNullable<ListenProps['actions']>;
 }) {
@@ -57,19 +54,6 @@ export function ProviderLive({
       zone={zone}
       onChange={onState}
       actions={actions}
-      {...(withHint
-        ? {
-            hint: (
-              <Rich
-                text={testLine(
-                  setup.test.text,
-                  setup.recipe === 'custom' ? 'your system' : setup.provider.name,
-                  setup.test.kind,
-                )}
-              />
-            ),
-          }
-        : {})}
     />
   );
 }
@@ -102,11 +86,14 @@ export function ProviderStrip({
   topics,
   seen,
   verified,
+  head,
 }: {
   url: string;
   topics: readonly SetupTopic[];
   seen: readonly string[];
   verified: boolean;
+  /** The live panel's heading, said here too while it is not the plain wait. */
+  head?: string | undefined;
 }) {
   const progress = topicProgress(topics, seen);
   return (
@@ -116,9 +103,11 @@ export function ProviderStrip({
       <span className="shrink-0 text-fg-muted">
         {verified
           ? 'Signed delivery seen'
-          : progress.of > 0
-            ? `Listening · ${progress.seen} of ${progress.of} seen`
-            : 'Listening'}
+          : head && head !== LISTENING
+            ? head
+            : progress.of > 0
+              ? `Listening · ${progress.seen} of ${progress.of} seen`
+              : 'Listening'}
       </span>
     </span>
   );

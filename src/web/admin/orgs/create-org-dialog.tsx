@@ -13,6 +13,7 @@ import {
   WizardDialog,
   WizardReview,
 } from '@/web/ui/index.ts';
+import { useMediaQuery } from '../../lib/media.ts';
 import { markCreated } from '../passes/created.tsx';
 import { PlanPicker } from './features/plan-picker.tsx';
 import { usePresets } from './features/preset-queries.ts';
@@ -62,6 +63,7 @@ export function CreateOrgDialog({
   const [slugEdited, setSlugEdited] = useState(false);
   const [addMe, setAddMe] = useState(true);
   const [preset, setPreset] = useState(DEFAULT_PLAN);
+  const coarse = useMediaQuery('(pointer: coarse)');
   const presets = usePresets();
   const plans = (presets.data?.presets ?? []).filter((p) => p.preset !== 'developer');
   const plan = plans.find((p) => p.preset === preset);
@@ -101,7 +103,7 @@ export function CreateOrgDialog({
       onOpenChange={onOpenChange}
       title="New organization"
       wizard={w}
-      dirty={name.trim() !== '' || slug !== ''}
+      dirty={name.trim() !== '' || slug !== '' || !addMe || preset !== DEFAULT_PLAN}
       finishLabel="Create organization"
       busy={create.isPending}
       onClose={() => {
@@ -118,7 +120,7 @@ export function CreateOrgDialog({
             {(p) => (
               <Input
                 {...p}
-                data-autofocus
+                {...(coarse ? {} : { 'data-autofocus': true })}
                 autoComplete="off"
                 value={name}
                 onChange={(e) => {

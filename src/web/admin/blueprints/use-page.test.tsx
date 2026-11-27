@@ -121,6 +121,25 @@ describe('Make it yours', () => {
     expect(patches[0]?.brand.passColors.background).toBe('#0f766e');
   });
 
+  it('lists Use for all passes in Review only when something would reach the brand', async () => {
+    const user = userEvent.setup();
+    await open({ [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(newOrgFacts())) });
+    await findName();
+    await toLook(user);
+    await screen.findByRole('switch', { name: 'Use for all passes' });
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(await screen.findByRole('heading', { name: 'Check and create' })).toBeVisible();
+    expect(screen.queryByText('Use for all passes')).toBeNull();
+    expect(screen.queryByText(/won't carry over/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Edit look' }));
+    fireEvent.change(await screen.findByLabelText('Custom colour'), {
+      target: { value: '#0f766e' },
+    });
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(await screen.findByText('Use for all passes')).toBeVisible();
+    expect(screen.getByText(/won't carry over to the designer/)).toBeVisible();
+  });
+
   it('starts off for an organization that has its own pass brand', async () => {
     const user = userEvent.setup();
     await open({ [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(readyFacts())) });

@@ -26,18 +26,18 @@ export function liveRecipientStmt(
         SELECT s.id FROM scanning_devices d
         JOIN scanning_sessions p ON p.id=d.session_id AND p.org_id=d.org_id AND p.mode=d.mode
         JOIN scanners s ON s.id=d.scanner_id AND s.org_id=d.org_id AND s.mode=d.mode
-        WHERE d.org_id=(SELECT org_id FROM actor_ok) AND d.mode=(SELECT mode FROM actor_ok)
+        WHERE d.org_id=ao.org_id AND d.mode=ao.mode
           AND d.session_id=? AND s.device_role='scan' AND s.revoked_at IS NULL ORDER BY s.id
       )) AS session_watch,
       (SELECT p.settings FROM scanning_sessions p
-        WHERE p.id=? AND p.org_id=(SELECT org_id FROM actor_ok) AND p.mode=(SELECT mode FROM actor_ok)
+        WHERE p.id=? AND p.org_id=ao.org_id AND p.mode=ao.mode
       ) AS session_settings,
       (SELECT d.overrides FROM scanning_devices d
-        WHERE d.scanner_id=screen.id AND d.session_id=? AND d.org_id=(SELECT org_id FROM actor_ok)
-          AND d.mode=(SELECT mode FROM actor_ok)) AS screen_overrides
-      FROM scanners screen LEFT JOIN scanner_setups m
+        WHERE d.scanner_id=screen.id AND d.session_id=? AND d.org_id=ao.org_id
+          AND d.mode=ao.mode) AS screen_overrides
+      FROM ${auth.rows}scanners screen LEFT JOIN scanner_setups m
         ON m.scanner_id=screen.id AND m.org_id=screen.org_id AND m.mode=screen.mode
-      WHERE screen.id=? AND ${auth.tenant('screen', 'scanners')} AND ${auth.ok}`,
+      WHERE screen.id=? AND ${auth.tenantOnce('screen', 'scanners')}`,
     [sessionId, sessionId, sessionId, scannerId],
   );
 }
@@ -73,16 +73,21 @@ export function liveRowsStmt(
     ]),
   );
   const params: SqlValue[] = [];
+  // The pass joins the ring row instead of hanging off it as a scalar subquery: nested, the effective-release
+  // expression pushes the statement past 80 expression levels; flat, it stays near 65. It comes last in the ON.
+  const passJoin = scope
+    ? `LEFT JOIN passes p ON ring.pass_id IS NOT NULL AND ring.cred IS NOT NULL AND p.id = ring.pass_id
+        AND ${auth.tenantOnce('p', 'passes')}
+        AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
+        AND ${scope.sql}
+        AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb, json_each(ring.refs) j
+          WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
+            AND tomb.credential_hash BETWEEN j.value || '${'0'.repeat(48)}'
+              AND j.value || '${'f'.repeat(48)}')
+        AND ${effectiveReleaseIdSql('p')} IS ring.rel`
+    : '';
   const passOk = scope
-    ? `(SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
-        WHERE ring.pass_id IS NOT NULL AND ring.cred IS NOT NULL AND p.id = ring.pass_id
-          AND ${auth.tenant('p', 'passes')}
-          AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
-          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql}
-          AND NOT EXISTS (SELECT 1 FROM pass_credential_tombstones tomb, json_each(ring.refs) j
-            WHERE tomb.org_id = p.org_id AND tomb.mode = p.mode
-              AND tomb.credential_hash BETWEEN j.value || '${'0'.repeat(48)}'
-                AND j.value || '${'f'.repeat(48)}'))`
+    ? 'CASE WHEN p.id IS NULL THEN 0 WHEN p.image_generation = ring.img THEN 2 ELSE 1 END'
     : '0';
   if (scope) params.push(...scope.params);
   return scanRead(
@@ -90,13 +95,13 @@ export function liveRowsStmt(
     auth,
     `SELECT ring.i AS i,
       CASE WHEN ring.scan_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scans s
-        WHERE s.id = ring.scan_id AND ${auth.tenant('s', 'scans')} AND s.pass_id IS ring.pass_id
+        WHERE s.id = ring.scan_id AND ${auth.tenantOnce('s', 'scans')} AND s.pass_id IS ring.pass_id
           AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}) END AS scan_ok,
-      COALESCE(${passOk}, 0) AS pass_ok,
+      ${passOk} AS pass_ok,
       CASE WHEN ring.staff_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scan_staff st
-        WHERE st.id = ring.staff_id AND st.org_id = (SELECT org_id FROM actor_ok)
+        WHERE st.id = ring.staff_id AND st.org_id = ao.org_id
           AND st.auth_epoch = ring.staff_epoch AND st.disabled_at IS NULL) END AS staff_ok
-    FROM ring WHERE ${auth.ok}`,
+    FROM ${auth.rows}ring ${passJoin}`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,
@@ -127,14 +132,14 @@ export function livePhotoStmt(
     db,
     auth,
     `SELECT mp.r2_key AS r2_key, mp.version AS version
-      FROM passes p JOIN member_photos mp ON mp.pass_id = p.id AND mp.org_id = p.org_id
-      WHERE ${auth.ok} AND p.id = ? AND ${auth.tenant('p', 'passes')}
+      FROM ${auth.rows}passes p JOIN member_photos mp ON mp.pass_id = p.id AND mp.org_id = p.org_id
+      WHERE p.id = ? AND ${auth.tenantOnce('p', 'passes')}
         AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
         AND p.image_generation = ? AND ${effectiveReleaseIdSql('p')} IS ? AND ${scope.sql}
         ${
           entry.scanId !== null
             ? `AND EXISTS (SELECT 1 FROM scans s
-          WHERE s.id = ? AND ${auth.tenant('s', 'scans')} AND s.pass_id = p.id
+          WHERE s.id = ? AND ${auth.tenantOnce('s', 'scans')} AND s.pass_id = p.id
             AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')})`
             : ''
         }

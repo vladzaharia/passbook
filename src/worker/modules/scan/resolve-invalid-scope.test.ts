@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import {
   CHECK_IN,
   kit,
@@ -20,12 +21,7 @@ function beforeAuthorityRead(change: () => Promise<unknown>) {
       if (prop === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          if (
-            fired ||
-            !sql.startsWith('WITH actor AS MATERIALIZED') ||
-            !sql.endsWith('AS authorized')
-          )
-            return statement;
+          if (fired || !sql.includes(RACE_AUTHORIZED)) return statement;
           return new Proxy(statement, {
             get(inner, member) {
               if (member === 'bind')
