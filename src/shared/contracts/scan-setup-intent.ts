@@ -4,10 +4,11 @@ import { IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common
 import { ScanRoleSchema, TimeZoneSchema } from './scan.ts';
 import { HoursSpanSchema, ZoneKeySchema } from './scan-access.ts';
 import { OccupancyFieldsSchema } from './scan-occupancy.ts';
-import { DeviceRoleSchema, StaffPinSchema } from './scanners.ts';
+import { StaffPinSchema } from './scanners.ts';
 import {
-  CreateScanningDeviceSchema,
+  CreatableDeviceRoleSchema,
   DevicePairingSchema,
+  ScanDeviceOverridesSchema,
   ScanningSessionSettingsSchema,
   ScanSurfaceChoiceSchema,
   SessionDatesSchema,
@@ -168,14 +169,15 @@ export const PlannedStaffSchema = z.strictObject({
   role: ScanRoleSchema,
 });
 
-export const PlannedDeviceSchema = CreateScanningDeviceSchema.extend({
+export const PlannedDeviceSchema = z.strictObject({
   ref: PlanRef,
   name: PlainLineSchema(40),
-  surface: ScanSurfaceChoiceSchema,
-  overrides: CreateScanningDeviceSchema.shape.overrides.unwrap(),
+  /** A Staff device's layout; absent on a Screen. */
+  surface: ScanSurfaceChoiceSchema.optional(),
+  overrides: ScanDeviceOverridesSchema,
   /** Derived from the layout. */
-  role: DeviceRoleSchema,
-}).strict();
+  role: CreatableDeviceRoleSchema,
+});
 export type PlannedDevice = z.infer<typeof PlannedDeviceSchema>;
 
 export const PlannedSessionSchema = z.strictObject({

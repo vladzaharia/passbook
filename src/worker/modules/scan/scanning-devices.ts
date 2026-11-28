@@ -7,7 +7,7 @@ import {
   ScanDeviceOverridesSchema,
   type UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { roleOfStoredSurface, storedSurfaceFor } from '../../../shared/scan-surfaces.ts';
 import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -35,6 +35,7 @@ import {
   scanningDeviceRows,
 } from './repo-scanning-devices.ts';
 import { readScannerScope } from './repo-scope.ts';
+import { refuseScreenLayout, refuseStaffFields } from './scanning-device-guards.ts';
 import {
   conflictsWithAllScope,
   deviceConfigRevision,
@@ -68,6 +69,7 @@ export async function createScanningDevice(
   /** Called right after the commit: what follows reads, and a failure there keeps a code's charge. */
   committed: () => void = () => {},
 ) {
+  refuseStaffFields(input);
   const parent = await loadScanningSession(ctx, sessionId);
   const capture = newCapture({
     userId,
@@ -112,10 +114,12 @@ export async function updateScanningDevice(
   input: z.infer<typeof UpdateScanningDeviceSchema>,
   authority: TenantPassWrite,
 ) {
+  refuseStaffFields(input);
   const parent = await loadScanningSession(ctx, sessionId);
   const device = await scanningDeviceRow(ctx.env.DB, parent.org_id, id);
   if (!device || device.session_id !== sessionId || device.revoked_at !== null)
     throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');
+  refuseScreenLayout(roleOfStoredSurface(device.surface), input);
   if (input.revision !== undefined && input.revision !== deviceConfigRevision(device))
     throw new ConflictError(
       'This device changed. Reload its settings and try again.',
@@ -138,11 +142,11 @@ export async function updateScanningDevice(
         )
       : null;
   const effective =
-    input.surface === undefined ? device.effective_surface : surfaceFor(surface, caps);
+    input.surface === undefined ? device.effective_surface : storedSurfaceFor(surface, caps);
   if (
     input.surface !== undefined &&
     device.kind === 'terminal' &&
-    roleForSurface(effective) !== 'scan'
+    roleOfStoredSurface(effective) !== 'scan'
   )
     throw new ValidationError(
       'A terminal cannot be used as a display.',
@@ -207,7 +211,7 @@ export async function updateScanningDevice(
     now,
   );
   if (input.surface !== undefined)
-    addLinkedDeviceRole(g, id, scanner.kind, roleForSurface(effective), now);
+    addLinkedDeviceRole(g, id, scanner.kind, roleOfStoredSurface(effective), now);
   g.add(
     audited(g, ctx, {
       orgId: parent.org_id,
@@ -275,6 +279,7 @@ export async function joinAdminScanningSession(
         parent.id,
         {
           name: `${(user?.name ?? 'Administrator').slice(0, 31)} · ${suffix}`,
+          deviceRole: 'scan',
           surface: 'auto',
           overrides: {},
         },

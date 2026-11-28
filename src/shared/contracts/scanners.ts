@@ -21,8 +21,8 @@ import {
 const NoteSchema = PlainLineSchema(140);
 const JsonValue = z.any();
 export const ScannerKindSchema = z.enum(['device', 'terminal', 'display']);
-/** What the device does now: scan, face a customer, or watch scans. A display never scans. */
-export const DeviceRoleSchema = z.enum(['scan', 'customer', 'monitor']);
+/** What the device does: scan (a Staff device), face a customer, watch scans, or serve guests (a kiosk). A display never scans. */
+export const DeviceRoleSchema = z.enum(['scan', 'customer', 'monitor', 'kiosk']);
 /** What a scanner row takes: one event or a list of templates. */
 export const ScannerAcceptsSchema = z.union([
   z.object({ eventId: IdSchema }),

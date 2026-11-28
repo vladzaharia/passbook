@@ -6,12 +6,19 @@ import type { ScanDeviceOverrides, ScanningDevice } from '@/shared/contracts/sca
 import { DeviceFollows, followable } from './device-follows.tsx';
 
 const device = (id: string, name: string, over: Partial<ScanningDevice> = {}) =>
-  ({ id, name, revoked: false, effectiveSurface: 'phone', ...over }) as ScanningDevice;
+  ({
+    id,
+    name,
+    revoked: false,
+    deviceRole: 'scan',
+    effectiveSurface: 'phone',
+    ...over,
+  }) as ScanningDevice;
 const doors = [
   device('a', 'North door'),
   device('b', 'South door'),
   device('c', 'Old door', { revoked: true }),
-  device('d', 'Screen', { effectiveSurface: 'customer' }),
+  device('d', 'Screen', { deviceRole: 'customer', surface: null, effectiveSurface: null }),
 ];
 
 function Harness({ start = {} }: { start?: ScanDeviceOverrides }) {

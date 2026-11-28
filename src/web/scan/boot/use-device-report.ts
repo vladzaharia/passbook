@@ -25,7 +25,7 @@ export function deviceCapabilities(native?: NativeScannerCapabilities): ScanDevi
     ...(native ? { native: withoutNativeHardware(native) } : {}),
     ...(reportedHardware()?.length ? { hardware: reportedHardware() ?? [] } : {}),
     ...(draftHealth.failures() > 0 ? { draftFailures: draftHealth.failures() } : {}),
-    surfaces: ['phone', 'customer'],
+    surfaces: ['phone'],
     preferred: 'phone',
   });
 }

@@ -1,9 +1,7 @@
 import type { ScannerSettings } from '../../../shared/contracts/scan.ts';
 import { type AdmitsInput, admitsOf } from '../../../shared/contracts/scanners.ts';
-import type {
-  ScanDeviceOverrides,
-  ScanSurface,
-} from '../../../shared/contracts/scanning-sessions.ts';
+import type { ScanDeviceOverrides } from '../../../shared/contracts/scanning-sessions.ts';
+import type { StoredSurface } from '../../../shared/scan-surfaces.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { admitsJson } from './admits.ts';
@@ -12,7 +10,7 @@ import { addScanningSessionInsert } from './repo-scanning-sessions.ts';
 
 export interface DeviceEnrollment {
   sessionId: string;
-  surface: ScanSurface | 'auto';
+  surface: StoredSurface;
   overrides: ScanDeviceOverrides;
   deviceKey?: string;
 }

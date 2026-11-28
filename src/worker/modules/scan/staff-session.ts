@@ -58,8 +58,8 @@ export async function staffSession(ctx: ServiceContext, actor: ScanActor): Promi
     if (scanner.mode !== actor.mode)
       throw new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');
     if (
-      scanner.deviceRole === 'customer' ||
-      (scanner.deviceRole === 'monitor' && !actor.settings.deskActions)
+      scanner.deviceRole !== 'scan' &&
+      !(scanner.deviceRole === 'monitor' && actor.settings.deskActions)
     )
       throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
     if (!scanner.csrfSecret || !actor.scannerCsrfProof)

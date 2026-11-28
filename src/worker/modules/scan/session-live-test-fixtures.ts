@@ -117,7 +117,12 @@ export async function sessionLiveFixtures(): Promise<SessionLiveFixtures> {
       'admin-1',
       'live',
       sessionId,
-      { name, surface, overrides: {} },
+      {
+        name,
+        deviceRole: surface === 'desk' ? 'monitor' : surface === 'customer' ? 'customer' : 'scan',
+        ...(surface === 'phone' ? { surface } : {}),
+        overrides: {},
+      },
       'https://wallet.test',
       authority,
     );

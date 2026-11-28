@@ -319,6 +319,24 @@
       ]
     },
     {
+      "code": "APPROVAL_GRANT_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "APPROVE_AS_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "ARCHIVE_TOO_LARGE",
       "statuses": [
         413
@@ -1303,6 +1321,15 @@
       "modules": [
         "apple",
         "workbench"
+      ]
+    },
+    {
+      "code": "DEVICE_KIND_FIXED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
       ]
     },
     {
@@ -6208,6 +6235,15 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "STAFF_DEVICE_FIELDS_UNAVAILABLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
       ]
     },
     {

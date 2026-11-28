@@ -55,7 +55,7 @@ export function registerScanningAuthorityDeviceAdmin() {
       camera: 'available',
       keyboard: true,
       nativeBarcode: false,
-      surfaces: ['phone', 'operator', 'customer'],
+      surfaces: ['phone', 'operator'],
       preferred: 'phone',
     };
     expect(await reportScanDevice(kit.ctx, actor, capabilities)).toMatchObject({

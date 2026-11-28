@@ -24,7 +24,24 @@ const native = {
 
 describe('stored device reports', () => {
   it('reads an old row', () => {
-    expect(readStoredCapabilities(JSON.stringify(old))).toEqual(old);
+    expect(readStoredCapabilities(JSON.stringify(old))).toEqual({
+      ...old,
+      surfaces: ['phone', 'operator'],
+    });
+  });
+
+  it('keeps a row whose preferred layout is a legacy one', () => {
+    const read = (surfaces: string[], preferred: string) =>
+      readStoredCapabilities(JSON.stringify({ ...old, surfaces, preferred }));
+    expect(read(['phone', 'customer'], 'customer')).toMatchObject({
+      surfaces: ['phone'],
+      preferred: 'phone',
+    });
+    expect(read(['desk'], 'desk')).toMatchObject({ surfaces: ['phone'], preferred: 'phone' });
+    expect(read(['customer', 'operator'], 'desk')).toMatchObject({
+      surfaces: ['operator'],
+      preferred: 'operator',
+    });
   });
 
   it('reads a row with the hardware summary', () => {

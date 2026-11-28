@@ -33,12 +33,27 @@ export const ScanAdminScopeSchema = z.object({
   templateIds: z.array(IdSchema).max(100).optional(),
   timeZone: TimeZoneSchema,
 });
+export const ScanPinSchema = z.string().regex(/^\d{6}$/);
 /** A Manager's PIN for one action. `staffId` is optional: a PIN alone is matched against the org's managers. */
 export const ScanApprovalSchema = z.object({
   staffId: IdSchema.optional(),
-  pin: z.string().regex(/^\d{6}$/),
+  pin: ScanPinSchema,
 });
-/** An action's approval: the requester may confirm `alone` with their own PIN when no other staff can approve here. */
-export const ScanActionApprovalSchema = ScanApprovalSchema.extend({
-  alone: z.boolean().optional(),
-});
+/** A remote approval the requester redeems: the help request a responder approved (SDA §10). */
+export const ScanGrantApprovalSchema = z.strictObject({ requestId: IdSchema });
+/** Approve as a named on-shift approver, with no PIN. Only under `scan.approvalPin: 'never'` (D29). */
+export const ScanApproveAsSchema = z.strictObject({ approveAs: IdSchema });
+/** An action's approval: a PIN (the requester may confirm `alone` with their own when no other staff can approve here), a grant, or Approve as. */
+export const ScanActionApprovalSchema = z.union([
+  ScanApprovalSchema.extend({ alone: z.boolean().optional() }).strict(),
+  ScanGrantApprovalSchema,
+  ScanApproveAsSchema,
+]);
+export type ScanActionApproval = z.infer<typeof ScanActionApprovalSchema>;
+/** An undo's approval: the same three forms, without `alone`. */
+export const ScanUndoApprovalSchema = z.union([
+  ScanApprovalSchema.strict(),
+  ScanGrantApprovalSchema,
+  ScanApproveAsSchema,
+]);
+export type ScanUndoApproval = z.infer<typeof ScanUndoApprovalSchema>;

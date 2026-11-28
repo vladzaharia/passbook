@@ -16,81 +16,31 @@ import {
   TimeZoneSchema,
 } from './scan.ts';
 import { HoursSpanSchema, SESSION_DEVICE_CAP, ZoneIdsSchema } from './scan-access.ts';
-import { NativeHardwareEntrySchema, ReportedHardwareSchema } from './scan-hardware.ts';
-import { AdmitsSchema } from './scanners.ts';
+import {
+  CreatableDeviceRoleSchema,
+  ReportedScanDeviceCapabilitiesSchema,
+  ScanDeviceCapabilitiesSchema,
+  ScanSurfaceChoiceSchema,
+  ScanSurfaceSchema,
+  StaffDeviceFieldsSchema,
+  staffDeviceFieldsValid,
+} from './scan-device.ts';
+import { AdmitsSchema, DeviceRoleSchema } from './scanners.ts';
 
-/** Layout and sign-in method are independent: an admin is another device in the session. */
-export const ScanSurfaceSchema = z.enum(['phone', 'operator', 'desk', 'customer']);
-export type ScanSurface = z.infer<typeof ScanSurfaceSchema>;
-export const ScanSurfaceChoiceSchema = z.enum(['auto', 'phone', 'operator', 'desk', 'customer']);
-export const NativeScannerCapabilitiesSchema = z.strictObject({
-  platform: z.enum(['ios', 'android']),
-  appVersion: z.string().max(32),
-  camera: z.strictObject({
-    available: z.boolean(),
-    permission: z.enum(['unknown', 'prompt', 'granted', 'denied', 'restricted', 'unavailable']),
-  }),
-  keyboard: z.strictObject({
-    supported: z.boolean(),
-    connected: z.boolean().nullable(),
-    connectionObservable: z.boolean(),
-  }),
-  nfc: z.strictObject({
-    available: z.boolean(),
-    reading: z.boolean(),
-    /** The app reads tags without a `tagRead` request (wire v2). */
-    continuous: z.boolean().optional(),
-    formats: z.array(z.enum(['ndef', 'wallet-vas', 'tag-uid', 'tag-sun'])).max(4),
-  }),
-  /** The shell plays `{op:'haptic', pattern}` (wire v1). */
-  haptics: z.boolean().optional(),
-  vas: z.strictObject({
-    deviceSupported: z.boolean(),
-    available: z.boolean(),
-    reader: z.enum(['proximityReader', 'android-native', 'none']),
-    reason: z.string().max(240),
-  }),
-  externalReader: z.strictObject({
-    mode: z.enum(['keyboard', 'unknown']),
-    connected: z.boolean().nullable(),
-  }),
-  customerDisplay: z.strictObject({
-    supported: z.boolean(),
-    available: z.boolean(),
-    active: z.boolean(),
-  }),
-  layout: z
-    .strictObject({
-      posture: z.enum(['unknown', 'folded', 'unfolded', 'half-folded']),
-      division: z
-        .strictObject({
-          x: z.number().min(0).max(32768),
-          y: z.number().min(0).max(32768),
-          width: z.number().min(0).max(32768),
-          height: z.number().min(0).max(32768),
-        })
-        .nullable(),
-    })
-    .optional(),
-  /** Bridge v1, additive: one entry per unit. Reports carry the summary, not this list. */
-  hardware: z.array(NativeHardwareEntrySchema).max(16).optional(),
-});
-export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
-export const ScanDeviceCapabilitiesSchema = z.strictObject({
-  width: z.number().int().min(1).max(32768),
-  height: z.number().int().min(1).max(32768),
-  touch: z.boolean(),
-  camera: z.enum(['unknown', 'available', 'unavailable']),
-  keyboard: z.boolean(),
-  nativeBarcode: z.boolean(),
-  native: NativeScannerCapabilitiesSchema.omit({ hardware: true }).optional(),
-  /** Found hardware by kind and state; failed customer-screen drafts (`scan.draft_failed`). Optional. */
-  hardware: z.array(ReportedHardwareSchema).max(16).optional(),
-  draftFailures: z.number().int().min(1).max(1_000_000).optional(),
-  surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
-  preferred: ScanSurfaceSchema,
-});
-export type ScanDeviceCapabilities = z.infer<typeof ScanDeviceCapabilitiesSchema>;
+export {
+  CreatableDeviceRoleSchema,
+  type NativeScannerCapabilities,
+  NativeScannerCapabilitiesSchema,
+  type ReportedScanDeviceCapabilities,
+  ReportedScanDeviceCapabilitiesSchema,
+  type ScanDeviceCapabilities,
+  ScanDeviceCapabilitiesSchema,
+  type ScanSurface,
+  type ScanSurfaceChoice,
+  ScanSurfaceChoiceSchema,
+  ScanSurfaceSchema,
+} from './scan-device.ts';
+
 /** Admission, staff rights, accepted passes and time zone always belong to the session. */
 export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   flow: true,
@@ -246,8 +196,11 @@ export const ScanningDeviceSchema = z.object({
   id: IdSchema,
   sessionId: IdSchema,
   name: z.string(),
-  surface: ScanSurfaceChoiceSchema,
-  effectiveSurface: ScanSurfaceSchema,
+  deviceRole: DeviceRoleSchema,
+  /** A Staff device's layout choice and what it resolved to; null on every other kind. */
+  surface: ScanSurfaceChoiceSchema.nullable(),
+  effectiveSurface: ScanSurfaceSchema.nullable(),
+  ...StaffDeviceFieldsSchema.shape,
   overrides: ScanDeviceOverridesSchema,
   settings: ScannerSettingsSchema,
   capabilities: ScanDeviceCapabilitiesSchema.nullable(),
@@ -292,19 +245,35 @@ export const ScanningSessionDetailSchema = ScanningSessionSchema.extend({
   devices: z.array(ScanningDeviceSchema),
   activity: SessionActivitySchema.shape.items.default([]),
 });
-export const CreateScanningDeviceSchema = z.strictObject({
-  /** Absent: the server picks a free name from the session's. */
-  name: PlainLineSchema(40).optional(),
-  surface: ScanSurfaceChoiceSchema.default('auto'),
-  overrides: ScanDeviceOverridesSchema.default({}),
-});
-/** No defaults: a name-only edit keeps the surface, hence the device role, and the overrides. */
-export const UpdateScanningDeviceSchema = z.strictObject({
-  name: PlainLineSchema(40).optional(),
-  surface: ScanSurfaceChoiceSchema.optional(),
-  overrides: ScanDeviceOverridesSchema.optional(),
-  revision: TimestampSchema.optional(),
-});
+const STAFF_KEYS = ['surface', ...Object.keys(StaffDeviceFieldsSchema.shape)];
+const staffOnly = (d: Record<string, unknown>) =>
+  d.deviceRole === 'scan' || STAFF_KEYS.every((key) => d[key] === undefined);
+const STAFF_ONLY = 'A layout, owner, sign-in ceiling, alerts and coverage are for a Staff device.';
+const PERSONAL = 'A Personal device names its person; a Shared one names nobody.';
+export const CreateScanningDeviceSchema = z
+  .strictObject({
+    /** Absent: the server picks a free name from the session's. */
+    name: PlainLineSchema(40).optional(),
+    /** Absent: a Staff device. */
+    deviceRole: CreatableDeviceRoleSchema.default('scan'),
+    /** A Staff device only. Absent: `auto`. */
+    surface: ScanSurfaceChoiceSchema.optional(),
+    ...StaffDeviceFieldsSchema.shape,
+    overrides: ScanDeviceOverridesSchema.default({}),
+  })
+  .refine(staffOnly, STAFF_ONLY)
+  .refine(staffDeviceFieldsValid, PERSONAL);
+/** No defaults: a name-only edit keeps the kind, the layout and the overrides. The kind never changes. */
+export const UpdateScanningDeviceSchema = z
+  .strictObject({
+    name: PlainLineSchema(40).optional(),
+    surface: ScanSurfaceChoiceSchema.optional(),
+    ...StaffDeviceFieldsSchema.shape,
+    overrides: ScanDeviceOverridesSchema.optional(),
+    revision: TimestampSchema.optional(),
+  })
+  // The full rule needs the stored row: the server checks the merged device.
+  .refine((d) => d.ownership !== 'shared' || !d.personalStaffId, PERSONAL);
 export const DevicePairingSchema = z.object({
   code: z.string(),
   url: z.string(),
@@ -325,6 +294,6 @@ export const ScanWorkspaceSchema = z.object({
 });
 export type ScanWorkspace = z.infer<typeof ScanWorkspaceSchema>;
 export const ReportScanDeviceSchema = z.object({
-  capabilities: ScanDeviceCapabilitiesSchema,
+  capabilities: ReportedScanDeviceCapabilitiesSchema,
   scope: z.object({ orgId: IdSchema, setupId: IdSchema, timeZone: TimeZoneSchema }).optional(),
 });

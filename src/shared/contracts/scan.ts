@@ -9,31 +9,30 @@ import { ScanAdmitSchema, ScanTypeCountSchema } from './scan-admit.ts';
 import {
   ScanActionApprovalSchema,
   ScanAdminScopeSchema,
-  ScanApprovalSchema,
   ScanDirectionSchema,
+  ScanUndoApprovalSchema,
   UuidV7Schema,
 } from './scan-base.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
 import { ScanOccupancySchema, ScanPlaceCountSchema } from './scan-occupancy.ts';
 import { ScanValueSchema } from './scan-value.ts';
 
-// Moved to leaf files so the access and occupancy contracts can use them without a cycle.
 export { type ScanAccess, ScanAccessSchema } from './scan-access.ts';
-export type { ScanActionInput } from './scan-action-input.ts';
-export { ScanActionInputSchema } from './scan-action-input.ts';
+export { type ScanActionInput, ScanActionInputSchema } from './scan-action-input.ts';
 export {
   ScanAdminScopeSchema,
   ScanApprovalSchema,
   ScanDirectionSchema,
+  ScanPinSchema,
   TimeZoneSchema,
   UuidV7Schema,
 } from './scan-base.ts';
+export { type ScanTarget, ScanTargetSchema } from './scan-target.ts';
 
 import { ScanBundleSchema, ScanGroupMemberSchema } from './scan-group.ts';
 
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
 export { ScanValueSchema } from './scan-value.ts';
-
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
 /** What a record shows: the system's auto tap-out has a method of its own; no client sends it. */
@@ -120,8 +119,7 @@ export const ScannerSettingsSchema = z.object({
   offline: z.boolean(),
   whenOffline: z.enum(['stop', 'decide', 'list']).optional(),
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
-  /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
-  deskActions: z.boolean().optional(),
+  deskActions: z.boolean().optional(), // Deprecated: the acting monitor. SD12 removes it.
   /** A full place refuses every role: `capacity_full` is never overridable at this door. */
   hardLimit: z.boolean().optional(),
   /** Whose PIN approves a risky action. Managers when absent; `set` and hard refusals never relax. */
@@ -138,10 +136,7 @@ export const ScanInputSchema = z.union([
   z.object({ tag: TagReadSchema, method: z.literal('nfc'), passId: IdSchema.optional() }),
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
-/**
- * What the code and pass-id paths take. A tag read reaches them as the pass it chose, read by NFC
- * (worker only: the wire never sends `passId` with `nfc`).
- */
+/** What the code and pass-id paths take: a tag read arrives as its pass by NFC (worker only). */
 export type ScanCodeInput =
   | Exclude<ScanInput, { tag: unknown }>
   | { passId: string; method: 'nfc' };
@@ -173,7 +168,8 @@ export const ScanActRequestSchema = z.strictObject({
 export const ScanUndoRequestSchema = z.strictObject({
   idempotencyKey: UuidV7Schema,
   scope: ScanAdminScopeSchema.optional(),
-  approval: ScanApprovalSchema.optional(),
+  /** Undo of another device's scan: the Manager's PIN, required under `scan.approvalPin: 'always'`. */
+  approval: ScanUndoApprovalSchema.optional(),
 });
 
 export const ScanPreviousSchema = z.object({
@@ -297,6 +293,12 @@ export const ScanOutcomeSchema = z.object({
   exitAllowed: z.boolean().optional(), // OC4: a voided or ended pass that is inside can only check out
   /** The org has active managers. */
   approvals: z.boolean(),
+  /** On `needs_approval`: the request's hash, which a help raise and `GET /scan/approvers` take. */
+  requestHash: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .nullable()
+    .optional(),
   group: z
     .object({
       total: z.number().int(),
@@ -322,9 +324,3 @@ export const ScanOutcomeSchema = z.object({
 export type ScanOutcome = z.infer<typeof ScanOutcomeSchema>;
 export type ScanCard = z.infer<typeof ScanCardSchema>;
 export type ScanCounts = z.infer<typeof ScanCountsSchema>;
-/** Shared with broadcasts and the passes list. */
-export const ScanTargetSchema = z.union([
-  z.object({ eventId: IdSchema, checkedIn: z.boolean() }),
-  z.object({ noScanDays: z.number().int().min(1).max(730) }),
-]);
-export type ScanTarget = z.infer<typeof ScanTargetSchema>;

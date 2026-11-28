@@ -46,7 +46,12 @@ export function planBodies(plan: ScanSetupPlan, orgId: string, idOf: (ref: strin
       },
       devices: s.devices.map((d) => ({
         ref: d.ref,
-        body: { name: d.name, surface: d.surface, overrides: d.overrides },
+        body: {
+          name: d.name,
+          surface: d.surface,
+          deviceRole: d.role,
+          overrides: d.overrides,
+        },
       })),
     })),
   };

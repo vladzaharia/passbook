@@ -55,7 +55,11 @@ export function scanningSessionsFixture() {
   async function device(sessionId: string, name: string, surface = 'auto') {
     const response = await call('POST', `/scanning-sessions/${sessionId}/devices`, {
       name,
-      surface,
+      ...(surface === 'customer'
+        ? { deviceRole: 'customer' }
+        : surface === 'desk'
+          ? { deviceRole: 'monitor' }
+          : { surface }),
     });
     expect(response.status).toBe(201);
     return CreatedScanningDeviceSchema.parse(await response.json());

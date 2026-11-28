@@ -57,7 +57,7 @@ describe('administrator session display authorization', () => {
       user.id,
       session.id,
       joined.setupId,
-      { surface: 'customer' },
+      { surface: 'customer' as never },
       updateAuthority,
     );
     const { attachment } = await managedScreenAttachment(kit, resolved, device.id);
@@ -104,7 +104,7 @@ describe('administrator session display authorization', () => {
       'admin-1',
       session.id,
       joined.setupId,
-      { surface: 'desk' },
+      { surface: 'desk' as never },
       authority,
     );
     await asDeskDisplay(kit.env.DB, device.id);

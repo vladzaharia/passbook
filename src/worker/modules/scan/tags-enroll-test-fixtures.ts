@@ -34,8 +34,8 @@ const NFC_DEVICE = {
     externalReader: { mode: 'unknown', connected: null },
     customerDisplay: { supported: false, available: false, active: false },
   },
-  surfaces: ['desk'],
-  preferred: 'desk',
+  surfaces: ['operator'],
+  preferred: 'operator',
 };
 
 /** Tags on, an org with a pass operator and a read-only user, another org, and scan-role devices that read tags. */

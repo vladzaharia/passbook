@@ -271,7 +271,7 @@ describe('planScanSetup derived defaults', () => {
       ],
     });
     const [customer, operator] = plan.sessions[0]?.devices ?? [];
-    expect(customer).toMatchObject({ surface: 'customer', role: 'customer', overrides: {} });
+    expect(customer).toMatchObject({ role: 'customer', overrides: {} });
     expect(operator).toMatchObject({
       name: 'Till',
       surface: 'operator',

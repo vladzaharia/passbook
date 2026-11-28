@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "PassBook API",
-    "version": "2026-11-22"
+    "version": "2026-11-28"
   },
   "servers": [
     {
@@ -12280,7 +12280,8 @@
                 "enum": [
                   "scan",
                   "customer",
-                  "monitor"
+                  "monitor",
+                  "kiosk"
                 ]
               },
               "mode": {
@@ -12612,24 +12613,80 @@
               "name": {
                 "type": "string"
               },
-              "surface": {
+              "deviceRole": {
                 "type": "string",
+                "enum": [
+                  "scan",
+                  "customer",
+                  "monitor",
+                  "kiosk"
+                ]
+              },
+              "surface": {
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "enum": [
                   "auto",
                   "phone",
                   "operator",
-                  "desk",
-                  "customer"
+                  null
                 ]
               },
               "effectiveSurface": {
-                "type": "string",
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "enum": [
                   "phone",
                   "operator",
-                  "desk",
-                  "customer"
+                  null
                 ]
+              },
+              "ownership": {
+                "type": "string",
+                "enum": [
+                  "shared",
+                  "personal"
+                ]
+              },
+              "personalStaffId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "signInCeiling": {
+                "type": "string",
+                "enum": [
+                  "door",
+                  "desk",
+                  "manager"
+                ]
+              },
+              "alerts": {
+                "type": "string",
+                "enum": [
+                  "ring",
+                  "badge",
+                  "off"
+                ]
+              },
+              "coverage": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "maxItems": 8
               },
               "overrides": {
                 "type": "object",
@@ -12721,6 +12778,7 @@
               "id",
               "sessionId",
               "name",
+              "deviceRole",
               "surface",
               "effectiveSurface",
               "overrides",
@@ -13854,21 +13912,17 @@
               "type": "string",
               "enum": [
                 "phone",
-                "operator",
-                "desk",
-                "customer"
+                "operator"
               ]
             },
             "minItems": 1,
-            "maxItems": 4
+            "maxItems": 2
           },
           "preferred": {
             "type": "string",
             "enum": [
               "phone",
-              "operator",
-              "desk",
-              "customer"
+              "operator"
             ]
           }
         },
@@ -14310,6 +14364,13 @@
           },
           "approvals": {
             "type": "boolean"
+          },
+          "requestHash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
           },
           "group": {
             "type": [
@@ -19209,7 +19270,8 @@
             "enum": [
               "scan",
               "customer",
-              "monitor"
+              "monitor",
+              "kiosk"
             ]
           },
           "name": {
@@ -19409,7 +19471,8 @@
             "enum": [
               "scan",
               "customer",
-              "monitor"
+              "monitor",
+              "kiosk"
             ]
           },
           "name": {
@@ -20714,6 +20777,11 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "ref": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
                           "name": {
                             "type": "string",
                             "minLength": 1,
@@ -20724,9 +20792,7 @@
                             "enum": [
                               "auto",
                               "phone",
-                              "operator",
-                              "desk",
-                              "customer"
+                              "operator"
                             ]
                           },
                           "overrides": {
@@ -20774,11 +20840,6 @@
                             },
                             "additionalProperties": false
                           },
-                          "ref": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
                           "role": {
                             "type": "string",
                             "enum": [
@@ -20789,10 +20850,9 @@
                           }
                         },
                         "required": [
-                          "name",
-                          "surface",
-                          "overrides",
                           "ref",
+                          "name",
+                          "overrides",
                           "role"
                         ],
                         "additionalProperties": false
@@ -21775,24 +21835,80 @@
           "name": {
             "type": "string"
           },
-          "surface": {
+          "deviceRole": {
             "type": "string",
+            "enum": [
+              "scan",
+              "customer",
+              "monitor",
+              "kiosk"
+            ]
+          },
+          "surface": {
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "auto",
               "phone",
               "operator",
-              "desk",
-              "customer"
+              null
             ]
           },
           "effectiveSurface": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "phone",
               "operator",
-              "desk",
-              "customer"
+              null
             ]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "personal"
+            ]
+          },
+          "personalStaffId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "signInCeiling": {
+            "type": "string",
+            "enum": [
+              "door",
+              "desk",
+              "manager"
+            ]
+          },
+          "alerts": {
+            "type": "string",
+            "enum": [
+              "ring",
+              "badge",
+              "off"
+            ]
+          },
+          "coverage": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 8
           },
           "overrides": {
             "type": "object",
@@ -21894,6 +22010,7 @@
           "id",
           "sessionId",
           "name",
+          "deviceRole",
           "surface",
           "effectiveSurface",
           "overrides",
@@ -21926,24 +22043,80 @@
           "name": {
             "type": "string"
           },
-          "surface": {
+          "deviceRole": {
             "type": "string",
+            "enum": [
+              "scan",
+              "customer",
+              "monitor",
+              "kiosk"
+            ]
+          },
+          "surface": {
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "auto",
               "phone",
               "operator",
-              "desk",
-              "customer"
+              null
             ]
           },
           "effectiveSurface": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "phone",
               "operator",
-              "desk",
-              "customer"
+              null
             ]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "personal"
+            ]
+          },
+          "personalStaffId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "signInCeiling": {
+            "type": "string",
+            "enum": [
+              "door",
+              "desk",
+              "manager"
+            ]
+          },
+          "alerts": {
+            "type": "string",
+            "enum": [
+              "ring",
+              "badge",
+              "off"
+            ]
+          },
+          "coverage": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 8
           },
           "overrides": {
             "type": "object",
@@ -22068,6 +22241,7 @@
           "id",
           "sessionId",
           "name",
+          "deviceRole",
           "surface",
           "effectiveSurface",
           "overrides",
@@ -75278,23 +75452,56 @@
             ]
           },
           "approval": {
-            "type": "object",
-            "properties": {
-              "staffId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "staffId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "pin": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  },
+                  "alone": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "pin"
+                ],
+                "additionalProperties": false
               },
-              "pin": {
-                "type": "string",
-                "pattern": "^\\d{6}$"
+              {
+                "type": "object",
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "requestId"
+                ],
+                "additionalProperties": false
               },
-              "alone": {
-                "type": "boolean"
+              {
+                "type": "object",
+                "properties": {
+                  "approveAs": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "approveAs"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "pin"
             ]
           }
         },
@@ -75352,20 +75559,53 @@
             ]
           },
           "approval": {
-            "type": "object",
-            "properties": {
-              "staffId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "staffId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "pin": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "pin"
+                ],
+                "additionalProperties": false
               },
-              "pin": {
-                "type": "string",
-                "pattern": "^\\d{6}$"
+              {
+                "type": "object",
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "requestId"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "approveAs": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "approveAs"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "pin"
             ]
           }
         },
@@ -76096,7 +76336,8 @@
                   "enum": [
                     "scan",
                     "customer",
-                    "monitor"
+                    "monitor",
+                    "kiosk"
                   ]
                 },
                 "name": {
@@ -76735,7 +76976,8 @@
             "enum": [
               "scan",
               "customer",
-              "monitor"
+              "monitor",
+              "kiosk"
             ]
           },
           "name": {
@@ -77039,7 +77281,8 @@
             "enum": [
               "scan",
               "customer",
-              "monitor"
+              "monitor",
+              "kiosk"
             ]
           },
           "name": {
@@ -77635,7 +77878,8 @@
             "enum": [
               "scan",
               "customer",
-              "monitor"
+              "monitor",
+              "kiosk"
             ]
           },
           "name": {
@@ -79565,10 +79809,51 @@
             "enum": [
               "auto",
               "phone",
-              "operator",
-              "desk",
-              "customer"
+              "operator"
             ]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "personal"
+            ]
+          },
+          "personalStaffId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "signInCeiling": {
+            "type": "string",
+            "enum": [
+              "door",
+              "desk",
+              "manager"
+            ]
+          },
+          "alerts": {
+            "type": "string",
+            "enum": [
+              "ring",
+              "badge",
+              "off"
+            ]
+          },
+          "coverage": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 8
           },
           "overrides": {
             "type": "object",
@@ -79630,16 +79915,65 @@
             "minLength": 1,
             "maxLength": 40
           },
+          "deviceRole": {
+            "type": "string",
+            "enum": [
+              "scan",
+              "customer",
+              "monitor"
+            ],
+            "default": "scan"
+          },
           "surface": {
             "type": "string",
             "enum": [
               "auto",
               "phone",
-              "operator",
-              "desk",
-              "customer"
+              "operator"
+            ]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "personal"
+            ]
+          },
+          "personalStaffId": {
+            "type": [
+              "string",
+              "null"
             ],
-            "default": "auto"
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "signInCeiling": {
+            "type": "string",
+            "enum": [
+              "door",
+              "desk",
+              "manager"
+            ]
+          },
+          "alerts": {
+            "type": "string",
+            "enum": [
+              "ring",
+              "badge",
+              "off"
+            ]
+          },
+          "coverage": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 8
           },
           "overrides": {
             "type": "object",
@@ -154606,6 +154940,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -155045,6 +155380,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -155568,6 +155904,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -155944,6 +156281,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -156332,6 +156670,7 @@
                         "id": "0193a1b2-7c00-7000-8000-000000000012",
                         "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                         "name": "Front desk tablet",
+                        "deviceRole": "scan",
                         "surface": "auto",
                         "effectiveSurface": "phone",
                         "overrides": {},
@@ -159756,6 +160095,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -163368,9 +163708,7 @@
                             "type": "string",
                             "enum": [
                               "phone",
-                              "operator",
-                              "desk",
-                              "customer"
+                              "operator"
                             ]
                           },
                           "online": {
@@ -163468,7 +163806,368 @@
                 "type": "object",
                 "properties": {
                   "capabilities": {
-                    "$ref": "#/components/schemas/ScanDeviceCapabilities"
+                    "type": "object",
+                    "properties": {
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 32768
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 32768
+                      },
+                      "touch": {
+                        "type": "boolean"
+                      },
+                      "camera": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "available",
+                          "unavailable"
+                        ]
+                      },
+                      "keyboard": {
+                        "type": "boolean"
+                      },
+                      "nativeBarcode": {
+                        "type": "boolean"
+                      },
+                      "native": {
+                        "type": "object",
+                        "properties": {
+                          "platform": {
+                            "type": "string",
+                            "enum": [
+                              "ios",
+                              "android"
+                            ]
+                          },
+                          "appVersion": {
+                            "type": "string",
+                            "maxLength": 32
+                          },
+                          "camera": {
+                            "type": "object",
+                            "properties": {
+                              "available": {
+                                "type": "boolean"
+                              },
+                              "permission": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "prompt",
+                                  "granted",
+                                  "denied",
+                                  "restricted",
+                                  "unavailable"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "available",
+                              "permission"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "keyboard": {
+                            "type": "object",
+                            "properties": {
+                              "supported": {
+                                "type": "boolean"
+                              },
+                              "connected": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "connectionObservable": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "supported",
+                              "connected",
+                              "connectionObservable"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "nfc": {
+                            "type": "object",
+                            "properties": {
+                              "available": {
+                                "type": "boolean"
+                              },
+                              "reading": {
+                                "type": "boolean"
+                              },
+                              "continuous": {
+                                "type": "boolean"
+                              },
+                              "formats": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ndef",
+                                    "wallet-vas",
+                                    "tag-uid",
+                                    "tag-sun"
+                                  ]
+                                },
+                                "maxItems": 4
+                              }
+                            },
+                            "required": [
+                              "available",
+                              "reading",
+                              "formats"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "haptics": {
+                            "type": "boolean"
+                          },
+                          "vas": {
+                            "type": "object",
+                            "properties": {
+                              "deviceSupported": {
+                                "type": "boolean"
+                              },
+                              "available": {
+                                "type": "boolean"
+                              },
+                              "reader": {
+                                "type": "string",
+                                "enum": [
+                                  "proximityReader",
+                                  "android-native",
+                                  "none"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "maxLength": 240
+                              }
+                            },
+                            "required": [
+                              "deviceSupported",
+                              "available",
+                              "reader",
+                              "reason"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "externalReader": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "enum": [
+                                  "keyboard",
+                                  "unknown"
+                                ]
+                              },
+                              "connected": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "mode",
+                              "connected"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "customerDisplay": {
+                            "type": "object",
+                            "properties": {
+                              "supported": {
+                                "type": "boolean"
+                              },
+                              "available": {
+                                "type": "boolean"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "supported",
+                              "available",
+                              "active"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "layout": {
+                            "type": "object",
+                            "properties": {
+                              "posture": {
+                                "type": "string",
+                                "enum": [
+                                  "unknown",
+                                  "folded",
+                                  "unfolded",
+                                  "half-folded"
+                                ]
+                              },
+                              "division": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "x": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 32768
+                                  },
+                                  "y": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 32768
+                                  },
+                                  "width": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 32768
+                                  },
+                                  "height": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 32768
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "y",
+                                  "width",
+                                  "height"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "posture",
+                              "division"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "platform",
+                          "appVersion",
+                          "camera",
+                          "keyboard",
+                          "nfc",
+                          "vas",
+                          "externalReader",
+                          "customerDisplay"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "hardware": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "camera",
+                                "barcode",
+                                "nfc",
+                                "keyboard",
+                                "usb",
+                                "hid",
+                                "serial",
+                                "bluetooth",
+                                "display"
+                              ]
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "builtIn": {
+                              "type": "boolean"
+                            },
+                            "connected": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": [
+                                "ready",
+                                "active",
+                                "off",
+                                "needs-permission",
+                                "unavailable",
+                                "error"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "count",
+                            "builtIn",
+                            "connected",
+                            "state"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 16
+                      },
+                      "draftFailures": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                      },
+                      "surfaces": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "phone",
+                            "operator",
+                            "customer",
+                            "desk"
+                          ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 2
+                      },
+                      "preferred": {
+                        "type": "string",
+                        "enum": [
+                          "phone",
+                          "operator",
+                          "customer",
+                          "desk"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "width",
+                      "height",
+                      "touch",
+                      "camera",
+                      "keyboard",
+                      "nativeBarcode",
+                      "surfaces",
+                      "preferred"
+                    ],
+                    "additionalProperties": false
                   },
                   "scope": {
                     "type": "object",
@@ -163653,6 +164352,7 @@
                     "id": "0193a1b2-7c00-7000-8000-000000000012",
                     "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                     "name": "Front desk tablet",
+                    "deviceRole": "scan",
                     "surface": "auto",
                     "effectiveSurface": "phone",
                     "overrides": {},
@@ -164495,6 +165195,8 @@
           "ACTOR_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -165529,6 +166231,8 @@
           "ACTOR_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -165719,6 +166423,7 @@
         "x-codes": [
           "ADMITS_TOO_MANY",
           "API_KEY_MISSING",
+          "DEVICE_KIND_FIXED",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -167859,6 +168564,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "DEVICE_KIND_FIXED",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -168380,6 +169086,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -168661,6 +169368,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -168930,6 +169638,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -169067,6 +169776,7 @@
         "x-codes": [
           "ADMITS_TOO_MANY",
           "API_KEY_MISSING",
+          "DEVICE_KIND_FIXED",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -169224,6 +169934,7 @@
                       "id": "0193a1b2-7c00-7000-8000-000000000012",
                       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                       "name": "Front desk tablet",
+                      "deviceRole": "scan",
                       "surface": "auto",
                       "effectiveSurface": "phone",
                       "overrides": {},
@@ -169449,6 +170160,7 @@
                   "id": "0193a1b2-7c00-7000-8000-000000000012",
                   "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                   "name": "Front desk tablet",
+                  "deviceRole": "scan",
                   "surface": "auto",
                   "effectiveSurface": "phone",
                   "overrides": {},
@@ -169583,6 +170295,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "DEVICE_KIND_FIXED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -169601,6 +170314,7 @@
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_CHANGED",
           "SCAN_SURFACE_UNSUPPORTED",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WORKBENCH_TEST_ONLY"
@@ -169667,6 +170381,7 @@
                   "id": "0193a1b2-7c00-7000-8000-000000000012",
                   "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
                   "name": "Front desk tablet",
+                  "deviceRole": "scan",
                   "surface": "auto",
                   "effectiveSurface": "phone",
                   "overrides": {},
@@ -169837,6 +170552,7 @@
           "SCANNING_SESSION_PAUSED",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCAN_MODE_LIVE_ONLY",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -169980,6 +170696,7 @@
           "SCANNING_SESSION_PAUSED",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCAN_MODE_LIVE_ONLY",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -173173,10 +173890,13 @@
           "API_KEY_NO_APPROVAL",
           "API_KEY_ORG_REQUIRED",
           "API_KEY_ROUTE",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -173312,6 +174032,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -173427,10 +174148,13 @@
           "API_KEY_NO_APPROVAL",
           "API_KEY_ORG_REQUIRED",
           "API_KEY_ROUTE",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -173566,6 +174290,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -175050,10 +175775,13 @@
           "API_KEY_NO_APPROVAL",
           "API_KEY_ORG_REQUIRED",
           "API_KEY_ROUTE",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -175189,6 +175917,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -175304,10 +176033,13 @@
           "API_KEY_NO_APPROVAL",
           "API_KEY_ORG_REQUIRED",
           "API_KEY_ROUTE",
+          "APPROVAL_GRANT_INVALID",
+          "APPROVE_AS_NOT_ALLOWED",
           "ASSET_NOT_FOUND",
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -175443,6 +176175,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",

@@ -2234,7 +2234,9 @@ __all__ = [
     "TemplatesVersionsRetrieveWalletReportsResult",
     "TerminalActBody",
     "TerminalActParams",
-    "TerminalActParamsApproval",
+    "TerminalActParamsApproval1",
+    "TerminalActParamsApproval2",
+    "TerminalActParamsApproval3",
     "TerminalActParamsInput1",
     "TerminalActParamsInput2",
     "TerminalActParamsInput3",
@@ -2253,7 +2255,9 @@ __all__ = [
     "TerminalResolveResult",
     "TerminalScansUndoBody",
     "TerminalScansUndoParams",
-    "TerminalScansUndoParamsApproval",
+    "TerminalScansUndoParamsApproval1",
+    "TerminalScansUndoParamsApproval2",
+    "TerminalScansUndoParamsApproval3",
     "TerminalScansUndoParamsScope",
     "TerminalScansUndoResult",
     "TerminalSignOutEverywhereBody",
@@ -4622,7 +4626,7 @@ class CreatedScanner(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: CreatedScannerAccepts1 | CreatedScannerAccepts2 | CreatedScannerAccepts3 | None
     settings: ScannerSettings
@@ -4652,8 +4656,14 @@ class CreatedScanningDevice(_Model):
     id: str
     sessionId: str
     name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
-    effectiveSurface: _Literal["phone", "operator", "desk", "customer"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
+    surface: _Literal["auto", "phone", "operator", None] | str
+    effectiveSurface: _Literal["phone", "operator", None] | str
+    ownership: _Literal["shared", "personal"] | str | None = None
+    personalStaffId: str | None = None
+    signInCeiling: _Literal["door", "desk", "manager"] | str | None = None
+    alerts: _Literal["ring", "badge", "off"] | str | None = None
+    coverage: _List[str] | None = None
     overrides: CreatedScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
@@ -12749,6 +12759,7 @@ class ScanOutcome(_Model):
     overridable: bool
     exitAllowed: bool | None = None
     approvals: bool
+    requestHash: str | None = None
     group: _Dict[str, _Any] | None
     bundle: _Dict[str, _Any] | None = None
     inBundle: bool | None = None
@@ -13021,10 +13032,10 @@ class ScanSetupAnswer2SessionsItem(_Model):
     devices: _List[ScanSetupAnswer2SessionsItemDevicesItem]
 
 class ScanSetupAnswer2SessionsItemDevicesItem(_Model):
-    name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
-    overrides: ScanSetupAnswer2SessionsItemDevicesItemOverrides
     ref: str
+    name: str
+    surface: _Literal["auto", "phone", "operator"] | str | None = None
+    overrides: ScanSetupAnswer2SessionsItemDevicesItemOverrides
     role: _Literal["scan", "customer", "monitor"] | str
 
 class ScanSetupAnswer2SessionsItemDevicesItemOverrides(_Model):
@@ -13166,7 +13177,7 @@ class ScanSetupsCreateResponse(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScanSetupsCreateResponseAccepts1 | ScanSetupsCreateResponseAccepts2 | ScanSetupsCreateResponseAccepts3 | None
     settings: ScannerSettings
@@ -13201,7 +13212,7 @@ class ScanSetupsListItem(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScanSetupsListItemAccepts1 | ScanSetupsListItemAccepts2 | ScanSetupsListItemAccepts3 | None
     settings: ScannerSettings
@@ -13239,7 +13250,7 @@ class ScanSetupsListResponseItemsItem(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScanSetupsListResponseItemsItemAccepts1 | ScanSetupsListResponseItemsItemAccepts2 | ScanSetupsListResponseItemsItemAccepts3 | None
     settings: ScannerSettings
@@ -13273,7 +13284,7 @@ class ScanSetupsRetrieveResponse(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScanSetupsRetrieveResponseAccepts1 | ScanSetupsRetrieveResponseAccepts2 | ScanSetupsRetrieveResponseAccepts3 | None
     settings: ScannerSettings
@@ -13356,7 +13367,7 @@ class ScanSetupsUpdateResponse(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScanSetupsUpdateResponseAccepts1 | ScanSetupsUpdateResponseAccepts2 | ScanSetupsUpdateResponseAccepts3 | None
     settings: ScannerSettings
@@ -13745,7 +13756,7 @@ class Scanner(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
     name: str
     accepts: ScannerAccepts1 | ScannerAccepts2 | ScannerAccepts3 | None
     settings: ScannerSettings
@@ -13932,8 +13943,14 @@ class ScanningDevice(_Model):
     id: str
     sessionId: str
     name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
-    effectiveSurface: _Literal["phone", "operator", "desk", "customer"] | str
+    deviceRole: _Literal["scan", "customer", "monitor", "kiosk"] | str
+    surface: _Literal["auto", "phone", "operator", None] | str
+    effectiveSurface: _Literal["phone", "operator", None] | str
+    ownership: _Literal["shared", "personal"] | str | None = None
+    personalStaffId: str | None = None
+    signInCeiling: _Literal["door", "desk", "manager"] | str | None = None
+    alerts: _Literal["ring", "badge", "off"] | str | None = None
+    coverage: _List[str] | None = None
     overrides: ScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
@@ -14200,7 +14217,13 @@ class ScanningSessionsCreateParamsSettingsTags(_Model):
 
 class ScanningSessionsDevicesCreateParams(_Model):
     name: str | None = None
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str | None = None
+    deviceRole: _Literal["scan", "customer", "monitor"] | str | None = None
+    surface: _Literal["auto", "phone", "operator"] | str | None = None
+    ownership: _Literal["shared", "personal"] | str | None = None
+    personalStaffId: str | None = None
+    signInCeiling: _Literal["door", "desk", "manager"] | str | None = None
+    alerts: _Literal["ring", "badge", "off"] | str | None = None
+    coverage: _List[str] | None = None
     overrides: ScanningSessionsDevicesCreateParamsOverrides | None = None
 
 class ScanningSessionsDevicesCreateParamsOverrides(_Model):
@@ -14213,7 +14236,12 @@ class ScanningSessionsDevicesCreateParamsOverrides(_Model):
 
 class ScanningSessionsDevicesUpdateParams(_Model):
     name: str | None = None
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str | None = None
+    surface: _Literal["auto", "phone", "operator"] | str | None = None
+    ownership: _Literal["shared", "personal"] | str | None = None
+    personalStaffId: str | None = None
+    signInCeiling: _Literal["door", "desk", "manager"] | str | None = None
+    alerts: _Literal["ring", "badge", "off"] | str | None = None
+    coverage: _List[str] | None = None
     overrides: ScanningSessionsDevicesUpdateParamsOverrides | None = None
     revision: int | None = None
 
@@ -15770,12 +15798,18 @@ class TerminalActParams(_Model):
     confirmed: bool | None = None
     expectedVersion: int | None = None
     group: _Literal["bundle"] | str | None = None
-    approval: TerminalActParamsApproval | None = None
+    approval: TerminalActParamsApproval1 | TerminalActParamsApproval2 | TerminalActParamsApproval3 | None = None
 
-class TerminalActParamsApproval(_Model):
+class TerminalActParamsApproval1(_Model):
     staffId: str | None = None
     pin: str
     alone: bool | None = None
+
+class TerminalActParamsApproval2(_Model):
+    requestId: str
+
+class TerminalActParamsApproval3(_Model):
+    approveAs: str
 
 class TerminalActParamsInput1(_Model):
     code: str
@@ -15849,11 +15883,17 @@ class TerminalResolveParamsScope(_Model):
 class TerminalScansUndoParams(_Model):
     idempotencyKey: str
     scope: TerminalScansUndoParamsScope | None = None
-    approval: TerminalScansUndoParamsApproval | None = None
+    approval: TerminalScansUndoParamsApproval1 | TerminalScansUndoParamsApproval2 | TerminalScansUndoParamsApproval3 | None = None
 
-class TerminalScansUndoParamsApproval(_Model):
+class TerminalScansUndoParamsApproval1(_Model):
     staffId: str | None = None
     pin: str
+
+class TerminalScansUndoParamsApproval2(_Model):
+    requestId: str
+
+class TerminalScansUndoParamsApproval3(_Model):
+    approveAs: str
 
 class TerminalScansUndoParamsScope(_Model):
     setupId: str | None = None

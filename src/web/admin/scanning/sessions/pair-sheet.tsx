@@ -1,6 +1,5 @@
 import { Check } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { Button, Callout, Dialog, DialogContent, Select, toast } from '@/web/ui/index.ts';
@@ -10,12 +9,12 @@ import { PairSlot } from '../setup/pair-roll.tsx';
 import { useAddSessionDevice, useRevokeDeviceById, useUpdateSessionDevice } from './api.ts';
 
 type Direction = 'inherit' | 'in' | 'out' | 'both';
-type Layout = 'auto' | 'phone' | 'operator' | 'customer';
+type Layout = 'auto' | 'phone' | 'operator';
 interface Row {
   id: string;
   name: string;
 }
-const LAYOUTS: Layout[] = ['auto', 'phone', 'operator', 'customer'];
+const LAYOUTS: Layout[] = ['auto', 'phone', 'operator'];
 const DIRECTIONS: { value: Direction; label: string }[] = [
   { value: 'inherit', label: 'Session default' },
   { value: 'in', label: 'Entry only' },
@@ -31,7 +30,7 @@ function PairedRow({ sessionId, device }: { sessionId: string; device: Row }) {
   const save = (next: { layout: Layout; direction: Direction }) => {
     update.mutate(
       {
-        surface: next.layout satisfies ScanningDevice['surface'],
+        surface: next.layout,
         overrides: next.direction === 'inherit' ? {} : { direction: next.direction },
       },
       { onError: (cause) => toast.error(cause, 'Could not save device') },
@@ -46,7 +45,10 @@ function PairedRow({ sessionId, device }: { sessionId: string; device: Row }) {
       <Select
         aria-label={`Layout for ${device.name}`}
         value={layout}
-        options={LAYOUTS.map((value) => ({ value, label: SCAN_SURFACE_LABELS[value] }))}
+        options={LAYOUTS.map((value) => ({
+          value,
+          label: SCAN_SURFACE_LABELS[value],
+        }))}
         onValueChange={(v) => {
           setLayout(v as Layout);
           save({ layout: v as Layout, direction });

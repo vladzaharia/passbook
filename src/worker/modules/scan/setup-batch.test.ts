@@ -102,7 +102,7 @@ async function runBatch(zoneKeys: string[], label: string) {
   if (!parent) throw new Error('Session not captured.');
   for (const [name, surface] of [
     [`${label} phone`, 'phone'],
-    [`${label} desk`, 'desk'],
+    [`${label} operator`, 'operator'],
   ] as const)
     devices.push(
       await planScanningDevice(

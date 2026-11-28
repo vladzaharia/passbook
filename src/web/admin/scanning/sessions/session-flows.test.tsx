@@ -275,14 +275,14 @@ describe('session configuration flows', () => {
     expect(automatic).toHaveAttribute('aria-pressed', 'true');
     expect(within(dialog).getByText('CHECK-IN')).toBeInTheDocument();
     expect(within(dialog).getByText('CUSTOMER DISPLAY')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: /^Customer display/ }));
-    expect(within(dialog).getByRole('button', { name: /^Customer display/ })).toHaveAttribute(
+    await user.click(within(dialog).getByRole('button', { name: /^Customer screen/ }));
+    expect(within(dialog).getByRole('button', { name: /^Customer screen/ })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
     await user.click(within(dialog).getByRole('button', { name: 'Create pairing code' }));
     expect(await screen.findByRole('dialog', { name: 'Pair Visitor phone' })).toBeInTheDocument();
-    expect(s.saved()).toMatchObject({ name: 'Visitor phone', surface: 'customer' });
+    expect(s.saved()).toMatchObject({ name: 'Visitor phone', deviceRole: 'customer' });
   });
   it('saves a device override without changing the shared admission policy', async () => {
     const s = setup();

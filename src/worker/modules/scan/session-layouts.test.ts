@@ -30,7 +30,7 @@ describe('legacy device layout compatibility', () => {
     expect(view.id).toBe(scanner.id);
   });
 
-  it('converts a display browser to a scanner while retaining its pairing state', async () => {
+  it('refuses to turn a display browser into a scanner, keeping its pairing state', async () => {
     const source = await kit.scanner();
     const display = await createSetup(
       kit.ctx,
@@ -52,18 +52,18 @@ describe('legacy device layout compatibility', () => {
         .status,
     ).toBe(200);
     const before = await getScanner(kit.env.DB, display.id);
-    const changed = await updateScanningDevice(
-      kit.ctx,
-      'admin-1',
-      display.id,
-      display.id,
-      { surface: 'phone' },
-      authority,
-    );
-    expect(changed.effectiveSurface).toBe('phone');
+    await expect(
+      updateScanningDevice(
+        kit.ctx,
+        'admin-1',
+        display.id,
+        display.id,
+        { surface: 'phone' },
+        authority,
+      ),
+    ).rejects.toMatchObject({ code: 'DEVICE_KIND_FIXED' });
     expect(await getScanner(kit.env.DB, display.id)).toMatchObject({
-      kind: 'device',
-      deviceRole: 'scan',
+      deviceRole: 'customer',
       tokenHash: before?.tokenHash,
     });
   });
@@ -91,7 +91,7 @@ describe('legacy device layout compatibility', () => {
         'admin-1',
         terminal.id,
         terminal.id,
-        { surface: 'customer' },
+        { surface: 'customer' as never },
         authority,
       ),
     ).rejects.toMatchObject({ code: 'SCAN_SURFACE_UNSUPPORTED' });

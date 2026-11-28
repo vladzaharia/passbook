@@ -5,7 +5,6 @@ import { settingsOfflineVerdict } from './scan-offline.ts';
 import { deviceName, isTracked, sessionHoursOf } from './scan-setup-plan-derive.ts';
 import { type DoorPlanEnv, isRef } from './scan-setup-plan-types.ts';
 import { PRESET_SPECS } from './scan-setup-presets.ts';
-import { roleForSurface } from './scan-surfaces.ts';
 import { resolveOrgTimeZone } from './time-zone.ts';
 
 /** A session admits at most this many events. */
@@ -160,9 +159,9 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
     return {
       ref: `${ref}-${n + 1}`,
       name: d.name ?? deviceName(door.name, n + 1),
-      surface: layout,
+      ...(layout === 'customer' ? {} : { surface: layout }),
       overrides,
-      role: roleForSurface(layout),
+      role: layout === 'customer' ? ('customer' as const) : ('scan' as const),
     };
   });
   // A direction or re-entry does nothing unless the check-in type tracks in and out.

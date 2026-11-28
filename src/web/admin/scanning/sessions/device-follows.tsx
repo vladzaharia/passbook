@@ -1,10 +1,9 @@
 import type { ScanDeviceOverrides, ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
-import { roleForSurface } from '@/shared/scan-surfaces.ts';
 import { CheckboxField, DependentSettings, SwitchRow } from '@/web/ui/index.ts';
 
 /** The scanners a customer screen can follow: the session's live scan-role devices. */
 export const followable = (devices: readonly ScanningDevice[]) =>
-  devices.filter((d) => !d.revoked && roleForSurface(d.effectiveSurface) === 'scan');
+  devices.filter((d) => !d.revoked && d.deviceRole === 'scan');
 
 /** Which scanners of the session a customer screen shows. Off the list: every scanner. */
 export function DeviceFollows({

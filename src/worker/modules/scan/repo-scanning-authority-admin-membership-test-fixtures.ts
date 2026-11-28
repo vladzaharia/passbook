@@ -107,7 +107,7 @@ export function registerScanningAuthorityAdminMembership() {
           user.id,
           'live',
           scanner.id,
-          { name, surface: 'phone', overrides: {} },
+          { name, deviceRole: 'scan', surface: 'phone', overrides: {} },
           ORIGIN,
           authority,
         ),

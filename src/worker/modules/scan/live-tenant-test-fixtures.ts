@@ -147,7 +147,7 @@ export function liveTenantFixture() {
       user.id,
       workspace.id,
       joined.setupId,
-      { surface: 'desk' },
+      { surface: 'desk' as never },
       management,
     );
     await asDeskDisplay(kit.env.DB, device.id);
@@ -254,7 +254,11 @@ export function liveTenantFixture() {
       screen.user.id,
       'live',
       screen.workspace.id,
-      { name: `Paired ${surface} ${kit.fx.ids.token(4)}`, surface, overrides: {} },
+      {
+        name: `Paired ${surface} ${kit.fx.ids.token(4)}`,
+        ...(surface === 'desk' ? { deviceRole: 'monitor' } : { deviceRole: 'scan', surface }),
+        overrides: {},
+      },
       ORIGIN,
       screen.management,
     );

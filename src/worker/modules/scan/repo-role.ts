@@ -1,4 +1,4 @@
-import type { ScanSurface } from '../../../shared/contracts/scanning-sessions.ts';
+import type { StoredEffectiveSurface } from '../../../shared/scan-surfaces.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs, exactlyOne } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
@@ -37,7 +37,7 @@ export interface RoleFlip {
   configEpoch: number;
   /** The device's own row, when it belongs to a scanning session. */
   device: ScanningDeviceRow | null;
-  surface: ScanSurface;
+  surface: StoredEffectiveSurface;
   unlockedBy: string | null;
 }
 

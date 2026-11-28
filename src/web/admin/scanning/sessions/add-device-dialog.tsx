@@ -1,6 +1,7 @@
 import { QrCode } from 'lucide-react';
 import { useState } from 'react';
-import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import type { StoredSurface } from '@/shared/scan-surfaces.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { FormField, Input, useWizard, WizardDialog } from '@/web/ui/index.ts';
 import { type Pairing, PairingFace } from '../pairing-face.tsx';
@@ -37,7 +38,7 @@ export function AddDeviceDialog({
   );
   // A name the dialog picked, not typed: another session's scanner may hold it, so try the next.
   const [auto, setAuto] = useState(setup);
-  const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
+  const [surface, setSurface] = useState<StoredSurface>('auto');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();
   const add = useAddSessionDevice(session.id);
   async function submit() {
@@ -45,7 +46,14 @@ export function AddDeviceDialog({
     let next = name.trim();
     for (let attempt = 0; ; attempt++) {
       try {
-        setMade(await add.mutateAsync({ name: next, surface }));
+        setMade(
+          await add.mutateAsync({
+            name: next,
+            ...(surface === 'customer' || surface === 'desk'
+              ? { deviceRole: 'customer' }
+              : { surface }),
+          }),
+        );
         return;
       } catch (cause) {
         if (auto && attempt < 20 && isApiError(cause) && cause.code === 'SCANNER_NAME_TAKEN') {

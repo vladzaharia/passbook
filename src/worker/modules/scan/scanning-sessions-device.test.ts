@@ -1,7 +1,8 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeUser } from '../../../../test/helpers/index.ts';
 import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
+import { CreatedScanningDeviceSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import { getScanner } from './repo-device.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { grantScanMembership } from './test-kit.ts';
@@ -48,7 +49,7 @@ describe('session device authorization and live configuration', () => {
     ).toBe(403);
   });
 
-  it('keeps scanner, operator and customer views available across screen sizes', async () => {
+  it('keeps handheld and console layouts available across screen sizes', async () => {
     const { kit, parent, device, pair, call } = fixture;
     const session = await parent('Capabilities');
     const made = await device(session.id, 'Wide scanner');
@@ -76,32 +77,11 @@ describe('session device authorization and live configuration', () => {
     expect(await small.json()).toMatchObject({
       device: {
         effectiveSurface: 'phone',
-        capabilities: { surfaces: ['phone', 'operator', 'customer'] },
+        capabilities: { surfaces: ['phone', 'operator'] },
       },
     });
     const wide = await report(1200);
     expect(await wide.json()).toMatchObject({ device: { effectiveSurface: 'operator' } });
-    const layout = await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
-      surface: 'customer',
-    });
-    expect(layout.status).toBe(200);
-    expect(await (await report(390)).json()).toMatchObject({
-      device: { effectiveSurface: 'customer' },
-    });
-    expect(
-      (
-        await call(
-          'POST',
-          '/scan/resolve',
-          {
-            idempotencyKey: kit.fx.ids.id(),
-            input: { code: 'x', method: 'camera' },
-            clientTs: kit.clock.now(),
-          },
-          headers,
-        )
-      ).status,
-    ).toBe(403);
     expect(
       (
         await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
@@ -124,51 +104,42 @@ describe('session device authorization and live configuration', () => {
     );
     expect(operatorAction.status).toBe(200);
   });
-  it('folds the persisted desk layout into the operator view', async () => {
-    const { kit, parent, device, pair, call } = fixture;
-    const session = await parent('Legacy desk');
-    const made = await device(session.id, 'Legacy desk', 'desk');
+  it('takes a cached client that still reports customer or desk, ignores it and logs it', async () => {
+    const { parent, device, pair, call } = fixture;
+    const session = await parent('Legacy report');
+    const made = await device(session.id, 'Cached client');
     const headers = await pair(made.pairing?.code ?? '');
-    const report = await call(
-      'POST',
-      '/scan/device',
-      {
-        capabilities: {
-          width: 390,
-          height: 844,
-          touch: true,
-          camera: 'available',
-          keyboard: true,
-          nativeBarcode: false,
-          surfaces: ['phone', 'customer'],
-          preferred: 'phone',
-        },
-      },
-      headers,
-    );
-    expect(report.status).toBe(200);
-    expect(await report.json()).toMatchObject({
-      device: {
-        surface: 'desk',
-        effectiveSurface: 'operator',
-        capabilities: { surfaces: ['phone', 'operator', 'customer'] },
-      },
-    });
-    expect(
-      (
-        await call(
-          'POST',
-          '/scan/resolve',
-          {
-            idempotencyKey: kit.fx.ids.id(),
-            input: { code: 'x', method: 'camera' },
-            clientTs: kit.clock.now(),
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      const report = await call(
+        'POST',
+        '/scan/device',
+        {
+          capabilities: {
+            width: 390,
+            height: 800,
+            touch: true,
+            camera: 'available',
+            keyboard: true,
+            nativeBarcode: false,
+            surfaces: ['phone', 'customer'],
+            preferred: 'desk',
           },
-          headers,
-        )
-      ).status,
-    ).toBe(200);
+        },
+        headers,
+      );
+      expect(report.status).toBe(200);
+      expect(await report.json()).toMatchObject({
+        device: { capabilities: { surfaces: ['phone', 'operator'], preferred: 'phone' } },
+      });
+      expect(log.mock.calls.some((c) => String(c[0]).includes('scan.report.legacy_surface'))).toBe(
+        true,
+      );
+    } finally {
+      log.mockRestore();
+    }
   });
+
   it('keeps standalone legacy desk monitors read-only when they report capabilities', async () => {
     const { kit, call, pair } = fixture;
     const source = await kit.scanner();
@@ -193,7 +164,7 @@ describe('session device authorization and live configuration', () => {
           camera: 'available',
           keyboard: true,
           nativeBarcode: false,
-          surfaces: ['phone', 'operator', 'customer'],
+          surfaces: ['phone', 'operator'],
           preferred: 'operator',
         },
       },
@@ -201,7 +172,7 @@ describe('session device authorization and live configuration', () => {
     );
     expect(report.status).toBe(200);
     expect(await report.json()).toMatchObject({
-      device: { surface: 'desk', effectiveSurface: 'desk' },
+      device: { surface: null, effectiveSurface: null },
     });
     const action = await call(
       'POST',
@@ -289,9 +260,14 @@ describe('session device authorization and live configuration', () => {
   });
 
   it('a name-only edit keeps a screen a screen, and a screen cannot sign staff in', async () => {
-    const { kit, parent, device, pair, call } = fixture;
+    const { kit, parent, pair, call } = fixture;
     const session = await parent('Screens');
-    const made = await device(session.id, 'Customer screen', 'customer');
+    const created = await call('POST', `/scanning-sessions/${session.id}/devices`, {
+      name: 'Customer screen',
+      deviceRole: 'customer',
+    });
+    expect(created.status).toBe(201);
+    const made = CreatedScanningDeviceSchema.parse(await created.json());
     expect(made.pairing).not.toBeNull();
     const headers = await pair(made.pairing?.code ?? '');
     const renamed = await call('PATCH', `/scanning-sessions/${session.id}/devices/${made.id}`, {
@@ -300,8 +276,8 @@ describe('session device authorization and live configuration', () => {
     expect(renamed.status).toBe(200);
     expect(await renamed.json()).toMatchObject({
       name: 'Front screen',
-      surface: 'customer',
-      effectiveSurface: 'customer',
+      deviceRole: 'customer',
+      surface: null,
     });
     expect(
       await kit.env.DB.prepare('SELECT device_role FROM scanners WHERE id = ?')
@@ -316,5 +292,82 @@ describe('session device authorization and live configuration', () => {
     );
     expect(signIn.status).toBe(403);
     expect(await signIn.json()).toMatchObject({ code: 'SCREEN_ONLY' });
+  });
+
+  it('a Monitor report never changes its kind, and its token stays out of scan routes', async () => {
+    const { kit, parent, pair, call } = fixture;
+    const session = await parent('Monitor kind');
+    const created = await call('POST', `/scanning-sessions/${session.id}/devices`, {
+      deviceRole: 'monitor',
+    });
+    expect(created.status).toBe(201);
+    const made = CreatedScanningDeviceSchema.parse(await created.json());
+    const headers = await pair(made.pairing?.code ?? '');
+    const report = await call(
+      'POST',
+      '/scan/device',
+      {
+        capabilities: {
+          width: 1440,
+          height: 900,
+          touch: false,
+          camera: 'available',
+          keyboard: true,
+          nativeBarcode: false,
+          surfaces: ['phone', 'operator'],
+          preferred: 'operator',
+        },
+      },
+      headers,
+    );
+    expect(report.status).toBe(200);
+    expect(
+      await kit.env.DB.prepare('SELECT device_role FROM scanners WHERE id = ?')
+        .bind(made.id)
+        .first(),
+    ).toEqual({ device_role: 'monitor' });
+    const action = await call(
+      'POST',
+      '/scan/resolve',
+      {
+        idempotencyKey: kit.fx.ids.id(),
+        input: { code: 'x', method: 'camera' },
+        clientTs: kit.clock.now(),
+      },
+      headers,
+    );
+    await expectProblem(action, 403, 'SCREEN_ONLY');
+  });
+
+  it('refuses a layout on a Screen and Staff-only fields on any device', async () => {
+    const { parent, device, call } = fixture;
+    const session = await parent('Kind fixed');
+    const created = await call('POST', `/scanning-sessions/${session.id}/devices`, {
+      deviceRole: 'customer',
+    });
+    const screen = CreatedScanningDeviceSchema.parse(await created.json());
+    const patch = (id: string, body: unknown) =>
+      call('PATCH', `/scanning-sessions/${session.id}/devices/${id}`, body);
+    await expectProblem(await patch(screen.id, { surface: 'phone' }), 422, 'DEVICE_KIND_FIXED');
+    const monitorMade = await call('POST', `/scanning-sessions/${session.id}/devices`, {
+      deviceRole: 'monitor',
+    });
+    const monitor = CreatedScanningDeviceSchema.parse(await monitorMade.json());
+    await expectProblem(
+      await patch(monitor.id, { alerts: 'off' }),
+      422,
+      'STAFF_DEVICE_FIELDS_UNAVAILABLE',
+    );
+    const staff = await device(session.id, 'Staff device', 'phone');
+    await expectProblem(
+      await patch(staff.id, { alerts: 'off' }),
+      422,
+      'STAFF_DEVICE_FIELDS_UNAVAILABLE',
+    );
+    await expectProblem(
+      await call('POST', `/scanning-sessions/${session.id}/devices`, { signInCeiling: 'manager' }),
+      422,
+      'STAFF_DEVICE_FIELDS_UNAVAILABLE',
+    );
   });
 });

@@ -49,7 +49,7 @@ describe('session administration', () => {
     });
     const sheet = await screen.findByRole('dialog', { name: 'Device Admin phone' });
     expect(within(sheet).getByLabelText(/^Device name/)).toBeDisabled();
-    expect(within(sheet).getByRole('button', { name: /^Operator/ })).toBeDisabled();
+    expect(within(sheet).getByRole('button', { name: /^Console/ })).toBeDisabled();
     expect(within(sheet).queryByRole('button', { name: 'Save device' })).not.toBeInTheDocument();
     expect(within(sheet).queryByRole('button', { name: /Pair/ })).not.toBeInTheDocument();
     expect(within(sheet).queryByRole('button', { name: 'Revoke device' })).not.toBeInTheDocument();
@@ -340,9 +340,11 @@ describe('session administration', () => {
     expect(within(dialog).getByText('iPhone/iPad')).toBeInTheDocument();
     expect(within(dialog).getByText('NDEF tag input')).toBeInTheDocument();
     expect(within(dialog).getByText('Wallet pass reader unavailable')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /Customer display/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Console/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Handheld/ })).toBeEnabled();
+    expect(
+      within(dialog).queryByRole('button', { name: /Customer screen/ }),
+    ).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /^Pair/ })).not.toBeInTheDocument();
     const user = userEvent.setup();
@@ -364,9 +366,9 @@ describe('session administration', () => {
       handlers,
     });
     const dialog = await screen.findByRole('dialog', { name: 'Add device' });
-    expect(within(dialog).getByRole('button', { name: /^Scanner/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /^Operator/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /^Customer display/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Handheld/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Console/ })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /^Customer screen/ })).toBeEnabled();
     expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
   });
 });

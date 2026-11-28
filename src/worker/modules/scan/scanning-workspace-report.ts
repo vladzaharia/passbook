@@ -1,5 +1,5 @@
 import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { roleOfStoredSurface, storedSurfaceFor } from '../../../shared/scan-surfaces.ts';
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -50,8 +50,11 @@ export async function commitReportedDevice(
   const old = actor.scanner;
   if (!old) throw changed();
   const { device } = observed;
-  const legacyStandaloneDesk = device.surface === 'desk' && device.session_id === device.scanner_id;
-  const effective = legacyStandaloneDesk ? 'desk' : surfaceFor(device.surface, capabilities);
+  // A Screen keeps its stored layout: a report never changes the kind (only `deviceRole` sets it).
+  const isScreen = device.surface === 'desk' || device.surface === 'customer';
+  const effective = isScreen
+    ? device.effective_surface
+    : storedSurfaceFor(device.surface, capabilities);
   const surfaceChanged = effective !== device.effective_surface;
   const now = ctx.clock.now();
   const g = grant(ctx, {
@@ -78,7 +81,7 @@ export async function commitReportedDevice(
       effective,
       JSON.parse(device.overrides),
     );
-    addLinkedDeviceRole(g, device.scanner_id, old.kind, roleForSurface(effective), now);
+    addLinkedDeviceRole(g, device.scanner_id, old.kind, roleOfStoredSurface(effective), now);
   }
   try {
     await g.commit();
