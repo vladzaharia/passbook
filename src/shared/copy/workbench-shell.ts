@@ -7,8 +7,8 @@ import { WB_AREA_WORDS } from './workbench-areas.ts';
  */
 export const WB_AREA = WB_AREA_WORDS;
 
-/** The nav label: the title, bar the Test inbox, which reads "Inbox" there. */
-export const wbLabel = (t: WbTool): string => (t === 'inbox' ? 'Inbox' : WB_AREA[t].title);
+/** The nav label: the area's title. */
+export const wbLabel = (t: WbTool): string => WB_AREA[t].title;
 
 /** The tab title when it says more than the h1: Events is where webhooks live. */
 export const WB_TAB_TITLE: Partial<Record<WbTool, string>> = { events: 'Events and webhooks' };
@@ -48,15 +48,11 @@ export const areaButtonTail = (attentionIn?: string): string =>
 /** Spoken after a context switch. */
 export const nowIn = (name: string): string => `Now in ${name}, Test`;
 
-/** The sheet's context row: counts belong to the selected context. */
-export const countsFor = (name: string): string => `Counts are for ${name}`;
-
 /** Each attention meta as it reads in its link's name ("Logs, 3 new errors"). */
 export const ATTENTION_LABEL = {
   quickstart: (done: number, total: number) => `${done} of ${total} done`,
   errors: (n: number) => `${n} new ${n === 1 ? 'error' : 'errors'}`,
   failedDeliveries: (n: number) => `${n} failed ${n === 1 ? 'delivery' : 'deliveries'}`,
-  listening: 'Listening',
   inboxNew: (n: number) => `${n} new`,
   running: (n: number) => `${n} running`,
   keyExpiring: 'A key expires within 7 days',

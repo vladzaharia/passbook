@@ -69,7 +69,7 @@ export function ResourceView({ page }: { page: ResourcePage }) {
       {/* Carries an old `#anchor` to the operation's own page. */}
       <i data-island="moved" aria-hidden="true" />
       <h1 className="h1 page-h">{page.label}</h1>
-      <p className="muted mt2">
+      <p className="muted mt2 meta-links">
         {anySdk() ? null : <span className="pill neutral">{DEV_COPY.reference.sdkSoon}</span>}{' '}
         {operations(page.ops.length)}. <a href={`${PATHS.reference}/${page.slug}.md`}>Markdown</a>
       </p>

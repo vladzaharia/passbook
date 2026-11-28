@@ -8,6 +8,7 @@ import { Buddy } from './art/buddy.tsx';
 import { ACTED_STATES } from './art/state-acts.ts';
 import { UnpluggedArt } from './art/unplugged.tsx';
 import { Button } from './button.tsx';
+import { STAGE_SURFACE } from './empty-state.tsx';
 import { useInCard } from './in-card.ts';
 
 export interface ErrorStateProps {
@@ -25,6 +26,10 @@ export interface ErrorStateProps {
    * Defaults to true inside a Card (InCardContext), false elsewhere; pass it to override.
    */
   inline?: boolean;
+  /** `stage`: the Workbench's dot-grid canvas, as its empty states have. */
+  surface?: 'stage';
+  /** Replaces the sentence's type (the Workbench sets one scale for its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -49,6 +54,8 @@ export function ErrorState({
   retryLabel = STATE_COPY.retry,
   action,
   inline: inlineProp,
+  titleClassName,
+  surface,
   className,
 }: ErrorStateProps) {
   const inCard = useInCard();
@@ -81,7 +88,10 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-4 rounded-lg border border-border bg-surface-raised p-4 text-center shadow-[var(--wl-edge),var(--pk-elevation-1)]',
+        'relative flex flex-col items-center gap-4 text-center',
+        surface === 'stage' && !inline
+          ? STAGE_SURFACE
+          : 'rounded-lg border border-border bg-surface-raised p-4 shadow-[var(--wl-edge),var(--pk-elevation-1)]',
         inline ? 'sm:flex-row sm:text-left' : 'px-6 py-10',
         className,
       )}
@@ -112,7 +122,7 @@ export function ErrorState({
           inline && 'sm:items-start',
         )}
       >
-        <p role="alert" className="max-w-[65ch] text-sm text-fg-strong">
+        <p role="alert" className={cn('max-w-[65ch]', titleClassName ?? 'text-sm text-fg-strong')}>
           {subject ? (
             <>
               <span className="block font-medium">Could not load {subject}.</span>

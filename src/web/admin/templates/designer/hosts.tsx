@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ReleaseResultSchema } from '@/shared/contracts/template-release-flow.ts';
 import { TemplateReleaseListSchema } from '@/shared/contracts/template-releases.ts';
+import { RELEASE } from '../../../../worker/modules/wallet-providers/release.ts';
 import { ApiError } from '../../../lib/errors.ts';
 import type { ToolApi } from '../../../lib/tool-api.tsx';
 import {
@@ -19,6 +20,10 @@ import { useWorkbenchReleaseStep } from './workbench-release-step.tsx';
 
 const tpl = (templateId: string) => `/api/v1/templates/${encodeURIComponent(templateId)}`;
 const SEARCH_LIMIT = 5;
+
+/** The wallets the platform has not released in a mode (the one release table, release.ts). */
+export const unreleasedWallets = (mode: 'live' | 'test'): ReadonlySet<'google' | 'samsung'> =>
+  new Set((['google', 'samsung'] as const).filter((w) => RELEASE[w][mode] !== 'released'));
 
 /**
  * The Workbench token client, as W1's ToolHost builds it: JSON calls on the bearer with no mode
@@ -179,6 +184,7 @@ export function anonymousDesignerHost(files: BundledFiles): DesignerHost {
     Link: null,
     crumbs: ({ name }) => [{ label: 'Design' }, { label: name }],
     useReleaseStep: noStep,
+    unreleased: unreleasedWallets('test'),
   };
 }
 

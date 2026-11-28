@@ -2,7 +2,9 @@ import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { BENCH_COPY } from '../../../shared/copy/developers-bench.ts';
 import { Sheet } from '../../developers/ui/sheet.tsx';
+import { cn } from '../../lib/cn.ts';
 import { useMediaQuery } from '../../lib/media.ts';
+import { Button } from '../../ui/button.tsx';
 import { BENCH_TABLET } from './split.tsx';
 import './toolbar.css';
 
@@ -93,16 +95,15 @@ export function FilterBar({
     );
   return (
     <>
-      <button
-        type="button"
-        className="btn outline sm bench-fb-open"
-        data-set={active > 0 ? '' : undefined}
+      <Button
+        variant="outline"
+        iconStart={<SlidersHorizontal aria-hidden />}
+        className={cn('shrink-0', active > 0 && 'border-accent bg-accent-subtle')}
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
       >
-        <SlidersHorizontal aria-hidden="true" />
         {C.count(active)}
-      </button>
+      </Button>
       {open ? (
         <Sheet
           title={C.filters}

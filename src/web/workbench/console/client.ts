@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSession } from '../../lib/session.ts';
 import { useToolScope } from '../../lib/tool-api.tsx';
 import type { BenchGet } from '../bench/trace-events.ts';
-import { createBearerFetch } from '../host/api.ts';
+import { createBearerFetch, PORTAL_READ } from '../host/api.ts';
 import { markSessionGone } from '../host/session-gone.ts';
 import { dropToken, workbenchToken } from '../host/token.ts';
 import { spend } from './budget.ts';
@@ -27,7 +27,10 @@ export interface ConsoleClient {
 
 function getOf(send: Transport): BenchGet {
   return async <T>(path: string): Promise<T> => {
-    const res = await send(`/api/v1${path}`, { headers: { accept: 'application/json' } });
+    // The template sample and the Trace read for the page: the log leaves them out of the developer's calls.
+    const res = await send(`/api/v1${path}`, {
+      headers: { accept: 'application/json', ...PORTAL_READ },
+    });
     if (!res.ok) throw new Error(`Could not read ${path.split('?')[0]} (${res.status}).`);
     return (await res.json()) as T;
   };

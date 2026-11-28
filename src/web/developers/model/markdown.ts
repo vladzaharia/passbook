@@ -114,7 +114,7 @@ export function homeMarkdown(site: Site): string {
 }
 
 export function guidesIndexMarkdown(guides: Guide[]): string {
-  const out = [`# ${DEV_COPY.slots.guides.title}`, '', DEV_COPY.slots.guides.line, ''];
+  const out = [`# ${DEV_COPY.slots.guides.title}`, ''];
   for (const { step, items } of groupByStep(guides, (g) => g.meta.id)) {
     out.push(`## ${step.label}`, '');
     for (const g of items) out.push(`- [${g.meta.title}](${twin(g.url)}): ${g.meta.line}`);

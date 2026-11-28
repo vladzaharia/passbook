@@ -3,9 +3,11 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { CapturedEmailSchema } from '@/shared/contracts/sandbox.ts';
 import { WB_INBOX } from '@/shared/copy/workbench-inbox.ts';
+import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
 import { wbPath } from '@/shared/workbench.ts';
 import { EmailDetail } from '../../admin/test-inbox/preview.tsx';
 import { useCapturedEmails } from '../../admin/test-inbox/queries.ts';
+import { Button } from '../../ui/button.tsx';
 import { Inspector } from '../bench/inspector.tsx';
 import { useBenchKeys } from '../bench/keys.ts';
 import type { BenchRowParts } from '../bench/list.tsx';
@@ -62,7 +64,19 @@ export function InboxPage() {
   let body: React.ReactNode;
   if (!host.canRead || list.isPending) body = <BenchSkeleton rows={5} />;
   else if (list.isError) body = <ToolFailed error={list.error} onRetry={() => list.refetch()} />;
-  else if (rows.length === 0 && !id) body = <ToolEmpty tool="inbox" />;
+  else if (rows.length === 0 && !id)
+    body = (
+      <ToolEmpty
+        tool="inbox"
+        action={
+          <Button asChild variant="outline">
+            <Link to={wbPath(context.orgId, 'passes', { query: { view: 'phone' } })}>
+              {WB_EMPTY.inbox?.action}
+            </Link>
+          </Button>
+        }
+      />
+    );
   else {
     const pane =
       id && host.orgId && host.userId ? (

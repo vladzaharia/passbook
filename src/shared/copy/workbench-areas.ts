@@ -12,7 +12,7 @@ export const WB_AREA_WORDS: Record<WbTool, { title: string; keywords: readonly s
     title: 'Events',
     keywords: ['webhooks', 'endpoints', 'deliveries', 'captures'],
   },
-  inbox: { title: 'Test inbox', keywords: ['emails', 'mail'] },
+  inbox: { title: 'Inbox', keywords: ['test inbox', 'emails', 'mail'] },
   activity: { title: 'Activity', keywords: ['operations', 'jobs', 'running'] },
   keys: { title: 'Keys', keywords: ['api keys', 'secrets', 'tokens'] },
   sandbox: { title: 'Sandbox', keywords: ['reset', 'limits', 'start over'] },

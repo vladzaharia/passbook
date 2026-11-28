@@ -23,7 +23,7 @@ const FeedSchema = z.object({
       type: z.string(),
       createdAt: z.number(),
       requestId: z.string().optional(),
-      simulated: z.boolean().optional(),
+      simulated: z.literal(true).optional(),
     }),
   ),
 });

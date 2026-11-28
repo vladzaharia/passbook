@@ -1,5 +1,6 @@
 // A first tap whose pending upsert the minute cron claims between the row's creation and the tap's own claim.
 import { afterEach, expect, it, vi } from 'vitest';
+import { run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { fixture, restore, tokenOf } from './google-runtime-test-fixtures.ts';
@@ -118,4 +119,47 @@ it('logs a failed wait read as its own event, not as a failed upsert', async () 
   const events = warn.mock.calls.map((call) => call[0]);
   expect(events).toContain('wallet.google_first_tap_wait_failed');
   expect(events).not.toContain('wallet.google_first_tap_failed');
+});
+
+it('answers preparing when the claim holder ends the tap’s version as superseded', async () => {
+  const { f } = await fixture();
+  const kit = f.kit;
+  const token = await tokenOf(f);
+  const provider = globalThis.fetch;
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let cron: Promise<void> = Promise.resolve();
+  overlap.beforeTap = async () => {
+    let held: () => void = () => undefined;
+    const inFlight = new Promise<void>((resolve) => {
+      held = resolve;
+    });
+    let first = true;
+    vi.stubGlobal('fetch', (...args: Parameters<typeof fetch>) => {
+      if (!first) return provider(...args);
+      first = false;
+      held();
+      return gate.then(() => provider(...args));
+    });
+    cron = drainWalletProviderSync(jobCtxOf(kit));
+    await inFlight;
+    overlap.beforeTap = async () => undefined;
+  };
+  // The pass changed under the cron: a newer version replaces the tap's, which ends superseded.
+  overlap.afterTap = () => {
+    void run(
+      kit.env.DB,
+      `UPDATE wallet_provider_instance_operations
+       SET state = 'superseded', claim_hash = NULL, claim_expires_at = NULL WHERE state = 'claimed'`,
+    ).then(release);
+  };
+  const warn = vi.spyOn(kit.ctx.log, 'warn');
+  await expect(issueWalletOffer(kit.ctx, token, 'google')).rejects.toMatchObject({
+    code: 'WALLET_PREPARING',
+  });
+  await cron;
+  const pending = warn.mock.calls.find((call) => call[0] === 'wallet.google_first_tap_pending');
+  expect(pending?.[1]).toMatchObject({ outcome: 'not_claimed', state: 'superseded' });
 });

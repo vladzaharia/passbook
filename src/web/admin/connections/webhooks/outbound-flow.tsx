@@ -194,10 +194,10 @@ export function OutboundFlow({
   };
   const secret = created?.secret ?? '';
   const floor = resume ? SERVER_PHASE + 1 : SERVER_PHASE;
-  const title = resume ? 'Set up your server' : 'Add endpoint';
+  const title = resume ? 'Set up your server' : 'New connection';
   const crumbs = [
     { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
-    { label: resume ? endpointHost(resume) : 'Add endpoint' },
+    { label: resume ? endpointHost(resume) : 'New' },
   ];
   const server = id === 'secret' || id === 'verify' || id === 'test';
 

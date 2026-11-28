@@ -1,10 +1,11 @@
 import { Lock, TriangleAlert } from 'lucide-react';
+import { BENCH_COPY } from '../../../../shared/copy/developers-bench.ts';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { MethodPill } from '../../../developers/ui/method-pill.tsx';
 import { BenchList } from '../../bench/list.tsx';
 import type { BenchSelection } from '../../bench/use-selection.ts';
 import type { RunIndexItem } from '../types.ts';
-import { LazyState } from './lazy-state.tsx';
+import { LazyStage } from './lazy-state.tsx';
 
 /** An operation in the index with the group it is listed under. */
 export interface IndexOp extends RunIndexItem {
@@ -59,15 +60,16 @@ export function OpIndex({
           ) : undefined,
         })}
         empty={
-          <LazyState
-            scene="no-match"
-            heading="p"
-            {...(query.trim() ? { title: CONSOLE_COPY.noMatch(query.trim()) } : {})}
-          >
-            <button type="button" className="btn outline" onClick={onClear}>
-              {CONSOLE_COPY.clear}
-            </button>
-          </LazyState>
+          <LazyStage
+            scene="search"
+            mood="curious"
+            title={query.trim() ? CONSOLE_COPY.noMatch(query.trim()) : BENCH_COPY.state.noMatch}
+            action={
+              <button type="button" className="btn outline" onClick={onClear}>
+                {CONSOLE_COPY.clear}
+              </button>
+            }
+          />
         }
       />
     </div>

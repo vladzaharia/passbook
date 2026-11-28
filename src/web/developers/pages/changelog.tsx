@@ -32,7 +32,10 @@ export function ChangelogView({ site }: { site: Site }) {
             <span className="pill accent mono">PassBook-Version: {v.date}</span>
             <span className="sm">{v.summary}</span>
           </div>
-          <p className="sm muted mt2">{v.migration}</p>
+          <details className="mt2">
+            <summary className="sm">Migration</summary>
+            <p className="sm muted mt2">{v.migration}</p>
+          </details>
         </div>
       ))}
       <div className="cl" data-changelog>

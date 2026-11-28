@@ -38,6 +38,8 @@ export interface EmptyStateProps {
   heading?: boolean;
   /** `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). */
   surface?: 'stage';
+  /** Replaces the title's type (the Workbench sets one scale for all its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -77,6 +79,7 @@ export function EmptyState({
   heading = false,
   still = false,
   surface,
+  titleClassName,
   className,
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
@@ -138,9 +141,10 @@ export function EmptyState({
       <Title
         tabIndex={heading ? -1 : undefined}
         className={cn(
-          heading
-            ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
-            : 'text-sm font-medium text-fg-strong',
+          titleClassName ??
+            (heading
+              ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
+              : 'text-sm font-medium text-fg-strong'),
         )}
       >
         {title}

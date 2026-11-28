@@ -1,39 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, request, test } from '@playwright/test';
 import { shots } from './helpers/shots.ts';
-import { stubTurnstile } from './helpers/turnstile.ts';
+import { signInToWorkbench } from './helpers/workbench.ts';
 
 /** `passbook login`'s approve page (design §3.7, L20): the code is typed, never carried by a URL. Needs `WALLET_E2E_PREVIEW=1`. */
 const CLIENT = { name: 'passbook-cli', version: '0.2.0', os: 'macOS' };
 
-async function signIn(page: Page) {
-  await stubTurnstile(page);
-  await page.route('**/auth/oidc/start*', async (route) => {
-    const response = await route.fetch({ maxRedirects: 0 });
-    const target = response.headers().location;
-    if (!target) return route.fulfill({ response });
-    const location = new URL(target);
-    location.searchParams.set('login_hint', 'e2e-builder');
-    return route.fulfill({
-      response,
-      headers: { ...response.headers(), location: location.toString() },
-    });
-  });
-  await page.goto('/workbench/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const create = page.getByRole('button', { name: 'Create sandbox' });
-  // A track already done (an earlier spec's pass) opens on the Done page, with neither.
-  await create
-    .or(page.getByRole('radio', { name: 'Run here' }))
-    .or(page.locator('.qs-done'))
-    .waitFor();
-  if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await create.click();
-    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
-  }
-}
+const signIn = (page: Page) => signInToWorkbench(page);
 
 /** A CLI's own start: no cookie, and (when `ip` is given) the network it says it came from. */
 async function start(page: Page, ip?: string) {
