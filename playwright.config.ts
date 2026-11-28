@@ -12,6 +12,9 @@ export default defineConfig({
   // A sign-in may wait out RL_LOGIN's 60 s window (helpers/auth.ts polls up to 70 s), so the test
   // must outlive that wait; the 30 s default failed whenever a run's sign-ins bunched up.
   timeout: 90_000,
+  // Playwright empties its outputDir when a run starts. A shared one let a second run in this checkout
+  // delete a live run's traces and artifacts (ENOENT); the slot's port is unique per live run.
+  outputDir: `test-results/pw-${port}`,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   // Reduced motion: no view transitions or entrance animations, so clicks never land mid-transition.
   use: {
