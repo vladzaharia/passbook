@@ -262,6 +262,7 @@ export function renderNotFoundPage(
     theme,
     title: HOLDER_COPY.deadLinkTitle(what),
     art: 'expired',
+    lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(DEAD_LINK_ACTION),
     replay,
     // A retired /p link also retires this phone's saved copy of it (DROP_SCRIPT).

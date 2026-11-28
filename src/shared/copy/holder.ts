@@ -126,4 +126,5 @@ export const HOLDER_COPY = {
    * passes (STATE_COPY.goToMyPasses).
    */
   deadLinkTitle: (what: 'pass' | 'bundle') => `This ${what} link does not work`,
+  deadLinkLine: 'It may have been replaced.',
 } as const;

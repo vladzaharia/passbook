@@ -100,7 +100,7 @@ describe('the dead link page', () => {
   it('opens the login with the link reason and names nothing', () => {
     const html = renderNotFoundPage('n');
     expect(html).toContain('href="/login?next=/&amp;reason=link"');
-    expect(text(html)).toContain('This pass link does not work');
+    expect(text(html)).toContain('This pass link does not work It may have been replaced.');
     expect(text(html)).toContain('Email me my passes');
   });
 });

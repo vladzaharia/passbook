@@ -140,6 +140,7 @@ test('a dead pass link explains itself and opens sign-in with the reason', async
     const res = await page.goto(`/p/${'x'.repeat(43)}`);
     expect(res?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'This pass link does not work' })).toBeVisible();
+    await expect(page.getByText('It may have been replaced.')).toBeVisible();
     await shoot(page, 'dead-pass');
     await page.getByRole('link', { name: 'Email me my passes' }).click();
     await page.waitForURL((u) => u.pathname === '/login');
