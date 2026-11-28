@@ -223,9 +223,9 @@ describe('check', () => {
         return json(committing());
       },
     });
-    const button = await screen.findByRole('button', { name: 'Nothing to import' });
+    const button = await screen.findByRole('button', { name: 'Import 0' });
     expect(button).toHaveAttribute('aria-disabled', 'true');
-    expect(button.textContent?.length).toBeLessThan(20);
+    expect(button.textContent?.length).toBeLessThan(12);
     await user.click(button);
     expect(posts).toEqual([]);
   });

@@ -63,7 +63,7 @@ test('the sample CSV imports with 0 errors', async ({ page }, testInfo) => {
   await expect(page.getByRole('table', { name: 'Problems' })).toHaveCount(0);
   await sweep(page, 'sample-3-check');
 
-  await page.getByRole('button', { name: 'Create 1 pass', exact: true }).click();
+  await page.getByRole('button', { name: 'Import 1', exact: true }).click();
   await expect(page.getByText('1 done')).toBeVisible({ timeout: 60_000 });
   await sweep(page, 'sample-4-done');
 });

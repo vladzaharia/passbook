@@ -229,16 +229,7 @@ export const IMPORT_COPY = {
       ? `The first ${budget} get an email. The rest are listed after the import.`
       : `You can send ${budget} more pass emails today.`,
   /** One short line: the footer shares a 390 px row with Cancel and Back. Errors are skipped; the tiles count them. */
-  commitButton: (c: { create: number; update: number }) => {
-    const n = (k: number) => `${k} ${k === 1 ? 'pass' : 'passes'}`;
-    return c.create + c.update === 0
-      ? 'Nothing to import'
-      : c.create > 0 && c.update > 0
-        ? `Import ${c.create + c.update}`
-        : c.create > 0
-          ? `Create ${n(c.create)}`
-          : `Update ${n(c.update)}`;
-  },
+  commitButton: (c: { create: number; update: number }) => `Import ${c.create + c.update}`,
   commitLabel,
   progressText: (done: number, total: number) => `${done} of ${total}`,
   removed: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'} removed`,

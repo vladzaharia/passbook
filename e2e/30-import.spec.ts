@@ -57,7 +57,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
 
   // 2. Commit with the email held for the default five minutes; the run card counts what it did.
   await page.getByRole('switch', { name: 'Email new holders' }).click();
-  await page.getByRole('button', { name: 'Create 3 passes', exact: true }).click();
+  await page.getByRole('button', { name: 'Import 3', exact: true }).click();
   await expect(page.getByText('3 done')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(/until 3 emails go out/)).toBeVisible();
   const created = await admin.get<{ items: { id: string }[] }>(
@@ -69,7 +69,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
   await start([HEAD, ...good, row(refs[2] as string, 'Cy', '30')].join('\n'));
   await check();
   await tile('Same', 3);
-  await expect(page.getByRole('button', { name: 'Nothing to import' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Import 0' })).toBeDisabled();
 
   // 4. Results of the first run: download, then undo what it created.
   await page.goto(first);
