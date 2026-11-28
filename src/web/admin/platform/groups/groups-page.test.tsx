@@ -241,6 +241,24 @@ describe('Group detail', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('does not ask for claims on a break-glass session', async () => {
+    const asked: string[] = [];
+    await renderApp('/admin/platform/groups/partners', {
+      session: 'admin',
+      amr: 'breakglass',
+      handlers: {
+        ...detail(),
+        '/api/v1/platform/idp/groups/partners/claims': () => {
+          asked.push('claims');
+          return json({ claims: {}, otherKeys: 0 });
+        },
+      },
+    });
+    expect(await screen.findByRole('heading', { name: 'Partner apps' })).toBeInTheDocument();
+    expect(screen.queryByText('Claims')).toBeNull();
+    expect(asked).toEqual([]);
+  });
+
   it('sets a typed claim', async () => {
     const bodies: unknown[] = [];
     const h = detail();

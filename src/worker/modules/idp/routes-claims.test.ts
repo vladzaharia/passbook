@@ -80,6 +80,13 @@ describe('access', () => {
       403,
       'FORBIDDEN',
     );
+    // Groups share the guard, so they refuse the same sessions the user page does not ask with.
+    for (const [who, code] of cases.slice(2))
+      await expectProblem(
+        await h.call('/api/v1/platform/idp/groups/console/claims', { headers: who.headers }),
+        403,
+        code,
+      );
   });
 
   it('asks an old sign-in to prove itself again', async () => {
