@@ -97,7 +97,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | op | operator console (OP-1 shell and keys, OP-2 lists; OP-3 to OP-8 follow) | `src/web/scan/operator/**` except `operator-panel.tsx` and `operator.css` (the handheld panel), `src/web/scan/visual-operator.tsx`, `src/shared/copy/scan-operator.ts` |
 | n8-ad | scanner: admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` |
 | n8-td | scanner: template designer | `src/web/admin/templates/designer/scan/**` |
-| dx | developer portal, SDKs | `src/web/developers/**`, `docs/developers/**`, `src/worker/modules/developer/**`, `sdk/**`, `tools/gen-sdk-{py,go}*`, `src/shared/sdk-names.ts`; `dev.*` analytics events carry the org id only, `sdk/zapier/**` |
+| dx | developer portal, SDKs | `src/web/developers/**`, `docs/developers/**`, `src/worker/modules/developer/**`, `sdk/**`, `tools/gen-sdk-{py,go}*`, `src/shared/sdk-names.ts`; `dev.*` analytics events carry the org id only |
 | wb | Workbench: Test-only token, shell, tools | `src/web/workbench/**`, `src/shared/workbench.ts`, `src/worker/modules/workbench/**`, `src/web/lib/tool-api.tsx` |
 | dx-access | developer invitations | `workers/polaris-binding/**`, `src/worker/modules/dev-access/**`, `src/shared/contracts/developer-invitations.ts`, `src/shared/copy/developer-invite.ts`, `src/web/admin/orgs/developers/**`, `test/polaris-binding/**`, `tools/check-idp-binding*.ts`, `migrations/0214_developer_invitations.sql` |
 | mk | marketing site | `marketing/**`, `src/web/marketing/**`, `src/worker/modules/marketing/**`, `src/worker/email/access-request*`, `src/shared/{marketing.ts,contracts/access-request.ts,copy/access.ts}`, `marketing/{pricing,legal}*`, `src/web/marketing/pages/pricing.ts` |

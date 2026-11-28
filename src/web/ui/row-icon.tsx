@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { AREA_ACCENTS, ROW_ICONS } from '@/generated/plan-icons.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { svgElement } from './plan-icon.tsx';
+import { useSvg } from './plan-icon.tsx';
 
 export interface RowIconProps {
   /** Pricing-row key, such as live-passes or area-use. */
@@ -16,6 +16,7 @@ export interface RowIconProps {
 /** A feature row's icon: an area-coloured ticket with a glyph. The svg is generated markup. */
 export function RowIcon({ icon, label, mono, className }: RowIconProps) {
   const found = ROW_ICONS[icon];
+  const svg = useSvg(mono ? found?.mono : found?.svg);
   if (!found) return null;
   return (
     <span
@@ -25,7 +26,7 @@ export function RowIcon({ icon, label, mono, className }: RowIconProps) {
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       className={cn('inline-flex size-5 shrink-0 [&>svg]:size-full', className)}
     >
-      {svgElement(mono ? found.mono : found.svg)}
+      {svg}
     </span>
   );
 }
