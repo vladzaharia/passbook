@@ -150,14 +150,16 @@ describe('join-once read predicate', () => {
     ).rejects.toThrow(/no such column/);
     const twice = `WITH ${p.ctes} SELECT 1 FROM ${p.rows}passes x WHERE x.id IN (SELECT 1 FROM actor_ok)`;
     expect(() => assertActorOnce(twice)).toThrow(/joins actor_ok once/);
-    expect(() => assertActorOnce(`WITH ${p.ctes} SELECT 1 FROM ${p.rows}passes x`)).not.toThrow();
+    expect(() =>
+      assertActorOnce(`WITH ${p.ctes} SELECT 1 FROM ${p.rows}passes x WHERE ${p.ok}`),
+    ).not.toThrow();
     expect(() => assertActorOnce(`WITH ${p.ctes} SELECT 1 FROM passes x`)).toThrow();
     expect(() =>
       assertActorOnce(`WITH ${p.ctes}, key_tpl AS (SELECT 1) SELECT 1 FROM ${p.rows}passes x`),
     ).toThrow();
     // A literal that spells the CTE name is not a reference.
     expect(() =>
-      assertActorOnce(`WITH ${p.ctes} SELECT 'FROM actor_ok' FROM ${p.rows}passes x`),
+      assertActorOnce(`WITH ${p.ctes} SELECT 'FROM actor_ok' FROM ${p.rows}passes x WHERE ${p.ok}`),
     ).not.toThrow();
   });
 });

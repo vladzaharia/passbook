@@ -199,7 +199,7 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
       'rev-1 negation: (x.org_id = ao.org_id) IS NOT 1',
       (c) =>
         c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE (x.org_id = ao.org_id) IS NOT 1`),
-      /appear only as/,
+      /appear only as|needs WHERE\/ON/,
     ],
     [
       'rev-1 negation: CASE THEN 0 ELSE 1 on the org comparison',
@@ -207,7 +207,7 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         c.stmt(
           `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE CASE WHEN x.org_id = ao.org_id THEN 0 ELSE 1 END = 1`,
         ),
-      /appear only as/,
+      /appear only as|needs WHERE\/ON/,
     ],
     [
       'top-level OR after the stamp gate and ao.org_id IS NULL',
@@ -215,13 +215,13 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         c.stmt(
           `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${c.P} = 1 AND ao.org_id IS NULL OR x.id > 0`,
         ),
-      /no OR|OR over ao/,
+      /no OR|OR over ao|needs WHERE\/ON/,
     ],
     [
       'top-level OR with no stamp gate on ao.org_id IS NULL',
       (c) =>
         c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ao.org_id IS NULL OR x.id > 0`),
-      /no OR|OR over ao/,
+      /no OR|OR over ao|needs WHERE\/ON/,
     ],
     [
       'top-level OR after the tenant comparison',
@@ -229,7 +229,7 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         c.stmt(
           `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE x.org_id = ao.org_id OR x.id > 0`,
         ),
-      /no OR|OR over ao/,
+      /no OR|OR over ao|needs WHERE\/ON/,
     ],
     [
       'parenthesised OR over ao.* without the stamp gate',
@@ -237,7 +237,50 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
         c.stmt(
           `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE (ao.org_id IS NULL OR x.id > 0) AND x.id IS NOT NULL`,
         ),
-      /no OR|OR over ao/,
+      /no OR|OR over ao|needs WHERE\/ON/,
+    ],
+    [
+      'anchor column compared with another anchor column as the gate',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ao.mode = ao.org_id AND x.id > 0`,
+        ),
+      /needs WHERE\/ON|OR over ao|only as/,
+    ],
+    [
+      'anchor column compared with another anchor column in a parenthesised OR',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ao.mode = ao.org_id AND (ao.limit_key IS NULL OR x.id > 0)`,
+        ),
+      /needs WHERE\/ON|OR over ao|only as/,
+    ],
+    [
+      'holder with no filter at all',
+      (c) => c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x`),
+      /needs WHERE\/ON/,
+    ],
+    [
+      'holder with a filter that never mentions the anchor',
+      (c) => c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE x.id > 0`),
+      /needs WHERE\/ON/,
+    ],
+    [
+      'holder CTE with no anchor gate',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM page x`,
+          `, page AS (SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE x.id > 0)`,
+        ),
+      /needs WHERE\/ON/,
+    ],
+    [
+      'gate only in the ON of a LEFT JOIN',
+      (c) =>
+        c.stmt(
+          `SELECT x.id FROM ${c.A} CROSS JOIN passes x LEFT JOIN passes y ON y.org_id = ao.org_id WHERE x.id > 0`,
+        ),
+      /needs WHERE\/ON/,
     ],
   ];
 

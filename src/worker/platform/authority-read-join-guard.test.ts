@@ -71,8 +71,10 @@ describe('assertActorOnce evasions', () => {
     const ok = (tail: string) => assertActorOnce(`WITH ${p.ctes} SELECT 1 FROM ${p.rows}${tail}`);
     expect(() => ok(`passes x WHERE ${p.platform}`)).not.toThrow();
     expect(() => ok(`passes x WHERE ${p.ok} AND ${p.tenant('x', 'passes')}`)).not.toThrow();
-    expect(() => ok(`passes x /* actor_ok ' */ -- actor_ok\n WHERE x.id = ?`)).not.toThrow();
-    expect(() => ok(`passes x WHERE x.id = 'ACTOR_OK ''x'`)).not.toThrow();
+    expect(() =>
+      ok(`passes x /* actor_ok ' */ WHERE ${p.ok} AND x.id = ? -- actor_ok`),
+    ).not.toThrow();
+    expect(() => ok(`passes x WHERE ${p.ok} AND x.id = 'ACTOR_OK ''x'`)).not.toThrow();
   });
 });
 

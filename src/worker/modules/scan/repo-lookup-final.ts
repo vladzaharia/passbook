@@ -1,3 +1,4 @@
+import { PRESENT } from '../../platform/authority-read.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
@@ -61,7 +62,8 @@ export function lookupPassesStmt(
       LEFT JOIN passes p ON p.id = ring.pass_id AND ${auth.tenantOnce('p', 'passes')}
         AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
         AND ${scope.sql} AND ${cleared.sql} AND ${effectiveReleaseIdSql('p')} IS ring.rel
-      LEFT JOIN passes hp ON hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}`,
+      LEFT JOIN passes hp ON hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}
+    WHERE ${PRESENT} = 1`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,

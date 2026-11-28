@@ -158,7 +158,8 @@ export function assertAnchorShape(blanked: string): void {
   for (const m of core.text.matchAll(new RegExp(`${esc(TERM)}`, 'g')))
     if (OUTER_BEFORE.test(core.text.slice(0, m.index ?? 0)))
       refuse('the anchor is never the outer side of a LEFT join');
-  for (const c of core.kind === 'cte' ? [core, root] : [core]) assertFilters(c);
+  assertFilters(core, aliases.length === 0);
+  if (core.kind === 'cte') assertFilters(root, false);
   if (core.kind === 'cte') {
     const q = readOnceBy(root, core, cores);
     for (const alias of aliases) aliasOnlyOut(root, q, alias, cores);
@@ -166,24 +167,31 @@ export function assertAnchorShape(blanked: string): void {
   } else for (const alias of aliases) aliasOnlyOut(root, null, alias, cores);
 }
 
+const NON_ANCHOR = String.raw`(?<![\w.])\+?(?!ao\.)[\w.?]+`;
+const GATE = new RegExp(
+  String.raw`\bao\.authority_present_k7\s*=\s*1\b|\bao\.(?:org_id|mode|limit_key)\s+IS\s+NULL\b|${NON_ANCHOR}\s*=\s*(?:''\s*\|\|\s*)?ao\.org_id\b|\bao\.org_id\s*=\s*\+?(?!ao\.)[\w.?]+`,
+  'i',
+);
+
 /**
  * WHERE, ON and HAVING of the holder (and of the root that reads a holder CTE) are one AND chain: an OR at paren depth 0
- * lets the other arm pass for an absent actor. A parenthesised OR that touches `ao.*` needs the stamp gate
- * `ao.authority_present_k7 = 1` or `<col> = ao.org_id` as a depth-0 term of those clauses.
+ * lets the other arm pass for an absent actor. The holder core (unless it only outputs `authorized()`) needs a gate as
+ * a depth-0 term of its WHERE or of an inner join's ON: `ao.authority_present_k7 = 1`, `ao.<c> IS NULL` (the platform term) or `<non-anchor col> = ao.org_id`.
+ * `ao.* = ao.*` is no gate: an absent actor's anchor columns all hold the same sentinel.
  */
-function assertFilters(core: Core): void {
+function assertFilters(core: Core, mustGate: boolean): void {
   const text = core.text;
   const tokens =
     /\b(WHERE|ON|HAVING|JOIN|GROUP|ORDER|LIMIT|FROM|WINDOW|SELECT|UNION|INTERSECT|EXCEPT|OR)\b|[()]/gi;
   const opens: number[] = [];
+  const clauses: { text: string; gating: boolean; or: boolean }[] = [];
   let depth = 0;
-  let filter = false;
-  let top = '';
+  let cur: (typeof clauses)[number] | null = null;
   let last = 0;
-  let nestedOrAo = false;
+  let outerJoin = false;
   for (const m of text.matchAll(tokens)) {
     const at = m.index ?? 0;
-    if (filter && depth === 0) top += text.slice(last, at);
+    if (depth === 0 && cur) cur.text += text.slice(last, at);
     last = at + m[0].length;
     if (m[0] === '(') {
       opens.push(at);
@@ -191,25 +199,37 @@ function assertFilters(core: Core): void {
     } else if (m[0] === ')') {
       const from = opens.pop() ?? 0;
       const group = text.slice(from, at);
-      if (filter && /\bOR\b/i.test(group) && /\bao\./i.test(group)) nestedOrAo = true;
+      if (cur && /\bOR\b/i.test(group) && /\bao\./i.test(group)) cur.or = true;
       depth = Math.max(0, depth - 1);
     } else if (depth === 0) {
       const kw = m[0].toUpperCase();
       if (kw === 'OR') {
-        if (filter) refuse('no OR at the top level of WHERE, ON or HAVING beside the anchor');
-      } else filter = kw === 'WHERE' || kw === 'ON' || kw === 'HAVING';
-      if (filter) top += ` ${kw} `;
+        if (cur) refuse('no OR at the top level of WHERE, ON or HAVING beside the anchor');
+      } else {
+        if (kw === 'JOIN') outerJoin = OUTER_BEFORE.test(text.slice(0, at + 4));
+        cur =
+          kw === 'WHERE' || kw === 'ON' || kw === 'HAVING'
+            ? { text: '', gating: kw === 'WHERE' || !outerJoin, or: false }
+            : null;
+        if (cur && kw === 'HAVING') cur.gating = false;
+        if (cur) clauses.push(cur);
+      }
     }
   }
-  if (filter) top += text.slice(last);
-  if (
-    nestedOrAo &&
-    !/\bao\.authority_present_k7\s*=\s*1\b|[\w.]+\s*=\s*(?:''\s*\|\|\s*)?ao\.org_id\b|\bao\.org_id\s*=\s*[\w.]+/i.test(
-      top,
-    )
-  )
+  if (cur) cur.text += text.slice(last);
+  const gate = clauses
+    .filter((c) => c.gating)
+    .map((c) => c.text)
+    .join(' AND ');
+  // A parenthesised OR over `ao.*` is gated by a top-level term of its own clause, or of any WHERE or inner ON.
+  for (const c of clauses)
+    if (c.or && !GATE.test(c.text) && !(c.gating && GATE.test(gate)))
+      refuse(
+        'an OR over ao columns needs the presence gate or the org comparison as a top-level AND term',
+      );
+  if (mustGate && !GATE.test(gate))
     refuse(
-      'an OR over ao columns needs the presence gate or the org comparison as a top-level AND term',
+      'the anchor needs WHERE/ON ao.authority_present_k7 = 1, ao.<c> IS NULL or <non-anchor col> = ao.org_id as a top-level AND term',
     );
 }
 
@@ -289,7 +309,7 @@ export function assertAnchorOperands(blanked: string): void {
   if (bad.test(blanked)) refuse('ao columns are compared with = only');
   // Each predicate that holds an `ao` column is exactly `<operand> = ao.<c>` (either side) or `ao.org_id IS NULL`:
   // IS, IS NOT, CASE, NOT, arithmetic or a function around it can turn the sentinel's 0 into a pass.
-  const operand = String.raw`\+?[\w.?]+`;
+  const operand = String.raw`\+?(?!ao\.)[\w.?]+`;
   const plain = new RegExp(
     String.raw`^\s*\(*\s*(?:${operand}\s*=\s*(?:''\s*\|\|\s*)?${OPERAND}|${OPERAND}\s*=\s*${operand}|${OPERAND}\s+IS\s+NULL)\s*\)*\s*$`,
     'i',
@@ -299,5 +319,5 @@ export function assertAnchorOperands(blanked: string): void {
       /\b(?:WHERE|ON|AND|OR|FROM|JOIN|GROUP|ORDER|HAVING|LIMIT|SELECT)\b/i,
     ))
       if (new RegExp(String.raw`\b${OPERAND}\b`, 'i').test(part) && !plain.test(part))
-        refuse('ao columns appear only as <col> = ao.<c> or ao.<c> IS NULL:' + part);
+        refuse(`ao columns appear only as <col> = ao.<c> or ao.<c> IS NULL:${part}`);
 }
