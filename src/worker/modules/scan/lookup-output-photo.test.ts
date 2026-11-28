@@ -15,6 +15,7 @@ import {
   setupPhoto,
 } from './lookup-output-test-fixtures.ts';
 import { knownPhotoUrl, photoGrantUrl } from './member-photo.ts';
+import { RACE_PASS_OK } from './race-tags.ts';
 import { candidateById } from './repo-lookup.ts';
 import { missCounterKey } from './repo-miss-authority.ts';
 import { isFinalFenceBatch } from './repo-read-grant-expiry-test-fixtures.ts';
@@ -155,7 +156,7 @@ describe('lookup output authority', () => {
     expect((await lookup(ctx, actor, pass.scanCode!)).items.map((item) => item.passId)).toEqual([
       pass.id,
     ]);
-    const final = bindings.filter(({ sql }) => sql.includes('ring AS MATERIALIZED'));
+    const final = bindings.filter(({ sql }) => sql.includes(RACE_PASS_OK));
     expect(final.length).toBeGreaterThan(0);
     for (const { values } of final)
       for (const value of values)

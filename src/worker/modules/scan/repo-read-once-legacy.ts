@@ -7,6 +7,7 @@ import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import type { LookupEntry } from './lookup-history.ts';
+import { RACE_PASS_OK } from './race-tags.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { refsClear } from './repo-read-fences.ts';
 import { type LegacyAuth, legacyRead } from './repo-read-once-legacy-auth.ts';
@@ -84,7 +85,7 @@ export function legacyLiveRowsStmt(
   return legacyRead(
     db,
     auth,
-    `SELECT ring.i AS i,
+    `${RACE_PASS_OK} SELECT ring.i AS i,
       CASE WHEN ring.scan_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scans s
         WHERE s.id = ring.scan_id AND ${auth.tenant('s', 'scans')} AND s.pass_id IS ring.pass_id
           AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}) END AS scan_ok,
@@ -184,7 +185,7 @@ export function legacyLookupPassesStmt(
   return legacyRead(
     db,
     auth,
-    `SELECT ring.i AS i,
+    `${RACE_PASS_OK} SELECT ring.i AS i,
       COALESCE((SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
         WHERE p.id = ring.pass_id AND ${auth.tenant('p', 'passes')}
           AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}

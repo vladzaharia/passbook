@@ -1,4 +1,5 @@
 import { effectiveReleaseIs, usedRelease } from './effective-release.ts';
+import { RACE_PREVIEW_CURRENT } from './race-tags.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
@@ -19,7 +20,7 @@ export function previewCurrentStmt(
   return scanRead(
     db,
     auth,
-    `SELECT COALESCE(${auth.present}, 0) AS actor_ok, p.id IS NOT NULL AS pass_ok
+    `${RACE_PREVIEW_CURRENT} SELECT COALESCE(${auth.present}, 0) AS actor_ok, p.id IS NOT NULL AS pass_ok
      FROM ${auth.anchor}
      LEFT JOIN passes p ON ${auth.present} AND p.id = ? AND ${auth.tenantOnce('p', 'passes')} AND p.template_id = ?
        AND (${passVisibleSql('p', { credential: '?', lifecycle: '?' })})

@@ -7,3 +7,10 @@ export { RACE_GRANT_INSERT, RACE_KEYSET_INSERT } from '../../platform/race-tag.t
 export const RACE_MISS_COUNTER = '/* race:miss-counter */';
 export const RACE_CANDIDATE_READ = '/* race:candidate-read */';
 export const RACE_SEARCH_PAGE = '/* race:search-page */';
+
+// Group D
+export const RACE_PASSLESS_READ = '/* race:passless-read */';
+export const RACE_PASS_OK = '/* race:pass-ok */';
+export const RACE_PREVIEW_CURRENT = '/* race:preview-current */';
+export const RACE_PREVIEW_AUDIT = '/* race:preview-audit */';
+export const RACE_PREDICATE_AUTHORIZED = '/* race:predicate-authorized */';

@@ -22,6 +22,7 @@ import { safeJson, safeTimestamp, visibleFields } from './card-semantics.ts';
 import { credentialKeysetContext } from './credential-keyset-authority.ts';
 import { previewScope } from './display-preview.ts';
 import { cardPrivacy } from './dto-projection.ts';
+import { RACE_PREVIEW_AUDIT } from './race-tags.ts';
 import { candidateById } from './repo-lookup.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
@@ -193,15 +194,20 @@ register(
       if (row.pass_ok !== 1) throw notFound();
     };
     await assertCurrent();
-    await auditStmt(ctx.env.DB, ctx, {
-      orgId: resourceOrgId,
-      actorType: 'user',
-      actorId: auth.userId,
-      action: 'scan_display.preview',
-      targetType: 'pass',
-      targetId: passId,
-      detail: { templateId, role: actor.role },
-    }).run();
+    await auditStmt(
+      ctx.env.DB,
+      ctx,
+      {
+        orgId: resourceOrgId,
+        actorType: 'user',
+        actorId: auth.userId,
+        action: 'scan_display.preview',
+        targetType: 'pass',
+        targetId: passId,
+        detail: { templateId, role: actor.role },
+      },
+      `${RACE_PREVIEW_AUDIT} `,
+    ).run();
     await assertCurrent();
     return c.json({ scope }, 200, { 'cache-control': 'no-store' });
   },

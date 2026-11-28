@@ -1,5 +1,6 @@
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
+import { RACE_PREDICATE_AUTHORIZED } from './race-tags.ts';
 
 /** A SQL boolean and its binds, in text order. */
 export interface ScanPredicate {
@@ -31,7 +32,7 @@ export function withCtes(
 export function predicateStmt(db: D1Database, predicate: ScanPredicate): D1PreparedStatement {
   const staged = withCtes(
     predicate,
-    `SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS authorized`,
+    `${RACE_PREDICATE_AUTHORIZED} SELECT CASE WHEN (${predicate.sql}) THEN 1 ELSE 0 END AS authorized`,
     predicate.params,
   );
   assertBudget(staged.sql, staged.params, PARAM_BUDGET);

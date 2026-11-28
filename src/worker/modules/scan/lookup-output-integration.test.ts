@@ -16,7 +16,12 @@ import {
   templateId,
   useKeysetlessDatabase,
 } from './lookup-output-test-fixtures.ts';
-import { RACE_CANDIDATE_READ, RACE_KEYSET_INSERT, RACE_SEARCH_PAGE } from './race-tags.ts';
+import {
+  RACE_CANDIDATE_READ,
+  RACE_KEYSET_INSERT,
+  RACE_PASSLESS_READ,
+  RACE_SEARCH_PAGE,
+} from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
@@ -89,7 +94,7 @@ describe('lookup output authority', () => {
     const { db } = interceptBatches(
       real,
       async (sql) => {
-        if (!changed && sql.some((text) => text.includes('SELECT 1 AS ok FROM actor_ok'))) {
+        if (!changed && sql.some((text) => text.includes(RACE_PASSLESS_READ))) {
           changed = true;
           await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
             barcodeHash,
@@ -130,7 +135,7 @@ describe('lookup output authority', () => {
     const { db } = interceptBatches(
       real,
       async (sql) => {
-        if (!changed && sql.some((text) => text.includes('SELECT 1 AS ok FROM actor_ok'))) {
+        if (!changed && sql.some((text) => text.includes(RACE_PASSLESS_READ))) {
           changed = true;
           await run(real, 'UPDATE passes SET barcode_hash=?,revision=revision+1 WHERE id=?', [
             barcodeHash,
