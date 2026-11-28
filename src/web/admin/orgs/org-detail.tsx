@@ -123,6 +123,9 @@ export function OrgDetailPage({
             <MetaLink to="/admin/audit" search={{ filterOrgId: org.id }} icon={ENTITY.audit.icon}>
               Audit log
             </MetaLink>
+            <MetaLink to="/admin/identities" icon={ENTITY.identity.icon}>
+              Signing identities
+            </MetaLink>
           </>
         }
         actions={
@@ -232,14 +235,6 @@ export function OrgDetailPage({
             {showBootstrap(org) ? (
               <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
             ) : null}
-            <Card>
-              <CardHeader title="Signing identities" />
-              <CardBody>
-                <Button asChild variant="outline">
-                  <Link to="/admin/identities">Manage identities</Link>
-                </Button>
-              </CardBody>
-            </Card>
             <HoldsCard scope="platform" orgId={org.id} canManage />
             <ReceiptsCard scope="platform" orgId={org.id} />
           </TwoPane>

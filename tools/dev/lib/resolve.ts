@@ -104,14 +104,20 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   sessionId: (c) => firstInOrgs(c, '/api/v1/scanning-sessions'),
   eventId: (c) => firstInOrgs(c, '/api/v1/scan-events'),
   scannerId: (c) => firstInOrgs(c, '/api/v1/scanners'),
-  broadcastId: (c) => firstInOrgs(c, '/api/v1/broadcasts'),
-  runId: (c) => firstInOrgs(c, '/api/v1/broadcasts'),
+  broadcastId: (c) =>
+    firstInOrgs(c, '/api/v1/broadcasts', (r) =>
+      r.kind === 'message' && r.state === 'sent' ? id(r) : undefined,
+    ),
+  runId: (c) =>
+    firstInOrgs(c, '/api/v1/broadcasts', (r) =>
+      r.kind === 'change' && r.state === 'sent' ? id(r) : undefined,
+    ),
   importId: (c) => firstInOrgs(c, '/api/v1/pass-imports'),
   bundleToken: (c) => firstInOrgs(c, '/api/v1/bundles', (r) => last(r.url)),
   joinToken,
   userId: async (c) => id((await list(await c.platform(), '/api/v1/users?limit=1'))[0]),
   groupKey: async (c) => {
-    const res = await (await c.platform()).get('/api/v1/idp/groups');
+    const res = await (await c.platform()).get('/api/v1/platform/idp/groups');
     if (!res.ok()) return undefined;
     const rows = ((await res.json()) as { items?: { key?: string; kind?: string }[] }).items ?? [];
     return (rows.find((r) => r.kind === 'custom') ?? rows[0])?.key;

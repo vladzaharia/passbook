@@ -228,18 +228,8 @@ export const IMPORT_COPY = {
     emailable > budget
       ? `The first ${budget} get an email. The rest are listed after the import.`
       : `You can send ${budget} more pass emails today.`,
-  commitButton: (c: { create: number; update: number; errors: number }) => {
-    const n = (k: number) => `${k} ${k === 1 ? 'pass' : 'passes'}`;
-    const main =
-      c.create > 0 && c.update > 0
-        ? `Create ${c.create} and update ${c.update}`
-        : c.create > 0
-          ? `Create ${n(c.create)}`
-          : `Update ${n(c.update)}`;
-    return c.errors > 0
-      ? `${main} (skip ${c.errors} ${c.errors === 1 ? 'error' : 'errors'})`
-      : main;
-  },
+  /** One short line: the footer shares a 390 px row with Cancel and Back. Errors are skipped; the tiles count them. */
+  commitButton: (c: { create: number; update: number }) => `Import ${c.create + c.update}`,
   commitLabel,
   progressText: (done: number, total: number) => `${done} of ${total}`,
   removed: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'} removed`,

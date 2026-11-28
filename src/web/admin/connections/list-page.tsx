@@ -146,7 +146,7 @@ export function ConnectionsListPage({
       {
         id: 'last',
         header: 'Last success',
-        meta: { nowrap: true, hideBelow: 'lg' },
+        meta: { nowrap: true, hideBelow: 'md' },
         cell: ({ row }) => formatDateTime(row.original.lastSuccessAt, '—'),
       },
     ];

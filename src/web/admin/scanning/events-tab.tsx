@@ -17,7 +17,7 @@ const eventColumns = (sessionsOf: (id: string) => number): DataColumnDef<ScanEve
       <Link
         to="/admin/scanning/events/$eventId"
         params={{ eventId: row.original.id }}
-        className="font-medium text-accent-fg"
+        className="inline-flex items-center font-medium text-accent-fg pointer-coarse:min-h-11"
       >
         {row.original.name}
       </Link>
