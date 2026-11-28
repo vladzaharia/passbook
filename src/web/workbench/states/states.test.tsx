@@ -45,6 +45,15 @@ describe('shared states (design §6)', () => {
     expect(failedLine(new ApiError({ status: 0, code: 'network' }))).toMatch(/connection/);
     expect(failedLine(new ApiError({ status: 403, code: 'forbidden' }))).toMatch(/access/);
     expect(failedLine(new ApiError({ status: 500, code: 'internal' }))).toMatch(/Try again/);
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited' }))).toBe(
+      'Too many requests. Try again in a minute.',
+    );
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited', retryAfter: 20 }))).toBe(
+      'Too many requests. Try again in 20 s.',
+    );
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited', retryAfter: 90 }))).toBe(
+      'Too many requests. Try again in 2 min.',
+    );
   });
 });
 

@@ -78,5 +78,325 @@
     "role": "org",
     "path": "/workbench/o/{orgId}/sandbox",
     "name": "workbench-sandbox"
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/passes",
+    "name": "workbench-passes-empty",
+    "mock": [
+      {
+        "path": "/api/v1/passes",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/passes",
+    "name": "workbench-passes-failed",
+    "mock": [
+      {
+        "path": "/api/v1/passes",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/logs",
+    "name": "workbench-logs-empty",
+    "mock": [
+      {
+        "path": "/api/v1/request-logs",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/logs",
+    "name": "workbench-logs-failed",
+    "mock": [
+      {
+        "path": "/api/v1/request-logs",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/events",
+    "name": "workbench-events-empty",
+    "mock": [
+      {
+        "path": "/api/v1/events",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/events",
+    "name": "workbench-events-failed",
+    "mock": [
+      {
+        "path": "/api/v1/events",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/keys",
+    "name": "workbench-keys-empty",
+    "mock": [
+      {
+        "path": "/api/v1/api-keys",
+        "body": {
+          "items": [],
+          "nextCursor": null,
+          "revokedCount": 0
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/keys",
+    "name": "workbench-keys-failed",
+    "mock": [
+      {
+        "path": "/api/v1/api-keys",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/inbox",
+    "name": "workbench-inbox-empty",
+    "mock": [
+      {
+        "path": "/api/v1/me/emails",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/inbox",
+    "name": "workbench-inbox-failed",
+    "mock": [
+      {
+        "path": "/api/v1/me/emails",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/design",
+    "name": "workbench-design-empty",
+    "mock": [
+      {
+        "path": "/api/v1/templates",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/design",
+    "name": "workbench-design-failed",
+    "mock": [
+      {
+        "path": "/api/v1/templates",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/activity",
+    "name": "workbench-activity-empty",
+    "mock": [
+      {
+        "path": "/api/v1/operations",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/activity",
+    "name": "workbench-activity-failed",
+    "mock": [
+      {
+        "path": "/api/v1/operations",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}",
+    "name": "workbench-home-failed",
+    "mock": [
+      {
+        "path": "/api/v1/workbench/summary",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      },
+      {
+        "path": "/api/v1/request-logs",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      },
+      {
+        "path": "/api/v1/events",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      },
+      {
+        "path": "/api/v1/passes",
+        "status": 500,
+        "body": {
+          "title": "Server error",
+          "status": 500,
+          "code": "INTERNAL"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}",
+    "name": "workbench-home-empty",
+    "mock": [
+      {
+        "path": "/api/v1/request-logs",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      },
+      {
+        "path": "/api/v1/events",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      },
+      {
+        "path": "/api/v1/passes",
+        "body": {
+          "items": [],
+          "nextCursor": null
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/logs",
+    "name": "workbench-logs-limited",
+    "mock": [
+      {
+        "path": "/api/v1/request-logs",
+        "status": 429,
+        "body": {
+          "title": "Too many requests",
+          "status": 429,
+          "code": "RATE_LIMITED"
+        },
+        "headers": {
+          "retry-after": "45"
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/workbench/o/{orgId}/passes",
+    "name": "workbench-passes-limited",
+    "mock": [
+      {
+        "path": "/api/v1/passes",
+        "status": 429,
+        "body": {
+          "title": "Too many requests",
+          "status": 429,
+          "code": "RATE_LIMITED"
+        },
+        "headers": {
+          "retry-after": "45"
+        }
+      }
+    ]
   }
 ]

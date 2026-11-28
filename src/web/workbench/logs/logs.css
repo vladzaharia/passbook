@@ -81,11 +81,6 @@
 .logs-solo .code {
   max-width: 100%;
 }
-.logs-first-a {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 .logs-quiet {
   margin: 0;
   padding: 10px 0;

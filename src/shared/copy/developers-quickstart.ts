@@ -197,5 +197,4 @@ export const QS_COPY = {
   },
   /** The landing's primary button once a developer is signed in. */
   runInConsole: 'Run in console',
-  signedOutStage: 'Sign in to see your pass here.',
 } as const;

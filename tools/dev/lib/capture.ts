@@ -129,6 +129,17 @@ async function shoot(
       await page.route('**/api/v1/scan/branding/logo*', (r) =>
         r.fulfill({ status: 200, contentType: 'image/svg+xml', body: GALLERY_LOGO }),
       );
+    for (const m of route.mock ?? [])
+      await page.route(
+        (u) => u.pathname === m.path || u.pathname.startsWith(`${m.path}/`),
+        (r) =>
+          r.fulfill({
+            status: m.status ?? 200,
+            headers: m.headers,
+            contentType: (m.status ?? 200) >= 400 ? 'application/problem+json' : 'application/json',
+            body: JSON.stringify(m.body ?? {}),
+          }),
+      );
     const { consoleErrors, failedRequests } = listen(page);
     const file = shotName(route.name, viewport, theme);
     let status: number | null = null;
