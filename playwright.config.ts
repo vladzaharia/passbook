@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { e2ePorts } from './tools/lib/e2e-ports.ts';
+import { e2eWebServer } from './tools/lib/e2e-web-server.ts';
 
 const port = e2ePorts.web;
 
@@ -34,11 +35,5 @@ export default defineConfig({
     },
   ],
   // Local D1 + mock OIDC provider (test/mock-oidc/server.ts) are started by tools/e2e-server.ts.
-  webServer: {
-    command: 'node tools/e2e-server.ts',
-    url: `http://localhost:${port}/health`,
-    reuseExistingServer: !process.env.CI,
-    // A cold start builds the app and the developer pages; under load that has taken over 120 s.
-    timeout: 300_000,
-  },
+  webServer: e2eWebServer(),
 });
