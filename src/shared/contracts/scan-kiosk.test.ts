@@ -2,13 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { CUSTOMER_REASON_SUB } from '../copy/scan-customer.ts';
 import { KIOSK_SUB_LINES } from '../copy/scan-kiosk.ts';
 import { GuestCodeInputSchema, normalizeGuestCode } from './guest-codes.ts';
+import { AgreementAcceptanceInputSchema } from './scan-agreements.ts';
+import { KioskHostResultSchema, ScanHostCreateSchema } from './scan-hosts.ts';
 import {
   KIOSK_ALLOWED_ENDPOINTS,
   KioskConfigSchema,
+  KioskDeviceSettingsSchema,
   KioskHeartbeatSchema,
   KioskViewSchema,
 } from './scan-kiosk.ts';
 
+const settings = {
+  entries: { pass: true, findMe: false, code: false, walkIn: false, leaving: false },
+  findMeKinds: [],
+  direction: 'in',
+  hours: null,
+  staffedHours: null,
+  idle: { warnS: 20, resetS: 30 },
+  help: { unstaffedText: 'Ask at the desk' },
+  walkIn: null,
+  kioskExitRole: 'desk',
+  kioskOverrideRole: 'door',
+  network: { cidrs: [] },
+  signatureRetentionDays: null,
+  presetId: null,
+};
 const week = { mon: ['09:00-17:00'] };
 const config = {
   name: 'Kiosk 1',
@@ -241,5 +259,12 @@ describe('hosts and agreements', () => {
       AgreementAcceptanceInputSchema.safeParse({ ...a, signerRole: 'self', minorName: 'Kit' })
         .success,
     ).toBe(false);
+  });
+});
+
+describe('kiosk reader default', () => {
+  it('is off until the admin turns it on', () => {
+    const parsed = KioskDeviceSettingsSchema.parse({ ...settings });
+    expect(parsed.nfcReader.use).toBe(false);
   });
 });

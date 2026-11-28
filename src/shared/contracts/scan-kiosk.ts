@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common.ts';
 import { GuestCodeInputSchema } from './guest-codes.ts';
-import { NfcReaderSettingsSchema, NfcReaderStatusSchema } from './nfc-reader.ts';
+import {
+  defaultNfcReaderSettings,
+  NfcReaderSettingsSchema,
+  NfcReaderStatusSchema,
+} from './nfc-reader.ts';
 import { ScanPinSchema, ScanRoleSchema } from './scan.ts';
 import { AgreementAcceptanceInputSchema, KioskAgreementTextSchema } from './scan-agreements.ts';
 import { KioskHostSchema } from './scan-hosts.ts';
@@ -84,7 +88,7 @@ export const KioskDeviceSettingsSchema = z.strictObject({
   signatureRetentionDays: z.number().int().min(1).max(3650).nullable(),
   presetId: KioskPresetIdSchema.nullable(),
   /** The external NFC reader (NR0): off for a kiosk unless the admin turns it on. */
-  nfcReader: NfcReaderSettingsSchema,
+  nfcReader: NfcReaderSettingsSchema.default(defaultNfcReaderSettings('kiosk')),
 });
 export type KioskDeviceSettings = z.infer<typeof KioskDeviceSettingsSchema>;
 export const KioskCreateSchema = z.strictObject({
