@@ -56,6 +56,125 @@
   },
   {
     "role": "org",
+    "path": "/workbench/o/{orgId}/events",
+    "name": "workbench-events-loaded",
+    "mock": [
+      {
+        "path": "/api/v1/events",
+        "body": {
+          "items": [
+            {
+              "id": "evt_01",
+              "type": "pass.issued",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800061000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": {
+                "id": "pass_02",
+                "externalId": null,
+                "templateId": "tpl1"
+              },
+              "data": {
+                "version": 1,
+                "source": "api"
+              },
+              "requestId": "req_8f21a"
+            },
+            {
+              "id": "evt_02",
+              "type": "pass.installed",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800122000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": {
+                "id": "pass_03",
+                "externalId": null,
+                "templateId": "tpl1"
+              },
+              "data": {
+                "wallet": "apple",
+                "device": "a1b2c3",
+                "deviceCount": 1,
+                "firstDevice": true
+              }
+            },
+            {
+              "id": "evt_03",
+              "type": "pass.updated",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800183000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": {
+                "id": "pass_01",
+                "externalId": null,
+                "templateId": "tpl1"
+              },
+              "data": {
+                "version": 2,
+                "cause": "fields",
+                "source": "api",
+                "notified": true
+              },
+              "requestId": "req_8f22b"
+            },
+            {
+              "id": "evt_04",
+              "type": "pass.voided",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800244000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": {
+                "id": "pass_02",
+                "externalId": null,
+                "templateId": "tpl1"
+              },
+              "data": {
+                "actorType": "api"
+              },
+              "requestId": "req_8f23c"
+            },
+            {
+              "id": "evt_05",
+              "type": "push.failed",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800305000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": {
+                "id": "pass_03",
+                "externalId": null,
+                "templateId": "tpl1"
+              },
+              "data": {
+                "version": 2,
+                "status": 410,
+                "reason": "Unregistered"
+              }
+            },
+            {
+              "id": "evt_06",
+              "type": "webhook.test",
+              "apiVersion": "2026-11-20",
+              "createdAt": 1795800366000,
+              "orgId": "org1",
+              "mode": "test",
+              "pass": null,
+              "data": {},
+              "sample": true
+            }
+          ],
+          "nextCursor": "evt_06",
+          "hasMore": false
+        }
+      }
+    ]
+  },
+  {
+    "role": "org",
     "path": "/workbench/o/{orgId}/inbox",
     "name": "workbench-inbox"
   },
@@ -107,7 +226,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -118,7 +238,9 @@
         "path": "/api/v1/request-logs",
         "body": {
           "items": [],
-          "nextCursor": null
+          "nextCursor": null,
+          "capped": null,
+          "bodiesRecorded": true
         }
       }
     ]
@@ -137,7 +259,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -148,7 +271,8 @@
         "path": "/api/v1/events",
         "body": {
           "items": [],
-          "nextCursor": null
+          "nextCursor": "",
+          "hasMore": false
         }
       }
     ]
@@ -167,7 +291,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -198,7 +323,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -206,7 +332,7 @@
     "name": "workbench-inbox-empty",
     "mock": [
       {
-        "path": "/api/v1/me/emails",
+        "path": "/api/v1/test-inbox",
         "body": {
           "items": [],
           "nextCursor": null
@@ -220,7 +346,7 @@
     "name": "workbench-inbox-failed",
     "mock": [
       {
-        "path": "/api/v1/me/emails",
+        "path": "/api/v1/test-inbox",
         "status": 500,
         "body": {
           "title": "Server error",
@@ -228,7 +354,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -258,7 +385,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -288,7 +416,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -331,7 +460,8 @@
           "code": "INTERNAL"
         }
       }
-    ]
+    ],
+    "waitFor": "p[role=\"alert\"]"
   },
   {
     "role": "org",
@@ -342,14 +472,17 @@
         "path": "/api/v1/request-logs",
         "body": {
           "items": [],
-          "nextCursor": null
+          "nextCursor": null,
+          "capped": null,
+          "bodiesRecorded": true
         }
       },
       {
         "path": "/api/v1/events",
         "body": {
           "items": [],
-          "nextCursor": null
+          "nextCursor": "",
+          "hasMore": false
         }
       },
       {
