@@ -46,7 +46,7 @@ export type ConnectorCapabilities = DeclaredCapabilities & LegacyCapabilityFlags
 export function legacyFlags(declared: DeclaredCapabilities): LegacyCapabilityFlags {
   const read = declared.read ?? {};
   const flags: LegacyCapabilityFlags = {};
-  if (read.list || read.fetch) flags.poll = true;
+  if (read.list) flags.poll = true;
   if (read.delta) flags.delta = true;
   if ((declared.inbound?.webhook ?? 'none') !== 'none') flags.webhook = true;
   if (read.import) flags.import = true;

@@ -12,7 +12,7 @@ const definition: ConnectorDefinition<Config, unknown> = {
   description: 'Keep passes in sync with a CSV, Excel or JSON file you upload.',
   category: 'files',
   order: 10,
-  capabilities: declareCapabilities({ read: { upload: true }, auth: 'none' }),
+  capabilities: declareCapabilities({ read: { fetch: true, upload: true }, auth: 'none' }),
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {},

@@ -19,6 +19,12 @@ describe('plan and row icons', () => {
     expect(Object.keys(icons.rowIcons)).toHaveLength(112);
   });
 
+  it('draws every path from a valid first command', () => {
+    for (const [key, icon] of Object.entries(icons.rowIcons))
+      for (const [, d] of icon.svg.matchAll(/ d="([^"]*)"/g))
+        expect(d, key).toMatch(/^M[-\d. ]/);
+  });
+
   it('keeps accents out of every dark-theme selector', () => {
     const css = planIconsCss(icons).replace(/\/\*[\s\S]*?\*\//g, '');
     const blocks = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)];

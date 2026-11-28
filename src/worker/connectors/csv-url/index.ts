@@ -115,7 +115,7 @@ const definition: ConnectorDefinition<Config, unknown> = {
   description: 'Keep passes in sync with a published CSV, such as a Google Sheet.',
   category: 'files',
   order: 20,
-  capabilities: declareCapabilities({ read: { list: true }, auth: 'none' }),
+  capabilities: declareCapabilities({ read: { fetch: true, list: true }, auth: 'none' }),
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {},
