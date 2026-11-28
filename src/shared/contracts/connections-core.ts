@@ -6,6 +6,10 @@ import {
   SecretOverlapSchema,
   VoidWhenSchema,
 } from './connections-mapping.ts';
+import { SubscribableEventTypeSchema } from './webhooks-events.ts';
+
+const Bool = z.boolean().default(false);
+const NO_READ = { fetch: false, list: false, delta: false, import: false, upload: false };
 
 export const ConnectionModeSchema = z.enum(['poll', 'webhook', 'hybrid', 'manual', 'snapshot']);
 export type ConnectionMode = z.infer<typeof ConnectionModeSchema>;
@@ -63,6 +67,7 @@ export const ConnectorInfoSchema = z.object({
   category: ConnectorCategorySchema.default('apis'),
   /** Position within the group; lower first. */
   order: z.number().int().default(0),
+  /** `read`, `write`, `inbound`, `outbound` and `auth` are declared; the flags before them derive from those. */
   capabilities: z.object({
     poll: z.boolean(),
     delta: z.boolean(),
@@ -71,6 +76,20 @@ export const ConnectorInfoSchema = z.object({
     snapshot: z.boolean(),
     /** Records come from uploaded files (`/connections/{id}/files`). */
     upload: z.boolean().default(false),
+    read: z
+      .object({ fetch: Bool, list: Bool, delta: Bool, import: Bool, upload: Bool })
+      .default(NO_READ),
+    /** Upstream objects written, with the ops on each. */
+    write: z
+      .object({ objects: z.record(z.string(), z.array(z.enum(['create', 'update', 'delete']))) })
+      .default({ objects: {} }),
+    /** `managed`: PassBook registers and renews the vendor's webhooks. */
+    inbound: z
+      .object({ webhook: z.enum(['none', 'manual', 'managed']) })
+      .default({ webhook: 'none' }),
+    /** Event kinds sent upstream. */
+    outbound: z.object({ events: z.array(SubscribableEventTypeSchema) }).default({ events: [] }),
+    auth: z.enum(['none', 'secret', 'oauth2']).default('none'),
   }),
   /** JSON Schema that drives the config form. */
   configSchema: JsonSchema,

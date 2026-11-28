@@ -114,6 +114,22 @@ describe('connectorInfo', () => {
     ]);
   });
 
+  it('serves the declared v2 capabilities beside the derived flags', () => {
+    expect(connectorInfo(httpJson).capabilities).toEqual({
+      poll: true,
+      delta: true,
+      webhook: true,
+      import: false,
+      snapshot: false,
+      upload: false,
+      read: { fetch: true, list: true, delta: true, import: false, upload: false },
+      write: { objects: {} },
+      inbound: { webhook: 'manual' },
+      outbound: { events: [] },
+      auth: 'secret',
+    });
+  });
+
   it('groups each sender recipe', () => {
     expect(connectorInfo(webhookPush).recipes.map((r) => [r.id, r.category])).toEqual([
       ['shopify-orders', 'commerce'],

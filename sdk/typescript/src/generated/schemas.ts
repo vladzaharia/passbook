@@ -1901,6 +1901,23 @@ export type ConnectorsListResponse = {
       import: boolean;
       snapshot: boolean;
       upload?: boolean;
+      read?: {
+        fetch?: boolean;
+        list?: boolean;
+        delta?: boolean;
+        import?: boolean;
+        upload?: boolean;
+      };
+      write?: {
+        objects: Record<string, Array<"create" | "update" | "delete">>;
+      };
+      inbound?: {
+        webhook: "none" | "manual" | "managed";
+      };
+      outbound?: {
+        events: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+      };
+      auth?: "none" | "secret" | "oauth2";
     };
     configSchema?: unknown;
     secretSchema?: unknown;
@@ -2029,6 +2046,23 @@ export type ConnectorsRetrieveResponse = {
     import: boolean;
     snapshot: boolean;
     upload?: boolean;
+    read?: {
+      fetch?: boolean;
+      list?: boolean;
+      delta?: boolean;
+      import?: boolean;
+      upload?: boolean;
+    };
+    write?: {
+      objects: Record<string, Array<"create" | "update" | "delete">>;
+    };
+    inbound?: {
+      webhook: "none" | "manual" | "managed";
+    };
+    outbound?: {
+      events: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+    };
+    auth?: "none" | "secret" | "oauth2";
   };
   configSchema?: unknown;
   secretSchema?: unknown;

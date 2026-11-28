@@ -325,6 +325,10 @@ __all__ = [
     "ConnectionsWebhookFailuresResolveResult",
     "ConnectorsListItem",
     "ConnectorsListItemCapabilities",
+    "ConnectorsListItemCapabilitiesInbound",
+    "ConnectorsListItemCapabilitiesOutbound",
+    "ConnectorsListItemCapabilitiesRead",
+    "ConnectorsListItemCapabilitiesWrite",
     "ConnectorsListItemDefaults",
     "ConnectorsListItemOutputFieldsValue",
     "ConnectorsListItemRecipesItem",
@@ -335,6 +339,10 @@ __all__ = [
     "ConnectorsListResponse",
     "ConnectorsListResponseItemsItem",
     "ConnectorsListResponseItemsItemCapabilities",
+    "ConnectorsListResponseItemsItemCapabilitiesInbound",
+    "ConnectorsListResponseItemsItemCapabilitiesOutbound",
+    "ConnectorsListResponseItemsItemCapabilitiesRead",
+    "ConnectorsListResponseItemsItemCapabilitiesWrite",
     "ConnectorsListResponseItemsItemDefaults",
     "ConnectorsListResponseItemsItemOutputFieldsValue",
     "ConnectorsListResponseItemsItemRecipesItem",
@@ -361,6 +369,10 @@ __all__ = [
     "ConnectorsRecipeSetupRetrieveResult",
     "ConnectorsRetrieveResponse",
     "ConnectorsRetrieveResponseCapabilities",
+    "ConnectorsRetrieveResponseCapabilitiesInbound",
+    "ConnectorsRetrieveResponseCapabilitiesOutbound",
+    "ConnectorsRetrieveResponseCapabilitiesRead",
+    "ConnectorsRetrieveResponseCapabilitiesWrite",
     "ConnectorsRetrieveResponseDefaults",
     "ConnectorsRetrieveResponseOutputFieldsValue",
     "ConnectorsRetrieveResponseRecipesItem",
@@ -4286,6 +4298,27 @@ class ConnectorsListItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListItemCapabilitiesRead | None = None
+    write: ConnectorsListItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListItemDefaults(_Model):
     intervalSeconds: int
@@ -4354,6 +4387,27 @@ class ConnectorsListResponseItemsItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListResponseItemsItemCapabilitiesRead | None = None
+    write: ConnectorsListResponseItemsItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListResponseItemsItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListResponseItemsItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListResponseItemsItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListResponseItemsItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
@@ -4500,6 +4554,27 @@ class ConnectorsRetrieveResponseCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsRetrieveResponseCapabilitiesRead | None = None
+    write: ConnectorsRetrieveResponseCapabilitiesWrite | None = None
+    inbound: ConnectorsRetrieveResponseCapabilitiesInbound | None = None
+    outbound: ConnectorsRetrieveResponseCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsRetrieveResponseCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsRetrieveResponseCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int

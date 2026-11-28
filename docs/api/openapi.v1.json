@@ -62367,6 +62367,127 @@
                     "upload": {
                       "type": "boolean",
                       "default": false
+                    },
+                    "read": {
+                      "type": "object",
+                      "properties": {
+                        "fetch": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "list": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "delta": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "import": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "upload": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "default": {
+                        "fetch": false,
+                        "list": false,
+                        "delta": false,
+                        "import": false,
+                        "upload": false
+                      }
+                    },
+                    "write": {
+                      "type": "object",
+                      "properties": {
+                        "objects": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "create",
+                                "update",
+                                "delete"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "default": {
+                        "objects": {}
+                      },
+                      "required": [
+                        "objects"
+                      ]
+                    },
+                    "inbound": {
+                      "type": "object",
+                      "properties": {
+                        "webhook": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "manual",
+                            "managed"
+                          ]
+                        }
+                      },
+                      "default": {
+                        "webhook": "none"
+                      },
+                      "required": [
+                        "webhook"
+                      ]
+                    },
+                    "outbound": {
+                      "type": "object",
+                      "properties": {
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "pass.issued",
+                              "pass.updated",
+                              "pass.voided",
+                              "pass.unvoided",
+                              "pass.removed",
+                              "pass.restored",
+                              "pass.replaced",
+                              "pass.installed",
+                              "pass.uninstalled",
+                              "pass.scanned",
+                              "pass.scan_refused",
+                              "pass.scan_undone",
+                              "pass.channels_changed",
+                              "pass.printed",
+                              "pass.print_voided",
+                              "push.failed",
+                              "email.failed"
+                            ]
+                          }
+                        }
+                      },
+                      "default": {
+                        "events": []
+                      },
+                      "required": [
+                        "events"
+                      ]
+                    },
+                    "auth": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "secret",
+                        "oauth2"
+                      ],
+                      "default": "none"
                     }
                   },
                   "required": [
@@ -62679,6 +62800,127 @@
               "upload": {
                 "type": "boolean",
                 "default": false
+              },
+              "read": {
+                "type": "object",
+                "properties": {
+                  "fetch": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "list": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "delta": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "import": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "upload": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "default": {
+                  "fetch": false,
+                  "list": false,
+                  "delta": false,
+                  "import": false,
+                  "upload": false
+                }
+              },
+              "write": {
+                "type": "object",
+                "properties": {
+                  "objects": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "create",
+                          "update",
+                          "delete"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "default": {
+                  "objects": {}
+                },
+                "required": [
+                  "objects"
+                ]
+              },
+              "inbound": {
+                "type": "object",
+                "properties": {
+                  "webhook": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "manual",
+                      "managed"
+                    ]
+                  }
+                },
+                "default": {
+                  "webhook": "none"
+                },
+                "required": [
+                  "webhook"
+                ]
+              },
+              "outbound": {
+                "type": "object",
+                "properties": {
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "pass.issued",
+                        "pass.updated",
+                        "pass.voided",
+                        "pass.unvoided",
+                        "pass.removed",
+                        "pass.restored",
+                        "pass.replaced",
+                        "pass.installed",
+                        "pass.uninstalled",
+                        "pass.scanned",
+                        "pass.scan_refused",
+                        "pass.scan_undone",
+                        "pass.channels_changed",
+                        "pass.printed",
+                        "pass.print_voided",
+                        "push.failed",
+                        "email.failed"
+                      ]
+                    }
+                  }
+                },
+                "default": {
+                  "events": []
+                },
+                "required": [
+                  "events"
+                ]
+              },
+              "auth": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "secret",
+                  "oauth2"
+                ],
+                "default": "none"
               }
             },
             "required": [
