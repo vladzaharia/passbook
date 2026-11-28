@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, requireActiveTemplateRelease, seedTemplateId, uid } from './helpers/api.ts';
+import { stepUpAdmin } from './helpers/auth.ts';
 import { sandboxOrgId } from './helpers/sandbox.ts';
 import { addOrgMember, readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
@@ -20,6 +21,8 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   browser,
 }) => {
   const seed = readSeed();
+  // Create sends config: a recent sign-in; a long CI shard's stored session is stale.
+  await stepUpAdmin(page);
   const api = await apiAs('admin');
   await requireActiveTemplateRelease(api, seed.org.id, seedTemplateId(), 'live');
   const tag = uid('fu');
