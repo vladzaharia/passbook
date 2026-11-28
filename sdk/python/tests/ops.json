@@ -5562,7 +5562,7 @@
    "label": "x",
    "items": [
     {
-     "key": "api",
+     "key": "templates",
      "value": 0,
      "source": "preset"
     }
@@ -5844,7 +5844,7 @@
    "label": "x",
    "limits": [
     {
-     "key": "api",
+     "key": "templates",
      "limit": 0,
      "used": 0
     }
@@ -10160,7 +10160,7 @@
    "updatedAt": 0,
    "items": [
     {
-     "key": "api",
+     "key": "templates",
      "value": 0,
      "presetValue": 0,
      "source": "preset",
@@ -10209,7 +10209,7 @@
    "updatedAt": 0,
    "items": [
     {
-     "key": "api",
+     "key": "templates",
      "value": 0,
      "presetValue": 0,
      "source": "preset",

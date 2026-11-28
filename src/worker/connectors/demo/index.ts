@@ -1,5 +1,5 @@
 import { localDate } from '../../../shared/zoned.ts';
-import { type ConnectorDefinition, ConnectorError } from '../types.ts';
+import { type ConnectorDefinition, ConnectorError, declareCapabilities } from '../types.ts';
 import { type Config, config } from './config.ts';
 import { buildClassic, CLASSIC_FIELDS, classicRef } from './datasets/classic.ts';
 import { buildRecord, DATASET_DEFS, indexOf, refOf } from './datasets/index.ts';
@@ -75,7 +75,10 @@ const definition: ConnectorDefinition<Config, undefined> = {
   description: 'Sample records to try a sync.',
   category: 'try',
   order: 10,
-  capabilities: { poll: true, delta: true },
+  capabilities: declareCapabilities({
+    read: { fetch: true, list: true, delta: true },
+    auth: 'none',
+  }),
   egress: () => [],
   webhookReferenceMode: 'refs-only',
   configSchema: config,

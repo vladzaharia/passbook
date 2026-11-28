@@ -881,12 +881,52 @@
     "note": "Read a draft upload."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.auth: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.auth: field added",
+    "note": "Connectors report capabilities.auth: none, secret or oauth2."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.inbound: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.inbound: field added",
+    "note": "Connectors report capabilities.inbound.webhook: none, manual or managed (PassBook registers the vendor webhook)."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.outbound: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.outbound: field added",
+    "note": "Connectors report capabilities.outbound.events, the event types they send upstream."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.read: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.read: field added",
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+  },
+  {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].capabilities.upload: field added",
     "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.write: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.write: field added",
+    "note": "Connectors report capabilities.write.objects, the upstream objects they write and the ops on each."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].category: field added",
@@ -953,12 +993,52 @@
     "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
   },
   {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.auth: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.auth: field added",
+    "note": "Connectors report capabilities.auth: none, secret or oauth2."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.inbound: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.inbound: field added",
+    "note": "Connectors report capabilities.inbound.webhook: none, manual or managed (PassBook registers the vendor webhook)."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.outbound: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.outbound: field added",
+    "note": "Connectors report capabilities.outbound.events, the event types they send upstream."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.read: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.read: field added",
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.capabilities.upload: field added",
     "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.write: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.write: field added",
+    "note": "Connectors report capabilities.write.objects, the upstream objects they write and the ops on each."
   },
   {
     "key": "GET /api/v1/connectors/{type} 200.category: field added",

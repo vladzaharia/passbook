@@ -325,6 +325,10 @@ __all__ = [
     "ConnectionsWebhookFailuresResolveResult",
     "ConnectorsListItem",
     "ConnectorsListItemCapabilities",
+    "ConnectorsListItemCapabilitiesInbound",
+    "ConnectorsListItemCapabilitiesOutbound",
+    "ConnectorsListItemCapabilitiesRead",
+    "ConnectorsListItemCapabilitiesWrite",
     "ConnectorsListItemDefaults",
     "ConnectorsListItemOutputFieldsValue",
     "ConnectorsListItemRecipesItem",
@@ -335,6 +339,10 @@ __all__ = [
     "ConnectorsListResponse",
     "ConnectorsListResponseItemsItem",
     "ConnectorsListResponseItemsItemCapabilities",
+    "ConnectorsListResponseItemsItemCapabilitiesInbound",
+    "ConnectorsListResponseItemsItemCapabilitiesOutbound",
+    "ConnectorsListResponseItemsItemCapabilitiesRead",
+    "ConnectorsListResponseItemsItemCapabilitiesWrite",
     "ConnectorsListResponseItemsItemDefaults",
     "ConnectorsListResponseItemsItemOutputFieldsValue",
     "ConnectorsListResponseItemsItemRecipesItem",
@@ -361,6 +369,10 @@ __all__ = [
     "ConnectorsRecipeSetupRetrieveResult",
     "ConnectorsRetrieveResponse",
     "ConnectorsRetrieveResponseCapabilities",
+    "ConnectorsRetrieveResponseCapabilitiesInbound",
+    "ConnectorsRetrieveResponseCapabilitiesOutbound",
+    "ConnectorsRetrieveResponseCapabilitiesRead",
+    "ConnectorsRetrieveResponseCapabilitiesWrite",
     "ConnectorsRetrieveResponseDefaults",
     "ConnectorsRetrieveResponseOutputFieldsValue",
     "ConnectorsRetrieveResponseRecipesItem",
@@ -4290,6 +4302,27 @@ class ConnectorsListItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListItemCapabilitiesRead | None = None
+    write: ConnectorsListItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListItemDefaults(_Model):
     intervalSeconds: int
@@ -4358,6 +4391,27 @@ class ConnectorsListResponseItemsItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListResponseItemsItemCapabilitiesRead | None = None
+    write: ConnectorsListResponseItemsItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListResponseItemsItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListResponseItemsItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListResponseItemsItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListResponseItemsItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
@@ -4504,6 +4558,27 @@ class ConnectorsRetrieveResponseCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsRetrieveResponseCapabilitiesRead | None = None
+    write: ConnectorsRetrieveResponseCapabilitiesWrite | None = None
+    inbound: ConnectorsRetrieveResponseCapabilitiesInbound | None = None
+    outbound: ConnectorsRetrieveResponseCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsRetrieveResponseCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsRetrieveResponseCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int
@@ -7169,7 +7244,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -7186,7 +7261,7 @@ class OrgsPlanRetrieveResponseFeaturesItem(_Model):
     level: str | None
 
 class OrgsPlanRetrieveResponseLimitsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     limit: int | None
     used: int | None
 
@@ -10574,7 +10649,7 @@ class PlatformOrgsEntitlementsRetrieveResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
 
 class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -10607,7 +10682,7 @@ class PlatformOrgsEntitlementsUpdateResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
 
 class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
