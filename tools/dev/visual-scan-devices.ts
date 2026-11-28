@@ -18,7 +18,8 @@ import {
   type ScanFixtures,
   scanApi,
 } from './lib/scan-api.ts';
-import { seedScans } from './lib/scan-seed.ts';
+import { deskBridgeStates, doorBridgeStates, installFakeApp } from './lib/scan-bridge.ts';
+import { codes as passCodes, seedScans } from './lib/scan-seed.ts';
 import { eventDeskStates, type Run, tabletStates } from './lib/scan-states.ts';
 import { touchOptions } from './lib/touch.ts';
 
@@ -101,6 +102,48 @@ async function pairedDevice(
     await tabletStates({ page, context, base: c.base, api, fx, pins, snap: shot } as Run);
   } finally {
     await context.close();
+  }
+}
+
+let bridgeRuns = 0;
+
+/** The native bridge (W82): settle, drop and a late band, with a fake app host. */
+async function bridge(
+  c: Ctx,
+  api: ScanApi,
+  fx: ScanFixtures,
+  viewport: ViewportName,
+  theme: Theme,
+) {
+  // The seed scanned the first passes of the door's template: take later ones, so the reads are check-ins.
+  const first = (await api.get(`/api/v1/passes?orgId=${fx.orgId}&limit=1&status=active`)).items[0];
+  const pool = await passCodes(api, fx.orgId, 50, first.templateId);
+  const end = pool.length - bridgeRuns * 2;
+  const codes = pool.slice(end - 2, end);
+  bridgeRuns += 1;
+  for (const role of ['door', 'desk'] as const) {
+    const context = await newContext(c, viewport, theme);
+    try {
+      const page = await context.newPage();
+      const { snap } = recorder(c, context, `native bridge ${role}`, viewport, theme);
+      await api.send('PATCH', `/api/v1/scanning-sessions/${fx.sessionId}`, {
+        settings: { roleWithoutSignIn: role, staffSignIn: false },
+      });
+      await installFakeApp(page);
+      await pairBrowser(page, c.base, await newPairingCode(api, fx.deviceId));
+      const run = {
+        page,
+        context,
+        base: c.base,
+        api,
+        fx,
+        pins: new Map(),
+        snap: snap(page),
+      } as Run;
+      await (role === 'door' ? doorBridgeStates(run, codes) : deskBridgeStates(run, codes));
+    } finally {
+      await context.close();
+    }
   }
 }
 
@@ -237,10 +280,16 @@ async function main() {
   try {
     for (const theme of themes) {
       for (const viewport of DEVICE_VIEWPORTS.filter(only)) {
+        if (has('--bridge-only')) {
+          await bridge(c, api, fx, viewport, theme);
+          continue;
+        }
         await pairedDevice(c, api, fx, pins, viewport, theme);
+        await bridge(c, api, fx, viewport, theme);
         await monitor(c, api, fx, viewport, theme);
         await eventDesk(c, api, fx, viewport, theme);
       }
+      if (has('--bridge-only')) continue;
       for (const viewport of DISPLAY_VIEWPORTS.filter(only))
         await customerDisplay(c, viewport, theme);
     }
