@@ -5,6 +5,7 @@ const NAME: Record<ReportedHardware['kind'], string> = {
   camera: 'Camera',
   barcode: 'Built-in barcode reader',
   nfc: 'NFC',
+  'nfc-reader': 'NFC reader',
   keyboard: 'Scanner or keyboard',
   usb: 'USB device',
   hid: 'HID device',
