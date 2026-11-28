@@ -12,7 +12,26 @@ import { BlueprintTile } from './blueprint-tile.tsx';
 import { entriesOf, groupEntries, matches } from './gallery-model.ts';
 import { UseBlueprintDialog } from './use-dialog.tsx';
 
-const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4';
+const GRID =
+  'grid grid-cols-2 gap-3 sm:gap-4 max-sm:[&>:last-child:nth-child(odd)]:col-span-2';
+
+const COLS = {
+  md: ['', '', 'md:grid-cols-2', 'md:grid-cols-3', 'md:grid-cols-4'],
+  lg: ['', '', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-cols-4'],
+  xl: ['', '', 'xl:grid-cols-2', 'xl:grid-cols-3', 'xl:grid-cols-4'],
+} as const;
+
+/** Columns that fill every row: all tiles in one row when few, else the count with the least empty cells. */
+function fit(count: number, max: number): number {
+  if (count <= max) return Math.max(count, 2);
+  let best = max;
+  for (let c = max - 1; c >= 3; c--) if (count % c < count % best) best = c;
+  return best;
+}
+
+export function gridFor(count: number): string {
+  return `${GRID} ${COLS.md[fit(count, 4)]} ${COLS.lg[fit(count, 3)]} ${COLS.xl[fit(count, 4)]}`;
+}
 
 /**
  * Platform designs to start from, grouped by the job they do. Read only: Use makes a tracked
@@ -87,7 +106,7 @@ export function BlueprintsPage() {
                     {g.label}
                     <span className="text-xs font-normal text-fg-muted">{g.entries.length}</span>
                   </h2>
-                  <ul aria-label={g.label} className={`wl-dim ${GRID}`}>
+                  <ul aria-label={g.label} className={`wl-dim ${gridFor(g.entries.length)}`}>
                     {g.entries.map((entry) => (
                       <BlueprintTile
                         key={entry.id}

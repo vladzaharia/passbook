@@ -82,7 +82,7 @@ export function BlueprintTile({
           <div className="absolute inset-x-2 bottom-2 z-10 flex justify-center">
             <SegmentedControl
               block
-              className="[&_button]:min-w-0 [&_button]:flex-1 [&_button]:truncate [&_button]:px-2"
+              className="[&_button]:min-w-0 [&_button]:flex-1 [&_button]:truncate [&_button]:px-1 [&_button]:text-xs"
               label={`${entry.variants[0]?.blueprint.name} for`}
               value={String(pick)}
               onValueChange={(v) => setPick(Number(v))}
