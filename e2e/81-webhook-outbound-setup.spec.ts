@@ -80,6 +80,19 @@ test('Send events: pick the tile, set up both sides, and land on the endpoint', 
   // The secret is shown once; Next waits for the copy.
   await expect(page.getByRole('heading', { name: 'Copy the secret', level: 2 })).toBeVisible();
   await check(page, 'outbound-secret');
+  // On a phone the bar hides its hint: a blocked Next says why in a toast.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Next', exact: true }).click({ force: true });
+  await expect(page.getByText('Confirm you saved it.').first()).toBeVisible();
+  if (DIR) {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `${DIR}/outbound-blocked-next-390-${scheme}.png` });
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
   await next(page);
 

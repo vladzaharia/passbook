@@ -1,6 +1,7 @@
 import { CircleAlert, CircleCheck, Lock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
+import { Kbd } from '../../../ui/kbd.tsx';
 import { type Draft, type InputCheck, inputUnchecked } from '../request.ts';
 import type { RunOp } from '../types.ts';
 import type { Issue } from '../validate.ts';
@@ -91,11 +92,7 @@ export function RunBar({
       >
         {pending ? <span className="spin" aria-hidden="true" /> : <Play aria-hidden="true" />}
         {armed ? C.confirm(op.method.toUpperCase()) : pending ? C.running : spent ? C.wait : C.run}
-        {armed || pending ? null : (
-          <span className="kbd" aria-hidden="true">
-            ⌘↵
-          </span>
-        )}
+        {armed || pending ? null : <Kbd className="kbd border-0">⌘↵</Kbd>}
       </button>
     </div>
   );

@@ -73,7 +73,7 @@ export interface DesignerExtras {
   /** Under the stage: the code that makes the pass. */
   Code: ComponentType;
   /** The head, in place of the page header: the template, then the actions the core offers. */
-  Head: ComponentType<{ name: string; actions: ReactNode }>;
+  Head: ComponentType<{ name: string; actions: ReactNode; modes?: ReactNode }>;
   /** Phone width: replaces the "preview only" notice. */
   Phone: ComponentType<{ preview: ReactNode; issues: ReactNode }>;
   /** Phone width: the bar fixed to the bottom, with the save the core runs. */
@@ -109,6 +109,8 @@ export interface DesignerHost {
   release?: (templateId: string, version: string, idempotencyKey: string) => Promise<ReleaseResult>;
   /** Issue a Test pass from the template's Test release. */
   issueTest?: (input: IssueTestInput) => Promise<PassDetailDto>;
+  /** Wallets the platform has not released in this host's mode: they have no tab, tile or mode. */
+  unreleased?: ReadonlySet<'google' | 'samsung'>;
   extras?: DesignerExtras;
 }
 

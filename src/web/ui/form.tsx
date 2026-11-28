@@ -7,8 +7,10 @@ import {
   useRef,
   useState,
 } from 'react';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { type GroupedForm, SaveBarGroupContext, type SaveHandler } from './save-bar.tsx';
+import { toast } from './toaster.tsx';
 
 const INVALID = '[aria-invalid="true"]';
 
@@ -33,6 +35,10 @@ export function useBlockedSubmit<T extends HTMLElement = HTMLElement>() {
   const [tick, setTick] = useState(0);
   const [summary, setSummary] = useState('');
   const fallback = useRef<string | undefined>(undefined);
+  // The wizard bars and the dialog footer hide their hint on a phone: a refused press says why.
+  const phone = useMediaQuery(PHONE);
+  const toastHint = useRef(phone);
+  toastHint.current = phone;
   useEffect(() => {
     if (tick === 0) return;
     const invalid = [...(ref.current?.querySelectorAll<HTMLElement>(INVALID) ?? [])];
@@ -46,6 +52,7 @@ export function useBlockedSubmit<T extends HTMLElement = HTMLElement>() {
     });
     // Clear first so the same count is announced again.
     setSummary('');
+    if (!roots.length && fallback.current && toastHint.current) toast.info(fallback.current);
     const frame = requestAnimationFrame(() =>
       setSummary(roots.length ? attentionLine(roots.length) : (fallback.current ?? '')),
     );
