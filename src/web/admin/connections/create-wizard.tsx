@@ -250,7 +250,6 @@ export function CreateConnectionWizard({ source }: { source?: string | undefined
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={next}
         nextLabel={step < REVIEW ? 'Next' : noMappings ? 'Create without mappings' : 'Create'}
-        nextHint="Pick a connector."
         nextDisabled={(step === 0 && !type) || (step === REVIEW && blockCreate)}
         busy={(currentCreate && create.isPending) || Boolean(created)}
       >
