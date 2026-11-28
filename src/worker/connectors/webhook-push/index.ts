@@ -9,7 +9,12 @@ import {
 } from '../lib/hmac.ts';
 import { isAllowedHeaderName } from '../lib/http.ts';
 import { getPointer, isPointer } from '../lib/pointer.ts';
-import { type ConnectorDefinition, ConnectorError, type UpstreamRecord } from '../types.ts';
+import {
+  type ConnectorDefinition,
+  ConnectorError,
+  declareCapabilities,
+  type UpstreamRecord,
+} from '../types.ts';
 import { RECIPE_INFOS, RECIPES, verifyRecipe } from './recipes/index.ts';
 
 const MAX_RECORDS = 100;
@@ -52,7 +57,7 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   description: 'Your system sends signed records.',
   category: 'apis',
   order: 20,
-  capabilities: { webhook: true },
+  capabilities: declareCapabilities({ inbound: { webhook: 'manual' }, auth: 'secret' }),
   egress: () => [],
   webhookReferenceMode: 'embedded-required',
   configSchema: config,

@@ -1093,7 +1093,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"orgs.entitlements.retrieve", "GET", "/api/v1/orgs/id1/entitlements", false,
-		"", `{"orgId":"x","preset":"x","label":"x","items":[{"key":"api","value":0,"source":"preset"}],"usage":{}}`,
+		"", `{"orgId":"x","preset":"x","label":"x","items":[{"key":"templates","value":0,"source":"preset"}],"usage":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Orgs.Entitlements.Retrieve(ctx, "id1")
 		},
@@ -1157,7 +1157,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"orgs.plan.retrieve", "GET", "/api/v1/orgs/id1/plan", false,
-		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"api","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
+		"", `{"orgId":"x","preset":"x","label":"x","limits":[{"key":"templates","limit":0,"used":0}],"features":[{"key":"apple","level":"x"}],"footer":"full"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Orgs.Plan.Retrieve(ctx, "id1")
 		},
@@ -2048,14 +2048,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"platform.orgs.entitlements.retrieve", "GET", "/api/v1/platform/orgs/id1/entitlements", false,
-		"", `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		"", `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"templates","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Platform.Orgs.Entitlements.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"platform.orgs.entitlements.update", "PUT", "/api/v1/platform/orgs/id1/entitlements", false,
-		`{"expectedRevision":0,"preset":"x","overrides":{}}`, `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"api","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
+		`{"expectedRevision":0,"preset":"x","overrides":{}}`, `{"orgId":"x","preset":"x","presetLabel":"x","revision":0,"updatedAt":0,"items":[{"key":"templates","value":0,"presetValue":0,"source":"preset","note":"x","expiresAt":0}],"presets":[{"preset":"x","label":"x","orgCount":0,"values":{}}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PlatformOrgsEntitlementsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
