@@ -85,8 +85,8 @@ register(
         templateId,
         extraChecks: capabilityChecks(previewAuthority),
       }),
-    ).first<{ actor_ok: number }>();
-    if (viewer?.actor_ok !== 1) throw new ForbiddenError();
+    ).first<{ authorized: number }>();
+    if (viewer?.authorized !== 1) throw new ForbiddenError();
     // Authorized by now, so the credential keyset may be created on first use; then it is pinned.
     const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
     actor.credentialKeysetCommitment = credentialKeysetCommitment;
@@ -188,8 +188,8 @@ register(
         }),
         candidate,
       );
-      const row = stmt ? await stmt.first<{ actor_ok: number; pass_ok: number }>() : null;
-      if (row?.actor_ok !== 1) throw new ForbiddenError();
+      const row = stmt ? await stmt.first<{ authorized: number; pass_ok: number }>() : null;
+      if (row?.authorized !== 1) throw new ForbiddenError();
       if (row.pass_ok !== 1) throw notFound();
     };
     await assertCurrent();

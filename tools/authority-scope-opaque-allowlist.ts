@@ -23,7 +23,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/scan/repo-read-fences.ts',
       'src/worker/modules/scan/repo-read-authority.ts',
     ],
-    hash: 'e5be7da69a19',
+    hash: 'deebee906cd4',
   },
   'src/worker/modules/scan/repo-counts.ts': {
     reason:
@@ -42,7 +42,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/platform/authority-statements.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: 'd15237d6453c',
+    hash: '423281ba0c20',
   },
   'src/worker/modules/events/repo.ts': {
     reason:

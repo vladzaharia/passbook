@@ -4,6 +4,8 @@
 // here inside HEADROOM extra levels, so a view or reference that grows fails this test instead of a route.
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { apiKeyReadAuthority, scanAuthorizedStmt } from '../modules/scan/repo-read-authority.ts';
+import { readStaffActivity } from '../modules/scan/repo-staff-activity.ts';
 import { authorityPredicate } from './authority-read.ts';
 import { assertActorOnce } from './authority-read-once.ts';
 import { restrictRow, TEMPLATE_REFS } from './authority-restrict.ts';
@@ -70,4 +72,35 @@ describe('the join-once tenant filter', () => {
       /SQL_ACTOR_REUSE|joins actor_ok once/,
     );
   });
+});
+
+describe('the anchored statements compile on D1 at their widest', () => {
+  const NOW = 1_700_000_000_000;
+  const platform = (named: string | undefined) =>
+    apiKeyReadAuthority({ keyId: 'depth-key', orgId: null }, named, NOW);
+
+  it('staff activity with every filter reads one absent-actor row on an org key', async () => {
+    const rows = await readStaffActivity(
+      env.DB,
+      apiKeyReadAuthority({ keyId: 'depth-key', orgId: 'org-depth' }, undefined, NOW),
+      ['America/Los_Angeles', 'UTC', 'Asia/Tokyo'],
+      NOW,
+      {
+        q: 'a%_b',
+        limit: 200,
+        staffId: 'staff-depth',
+        cursor: { disabled: true, name: 'n', id: 'i' },
+      },
+      'America/Los_Angeles',
+    );
+    expect(rows.map((r) => [r.auth_ok, r.m_id])).toEqual([[0, null]]);
+  });
+
+  it.each([undefined, 'org-depth'])(
+    'the named-platform authorized statement runs for %s',
+    async (named) => {
+      const { results } = await scanAuthorizedStmt(env.DB, platform(named)).all();
+      expect(results).toEqual([{ authorized: 0 }]);
+    },
+  );
 });

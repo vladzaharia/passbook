@@ -1,8 +1,11 @@
-import { authorityPredicate } from '../../platform/authority-read.ts';
+import { authorityPredicate, PRESENT } from '../../platform/authority-read.ts';
 import { type HistoryRow, scanReferenceOf } from './history-row.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
-import type { ScanReadAuthority } from './repo-read-authority.ts';
+import { type ScanReadAuthority, seal } from './repo-read-authority.ts';
 import { loadManifests, type ManifestCache, manifestCacheKey } from './repo-template-manifests.ts';
+
+/** The CTE's stamp column, named as the builder reads it. */
+const STAMP = PRESENT.slice('ao.'.length);
 
 /** Test-only: a fence that holds for one org in live mode, so a page statement runs without a session. */
 export function testFence(orgId: string, mode: 'live' | 'test' = 'live'): ScanReadAuthority {
@@ -13,13 +16,14 @@ export function testFence(orgId: string, mode: 'live' | 'test' = 'live'): ScanRe
   );
   return {
     ctes: `actor AS MATERIALIZED (SELECT ? AS org_id, ? AS mode),
-      actor_ok AS MATERIALIZED (SELECT 1 AS present, org_id, mode, NULL AS limit_key FROM actor)`,
+      actor_ok AS MATERIALIZED (SELECT 1 AS ${STAMP}, org_id, mode, NULL AS limit_key FROM actor)`,
     params: [orgId, mode],
-    rows: predicate.rows,
-    anchor: predicate.anchor,
-    present: predicate.ok,
-    platform: predicate.platform,
-    tenantOnce: (alias, table) => predicate.tenant(alias, table, 'org_mode'),
+    ...seal({
+      rows: predicate.rows,
+      anchor: predicate.anchor,
+      platform: predicate.platform,
+      tenantOnce: (alias: string, table: string) => predicate.tenant(alias, table, 'org_mode'),
+    }),
   };
 }
 
