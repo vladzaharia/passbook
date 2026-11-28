@@ -20,6 +20,14 @@ const Hex = z
   .regex(/^(?:[0-9a-fA-F]{2})+$/)
   .max(520);
 const Id = z.string().min(1).max(100);
+/** Text from a reader or its app that reaches admin pages and audit rows: printable ASCII only. */
+export const ReaderText = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .regex(/^[\x20-\x7E]*$/);
+/** `r-` plus 8 hex of SHA-256(install salt, serial). */
+export const ReaderIdSchema = z.string().regex(/^r-[0-9a-f]{8}$/);
 
 export const READER_ERROR_CODES = [
   'READER_NOT_FOUND',
@@ -44,7 +52,7 @@ export const ReaderTransportSchema = z.enum(['usb', 'bluetooth', 'web-bluetooth'
 /** One reader as the app reports it. Unknown fields are dropped, so an older page keeps parsing. */
 export const ReaderStateSchema = z.object({
   /** Opaque: `r-` plus 8 hex of SHA-256(install salt, serial) in the apps. Never a serial or a MAC. */
-  id: Id,
+  id: ReaderIdSchema,
   model: ReaderModelSchema,
   transport: ReaderTransportSchema,
   state: z.enum([
@@ -61,11 +69,13 @@ export const ReaderStateSchema = z.object({
   active: z.boolean(),
   mode: z.enum(['app', 'keyboard', 'unknown']),
   pinned: z.boolean(),
+  /** Who pinned it: the device (BLE pairing, any pin) or the PIN-gated kiosk staff menu. Kiosks read only from `staffMenu`. */
+  pinnedBy: z.enum(['device', 'staffMenu']),
   /** Firmware allows `FF 00 00 00`. */
   passThrough: z.boolean(),
   /** Model plus the last 4 of the serial: the one serial fragment kept. */
-  label: z.string().max(40).optional(),
-  firmware: z.string().max(32).optional(),
+  label: ReaderText(40).optional(),
+  firmware: ReaderText(32).optional(),
   battery: z
     .strictObject({
       percent: z.number().int().min(0).max(100).nullable(),
@@ -124,7 +134,7 @@ export const ReaderEventSchema = z.discriminatedUnion('event', [
     event: z.literal('readerFound'),
     id: Id,
     handle: Id,
-    name: z.string().max(100),
+    name: ReaderText(100),
   }),
   z.object({ event: z.literal('readerPaired'), id: Id, reader: ReaderStateSchema }),
   /** Answers a discover, pair or mode op with `id`, or arrives unsolicited with `reader`. */
@@ -157,7 +167,12 @@ export const programArmWindowOk = (expiresAt: number, nowMs: number): boolean =>
 
 /** NTAG 424 native commands the `program` list wraps (`90 xx 00 00`): the set `program-script.ts` sends. */
 export const PROGRAM_NATIVE_INS = [0x71, 0xaf, 0x60, 0x64, 0xf5, 0x5f, 0xc4, 0x8d, 0x3c] as const;
-/** Native commands the `FF 00 00 00 Lc` pass-through may carry: read, read signature, get version, fast read. */
+/**
+ * Native commands the `FF 00 00 00 Lc` pass-through may carry, with the exact Lc each takes (command byte
+ * plus arguments): read (page), fast read (start, end), get version, read signature (address). `60` is
+ * also MIFARE Classic key A auth with a longer body, so any other Lc is refused.
+ */
+export const PASS_THROUGH_LC = { 48: 2, 58: 3, 96: 1, 60: 2 } as const;
 export const PASS_THROUGH_NATIVE = [0x30, 0x3a, 0x60, 0x3c] as const;
 
 export type ReaderIntent = 'read' | 'program';
@@ -193,12 +208,8 @@ export function isApduAllowed(
       return b.length === 5 && p2 === 0x00 && b[4] === 0x00 && (p1 === 0x00 || p1 === 0x01);
     if (ins === 0xb0) return b.length === 5 && p1 === 0x00;
     if (ins === 0x00 && p1 === 0x00 && p2 === 0x00 && options.passThrough) {
-      const lc = b[4] ?? 0;
-      return (
-        lc >= 1 &&
-        b.length === 5 + lc &&
-        (PASS_THROUGH_NATIVE as readonly number[]).includes(b[5] ?? -1)
-      );
+      const want = (PASS_THROUGH_LC as Record<number, number>)[b[5] ?? -1];
+      return want !== undefined && b[4] === want && b.length === 5 + want;
     }
     return false;
   }

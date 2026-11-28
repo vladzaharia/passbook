@@ -25,6 +25,7 @@ const state = {
   active: true,
   mode: 'app',
   pinned: true,
+  pinnedBy: 'device',
   passThrough: true,
 } as const;
 
@@ -41,6 +42,23 @@ describe('ReaderState', () => {
   it('accepts a reader and drops unknown fields', () => {
     const parsed = ReaderStateSchema.parse({ ...state, serial: 'SECRET' });
     expect(parsed).toEqual(state);
+  });
+
+  it('takes printable ASCII text and a hashed reader id only', () => {
+    const bad = (extra: object) => ReaderStateSchema.safeParse({ ...state, ...extra }).success;
+    expect(bad({ label: 'ACR1555U ·4F21' })).toBe(false);
+    expect(bad({ label: 'ACR1555U \u202Eevil' })).toBe(false);
+    expect(bad({ label: 'a\nb' })).toBe(false);
+    expect(bad({ firmware: '1.3\u0000' })).toBe(false);
+    expect(bad({ label: 'ACR1555U 4F21', firmware: '1.3.1' })).toBe(true);
+    expect(bad({ id: 'r-4F21A0B3' })).toBe(false);
+    expect(bad({ id: 'r-4f21a0b' })).toBe(false);
+    expect(bad({ id: 'serial-123' })).toBe(false);
+    expect(bad({ pinnedBy: 'other' })).toBe(false);
+    expect(
+      ReaderEventSchema.safeParse({ event: 'readerFound', id: 'a', handle: 'h', name: 'AC\u202ER' })
+        .success,
+    ).toBe(false);
   });
 
   it('refuses an unknown model and an overlong label', () => {
@@ -141,14 +159,31 @@ describe('APDU allow-list: read', () => {
   });
 
   it('allows pass-through of read commands only, and only when the firmware allows it', () => {
-    for (const cmd of ['30', '3A', '60', '3C']) expect(read(`FF00000002${cmd}04`)).toBe(true);
+    expect(read('FF000000023004')).toBe(true);
+    expect(read('FF00000003 3A0408'.replace(' ', ''))).toBe(true);
+    expect(read('FF0000000160')).toBe(true);
+    expect(read('FF000000023C00')).toBe(true);
     expect(read('FF0000000230' + '04', false)).toBe(false);
     expect(read('FF000000023004'.replace('30', 'A0'))).toBe(false);
     expect(read('FF000000023004'.replace('30', 'A2'))).toBe(false);
     expect(read('FF0000000330' + '04')).toBe(false);
-    expect(read('FF0000000130')).toBe(true);
+    expect(read('FF0000000130')).toBe(false);
     expect(read('FF00000000')).toBe(false);
     expect(read('FF01000002' + '3004')).toBe(false);
+  });
+
+  it('pins Lc per pass-through command and refuses trailing bytes', () => {
+    expect(read('FF0000000C60' + '00'.repeat(11))).toBe(false);
+    expect(read('FF0000000C60' + '0A'.repeat(11))).toBe(false);
+    expect(read('FF000000026004')).toBe(false);
+    expect(read('FF000000016000')).toBe(false);
+    expect(read('FF00000001' + '60' + '00')).toBe(false);
+    expect(read('FF000000023004' + '00')).toBe(false);
+    expect(read('FF000000023A04')).toBe(false);
+    expect(read('FF000000033A040800')).toBe(false);
+    expect(read('FF0000000130')).toBe(false);
+    expect(read('FF000000033C0000')).toBe(false);
+    expect(read('FF000000FF60' + '00'.repeat(255))).toBe(false);
   });
 
   it('allows ISO select and read binary, nothing else on class 00', () => {
