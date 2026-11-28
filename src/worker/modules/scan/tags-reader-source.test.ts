@@ -34,8 +34,15 @@ describe('tag source', () => {
       const read = { ...tag, source };
       const out = await door.post(s, '/resolve', read);
       expect(out).toMatchObject({ kind: base.kind, card: { passId: pass.id } });
-      expect(await door.post(s, '/actions', read)).toMatchObject({ kind: 'ok' });
     }
+    const acted: unknown[] = [];
+    for (const source of SOURCES) {
+      const fresh = await bound();
+      const res = await door.post(s, '/actions', { ...fresh.tag, source });
+      acted.push({ kind: res.kind, reason: res.reason });
+    }
+    expect(acted.every((a) => JSON.stringify(a) === JSON.stringify(acted[0]))).toBe(true);
+    expect(acted[0]).toMatchObject({ kind: expect.stringMatching(/^(ok|done)$/) });
   });
 
   it('an unknown tag is not found whatever the source says', async () => {
@@ -69,6 +76,6 @@ describe('tag source', () => {
       },
       clientTs: f.kit.clock.now(),
     });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
   });
 });

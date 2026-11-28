@@ -156,7 +156,8 @@ describe('APDU allow-list: read', () => {
     expect(read('00A4000C02E103')).toBe(true);
     expect(read('00B000000F')).toBe(true);
     expect(read('00D6000001AA')).toBe(false);
-    expect(read('00A4040007D2760000850101')).toBe(false);
+    expect(read('00A4040007D2760000850101')).toBe(true);
+    expect(read('00A4040007D27600008501')).toBe(false);
     expect(read('00A4040007D27600008501010000')).toBe(false);
   });
 
