@@ -35,13 +35,6 @@
   );
   color: var(--pk-accent-fg);
 }
-.scan-operator-eyebrow {
-  color: var(--pk-text-muted);
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
 .scan-operator-lookup,
 .scan-operator-activity {
   min-width: 0;
@@ -151,6 +144,7 @@
 .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
   z-index: 11;
 }
+/* The card covers the activity column, so the list waits behind it at every width. */
 .scan-shell[data-surface="operator"]:has(.scan-result) .scan-operator-activity {
   visibility: hidden;
 }

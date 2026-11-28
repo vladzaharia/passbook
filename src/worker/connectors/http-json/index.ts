@@ -3,7 +3,12 @@ import { strictEmail } from '../../../shared/email.ts';
 import { parseJsonBody } from '../lib/decode.ts';
 import { verifySignedRequest, webhookSecretsOf } from '../lib/hmac.ts';
 import { getPointer } from '../lib/pointer.ts';
-import { type ConnectorDefinition, ConnectorError, type UpstreamRecord } from '../types.ts';
+import {
+  type ConnectorDefinition,
+  ConnectorError,
+  declareCapabilities,
+  type UpstreamRecord,
+} from '../types.ts';
 import { type Config, config, type Secrets, secrets } from './config.ts';
 import { decodeCursor, encodeCursor } from './cursor.ts';
 import { highest, maxOf, sinceParam } from './incremental.ts';
@@ -50,7 +55,11 @@ const definition: ConnectorDefinition<Config, Secrets> = {
   description: 'Read records from a REST API.',
   category: 'apis',
   order: 10,
-  capabilities: { poll: true, delta: true, webhook: true },
+  capabilities: declareCapabilities({
+    read: { fetch: true, list: true, delta: true },
+    inbound: { webhook: 'manual' },
+    auth: 'secret',
+  }),
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   secretSchema: secrets,

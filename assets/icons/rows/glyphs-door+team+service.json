@@ -19,7 +19,7 @@
   "area-team": "<circle cx=\"19\" cy=\"19\" r=\"3.4\" fill=\"#16132B\"/><circle cx=\"12.2\" cy=\"22.4\" r=\"2.5\" fill=\"#16132B\"/><circle cx=\"25.8\" cy=\"22.4\" r=\"2.5\" fill=\"#16132B\"/><path d=\"M12.2 32.5A6.8 6.8 0 0 1 25.8 32.5Z\" fill=\"#16132B\"/><path d=\"M8.6 32.5A3.9 3.9 0 0 1 11 28.6A8 8 0 0 0 10.2 32.5Z\" fill=\"#16132B\"/><path d=\"M29.4 32.5A3.9 3.9 0 0 0 27 28.6A8 8 0 0 1 27.8 32.5Z\" fill=\"#16132B\"/>",
   "team-members": "<circle cx=\"13.8\" cy=\"20\" r=\"3.2\" fill=\"#16132B\"/><path d=\"M8.5 32.5A5.3 6 0 0 1 19.1 32.5Z\" fill=\"#16132B\"/><circle cx=\"24.8\" cy=\"20\" r=\"3.2\" fill=\"#16132B\"/><path d=\"M20.4 32.5A5.3 6 0 0 1 29.5 32.5Z\" fill=\"#16132B\"/>",
   "admin-operator-and-read-only-roles": "<circle cx=\"14.5\" cy=\"20\" r=\"3.5\" fill=\"#16132B\"/><path d=\"M8.5 32.5A6 6.5 0 0 1 20.5 32.5Z\" fill=\"#16132B\"/><path d=\"M24 19H29M24 24.5H27.5M24 30H26\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
-  "author-reviewer-publisher-and-integration-roles": "<circle cx=\"13.5\" cy=\"20\" r=\"3.6\" fill=\"#16132B\"/><path d=\"MM22.6 16.9H28.9V23.2H22.6Z\" fill=\"#16132B\"/><path d=\"M13.5 25.4L17.4 32H9.6Z\" fill=\"#16132B\"/><path d=\"M25.8 25.2L29.4 28.8L25.8 32.4L22.2 28.8Z\" fill=\"#16132B\"/>",
+  "author-reviewer-publisher-and-integration-roles": "<circle cx=\"13.5\" cy=\"20\" r=\"3.6\" fill=\"#16132B\"/><path d=\"M22.6 16.9H28.9V23.2H22.6Z\" fill=\"#16132B\"/><path d=\"M13.5 25.4L17.4 32H9.6Z\" fill=\"#16132B\"/><path d=\"M25.8 25.2L29.4 28.8L25.8 32.4L22.2 28.8Z\" fill=\"#16132B\"/>",
   "locations-with-their-own-staff-and-counts": "<path d=\"M9 15.8H29V20A3.33 3.33 0 0 1 22.3 20A3.33 3.33 0 0 1 15.7 20A3.33 3.33 0 0 1 9 20Z\" fill=\"#16132B\"/><path d=\"M10.8 22.5H27.2V32.5H21.4V27H16.6V32.5H10.8Z\" fill=\"#16132B\"/>",
   "sign-in-with-your-company-s-identity-provider": "<path d=\"M10.5 17.5A2 2 0 0 1 12.5 15.5H25.5A2 2 0 0 1 27.5 17.5V30.5A2 2 0 0 1 25.5 32.5H12.5A2 2 0 0 1 10.5 30.5ZM16 20.2A2.3 2.3 0 1 0 16 20.21ZM12.8 27.6A3.2 2.6 0 0 1 19.2 27.6ZM21 21H25V22.8H21ZM21 25H25V26.8H21Z\" fill=\"#16132B\" fill-rule=\"evenodd\"/>",
   "add-and-remove-team-members-automatically": "<circle cx=\"14.5\" cy=\"20\" r=\"3.5\" fill=\"#16132B\"/><path d=\"M8.5 32.5A6 6.5 0 0 1 20.5 32.5Z\" fill=\"#16132B\"/><path d=\"M25.5 16.5V22.5M22.5 19.5H28.5\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M22.5 28.5H28.5\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
@@ -33,5 +33,182 @@
   "priority-support": "<path d=\"M21.5 15.5L12 25.8H17.8L15.8 32.5L26 21.6H20Z\" fill=\"#16132B\"/>",
   "uptime-commitment": "<path d=\"M8.8 24.5H13.3L16 18L20.4 30.5L23.2 24.5H29.2\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
   "data-processing-agreement": "<path d=\"M12 15.8H21L26.5 21.3V32.2H12Z\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M14.8 28.6C16 25.5 17 28.8 18.2 27.2S20.6 26.4 23.6 27.4\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M15.2 21H18.6V22.8H15.2Z\" fill=\"#16132B\"/>",
-  "25-off-for-nonprofits-member-run-clubs-schools-and-public-bo": "<path d=\"M19 32.5L9.8 23.4A5.4 5.4 0 0 1 19 18A5.4 5.4 0 0 1 28.2 23.4ZM15.9 20.9A1.6 1.6 0 1 0 15.9 20.91ZM22.1 26.1A1.6 1.6 0 1 0 22.1 26.11ZM21.9 19.6L23.2 20.7L16.2 28.2L14.9 27.1Z\" fill=\"#16132B\" fill-rule=\"evenodd\"/>"
+  "25-off-for-nonprofits-member-run-clubs-schools-and-public-bo": "<path d=\"M19 32.5L9.8 23.4A5.4 5.4 0 0 1 19 18A5.4 5.4 0 0 1 28.2 23.4ZM15.9 20.9A1.6 1.6 0 1 0 15.9 20.91ZM22.1 26.1A1.6 1.6 0 1 0 22.1 26.11ZM21.9 19.6L23.2 20.7L16.2 28.2L14.9 27.1Z\" fill=\"#16132B\" fill-rule=\"evenodd\"/>",
+  "$fit": {
+    "area-door": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "scanners": {
+      "s": 0.978,
+      "tx": 1.89,
+      "ty": 0.53
+    },
+    "scan-in-a-browser-or-the-iphone-and-android-apps": {
+      "s": 1.028,
+      "tx": 1.2,
+      "ty": -0.41
+    },
+    "keep-scanning-without-a-connection": {
+      "s": 0.978,
+      "tx": 1.89,
+      "ty": 0.04
+    },
+    "hardware-barcode-scanners": {
+      "s": 1.119,
+      "tx": -1.07,
+      "ty": -2.86
+    },
+    "find-someone-by-name": {
+      "s": 0.849,
+      "tx": 4,
+      "ty": 4.98
+    },
+    "door-staff-with-pins": {
+      "s": 1.034,
+      "tx": 0.83,
+      "ty": -0.82
+    },
+    "live-counts-who-s-in-and-roll-call": {
+      "s": 1.111,
+      "tx": -0.44,
+      "ty": -2.86
+    },
+    "entry-rules-cooldown-re-entry-in-and-out": {
+      "s": 0.952,
+      "tx": 2.39,
+      "ty": 0.91
+    },
+    "entry-rules-capacity-and-auto-tap-out": {
+      "s": 1.147,
+      "tx": -1.32,
+      "ty": -3.53
+    },
+    "desk-console": {
+      "s": 1.046,
+      "tx": 0.6,
+      "ty": -1.21
+    },
+    "customer-facing-screen": {
+      "s": 0.989,
+      "tx": 1.68,
+      "ty": 0.26
+    },
+    "zones-and-gates": {
+      "s": 1.04,
+      "tx": 0.71,
+      "ty": -0.96
+    },
+    "design-what-staff-see-for-each-pass": {
+      "s": 1,
+      "tx": 1.48,
+      "ty": 0
+    },
+    "manager-approval-and-overrides": {
+      "s": 1.028,
+      "tx": 0.94,
+      "ty": -0.93
+    },
+    "scan-history-kept": {
+      "s": 0.88,
+      "tx": 4.5,
+      "ty": 2.86
+    },
+    "export-scan-history": {
+      "s": 1.034,
+      "tx": 0.83,
+      "ty": 0.01
+    },
+    "area-team": {
+      "s": 1.065,
+      "tx": 0.24,
+      "ty": -1.61
+    },
+    "team-members": {
+      "s": 1.092,
+      "tx": -0.27,
+      "ty": -2.92
+    },
+    "admin-operator-and-read-only-roles": {
+      "s": 1.057,
+      "tx": 0.02,
+      "ty": -1.9
+    },
+    "author-reviewer-publisher-and-integration-roles": {
+      "s": 1.125,
+      "tx": -1.46,
+      "ty": -3.45
+    },
+    "locations-with-their-own-staff-and-counts": {
+      "s": 1.077,
+      "tx": 0.01,
+      "ty": -2.01
+    },
+    "sign-in-with-your-company-s-identity-provider": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "add-and-remove-team-members-automatically": {
+      "s": 1.046,
+      "tx": 0.5,
+      "ty": -1
+    },
+    "audit-log": {
+      "s": 1.071,
+      "tx": 0.34,
+      "ty": -1.7
+    },
+    "export-the-audit-log": {
+      "s": 0.947,
+      "tx": 2.1,
+      "ty": 1.46
+    },
+    "activity-reports": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "organizations-on-one-bill-sharing-the-allowance": {
+      "s": 1.016,
+      "tx": 1.17,
+      "ty": -0.03
+    },
+    "create-organizations-by-api-with-usage-per-organization": {
+      "s": 0.967,
+      "tx": 2.1,
+      "ty": 0.79
+    },
+    "area-service": {
+      "s": 0.886,
+      "tx": 3.64,
+      "ty": 3.22
+    },
+    "support": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "priority-support": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "uptime-commitment": {
+      "s": 0.997,
+      "tx": 1.53,
+      "ty": -0.18
+    },
+    "data-processing-agreement": {
+      "s": 0.962,
+      "tx": 1.96,
+      "ty": 0.91
+    },
+    "25-off-for-nonprofits-member-run-clubs-schools-and-public-bo": {
+      "s": 1.09,
+      "tx": -0.23,
+      "ty": -2.43
+    }
+  }
 }

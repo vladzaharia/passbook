@@ -286,3 +286,26 @@
     zoom: 1.4;
   }
 }
+
+/* Tablet portrait: the board fills the screen and the recent scans share what is left. */
+@media (orientation: portrait) and (min-width: 700px) {
+  .mon-board {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .mon-main,
+  .mon-recent {
+    display: flex;
+    flex-direction: column;
+  }
+  .mon-main {
+    align-items: stretch;
+  }
+  .mon-recent {
+    flex: 1;
+  }
+  .mon-grid {
+    flex: 1;
+    grid-auto-rows: minmax(0, 150px);
+    align-content: start;
+  }
+}

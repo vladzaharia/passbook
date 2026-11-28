@@ -46,12 +46,14 @@ export function IdleView({
   onOpen,
   onUndo,
   onProblems,
+  onHelp,
 }: {
   facts: IdleFacts;
   keys: readonly ShortcutRow[];
   onOpen: (item: ActivityItem) => void;
   onUndo: (scanId: string) => void;
   onProblems: () => void;
+  onHelp: () => void;
 }) {
   const { items, now, timeZone } = facts;
   const last = items.find((item) => item.outcome === 'ok') ?? items[0];
@@ -156,7 +158,7 @@ export function IdleView({
           </span>
         </button>
       </div>
-      <p className="op-keys">
+      <button type="button" className="op-keys" onClick={onHelp}>
         {keys.map((row) => (
           <span key={row.id}>
             {row.keys.map((key) => (
@@ -165,7 +167,7 @@ export function IdleView({
             {row.label}
           </span>
         ))}
-      </p>
+      </button>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { ApiError } from '../../lib/errors.ts';
 import { NoAccessState } from '../../ui/no-access-state.tsx';
 import { ToolHostProvider, useToolHost } from '../host/tool-host.tsx';
 import { useToolApi, useToolMode, useToolScope } from '../host/tool-scope.ts';
-import { failedLine, ResettingState, ToolEmpty } from './states.tsx';
+import { failedLine, ResettingState, ToolEmpty, ToolFailed } from './states.tsx';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -41,10 +41,35 @@ describe('shared states (design §6)', () => {
     expect(status.querySelector('[tabindex]')).toBeNull();
   });
 
+  it('a refusal says so and offers no Retry; other failures keep it', () => {
+    const refused = new ApiError({ status: 403, code: 'WORKBENCH_TEST_ONLY' });
+    expect(failedLine(refused)).toBe('Not available with a Workbench token.');
+    const { unmount } = render(<ToolFailed error={refused} onRetry={() => undefined} />);
+    expect(screen.getByText('Not available with a Workbench token.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    unmount();
+    for (const status of [0, 429, 500]) {
+      const view = render(
+        <ToolFailed error={new ApiError({ status, code: 'x' })} onRetry={() => undefined} />,
+      );
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+      view.unmount();
+    }
+  });
+
   it('a failure says whether it was the network, access or the server', () => {
     expect(failedLine(new ApiError({ status: 0, code: 'network' }))).toMatch(/connection/);
     expect(failedLine(new ApiError({ status: 403, code: 'forbidden' }))).toMatch(/access/);
     expect(failedLine(new ApiError({ status: 500, code: 'internal' }))).toMatch(/Try again/);
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited' }))).toBe(
+      'Too many requests. Try again in a minute.',
+    );
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited', retryAfter: 20 }))).toBe(
+      'Too many requests. Try again in 20 s.',
+    );
+    expect(failedLine(new ApiError({ status: 429, code: 'rate_limited', retryAfter: 90 }))).toBe(
+      'Too many requests. Try again in 2 min.',
+    );
   });
 });
 

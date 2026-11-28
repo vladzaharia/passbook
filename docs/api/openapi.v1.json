@@ -23169,34 +23169,34 @@
                 "key": {
                   "type": "string",
                   "enum": [
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "email.perDay",
+                    "brand.mark",
+                    "domains",
+                    "print",
+                    "join.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "messages.perDay",
+                    "scanning.devices",
+                    "nfc",
+                    "members",
+                    "members.developers",
                     "api",
                     "api.rateTier",
                     "api.keys",
                     "apps",
                     "webhooks",
                     "webhooks.endpoints",
-                    "connections",
-                    "connectors",
-                    "wallet.google",
-                    "wallet.samsung",
-                    "print",
-                    "nfc",
-                    "scanning.devices",
-                    "join.perDay",
-                    "messages.perDay",
-                    "passes.changesPerDay",
-                    "passes.live",
-                    "passes.test",
-                    "templates",
-                    "templates.uploads",
-                    "templates.stylesBlocked",
-                    "email.perDay",
-                    "members",
-                    "members.developers",
-                    "brand.mark",
-                    "domains",
                     "identity.own",
-                    "identity.managed"
+                    "identity.managed",
+                    "connections",
+                    "connectors"
                   ]
                 },
                 "value": {
@@ -23280,34 +23280,34 @@
                 "key": {
                   "type": "string",
                   "enum": [
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "email.perDay",
+                    "brand.mark",
+                    "domains",
+                    "print",
+                    "join.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "messages.perDay",
+                    "scanning.devices",
+                    "nfc",
+                    "members",
+                    "members.developers",
                     "api",
                     "api.rateTier",
                     "api.keys",
                     "apps",
                     "webhooks",
                     "webhooks.endpoints",
-                    "connections",
-                    "connectors",
-                    "wallet.google",
-                    "wallet.samsung",
-                    "print",
-                    "nfc",
-                    "scanning.devices",
-                    "join.perDay",
-                    "messages.perDay",
-                    "passes.changesPerDay",
-                    "passes.live",
-                    "passes.test",
-                    "templates",
-                    "templates.uploads",
-                    "templates.stylesBlocked",
-                    "email.perDay",
-                    "members",
-                    "members.developers",
-                    "brand.mark",
-                    "domains",
                     "identity.own",
-                    "identity.managed"
+                    "identity.managed",
+                    "connections",
+                    "connectors"
                   ]
                 },
                 "limit": {
@@ -33721,34 +33721,34 @@
                 "key": {
                   "type": "string",
                   "enum": [
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "email.perDay",
+                    "brand.mark",
+                    "domains",
+                    "print",
+                    "join.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "messages.perDay",
+                    "scanning.devices",
+                    "nfc",
+                    "members",
+                    "members.developers",
                     "api",
                     "api.rateTier",
                     "api.keys",
                     "apps",
                     "webhooks",
                     "webhooks.endpoints",
-                    "connections",
-                    "connectors",
-                    "wallet.google",
-                    "wallet.samsung",
-                    "print",
-                    "nfc",
-                    "scanning.devices",
-                    "join.perDay",
-                    "messages.perDay",
-                    "passes.changesPerDay",
-                    "passes.live",
-                    "passes.test",
-                    "templates",
-                    "templates.uploads",
-                    "templates.stylesBlocked",
-                    "email.perDay",
-                    "members",
-                    "members.developers",
-                    "brand.mark",
-                    "domains",
                     "identity.own",
-                    "identity.managed"
+                    "identity.managed",
+                    "connections",
+                    "connectors"
                   ]
                 },
                 "value": {
@@ -33994,34 +33994,34 @@
                 "key": {
                   "type": "string",
                   "enum": [
+                    "templates",
+                    "templates.uploads",
+                    "templates.stylesBlocked",
+                    "wallet.google",
+                    "wallet.samsung",
+                    "email.perDay",
+                    "brand.mark",
+                    "domains",
+                    "print",
+                    "join.perDay",
+                    "passes.changesPerDay",
+                    "passes.live",
+                    "passes.test",
+                    "messages.perDay",
+                    "scanning.devices",
+                    "nfc",
+                    "members",
+                    "members.developers",
                     "api",
                     "api.rateTier",
                     "api.keys",
                     "apps",
                     "webhooks",
                     "webhooks.endpoints",
-                    "connections",
-                    "connectors",
-                    "wallet.google",
-                    "wallet.samsung",
-                    "print",
-                    "nfc",
-                    "scanning.devices",
-                    "join.perDay",
-                    "messages.perDay",
-                    "passes.changesPerDay",
-                    "passes.live",
-                    "passes.test",
-                    "templates",
-                    "templates.uploads",
-                    "templates.stylesBlocked",
-                    "email.perDay",
-                    "members",
-                    "members.developers",
-                    "brand.mark",
-                    "domains",
                     "identity.own",
-                    "identity.managed"
+                    "identity.managed",
+                    "connections",
+                    "connectors"
                   ]
                 },
                 "value": {
@@ -62367,6 +62367,127 @@
                     "upload": {
                       "type": "boolean",
                       "default": false
+                    },
+                    "read": {
+                      "type": "object",
+                      "properties": {
+                        "fetch": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "list": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "delta": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "import": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "upload": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "default": {
+                        "fetch": false,
+                        "list": false,
+                        "delta": false,
+                        "import": false,
+                        "upload": false
+                      }
+                    },
+                    "write": {
+                      "type": "object",
+                      "properties": {
+                        "objects": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "create",
+                                "update",
+                                "delete"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "default": {
+                        "objects": {}
+                      },
+                      "required": [
+                        "objects"
+                      ]
+                    },
+                    "inbound": {
+                      "type": "object",
+                      "properties": {
+                        "webhook": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "manual",
+                            "managed"
+                          ]
+                        }
+                      },
+                      "default": {
+                        "webhook": "none"
+                      },
+                      "required": [
+                        "webhook"
+                      ]
+                    },
+                    "outbound": {
+                      "type": "object",
+                      "properties": {
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "pass.issued",
+                              "pass.updated",
+                              "pass.voided",
+                              "pass.unvoided",
+                              "pass.removed",
+                              "pass.restored",
+                              "pass.replaced",
+                              "pass.installed",
+                              "pass.uninstalled",
+                              "pass.scanned",
+                              "pass.scan_refused",
+                              "pass.scan_undone",
+                              "pass.channels_changed",
+                              "pass.printed",
+                              "pass.print_voided",
+                              "push.failed",
+                              "email.failed"
+                            ]
+                          }
+                        }
+                      },
+                      "default": {
+                        "events": []
+                      },
+                      "required": [
+                        "events"
+                      ]
+                    },
+                    "auth": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "secret",
+                        "oauth2"
+                      ],
+                      "default": "none"
                     }
                   },
                   "required": [
@@ -62679,6 +62800,127 @@
               "upload": {
                 "type": "boolean",
                 "default": false
+              },
+              "read": {
+                "type": "object",
+                "properties": {
+                  "fetch": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "list": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "delta": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "import": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "upload": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "default": {
+                  "fetch": false,
+                  "list": false,
+                  "delta": false,
+                  "import": false,
+                  "upload": false
+                }
+              },
+              "write": {
+                "type": "object",
+                "properties": {
+                  "objects": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "create",
+                          "update",
+                          "delete"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "default": {
+                  "objects": {}
+                },
+                "required": [
+                  "objects"
+                ]
+              },
+              "inbound": {
+                "type": "object",
+                "properties": {
+                  "webhook": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "manual",
+                      "managed"
+                    ]
+                  }
+                },
+                "default": {
+                  "webhook": "none"
+                },
+                "required": [
+                  "webhook"
+                ]
+              },
+              "outbound": {
+                "type": "object",
+                "properties": {
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "pass.issued",
+                        "pass.updated",
+                        "pass.voided",
+                        "pass.unvoided",
+                        "pass.removed",
+                        "pass.restored",
+                        "pass.replaced",
+                        "pass.installed",
+                        "pass.uninstalled",
+                        "pass.scanned",
+                        "pass.scan_refused",
+                        "pass.scan_undone",
+                        "pass.channels_changed",
+                        "pass.printed",
+                        "pass.print_voided",
+                        "push.failed",
+                        "email.failed"
+                      ]
+                    }
+                  }
+                },
+                "default": {
+                  "events": []
+                },
+                "required": [
+                  "events"
+                ]
+              },
+              "auth": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "secret",
+                  "oauth2"
+                ],
+                "default": "none"
               }
             },
             "required": [
@@ -114109,7 +114351,7 @@
                   "updatedAt": 1795399200000,
                   "items": [
                     {
-                      "key": "api",
+                      "key": "templates",
                       "value": 15,
                       "presetValue": 20,
                       "source": "preset",
@@ -114227,7 +114469,7 @@
                   "updatedAt": 1795399200000,
                   "items": [
                     {
-                      "key": "api",
+                      "key": "templates",
                       "value": 15,
                       "presetValue": 20,
                       "source": "preset",
@@ -115366,6 +115608,7 @@
           }
         },
         "operationId": "templates.getTemplates",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "list"
@@ -148796,6 +149039,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
@@ -150524,6 +150768,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
@@ -151069,6 +151314,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "API_KEY_RETIRE_SET",
@@ -160799,6 +161045,7 @@
           "SCAN_PASS_CHANGED",
           "SCAN_STAFF_CHANGED",
           "TAG_ASSIGN_FORBIDDEN",
+          "TAG_HOLDER_CHANGED",
           "TAG_NOT_FOUND",
           "TAG_SCANNER_ONLY",
           "TAG_TYPE_NOT_FOUND",
@@ -170051,6 +170298,53 @@
                           "label": {
                             "type": "string"
                           },
+                          "reason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "not_found",
+                              "code_replaced",
+                              "ambiguous",
+                              "test_pass",
+                              "live_pass",
+                              "not_accepted",
+                              "wrong_event",
+                              "removed",
+                              "voided",
+                              "expired",
+                              "no_balance",
+                              "card_full",
+                              "managed_elsewhere",
+                              "limit_reached",
+                              "zone_not_included",
+                              "outside_hours",
+                              "guest_expired",
+                              "guest_visits_used",
+                              "suspended",
+                              "tag_lost",
+                              "tag_not_allowed",
+                              "tag_invalid",
+                              "tag_expired",
+                              "channel_off",
+                              "print_replaced",
+                              "print_voided",
+                              "already_done",
+                              "cooldown",
+                              "not_yet_valid",
+                              "ended",
+                              "capacity_full",
+                              "check_required",
+                              "needs_approval",
+                              "stale",
+                              "in_progress",
+                              "still_inside",
+                              "not_inside",
+                              "choose",
+                              null
+                            ]
+                          },
                           "presented": {
                             "type": "boolean"
                           },
@@ -171558,6 +171852,7 @@
                       "kind": "ok",
                       "direction": "in",
                       "label": "Ada Example",
+                      "reason": null,
                       "presented": false,
                       "occupancy": {
                         "place": {

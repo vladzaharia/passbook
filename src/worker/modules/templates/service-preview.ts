@@ -9,7 +9,7 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { AppError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   appliedBranding,
@@ -37,7 +37,11 @@ export async function previewMany(
   requireTemplateReader(auth);
   if (orgId) await requireTemplateOrgRead(ctx, auth, orgId);
   else if (auth.kind === 'session' && !auth.roles.includes('admin'))
-    throw new ForbiddenError('An organization is required to preview templates.', 'ORG_REQUIRED');
+    throw new ValidationError(
+      'An organization is required to preview templates.',
+      [],
+      'ORG_REQUIRED',
+    );
   const results = await Promise.all(
     ids.map(async (id) => {
       try {

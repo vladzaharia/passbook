@@ -21,5 +21,122 @@
   "broadcasts-per-day": "<path d=\"M9.5 21.2a1.5 1.5 0 0 1 1.5-1.5H14l9.4-4.2a1 1 0 0 1 1.4.9v15.2a1 1 0 0 1-1.4.9L14 28.3h-3a1.5 1.5 0 0 1-1.5-1.5z M12.8 28.5h3.6l1 4h-3.6z\" fill=\"#16132B\"/><path d=\"M27.6 20.2a5 5 0 0 1 0 7.6\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
   "scheduled-broadcasts": "<path d=\"M21.46 17.43A7.2 7.2 0 1 1 13.48 19.57\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M10.8 17.32L16.17 21.82L16.18 16.35Z\" fill=\"#16132B\"/><path d=\"M19 20.6v4l3 1.9\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
   "automatic-reminders-active-rules": "<path d=\"M19 15.5c-4 0-6.2 3-6.2 6.6v3.2l-2.3 2.7v.9h17v-.9l-2.3-2.7v-3.2c0-3.6-2.2-6.6-6.2-6.6z M19 29.4a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8z\" fill=\"#16132B\"/>",
-  "bulk-changes-per-day": "<path d=\"M10 18.3l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 16.8h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 24.2l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 22.7h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 30.1l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 28.6h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/>"
+  "bulk-changes-per-day": "<path d=\"M10 18.3l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 16.8h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 24.2l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 22.7h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 30.1l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 28.6h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/>",
+  "$fit": {
+    "area-templates": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "templates": {
+      "s": 1.01,
+      "tx": 0.73,
+      "ty": 0.16
+    },
+    "all-23-blueprints": {
+      "s": 1.034,
+      "tx": 0.11,
+      "ty": -1.02
+    },
+    "visual-designer": {
+      "s": 1.071,
+      "tx": -0.73,
+      "ty": -1.28
+    },
+    "boarding-pass-and-transit-ticket-style": {
+      "s": 1.125,
+      "tx": -1.04,
+      "ty": -3
+    },
+    "upload-your-own-template-files": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "stamps-balances-and-packs": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "expiry-and-term-rules": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "show-on-the-lock-screen-near-a-time": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "show-on-the-lock-screen-near-a-place": {
+      "s": 1.046,
+      "tx": 0.6,
+      "ty": -1
+    },
+    "beacons": {
+      "s": 1.136,
+      "tx": -1.11,
+      "ty": -3.26
+    },
+    "several-events-or-dates-on-one-pass": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "bundles-for-groups-and-families": {
+      "s": 0.975,
+      "tx": 1.95,
+      "ty": 0.82
+    },
+    "photo-on-the-pass": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "move-a-pass-to-a-new-holder": {
+      "s": 1.084,
+      "tx": -0.12,
+      "ty": -2.02
+    },
+    "void-and-remove-from-the-phone": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "area-sending": {
+      "s": 1.016,
+      "tx": 0.89,
+      "ty": -0.64
+    },
+    "push-updates-to-passes": {
+      "s": 1.084,
+      "tx": -0.12,
+      "ty": -2.02
+    },
+    "join-links-and-qr-sign-up-per-day": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "broadcasts-per-day": {
+      "s": 1.046,
+      "tx": -0.42,
+      "ty": -1.1
+    },
+    "scheduled-broadcasts": {
+      "s": 1.097,
+      "tx": -0.37,
+      "ty": -2.77
+    },
+    "automatic-reminders-active-rules": {
+      "s": 1.016,
+      "tx": 1.17,
+      "ty": -0.74
+    },
+    "bulk-changes-per-day": {
+      "s": 1.058,
+      "tx": 0.21,
+      "ty": -1.6
+    }
+  }
 }

@@ -194,10 +194,14 @@ test.describe('contexts', () => {
         }),
       );
       await page.goto(`/workbench/o/${encodeURIComponent(org().id)}/logs`);
-      await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
-      expect(
-        (await page.getByRole('button', { name: 'Try again' }).first().boundingBox())?.height,
-      ).toBeGreaterThanOrEqual(43.5);
+      const retry = page.getByRole('button', { name: 'Try again' }).first();
+      if (status === 403) {
+        await expect(page.getByText('You do not have access')).toBeVisible();
+        await expect(retry).toHaveCount(0);
+      } else {
+        await expect(retry).toBeVisible();
+        expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(43.5);
+      }
       await shot(page, `state-${name}`);
       await page.unroute('**/api/v1/request-logs*');
     }

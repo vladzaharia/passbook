@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { plural } from '@/shared/plural.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { handleStaleSave } from '@/web/lib/stale-save.ts';
 import {
@@ -216,7 +217,7 @@ export function SettingsForm({ scope, fields, guard, aside, columns }: SettingsF
         extra={
           platform && dirty ? (
             <span className="text-sm text-fg-muted">
-              {dirtyFields.length} {dirtyFields.length === 1 ? 'change' : 'changes'} · Not applied
+              {plural(dirtyFields.length, 'change')} · Not applied
               {advancedDirty ? ` · ${advancedDirty} in Advanced` : ''}
             </span>
           ) : undefined

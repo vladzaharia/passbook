@@ -1,7 +1,7 @@
 // The states of a paired scanner, in the order they are set up. Each one is a console change
 // (role, settings, hours) followed by a reload, so the screen is the one a device would show.
 import type { BrowserContext, Page } from '@playwright/test';
-import { closedHours, type ScanApi, type ScanFixtures } from './scan-api.ts';
+import { closedHours, resetPin, type ScanApi, type ScanFixtures } from './scan-api.ts';
 
 export type Run = {
   page: Page;
@@ -101,16 +101,23 @@ export async function tabletStates(r: Run): Promise<void> {
   const person = r.fx.staff.find((s) => s.name === 'Mara Lopez') ?? r.fx.staff[0];
   const pin = person && r.pins.get(person.id);
   if (person && pin) {
-    const key = async (digits: string) => {
+    const keyIn = async (digits: string) => {
       for (const d of digits)
         await page.getByTestId('scan-keypad').getByRole('button', { name: d, exact: true }).click();
     };
-    await key('00000');
+    await keyIn('000');
     await r.snap('device-staff-pin-entered');
-    await key('0');
+    await keyIn('000');
     await page.waitForTimeout(1_200);
     await r.snap('device-staff-wrong-pin');
-    await key(pin);
+    for (let i = 0; i < 8 && !(await page.getByText(/Too many wrong PINs/).isVisible()); i++) {
+      await keyIn('000000');
+      await page.waitForTimeout(700);
+    }
+    await r.snap('device-staff-lockout');
+    const fresh = await resetPin(r.api, r.fx.orgId, person.id);
+    await reload(r);
+    await keyIn(fresh);
     await page.waitForTimeout(1_500);
     await r.snap('device-staff-signed-in-start');
     if (await start(r).isVisible()) await start(r).click();

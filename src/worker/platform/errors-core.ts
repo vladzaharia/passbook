@@ -72,8 +72,8 @@ export class ForbiddenError extends AppError {
   }
 }
 export class NotFoundError extends AppError {
-  constructor(message = 'Not found.', code = 'NOT_FOUND') {
-    super(code, 404, message);
+  constructor(message = 'Not found.', code = 'NOT_FOUND', issues?: FieldIssue[]) {
+    super(code, 404, message, issues ? { issues } : undefined);
   }
 }
 export class ConflictError extends AppError {
