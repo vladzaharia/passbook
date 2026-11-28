@@ -18,6 +18,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Text | `fg-strong` titles, `fg` body and values, `fg-muted` labels and meta, `fg-subtle` placeholders (`--wl-placeholder`, 4.5:1 or more; "optional" goes in the label) | Dark `fg-muted` ≈ #8f98ad: 4.5–7:1 on raised, so labels separate from values |
 | Accent | `accent` (#2dd4bf dark, #0f766e light) | Selection and the one primary action per view. Never origin, role or health |
 | States | `success`, `warning`, `danger`, `info` + `-subtle`/`-border` | `success` only for healthy or working; `info` is blue (not Polaris violet, not foil) |
+| Screen tones | `--pk-tone-ok`, `-heads-up`, `-refused`, `-system` + `-wash`; slate `--pk-slate-bg`, `-line`, `-fg` | Verdicts and states. Wash is the tone over the page, 10 % light and 14 % dark. System is slate, never `info`. `styles/tone-contrast.test.ts` holds text at 4.5:1 and glyph at 3:1 in both themes |
 
 - No hex values in components. Exception: pass art (pass.json colours).
 - One source for the SPA, SSR pages and emails. `npm run gen` compiles the SPA's tokens, kit
@@ -376,7 +377,16 @@ Action icons (`src/web/lib/action-icons.ts`):
 
 ## Empty, loading, error
 
-- `EmptyState` requires `art`. Page level: dashed box, 96×72 art, title `text-sm font-medium`,
+- `StateView` (`ui/state-view.tsx`) is the one renderer of empty, filtered, failed, not found, no
+  access and loading: buddy and prop, title, at most one line, one action, an optional link. Sizes
+  `inline` (card or row), `panel`, `stage`, `hosted`; `data-state`, `data-size`, `data-tone` on
+  `data-testid="state-view"`. Failed is slate and the only state with Try again; forbidden is
+  slate; the rest are neutral. Loading is a `Checking…` band. It fades in, 120 ms under reduced
+  motion. `artLoader` loads the art on demand (scan keeps StateArt out of its entry).
+  `EmptyState`, `FilteredEmpty`, `DetailNotFound`, `ErrorState` and `NoAccessState` are adapters
+  over it until their importers move; `ui/kit-retired.test.ts` lists the importers still to move
+  and fails on a new one.
+- `EmptyState` requires `art`. Page level: bordered panel, 96×72 art, title `text-sm font-medium`,
   one action. Inside a card: `inline` (no border, 64×48 art, one line). Navigation actions are
   outline; only create is primary.
 - Filtered: the entity art dimmed with the lens over it, `No <things> match`, `Clear filters`.
@@ -407,7 +417,7 @@ Action icons (`src/web/lib/action-icons.ts`):
   is `DetailNotFound` under the page's header (breadcrumbs, `<title>`), other errors `ErrorState`
   with Retry, and a 403 is thrown to the route's error page (`RouteError`, Forbidden). Page code
   never imports `ui/layout/error-pages.tsx` (it would pull the shell out of the entry chunk).
-- Error: `ErrorState` is a neutral card with a danger icon tile and the `unplugged` art, one
+- Error: `ErrorState` is a slate StateView (no red tile) with the `unplugged` art, one
   sentence (what happened, what to do), Retry (outline). The request id hides under `Details` in
   `xs` muted mono. Unreadable responses: `Could not read the response. Reload.` Inside a card it is
   `inline`.

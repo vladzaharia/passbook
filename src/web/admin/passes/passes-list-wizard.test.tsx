@@ -184,7 +184,7 @@ describe('passes list', () => {
         '/api/v1/passes': () => problem(500, 'boom', 'internal'),
       }),
     });
-    expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('voids from the row menu', async () => {

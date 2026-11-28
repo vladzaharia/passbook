@@ -180,7 +180,7 @@ describe('Home (summary fails)', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Test passes' });
-    expect(await screen.findAllByRole('button', { name: 'Retry' })).not.toHaveLength(0);
+    expect(await screen.findAllByRole('button', { name: 'Try again' })).not.toHaveLength(0);
     expect(document.querySelector('[data-loading="content"]')).toBeNull();
   });
 });

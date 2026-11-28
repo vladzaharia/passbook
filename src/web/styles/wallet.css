@@ -31,6 +31,8 @@
   --wl-org-fallback: #475569;
   /* Filled buttons lighten on hover in dark and darken in light, away from their text. */
   --wl-hover-mix: white;
+  /* Tone washes: 14 % over the page in dark, 10 % in light. */
+  --pk-tone-wash: 14%;
 }
 
 @media (prefers-color-scheme: light) {
@@ -59,11 +61,13 @@
     --wl-field-readonly: var(--pk-surface-sunken);
     --wl-placeholder: #5d667b;
     --wl-hover-mix: black;
+    --pk-tone-wash: 10%;
   }
 }
 
 [data-theme="light"] {
   --wl-hover-mix: black;
+  --pk-tone-wash: 10%;
   /* The brand's light value again: the dark muted above also matches :root, and comes later. */
   --pk-text-muted: #48536b;
   --pk-accent: #0f766e;
@@ -114,4 +118,37 @@
     --pk-border-subtle: #7e8699;
     --wl-placeholder: #5d667b;
   }
+}
+
+/* Screen tones (unify-screens spec §1): ok, heads up, refused and system, once for every surface.
+   Glyph and text take the tone; the band is the tone washed over the page. System is slate: the
+   sunken ground, the strong line and the strong type, never info blue. */
+:root {
+  --pk-tone-ok: var(--pk-success);
+  --pk-tone-heads-up: var(--pk-warning);
+  --pk-tone-refused: var(--pk-danger);
+  --pk-tone-system: var(--pk-slate-fg);
+  --pk-slate-bg: var(--pk-surface-sunken);
+  --pk-slate-line: var(--pk-border-strong);
+  --pk-slate-fg: var(--pk-text-strong);
+  --pk-tone-ok-wash: color-mix(
+    in srgb,
+    var(--pk-tone-ok) var(--pk-tone-wash),
+    var(--pk-surface-page)
+  );
+  --pk-tone-heads-up-wash: color-mix(
+    in srgb,
+    var(--pk-tone-heads-up) var(--pk-tone-wash),
+    var(--pk-surface-page)
+  );
+  --pk-tone-refused-wash: color-mix(
+    in srgb,
+    var(--pk-tone-refused) var(--pk-tone-wash),
+    var(--pk-surface-page)
+  );
+  --pk-tone-system-wash: color-mix(
+    in srgb,
+    var(--pk-tone-system) var(--pk-tone-wash),
+    var(--pk-surface-page)
+  );
 }

@@ -5,6 +5,8 @@ const SessionEndedDialog = lazy(() =>
   import('./session-ended-dialog.tsx').then((m) => ({ default: m.SessionEndedDialog })),
 );
 
+export { SignedOutCard } from './signed-out-card.tsx';
+
 /** The dialog loads only once a session ends: the first load carries none of it. */
 export function SessionEnded() {
   return useSessionEnded() ? (

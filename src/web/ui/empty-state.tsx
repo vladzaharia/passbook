@@ -2,19 +2,12 @@ import { Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { backTo, notFoundTitle } from '@/shared/copy/states.ts';
-import { cn } from '../lib/cn.ts';
 import { ENTITY, type EntityKind } from '../lib/entities.ts';
-import {
-  type ArtName,
-  Buddy,
-  type BuddyScene,
-  EntityArt,
-  LensOverlay,
-  type WalletMood,
-  type WalletState,
-} from './art/index.ts';
-import { ACTED_STATES, type ActedState } from './art/state-acts.ts';
+import type { ArtName, WalletMood, WalletState } from './art/index.ts';
 import { Button } from './button.tsx';
+import { type StateKind, StateView } from './state-view.tsx';
+
+export { STAGE_SURFACE } from './state-view.tsx';
 
 export interface EmptyStateProps {
   /** Every empty state names its art; there is no generic picture. */
@@ -38,35 +31,21 @@ export interface EmptyStateProps {
   heading?: boolean;
   /** `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). */
   surface?: 'stage';
-  /** Replaces the title's type (the Workbench sets one scale for all its states). */
+  /** Replaces the title's type (the Workbench sets one scale for its states). */
   titleClassName?: string;
   className?: string;
 }
 
-/** The dot grid a pass stands on: the Workbench's empty canvas. */
-export const STAGE_SURFACE =
-  'rounded-lg border border-border bg-surface-sunken bg-[radial-gradient(color-mix(in_oklab,var(--pk-border-strong)_38%,transparent)_1px,transparent_1.2px)] bg-size-[16px_16px]';
+const stateOf = (art: ArtName, variant: 'empty' | 'filtered'): StateKind =>
+  variant === 'filtered'
+    ? 'filtered'
+    : art === 'lock'
+      ? 'no-access'
+      : art === 'torn'
+        ? 'not-found'
+        : 'empty';
 
-/** Not found and forbidden: the SSR pages' compositions (art/state-acts.ts), always sad. */
-function stateOf(art: ArtName, artState: WalletState | undefined): ActedState | undefined {
-  if (art === 'torn') return 'torn';
-  if (art === 'lock') return 'no-access';
-  if (art === 'wallet' && artState === 'lost') return 'lost';
-  return undefined;
-}
-
-/** What the buddy acts out over each kind of empty box (art/buddy.tsx). */
-function sceneFor(art: ArtName, filtered: boolean): BuddyScene {
-  if (art === 'wallet') return 'search';
-  if (filtered) return 'sweep';
-  if (art === 'log') return 'flip';
-  return 'inspect';
-}
-
-/**
- * Not inline, the buddy stands inside the box above the title with the entity's art beside it;
- * inline keeps the entity art alone, so a view never shows more than one buddy.
- */
+/** Adapter over StateView (the one renderer): the old props, until importers move. */
 export function EmptyState({
   art,
   artState,
@@ -82,81 +61,22 @@ export function EmptyState({
   titleClassName,
   className,
 }: EmptyStateProps) {
-  const filtered = variant === 'filtered';
-  const Title = heading ? 'h1' : 'p';
-  const state = filtered ? undefined : stateOf(art, artState);
-  const scene = state ? ACTED_STATES[state].scene : sceneFor(art, filtered);
-  // Filtered: the art dims under a lens. Not inline, the buddy holds it.
-  const picture = (
-    <>
-      <EntityArt
-        name={art}
-        size="sm"
-        className={filtered ? 'opacity-60' : undefined}
-        still={still}
-        {...(artState ? { state: artState } : {})}
-      />
-      {filtered ? (
-        <LensOverlay
-          size="sm"
-          still={still}
-          className="absolute right-0 bottom-0 origin-bottom-right translate-x-1/4 scale-60"
-        />
-      ) : null}
-    </>
-  );
   return (
-    <div
-      data-art-host=""
-      className={cn(
-        'relative flex flex-col items-center text-center',
-        inline
-          ? 'gap-1.5 px-4 py-6'
-          : cn(
-              'gap-2 px-6 py-10',
-              surface === 'stage'
-                ? STAGE_SURFACE
-                : 'rounded-lg border border-dashed border-border-strong',
-            ),
-        // The search walk spans a share of the box's width.
-        !inline && scene === 'search' && '[container-type:inline-size]',
-        className,
-      )}
-    >
-      {inline ? (
-        <div className="relative mb-1">{picture}</div>
-      ) : (
-        // The buddy stands on a zero-height floor under its own height, inside the box.
-        <div aria-hidden className="relative mt-[4.5rem] mb-1 h-0 w-full">
-          <Buddy
-            mood={state ? 'sad' : (mood ?? (heading ? 'sad' : 'curious'))}
-            still={still}
-            scene={scene}
-            {...(art === 'wallet'
-              ? { state: artState ?? 'empty' }
-              : { prop: <span className="relative block">{picture}</span> })}
-          />
-        </div>
-      )}
-      <Title
-        tabIndex={heading ? -1 : undefined}
-        className={cn(
-          titleClassName ??
-            (heading
-              ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
-              : 'text-sm font-medium text-fg-strong'),
-        )}
-      >
-        {title}
-      </Title>
-      {description ? <p className="max-w-[65ch] text-sm text-fg-muted">{description}</p> : null}
-      {action ? (
-        // Below sm every action is the row's width, so two empty states line up.
-        <div className={cn(inline ? 'mt-1' : 'mt-2', 'max-sm:w-full max-sm:[&>*]:w-full')}>
-          {action}
-        </div>
-      ) : null}
-    </div>
+    <StateView
+      size={inline ? 'inline' : surface === 'stage' ? 'stage' : 'panel'}
+      state={stateOf(art, variant)}
+      art={art}
+      {...(artState ? { artState } : {})}
+      {...(mood ? { mood } : {})}
+      title={title}
+      line={description}
+      action={action}
+      heading={heading}
+      still={still}
+      canvas={surface === 'stage' && art !== 'lock'}
+      {...(titleClassName ? { titleClassName } : {})}
+      className={className}
+    />
   );
 }
 

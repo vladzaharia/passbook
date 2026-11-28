@@ -347,7 +347,7 @@ describe('Apple API tab', () => {
     });
     const ui = userEvent.setup();
     await ui.click(await screen.findByRole('tab', { name: 'Apple API' }));
-    expect(await screen.findByRole('button', { name: /retry/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
   it('reads as not connected without the binding', async () => {

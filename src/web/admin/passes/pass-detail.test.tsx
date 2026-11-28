@@ -1540,7 +1540,7 @@ describe('pass detail: header actions', () => {
       'href',
       '/admin/passes?orgId=org1',
     );
-    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
   it('shows an error with retry for server failures', async () => {
@@ -1553,7 +1553,7 @@ describe('pass detail: header actions', () => {
       },
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('offers the .pkpass download from the detail header', async () => {

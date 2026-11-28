@@ -158,7 +158,7 @@ describe('my passes', () => {
       },
     });
     expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('heading', { name: 'Gym membership' })).toBeInTheDocument();
   });
 

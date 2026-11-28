@@ -87,7 +87,7 @@ describe('a failed refresh of the contexts (R4 M2)', () => {
     expect(await screen.findByText('Could not refresh your contexts.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Logs', level: 1 })).toBeInTheDocument();
     fail = false;
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() =>
       expect(screen.queryByText('Could not refresh your contexts.')).not.toBeInTheDocument(),
     );
@@ -109,7 +109,7 @@ describe('a failed refresh of the contexts (R4 M2)', () => {
     await refetch(queryClient);
     expect(await screen.findByText('Your session ended')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Logs', level: 1 })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
     // L13: signed in again elsewhere, the next good answer clears the banner.
     fail = false;
     await refetch(queryClient);

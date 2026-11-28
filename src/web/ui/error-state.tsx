@@ -1,15 +1,13 @@
-import { ChevronRight, RefreshCw, TriangleAlert } from 'lucide-react';
+import { ChevronRight, RefreshCw } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { STATE_COPY } from '@/shared/copy/states.ts';
-import { cn } from '../lib/cn.ts';
 import { errorMessage, isApiError } from '../lib/errors.ts';
 import { useChangeCount } from '../lib/motion.ts';
-import { Buddy } from './art/buddy.tsx';
 import { ACTED_STATES } from './art/state-acts.ts';
 import { UnpluggedArt } from './art/unplugged.tsx';
 import { Button } from './button.tsx';
-import { STAGE_SURFACE } from './empty-state.tsx';
 import { useInCard } from './in-card.ts';
+import { StateView } from './state-view.tsx';
 
 export interface ErrorStateProps {
   error?: unknown;
@@ -42,9 +40,9 @@ export function isChunkLoadError(error: unknown): boolean {
 }
 
 /**
- * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy stands inside
+ * Slate card, one sentence, Try again; the request id hides under Details. The sad buddy stands inside
  * the box above the title beside the pulled plug (art/state-art.tsx, as on the SSR 500); inline, a danger tile on
- * the unplugged art. A failure after Retry shakes the art once; the first render never shakes.
+ * the unplugged art. A failure after Try again shakes the art once; the first render never shakes.
  */
 export function ErrorState({
   error,
@@ -86,83 +84,50 @@ export function ErrorState({
   }
 
   return (
-    <div
-      className={cn(
-        'relative flex flex-col items-center gap-4 text-center',
-        surface === 'stage' && !inline
-          ? STAGE_SURFACE
-          : 'rounded-lg border border-border bg-surface-raised p-4 shadow-[var(--wl-edge),var(--pk-elevation-1)]',
-        inline ? 'sm:flex-row sm:text-left' : 'px-6 py-10',
-        className,
-      )}
+    <StateView
+      size={inline ? 'inline' : 'panel'}
+      state="failed"
+      picture={<UnpluggedArt size="sm" />}
+      scene={ACTED_STATES.broken.scene}
+      replay={tries}
+      artRef={art}
+      alert
+      title={subject ? `Could not load ${subject}.` : (title ?? errorMessage(error))}
+      line={subject ? (title ?? errorMessage(error)) : undefined}
+      action={
+        onRetry ? (
+          <Button
+            variant="outline"
+            size="sm"
+            loading={retrying}
+            busy="spin"
+            iconStart={<RefreshCw aria-hidden />}
+            onClick={() => void retry()}
+          >
+            {retryLabel}
+          </Button>
+        ) : undefined
+      }
+      secondary={action}
+      canvas={surface === 'stage' && !inline}
+      {...(titleClassName ? { titleClassName } : {})}
+      className={className}
     >
-      <div ref={art} className={inline ? 'relative shrink-0' : 'relative mt-[4.5rem] h-0 w-full'}>
-        {inline ? (
-          <>
-            <UnpluggedArt size="sm" />
-            <span
+      {requestId || code ? (
+        <details className="group text-xs text-fg-muted">
+          <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-sm px-1 hover:text-fg-strong pointer-coarse:min-h-11 [&::-webkit-details-marker]:hidden">
+            <ChevronRight
               aria-hidden
-              className="absolute -top-1 -left-1 inline-flex size-6 items-center justify-center rounded-md border border-danger-border bg-danger-subtle text-danger [&_svg]:size-3.5"
-            >
-              <TriangleAlert />
-            </span>
-          </>
-        ) : (
-          <Buddy
-            mood="sad"
-            scene={ACTED_STATES.broken.scene}
-            replay={tries}
-            prop={<UnpluggedArt size="sm" />}
-          />
-        )}
-      </div>
-      <div
-        className={cn(
-          'flex min-w-0 flex-1 flex-col items-center gap-2',
-          inline && 'sm:items-start',
-        )}
-      >
-        <p role="alert" className={cn('max-w-[65ch]', titleClassName ?? 'text-sm text-fg-strong')}>
-          {subject ? (
-            <>
-              <span className="block font-medium">Could not load {subject}.</span>
-              {title ?? errorMessage(error)}
-            </>
-          ) : (
-            (title ?? errorMessage(error))
-          )}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {onRetry ? (
-            <Button
-              variant="outline"
-              size="sm"
-              loading={retrying}
-              busy="spin"
-              iconStart={<RefreshCw aria-hidden />}
-              onClick={() => void retry()}
-            >
-              {retryLabel}
-            </Button>
-          ) : null}
-          {action}
-          {requestId || code ? (
-            <details className="group text-xs text-fg-muted">
-              <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-sm px-1 hover:text-fg-strong pointer-coarse:min-h-11 [&::-webkit-details-marker]:hidden">
-                <ChevronRight
-                  aria-hidden
-                  className="size-3.5 motion-safe:transition-transform motion-safe:duration-(--wl-dur-enter) group-open:rotate-90"
-                />
-                Details
-              </summary>
-              <p className="flex flex-col px-1 font-mono text-xs text-fg-muted">
-                {code ? <span>Code {code}</span> : null}
-                {requestId ? <span>Request {requestId}</span> : null}
-              </p>
-            </details>
-          ) : null}
-        </div>
-      </div>
-    </div>
+              className="size-3.5 motion-safe:transition-transform motion-safe:duration-(--wl-dur-enter) group-open:rotate-90"
+            />
+            Details
+          </summary>
+          <p className="flex flex-col px-1 font-mono text-xs text-fg-muted">
+            {code ? <span>Code {code}</span> : null}
+            {requestId ? <span>Request {requestId}</span> : null}
+          </p>
+        </details>
+      ) : null}
+    </StateView>
   );
 }

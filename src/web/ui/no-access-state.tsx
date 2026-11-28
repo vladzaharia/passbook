@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
-import { EmptyState } from './empty-state.tsx';
+import { StateView } from './state-view.tsx';
 
 /**
  * A place this person cannot open here, said once: the lock, one line, the nearest way on. Never a
- * 403 page and never a disabled control (design §6). On the stage surface, so it reads as the
- * tool's own canvas rather than an error.
+ * 403 page and never a disabled control (design §6). A StateView adapter; slate, not an error.
  */
 export function NoAccessState({
   title,
@@ -22,14 +21,15 @@ export function NoAccessState({
   titleClassName?: string;
 }) {
   return (
-    <EmptyState
+    <StateView
+      size="stage"
+      state="no-access"
       art="lock"
       mood="curious"
-      surface="stage"
       heading={heading}
       titleClassName={titleClassName}
       title={title}
-      description={description}
+      line={description}
       action={
         actions ? (
           <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col">{actions}</div>
