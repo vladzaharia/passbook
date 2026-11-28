@@ -229,3 +229,13 @@
     padding-block: 12px;
   }
 }
+
+/* A tall touch screen: rows grow with the pane, up to a cap, so the list is not a strip above blank. */
+@media (pointer: coarse) and (orientation: portrait) and (min-width: 700px) {
+  .op-list-scroll {
+    container-type: size;
+  }
+  .op-row {
+    min-height: clamp(60px, 11cqh, 96px);
+  }
+}

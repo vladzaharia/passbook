@@ -105,7 +105,9 @@ export function TopBar({
           <Layers aria-hidden />
           {T.admits}
           <b className="op-admits-names">{types.join(', ')}</b>
-          <b className="op-admits-count">{T.types.replace('{n}', String(types.length))}</b>
+          <b className="op-admits-count">
+            {types.length === 1 ? T.typeOne : T.types.replace('{n}', String(types.length))}
+          </b>
         </span>
       ) : null}
       <div className="op-top-end">

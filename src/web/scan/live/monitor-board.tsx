@@ -12,6 +12,7 @@ import { type ReactNode, useEffect, useRef } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { reasonHeadline } from '../../../shared/copy/scan-headline.ts';
 import { Buddy } from '../../ui/art/index.ts';
 import '../buddy/beats.css';
 import { fill } from '../ui/copy.ts';
@@ -38,7 +39,8 @@ const ROW_ICON = {
 };
 const FILL_WORD: Record<Fill, string | null> = { open: null, busy: 'Almost full', full: 'Full' };
 
-function Trendline({ trend }: { trend: Trend }) {
+/** `noted`: the heading already says 15 minutes when there is no place count. */
+function Trendline({ trend, noted }: { trend: Trend; noted: boolean }) {
   return (
     <ul className="mon-trend" aria-label="Last 15 minutes">
       <li>
@@ -47,7 +49,7 @@ function Trendline({ trend }: { trend: Trend }) {
       <li>
         <ArrowDownRight aria-hidden /> {trend.left} out
       </li>
-      <li className="mon-trend-note">last 15 min</li>
+      {noted ? <li className="mon-trend-note">last 15 min</li> : null}
     </ul>
   );
 }
@@ -125,7 +127,7 @@ export function MonitorBoard({
                 <TriangleAlert aria-hidden /> {word}
               </p>
             ) : null}
-            <Trendline trend={trend} />
+            <Trendline trend={trend} noted={Boolean(hero)} />
             {others.map((p) => (
               <p key={p.place} className="mon-place">
                 {p.name}{' '}
@@ -172,7 +174,13 @@ export function MonitorBoard({
                     </span>
                     <span className="mon-row-body">
                       <span className="mon-row-name">{row.holder ?? row.label}</span>
-                      {row.holder ? <span className="mon-row-what">{row.label}</span> : null}
+                      {row.holder || row.reason ? (
+                        <span className="mon-row-what">
+                          {row.reason && row.kind !== 'ok'
+                            ? `${row.label} · ${reasonHeadline(row.reason)}`
+                            : row.label}
+                        </span>
+                      ) : null}
                       <span className="mon-row-meta">
                         {row.scannerName} · {sessionTime(row.at, timeZone)}
                       </span>

@@ -35,13 +35,6 @@
   );
   color: var(--pk-accent-fg);
 }
-.scan-operator-eyebrow {
-  color: var(--pk-text-muted);
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
 .scan-operator-lookup,
 .scan-operator-activity {
   min-width: 0;

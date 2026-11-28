@@ -201,10 +201,22 @@ button.op-tile {
   gap: 8px 18px;
   margin-top: 16px;
   padding: 14px 16px;
-  border: 1px dashed var(--op-line);
+  width: 100%;
+  border: 1px solid var(--op-line);
   border-radius: 12px;
+  background: var(--op-raised);
   color: var(--op-muted);
+  cursor: pointer;
+  font: inherit;
   font-size: 13px;
+  text-align: start;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+.op-keys:hover {
+  border-color: var(--pk-text-muted);
+  color: var(--pk-text-strong);
 }
 .op-keys span {
   display: inline-flex;

@@ -82,6 +82,7 @@ export const OPERATOR_COPY = {
     closed: 'Closed',
     admits: 'Admits',
     types: '{n} types',
+    typeOne: '1 type',
     inNow: 'In now',
     of: 'of {n}',
     arrived: '{n} of {total} in',

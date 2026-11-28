@@ -215,12 +215,12 @@
     height: auto;
     min-height: 100dvh;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     /* The fixed "Hold to switch back" button owns the bottom 68px; the buddy stands above it. */
     padding: 24px 24px 68px;
   }
   .cstage-copy {
-    align-self: start;
+    align-self: center;
     padding-top: 28px;
   }
   .cstage-copy h1 {
@@ -233,7 +233,7 @@
     grid-row: 3;
     align-self: end;
     justify-self: center;
-    width: min(100%, 60vw, 520px);
+    width: min(100%, 80vw, 640px);
   }
 }
 /* A short landscape screen (a phone on a stand): verdict on the left, buddy on the right, never scrolls. */
@@ -306,18 +306,16 @@
   }
 }
 
-/* Readable at every width; two short lines, so the button stays clear of the buddy in the middle. */
+/* One line at every width, on a plate so it reads on the blue. */
 button.scan-hold-switch {
-  max-width: 11rem;
   min-height: 44px;
-  font-size: 16px;
+  padding-inline: 16px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 999px;
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-strong);
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.2;
-  white-space: normal;
-  text-align: start;
-}
-@media (min-width: 834px) {
-  button.scan-hold-switch {
-    max-width: none;
-    font-size: 16px;
-  }
+  white-space: nowrap;
 }
