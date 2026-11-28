@@ -9,6 +9,7 @@ import {
   type SqlValue,
   stmt,
 } from '../../platform/db.ts';
+import { PUBLIC_AUDIT_SQL } from '../../platform/repo-audit-public.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
@@ -43,6 +44,8 @@ export interface AuditFilter {
   to?: number;
   /** Exclusive upper bound on id (newest first paging). */
   before?: number;
+  /** Leave out rows of personal orgs, which are private to their owner. */
+  excludePersonal?: boolean;
 }
 
 export async function listAuditRows(
@@ -80,6 +83,7 @@ export async function listAuditRows(
   if (filter.from !== undefined) add('at >= ?', filter.from);
   if (filter.to !== undefined) add('at <= ?', filter.to);
   if (filter.before !== undefined) add('id < ?', filter.before);
+  if (filter.excludePersonal) where.push(PUBLIC_AUDIT_SQL);
   const sql = `SELECT id, at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, detail
      FROM audit_log ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT ?`;
   return all<AuditRow>(db, sql, [...params, limit]);

@@ -2,6 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ApiKeyAuth } from '../../platform/auth.ts';
 import { exactStmt, first } from '../../platform/db.ts';
 import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
+import { RACE_EXPORT_COUNT } from './race-tags.ts';
 import { scanLedgerScopeSql, where } from './repo-feed-scope.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -39,7 +40,7 @@ export interface ScanLogFilter {
  */
 function narrowTenant(f: ScanLogFilter, auth: ScanReadAuthority): string | undefined {
   return !f.orgId && (f.scannerId || f.staffId || f.eventId || f.passId)
-    ? auth.tenant('+s', 'scans')
+    ? auth.tenantOnce('+s', 'scans')
     : undefined;
 }
 
@@ -120,13 +121,11 @@ export async function countScanRows(
   const w = where(f);
   const [authorized, count] = await db.batch([
     scanAuthorizedStmt(db, auth),
-    scanRead(
-      db,
-      auth,
-      `SELECT count(*) AS n FROM (SELECT 1 FROM scans s
-        WHERE ${auth.ok} AND ${narrowTenant(f, auth) ?? auth.tenant('s', 'scans')} AND ${w.sql} LIMIT ?)`,
-      [...w.params, cap + 1],
-    ),
+    scanRead(db, auth, `${RACE_EXPORT_COUNT} SELECT count(*) AS n FROM capped`, [], {
+      ctes: `capped AS MATERIALIZED (SELECT 1 FROM ${auth.rows}scans s
+        WHERE ${auth.present} AND ${narrowTenant(f, auth) ?? auth.tenantOnce('s', 'scans')} AND ${w.sql} LIMIT ?)`,
+      params: [...w.params, cap + 1],
+    }),
   ]);
   const ok = (authorized?.results[0] as { authorized: number } | undefined)?.authorized === 1;
   return { authorized: ok, n: ok ? ((count?.results[0] as { n: number } | undefined)?.n ?? 0) : 0 };

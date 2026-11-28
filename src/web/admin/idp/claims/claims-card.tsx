@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ClaimsView, UpdateClaims } from '@/shared/contracts/idp-access.ts';
 import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { removeClaimConfirm } from '@/web/lib/confirms-idp.ts';
+import { requestStepUp } from '@/web/lib/step-up.ts';
 import {
   Button,
   Card,
@@ -19,6 +20,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { CLAIM_TYPE_LABEL, ClaimDialog } from './claim-dialog.tsx';
+import type { ClaimsAccess } from './use-can-read-claims.ts';
 
 const shown = (value: unknown): string => {
   const text = typeof value === 'string' ? value : JSON.stringify(value);
@@ -31,6 +33,7 @@ export function ClaimsCard({
   save,
   namespaced = false,
   hideOnError = false,
+  access = 'ok',
   id,
 }: {
   query: UseQueryResult<ClaimsView>;
@@ -39,6 +42,8 @@ export function ClaimsCard({
   namespaced?: boolean;
   /** The user card hides when the binding is absent. */
   hideOnError?: boolean;
+  /** Without a recent Polaris ID sign-in the card asks for one instead of loading. */
+  access?: ClaimsAccess;
   id?: string;
 }) {
   const [editing, setEditing] = useState<{ key: string } | 'new' | null>(null);
@@ -53,18 +58,33 @@ export function ClaimsCard({
       <CardHeader
         title="Claims"
         actions={
-          <Button
-            size="sm"
-            variant="ghost"
-            iconStart={<Plus aria-hidden />}
-            onClick={() => setEditing('new')}
-          >
-            Add claim
-          </Button>
+          access !== 'ok' ? null : (
+            <Button
+              size="sm"
+              variant="ghost"
+              iconStart={<Plus aria-hidden />}
+              onClick={() => setEditing('new')}
+            >
+              Add claim
+            </Button>
+          )
         }
       />
       <CardBody>
-        {query.isPending ? (
+        {access === 'breakglass' ? (
+          <EmptyState inline art="log" title={IDP_COPY.claimsBreakGlass} />
+        ) : access === 'stale' ? (
+          <EmptyState
+            inline
+            art="log"
+            title={IDP_COPY.claimsStale}
+            action={
+              <Button size="sm" variant="outline" onClick={() => requestStepUp(undefined)}>
+                {IDP_COPY.claimsSignIn}
+              </Button>
+            }
+          />
+        ) : query.isPending ? (
           <SkeletonRows rows={2} label="Loading claims" />
         ) : query.isError ? (
           <ErrorState

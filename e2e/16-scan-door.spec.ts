@@ -109,7 +109,10 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     ).toHaveLength(1);
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     await expect(page.getByTestId('scan-count')).toContainText('Today 0');
-    await page.screenshot({ path: 'test-results/scanner-m1-android.png', fullPage: true });
+    await page.screenshot({
+      path: test.info().outputPath('scanner-m1-android.png'),
+      fullPage: true,
+    });
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await page.getByRole('button', { name: 'Enter code', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name, email or code' }).fill('Lookup');
@@ -119,7 +122,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     const before = await api.get(`/api/v1/scans?orgId=${orgId}&passId=${lookupPass.id}`);
     expect(before.items).toHaveLength(0);
     await expect(page.locator('.scan-pass-preview .pc-card')).toBeVisible();
-    await page.screenshot({ path: 'test-results/scanner-lookup-confirm-phone.png' });
+    await page.screenshot({ path: test.info().outputPath('scanner-lookup-confirm-phone.png') });
     await page.getByRole('button', { name: 'Check in', exact: true }).click();
     await expect(page.getByTestId('scan-result')).toContainText('Lookup Guest');
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
@@ -146,7 +149,9 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
           .analyze();
         expect(accessibility.violations).toEqual([]);
-        await page.screenshot({ path: `test-results/scanner-door-${width}-${colorScheme}.png` });
+        await page.screenshot({
+          path: test.info().outputPath(`scanner-door-${width}-${colorScheme}.png`),
+        });
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
@@ -172,7 +177,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await expect(page.getByTestId('scan-verdict')).toHaveAttribute('data-kind', 'refused');
     await expect(page.getByRole('heading', { name: 'Not found', exact: true })).toBeVisible();
     await expect(page.getByTestId('scan-result')).toHaveAttribute('data-phase', 'up');
-    await page.screenshot({ path: 'test-results/scanner-refused-phone.png' });
+    await page.screenshot({ path: test.info().outputPath('scanner-refused-phone.png') });
     // A tap on the tint outside the card dismisses the verdict.
     await page.mouse.click(195, 160);
     await expect(page.getByTestId('scan-result')).toHaveCount(0);
@@ -246,7 +251,7 @@ test('camera decodes a real QR frame through the wasm worker', async ({ browser 
     });
     await expect(page.getByTestId('scan-result')).toContainText('Checked in');
     await expect(page.getByTestId('scan-result')).toHaveAttribute('data-phase', 'up');
-    await page.screenshot({ path: 'test-results/scanner-m1-camera-phone.png' });
+    await page.screenshot({ path: test.info().outputPath('scanner-m1-camera-phone.png') });
     expect(errors).toEqual([]);
   } finally {
     await context.close();

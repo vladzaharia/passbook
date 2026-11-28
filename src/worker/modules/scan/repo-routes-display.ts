@@ -4,7 +4,7 @@ import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 
 /**
- * One read for a preview: whether the viewer's authority holds (`actor_ok`) and whether the pass the
+ * One read for a preview: whether the viewer's authority holds (`authorized`) and whether the pass the
  * preview was built from is still live at its generations, under the release it was read with, of
  * the previewed template (`pass_ok`). Null when the candidate carries no usable release snapshot.
  */
@@ -19,11 +19,11 @@ export function previewCurrentStmt(
   return scanRead(
     db,
     auth,
-    `SELECT ${auth.ok} AS actor_ok,
-      EXISTS (SELECT 1 FROM passes p
-        WHERE ${auth.ok} AND p.id = ? AND ${auth.tenant('p', 'passes')} AND p.template_id = ?
-          AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
-          AND ${effectiveReleaseIs('p')}) AS pass_ok`,
+    `SELECT ${auth.authorized('authorized')}, p.id IS NOT NULL AS pass_ok
+     FROM ${auth.anchor}
+     LEFT JOIN passes p ON ${auth.present} AND p.id = ? AND ${auth.tenantOnce('p', 'passes')} AND p.template_id = ?
+       AND (${passVisibleSql('p', { credential: '?', lifecycle: '?' })})
+       AND (${effectiveReleaseIs('p')})`,
     [
       pass.id,
       pass.templateId,
@@ -36,4 +36,4 @@ export function previewCurrentStmt(
 
 /** The viewer's authority alone: checked before the credential keyset may be created on first use. */
 export const previewActorStmt = (db: D1Database, auth: ScanReadAuthority): D1PreparedStatement =>
-  scanRead(db, auth, `SELECT ${auth.ok} AS actor_ok`);
+  scanRead(db, auth, `SELECT ${auth.authorized('authorized')} FROM ${auth.anchor}`);

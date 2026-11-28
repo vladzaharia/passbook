@@ -188,9 +188,6 @@ export function MatchEditor({
           >
             <Plus aria-hidden /> Add condition
           </Button>
-          {usable.length === 0 ? (
-            <p className="mt-1 text-xs text-fg-muted">Choose a template first.</p>
-          ) : null}
         </div>
       ) : null}
     </div>

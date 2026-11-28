@@ -90,7 +90,10 @@ test('admin uploads a member photo, opts it into Wallet and configures in/out ru
     await expect
       .poll(async () => (await api.get(`/api/v1/passes/${pass.id}/check-in`)).rules.mode)
       .toBe('in_out');
-    await page.screenshot({ path: 'test-results/member-photo-rules.png', fullPage: true });
+    await page.screenshot({
+      path: test.info().outputPath('member-photo-rules.png'),
+      fullPage: true,
+    });
   } finally {
     await context.close();
     await api.dispose();
@@ -202,7 +205,10 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
     ).toBeVisible();
     const scans = await api.get(`/api/v1/scans?orgId=${orgId}&passId=${pass.id}`);
     expect(scans.items.filter((s: { outcome: string }) => s.outcome === 'ok')).toHaveLength(2);
-    await desk.page.screenshot({ path: 'test-results/scan-desk-view.png', fullPage: true });
+    await desk.page.screenshot({
+      path: test.info().outputPath('scan-desk-view.png'),
+      fullPage: true,
+    });
     await api.send('POST', `/api/v1/scanners/${monitor.id}/revoke`);
     await expect(desk.page.getByTestId('scan-live')).toHaveCount(0, { timeout: 5000 });
     await expect(desk.page.locator('body')).not.toContainText(holder);

@@ -31,6 +31,8 @@ export interface EmptyStateProps {
   heading?: boolean;
   /** `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). */
   surface?: 'stage';
+  /** Replaces the title's type (the Workbench sets one scale for its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -56,6 +58,7 @@ export function EmptyState({
   heading = false,
   still = false,
   surface,
+  titleClassName,
   className,
 }: EmptyStateProps) {
   return (
@@ -71,6 +74,7 @@ export function EmptyState({
       heading={heading}
       still={still}
       canvas={surface === 'stage' && art !== 'lock'}
+      {...(titleClassName ? { titleClassName } : {})}
       className={className}
     />
   );

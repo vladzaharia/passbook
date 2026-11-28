@@ -227,7 +227,6 @@ describe('VerifyGuide and RotateSecretForm', () => {
     const user = userEvent.setup();
     render(<Host rotate={async () => Promise.reject(new Error('nope'))} />);
     await user.click(screen.getByRole('radio', { name: 'Now' }));
-    expect(screen.getByText(/stops working now/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Rotate' }));
     expect(await screen.findByText(/nope|went wrong|Could not/i)).toBeInTheDocument();
   });

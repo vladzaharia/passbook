@@ -28,7 +28,6 @@ export function EmailSettings({
     <div className="flex flex-col gap-4">
       <SwitchRow
         label={C.sheet.email}
-        help={counts.emailable === 0 ? C.sheet.noEmail : undefined}
         checked={on}
         disabled={!canEmail}
         onCheckedChange={(next) => onChange({ ...value, on: next })}

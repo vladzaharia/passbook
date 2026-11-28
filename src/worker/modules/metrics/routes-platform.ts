@@ -40,7 +40,9 @@ register(
     ) {
       throw new NotFoundError('Metrics not found.', 'METRICS_NOT_FOUND');
     }
-    return c.json(await getOverview(ctx, query, modeOf(c.var.auth), 'platform'));
+    return c.json(
+      await getOverview(ctx, query, modeOf(c.var.auth), 'platform', c.var.auth?.kind !== 'session'),
+    );
   },
 );
 

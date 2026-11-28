@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { type FormEvent, type Ref, useEffect, useState } from 'react';
+import { type FormEvent, type Ref, useState } from 'react';
 import { LOGIN_OPERATOR_COPY } from '@/shared/copy/login-reasons.ts';
 import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
 import { strictEmail } from '@/shared/email.ts';
@@ -89,15 +89,7 @@ export function EmailFace({
     scene.fail(failure(result.error));
   }
 
-  const { challengeFailed } = request;
-  useEffect(() => {
-    if (!challengeFailed) return;
-    scene.fail('error');
-    // The error is the news: the autofocused field's ring would compete with it.
-    if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
-  }, [challengeFailed, scene]);
-
-  const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);
+  const callout = error ?? null;
   const busy = request.phase !== 'idle';
   const divider = (
     <div className="flex items-center gap-3 text-xs text-fg-muted" aria-hidden>

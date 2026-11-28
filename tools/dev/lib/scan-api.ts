@@ -93,7 +93,7 @@ export async function pairBrowser(
   const confirm = page.getByTestId('scan-pair-confirm');
   await confirm.waitFor({ timeout: 15_000 });
   await onConfirm?.();
-  await confirm.getByRole('button', { name: 'Pair', exact: true }).click();
+  await confirm.getByRole('button', { name: 'Join', exact: true }).click();
   await confirm.waitFor({ state: 'hidden', timeout: 15_000 });
 }
 

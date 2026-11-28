@@ -9,6 +9,7 @@ import {
   makeScanStaff,
   TEST_NOW,
 } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -239,7 +240,7 @@ describe('PIN reservation recovery', () => {
       });
       expect(verified?.pinHash).toBe(original.pinHash);
       expect(JSON.stringify(verified)).not.toContain(original.pinHash);
-      expect(JSON.stringify(verified)).not.toContain(manager.pin);
+      expectSecretAbsent(JSON.stringify(verified), manager.pin);
     } finally {
       await reservation.refund();
     }

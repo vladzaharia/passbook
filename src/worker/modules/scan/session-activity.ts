@@ -81,7 +81,7 @@ export async function scanningSessionActivity(
   const page = await readHistoryPage(
     ctx.env.DB,
     auth,
-    { ...selector, tenant: auth.tenant('+s', 'scans') },
+    { ...selector, tenant: auth.tenantOnce('+s', 'scans') },
     now,
   );
   if (!page.authorized) return null;

@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { registrationCountStmt } from '../apple/repo.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvents } from '../events/record.ts';
+import { syncDevicePasses } from '../workbench/device-pass-sync.ts';
 import { notifiesHolder } from './change-messages.ts';
 import type { PublishOptions, PublishResult } from './publish.ts';
 import type { PreparedPublishAttempt } from './publish-flow-prepare.ts';
@@ -76,6 +77,8 @@ export async function completePublishAttempt(
       : []),
   ]);
   if (options.dispatch !== false) ctx.waitUntil(dispatchSafely(ctx, { passId: pass.id }));
+  // A developer's device passes of this Test pass stand for the new version (a no-op while they are off).
+  if (pushes) ctx.waitUntil(syncDevicePasses(ctx, pass));
   return {
     pass,
     changed: true,

@@ -27,7 +27,7 @@ function EventRow({
         aria-hidden
         className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-sunken text-center leading-none"
       >
-        <span className="text-[0.625rem] font-semibold text-danger">{month}</span>
+        <span className="text-xs font-semibold text-danger">{month}</span>
         <span className="text-base font-semibold text-fg-strong tabular-nums">
           {d ? Number(d) : ''}
         </span>

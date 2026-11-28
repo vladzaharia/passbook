@@ -27,10 +27,24 @@ class ApiKeysActivityResource:
         return self._core.request("GET", f"/api/v1/api-keys/{_p(id)}/activity", query={"limit": limit}, result=m.ApiKeysActivityListResult, **opts)
 
 
+class ApiKeysCliTokensResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ApiKeysCliTokensRevokeResult:
+        """Sign out: a CLI token ends itself (send it as the bearer); a person ends their own `DELETE /api/v1/cli/tokens/{id}`"""
+        return self._core.request("DELETE", f"/api/v1/cli/tokens/{_p(id)}", result=m.ApiKeysCliTokensRevokeResult, **opts)
+
+
 class ApiKeysResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.activity = ApiKeysActivityResource(core)
+        self.cli_tokens = ApiKeysCliTokensResource(core)
 
     def create(
         self,
@@ -161,7 +175,7 @@ class PlatformAuditEntriesResource:
         created_before: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> httpx.Response:
-        """Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export`"""
+        """Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/platform/export`"""
         return self._core.request("GET", "/api/v1/audit/platform/export", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, raw=True, **opts)
 
     def list(
@@ -2361,6 +2375,28 @@ class MembershipsResource:
         return self._core.request("PATCH", f"/api/v1/orgs/{_p(id)}/memberships/{_p(membership_id)}", body=body, result=m.MembershipsUpdateRolesResult, **opts)
 
 
+class WalletHealthResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        org_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WalletHealthListResult:
+        """Health of the wallets open to an organization, in the caller's mode `GET /api/v1/orgs/{orgId}/wallet-health`"""
+        return self._core.request("GET", f"/api/v1/orgs/{_p(org_id)}/wallet-health", result=m.WalletHealthListResult, **opts)
+
+    def retry(
+        self,
+        org_id: str,
+        provider: _Literal["google", "samsung"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WalletHealthRetryResult:
+        """Queue the settling of a wallet's uncertain updates that are past their grace window `POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(org_id)}/wallet-health/{_p(provider)}/recheck", result=m.WalletHealthRetryResult, **opts)
+
+
 class PassImportsMappingsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -4129,6 +4165,7 @@ class Resources:
         self.orgs = OrgsResource(core)
         self.invitations = InvitationsResource(core)
         self.memberships = MembershipsResource(core)
+        self.wallet_health = WalletHealthResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)

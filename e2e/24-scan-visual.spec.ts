@@ -103,7 +103,9 @@ async function checkLayout(page: Page, surface: Surface, pass: string, viewport:
     await expect(page.getByRole('region', { name: 'Session activity' })).toBeHidden();
   }
   await page.screenshot({
-    path: `test-results/scan-visual-${surface}-${pass}-${viewport.width}x${viewport.height}.png`,
+    path: test
+      .info()
+      .outputPath(`scan-visual-${surface}-${pass}-${viewport.width}x${viewport.height}.png`),
   });
 }
 
@@ -129,12 +131,12 @@ async function checkWalletSheet(page: Page, surface: Surface, pass: string) {
   await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'front');
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
-    path: `test-results/scan-visual-${surface}-${pass}-wallet-front.png`,
+    path: test.info().outputPath(`scan-visual-${surface}-${pass}-wallet-front.png`),
   });
   await page.getByRole('button', { name: 'Details', exact: true }).click();
   await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'back');
   await page.screenshot({
-    path: `test-results/scan-visual-${surface}-${pass}-wallet-back.png`,
+    path: test.info().outputPath(`scan-visual-${surface}-${pass}-wallet-back.png`),
   });
 }
 
@@ -171,7 +173,7 @@ test('scan details remain reachable on compact screens', async ({ page }) => {
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
     animations: 'disabled',
-    path: 'test-results/scan-visual-generic-320x640-details-scroll.png',
+    path: test.info().outputPath('scan-visual-generic-320x640-details-scroll.png'),
   });
   await page.goto('/scan?visual=1&surface=scanner&pass=identity');
   await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
@@ -187,7 +189,7 @@ test('scan verdict motion respects the reduced-motion preference', async ({ page
   const animationName = () =>
     page.locator('.scan-result').evaluate((element) => getComputedStyle(element).animationName);
   await expect.poll(animationName).toBe('scan-result-rise');
-  await page.screenshot({ path: 'test-results/scan-visual-verdict-motion.png' });
+  await page.screenshot({ path: test.info().outputPath('scan-visual-verdict-motion.png') });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect.poll(animationName).toBe('scan-card-fade');
 });
@@ -214,7 +216,9 @@ test('customer screens stay pass-agnostic and legible across sizes', async ({ pa
       await expectNoHorizontalOverflow(page);
       await page.screenshot({
         animations: 'disabled',
-        path: `test-results/scan-visual-customer-${pass}-${viewport.width}x${viewport.height}.png`,
+        path: test
+          .info()
+          .outputPath(`scan-visual-customer-${pass}-${viewport.width}x${viewport.height}.png`),
       });
     }
   }
@@ -233,7 +237,7 @@ test('Duo customer display keeps its brand lockup and status clear in short and 
     await expectNoHorizontalOverflow(page);
     await page.screenshot({
       animations: 'disabled',
-      path: `test-results/scan-visual-duo-${viewport.width}x${viewport.height}.png`,
+      path: test.info().outputPath(`scan-visual-duo-${viewport.width}x${viewport.height}.png`),
     });
   }
 });

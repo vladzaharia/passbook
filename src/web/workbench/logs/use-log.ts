@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
+import { pacer } from '../../lib/poll-hold.ts';
 import { useToolApi } from '../../lib/tool-api.tsx';
 import { refusingApi } from '../host/refusing.ts';
 import { type Cursor, type Page, readLog } from './api.ts';
@@ -40,6 +41,7 @@ export function useLog(filters: LogFilters) {
   const query = JSON.stringify([queryOf(filters), filters.tab === 'errors']);
   const settled = useSettled(query, TYPE_MS);
   const [phase, setPhase] = useState<LogPhase>('loading');
+  const [error, setError] = useState<unknown>(null);
   const [items, setItems] = useState<RequestLogEntry[]>([]);
   const [cursor, setCursor] = useState<Cursor | null>(null);
   const [capped, setCapped] = useState<Page['capped']>(null);
@@ -83,10 +85,11 @@ export function useLog(filters: LogFilters) {
         quietSince.current = Date.now();
         if (pausedRef.current) wake.current();
       },
-      () => {
+      (failure: unknown) => {
         // The list says it did not load; Retry reads again. A gone session is the shell's banner.
         if (mine !== run.current) return;
         setBusy(false);
+        setError(failure);
         setPhase('failed');
       },
     );
@@ -123,17 +126,22 @@ export function useLog(filters: LogFilters) {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const clearFresh: ReturnType<typeof setTimeout>[] = [];
-    const schedule = () => {
+    const pace = pacer('logs', POLL_MS);
+    const schedule = (wait = POLL_MS) => {
       clearTimeout(timer);
-      if (!stopped) timer = setTimeout(() => void tick(), POLL_MS);
+      if (!stopped) timer = setTimeout(() => void tick(), wait);
     };
     async function tick() {
       if (stopped || document.visibilityState !== 'visible') return;
       if (Date.now() - quietSince.current > IDLE_MS) return setPaused(true);
       const mine = run.current;
+      let failure: unknown;
       const page = await readLog(apiRef.current, filtersRef.current, {
         after: newest.current,
-      }).catch(() => null);
+      }).catch((error: unknown) => {
+        failure = error;
+        return null;
+      });
       if (!stopped && mine === run.current && page) {
         const have = new Set(itemsRef.current.map((r) => r.id));
         const added = page.items.filter((r) => !have.has(r.id));
@@ -146,7 +154,7 @@ export function useLog(filters: LogFilters) {
           clearFresh.push(setTimeout(() => setFresh(new Set()), FRESH_MS));
         }
       }
-      schedule();
+      schedule(pace.after(failure));
     }
     wake.current = () => {
       if (document.visibilityState !== 'visible' || stopped) return;
@@ -160,6 +168,7 @@ export function useLog(filters: LogFilters) {
     return () => {
       stopped = true;
       clearTimeout(timer);
+      pace.stop();
       for (const t of clearFresh) clearTimeout(t);
       document.removeEventListener('visibilitychange', onVisible);
     };
@@ -172,6 +181,7 @@ export function useLog(filters: LogFilters) {
 
   return {
     phase,
+    error,
     items,
     capped,
     busy,

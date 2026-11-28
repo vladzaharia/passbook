@@ -5,6 +5,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProviders } from '../../../lib/providers.tsx';
 import { createQueryClient } from '../../../lib/query-client.ts';
@@ -87,5 +88,55 @@ describe('Design signed out: a blueprint on the anonymous host', () => {
       expect(url, url).toMatch(/^\/templates\//);
       expect(init?.credentials, url).toBe('omit');
     }
+  });
+
+  it('plans the card from the edited values in the browser, with no request', async () => {
+    mount();
+    const name = await screen.findByRole('textbox', { name: /^Name/ });
+    await vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
+    expect(await screen.findAllByText('Alex Morgan')).not.toHaveLength(0);
+    const before = seen.length;
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Casey River');
+    await vi.waitFor(() => expect(screen.getAllByText('Casey River').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Alex Morgan')).toBeNull();
+    for (const { url } of seen.slice(before)) expect(url, url).toMatch(/^\/templates\//);
+    expect(seen.every((r) => !r.url.includes('/api/'))).toBe(true);
+  });
+
+  it('says so and keeps the stored card when the planner fails to load', async () => {
+    vi.resetModules();
+    vi.doMock('./live-plan.ts', () => {
+      throw new Error('chunk');
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { AnonDesign: Fresh } = await import('./anon-design.tsx');
+    const { AnonProvider: Provider } = await import('./anon-context.tsx');
+    const { useAnonValue: useValue } = await import('./use-anon-value.ts');
+    function Broken() {
+      const { value } = useValue(data, false);
+      return (
+        <Provider value={value}>
+          <Fresh blueprint={value.blueprint} />
+        </Provider>
+      );
+    }
+    const queryClient = createQueryClient();
+    const root = createRootRoute({ component: Broken });
+    const router = createRouter({
+      routeTree: root,
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    });
+    render(
+      <AppProviders queryClient={queryClient}>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    );
+    const name = await screen.findByRole('textbox', { name: /^Name/ });
+    await userEvent.type(name, 'x');
+    expect(await screen.findByText('The preview did not update. Reload the page.')).toBeVisible();
+    expect(error).toHaveBeenCalledWith('design.live_plan_failed', expect.anything());
+    vi.doUnmock('./live-plan.ts');
+    error.mockRestore();
   });
 });

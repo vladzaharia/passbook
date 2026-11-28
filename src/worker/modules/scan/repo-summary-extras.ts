@@ -50,10 +50,10 @@ export async function readSummaryExtras(
   scope: { where: string; params: readonly SqlValue[] },
   window: { from: number; to: number },
 ): Promise<SummaryExtras> {
-  const fromOf = (joins = '') => `FROM scans s
+  const fromOf = (joins = '') => `FROM ${auth.rows}scans s
     LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = s.org_id${joins}
-    WHERE ${auth.ok} AND ${auth.tenant('+s', 'scans')} AND ${scope.where}
-      AND s.at >= ? AND s.at <= ? AND s.action_kind IS NOT 'undo' AND s.outcome IS NOT NULL`;
+    WHERE ${auth.present} AND ${auth.tenantOnce('+s', 'scans')} AND (${scope.where})
+      AND (s.at >= ? AND s.at <= ? AND s.action_kind IS NOT 'undo' AND s.outcome IS NOT NULL)`;
   const from = fromOf();
   const params = [...scope.params, window.from, window.to];
   const refused = `COALESCE(SUM(${REFUSED_SQL}), 0)`;
@@ -79,8 +79,8 @@ export async function readSummaryExtras(
         db,
         auth,
         `SELECT s.action_kind AS kind, COUNT(*) AS n, COALESCE(SUM(s.amount), 0) AS amount ${from}
-        AND s.outcome = 'ok' AND s.undone_by IS NULL
-        AND s.action_kind IS NOT NULL AND s.action_kind <> 'check_in' GROUP BY s.action_kind`,
+        AND (s.outcome = 'ok' AND s.undone_by IS NULL
+        AND s.action_kind IS NOT NULL AND s.action_kind <> 'check_in') GROUP BY s.action_kind`,
         params,
       ),
       scanRead(

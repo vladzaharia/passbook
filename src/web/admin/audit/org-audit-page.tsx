@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { useId } from 'react';
-import { RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, Card, CardBody, Combobox, Label, PageHeader } from '@/web/ui/index.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
@@ -44,20 +43,15 @@ export function OrgAuditPage({
     <>
       <PageHeader
         title="Audit log"
-        description={
-          <>
-            {RETENTION_COPY.auditNote(365)}{' '}
-            <Link
-              to="/admin/o/$orgId/retention"
-              params={{ orgId: allowed }}
-              className="text-accent-fg underline underline-offset-2"
-            >
-              Holds and receipts
-            </Link>
-          </>
-        }
         actions={
-          <ExportButton path="/api/v1/audit/export" query={{ ...filters, orgId: allowed }} />
+          <>
+            <Button asChild variant="outline">
+              <Link to="/admin/o/$orgId/retention" params={{ orgId: allowed }}>
+                Retention
+              </Link>
+            </Button>
+            <ExportButton path="/api/v1/audit/export" query={{ ...filters, orgId: allowed }} />
+          </>
         }
       />
       <Card className="mb-6">

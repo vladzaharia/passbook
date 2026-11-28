@@ -1,6 +1,9 @@
 import type { PassEventDto } from '@/shared/contracts/events.ts';
 import { REMOVAL_WALLET_NAME, type RemovalWallet } from '@/shared/copy/removal.ts';
 
+/** Prefix on a device row made by a Test simulation. */
+export const SIMULATED_DEVICE = 'Simulated';
+
 /** One-line titles for events that stand alone in the sync log. */
 export const SINGLE_TITLE: Record<string, string> = {
   'pass.voided': 'Voided',

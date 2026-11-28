@@ -26,15 +26,36 @@ func (r *ApiKeysActivityResource) List(ctx context.Context, id string, query *Ap
 	return &out, nil
 }
 
+type ApiKeysCliTokensResource struct {
+	c *core
+}
+
+func newApiKeysCliTokensResource(c *core) *ApiKeysCliTokensResource {
+	return &ApiKeysCliTokensResource{
+		c: c,
+	}
+}
+
+// Revoke Sign out: a CLI token ends itself (send it as the bearer); a person ends their own `DELETE /api/v1/cli/tokens/{id}`
+func (r *ApiKeysCliTokensResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ApiKeysCliTokensRevokeResult, error) {
+	var out ApiKeysCliTokensRevokeResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/cli/tokens/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ApiKeysResource struct {
-	c        *core
-	Activity *ApiKeysActivityResource
+	c         *core
+	Activity  *ApiKeysActivityResource
+	CliTokens *ApiKeysCliTokensResource
 }
 
 func newApiKeysResource(c *core) *ApiKeysResource {
 	return &ApiKeysResource{
-		c:        c,
-		Activity: newApiKeysActivityResource(c),
+		c:         c,
+		Activity:  newApiKeysActivityResource(c),
+		CliTokens: newApiKeysCliTokensResource(c),
 	}
 }
 
@@ -136,7 +157,7 @@ func newPlatformAuditEntriesResource(c *core) *PlatformAuditEntriesResource {
 	}
 }
 
-// Export Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export`
+// Export Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/platform/export`
 func (r *PlatformAuditEntriesResource) Export(ctx context.Context, query *PlatformAuditEntriesExportQuery, opts ...RequestOption) (*http.Response, error) {
 	return r.c.download(ctx, call{method: "GET", path: "/api/v1/audit/platform/export", query: queryValues(query)}, opts)
 }
@@ -2571,6 +2592,34 @@ func (r *MembershipsResource) UpdateRoles(ctx context.Context, id string, member
 	return &out, nil
 }
 
+type WalletHealthResource struct {
+	c *core
+}
+
+func newWalletHealthResource(c *core) *WalletHealthResource {
+	return &WalletHealthResource{
+		c: c,
+	}
+}
+
+// List Health of the wallets open to an organization, in the caller's mode `GET /api/v1/orgs/{orgId}/wallet-health`
+func (r *WalletHealthResource) List(ctx context.Context, orgId string, opts ...RequestOption) (*WalletHealthListResult, error) {
+	var out WalletHealthListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(orgId) + "/wallet-health"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retry Queue the settling of a wallet's uncertain updates that are past their grace window `POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck`
+func (r *WalletHealthResource) Retry(ctx context.Context, orgId string, provider string, opts ...RequestOption) (*WalletHealthRetryResult, error) {
+	var out WalletHealthRetryResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(orgId) + "/wallet-health/" + pathEscape(provider) + "/recheck"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsMappingsResource struct {
 	c *core
 }
@@ -4401,6 +4450,7 @@ type Resources struct {
 	Orgs                 *OrgsResource
 	Invitations          *InvitationsResource
 	Memberships          *MembershipsResource
+	WalletHealth         *WalletHealthResource
 	PassImports          *PassImportsResource
 	Passes               *PassesResource
 	PrintJobs            *PrintJobsResource
@@ -4445,6 +4495,7 @@ func newResources(c *core) Resources {
 		Orgs:                 newOrgsResource(c),
 		Invitations:          newInvitationsResource(c),
 		Memberships:          newMembershipsResource(c),
+		WalletHealth:         newWalletHealthResource(c),
 		PassImports:          newPassImportsResource(c),
 		Passes:               newPassesResource(c),
 		PrintJobs:            newPrintJobsResource(c),

@@ -123,7 +123,11 @@ export function createToolApi(deps: ToolApiDeps): WorkbenchApi {
   const bearerFetch = createBearerFetch(deps);
 
   async function send(method: string, path: string, body: unknown, opts: ToolRequest = {}) {
-    const headers: Record<string, string> = { accept: 'application/json' };
+    // A tool's own read is the Workbench's, never one of the developer's calls: the log tells them apart by this mark.
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      ...(method === 'GET' ? PORTAL_READ : {}),
+    };
     for (const [key, value] of Object.entries(opts.headers ?? {}))
       if (!MODE_HEADER.test(key)) headers[key.toLowerCase()] = value;
     if (opts.ifMatch) headers['if-match'] = opts.ifMatch;

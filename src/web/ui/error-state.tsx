@@ -24,6 +24,10 @@ export interface ErrorStateProps {
    * Defaults to true inside a Card (InCardContext), false elsewhere; pass it to override.
    */
   inline?: boolean;
+  /** `stage`: the Workbench's dot-grid canvas, as its empty states have. */
+  surface?: 'stage';
+  /** Replaces the sentence's type (the Workbench sets one scale for its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -48,6 +52,8 @@ export function ErrorState({
   retryLabel = STATE_COPY.retry,
   action,
   inline: inlineProp,
+  titleClassName,
+  surface,
   className,
 }: ErrorStateProps) {
   const inCard = useInCard();
@@ -103,6 +109,8 @@ export function ErrorState({
         ) : undefined
       }
       secondary={action}
+      canvas={surface === 'stage' && !inline}
+      {...(titleClassName ? { titleClassName } : {})}
       className={className}
     >
       {requestId || code ? (

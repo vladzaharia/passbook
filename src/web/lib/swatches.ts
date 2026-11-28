@@ -17,14 +17,19 @@ const IMAGES = ['artwork@2x.png', 'background@2x.png', 'strip@2x.png', 'thumbnai
 export function useSwatches(
   templateIds: readonly string[],
   orgId: string | undefined,
+  /** The All scope: each template's own organization. */
+  orgByTemplate?: ReadonlyMap<string, string>,
 ): Map<string, Swatch> {
   return useQueries({
-    queries: templateIds.map((id) => ({
-      queryKey: templatePreviewKey(id, orgId),
-      queryFn: () => fetchPreview(id, orgId),
-      staleTime: Number.POSITIVE_INFINITY,
-      retry: false,
-    })),
+    queries: templateIds.map((id) => {
+      const org = orgByTemplate?.get(id) ?? orgId;
+      return {
+        queryKey: templatePreviewKey(id, org),
+        queryFn: () => fetchPreview(id, org),
+        staleTime: Number.POSITIVE_INFINITY,
+        retry: false,
+      };
+    }),
     combine: (results) => {
       const map = new Map<string, Swatch>();
       results.forEach((r, i) => {

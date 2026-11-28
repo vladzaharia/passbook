@@ -1,5 +1,9 @@
 import { lazy, Suspense, useMemo } from 'react';
-import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
+import {
+  CHANNELS,
+  type ChannelStatus,
+  type EffectiveChannels,
+} from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
@@ -74,13 +78,23 @@ export function DesignerStage({
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
   // has no tab. The paper pane says so itself.
+  const { unreleased } = useDesignerHost();
   const effective = useMemo(() => {
     const all = channels.data?.effective;
-    if (!all) return undefined;
+    if (!all && !unreleased?.size) return undefined;
+    const held = (c: string): ChannelStatus | undefined =>
+      unreleased?.has(c as 'google' | 'samsung')
+        ? { on: false, source: 'platform', reason: 'not_released' }
+        : undefined;
+    const base =
+      all ?? Object.fromEntries(CHANNELS.map((c) => [c, { on: true, source: 'platform' }]));
     return Object.fromEntries(
-      Object.entries(all).map(([c, s]) => [c, s.source === 'template' ? { ...s, on: true } : s]),
+      Object.entries(base).map(([c, s]) => [
+        c,
+        held(c) ?? (s.source === 'template' ? { ...s, on: true } : s),
+      ]),
     ) as EffectiveChannels;
-  }, [channels.data]);
+  }, [channels.data, unreleased]);
   const notes = useMemo(() => {
     const all = channels.data?.effective;
     if (!all) return undefined;

@@ -92,7 +92,6 @@ export function TemplateDetailHeader({
     <PageHeader
       title={t.name}
       breadcrumbs={crumbs}
-      description={t.description ?? undefined}
       meta={
         <>
           {t.fromBlueprint ? (

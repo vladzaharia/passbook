@@ -25,7 +25,7 @@ function Loading({
   children: ReactNode;
 }) {
   return (
-    <div role="status" aria-busy className={className}>
+    <div role="status" data-loading="content" className={className}>
       <span className="sr-only">{label}</span>
       {children}
     </div>

@@ -57,3 +57,24 @@ describe('CodeField', () => {
     expect(container.querySelector('input')).toHaveAttribute('inputmode', 'numeric');
   });
 });
+
+describe('CodeField autofill', () => {
+  it('is a native one-time-code input', () => {
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    expect(input).toHaveAttribute('pattern', '[0-9]*');
+  });
+  it('a pasted full code, spaces and all, fills it', () => {
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '123 456' } });
+    expect(input.value).toBe('123456');
+    expect(container.querySelector('.wl-code')).toHaveAttribute('data-complete');
+  });
+  it('a disabled field cannot be typed into', () => {
+    const { container } = render(<CodeField id="c" value="" onChange={() => {}} disabled />);
+    expect(container.querySelector('input')).toBeDisabled();
+  });
+});

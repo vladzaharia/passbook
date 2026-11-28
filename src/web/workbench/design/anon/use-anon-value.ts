@@ -19,7 +19,6 @@ export function useAnonValue(data: BlueprintPreviews, signedIn: boolean) {
     () => ({
       blueprint: s.current,
       values: s.values,
-      edited: Object.keys(s.state.edits).length > 0,
       mode: s.state.mode,
       setValues: s.setValues,
       setMode: s.setMode,

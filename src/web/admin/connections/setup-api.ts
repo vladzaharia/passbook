@@ -57,9 +57,3 @@ export function useNotIssued(connectionId: string): ReadonlySet<string> {
     [failures.data],
   );
 }
-
-/** "In Shopify: row menu, **Send test**." The test line led by the provider, where it says where. */
-export function testLine(text: string, provider: string, kind: string): string {
-  if (kind === 'cli' || kind === 'snippet') return text;
-  return `In ${provider}: ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
-}

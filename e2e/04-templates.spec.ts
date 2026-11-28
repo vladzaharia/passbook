@@ -8,30 +8,33 @@ import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
-/** Zips templates/starter-generic with a new display name, minus what uploads may not use. */
-function variantZip(name: string): Buffer {
-  const dir = 'templates/starter-generic';
+/** Walks a directory and returns files keyed by their zip path. */
+function walk(dir: string, prefix = ''): Record<string, Uint8Array> {
   const files: Record<string, Uint8Array> = {};
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isFile()) continue;
-    let bytes: Uint8Array = readFileSync(join(dir, entry.name));
-    if (entry.name === 'wallet.template.json') {
-      const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
-      manifest.name = name;
-      // Only built-in packages are blueprints.
-      manifest.blueprint = undefined;
-      // The zip copies top-level files only, so the art the wallets block names is not in it.
-      manifest.wallets = undefined;
-      // Uploads are untrusted: baked-only schema keywords and /semantics bindings are rejected.
-      manifest.inputs.properties.website.pattern = undefined;
-      manifest.inputs.dependentRequired = undefined;
-      manifest.bindings = manifest.bindings.filter(
-        (b: { to: { pointer?: string } }) => !b.to.pointer?.startsWith('/semantics'),
-      );
-      bytes = Buffer.from(JSON.stringify(manifest, null, 2));
-    }
-    files[entry.name] = bytes;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) Object.assign(files, walk(path, `${prefix}${entry.name}/`));
+    else if (entry.isFile()) files[`${prefix}${entry.name}`] = readFileSync(path);
   }
+  return files;
+}
+
+/** Zips templates/starter-generic, wallet art included, with a new display name, minus what uploads may not use. */
+function variantZip(name: string): Buffer {
+  const files = walk('templates/starter-generic');
+  const manifest = JSON.parse(
+    Buffer.from(files['wallet.template.json'] as Uint8Array).toString('utf8'),
+  );
+  manifest.name = name;
+  // Only built-in packages are blueprints.
+  manifest.blueprint = undefined;
+  // Uploads are untrusted: baked-only schema keywords and /semantics bindings are rejected.
+  manifest.inputs.properties.website.pattern = undefined;
+  manifest.inputs.dependentRequired = undefined;
+  manifest.bindings = manifest.bindings.filter(
+    (b: { to: { pointer?: string } }) => !b.to.pointer?.startsWith('/semantics'),
+  );
+  files['wallet.template.json'] = Buffer.from(JSON.stringify(manifest, null, 2));
   return Buffer.from(zipSync(files));
 }
 

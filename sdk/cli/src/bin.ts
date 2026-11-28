@@ -2,12 +2,16 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { PassBook } from '@passbook/sdk';
 import { run } from './cli.ts';
+import { defaultStore, openBrowser, osName } from './platform.ts';
 
 const stop = new AbortController();
 process.on('SIGINT', () => stop.abort());
 
 process.exitCode = await run(process.argv.slice(2), {
   env: process.env,
+  credentials: await defaultStore(process.env),
+  openBrowser,
+  os: osName(),
   out: (line) => process.stdout.write(`${line}\n`),
   err: (line) => process.stderr.write(`${line}\n`),
   writeFile: (path, text) => writeFile(path, text),

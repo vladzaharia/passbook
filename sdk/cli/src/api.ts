@@ -21,7 +21,6 @@ export interface Api extends LogsApi {
     ensureCapture(body: object): Promise<{ endpoint: { id: string }; secret: string | null }>;
     captures: {
       list(id: string, query?: { limit?: number; cursor?: string }): Promise<CapturePage>;
-      revealSecret(id: string): Promise<{ secret: string }>;
     };
   };
   templates: {

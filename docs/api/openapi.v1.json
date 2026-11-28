@@ -75,6 +75,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -188,6 +194,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -265,6 +277,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -334,6 +352,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -415,6 +439,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -481,6 +511,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -554,6 +590,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -633,6 +675,13 @@
               },
               "firstDevice": {
                 "type": "boolean"
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -646,6 +695,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -732,6 +787,13 @@
                   "wallet",
                   "push_gone"
                 ]
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "required": [
@@ -746,6 +808,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -902,6 +970,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1010,6 +1084,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1093,6 +1173,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -1203,6 +1289,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1281,6 +1373,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -1365,6 +1463,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1441,6 +1545,13 @@
                   "null"
                 ],
                 "maxLength": 300
+              },
+              "devicePass": {
+                "type": "boolean"
+              },
+              "devicePassId": {
+                "type": "string",
+                "maxLength": 300
               }
             }
           },
@@ -1448,6 +1559,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -1525,6 +1642,12 @@
             "enum": [
               true
             ]
+          },
+          "simulated": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1586,6 +1709,12 @@
             "type": "string"
           },
           "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "simulated": {
             "type": "boolean",
             "enum": [
               true
@@ -1667,6 +1796,20 @@
           "status",
           "code",
           "detail"
+        ]
+      },
+      "CliTokenEnded": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "PassSetup": {
@@ -10890,6 +11033,14 @@
                     "maxLength": 64,
                     "default": null
                   },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "app",
+                      "cli"
+                    ],
+                    "default": "app"
+                  },
                   "secret": {
                     "type": "string"
                   }
@@ -11125,6 +11276,14 @@
                     "minLength": 1,
                     "maxLength": 64,
                     "default": null
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "app",
+                      "cli"
+                    ],
+                    "default": "app"
                   }
                 },
                 "required": [
@@ -11359,6 +11518,14 @@
                 "minLength": 1,
                 "maxLength": 64,
                 "default": null
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "app",
+                  "cli"
+                ],
+                "default": "app"
               }
             },
             "required": [
@@ -11597,6 +11764,14 @@
             "minLength": 1,
             "maxLength": 64,
             "default": null
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app",
+              "cli"
+            ],
+            "default": "app"
           },
           "lastIpPrefix": {
             "type": [
@@ -12012,6 +12187,14 @@
             "minLength": 1,
             "maxLength": 64,
             "default": null
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app",
+              "cli"
+            ],
+            "default": "app"
           },
           "secret": {
             "type": "string"
@@ -23200,6 +23383,106 @@
           "features",
           "footer"
         ]
+      },
+      "WalletHealthListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "google",
+                    "samsung"
+                  ]
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "live",
+                    "test"
+                  ]
+                },
+                "tone": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "attention",
+                    "failing",
+                    "idle"
+                  ]
+                },
+                "lastSuccessAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "queued": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "failed24h": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertain": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uncertainWaiting": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "callbackAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "provider",
+                "mode",
+                "tone",
+                "lastSuccessAt",
+                "queued",
+                "failed24h",
+                "uncertain",
+                "uncertainWaiting",
+                "callbackAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "WalletHealthRetryResponse": {
+        "type": "object",
+        "properties": {
+          "due": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "waiting": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "due",
+          "waiting"
+        ],
+        "additionalProperties": false
       },
       "DeveloperInvitationsCreateParams": {
         "type": "object",
@@ -45648,6 +45931,12 @@
                 },
                 "deviceId": {
                   "type": "string"
+                },
+                "devicePass": {
+                  "type": "boolean",
+                  "enum": [
+                    true
+                  ]
                 }
               },
               "required": [
@@ -71695,6 +71984,14 @@
                   "minLength": 1,
                   "maxLength": 64,
                   "default": null
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": [
+                    "app",
+                    "cli"
+                  ],
+                  "default": "app"
                 }
               },
               "required": [
@@ -88814,6 +89111,13 @@
                           ],
                           "minimum": 0
                         },
+                        "authTime": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
                         "consoleGroupRequired": {
                           "type": "boolean"
                         },
@@ -88872,6 +89176,7 @@
                   "csrfToken": "csrf_demo_northwind",
                   "amr": "oidc",
                   "consoleUntil": 1798790399999,
+                  "authTime": 5,
                   "consoleGroupRequired": false,
                   "expiresAt": 1798790399999
                 }
@@ -95350,6 +95655,927 @@
         ]
       }
     },
+    "/api/v1/developer/device-passes": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Make a device pass: a Test pass of your own sandbox on your phone, shown as PassBook Test, valid for 24 hours. Answers a one-time code to open on the phone (Idempotency-Key)",
+        "operationId": "developer.postDevicePasses",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "passId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "passId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-21d5ba4f7b54",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "create",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_BLOCKED",
+          "DEVICE_PASS_LIMIT",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "DEVICE_PASS_RATE_LIMITED",
+          "DEVICE_PASS_SOURCE_VOIDED",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Your device passes: the open ones and the last 7 days, with state, phones and expiry",
+        "operationId": "developer.getDevicePasses",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "passId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "active",
+                              "voided",
+                              "expired"
+                            ]
+                          },
+                          "voidReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "developer",
+                              "expired",
+                              "overshared",
+                              "platform",
+                              "pass_gone",
+                              null
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "expiresAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "deviceCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "lastSeenAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "code": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "expiresAt": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "expiresAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "passId",
+                          "state",
+                          "voidReason",
+                          "createdAt",
+                          "expiresAt",
+                          "deviceCount",
+                          "lastSeenAt",
+                          "code"
+                        ]
+                      }
+                    },
+                    "active": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "active",
+                    "limit"
+                  ]
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-e7ff07ca3ee7",
+                      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "state": "active",
+                      "voidReason": "developer",
+                      "createdAt": 1794362400000,
+                      "expiresAt": 1798790399999,
+                      "deviceCount": 24,
+                      "lastSeenAt": 1795570500000,
+                      "code": {
+                        "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                        "expiresAt": 1798790399999
+                      }
+                    }
+                  ],
+                  "active": 30,
+                  "limit": 25
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "list",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}/code": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "A new one-time code for a device pass that is not opened yet. The old code stops working; a pass has 5 codes (Idempotency-Key)",
+        "operationId": "developer.postDevicePassesByIdCode",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-b99d9a6b2589",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "replaceCode",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_CODE_LIMIT",
+          "DEVICE_PASS_CODE_USED",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}/again": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Add again: a new device pass from the same source after the old one expired or was voided. It counts against the 5 (Idempotency-Key)",
+        "operationId": "developer.postDevicePassesByIdAgain",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-e885e79bd335",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "addAgain",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "DEVICE_PASS_BLOCKED",
+          "DEVICE_PASS_LIMIT",
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "DEVICE_PASS_RATE_LIMITED",
+          "DEVICE_PASS_SOURCE_VOIDED",
+          "DEVICE_PASS_STILL_OPEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/device-passes/{id}": {
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Void a device pass: its phones get the voided copy",
+        "operationId": "developer.deleteDevicePassesById",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "devicePass": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "active",
+                            "voided",
+                            "expired"
+                          ]
+                        },
+                        "voidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "developer",
+                            "expired",
+                            "overshared",
+                            "platform",
+                            "pass_gone",
+                            null
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "deviceCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "lastSeenAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "code": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "expiresAt": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "passId",
+                        "state",
+                        "voidReason",
+                        "createdAt",
+                        "expiresAt",
+                        "deviceCount",
+                        "lastSeenAt",
+                        "code"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "devicePass"
+                  ]
+                },
+                "example": {
+                  "devicePass": {
+                    "id": "0193a1b2-7c00-7000-8000-44109642f043",
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "state": "active",
+                    "voidReason": "developer",
+                    "createdAt": 1794362400000,
+                    "expiresAt": 1798790399999,
+                    "deviceCount": 24,
+                    "lastSeenAt": 1795570500000,
+                    "code": {
+                      "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                      "expiresAt": 1798790399999
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.devicePasses",
+          "method": "void",
+          "sdk": false,
+          "reason": "Developer portal device pass: a signed-in developer with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "DEVICE_PASS_NOT_FOUND",
+          "DEVICE_PASS_NOT_SANDBOX",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/developer/access": {
       "get": {
         "security": [
@@ -97188,6 +98414,910 @@
         ]
       }
     },
+    "/api/v1/cli/sessions": {
+      "post": {
+        "summary": "Start a CLI sign-in: a device code, and the code the person types",
+        "operationId": "cli.postSessions",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "os": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "hostname": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "os"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "accountHint": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "client": {
+                  "name": "passbook-cli",
+                  "version": "0.2.0",
+                  "os": "macOS"
+                },
+                "accountHint": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deviceCode": {
+                      "type": "string",
+                      "description": "Secret. Poll with it; never put it in a URL."
+                    },
+                    "userCode": {
+                      "type": "string",
+                      "description": "Shown as XXXX-XXXX. The person types it at verificationUri."
+                    },
+                    "verificationUri": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Absolute. Carries no code."
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    },
+                    "interval": {
+                      "type": "integer",
+                      "description": "Seconds between polls."
+                    }
+                  },
+                  "required": [
+                    "deviceCode",
+                    "userCode",
+                    "verificationUri",
+                    "expiresIn",
+                    "interval"
+                  ]
+                },
+                "example": {
+                  "deviceCode": "q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE",
+                  "userCode": "BCDF-GHJK",
+                  "verificationUri": "https://passbook.mobile/workbench/cli",
+                  "expiresIn": 600,
+                  "interval": 5
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "create",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "description": "Starts a CLI sign-in (`passbook login`). No auth. Returns a device code to poll with and a code the person types at `verificationUri`; the page never takes a code from its URL.",
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/lookup": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "What a typed code is: the device, where it started and the account approving",
+        "operationId": "cli.postSessionsLookup",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  }
+                },
+                "required": [
+                  "userCode"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "userCode": "BCDF-GHJK"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "client": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "version": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "os": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "hostname": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version",
+                        "os"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "startCountry": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "startCity": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "mismatch": {
+                      "type": "boolean",
+                      "description": "The approving network differs from the starting one."
+                    },
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "email"
+                      ]
+                    },
+                    "accountMismatch": {
+                      "type": "boolean",
+                      "description": "The device asked for another account."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "client",
+                    "startedAt",
+                    "startCountry",
+                    "startCity",
+                    "mismatch",
+                    "account",
+                    "accountMismatch"
+                  ]
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+                  "client": {
+                    "name": "passbook-cli",
+                    "version": "0.2.0",
+                    "os": "macOS"
+                  },
+                  "startedAt": 1795570500000,
+                  "startCountry": "US",
+                  "startCity": "Seattle",
+                  "mismatch": false,
+                  "account": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000011",
+                    "name": "Dana Whitfield",
+                    "email": "dana@example.com"
+                  },
+                  "accountMismatch": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "lookup",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-codes": [
+          "CLI_CODE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/{id}/approve": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Approve a CLI sign-in for one context: Test only, 30 days",
+        "operationId": "cli.postSessionsByIdApprove",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "orgId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "approve",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "API_KEY_CHILD_CANNOT_MINT",
+          "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_PARENT_RETIRING",
+          "API_KEY_PLATFORM_LIVE",
+          "API_KEY_PLATFORM_SCOPES_ALONE",
+          "API_KEY_PLATFORM_SCOPE_KIND",
+          "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCAN_ORG_REQUIRED",
+          "API_KEY_SCOPE_EXCEEDS_CREATOR",
+          "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+          "API_KEY_TERMINALS_REQUIRED",
+          "API_KEY_TERMINALS_UNUSED",
+          "CLI_ACCOUNT_MISMATCH",
+          "CLI_CODE_NOT_FOUND",
+          "CONSOLE_ACCESS_REQUIRED",
+          "DEVELOPER_ACCESS_REQUIRED",
+          "EXPIRY_PAST",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/{id}/deny": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Deny a CLI sign-in",
+        "operationId": "cli.postSessionsByIdDeny",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "decline",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "CLI_CODE_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/sessions/token": {
+      "post": {
+        "summary": "Poll a CLI sign-in with its device code: pending, or the token, once",
+        "operationId": "cli.postSessionsToken",
+        "tags": [
+          "cli"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deviceCode": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "deviceCode"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "deviceCode": "q7Jm2vKcT9xWnB4eYhLsD1aZrUo8PfGiNtV3bX5yCkE"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "pbcli_test_…, shown once. Test only."
+                    },
+                    "tokenId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "context": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "sandbox",
+                            "org"
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "name"
+                      ]
+                    },
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "email"
+                      ]
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "origin": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "The origin that issued it; send it there only."
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "tokenId",
+                    "orgId",
+                    "context",
+                    "account",
+                    "expiresAt",
+                    "origin"
+                  ]
+                },
+                "example": {
+                  "token": "pbcli_test_k3Qx9Zt2_Hn4vR8sLw1YcT6mPq0eUjXb5DgAoZ7iKfN",
+                  "tokenId": "0193a1b2-7c00-7000-8000-000000000011",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "context": {
+                    "kind": "sandbox",
+                    "name": "Dana Whitfield sandbox"
+                  },
+                  "account": {
+                    "id": "0193a1b2-7c00-7000-8000-000000000011",
+                    "name": "Dana Whitfield",
+                    "email": "dana@example.com"
+                  },
+                  "expiresAt": 1795570500000,
+                  "origin": "https://passbook.mobile"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "cli.sessions",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "CLI sign-in: the command line's device flow and its kill switch, not an integration."
+        },
+        "description": "Polls a CLI sign-in with its device code in the body. Answers 400 pending, slow down, denied or expired until the person approves, then the 30-day Test token once.",
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "CLI_ACCOUNT_MISMATCH",
+          "CLI_AUTH_PENDING",
+          "CLI_CODE_DENIED",
+          "CLI_CODE_EXPIRED",
+          "CLI_SLOW_DOWN",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/cli/tokens/{id}": {
+      "delete": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "holders:write"
+            ]
+          },
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "scans:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "logs:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Sign out: a CLI token ends itself (send it as the bearer); a person ends their own",
+        "operationId": "cli.deleteTokensById",
+        "tags": [
+          "cli"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliTokenEnded"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-workbench-cli": true,
+        "x-sdk": {
+          "resource": "apiKeys.cliTokens",
+          "method": "revoke"
+        },
+        "description": "Signs the CLI out: a `pbcli_` token ends itself when sent as the bearer with its own id, and a person ends a CLI token they approved. Any other id answers 404.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/cli-tokens/revoke": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Kill switch: end every CLI token, or those of one organization or person",
+        "operationId": "platform.postCliTokensRevoke",
+        "tags": [
+          "platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "additionalProperties": false
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "userId": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "revoked"
+                  ]
+                },
+                "example": {
+                  "revoked": 33
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.cliTokens",
+          "method": "revokeAll",
+          "sdk": false,
+          "reason": "Platform administration by a person; no key calls it."
+        },
+        "x-sign-in": "oidc",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/resolve": {
       "get": {
         "summary": "What a pasted id is in your Test data: a request, a pass, an event, a key, or Live",
@@ -97286,6 +99416,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "workbench",
           "method": "resolve",
@@ -97646,6 +99777,10 @@
                         "timeZone": {
                           "type": "string",
                           "description": "The sandbox org's IANA zone; every time shows in it."
+                        },
+                        "devicePass": {
+                          "type": "boolean",
+                          "description": "Device passes are on: a Test pass of the sandbox can go on your phone."
                         }
                       },
                       "required": [
@@ -97653,7 +99788,8 @@
                         "name",
                         "slug",
                         "closed",
-                        "timeZone"
+                        "timeZone",
+                        "devicePass"
                       ],
                       "description": "Your developer sandbox, or null before you make one."
                     },
@@ -97717,7 +99853,8 @@
                     "name": "Northwind sandbox",
                     "slug": "northwind-climbing",
                     "closed": false,
-                    "timeZone": "America/Los_Angeles"
+                    "timeZone": "America/Los_Angeles",
+                    "devicePass": false
                   },
                   "orgs": [
                     {
@@ -98003,6 +100140,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "requestLogs",
           "method": "list"
@@ -98130,6 +100268,7 @@
           }
         },
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "requestLogs",
           "method": "retrieve"
@@ -98342,6 +100481,183 @@
           "method": "retrieve"
         },
         "description": "The organization's plan: each limit with how much is used, the features it can use now, and the smallest PassBook footer the plan allows.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "wallet:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Health of the wallets open to an organization, in the caller's mode",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "provider": "google",
+                      "mode": "live",
+                      "tone": "attention",
+                      "lastSuccessAt": 1795571880000,
+                      "queued": 2,
+                      "failed24h": 0,
+                      "uncertain": 4,
+                      "uncertainWaiting": 1,
+                      "callbackAt": 1795568400000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "list"
+        },
+        "description": "The health of each wallet open to the organization in the key's mode: the last update the provider accepted, updates queued, failed in the last 24 hours and with an unknown outcome, and the provider's last report. A wallet that is not released, not in the plan or not enrolled is left out. A key needs wallet:read.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-health/{provider}/recheck": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Queue the settling of a wallet's uncertain updates that are past their grace window",
+        "tags": [
+          "wallet-health"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "samsung"
+              ]
+            },
+            "required": true,
+            "name": "provider",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletHealthRetryResponse"
+                },
+                "example": {
+                  "due": 3,
+                  "waiting": 1
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+        "x-sdk": {
+          "resource": "walletHealth",
+          "method": "retry"
+        },
+        "description": "Sends a wallet's updates with an unknown outcome to settle, once they are past the 10 minute window; those still inside it settle by themselves. Answers how many were sent (at most 50) and how many are still waiting. A key needs passes:write; ten calls an hour per wallet.",
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
@@ -101299,6 +103615,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "API_KEY_RESTRICTED_ROUTE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101397,6 +103714,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "API_KEY_RESTRICTED_ROUTE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -106349,6 +108667,194 @@
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/device-passes/void": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Void every open device pass of one developer; their phones get the voided copy",
+        "operationId": "platform.postDevicePassesVoid",
+        "tags": [
+          "platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "userId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "voided": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "voided"
+                  ]
+                },
+                "example": {
+                  "voided": 3
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.devicePasses",
+          "method": "voidAll",
+          "sdk": false,
+          "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/device-passes/unblock": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-platform-scope": "platform:users",
+        "summary": "Let a developer make device passes again after one was shared",
+        "operationId": "platform.postDevicePassesUnblock",
+        "tags": [
+          "platform"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "userId"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "userId": "0193a1b2-7c00-7000-8000-000000000011"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "platform.devicePasses",
+          "method": "clearBlock",
+          "sdk": false,
+          "reason": "Platform administration by a signed-in person with a step-up, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
           "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -113876,6 +116382,7 @@
         },
         "operationId": "templates.getTemplatesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "templates",
           "method": "retrieve"
@@ -114956,6 +117463,8 @@
           }
         },
         "operationId": "templates.getTemplatesByIdInputSchema",
+        "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "templates",
           "method": "retrieveInputSchema"
@@ -121219,6 +123728,7 @@
         },
         "operationId": "passes.getPasses",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "list"
@@ -121419,6 +123929,7 @@
         },
         "operationId": "passes.postPasses",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "create"
@@ -122273,6 +124784,7 @@
         },
         "operationId": "passes.getPassesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "retrieve"
@@ -122592,6 +125104,7 @@
         },
         "operationId": "passes.patchPassesById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "update"
@@ -127949,6 +130462,7 @@
         },
         "operationId": "passes.postPassesByIdSimulate",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "passes",
           "method": "simulate"
@@ -141283,6 +143797,7 @@
         },
         "operationId": "webhooks.postWebhookEndpointsCapture",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints",
           "method": "ensureCapture"
@@ -141464,6 +143979,7 @@
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "list"
@@ -141568,6 +144084,7 @@
         },
         "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "webhookEndpoints.captures",
           "method": "retrieve"
@@ -142573,6 +145090,7 @@
         },
         "operationId": "events.getEvents",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "events",
           "method": "list"
@@ -142688,6 +145206,7 @@
         },
         "operationId": "events.getEventsById",
         "x-workbench": "test",
+        "x-workbench-cli": true,
         "x-sdk": {
           "resource": "events",
           "method": "retrieve"
@@ -142934,7 +145453,7 @@
     },
     "/api/v1/identities": {
       "get": {
-        "summary": "List Apple identities",
+        "summary": "List Apple identities. With `orgId`, a member lists their organization. Without it, a platform admin session or a Platform key with `platform:identities` or `platform:read` lists all.",
         "tags": [
           "identities"
         ],
@@ -149631,7 +152150,7 @@
           }
         ],
         "x-platform-scope": "platform:audit",
-        "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour)",
+        "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key)",
         "tags": [
           "audit"
         ],
@@ -178737,6 +181256,8 @@
         ],
         "x-codes": [
           "APPLE_UNAUTHORIZED",
+          "ASSET_NOT_FOUND",
+          "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -178744,7 +181265,11 @@
           "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -178911,6 +181436,65 @@
         "x-codes": [
           "LOG_BUDGET",
           "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/d/{code}": {
+      "get": {
+        "summary": "A device pass, once: the signed Test pass for a one-time code (410 when used or expired)",
+        "operationId": "public.getDevicePassByCode",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 128
+            },
+            "required": true,
+            "name": "code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "public.devicePasses",
+          "method": "download",
+          "sdk": false,
+          "reason": "A one-time link a phone opens from a QR code: a person's browser, not an integration."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "ASSET_SLOT",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TOKEN_SEAL_MISMATCH",
           "VALIDATION"
         ]
       }

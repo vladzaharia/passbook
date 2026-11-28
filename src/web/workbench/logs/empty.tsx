@@ -4,8 +4,9 @@ import { LOGS_BENCH_COPY } from '../../../shared/copy/developers-bench-logs.ts';
 import { WB_EMPTY } from '../../../shared/copy/workbench-states.ts';
 import { wbPath } from '../../../shared/workbench.ts';
 import { useToolApi } from '../../lib/tool-api.tsx';
+import { Button } from '../../ui/button.tsx';
 import { BenchCode } from '../bench/code-block.tsx';
-import { BenchState } from '../bench/state.tsx';
+import { StageState } from '../states/states.tsx';
 import { readLog } from './api.ts';
 
 const S = LOGS_BENCH_COPY.state;
@@ -47,16 +48,25 @@ export function FirstCall({
   const portal = usePortalCalls();
   if (portal > 0)
     return (
-      <BenchState scene="logs-idle" title={S.hidden(portal)}>
-        <button type="button" className="btn outline" onClick={onShowPortal}>
-          {S.showHidden}
-        </button>
-      </BenchState>
+      <StageState
+        scene="inspect"
+        mood="curious"
+        title={S.hidden(portal)}
+        action={
+          <Button variant="outline" onClick={onShowPortal}>
+            {S.showHidden}
+          </Button>
+        }
+      />
     );
   return (
-    <BenchState scene="logs-listen" title={hasKey ? WB_EMPTY.logs?.title : S.noCalls}>
+    <StageState
+      scene="listen"
+      mood="curious"
+      title={(hasKey ? WB_EMPTY.logs?.title : S.noCalls) ?? S.noCalls}
+    >
       {hasKey ? (
-        <div className="logs-first">
+        <div className="logs-first w-full min-w-0 [&_.code]:max-w-full [&_.code]:overflow-x-auto">
           <BenchCode label="curl" lang="curl" body={firstCall(location.origin)} empty={S.noCalls} />
         </div>
       ) : (
@@ -64,26 +74,30 @@ export function FirstCall({
       )}
       <div className="logs-first-a">
         {hasKey ? null : (
-          <a className="btn" href={wbPath(orgId, 'keys')}>
-            {S.makeKey}
-          </a>
+          <Button asChild>
+            <a href={wbPath(orgId, 'keys')}>{S.makeKey}</a>
+          </Button>
         )}
-        <a className={hasKey ? 'btn' : 'btn outline'} href={wbPath(orgId, 'console')}>
-          {S.console}
-        </a>
+        <Button asChild variant={hasKey ? 'primary' : 'outline'}>
+          <a href={wbPath(orgId, 'console')}>{S.console}</a>
+        </Button>
       </div>
-      <p className="sm muted logs-kept">{LOGS_BENCH_COPY.kept}</p>
-    </BenchState>
+    </StageState>
   );
 }
 
 /** Filters that match nothing: the way back. */
 export function NoMatch({ onClear }: { onClear: () => void }) {
   return (
-    <BenchState scene="no-match">
-      <button type="button" className="btn outline" onClick={onClear}>
-        {BENCH_COPY.state.clearFilters}
-      </button>
-    </BenchState>
+    <StageState
+      scene="search"
+      mood="curious"
+      title={BENCH_COPY.state.noMatch}
+      action={
+        <Button variant="outline" onClick={onClear}>
+          {BENCH_COPY.state.clearFilters}
+        </Button>
+      }
+    />
   );
 }

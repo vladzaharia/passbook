@@ -51,7 +51,14 @@ register(
     query: AuditQuerySchema,
     response: AuditListSchema,
   },
-  async (c) => c.json(await listPlatformAudit(serviceContext(c), c.req.valid('query'))),
+  async (c) =>
+    c.json(
+      await listPlatformAudit(
+        serviceContext(c),
+        c.req.valid('query'),
+        c.var.auth?.kind !== 'session',
+      ),
+    ),
 );
 
 const csvHeaders = {
@@ -120,7 +127,8 @@ register(
   {
     method: 'get',
     path: '/platform/export',
-    summary: 'Export the platform audit log as CSV (10,000 entries at most; 6 an hour)',
+    summary:
+      'Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key)',
     auth: { platform: 'platform:audit', key: true },
     query: ExportQuerySchema,
   },
@@ -131,7 +139,8 @@ register(
     const query = c.req.valid('query');
     const keyId = auth.kind === 'api_key' ? auth.keyId : null;
     const out = await auditCsv(
-      (cursor, limit) => listPlatformAudit(ctx, { ...query, cursor, limit }),
+      (cursor, limit) =>
+        listPlatformAudit(ctx, { ...query, cursor, limit }, auth.kind !== 'session'),
       () =>
         enforceExportLimit(
           ctx,

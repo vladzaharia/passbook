@@ -21,3 +21,32 @@ export function turnstileScriptUrl(): string {
   });
   return policy.createScriptURL(TURNSTILE_SCRIPT_SRC);
 }
+
+export type TurnstileApi = {
+  render(el: HTMLElement, options: Record<string, unknown>): string;
+  reset(id: string): void;
+  remove(id: string): void;
+};
+
+/** Options every widget shares: a check that cannot run stops; the next submit renders a fresh one. */
+export const TURNSTILE_BASE_OPTIONS = { appearance: 'interaction-only', retry: 'never' } as const;
+
+let scriptPromise: Promise<TurnstileApi> | undefined;
+
+/** The one Turnstile script loader: sign-in, invite and the Workbench console all use it. */
+export function loadTurnstile(): Promise<TurnstileApi> {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  scriptPromise ??= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = turnstileScriptUrl();
+    script.async = true;
+    script.onload = () =>
+      window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile missing'));
+    script.onerror = () => {
+      scriptPromise = undefined;
+      reject(new Error('turnstile blocked'));
+    };
+    document.head.appendChild(script);
+  });
+  return scriptPromise;
+}

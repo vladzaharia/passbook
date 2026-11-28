@@ -10,6 +10,7 @@ export function NoAccessState({
   description,
   actions,
   heading = false,
+  titleClassName,
 }: {
   title: string;
   description?: ReactNode;
@@ -17,6 +18,7 @@ export function NoAccessState({
   actions?: ReactNode;
   /** The page's h1 (a deep link that lands here). */
   heading?: boolean;
+  titleClassName?: string;
 }) {
   return (
     <StateView
@@ -25,6 +27,7 @@ export function NoAccessState({
       art="lock"
       mood="curious"
       heading={heading}
+      titleClassName={titleClassName}
       title={title}
       line={description}
       action={

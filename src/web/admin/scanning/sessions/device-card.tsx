@@ -39,7 +39,7 @@ export function DeviceCard({
               {device.surface === 'auto'
                 ? device.capabilities
                   ? `Automatic · ${SCAN_SURFACE_LABELS[device.effectiveSurface]}`
-                  : 'Automatic · waiting for device'
+                  : 'Automatic'
                 : SCAN_SURFACE_LABELS[device.effectiveSurface]}
             </p>
           </div>
@@ -83,28 +83,27 @@ export function DeviceCard({
             <Badge>Admin · {device.adminName ?? 'Administrator'}</Badge>
           ) : null}
         </div>
-        <div className="grid min-w-0 gap-1 text-xs text-fg-muted">
-          <p>
-            {device.capabilities
-              ? `${device.capabilities.width} × ${device.capabilities.height}${device.capabilities.touch ? ' · Touch' : ''}`
-              : 'Screen not reported yet'}
-          </p>
-          <p>
+        {device.capabilities || device.lastSeenAt || overrides ? (
+          <div className="grid min-w-0 gap-1 text-xs text-fg-muted">
+            {device.capabilities ? (
+              <p>
+                {device.capabilities.width} × {device.capabilities.height}
+                {device.capabilities.touch ? ' · Touch' : ''}
+              </p>
+            ) : null}
             {device.lastSeenAt ? (
-              <>
+              <p>
                 Last seen <RelTime at={device.lastSeenAt} now={now} />
-              </>
-            ) : (
-              'Waiting for the first connection'
-            )}
-          </p>
-          <p className="inline-flex items-center gap-1">
-            <SlidersHorizontal className="size-3.5" aria-hidden />
-            {overrides
-              ? `${overrides} device override${overrides === 1 ? '' : 's'}`
-              : 'Uses session defaults'}
-          </p>
-        </div>
+              </p>
+            ) : null}
+            {overrides ? (
+              <p className="inline-flex items-center gap-1">
+                <SlidersHorizontal className="size-3.5" aria-hidden />
+                {`${overrides} device override${overrides === 1 ? '' : 's'}`}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <Button
           variant="outline"
           size="sm"

@@ -28,8 +28,9 @@ export function liveEventPresenceSql(
   ledgerScopeSql = scanLedgerScopeSql('witness'),
   witnessId = false,
   capacity = false,
+  scopeFrom = '',
 ): string {
-  return `SELECT presence.pass_id, presence.state${witnessId ? ', witness.id AS witness_id' : ''} FROM scan_presence presence
+  return `SELECT presence.pass_id, presence.state${witnessId ? ', witness.id AS witness_id' : ''} FROM ${scopeFrom}scan_presence presence
     JOIN passes member ON member.id=presence.pass_id AND member.org_id=presence.org_id
       AND member.mode=${modeSql}${capacity ? ` AND (presence.tracking=1 OR ${livePassSql('member')})` : ''}
     JOIN scans witness ON witness.id=presence.last_scan_id AND witness.org_id=member.org_id
@@ -46,7 +47,7 @@ export function liveEventPresenceSql(
       )))
     WHERE presence.org_id=${orgSql} AND presence.scope='event:' || ${eventSql}
     UNION ALL
-    SELECT gate.pass_id, gate.state${witnessId ? ', witness.id AS witness_id' : ''} FROM scan_gates gate
+    SELECT gate.pass_id, gate.state${witnessId ? ', witness.id AS witness_id' : ''} FROM ${scopeFrom}scan_gates gate
     JOIN passes member ON member.id=gate.pass_id AND member.org_id=gate.org_id AND member.mode=gate.mode
       AND member.template_id=gate.template_id AND ${livePassSql('member')}
     JOIN scans witness ON witness.id=gate.last_scan_id AND witness.org_id=member.org_id
@@ -58,6 +59,22 @@ export function liveEventPresenceSql(
       AND gate.kind='check_in' AND gate.state IN ('in','out')
       AND NOT EXISTS (SELECT 1 FROM scan_presence present WHERE present.pass_id=gate.pass_id
         AND present.org_id=gate.org_id AND present.scope=gate.scope)`;
+}
+
+/**
+ * `live` and `verified` CTEs over a one-row `scope(org_id, mode, event_id)` CTE named by `scope`.
+ * SQLite counts a cursor per CTE reference, so each CTE is read once: the scope is joined in each
+ * arm of `live`, and the ledger checks run on the witness joined to `live`, not in sibling CTEs.
+ */
+export function verifiedPresenceCtesSql(scope: string, capacity: boolean): string {
+  return `live AS MATERIALIZED (
+      ${liveEventPresenceSql('sc.org_id', 'sc.mode', 'sc.event_id', '1', true, capacity, `${scope} sc CROSS JOIN `)}
+    ), verified AS MATERIALIZED (
+      SELECT live.pass_id, live.state FROM live CROSS JOIN scans witness ON witness.id=live.witness_id
+      WHERE witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
+        AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL
+        AND ${scanLedgerCommonScopeSql('witness')} AND ${scanLedgerSuccessfulCandidateSql('witness')}
+    )`;
 }
 
 /** Correlated scalar occupancy. Inputs must be trusted SQL expressions, not untrusted data. */
@@ -73,29 +90,10 @@ export function eventOccupancySql(
 }
 /** Historical arrivals and current inside include live presence plus proven retained deletions. */
 export const eventTotalsStmt = (db: D1Database, orgId: string, mode: Mode, eventId: string) => {
-  const org = '(SELECT org_id FROM scope)';
-  const modeScope = '(SELECT mode FROM scope)';
-  const event = '(SELECT event_id FROM scope)';
-  const witness = `SELECT witness.id AS witness_id FROM scans witness JOIN scope
-    ON witness.org_id=scope.org_id AND witness.mode=scope.mode AND witness.event_id=scope.event_id
-    WHERE (witness.state='done' AND witness.outcome='ok' AND witness.action_kind='check_in'
-      AND witness.undone_by IS NULL AND witness.pass_id IS NOT NULL)
-      AND witness.id IN (SELECT witness_id FROM live)`;
-  // Live witnesses first: the ledger scope is evaluated only for them, and staged apart from presence
-  // so SQLite does not expand it inside both witness arms of the union.
   return stmt(
     db,
     `WITH scope AS MATERIALIZED (SELECT ? AS org_id, ? AS mode, ? AS event_id),
-    live AS MATERIALIZED (
-      ${liveEventPresenceSql(org, modeScope, event, '1', true)}
-    ), common AS MATERIALIZED (
-      ${witness} AND ${scanLedgerCommonScopeSql('witness')}
-    ), candidate AS MATERIALIZED (
-      ${witness} AND ${scanLedgerSuccessfulCandidateSql('witness')}
-    ), verified AS MATERIALIZED (
-      SELECT live.pass_id, live.state FROM live
-      JOIN common USING (witness_id) JOIN candidate USING (witness_id)
-    ), totals AS MATERIALIZED (
+    ${verifiedPresenceCtesSql('scope', false)}, totals AS MATERIALIZED (
       SELECT COUNT(DISTINCT verified.pass_id) AS arrived,
         COUNT(DISTINCT CASE WHEN verified.state='in' THEN verified.pass_id END) AS inside
       FROM verified

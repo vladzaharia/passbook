@@ -8,6 +8,7 @@ import {
 } from '../../../shared/contracts/idp-access.ts';
 import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { idpIdempotent } from './idempotent.ts';
@@ -17,7 +18,7 @@ const TAG = 'polaris platform';
 
 /** Mount at /api/v1/platform. */
 export const idpPlatformRoutes = createRouter();
-idpPlatformRoutes.use('*', async (c, next) => {
+ownUse(idpPlatformRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

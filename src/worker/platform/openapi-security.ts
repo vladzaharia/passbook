@@ -4,6 +4,7 @@ import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
+import { innerOf } from './router-scope.ts';
 import { isOidcOnly, signInLevelOf, stepUpOf } from './sign-in-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
@@ -47,7 +48,7 @@ export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiSc
 
 /** Whether a guard declared key access and enforces it: a route it covers has its access decision. */
 export const enforcesKeyAccess = (guard: object): boolean => {
-  const access = accessOf.get(guard);
+  const access = accessOf.get(innerOf(guard));
   return access !== undefined && access.documentOnly !== true;
 };
 
@@ -104,7 +105,7 @@ function keyScopes(
   let any = false;
   let seen = false;
   for (const r of app.routes) {
-    const access = accessOf.get(r.handler);
+    const access = accessOf.get(innerOf(r.handler));
     if (!access || (r.method !== 'ALL' && r.method.toLowerCase() !== method)) continue;
     if (!patternOf(r.path).test(sample) || (access.only && !access.only.test(docPath))) continue;
     const list = isRead(method) ? access.read : (access.write ?? []);

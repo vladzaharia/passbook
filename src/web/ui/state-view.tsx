@@ -94,6 +94,8 @@ export interface StateViewProps {
   children?: ReactNode;
   /** The Workbench canvas in place of the border (until its states move). */
   canvas?: boolean;
+  /** Replaces the title's type (the Workbench sets one scale for its states). */
+  titleClassName?: string;
   className?: string;
 }
 
@@ -123,6 +125,7 @@ export function StateView({
   alert = false,
   children,
   canvas = false,
+  titleClassName,
   className,
 }: StateViewProps) {
   const tone = TONE[state];
@@ -208,9 +211,10 @@ export function StateView({
         <Title
           tabIndex={heading ? -1 : undefined}
           className={cn(
-            size === 'stage' || size === 'hosted' || heading
-              ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
-              : 'text-sm font-medium text-fg-strong',
+            titleClassName ??
+              (size === 'stage' || size === 'hosted' || heading
+                ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
+                : 'text-sm font-medium text-fg-strong'),
           )}
         >
           {title}

@@ -32,6 +32,17 @@ export function sqlOutsideRepo(rel: string, text: string): string | null {
   return SQL.test(text) ? `${rel} contains SQL outside a repo file` : null;
 }
 
+// The stamped presence column exists only in the anchor builder and its guard; other SQL gets it by interpolating
+// builder output, so a hand-written `ao.<stamp>` cannot be wrapped into a negation the guard does not see.
+const STAMP_OWNERS = /^src\/worker\/platform\/authority-read(?:-[a-z-]+)?(?:\.test)?\.ts$/;
+
+export function presenceStamp(rel: string, text: string): string | null {
+  if (STAMP_OWNERS.test(rel) || !rel.startsWith('src/worker/')) return null;
+  return text.includes('authority_present_k7')
+    ? `${rel} names the presence stamp; use the builder's present, authorized() or ok`
+    : null;
+}
+
 // A bound parameter that switches a filter off defeats index use and lets a null drop a tenant filter.
 // Build the WHERE from the filters that are present instead. The patterns cover a null test of a bind in
 // either order (also through `(SELECT ?)`), `?NNN`, ISNULL / COALESCE / IFNULL / NULLIF of a bind, an
@@ -51,6 +62,8 @@ const OPTIONAL_BIND = [
   new RegExp(String.raw`${P}\s*(?:=|==|!=|<>|<=?|>=?)\s*(?:'[^']*'|-?\d)`, 'gi'),
   new RegExp(String.raw`(?:\(|\bOR\b|\bAND\b|\bWHERE\b)\s*${P}\s*\bOR\b`, 'gi'),
   new RegExp(String.raw`\bOR\b\s*${P}\s*(?:\)|\bAND\b|\bOR\b)`, 'gi'),
+  // A bind interpolated through a helper (`${p(x)}`, `${b.bind(x)}`); column helpers render names, not binds.
+  /\$\{\s*(?:\w+\.)*(?:p|bind)\([^{}]*\)\s*\}\s+IS\s+(?:NOT\s+)?NULL\b/gi,
 ];
 const TEST_FILE =
   /\.test\.tsx?$|(^|\/)(?:test-kit|test-support|test-utils|testing|[a-z0-9-]*(?:test-support|fixtures?))\.tsx?$/;
@@ -86,7 +99,11 @@ if (import.meta.main) {
   for (const file of sources(join(root, 'src/worker'))) {
     const rel = relative(root, file);
     const text = readFileSync(file, 'utf8');
-    for (const found of [sqlOutsideRepo(rel, text), replaceOnIdentities(rel, text)])
+    for (const found of [
+      sqlOutsideRepo(rel, text),
+      replaceOnIdentities(rel, text),
+      presenceStamp(rel, text),
+    ])
       if (found) problems.push(found);
     problems.push(...optionalBindPredicate(rel, text));
   }

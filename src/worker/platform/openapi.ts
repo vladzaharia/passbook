@@ -9,9 +9,11 @@ import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { checkDeprecation, deprecationMiddleware, type RouteDeprecation } from './deprecation.ts';
 import { AppError } from './errors.ts';
+import { innerOf } from './router-scope.ts';
 import './openapi-names.ts';
 import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
+import { ownRoutesOnly } from './router-scope.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -63,7 +65,7 @@ export interface RouteSpec {
 }
 
 const publicHandlers = new WeakSet<object>();
-export const isPublicHandler = (handler: object): boolean => publicHandlers.has(handler);
+export const isPublicHandler = (handler: object): boolean => publicHandlers.has(innerOf(handler));
 
 /** A `capability` on a scope declaration must be one every scope the route's method accepts exercises. */
 function checkDeclaration(spec: RouteSpec): void {
@@ -107,7 +109,7 @@ const throwInvalid = (
  */
 export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono<AppBindings> {
   const router = new OpenAPIHono<AppBindings>({ defaultHook: throwInvalid });
-  if (options.bodyLimit !== false) router.use('*', defaultBodyLimit());
+  if (options.bodyLimit !== false) router.use('*', ownRoutesOnly(router, defaultBodyLimit()));
   return router;
 }
 
@@ -226,10 +228,10 @@ export function register<S extends RouteSpec>(
   );
 }
 
-/** Applies a middleware to every route of a router. */
+/** Applies a middleware to every route of a router, and only to its own routes. */
 export function guard(
   router: OpenAPIHono<AppBindings>,
   ...middleware: MiddlewareHandler<AppBindings>[]
 ): void {
-  for (const m of middleware) router.use('*', m);
+  for (const m of middleware) router.use('*', ownRoutesOnly(router, m));
 }
