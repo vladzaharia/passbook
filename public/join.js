@@ -50,7 +50,7 @@
         sitekey: siteKey,
         action: 'join',
         appearance: 'interaction-only',
-        // A check that cannot run stops instead of retrying; the post then fails closed.
+        // Same as TURNSTILE_BASE_OPTIONS (src/web/lib/turnstile-script.ts): a check that cannot run stops; the post then fails closed.
         retry: 'never',
         theme: 'auto',
         callback: (token) => {
