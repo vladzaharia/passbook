@@ -45,6 +45,7 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
+import { usagePeriods } from '../modules/usage/jobs-periods.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { syncGoogleClassReviews } from '../modules/wallet-providers/google-review-sync.ts';
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
@@ -102,6 +103,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
     { name: 'idp.drain', run: drainIdp },
+    { name: 'usage.periods', run: usagePeriods },
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },

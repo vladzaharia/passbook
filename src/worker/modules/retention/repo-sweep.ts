@@ -19,6 +19,24 @@ export type Scope =
   | { kind: 'platform'; exclude: readonly string[] }
   | { kind: 'org'; orgId: string };
 
+/** `pass_events` kinds the usage gauge counts from (AD10); a recount reads them until the period after them closes. */
+export const METERED_EVENT_KINDS = [
+  'device.registered',
+  'device.unregistered',
+  'device.fetched',
+  'wallet.saved',
+  'pass.printed',
+  'scan.checked_in',
+  'scan.redeemed',
+  'scan.checked_out',
+  'scan.adjusted',
+] as const;
+
+/** True for a row whose usage period has not closed its recount window (the period after it is still open). */
+const recountOpen = (org: string, at: string) =>
+  `EXISTS (SELECT 1 FROM usage_periods up WHERE up.org_id = ${org} AND up.start_ms <= ${at}
+     AND up.end_ms > ${at} AND up.recount_closed_at IS NULL)`;
+
 const COND: Record<
   SweepTable,
   { table: string; sql: string; params: (c: Cutoffs) => number[]; idCol?: string }
@@ -37,13 +55,17 @@ const COND: Record<
   },
   events: {
     table: 'pass_events',
-    sql: "pass_events.mode = 'live' AND pass_events.at < ?",
+    sql: `pass_events.mode = 'live' AND pass_events.at < ?
+      AND NOT (pass_events.kind IN (${METERED_EVENT_KINDS.map((k) => `'${k}'`).join(', ')})
+        AND ${recountOpen('pass_events.org_id', 'pass_events.at')})`,
     params: (c) => [c.cutoff],
   },
   delivery: {
     table: 'outbox',
     sql: `((outbox.state IN ('sent', 'cancelled') AND outbox.finished_at < ?)
-      OR (outbox.state IN ('failed', 'partial') AND outbox.finished_at < ?))`,
+      OR (outbox.state IN ('failed', 'partial') AND outbox.finished_at < ?))
+      AND NOT (outbox.kind = 'email' AND outbox.state = 'sent'
+        AND ${recountOpen('outbox.org_id', 'COALESCE(outbox.finished_at, outbox.created_at)')})`,
     params: (c) => [c.cutoff, c.failedCutoff],
   },
   // A photo of a voided or removed pass, once the photo and the pass have both been untouched since the cutoff.

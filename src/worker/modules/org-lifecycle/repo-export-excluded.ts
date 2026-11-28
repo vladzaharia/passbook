@@ -118,6 +118,9 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   identity_runs: BOOKKEEPING,
   identity_moves: BOOKKEEPING,
   pass_moves: BOOKKEEPING,
+  usage_periods: BOOKKEEPING,
+  usage_day_bounds: BOOKKEEPING,
+  usage_daily: BOOKKEEPING,
   wallet_google_issuers:
     'which org holds a Google issuer: platform bookkeeping, kept after a purge',
   wallet_sa_keys: 'platform service-account key inventory',
