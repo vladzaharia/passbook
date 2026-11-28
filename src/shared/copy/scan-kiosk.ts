@@ -95,7 +95,7 @@ export const KIOSK_COPY = {
   },
   help: {
     title: 'Help is on the way',
-    call: 'Call {phone}',
+    coming: "Someone's coming.",
     cancel: 'Cancel',
   },
   staff: {
@@ -134,12 +134,4 @@ export const KIOSK_COPY = {
     speak: 'Read aloud',
     longer: 'Longer time',
   },
-} as const;
-
-/** The sub under `see_desk`, by `KioskView.sub`: the shipped `CUSTOMER_REASON_SUB` lines. */
-export const KIOSK_SUB_LINES = {
-  capacity_full: "We're full right now.",
-  outside_hours: 'Your plan opens {when}.',
-  guest_expired: 'Your guest pass has ended.',
-  still_inside: "Your last exit wasn't recorded.",
 } as const;

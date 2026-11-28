@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common.ts';
+import { EmailSchema, IdSchema, ModeSchema, PlainLineSchema, TimestampSchema } from './common.ts';
 import { GuestCodeInputSchema } from './guest-codes.ts';
 import {
   defaultNfcReaderSettings,
@@ -96,15 +96,13 @@ export const KioskCreateSchema = z.strictObject({
   name: PlainLineSchema(80).optional(),
   kiosk: KioskDeviceSettingsSchema,
 });
-export const KioskPatchSchema = z.strictObject({ kiosk: KioskDeviceSettingsSchema.partial() });
+/** `.partial()` would apply the `nfcReader` default and turn the reader off on every PATCH. */
+export const KioskPatchSchema = z.strictObject({
+  kiosk: KioskDeviceSettingsSchema.omit({ nfcReader: true })
+    .partial()
+    .extend({ nfcReader: NfcReaderSettingsSchema.optional() }),
+});
 
-/** The four guidance lines the kiosk may show under a refusal (`CUSTOMER_REASON_SUB`). */
-export const KioskSubSchema = z.enum([
-  'capacity_full',
-  'outside_hours',
-  'guest_expired',
-  'still_inside',
-]);
 export const KioskScreenSchema = z.enum([
   'welcome',
   'goodbye',
@@ -115,30 +113,49 @@ export const KioskScreenSchema = z.enum([
   'paused',
   'closed',
 ]);
-/** What a kiosk is ever sent: no reason, id, count (but `room`), full email or last name. */
+/** First character, then masked: the only email form a kiosk is sent (`maskEmail`). */
+const MaskedEmailSchema = z
+  .string()
+  .max(80)
+  .regex(
+    /^[^\s@\u2022]\u2022{3}@[^\s@\u2022]\u2022{3}(?:\.[A-Za-z0-9.-]{1,40})?$/u,
+    'Send the masked form.',
+  );
+/** What a kiosk is ever sent: no reason, sub, id (but the kiosk's own handoff), count (but `room`), full email or last name. */
 export const KioskViewSchema = z.strictObject({
   screen: KioskScreenSchema,
   /** First name only. */
-  greet: z.string().min(1).max(24).optional(),
-  card: z.strictObject({ label: z.string().max(40), band: z.enum(['in', 'out']) }).optional(),
-  reward: z.strictObject({ label: z.string().max(40) }).optional(),
+  greet: PlainLineSchema(24).optional(),
+  /** Fills `{host}`: the host's display first name. */
+  hostName: PlainLineSchema(24).optional(),
+  /** Fills `{maskedEmail}`. */
+  maskedEmail: MaskedEmailSchema.optional(),
+  /** The words come from `KIOSK_COPY.pass.in` or `out`. */
+  card: z.strictObject({ band: z.enum(['in', 'out']) }).optional(),
+  /** The words come from `CUSTOMER_COPY.rewardReady`. */
+  reward: z.strictObject({ ready: z.literal(true) }).optional(),
   rows: z
     .array(
       z.strictObject({
         handle: z.string().min(1).max(128),
-        firstName: z.string().min(1).max(24),
-        hint: z.string().max(24),
+        firstName: PlainLineSchema(24),
+        /** Fills `{last2}`. */
+        serialTail: z.string().regex(/^[0-9]{2}$/),
       }),
     )
     .max(4)
     .optional(),
   /** Partial groups only. */
   room: z.number().int().min(1).max(999).optional(),
-  sub: KioskSubSchema.optional(),
-  /** Fills `{when}` of the `outside_hours` sub, in the session or org zone. */
-  subWhen: z.string().max(40).optional(),
   hostNotified: z.boolean().optional(),
-  handoff: z.strictObject({ url: z.string().max(512), expiresAt: TimestampSchema }).optional(),
+  handoff: z
+    .strictObject({
+      id: IdSchema,
+      /** A QR for `/h/{token}` on this site. */
+      url: z.url({ protocol: /^https$/ }).max(512),
+      expiresAt: TimestampSchema,
+    })
+    .optional(),
 });
 export type KioskView = z.infer<typeof KioskViewSchema>;
 
@@ -208,7 +225,7 @@ export const KioskConfirmSchema = z.strictObject({
 const DetailSchema = z.strictObject({
   firstName: PlainLineSchema(24),
   lastName: PlainLineSchema(40),
-  email: z.string().trim().max(254),
+  email: EmailSchema,
   phone: PlainLineSchema(24).optional(),
   company: PlainLineSchema(60).optional(),
   news: z.boolean().optional(),
@@ -228,27 +245,6 @@ export const KioskStaffAdmitSchema = z.union([
 /** Exit needs a fresh PIN with the binding. */
 export const KioskStaffExitSchema = z.strictObject({ pin: ScanPinSchema });
 
-/** The only device endpoints a kiosk may call (K-D2); anything else is 403 `KIOSK_NOT_ALLOWED`. */
-export const KIOSK_ALLOWED_ENDPOINTS: readonly (readonly [method: string, path: string])[] = [
-  ['GET', '/scan/kiosk/config'],
-  ['POST', '/scan/kiosk/heartbeat'],
-  ['POST', '/scan'],
-  ['POST', '/scan/kiosk/lookup'],
-  ['POST', '/scan/kiosk/code'],
-  ['POST', '/scan/kiosk/confirm'],
-  ['GET', '/scan/kiosk/hosts'],
-  ['POST', '/scan/kiosk/walk-in'],
-  ['POST', '/scan/kiosk/handoff/{id}/revoke'],
-  ['POST', '/staff/pin'],
-  ['DELETE', '/staff'],
-  ['POST', '/scan/kiosk/staff/admit'],
-  ['POST', '/scan/kiosk/staff/pause'],
-  ['POST', '/scan/kiosk/staff/resume'],
-  ['POST', '/scan/kiosk/staff/exit'],
-  ['POST', '/scan/help'],
-  ['POST', '/scan/help/{id}/cancel'],
-  ['GET', '/scan/help/{id}'],
-];
 /** Kiosk-only codes. `FEATURE_NOT_INCLUDED` is the platform's. `KIOSK_NOT_ALLOWED` is in `scan-help.ts`. */
 export const KIOSK_ERROR_STATUS = { KIOSK_NETWORK: 403, KIOSK_TOO_MANY_LOOKUPS: 429 } as const;
 
