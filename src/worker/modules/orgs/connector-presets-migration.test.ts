@@ -1,7 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { presetValues } from '../../../shared/contracts/entitlements.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { applyKit } from '../channels/apply-test-fixtures.ts';
@@ -111,8 +110,6 @@ describe('0212 connector presets', () => {
       );
       expect({ ...now, connectors: null }).toEqual({ ...before[p], connectors: null });
     }
-    // The registry is the source of truth.
-    expect(presetValues('trial').connectors).toEqual(NEW);
 
     const meta = await all<{
       preset: string;

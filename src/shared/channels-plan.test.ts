@@ -59,7 +59,6 @@ describe('blockedByEntitlement', () => {
     expect(blocked('legacy')).toEqual({});
     expect(blocked('standard')).toEqual({});
     expect(blocked('trial')).toEqual({
-      google: 'not_included',
       samsung: 'not_included',
       paper: 'not_included',
       nfc: 'not_included',
@@ -93,16 +92,16 @@ describe('entitlementTransition', () => {
     expect(entitlementTransition(legacy, trial)).toEqual([
       {
         kind: 'channel_apply',
-        channels: ['google', 'samsung', 'paper', 'nfc'],
+        channels: ['samsung', 'paper', 'nfc'],
         blockedBefore: [],
-        blockedAfter: ['google', 'samsung', 'paper', 'nfc'],
+        blockedAfter: ['samsung', 'paper', 'nfc'],
       },
     ]);
     expect(entitlementTransition(trial, legacy)).toEqual([
       {
         kind: 'channel_apply',
-        channels: ['google', 'samsung', 'paper', 'nfc'],
-        blockedBefore: ['google', 'samsung', 'paper', 'nfc'],
+        channels: ['samsung', 'paper', 'nfc'],
+        blockedBefore: ['samsung', 'paper', 'nfc'],
         blockedAfter: [],
       },
     ]);

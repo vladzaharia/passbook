@@ -2,7 +2,6 @@ export const LABEL_API = {
   api: 'API access',
   'api.rateTier': 'API rate tier',
   'api.keys': 'API keys',
-  apps: 'Apps',
   webhooks: 'Webhooks',
   'webhooks.endpoints': 'Webhook endpoints',
 } as const;

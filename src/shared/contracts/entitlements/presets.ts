@@ -12,7 +12,9 @@ export const ENTITLEMENT_PRESETS = [
   'trial',
   'starter',
   'standard',
+  'business',
   'premium',
+  'enterprise',
   'legacy',
   'developer',
 ] as const;

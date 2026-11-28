@@ -24,8 +24,24 @@ async function kitOf(google: 'absent' | 'configured') {
   const f = await setupWalletOfferKit({ google, samsung: 'absent', db: (await testEnv()).DB });
   restore = setWalletProvidersEnabledForTest(true);
   const db = f.kit.env.DB;
-  const plan = (preset: string) =>
-    run(db, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [preset, f.kit.org.id]);
+  // Every sold plan includes Google: 'trial' here means a plan without it, a Google override of 0.
+  const plan = async (preset: string) => {
+    await run(db, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [
+      preset,
+      f.kit.org.id,
+    ]);
+    await run(
+      db,
+      "DELETE FROM org_entitlement_overrides WHERE org_id = ? AND key = 'wallet.google'",
+      [f.kit.org.id],
+    );
+    if (preset === 'trial')
+      await run(
+        db,
+        "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'wallet.google', '0', 1)",
+        [f.kit.org.id],
+      );
+  };
   const reason = (provider: 'google' | 'samsung' = 'google') =>
     walletProviderDisabledReason(db, provider, f.kit.org.id, 'live');
   const open = async () =>

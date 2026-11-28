@@ -47,6 +47,6 @@ describe('a preset change through the platform API converges the org channels', 
     const mid = await read();
     expect((await put('legacy', mid.revision)).status).toBe(200);
     expect(jobs()).toHaveLength(2);
-    expect(jobs()[1]?.blockedBefore).toEqual(['google', 'samsung', 'paper', 'nfc']);
+    expect(jobs()[1]?.blockedBefore).toEqual(['samsung', 'paper', 'nfc']);
   });
 });

@@ -33,7 +33,7 @@ describe('plan-change jobs out of order and repeated', () => {
       from_rev: 2,
       to_rev: 3,
       from_blocked: '[]',
-      to_blocked: '["google","samsung","paper","nfc"]',
+      to_blocked: '["samsung","paper","nfc"]',
     });
     await t.work(runs[0]?.id as string).done;
     // Paper and nfc flipped on both passes, once.

@@ -43,6 +43,13 @@ async function ready(mode: Mode, preset: string) {
   const cred = await platformSource(mode);
   const org = await k.org();
   await run(env.DB, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [preset, org.id]);
+  // Every sold plan includes Google, so "the plan lacks the wallet" is a Google override of 0 on the lowest.
+  if (preset === 'trial')
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'wallet.google', '0', 1)",
+      [org.id],
+    );
   const m = await k.member(org.id, mode);
   await setEnrolmentSource(k.ctx, m.auth, org.id, 'google', {
     source: 'platform',
@@ -79,7 +86,7 @@ describe('enabling a wallet enrolment under the plan', () => {
     const { org, m } = await ready('test', 'trial');
     await run(
       env.DB,
-      `INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at)
+      `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at)
        VALUES (?, 'wallet.google', '1', 1)`,
       [org.id],
     );

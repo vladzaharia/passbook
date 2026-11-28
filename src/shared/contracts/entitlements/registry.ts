@@ -17,7 +17,8 @@ import type { EntitlementDef, EntitlementValue } from './kinds.ts';
 import type { EntitlementPreset } from './presets.ts';
 
 /**
- * Columns: trial, starter, standard, premium, unlimited (id `legacy`), developer. Unlimited is every flag
+ * Columns: trial (Stub), starter (Admit One), standard (Season Pass), business (Backstage), premium (All Access),
+ * enterprise, unlimited (id `legacy`), developer. Unlimited is every flag
  * on and no limits, so nothing changes for an existing org. Each step up only adds (a test holds it).
  */
 export const ENTITLEMENTS = {

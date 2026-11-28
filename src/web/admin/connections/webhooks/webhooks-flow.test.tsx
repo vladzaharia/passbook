@@ -155,7 +155,7 @@ describe('add endpoint (the outbound path of the wizard)', () => {
             ? problem(
                 409,
                 'WEBHOOK_ENDPOINT_LIMIT',
-                'This mode already has 10 endpoints. Delete one first.',
+                'This mode already has 100 endpoints. Delete one first.',
               )
             : new Response(JSON.stringify({ items: [] }), {
                 headers: { 'content-type': 'application/json' },
@@ -167,7 +167,7 @@ describe('add endpoint (the outbound path of the wizard)', () => {
     await next(user);
     await user.click(await screen.findByRole('button', { name: 'Add endpoint' }));
     expect(
-      await screen.findByText('This mode already has 10 endpoints. Delete one first.'),
+      await screen.findByText('This mode already has 100 endpoints. Delete one first.'),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Add endpoint' })).toBeVisible();
   });

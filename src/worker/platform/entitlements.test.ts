@@ -224,13 +224,13 @@ describe('overrides and expiry', () => {
   it('an override beats the preset; an expired one does not; a future one does', async () => {
     const { s } = await setupGrant('override');
     await setPreset(s.org.id, 'trial');
-    expect(await resolved(s.org.id, 'webhooks')).toBe('0');
-    await override(s.org.id, 'webhooks', '1');
-    expect(await resolved(s.org.id, 'webhooks')).toBe('1');
-    await override(s.org.id, 'webhooks', '1', Date.now() - 1);
-    expect(await resolved(s.org.id, 'webhooks')).toBe('0');
-    await override(s.org.id, 'webhooks', '1', Date.now() + HOUR);
-    expect(await resolved(s.org.id, 'webhooks')).toBe('1');
+    expect(await resolved(s.org.id, 'print')).toBe('0');
+    await override(s.org.id, 'print', '1');
+    expect(await resolved(s.org.id, 'print')).toBe('1');
+    await override(s.org.id, 'print', '1', Date.now() - 1);
+    expect(await resolved(s.org.id, 'print')).toBe('0');
+    await override(s.org.id, 'print', '1', Date.now() + HOUR);
+    expect(await resolved(s.org.id, 'print')).toBe('1');
     await override(s.org.id, 'members', 'null', Date.now() + HOUR);
     expect(await resolved(s.org.id, 'members')).toBe('null');
   });
@@ -243,13 +243,13 @@ describe('overrides and expiry', () => {
         grant(route, {
           purpose: 'org_mode.test.entitled',
           principal: member(),
-          checks: [entitled('webhooks')],
+          checks: [entitled('print')],
         }).commit(),
       );
     expect((await g())?.code).toBe('FEATURE_NOT_INCLUDED');
-    await override(s.org.id, 'webhooks', '1', Date.now() + 60_000);
+    await override(s.org.id, 'print', '1', Date.now() + 60_000);
     expect(await g()).toBeNull();
-    await override(s.org.id, 'webhooks', '1', Date.now() - 1);
+    await override(s.org.id, 'print', '1', Date.now() - 1);
     expect((await g())?.code).toBe('FEATURE_NOT_INCLUDED');
   });
 });
@@ -273,7 +273,7 @@ describe('fail closed', () => {
             checks: [c],
           }).commit(),
         );
-      expect((await go(entitled('apps')))?.code).toBe('FEATURE_NOT_INCLUDED');
+      expect((await go(entitled('print')))?.code).toBe('FEATURE_NOT_INCLUDED');
       expect((await go(entitled('api', 'read')))?.code).toBe('FEATURE_NOT_INCLUDED');
       expect((await go(entitled('connectors', 'csv-url')))?.code).toBe('FEATURE_NOT_INCLUDED');
       expect((await go(entitled('templates.stylesBlocked', 'coupon')))?.code).toBe(
@@ -283,7 +283,7 @@ describe('fail closed', () => {
       expect((await go(withinLimit('templates', 'SELECT 0 WHERE {org} IS NOT NULL')))?.code).toBe(
         'FEATURE_LIMIT_REACHED',
       );
-      expect((await refusal(requireEntitled(route, s.org.id, 'apps')))?.code).toBe(
+      expect((await refusal(requireEntitled(route, s.org.id, 'print')))?.code).toBe(
         'FEATURE_NOT_INCLUDED',
       );
     } finally {
@@ -315,7 +315,7 @@ describe('fail closed', () => {
           checks: [c],
         }).commit(),
       );
-    expect((await go(entitled('apps')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not in the preset
+    expect((await go(entitled('print')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not in the preset
     expect((await go(entitled('webhooks')))?.code).toBe('FEATURE_NOT_INCLUDED'); // "yes" is not 1
     expect((await go(entitled('api', 'read')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not a level
     expect((await go(entitled('connections')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not an integer
@@ -338,8 +338,8 @@ describe('fail closed', () => {
 
 describe('entitled', () => {
   const cases: [string, string, Check, boolean][] = [
-    ['flag off', 'trial', entitled('webhooks'), false],
-    ['flag on', 'standard', entitled('webhooks'), true],
+    ['flag off', 'trial', entitled('print'), false],
+    ['flag on', 'standard', entitled('print'), true],
     ['level below', 'standard', entitled('nfc', 'secure'), false],
     ['level at', 'standard', entitled('nfc', 'basic'), true],
     ['level above', 'legacy', entitled('nfc', 'basic'), true],
@@ -347,9 +347,15 @@ describe('entitled', () => {
     ['allow-list star', 'standard', entitled('connectors', 'shopify/orders'), true],
     [
       'allow-list type wildcard',
-      'trial',
+      'starter',
       entitled('connectors', 'webhook-push/shopify-orders'),
       true,
+    ],
+    [
+      'allow-list stub excludes webhook push',
+      'trial',
+      entitled('connectors', 'webhook-push/x'),
+      false,
     ],
     ['allow-list exact', 'trial', entitled('connectors', 'csv-url'), true],
     ['allow-list miss', 'trial', entitled('connectors', 'square'), false],
@@ -359,7 +365,7 @@ describe('entitled', () => {
     ['limit above zero', 'trial', entitled('connections'), true],
     ['limit null', 'legacy', entitled('connections'), true],
     ['limit zero', 'trial', entitled('domains'), false],
-    ['limit one', 'standard', entitled('domains'), true],
+    ['limit one', 'business', entitled('domains'), true],
   ];
   it.each(cases)('%s (%s)', async (_n, preset, check, ok) => {
     const { s, route, member } = await setupGrant(`entitled-${_n.replaceAll(' ', '-')}`);
@@ -380,14 +386,14 @@ describe('entitled', () => {
     expect(() => entitled('nfc')).toThrow(/needs a level/);
     expect(() => entitled('nfc', 'huge')).toThrow(/needs a level/);
     expect(() => entitled('connectors')).toThrow(/needs an item/);
-    expect(() => withinLimit('apps', 'SELECT 0')).toThrow(/needs a limit/);
+    expect(() => withinLimit('print', 'SELECT 0')).toThrow(/needs a limit/);
   });
 
   it('a platform grant has no org to ask', async () => {
     const { s, route } = await setupGrant('entitled-platform');
     const principal = await platformPrincipal(s);
     expect(() =>
-      grant(route, { purpose: 'platform.test.entitled', principal, checks: [entitled('apps')] }),
+      grant(route, { purpose: 'platform.test.entitled', principal, checks: [entitled('print')] }),
     ).toThrow(/needs a tenant/);
   });
 
@@ -398,7 +404,7 @@ describe('entitled', () => {
       grant(route, {
         purpose: 'org_mode.test.entitled',
         principal: member(),
-        checks: [entitled('apps')],
+        checks: [entitled('print')],
         codes: { entitlement: 'APPS_NOT_INCLUDED' },
       }).commit(),
     );

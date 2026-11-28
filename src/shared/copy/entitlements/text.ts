@@ -13,10 +13,12 @@ export const LIMIT_REACHED_COPY = '{feature}: limit reached for this organizatio
 export const LIMIT_ASK = 'Ask PassBook for more.';
 
 export const PRESET_LABEL: Record<EntitlementPreset, string> = {
-  trial: 'Trial',
-  starter: 'Starter',
-  standard: 'Standard',
-  premium: 'Premium',
+  trial: 'Stub',
+  starter: 'Admit One',
+  standard: 'Season Pass',
+  business: 'Backstage',
+  premium: 'All Access',
+  enterprise: 'Enterprise',
   legacy: 'Unlimited',
   developer: 'Developer sandbox',
 };

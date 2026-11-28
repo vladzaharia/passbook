@@ -44,7 +44,6 @@ export const WebhookApiVersionSchema = z.enum(WEBHOOK_API_VERSIONS);
 export type WebhookApiVersion = z.infer<typeof WebhookApiVersionSchema>;
 export const LATEST_WEBHOOK_API_VERSION: WebhookApiVersion = '2026-11-20';
 
-export const WEBHOOK_ENDPOINT_LIMIT = 10;
 export const WEBHOOK_MAX_TEMPLATES = 20;
 export const WEBHOOK_MAX_BODY_BYTES = 8192;
 

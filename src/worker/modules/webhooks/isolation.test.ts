@@ -210,9 +210,9 @@ describe('proof 4: test rows on live passes produce nothing', () => {
 });
 
 describe('limits and immutability', () => {
-  it('aborts the 11th endpoint of an org and mode, and counts modes apart', async () => {
+  it('aborts the 101st endpoint of an org and mode, and counts modes apart', async () => {
     const org = (await makeOrg(kit.fx)).id;
-    for (let i = 0; i < 10; i++) await seedEndpoint(db(), { orgId: org });
+    for (let i = 0; i < 100; i++) await seedEndpoint(db(), { orgId: org });
     await expect(seedEndpoint(db(), { orgId: org })).rejects.toThrow(/webhook endpoint limit/);
     await expect(seedEndpoint(db(), { orgId: org, mode: 'test' })).resolves.toBeTruthy();
   });

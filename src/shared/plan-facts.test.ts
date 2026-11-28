@@ -6,8 +6,8 @@ import { planFacts } from './plan-facts.ts';
 describe('planFacts', () => {
   it('reads numbers, no limit and off from the values', () => {
     expect(planFacts(presetValues('standard'))).toEqual({
-      passes: 5000,
-      templates: 25,
+      passes: null,
+      templates: 10,
       google: true,
       samsung: true,
       print: true,
@@ -21,7 +21,7 @@ describe('planFacts', () => {
       footer: 'none',
     });
     expect(planFacts(presetValues('trial'))).toMatchObject({
-      google: false,
+      google: true,
       samsung: false,
       print: false,
       nfc: 'off',
@@ -49,7 +49,7 @@ describe('planFacts', () => {
     for (const [preset, level] of [
       ['premium', 'none'],
       ['standard', 'quiet'],
-      ['starter', 'full'],
+      ['trial', 'full'],
     ] as const)
       expect(planFacts(presetValues(preset)).footer).toBe(level);
   });

@@ -8,6 +8,9 @@ import {
   WebhookEventTypeSchema,
 } from './webhooks-events.ts';
 
+/** Endpoints per org and mode: the platform ceiling the database trigger enforces; a plan's `webhooks.endpoints` is the usual cap. */
+export const WEBHOOK_ENDPOINT_LIMIT = 100;
+
 export const WebhookEndpointStatusSchema = z.enum(['active', 'paused', 'disabled']);
 export type WebhookEndpointStatus = z.infer<typeof WebhookEndpointStatusSchema>;
 

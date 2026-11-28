@@ -85,7 +85,7 @@ describe('a feature transition starts channel-apply runs', () => {
     t.kit.clock.advance(60_000);
 
     const up = (await change(trial, legacy, 'legacy')) as Job;
-    expect(up.blockedBefore).toEqual(['google', 'samsung', 'paper', 'nfc']);
+    expect(up.blockedBefore).toEqual(['samsung', 'paper', 'nfc']);
     await handleEntitlementApply(up, ctx);
     const runs = (await t.runs()).filter((r) => r.state === 'pending');
     expect(runs).toHaveLength(1);

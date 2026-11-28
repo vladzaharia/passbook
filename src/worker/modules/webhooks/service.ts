@@ -114,7 +114,7 @@ export async function commitEndpoint(g: Grant): Promise<D1Result[]> {
       );
     if (error instanceof Error && /webhook endpoint limit/.test(error.message))
       throw new ConflictError(
-        'This mode already has 10 endpoints. Delete one first.',
+        'This mode already has 100 endpoints. Delete one first.',
         'WEBHOOK_ENDPOINT_LIMIT',
       );
     throw g.translate(error);

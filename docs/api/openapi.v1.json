@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "PassBook API",
-    "version": "2026-11-22"
+    "version": "2026-11-28"
   },
   "servers": [
     {
@@ -23190,7 +23190,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "identity.own",
@@ -23301,7 +23300,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "identity.own",
@@ -24726,7 +24724,9 @@
               "trial",
               "starter",
               "standard",
+              "business",
               "premium",
+              "enterprise",
               "legacy"
             ]
           },
@@ -33742,7 +33742,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "identity.own",
@@ -34015,7 +34014,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "identity.own",
@@ -114511,6 +114509,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
+          "FOOTER_REQUIRED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114681,6 +114680,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
+          "FOOTER_REQUIRED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",

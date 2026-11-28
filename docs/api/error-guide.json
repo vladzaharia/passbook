@@ -749,6 +749,12 @@
     "fix": "Ask an org admin to enable the feature, then send the request again.",
     "retryable": false
   },
+  "FOOTER_REQUIRED": {
+    "title": "Footer required",
+    "when": "Admit One keeps the PassBook footer, so brand.mark none is refused on it.",
+    "fix": "Choose a plan that allows removing the footer, or leave brand.mark as it is.",
+    "retryable": false
+  },
   "FORBIDDEN": {
     "title": "Not allowed",
     "when": "The key is valid but may not do this.",
@@ -3535,7 +3541,7 @@
   },
   "WEBHOOK_ENDPOINT_LIMIT": {
     "title": "Webhook endpoint limit",
-    "when": "This mode already has 10 endpoints.",
+    "when": "This mode already has 100 endpoints.",
     "fix": "Delete one first.",
     "retryable": false
   },

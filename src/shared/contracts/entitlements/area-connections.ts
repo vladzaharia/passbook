@@ -1,6 +1,14 @@
-import { ALL, allow, BASIC_CONNECTORS, type EntitlementDef, limit, NONE } from './kinds.ts';
+import {
+  ADMIT_CONNECTORS,
+  ALL,
+  allow,
+  type EntitlementDef,
+  limit,
+  NONE,
+  STUB_CONNECTORS,
+} from './kinds.ts';
 
 export const AREA_CONNECTIONS = {
-  connections: limit([1, 2, 10, 50, null, 0]),
-  connectors: allow([BASIC_CONNECTORS, BASIC_CONNECTORS, ALL, ALL, ALL, NONE]),
+  connections: limit([1, 2, 3, 15, 40, null, null, 0]),
+  connectors: allow([STUB_CONNECTORS, ADMIT_CONNECTORS, ALL, ALL, ALL, ALL, ALL, NONE]),
 } as const satisfies Record<string, EntitlementDef>;

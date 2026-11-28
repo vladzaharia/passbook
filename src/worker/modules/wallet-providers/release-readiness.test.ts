@@ -75,7 +75,11 @@ async function org(state: 'off' | 'on' | 'no_plan') {
     await enableEnrolment(k.ctx, m.auth, o.id, 'google', { expectedRevision: 1 });
   }
   if (state === 'no_plan')
-    await run(env.DB, "UPDATE org_entitlements SET preset = 'trial' WHERE org_id = ?", [o.id]);
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'wallet.google', '0', 1)",
+      [o.id],
+    );
   return o;
 }
 

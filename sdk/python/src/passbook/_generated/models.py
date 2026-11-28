@@ -7234,7 +7234,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -7251,7 +7251,7 @@ class OrgsPlanRetrieveResponseFeaturesItem(_Model):
     level: str | None
 
 class OrgsPlanRetrieveResponseLimitsItem(_Model):
-    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     limit: int | None
     used: int | None
 
@@ -10623,7 +10623,7 @@ class PlatformOrgsCreateParams(_Model):
     name: str
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    preset: _Literal["trial", "starter", "standard", "premium", "legacy"] | str | None = None
+    preset: _Literal["trial", "starter", "standard", "business", "premium", "enterprise", "legacy"] | str | None = None
     addMe: bool | None = None
 
 class PlatformOrgsDeleteResponse(_Model):
@@ -10639,7 +10639,7 @@ class PlatformOrgsEntitlementsRetrieveResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
 
 class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -10672,7 +10672,7 @@ class PlatformOrgsEntitlementsUpdateResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
 
 class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
-    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str

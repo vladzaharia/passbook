@@ -258,9 +258,11 @@ describe('the org layer behind one released pair', () => {
     expect(await reason(open.id, 'samsung', 'test')).toBe('not_released');
     expect(await reason(open.id, 'google', 'live')).toBe('not_released');
     const trial = await on(await k.org());
-    await run(k.env.DB, "UPDATE org_entitlements SET preset = 'trial' WHERE org_id = ?", [
-      trial.id,
-    ]);
+    await run(
+      k.env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'wallet.google', '0', 1)",
+      [trial.id],
+    );
     expect(await reason(trial.id, 'google', 'test')).toBe('not_included');
     const developer = await makeOrg(k.f, { kind: 'developer' });
     expect(await reason(developer.id, 'google', 'test')).toBe('not_included');

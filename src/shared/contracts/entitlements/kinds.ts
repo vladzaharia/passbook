@@ -20,7 +20,9 @@ export type Row<V> = readonly [
   trial: V,
   starter: V,
   standard: V,
+  business: V,
   premium: V,
+  enterprise: V,
   unlimited: V,
   developer: V,
 ];
@@ -28,14 +30,18 @@ export const col = <V>([
   trial,
   starter,
   standard,
+  business,
   premium,
+  enterprise,
   legacy,
   developer,
 ]: Row<V>): Column<V> => ({
   trial,
   starter,
   standard,
+  business,
   premium,
+  enterprise,
   legacy,
   developer,
 });
@@ -57,7 +63,18 @@ export const block = (r: Row<string[]>): EntitlementDef => ({
 });
 export const limit = (r: Row<LimitValue>): EntitlementDef => ({ kind: 'limit', presets: col(r) });
 
-export const BASIC_CONNECTORS: string[] = ['csv-url', 'webhook-push/*', 'file-upload', 'demo'];
+export const STUB_CONNECTORS: string[] = ['csv-url', 'file-upload', 'demo'];
+export const ADMIT_CONNECTORS: string[] = [
+  ...STUB_CONNECTORS,
+  'http-json',
+  'webhook-push/*',
+  'zapier',
+  'shopify/webhook',
+  'stripe/*',
+  'woocommerce/*',
+  'calcom/*',
+  'tickettailor/*',
+];
 export const ALL: string[] = ['*'];
 export const BOARDING: string[] = ['boardingPass'];
 export const NONE: string[] = [];

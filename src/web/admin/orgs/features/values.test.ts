@@ -14,8 +14,8 @@ describe('feature groups', () => {
 
 describe('formatValue', () => {
   it('reads each kind in words', () => {
-    expect(formatValue('apps', 1)).toBe('On');
-    expect(formatValue('apps', 0)).toBe('Off');
+    expect(formatValue('print', 1)).toBe('On');
+    expect(formatValue('print', 0)).toBe('Off');
     expect(formatValue('api', 'read')).toBe('Read only');
     expect(formatValue('passes.live', null)).toBe('No limit');
     expect(formatValue('passes.live', 0)).toBe('Off');
@@ -25,11 +25,11 @@ describe('formatValue', () => {
       'csv-url, webhook-push/*',
     );
     expect(formatValue('templates.stylesBlocked', [])).toBe('None');
-    expect(formatValue('apps', undefined)).toBe('Off');
+    expect(formatValue('print', undefined)).toBe('Off');
   });
 
   it('marks only a stopped feature as off', () => {
-    expect(isOff('apps', 0)).toBe(true);
+    expect(isOff('print', 0)).toBe(true);
     expect(isOff('nfc', 'off')).toBe(true);
     expect(isOff('nfc', 'basic')).toBe(false);
     expect(isOff('domains', 0)).toBe(true);
@@ -40,10 +40,10 @@ describe('formatValue', () => {
 describe('resolved', () => {
   it('lets an override win only where the preset has the key', () => {
     const values = resolved(presetValues('trial'), {
-      apps: { value: 1, note: null, expiresAt: null },
+      print: { value: 1, note: null, expiresAt: null },
     });
-    expect(values.apps).toBe(1);
-    expect(values.webhooks).toBe(0);
+    expect(values.print).toBe(1);
+    expect(values['wallet.samsung']).toBe(0);
   });
 });
 
@@ -68,6 +68,6 @@ describe('value drafts', () => {
       valueFromDraft('connectors', { ...draftOf('connectors', ['*']), list: 'not valid!' }),
     ).toHaveProperty('error');
     expect(valueFromDraft('nfc', draftOf('nfc', 'basic'))).toEqual({ value: 'basic' });
-    expect(valueFromDraft('apps', draftOf('apps', 1))).toEqual({ value: 1 });
+    expect(valueFromDraft('print', draftOf('print', 1))).toEqual({ value: 1 });
   });
 });

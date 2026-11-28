@@ -102,7 +102,9 @@ describe('platform read', () => {
       'trial',
       'starter',
       'standard',
+      'business',
       'premium',
+      'enterprise',
       'legacy',
     ]);
     expect(body.presets.find((x) => x.preset === 'legacy')?.orgCount).toBeGreaterThan(0);
@@ -127,18 +129,18 @@ describe('platform write', () => {
     expect(res.status).toBe(200);
     const after = (await res.json()) as OrgEntitlementsDto;
     expect(after).toMatchObject({ preset: 'trial', revision: before.revision + 1 });
-    expect(after.items.find((i) => i.key === 'apps')?.value).toBe(0);
-    expect(after.items.find((i) => i.key === 'passes.live')?.value).toBe(100);
+    expect(after.items.find((i) => i.key === 'print')?.value).toBe(0);
+    expect(after.items.find((i) => i.key === 'passes.live')?.value).toBe(50);
     const rows = await auditRows(p.orgId);
     expect(rows).toHaveLength(1);
     const detail = JSON.parse(rows[0]?.detail ?? '{}');
     expect(detail.preset).toEqual({ from: 'legacy', to: 'trial' });
     expect(detail.off).toBeGreaterThan(0);
-    expect(detail.changes.apps).toEqual({ from: 1, to: 0 });
+    expect(detail.changes.print).toEqual({ from: 1, to: 0 });
     expect(rows[0]?.target_id).toBe(p.orgId);
     // The org's own resolved values moved with it.
     const resolved = await entitlementsOf(rk.kit.ctx, p.orgId);
-    expect(resolved.apps).toBe(0);
+    expect(resolved.print).toBe(0);
   });
 
   it('refuses a stale revision with 409 and writes nothing', async () => {
@@ -203,14 +205,14 @@ describe('platform write', () => {
       expectedRevision: state.revision,
       preset: 'trial',
       overrides: {
-        webhooks: { value: 1, note: 'Pilot with Northwind', expiresAt },
+        print: { value: 1, note: 'Pilot with Northwind', expiresAt },
         'api.keys': { value: 5 },
         connectors: { value: ['csv-url', 'shopify/*'] },
       },
     });
     expect(res.status).toBe(200);
     state = (await res.json()) as OrgEntitlementsDto;
-    const hooks = state.items.find((i) => i.key === 'webhooks');
+    const hooks = state.items.find((i) => i.key === 'print');
     expect(hooks).toMatchObject({
       value: 1,
       presetValue: 0,
@@ -223,7 +225,7 @@ describe('platform write', () => {
       presetValue: 2,
     });
     const listed = await entitlementsOf(rk.kit.ctx, p.orgId);
-    expect(listed.webhooks).toBe(1);
+    expect(listed.print).toBe(1);
     expect(listed.connectors).toEqual(['csv-url', 'shopify/*']);
 
     // Same overrides on another preset: they stand.
@@ -232,7 +234,7 @@ describe('platform write', () => {
         expectedRevision: state.revision,
         preset: 'standard',
         overrides: {
-          webhooks: { value: 1, note: 'Pilot with Northwind', expiresAt },
+          print: { value: 1, note: 'Pilot with Northwind', expiresAt },
           'api.keys': { value: 5 },
           connectors: { value: ['csv-url', 'shopify/*'] },
         },
@@ -240,7 +242,7 @@ describe('platform write', () => {
     ).json()) as OrgEntitlementsDto;
     expect(moved.items.find((i) => i.key === 'api.keys')).toMatchObject({
       value: 5,
-      presetValue: 10,
+      presetValue: 5,
       source: 'override',
     });
 
@@ -263,14 +265,14 @@ describe('platform write', () => {
     expect(rows?.n).toBe(1);
     const audit = (await auditRows(p.orgId)).map((r) => JSON.parse(r.detail));
     expect(audit).toHaveLength(3);
-    // Legacy had webhooks on and no key limit: the override keeps one and the trial preset caps the other.
-    expect(audit[0].changes.webhooks).toMatchObject({
+    // Legacy had print on and no key limit: the override keeps one and the trial preset caps the other.
+    expect(audit[0].changes.print).toMatchObject({
       from: 1,
       to: 1,
       note: 'Pilot with Northwind',
     });
     expect(audit[0].changes['api.keys']).toEqual({ from: null, to: 5 });
-    expect(audit[2].changes.webhooks).toMatchObject({ override: 'removed' });
+    expect(audit[2].changes.print).toMatchObject({ override: 'removed' });
   });
 
   it('writes nothing when nothing changes', async () => {
@@ -304,8 +306,8 @@ describe('platform write', () => {
       'overrides.api.value',
     );
     await bad(
-      { expectedRevision: revision, preset: 'trial', overrides: { apps: { value: 2 } } },
-      'overrides.apps.value',
+      { expectedRevision: revision, preset: 'trial', overrides: { print: { value: 2 } } },
+      'overrides.print.value',
     );
     await bad(
       { expectedRevision: revision, preset: 'trial', overrides: { 'api.keys': { value: -1 } } },
@@ -315,9 +317,9 @@ describe('platform write', () => {
       {
         expectedRevision: revision,
         preset: 'trial',
-        overrides: { apps: { value: 1, expiresAt: rk.kit.clock.now() - 1 } },
+        overrides: { print: { value: 1, expiresAt: rk.kit.clock.now() - 1 } },
       },
-      'overrides.apps.expiresAt',
+      'overrides.print.expiresAt',
     );
     expect((await read(p)).revision).toBe(revision);
   });
@@ -351,7 +353,7 @@ describe('org read', () => {
     await put(p, {
       expectedRevision: state.revision,
       preset: 'trial',
-      overrides: { webhooks: { value: 1, note: 'Internal deal 42' } },
+      overrides: { print: { value: 1, note: 'Internal deal 42' } },
     });
     for (const who of [p.admin, p.reader]) {
       const res = await call('GET', orgPath(p.orgId), who);
@@ -359,7 +361,7 @@ describe('org read', () => {
       const text = await res.text();
       expect(text).not.toContain('Internal deal 42');
       const body = JSON.parse(text);
-      expect(body).toMatchObject({ orgId: p.orgId, preset: 'trial', label: 'Trial' });
+      expect(body).toMatchObject({ orgId: p.orgId, preset: 'trial', label: 'Stub' });
       // `usage` is counts only: no notes, no revision, no other plans.
       expect(Object.keys(body).sort()).toEqual(['items', 'label', 'orgId', 'preset', 'usage']);
       expect(body.usage.members).toBeGreaterThanOrEqual(2);
@@ -375,8 +377,8 @@ describe('org read', () => {
         'webhooks.endpoints',
       ]);
       expect(body.items).toHaveLength(ENTITLEMENT_KEYS.length);
-      expect(body.items.find((i: { key: string }) => i.key === 'webhooks')).toEqual({
-        key: 'webhooks',
+      expect(body.items.find((i: { key: string }) => i.key === 'print')).toEqual({
+        key: 'print',
         value: 1,
         source: 'override',
       });
@@ -420,7 +422,9 @@ describe('an org without a features row', () => {
       'trial',
       'starter',
       'standard',
+      'business',
       'premium',
+      'enterprise',
       'legacy',
     ]);
     // The guard's read sees nothing: fail closed.

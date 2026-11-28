@@ -10,7 +10,7 @@ import { formatCount } from '@/web/lib/format.ts';
 
 /** The Features tab's sections; every registry key is in exactly one (a test holds it). */
 export const FEATURE_GROUPS: readonly { title: string; keys: readonly EntitlementKey[] }[] = [
-  { title: 'API and apps', keys: ['api', 'api.rateTier', 'api.keys', 'apps'] },
+  { title: 'API', keys: ['api', 'api.rateTier', 'api.keys'] },
   { title: 'Integrations', keys: ['webhooks', 'webhooks.endpoints', 'connections', 'connectors'] },
   {
     title: 'Wallets and delivery',

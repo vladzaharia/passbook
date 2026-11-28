@@ -33,25 +33,27 @@ describe('PlanPicker', () => {
       'trial',
       'starter',
       'standard',
+      'business',
       'premium',
+      'enterprise',
       'legacy',
     ]);
     expect(screen.queryByText('Developer sandbox')).toBeNull();
-    expect(screen.getByRole('radio', { name: 'Standard' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Season Pass' })).toBeChecked();
   });
 
   it('shows each plan as aligned limits, what it includes and one footer row', () => {
     render(<Harness current="standard" />);
-    const standard = tile('Standard');
+    const standard = tile('Season Pass');
     const rows = Object.fromEntries(
       standard.getAllByRole('term').map((t) => [t.textContent, t.nextElementSibling?.textContent]),
     );
     expect(rows).toEqual({
-      Passes: '5,000',
-      Templates: '25',
-      Scanners: '20',
-      Members: '25',
-      'API keys': '10',
+      Passes: 'No limit',
+      Templates: '10',
+      Scanners: '10',
+      Members: '8',
+      'API keys': '5',
     });
     expect(standard.getAllByRole('listitem').map((i) => i.textContent)).toEqual([
       'Apple',
@@ -63,9 +65,9 @@ describe('PlanPicker', () => {
     expect(standard.getByText('Footer')).toBeVisible();
     expect(standard.getByText('Powered by PassBook')).toBeVisible();
     // What a plan lacks is left out, not shown dashed.
-    expect(tile('Trial').queryByText('Google')).toBeNull();
-    expect(tile('Trial').getByText('Issued with PassBook')).toBeVisible();
-    expect(tile('Premium').getByText('Footer').nextElementSibling).toHaveTextContent('None');
+    expect(tile('Stub').queryByText('Samsung')).toBeNull();
+    expect(tile('Stub').getByText('Issued with PassBook')).toBeVisible();
+    expect(tile('All Access').getByText('Footer').nextElementSibling).toHaveTextContent('None');
     expect(tile('Unlimited').getAllByText('No limit').length).toBe(5);
     expect(
       tile('Unlimited')
@@ -80,18 +82,20 @@ describe('PlanPicker', () => {
     const user = userEvent.setup();
     render(<Harness current="standard" />);
     expect(screen.getAllByText('Current')).toHaveLength(1);
-    await user.click(screen.getByText('Premium'));
-    expect(screen.getByRole('radio', { name: 'Premium' })).toBeChecked();
+    await user.click(screen.getByText('All Access'));
+    expect(screen.getByRole('radio', { name: 'All Access' })).toBeChecked();
     expect(screen.getAllByText('Current')).toHaveLength(1);
-    expect(screen.getByRole('radio', { name: 'Standard' })).toHaveAccessibleDescription(/Current/);
+    expect(screen.getByRole('radio', { name: 'Season Pass' })).toHaveAccessibleDescription(
+      /Current/,
+    );
   });
 
   it('moves the pick with the arrow keys', async () => {
     const user = userEvent.setup();
     render(<Harness current="standard" />);
-    screen.getByRole('radio', { name: 'Standard' }).focus();
+    screen.getByRole('radio', { name: 'Season Pass' }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('radio', { name: 'Premium' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Backstage' })).toBeChecked();
   });
 
   it('has nothing picked and no badge before an org has a plan', () => {

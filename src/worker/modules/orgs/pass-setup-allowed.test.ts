@@ -169,7 +169,11 @@ describe('Allowed on a wallet channel', () => {
     restore = setWalletProvidersEnabledForTest(true, 'test');
     const { org, m } = await ready();
     await block(org.id);
-    await run(env.DB, "UPDATE org_entitlements SET preset = 'trial' WHERE org_id = ?", [org.id]);
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at, updated_by) VALUES (?, 'wallet.google', '0', 1, 'test')",
+      [org.id],
+    );
     const done = await save(org, m.auth, { channels: { google: 'allowed' } });
     expect(done.impact.enrolments).toEqual([]);
     expect((await enrolment(org.id))?.enabled_at).toBeNull();

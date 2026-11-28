@@ -129,7 +129,6 @@ export const COMPARE_ROWS: ReadonlyArray<{ group: string; rows: readonly Compare
 export const NOT_COMPARED: Partial<Record<EntitlementKey, string>> = {
   api: 'same on every plan',
   'api.rateTier': 'not enforced',
-  apps: 'not built',
   'templates.stylesBlocked': 'not enforced',
   domains: 'not built',
   'identity.own': 'not enforced',

@@ -146,7 +146,7 @@ describe('orgs api', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
-      plan: { preset: 'standard', label: 'Standard' },
+      plan: { preset: 'standard', label: 'Season Pass' },
     });
     expect(provisioningBody).not.toHaveProperty('branding');
     expect(provisioningBody).not.toHaveProperty('supportEmail');

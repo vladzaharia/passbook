@@ -126,7 +126,7 @@ describe('orgs list', () => {
         '/api/v1/orgs': () =>
           json({
             items: [
-              { ...provisioning(), plan: { preset: 'premium', label: 'Premium' } },
+              { ...provisioning(), plan: { preset: 'premium', label: 'All Access' } },
               { ...provisioning({ id: 'o9', slug: 'bare', name: 'Bare' }), plan: null },
             ],
             nextCursor: null,
@@ -134,7 +134,7 @@ describe('orgs list', () => {
       },
     });
     expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
-    expect(await screen.findByText('Premium')).toBeVisible();
+    expect(await screen.findByText('All Access')).toBeVisible();
     expect(screen.getByText('None')).toBeVisible();
   });
 
@@ -343,10 +343,10 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
     await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
-    // Plans load as cards: Standard is the default, the developer sandbox is not offered.
-    expect(await within(dialog).findByRole('radio', { name: 'Standard' })).toBeChecked();
+    // Plans load as cards: Season Pass is the default, the developer sandbox is not offered.
+    expect(await within(dialog).findByRole('radio', { name: 'Season Pass' })).toBeChecked();
     expect(within(dialog).queryByRole('radio', { name: 'Developer sandbox' })).toBeNull();
-    await ui.click(within(dialog).getByRole('radio', { name: 'Premium' }));
+    await ui.click(within(dialog).getByRole('radio', { name: 'All Access' }));
     await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
     expect(within(dialog).getByRole('heading', { name: 'Check and create' })).toBeInTheDocument();
     await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
@@ -403,10 +403,10 @@ describe('orgs list', () => {
         })),
       }),
     );
-    await ui.click(await within(dialog).findByRole('radio', { name: 'Premium' }));
+    await ui.click(await within(dialog).findByRole('radio', { name: 'All Access' }));
     await ui.click(within(dialog).getByRole('button', { name: 'Next' }));
     const plan = within(dialog).getByRole('region', { name: 'Plan' });
-    expect(within(plan).getByText('Premium')).toBeInTheDocument();
+    expect(within(plan).getByText('All Access')).toBeInTheDocument();
     await ui.click(within(dialog).getByRole('button', { name: 'Create organization' }));
     await waitFor(() => expect(body).toMatchObject({ preset: 'premium' }));
   });
@@ -437,7 +437,7 @@ describe('orgs list', () => {
       await within(dialog).findByRole('heading', { name: 'Check and create' }),
     ).toBeInTheDocument();
     const plan = within(dialog).getByRole('region', { name: 'Plan' });
-    expect(within(plan).getByText('Standard (default)')).toBeInTheDocument();
+    expect(within(plan).getByText('Season Pass (default)')).toBeInTheDocument();
     expect(
       within(dialog).getByText('Plans did not load. The default plan is used.'),
     ).toBeInTheDocument();

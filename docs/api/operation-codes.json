@@ -1933,6 +1933,7 @@
   ],
   "entitlements put /entitlement-presets": [
     "ENTITLEMENTS_CHANGED",
+    "FOOTER_REQUIRED",
     "FORBIDDEN",
     "MISSING_SCOPE",
     "PRESET_MOVING",
@@ -1941,6 +1942,7 @@
   ],
   "entitlements put /orgs/{id}/entitlements": [
     "ENTITLEMENTS_CHANGED",
+    "FOOTER_REQUIRED",
     "FORBIDDEN",
     "MISSING_SCOPE",
     "ORG_NOT_FOUND",

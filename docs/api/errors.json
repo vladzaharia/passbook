@@ -1907,6 +1907,15 @@
       ]
     },
     {
+      "code": "FOOTER_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "FORBIDDEN",
       "statuses": [
         403

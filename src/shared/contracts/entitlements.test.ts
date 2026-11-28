@@ -42,14 +42,24 @@ describe('entitlement registry', () => {
       'trial',
       'starter',
       'standard',
+      'business',
       'premium',
+      'enterprise',
       'legacy',
       'developer',
     ]);
   });
 
   it('every step up the ladder only adds: nothing turns off, drops or changes sideways', () => {
-    const ladder = ['trial', 'starter', 'standard', 'premium', 'legacy'] as const;
+    const ladder = [
+      'trial',
+      'starter',
+      'standard',
+      'business',
+      'premium',
+      'enterprise',
+      'legacy',
+    ] as const;
     for (const [i, higher] of ladder.entries()) {
       const lower = ladder[i - 1];
       if (!lower) continue;
@@ -71,9 +81,9 @@ describe('entitlement registry', () => {
 
   it('rejects values of the wrong shape for the key', () => {
     const bad: [EntitlementKey, unknown][] = [
-      ['apps', true],
-      ['apps', 2],
-      ['apps', null],
+      ['print', true],
+      ['print', 2],
+      ['print', null],
       ['api', 'huge'],
       ['api', null],
       ['connectors', 'all'],
@@ -90,10 +100,10 @@ describe('entitlement registry', () => {
   });
 
   it('fails closed: a missing or invalid value denies', () => {
-    expect(entitledValue('apps', undefined)).toBe(false);
-    expect(entitledValue('apps', 0)).toBe(false);
-    expect(entitledValue('apps', 1)).toBe(true);
-    expect(entitledValue('apps', null as never)).toBe(false);
+    expect(entitledValue('print', undefined)).toBe(false);
+    expect(entitledValue('print', 0)).toBe(false);
+    expect(entitledValue('print', 1)).toBe(true);
+    expect(entitledValue('print', null as never)).toBe(false);
     expect(entitledValue('api', 'full')).toBe(false);
     expect(entitledValue('api', 'bogus', 'read')).toBe(false);
     expect(entitledValue('api', 'full', 'read')).toBe(true);

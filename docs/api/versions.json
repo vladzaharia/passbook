@@ -9,6 +9,11 @@
       "date": "2026-11-22",
       "summary": "POST /scan/tags/bind answers 422 IDEMPOTENCY_KEY_REUSED when a key is reused with another request.",
       "migration": "Send PassBook-Version: 2026-11-22 to opt in. A reused Idempotency-Key on POST /scan/tags/bind then returns 422 IDEMPOTENCY_KEY_REUSED (a validation error), not 409. The SDKs raise ValidationError, not ConflictError. Without the header nothing changes."
+    },
+    {
+      "date": "2026-11-28",
+      "summary": "The apps entitlement is removed from entitlement and plan responses.",
+      "migration": "Nothing to send: no organization held apps and nothing read it. Drop the apps key from any code that matches entitlement keys. Responses no longer list it, with or without the PassBook-Version header."
     }
   ]
 }
