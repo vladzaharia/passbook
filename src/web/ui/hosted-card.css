@@ -193,6 +193,9 @@
   color: var(--pk-danger);
 }
 :where(.hosted) .field {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   min-width: 0;
   margin: 0;
   border: 0;
