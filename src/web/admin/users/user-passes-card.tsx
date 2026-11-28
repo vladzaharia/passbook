@@ -60,9 +60,7 @@ export function UserPassesCard({ userId }: { userId: string }) {
                 p.templateName,
                 channelsLabel(p),
                 `Issued ${day(p.issuedAt)}`,
-                `Updated ${day(p.updatedAt)}`,
                 ...(p.holding === 'waiting' ? ['Waiting for sign-in'] : []),
-                ...(open ? [] : ['Open the org to see details']),
               ].join(' · ');
               const org = p.orgStatus === 'suspended' ? `${p.orgName} (suspended)` : p.orgName;
               return (

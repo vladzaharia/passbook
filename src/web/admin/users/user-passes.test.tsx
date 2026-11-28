@@ -67,8 +67,6 @@ describe('user passes section', () => {
     expect(within(rows[1] as HTMLElement).queryByRole('link')).toBeNull();
     expect(rows[1]).toHaveTextContent('Elsewhere');
     expect(rows[1]).toHaveTextContent('Issued Nov 1, 2026');
-    expect(rows[1]).toHaveTextContent('Open the org to see details');
-    expect(rows[0]).not.toHaveTextContent('Open the org to see details');
     expect(rows[1]).toHaveTextContent('Waiting for sign-in');
     expect(rows[0]).not.toHaveTextContent('Waiting for sign-in');
   });

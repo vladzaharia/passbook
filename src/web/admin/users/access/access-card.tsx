@@ -27,7 +27,7 @@ type Role = AccessView['roles'][number];
 type Act = { kind: 'restore' | 'revoke' | 'remove'; role: Role['role'] };
 
 /** Why the role is on: the sources PassBook counted, or what Polaris ID showed. */
-function why(r: Role): string {
+function why(r: Role): string | undefined {
   if (r.held) return IDP_COPY.paused;
   const orgs = (list: Role['memberships']) => list.map((m) => m.org.name).join(', ');
   if (r.role === 'console' && r.wanted)
@@ -35,7 +35,7 @@ function why(r: Role): string {
   if (r.sponsorships.length) return `Sponsored by ${orgs(r.sponsorships)}`;
   if (r.grantedAt) return `Granted ${formatDateTime(r.grantedAt, '')}`;
   if (r.presence === 'external') return IDP_COPY.account.external;
-  return 'Not given';
+  return undefined;
 }
 
 function state(r: Role) {
@@ -160,7 +160,7 @@ export function AccessCard({
                 leading={r.held ? <Pause aria-hidden /> : <ShieldCheck aria-hidden />}
                 title={IDP_COPY.role[r.role]}
                 pills={state(r)}
-                meta={r.error ? `Last change failed (${r.error}). It retries on its own.` : why(r)}
+                meta={r.error ? `Last change failed: ${r.error}` : why(r)}
                 trailing={
                   <RowActions label={`${IDP_COPY.role[r.role]} actions`} actions={rowActions(r)} />
                 }
