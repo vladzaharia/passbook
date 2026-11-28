@@ -31,6 +31,8 @@ export {
   CreatableDeviceRoleSchema,
   type NativeScannerCapabilities,
   NativeScannerCapabilitiesSchema,
+  type ReportedScanDeviceCapabilities,
+  ReportedScanDeviceCapabilitiesSchema,
   type ScanDeviceCapabilities,
   ScanDeviceCapabilitiesSchema,
   type ScanSurface,
