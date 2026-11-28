@@ -179,7 +179,9 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         options.rateNamespace === 'draft' ? `d:${auth.scannerId}` : undefined,
       );
       const actsFromMonitor = !!options.screenActions && auth.deviceRole === 'monitor';
-      if (auth.deviceRole !== 'scan' && !options.screens && !actsFromMonitor) {
+      const screensMayPass =
+        !!options.screens && (auth.deviceRole === 'monitor' || auth.deviceRole === 'customer');
+      if (auth.deviceRole !== 'scan' && !screensMayPass && !actsFromMonitor) {
         reportDenied(c, 'FORBIDDEN', auth);
         throw new ForbiddenError('This device is a screen.', 'SCREEN_ONLY');
       }

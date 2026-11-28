@@ -88,7 +88,7 @@ export const SCAN_HELP_TERMINAL_STATES = [
   'expired',
 ] as const satisfies readonly ScanHelpState[];
 export const ScanHelpLevelSchema = z.enum(['normal', 'escalated']);
-export const ScanHelpResolvedBySchema = z.enum(['responder', 'pin', 'auto', 'admin']);
+export const ScanHelpResolvedBySchema = z.enum(['responder', 'pin', 'auto', 'admin', 'requester']);
 export const ScanHelpRequesterClassSchema = z.enum(['scan', 'kiosk']);
 /** `denyWhy` presets. */
 export const ScanHelpDenyReasonSchema = z.enum([

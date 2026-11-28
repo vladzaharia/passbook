@@ -43,6 +43,7 @@ import {
   projectedDeviceSettings,
   resolveSessionScope,
 } from './scanning-session-dto.ts';
+import { refuseScreenLayout, refuseStaffFields } from './scanning-device-guards.ts';
 import { loadScanningSession } from './scanning-sessions.ts';
 import { newCapture, slotChecks } from './setup-capture.ts';
 import { issuePairing, SETUP_CODES, setupConflict } from './setup-statements.ts';
@@ -68,6 +69,7 @@ export async function createScanningDevice(
   /** Called right after the commit: what follows reads, and a failure there keeps a code's charge. */
   committed: () => void = () => {},
 ) {
+  refuseStaffFields(input);
   const parent = await loadScanningSession(ctx, sessionId);
   const capture = newCapture({
     userId,
@@ -112,10 +114,12 @@ export async function updateScanningDevice(
   input: z.infer<typeof UpdateScanningDeviceSchema>,
   authority: TenantPassWrite,
 ) {
+  refuseStaffFields(input);
   const parent = await loadScanningSession(ctx, sessionId);
   const device = await scanningDeviceRow(ctx.env.DB, parent.org_id, id);
   if (!device || device.session_id !== sessionId || device.revoked_at !== null)
     throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');
+  refuseScreenLayout(roleOfStoredSurface(device.surface), input);
   if (input.revision !== undefined && input.revision !== deviceConfigRevision(device))
     throw new ConflictError(
       'This device changed. Reload its settings and try again.',

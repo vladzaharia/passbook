@@ -162,9 +162,9 @@
     "retryable": false
   },
   "APPROVE_AS_NOT_ALLOWED": {
-    "title": "Cannot approve as this staff member",
-    "when": "The approving staff member may not approve on behalf of the one named.",
-    "fix": "Approve as yourself, or ask a staff member who is allowed to approve.",
+    "title": "Approve as is off",
+    "when": "The approval named a staff member to approve as, and Approve as is off in this approval mode.",
+    "fix": "Enter a Manager PIN instead.",
     "retryable": false
   },
   "ARCHIVE_TOO_LARGE": {
@@ -2547,6 +2547,18 @@
     "title": "Session totals need a manager",
     "when": "Only Managers can read session totals.",
     "fix": "Sign in with a manager PIN.",
+    "retryable": false
+  },
+  "STAFF_DEVICE_FIELDS_UNAVAILABLE": {
+    "title": "Staff device settings not available",
+    "when": "A device was sent an owner, sign-in ceiling, alerts or coverage, which are not built yet.",
+    "fix": "Leave those fields out.",
+    "retryable": false
+  },
+  "DEVICE_KIND_FIXED": {
+    "title": "Device kind cannot change",
+    "when": "A layout was set on a screen. A device keeps the kind it was created as.",
+    "fix": "Create a new device of the other kind.",
     "retryable": false
   },
   "SCAN_SURFACE_UNSUPPORTED": {

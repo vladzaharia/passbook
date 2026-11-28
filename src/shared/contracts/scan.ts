@@ -169,9 +169,8 @@ export const ScanActRequestSchema = z.strictObject({
 export const ScanUndoRequestSchema = z.strictObject({
   idempotencyKey: UuidV7Schema,
   scope: ScanAdminScopeSchema.optional(),
-  approval: ScanUndoApprovalSchema.optional(),
   /** Undo of another device's scan: the Manager's PIN, required under `scan.approvalPin: 'always'`. */
-  pin: ScanPinSchema.optional(),
+  approval: ScanUndoApprovalSchema.optional(),
 });
 
 export const ScanPreviousSchema = z.object({

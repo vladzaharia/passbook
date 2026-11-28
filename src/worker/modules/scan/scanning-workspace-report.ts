@@ -50,8 +50,11 @@ export async function commitReportedDevice(
   const old = actor.scanner;
   if (!old) throw changed();
   const { device } = observed;
-  const legacyStandaloneDesk = device.surface === 'desk' && device.session_id === device.scanner_id;
-  const effective = legacyStandaloneDesk ? 'desk' : storedSurfaceFor(device.surface, capabilities);
+  // A Screen keeps its stored layout: a report never changes the kind (only `deviceRole` sets it).
+  const isScreen = device.surface === 'desk' || device.surface === 'customer';
+  const effective = isScreen
+    ? device.effective_surface
+    : storedSurfaceFor(device.surface, capabilities);
   const surfaceChanged = effective !== device.effective_surface;
   const now = ctx.clock.now();
   const g = grant(ctx, {

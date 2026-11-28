@@ -64,10 +64,13 @@ export function SurfacePicker({
   value,
   onChange,
   capabilities,
+  staffOnly = false,
 }: {
   value: StoredSurface;
   onChange: (v: StoredSurface) => void;
   capabilities?: ScanDeviceCapabilities | null;
+  /** An existing Staff device: its kind never changes, so no Customer screen. */
+  staffOnly?: boolean;
 }) {
   const choice = (key: SurfaceChoice) => {
     // A desk monitor is a feed that follows scanners and checks no one in: the Customer display's kind.
@@ -112,10 +115,12 @@ export function SurfacePicker({
           {choice('phone')}
           {choice('operator')}
         </div>
-        <div className="grid min-w-0 content-start gap-2">
-          <p className="text-xs font-semibold text-fg-muted">CUSTOMER DISPLAY</p>
-          {choice('customer')}
-        </div>
+        {staffOnly ? null : (
+          <div className="grid min-w-0 content-start gap-2">
+            <p className="text-xs font-semibold text-fg-muted">CUSTOMER DISPLAY</p>
+            {choice('customer')}
+          </div>
+        )}
       </div>
     </fieldset>
   );

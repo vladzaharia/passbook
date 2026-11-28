@@ -13,7 +13,7 @@
     {
       "date": "2026-11-28",
       "summary": "Scanning devices carry deviceRole (scan, customer, monitor, kiosk); staff approval is the contract in scan-device, and the surface roles desk and customer are replaced.",
-      "migration": "Send PassBook-Version: 2026-11-28 to opt in. Scanning-device bodies and responses then use deviceRole in place of the desk and customer surfaces, and scan approvals no longer take staffId, pin or alone. Without the header nothing changes."
+      "migration": "The change applies to all clients, with or without the header. Scanning-device bodies and responses use deviceRole in place of the desk and customer surfaces, and scan approvals no longer take staffId, pin or alone."
     }
   ]
 }

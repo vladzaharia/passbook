@@ -221,11 +221,14 @@ export function DeviceSheet({
                   />
                 )}
               </FormField>
-              <SurfacePicker
-                value={surface}
-                onChange={setSurface}
-                capabilities={device.capabilities}
-              />
+              {device.deviceRole === 'scan' ? (
+                <SurfacePicker
+                  value={surface}
+                  onChange={setSurface}
+                  capabilities={device.capabilities}
+                  staffOnly
+                />
+              ) : null}
               {layout !== 'customer' ? (
                 <section className="grid gap-4 border-t border-border pt-4">
                   <div className="flex items-center justify-between gap-2">

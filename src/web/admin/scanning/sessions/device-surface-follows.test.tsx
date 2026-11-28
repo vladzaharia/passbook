@@ -13,7 +13,7 @@ describe('device sheet follows', () => {
     device.deviceRole = 'customer';
     device.surface = null;
     device.effectiveSurface = null;
-    let saved: { overrides?: { follows?: string[] } } | undefined;
+    let saved: { surface?: string; overrides?: { follows?: string[] } } | undefined;
     await renderApp('/admin/scanning/sessions/session-1?deviceId=device-1', {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' })],
@@ -31,8 +31,10 @@ describe('device sheet follows', () => {
       },
     });
     const dialog = await screen.findByRole('dialog', { name: 'Configure Admin phone' });
+    expect(within(dialog).queryByText('Device layout')).toBeNull();
     await userEvent.type(within(dialog).getByRole('textbox', { name: 'Device name' }), ' 2');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save device' }));
     await waitFor(() => expect(saved?.overrides?.follows).toEqual(['door-1']));
+    expect(saved).not.toHaveProperty('surface');
   });
 });

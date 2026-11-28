@@ -8,7 +8,7 @@ const old = {
   camera: 'available',
   keyboard: true,
   nativeBarcode: false,
-  surfaces: ['phone', 'operator'],
+  surfaces: ['phone', 'operator', 'customer'],
   preferred: 'phone',
 };
 const native = {
@@ -24,7 +24,10 @@ const native = {
 
 describe('stored device reports', () => {
   it('reads an old row', () => {
-    expect(readStoredCapabilities(JSON.stringify(old))).toEqual(old);
+    expect(readStoredCapabilities(JSON.stringify(old))).toEqual({
+      ...old,
+      surfaces: ['phone', 'operator'],
+    });
   });
 
   it('reads a row with the hardware summary', () => {
