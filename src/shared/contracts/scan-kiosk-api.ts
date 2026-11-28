@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ROSTER_MAX_ENTRIES } from '../scan-offline.ts';
 import { IdSchema, PlainLineSchema, TimestampSchema } from './common.ts';
 import { UuidV7Schema } from './scan.ts';
 import { ScanHelpStateSchema } from './scan-help.ts';
@@ -39,14 +40,16 @@ export const KioskHelpViewSchema = z.strictObject({
 
 /** `GET /scan/kiosk/roster`: hashes and state only, as the staff roster, with no group ordinals. */
 export const KioskRosterSchema = z.strictObject({
-  entries: z.array(
-    z.strictObject({
-      h: z.string().regex(/^[0-9a-f]{32}$/),
-      status: z.enum(['active', 'voided', 'removed']),
-      state: z.enum(['in', 'out']).nullable(),
-      day: z.boolean().optional(),
-    }),
-  ),
+  entries: z
+    .array(
+      z.strictObject({
+        h: z.string().regex(/^[0-9a-f]{32}$/),
+        status: z.enum(['active', 'voided', 'removed']),
+        state: z.enum(['in', 'out']).nullable(),
+        day: z.boolean().optional(),
+      }),
+    )
+    .max(ROSTER_MAX_ENTRIES),
   cursor: z.string().max(128).nullable(),
   asOf: TimestampSchema,
   validUntil: TimestampSchema,
