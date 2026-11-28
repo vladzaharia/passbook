@@ -188,10 +188,11 @@ const rowAddsUp = (c: Catalog, row: PricingRow): string[] => {
 const featuresAddUp: Rule = (c) => c.rows.flatMap((row) => rowAddsUp(c, row));
 
 const autoUpPlans: Rule = (c) => {
-  const want = autoUpEligible(c);
-  const have = c.switches.autoUp.plans;
-  const same = want.length === have.length && want.every((id) => have.includes(id));
-  return same ? [] : [`autoUp is on ${have.join(', ')}; it belongs on ${want.join(', ')}`];
+  const allowed = autoUpEligible(c);
+  const bad = c.switches.autoUp.plans.filter((id) => !allowed.includes(id));
+  return bad.length
+    ? [`autoUp is on ${bad.join(', ')}; it may only be on ${allowed.join(', ')}`]
+    : [];
 };
 
 export const RULES: Record<RuleId, Rule> = {

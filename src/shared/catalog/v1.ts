@@ -180,7 +180,7 @@ export const EVENT_PASS_V1: EventPassTerms = {
     },
   ],
   doorDays: 10,
-  plans: ['starter', 'standard', 'business', 'premium'],
+  plans: ['starter', 'standard', 'business', 'premium', 'enterprise'],
   doorFeaturesOf: 'business',
   discountable: true,
   annual: false,

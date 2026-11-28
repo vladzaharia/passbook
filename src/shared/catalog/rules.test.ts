@@ -86,6 +86,11 @@ describe('catalog rules', () => {
     expect(broken(fewer)).toEqual(['features-add-up']);
   });
 
+  it('allows autoUp on a subset of the eligible plans', () => {
+    expect(broken((c) => (c.switches.autoUp.plans = ['starter']))).toEqual([]);
+    expect(broken((c) => (c.switches.autoUp.plans = []))).toEqual([]);
+  });
+
   it('catches trial, enterprise and unbilled plans in autoUp', () => {
     for (const id of ['trial', 'enterprise', 'legacy', 'developer'] as const) {
       expect(broken((c) => (c.switches.autoUp.plans = [id]))).toEqual(['auto-up-plans']);

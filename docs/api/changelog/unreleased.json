@@ -782,7 +782,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].capabilities.read: field added",
-    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, import and upload derive from it; webhook derives from inbound.webhook."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
@@ -894,7 +894,7 @@
     "operationId": "connectors.getConnectorsByType",
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.capabilities.read: field added",
-    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, import and upload derive from it; webhook derives from inbound.webhook."
   },
   {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",

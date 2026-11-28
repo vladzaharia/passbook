@@ -108,7 +108,7 @@ describe('catalog v1', () => {
       doorFeaturesOf: 'business',
       discountable: true,
     });
-    expect(c.eventPass.plans).toEqual(['starter', 'standard', 'business', 'premium']);
+    expect(c.eventPass.plans).toEqual(['starter', 'standard', 'business', 'premium', 'enterprise']);
   });
 
   it('sets the switches and terms', () => {

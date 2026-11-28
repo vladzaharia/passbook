@@ -1,17 +1,22 @@
 import { vi } from 'vitest';
 import { z } from 'zod';
 import demo from '../../connectors/demo/index.ts';
-import { connectors } from '../../connectors/registry.ts';
-import type { AnyConnector } from '../../connectors/types.ts';
+import { connectors, defineRegistry } from '../../connectors/registry.ts';
+import { type AnyConnector, declareCapabilities } from '../../connectors/types.ts';
 import * as service from './service.ts';
 import type { Kit } from './test-kit.ts';
 
 /** The demo connector with the upload capability and an ID column, standing in for file-upload. */
-export const uploadConnector: AnyConnector = {
-  ...demo,
-  capabilities: { ...demo.capabilities, upload: true },
-  configSchema: z.object({ idColumn: z.string(), sheet: z.string().optional() }) as never,
-};
+export const uploadConnector: AnyConnector = defineRegistry([
+  {
+    ...demo,
+    capabilities: declareCapabilities({
+      read: { fetch: true, list: true, delta: true, upload: true },
+      auth: 'none',
+    }),
+    configSchema: z.object({ idColumn: z.string(), sheet: z.string().optional() }) as never,
+  },
+]).list()[0] as AnyConnector;
 
 /** Makes `connectors.get('demo')` the upload connector until the spy is restored. */
 export function useUploadConnector(): void {

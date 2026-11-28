@@ -112,6 +112,7 @@ describe('defineRegistry refuses a declaration that does not match the methods',
       }),
       listChanges: undefined,
     };
+    // write.objects alone is valid: outbound.events only chooses which events feed it.
     expect(defineRegistry([writer, managed, outbound]).list()).toHaveLength(3);
   });
 
@@ -181,6 +182,18 @@ describe('defineRegistry refuses a declaration that does not match the methods',
       },
       /mapEvent and write/,
     ],
+    [
+      'duplicate ops on a written object',
+      {
+        ...writer,
+        capabilities: declareCapabilities({
+          read: { list: true },
+          write: { objects: { member: ['update', 'update'] } },
+          auth: 'none',
+        }),
+      },
+      /distinct ops/,
+    ],
     ['a written object missing from the catalog', { ...writer, objects: {} }, /member/],
     [
       'an empty op list',
@@ -199,10 +212,10 @@ describe('defineRegistry refuses a declaration that does not match the methods',
       {
         ...listed,
         objects: {
-          guest: { label: 'Guest', fields: { tag: { type: 'string', direction: 'both' } } },
+          guest: { label: 'Guest', fields: { tag: { type: 'string', direction: 'out' } } },
         },
       },
-      /guest/,
+      /not written/,
     ],
     [
       'a two-way field with no master',
