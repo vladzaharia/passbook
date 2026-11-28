@@ -7,9 +7,11 @@ import { isApiError } from '../../lib/errors.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { usePalette } from '../../lib/palette.ts';
 import { signOut, useSession } from '../../lib/session.ts';
+import { StateArt } from '../art/state-art.tsx';
 import { Button } from '../button.tsx';
 import { EmptyState } from '../empty-state.tsx';
 import { ErrorState, isChunkLoadError } from '../error-state.tsx';
+import { HostedCard } from '../hosted-card.tsx';
 import { AppShell } from './app-shell.tsx';
 import { PORTAL_BAR } from './portal-layout.tsx';
 import { Wordmark } from './wordmark.tsx';
@@ -124,47 +126,49 @@ export function ScopeRefusal({
   );
 }
 
-/** A route that is not there: the lost buddy peeks, as on the SSR 404. */
+/**
+ * A route that is not there: the hosted card, the same markup and sheet as the SSR 404
+ * (ui/hosted-card.tsx). Outside the console the page is bare, so the card's band is the one brand;
+ * the console's header carries its own.
+ */
 export function NotFoundPage() {
   const inAdmin = useInAdmin();
   const palette = usePalette();
   const { session } = useSession();
   const signedOut = session !== undefined && !session.authenticated;
   return (
-    <EmptyState
-      heading
-      art="wallet"
-      artState="lost"
-      surface="card"
-      brand={<Wordmark hello={false} size="lg" />}
+    <HostedCard
+      inline={inAdmin}
+      state="lost"
+      brand={inAdmin ? null : <Wordmark hello={false} size="lg" />}
+      scene={<StateArt name="lost" size="xl" playOnLoad />}
       title={STATE_COPY.pageNotFound}
-      action={
-        inAdmin ? (
-          <div className="flex flex-wrap justify-center gap-2">
-            {palette ? (
-              <Button variant="outline" iconStart={<Search aria-hidden />} onClick={palette.open}>
-                {STATE_COPY.search}
-              </Button>
-            ) : null}
-            <Button asChild variant="outline">
-              <Link to="/admin">
-                <LayoutDashboard aria-hidden />
-                {STATE_COPY.goToOverview}
-              </Link>
+    >
+      {inAdmin ? (
+        <div className="flex flex-col gap-2">
+          {palette ? (
+            <Button variant="outline" iconStart={<Search aria-hidden />} onClick={palette.open}>
+              {STATE_COPY.search}
             </Button>
-          </div>
-        ) : session === undefined ? null : signedOut ? (
-          <Button variant="outline" asChild>
-            <Link to="/login">
-              <LogIn aria-hidden />
-              {AUTH_PAGE_COPY.signIn}
+          ) : null}
+          <Button asChild variant="outline">
+            <Link to="/admin">
+              <LayoutDashboard aria-hidden />
+              {STATE_COPY.goToOverview}
             </Link>
           </Button>
-        ) : (
-          <ToMyPasses />
-        )
-      }
-    />
+        </div>
+      ) : session === undefined ? null : signedOut ? (
+        <Button variant="outline" asChild>
+          <Link to="/login">
+            <LogIn aria-hidden />
+            {AUTH_PAGE_COPY.signIn}
+          </Link>
+        </Button>
+      ) : (
+        <ToMyPasses />
+      )}
+    </HostedCard>
   );
 }
 

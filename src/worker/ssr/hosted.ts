@@ -10,8 +10,10 @@ import { Lock, type LucideIcon, OctagonX } from 'lucide-react';
 import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { ART_CSS } from '../../web/ui/art/css.ts';
+import hostedCardCss from '../../web/ui/hosted-card.css?raw';
 import { appPageHead, documentStart, type PageTheme } from './head.ts';
 import { HOSTED_ART_CSS, type HostedArt, stateArtHtml } from './hosted-art.tsx';
+import { hostedCardHtml } from './hosted-card.tsx';
 import { iconHtml } from './icon.ts';
 import { orgLogoHtml, orgMarkHtml } from './org-bar.tsx';
 import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
@@ -25,29 +27,13 @@ export const HOSTED_CSS = `${THEME_CSS}
 ${WORDMARK_CSS}
 ${ART_CSS}
 ${HOSTED_ART_CSS}
-.hosted{display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
-.band{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-inline:calc(1px + 1.5rem) calc(1.5rem - 19px)}
-.brand{display:flex;align-items:center;height:72px}
+${hostedCardCss}
 .band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;letter-spacing:-.015em}
 .band .mark>svg{width:1.5rem;height:1.5rem}
-.scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:0;pointer-events:none}
-.scene .wl-art{width:128px;height:96px}
-.scene>[data-replay]{display:block}
-.hosted.wide{max-width:32rem}
-.card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-xl);background:var(--pk-surface-raised);box-shadow:var(--pk-elevation-1)}
-.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil)}
-.body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
-h1{margin:0;overflow-wrap:break-word;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:var(--pk-font-weight-semibold);letter-spacing:var(--pk-tracking-tight);color:var(--pk-text-strong)}
-.lede{margin:.25rem 0 0;font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted);overflow-wrap:anywhere}
-.lede b{font-weight:500;color:var(--pk-text-strong)}
 .stack{display:flex;flex-direction:column;gap:1rem;margin:0}
 .callout{margin:0}
 label{display:block;margin:0 0 .5rem}
-input:not([type="hidden"]){display:block}
-.foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--pk-border-subtle);font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted)}
-.foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
-@media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
-@media(max-width:39.99rem){.band{padding-inline:calc(1px + 1.25rem) calc(1.25rem - 17px)}.brand{height:63px}.scene{margin-bottom:0}.scene,.scene .wl-art{width:112px;height:84px}}`;
+input:not([type="hidden"]){display:block}`;
 
 export type { HostedArt };
 
@@ -111,7 +97,6 @@ export const calloutHtml = (message: string) =>
 /** A full hosted page: the band (wordmark, wallet scene), then the card with an h1 and the body. */
 export function hostedPage(input: HostedPageInput): string {
   const art = stateArtHtml(input.art, Boolean(input.error));
-  const lede = input.lede ? `<p class="lede">${input.lede}</p>` : '';
   const error = input.error ? calloutHtml(input.error) : '';
   const footer = input.footer
     ? `<p class="foot">${iconHtml(Lock)}${escapeHtml(HOLDER_COPY.signInFooter)}</p>`
@@ -122,5 +107,17 @@ export function hostedPage(input: HostedPageInput): string {
   const { brand } = input;
   const sheet = brand ? `${ORG_SHELL_CSS}\n${brandCss(brand)}` : '';
   const suffix = brand ? brand.name : 'PassBook';
-  return `${documentStart(input.theme)}${appPageHead(input.headTitle ?? input.title, { manifest: input.headTitle === undefined })}${refresh}<title>${escapeHtml(input.headTitle ?? input.title)} · ${escapeHtml(suffix)}</title><style nonce="${input.nonce}">${HOSTED_CSS}${sheet}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${brand ? orgLogoHtml(brand) : wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section>${orgMarkHtml(brand)}</main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
+  const card = hostedCardHtml({
+    wide: input.wide,
+    state: input.art,
+    title: escapeHtml(input.title),
+    brand: brand ? orgLogoHtml(brand) : wordmarkHtml(),
+    scene: art,
+    lede: input.lede,
+    error,
+    body: input.body,
+    footer,
+    after: orgMarkHtml(brand),
+  });
+  return `${documentStart(input.theme)}${appPageHead(input.headTitle ?? input.title, { manifest: input.headTitle === undefined })}${refresh}<title>${escapeHtml(input.headTitle ?? input.title)} · ${escapeHtml(suffix)}</title><style nonce="${input.nonce}">${HOSTED_CSS}${sheet}${input.css ?? ''}</style>${input.head ?? ''}</head><body>${card}${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
 }

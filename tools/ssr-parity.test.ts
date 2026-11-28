@@ -150,12 +150,16 @@ describe('generated SSR kit', () => {
     expect(read('src/web/portal/login-card.tsx')).toContain(
       'wl-foil-edge flex flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-elevation-1',
     );
-    const hosted = read('src/worker/ssr/hosted.ts');
+    // The hosted card's sheet is shared with the SPA's not-found (ui/hosted-card.css).
+    const hosted = read('src/web/ui/hosted-card.css').replace(/\s+/g, '');
     expect(hosted).toContain(
-      'border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-xl);background:var(--pk-surface-raised);box-shadow:var(--pk-elevation-1)}',
+      'border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-xl);background:var(--pk-surface-raised);box-shadow:var(--pk-elevation-1);}'.replace(
+        /\s+/g,
+        '',
+      ),
     );
     expect(hosted).toContain(
-      '.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil)}',
+      '.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil);}'.replace(/\s+/g, ''),
     );
     expect(read('src/web/styles/kit-controls.css')).toMatch(
       /\.wl-foil-edge::before \{[^}]*height: 2px;\s*background: var\(--wl-foil\);/,
