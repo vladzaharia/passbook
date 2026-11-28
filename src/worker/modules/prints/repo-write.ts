@@ -103,7 +103,7 @@ export async function writeMint(
   print: NewPrint,
   replace: boolean,
 ): Promise<number> {
-  const g = newGrant(ctx, w, passId, [entitled('print')]);
+  const g = newGrant(ctx, w, passId, [entitled('print', undefined, { testWaived: true })]);
   const now = ctx.clock.now();
   const voided = replace
     ? g.update('pass_prints', {

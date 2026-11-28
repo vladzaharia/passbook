@@ -133,7 +133,8 @@ describe('RouteAuth.feature in Test mode', () => {
 describe('entitled() and withinLimit() in Test mode', () => {
   const COUNT = 'SELECT count(*) FROM connections cn WHERE cn.org_id = {org}';
   const cases: [string, Check, boolean][] = [
-    ['waivable flag', entitled('print'), true],
+    ['waivable flag opted in', entitled('print', undefined, { testWaived: true }), true],
+    ['waivable flag not opted in', entitled('print'), false],
     ['nfc level', entitled('nfc', 'secure'), false],
     ['limit', entitled('scanning.devices'), false],
     ['limit count', withinLimit('connections', COUNT), false],
@@ -160,7 +161,7 @@ describe('entitled() and withinLimit() in Test mode', () => {
       grant(route, {
         purpose: 'org_mode.test.entitled',
         principal: member({ mode: 'test' }),
-        checks: [entitled('print')],
+        checks: [entitled('print', undefined, { testWaived: true })],
       }).commit(),
     );
     expect(e?.code).toBe('FEATURE_NOT_INCLUDED');
@@ -173,7 +174,7 @@ describe('entitled() and withinLimit() in Test mode', () => {
       grant(route, {
         purpose: 'org_mode.test.entitled',
         principal: member({ mode: null }),
-        checks: [entitled('print')],
+        checks: [entitled('print', undefined, { testWaived: true })],
       }).commit(),
     );
     expect(e?.code).toBe('FEATURE_NOT_INCLUDED');

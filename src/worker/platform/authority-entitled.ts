@@ -43,10 +43,15 @@ const lookup = (b: Binds, key: EntitlementKey, expr: (v: string) => string): str
 /**
  * The org may use `key`. A flag must be 1. A level must be at least `want`. A list: `want` is the item,
  * which an allow-list must name (`*`, the item or `type/*`) and a block-list must not. A limit is on unless
- * it is 0 (`null` has no cap). A Test-waivable key the org has a row for passes for a Test actor of an org_mode grant. Reason
+ * it is 0 (`null` has no cap). A Test-waivable key the org has a row for passes for a Test actor of an org_mode grant when
+ * the caller opts in with `testWaived` (the rows it writes carry a mode); by default nothing is waived. Reason
  * `entitlement`.
  */
-export function entitled(key: EntitlementKey, want?: string): Check {
+export function entitled(
+  key: EntitlementKey,
+  want?: string,
+  opts: { testWaived?: true } = {},
+): Check {
   const def = entitlementDef(key);
   const items = want === undefined ? [] : listMatches(want);
   const levels = want === undefined ? [] : levelsAtLeast(key, want);
@@ -55,7 +60,7 @@ export function entitled(key: EntitlementKey, want?: string): Check {
   if (def.kind === 'list' && (want === undefined || want.includes('*')))
     throw bad(`entitled(${key}) needs an item, not a pattern.`);
   // Test-mode waiver (billing AD5): only an org_mode grant fences its rows to the actor's mode.
-  const waivable = isTestWaivable(key) && def.kind !== 'limit';
+  const waivable = opts.testWaived === true && isTestWaivable(key) && def.kind !== 'limit';
   const stored = (b: Binds): string => {
     switch (def.kind) {
       case 'flag':
