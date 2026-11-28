@@ -17,7 +17,8 @@ const shard = process.argv
   .find((arg) => arg.startsWith('--shard='))
   ?.slice(8)
   .replace('/', 'of');
-rmSync(corpusDir, { recursive: true, force: true });
+// SQL_CORPUS_KEEP=1 appends across chunked runs instead of starting a fresh corpus.
+if (!process.env.SQL_CORPUS_KEEP) rmSync(corpusDir, { recursive: true, force: true });
 mkdirSync(corpusDir, { recursive: true });
 
 // Tapped before reporters filter anything, so the corpus is collected whatever `silent` is (agent runs

@@ -1,43 +1,28 @@
 [
   {
-    "fingerprint": "7da9d6f05171",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN QUERY PLAN UPDATE wallet_provider_offer_refs SET delivered_at = ? WHERE ref_hash = ? AND delivered_at IS NULL AND EXISTS (WITH requested AS MATERIALIZED"
+    "fingerprint": "21a59bc5183e",
+    "error": "SQLITE_ERROR: sqlite3 result code 1: Expression tree is too large (maximum depth 100)",
+    "sql": "SELECT 1 FROM webhook_deliveries t JOIN (SELECT NULL AS limit_key) g WHERE (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1"
   },
   {
-    "fingerprint": "830cdb0e0bed",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN QUERY PLAN WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id ="
+    "fingerprint": "49a6b879f1ff",
+    "error": "SQLITE_ERROR: sqlite3 result code 1: Expression tree is too large (maximum depth 100)",
+    "sql": "SELECT 1 FROM webhook_deliveries t JOIN (SELECT NULL AS limit_key) g WHERE (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1"
   },
   {
-    "fingerprint": "b0e0c1431dfc",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN QUERY PLAN WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id ="
+    "fingerprint": "7de45ce2d2b6",
+    "error": "SQLITE_ERROR: sqlite3 result code 1: Expression tree is too large (maximum depth 100)",
+    "sql": "SELECT 1 FROM webhook_deliveries t JOIN (SELECT NULL AS limit_key) g WHERE (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1"
   },
   {
-    "fingerprint": "b2f6afa0f55b",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN UPDATE wallet_provider_offer_refs SET delivered_at = ? WHERE ref_hash = ? AND delivered_at IS NULL AND EXISTS (WITH requested AS MATERIALIZED ( SELECT ?"
+    "fingerprint": "8e4892580caf",
+    "error": "SQLITE_ERROR: sqlite3 result code 1: Expression tree is too large (maximum depth 100)",
+    "sql": "SELECT 1 FROM webhook_deliveries t JOIN (SELECT NULL AS limit_key) g WHERE (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1"
   },
   {
-    "fingerprint": "95f49f435f77",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS cred"
-  },
-  {
-    "fingerprint": "a66a75ba5897",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "EXPLAIN WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS cred"
-  },
-  {
-    "fingerprint": "34029a4a9b33",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "UPDATE scans SET state = ?, outcome = ?, reason = ?, pass_id = ?, template_id = ?, action_id = ?, action_kind = ?, pass_version = ?, override_of = ?, approved_b"
-  },
-  {
-    "fingerprint": "d7b58151313e",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "UPDATE scans SET state = ?, outcome = ?, reason = ?, pass_id = ?, template_id = ?, action_id = ?, action_kind = ?, pass_version = ?, override_of = ?, approved_b"
+    "fingerprint": "f6d4e15bc344",
+    "error": "SQLITE_ERROR: sqlite3 result code 1: Expression tree is too large (maximum depth 100)",
+    "sql": "SELECT 1 FROM webhook_deliveries t JOIN (SELECT NULL AS limit_key) g WHERE (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1 AND (1=1"
   },
   {
     "fingerprint": "7530479ac21a",
@@ -50,114 +35,14 @@
     "sql": "UPDATE wallet_provider_offer_refs SET delivered_at = ? WHERE ref_hash = ? AND delivered_at IS NULL AND EXISTS (WITH requested AS MATERIALIZED ( SELECT ? AS proj"
   },
   {
-    "fingerprint": "3914182ca7dd",
+    "fingerprint": "37a98ce3c800",
     "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
+    "sql": "WITH actor AS MATERIALIZED (SELECT COALESCE(k.org_id, ?) AS org_id, k.mode AS mode, CASE WHEN (k.revoked_at IS NULL AND (k.expires_at IS NULL AND k.retire_at IS"
   },
   {
-    "fingerprint": "59370764b34b",
+    "fingerprint": "d36dd9ebf4eb",
     "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "65e5223ca5f7",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "9a9526520df1",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "9ee44a8b7adb",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "adbb699333a4",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "ea0e3f4bd639",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "ea3f936ef37c",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "ead8ddbadbbd",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "f61afd8a6e52",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "fa3329485004",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT m.org_id AS org_id, ? AS mode, CASE WHEN m.revoked_at IS NULL AND u.status = 'active' AND EXISTS (SELECT 1 FROM sessions s WH"
-  },
-  {
-    "fingerprint": "0a2636731409",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "1c97b16d6f72",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "2e3f8866c75a",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "3d5f60bc6d4f",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "493061f14b66",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "565200f0c9fa",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "56e3de632c74",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "570a46c2b7fd",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "5c1f642662e2",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "d22adcfc8565",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
-  },
-  {
-    "fingerprint": "ff79bbb1ef2d",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH actor AS MATERIALIZED (SELECT sc.org_id AS org_id, sc.mode AS mode, CASE WHEN sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ?) AND sc"
+    "sql": "WITH actor AS MATERIALIZED (SELECT COALESCE(k.org_id, ?) AS org_id, k.mode AS mode, CASE WHEN (k.revoked_at IS NULL AND (k.expires_at IS NULL AND k.retire_at IS"
   },
   {
     "fingerprint": "49b942cfb04c",
@@ -175,17 +60,12 @@
     "sql": "WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS credential_k"
   },
   {
-    "fingerprint": "9d64ea367e13",
-    "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
-    "sql": "WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS credential_k"
-  },
-  {
     "fingerprint": "ec351207a0c8",
     "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
     "sql": "WITH requested AS MATERIALIZED ( SELECT ? AS projection_id, ? AS provider, ? AS now, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS credential_k"
   },
   {
-    "fingerprint": "400874baa997",
+    "fingerprint": "0fca22f3241f",
     "error": "SQLITE_ERROR: sqlite3 result code 1: VIEWs and/or subqueries nested too deep",
     "sql": "WITH scope AS MATERIALIZED ( SELECT org_id,mode,id AS event_id,capacity,reentry,? AS pass_id FROM scan_events WHERE id=? AND org_id=? AND mode=? ), live AS MATE"
   }

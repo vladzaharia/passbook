@@ -2,7 +2,9 @@
 // broke workerd 1.20261110) with D1's limits, so a statement near the limit fails here, not in prod.
 // Corpus: .wrangler/sql-corpus/*.jsonl, written by the worker project (test/setup/sql-corpus.ts).
 // Known failures are pinned in tools/sql-depth-allowlist.json; P2 to P4 of the workerd-sql-limit plan empty it.
-// Usage: node tools/check-sql-depth.ts [corpus dir] [--write-allowlist]
+// Usage: node tools/check-sql-depth.ts [corpus dir] [--full] [--write-allowlist [--add-new]]
+// --full: the corpus is the whole worker suite, so an allowlisted statement that passes is stale and fails.
+// --write-allowlist only prunes entries that no longer fail; --add-new also pins new failures (the list may only shrink, so say why).
 // Refresh the allowlist from CI: gh run download <run> -p 'sql-corpus-*' -D /tmp/corpus && node tools/check-sql-depth.ts /tmp/corpus --write-allowlist
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -157,13 +159,19 @@ async function main() {
   }
   const findings = findFailures(oracle, corpus);
   if (args.includes('--write-allowlist')) {
-    const merged = new Map(readAllowlist().map((a) => [a.fingerprint, a]));
-    for (const f of findings)
-      merged.set(f.fingerprint, {
-        fingerprint: f.fingerprint,
-        error: f.error,
-        sql: excerpt(f.sql),
-      });
+    const failing = new Map(findings.map((f) => [f.fingerprint, f]));
+    const merged = new Map(
+      readAllowlist()
+        .filter((a) => failing.has(a.fingerprint))
+        .map((a) => [a.fingerprint, a]),
+    );
+    if (args.includes('--add-new'))
+      for (const f of findings)
+        merged.set(f.fingerprint, {
+          fingerprint: f.fingerprint,
+          error: f.error,
+          sql: excerpt(f.sql),
+        });
     const sorted = [...merged.values()].sort(
       (a, b) => a.sql.localeCompare(b.sql) || a.fingerprint.localeCompare(b.fingerprint),
     );
@@ -188,6 +196,12 @@ async function main() {
       );
     process.stderr.write(
       `check-sql-depth: ${fresh.length} statements fail and are not in tools/sql-depth-allowlist.json\n`,
+    );
+    process.exit(1);
+  }
+  if (args.includes('--full') && cleared.length > 0) {
+    process.stderr.write(
+      `check-sql-depth: ${cleared.length} allowlist entries pass; run node tools/check-sql-depth.ts --full --write-allowlist to prune them\n`,
     );
     process.exit(1);
   }
