@@ -1,4 +1,5 @@
-import { ROW_ICONS } from '@/generated/plan-icons.ts';
+import type { CSSProperties } from 'react';
+import { AREA_ACCENTS, ROW_ICONS } from '@/generated/plan-icons.ts';
 import { cn } from '@/web/lib/cn.ts';
 
 export interface RowIconProps {
@@ -19,6 +20,7 @@ export function RowIcon({ icon, label, mono, className }: RowIconProps) {
     <span
       data-row-icon={icon}
       data-area={found.area}
+      style={{ '--row-accent': AREA_ACCENTS[found.area] } as CSSProperties}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       className={cn('inline-flex size-5 shrink-0 [&>svg]:size-full', className)}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: generated, static svg

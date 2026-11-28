@@ -4,8 +4,6 @@ import { PLAN_ICONS } from '@/generated/plan-icons.ts';
 import { PlanIcon } from '@/web/ui/plan-icon.tsx';
 import '@/generated/plan-icons.css';
 
-export { AREA_ACCENTS, PLAN_ICONS, ROW_ICONS } from '@/generated/plan-icons.ts';
-
 type IconComponent = FC<{ className?: string; 'aria-hidden'?: boolean }>;
 
 const PLAN_COMPONENTS: Record<string, IconComponent> = Object.fromEntries(
