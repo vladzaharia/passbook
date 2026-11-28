@@ -18,7 +18,7 @@ describe('detailError', () => {
     const back = screen.getByRole('link', { name: 'Back to organizations' });
     expect(back).toHaveAttribute('href', '/admin/orgs');
     // Not found is the torn pass, not the error's plug.
-    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
   it('gives any other failure the error state with Retry', async () => {
@@ -26,7 +26,7 @@ describe('detailError', () => {
       session: 'admin',
       handlers: { '/api/v1/orgs/o1': org(500) },
     });
-    expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
   });
 

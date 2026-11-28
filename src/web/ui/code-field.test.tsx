@@ -73,6 +73,13 @@ describe('CodeField autofill', () => {
     expect(input.value).toBe('123456');
     expect(container.querySelector('.wl-code')).toHaveAttribute('data-complete');
   });
+  it('a pasted grouped Crockford code, lookalikes and separators included, fills it', () => {
+    const { container } = render(<Harness length={10} group={5} alphabet="crockford" />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: ' k7qho-m9xtl ' } });
+    expect(input.value).toBe('K7QH0M9XT1');
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+  });
   it('a disabled field cannot be typed into', () => {
     const { container } = render(<CodeField id="c" value="" onChange={() => {}} disabled />);
     expect(container.querySelector('input')).toBeDisabled();

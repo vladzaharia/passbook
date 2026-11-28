@@ -26,7 +26,7 @@ export const STATE_COPY = {
   pageLoadFailed: 'Could not load this page. Check your connection.',
   /** The response did not match the app's schema: a reload fetches the current app. */
   badResponse: 'Could not read the response. Reload.',
-  retry: 'Retry',
+  retry: 'Try again',
   reload: 'Reload',
 } as const;
 

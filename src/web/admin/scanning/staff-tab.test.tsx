@@ -144,7 +144,7 @@ describe('Scanning staff', () => {
     expect(screen.queryByText('No staff yet')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add staff' })).not.toBeInTheDocument();
     available = true;
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('No staff yet')).toBeInTheDocument();
   });
 

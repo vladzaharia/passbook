@@ -267,6 +267,30 @@ describe('magic link', () => {
     expect(clock).toHaveBeenCalled();
   });
 
+  it('locks the code field and says when to retry after a 429', async () => {
+    const user = userEvent.setup();
+    await renderApp('/login', {
+      session: 'anon',
+      handlers: {
+        '/auth/magic/request': sent,
+        '/auth/magic/consume': () =>
+          new Response(
+            JSON.stringify({ type: 'about:blank#RATE_LIMITED', status: 429, code: 'RATE_LIMITED' }),
+            {
+              status: 429,
+              headers: { 'content-type': 'application/problem+json', 'retry-after': '272' },
+            },
+          ),
+      },
+    });
+    await requestLink(user);
+    await user.type(screen.getByLabelText('Or enter the 6-digit code'), '000000');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(/Too many tries\. Try again in 4:\d\d\./)).toBeInTheDocument();
+    expect(screen.getByLabelText('Or enter the 6-digit code')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled();
+  });
+
   it('rejects a short code locally and goes back to the email face', async () => {
     const user = userEvent.setup();
     await renderApp('/login', { session: 'anon', handlers: { '/auth/magic/request': sent } });

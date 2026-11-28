@@ -197,7 +197,7 @@ describe('Set up scanning', () => {
     await next(user, 'Review');
     await user.click(await screen.findByRole('button', { name: 'Set up' }));
     expect(await screen.findByText(/Could not set up scanning/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('applies with an idempotency key and opens Done', async () => {

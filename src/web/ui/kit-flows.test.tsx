@@ -259,6 +259,7 @@ describe('ErrorState and offline', () => {
     expect(container.querySelector('[data-art="unplugged"]')).not.toBeNull();
     expect(container.querySelector('details')).toHaveTextContent('Request req-1');
     expect(container.firstElementChild).toHaveAttribute('data-tone', 'system');
+    expect(container.firstElementChild?.className).toContain('bg-(--pk-slate-bg)');
   });
 
   it('seats the sad buddy beside the pulled plug; inline keeps the small art alone', () => {

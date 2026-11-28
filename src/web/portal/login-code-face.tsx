@@ -8,6 +8,7 @@ import { api } from '../lib/api.ts';
 import { isApiError } from '../lib/errors.ts';
 import { safeNext } from '../lib/redirect.ts';
 import { CODE_LENGTH, CodeField } from '../ui/code-field.tsx';
+import { lockoutLine } from '../ui/identity-card.tsx';
 import { Button, Callout, Label, useNow } from '../ui/index.ts';
 import { goTo } from './goto.ts';
 import { type SignInError, signInError } from './login-errors.ts';
@@ -35,8 +36,10 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
   const [error, setError] = useState<SignInError>();
   const [cooldownUntil, setCooldownUntil] = useState(sentAt + RESEND_COOLDOWN_MS);
   const [resent, setResent] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
   const now = useNow(1000, Boolean(email));
   const left = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
+  const locked = lockedUntil > now;
 
   const consume = useMutation({
     mutationFn: () => api.post('/auth/magic/consume', MagicConsumeResultSchema, { email, code }),
@@ -49,6 +52,12 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
       if (isApiError(e) && e.status === 400) {
         setFieldError(WRONG_CODE);
         scene.fail(Date.now() - sentAt > CODE_TTL_MS ? 'expired' : 'slip');
+        return;
+      }
+      if (isApiError(e) && e.status === 429 && e.retryAfter !== undefined) {
+        setLockedUntil(Date.now() + e.retryAfter * 1000);
+        setCode('');
+        scene.fail('error');
         return;
       }
       setError(signInError(e));
@@ -96,39 +105,49 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
           {error.message}
         </Callout>
       ) : null}
+      {locked ? (
+        <p role="status" className="text-sm text-fg-muted">
+          Too many tries. {lockoutLine(lockedUntil, now)}
+        </p>
+      ) : null}
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col">
-          <Label htmlFor={id} className="mb-2">
-            Or enter the 6-digit code
-          </Label>
-          <CodeField
-            id={id}
-            value={code}
-            onChange={(v) => {
-              setCode(v);
-              setFieldError(undefined);
-              // The eyes follow the slot the next digit goes in.
-              const slots = document
-                .getElementById(id)
-                ?.parentElement?.querySelectorAll('.wl-code-slot');
-              const slot = slots?.[Math.min(v.length, CODE_LENGTH - 1)]?.getBoundingClientRect();
-              if (slot) scene.gaze(slot.left + slot.width / 2);
-            }}
-            onBlur={() => scene.gaze(null)}
-            inputRef={codeRef}
-            invalid={Boolean(fieldError)}
-            describedBy={fieldError ? noteId : undefined}
-          />
-          {fieldError ? (
-            <p id={noteId} className="mt-1 flex items-start gap-1.5 text-xs text-danger">
-              <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
-              {fieldError}
-            </p>
-          ) : null}
-        </div>
-        <Button type="submit" className="w-full" loading={consume.isPending}>
-          Sign in
-        </Button>
+        <fieldset
+          disabled={locked}
+          className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0 disabled:opacity-50"
+        >
+          <div className="flex flex-col">
+            <Label htmlFor={id} className="mb-2">
+              Or enter the 6-digit code
+            </Label>
+            <CodeField
+              id={id}
+              value={code}
+              onChange={(v) => {
+                setCode(v);
+                setFieldError(undefined);
+                // The eyes follow the slot the next digit goes in.
+                const slots = document
+                  .getElementById(id)
+                  ?.parentElement?.querySelectorAll('.wl-code-slot');
+                const slot = slots?.[Math.min(v.length, CODE_LENGTH - 1)]?.getBoundingClientRect();
+                if (slot) scene.gaze(slot.left + slot.width / 2);
+              }}
+              onBlur={() => scene.gaze(null)}
+              inputRef={codeRef}
+              invalid={Boolean(fieldError)}
+              describedBy={fieldError ? noteId : undefined}
+            />
+            {fieldError ? (
+              <p id={noteId} className="mt-1 flex items-start gap-1.5 text-xs text-danger">
+                <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+                {fieldError}
+              </p>
+            ) : null}
+          </div>
+          <Button type="submit" className="w-full" loading={consume.isPending}>
+            Sign in
+          </Button>
+        </fieldset>
         {/* Ghost labels line up with the card text; on a phone the pair stacks. */}
         <div className="-mx-3 flex flex-wrap items-center justify-between gap-x-2">
           <Button

@@ -31,7 +31,6 @@ export * from './filter-bar.tsx';
 export * from './form.tsx';
 export * from './form-dialog.tsx';
 export * from './form-grid.tsx';
-export * from './hosted-card.tsx';
 export * from './icon-button.tsx';
 export * from './identity-card.tsx';
 export * from './inline-add-field.tsx';

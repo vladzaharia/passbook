@@ -299,7 +299,7 @@ describe('states', () => {
     );
     expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
     expect(screen.getByText('Request req-9')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledOnce();
     expect((await axe(container)).violations).toEqual([]);
   });

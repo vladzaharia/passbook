@@ -612,7 +612,7 @@ describe('new pass details step', () => {
       'aria-disabled',
       'true',
     );
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByLabelText(/Member name/)).toBeInTheDocument();
   });
 
@@ -638,7 +638,7 @@ describe('new pass details step', () => {
       },
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('Preview unavailable');
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('button', { name: 'Show pass' })).toBeInTheDocument();
   });
 });
@@ -872,7 +872,7 @@ describe('new pass template step', () => {
       'aria-disabled',
       'true',
     );
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
   });
 

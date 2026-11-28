@@ -122,7 +122,7 @@ test('setup states: ledger error, then skipped', async ({ page }) => {
     );
     await page.goto(setup(id));
     await expect(page.getByRole('alert').first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('button', { name: 'Retry' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
     await check(page, 'webhook-ledger-error');
     await page.unroute('**/webhook-arrivals*');
 

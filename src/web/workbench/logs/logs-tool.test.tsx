@@ -466,7 +466,7 @@ describe('Logs on the Workbench token', () => {
   it('says it did not load, and Retry asks again', async () => {
     const calls = stubApi({ lists: [page([entry(1)])], status: 500 });
     open();
-    fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(logCalls(calls).length).toBeGreaterThan(1));
   });
 

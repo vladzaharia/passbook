@@ -380,7 +380,7 @@ describe('pass detail', () => {
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => problem(500, 'server_error', 'x') },
     });
-    expect(await screen.findByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Pass' })).toBeInTheDocument();
   });
 

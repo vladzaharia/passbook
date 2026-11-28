@@ -138,7 +138,7 @@ export function StateView({
 
   const root = cn(
     'wl-state relative flex flex-col items-center text-center',
-    inline ? '' : canvas ? STAGE_SURFACE : SURFACE[tone],
+    canvas && !inline ? STAGE_SURFACE : inline && tone === 'neutral' ? '' : SURFACE[tone],
     PAD[size],
     // The search walk spans a share of the box's width.
     !inline && scene === 'search' && '[container-type:inline-size]',

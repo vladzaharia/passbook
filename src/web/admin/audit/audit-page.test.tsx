@@ -585,7 +585,7 @@ describe('audit page', () => {
     });
     expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
     expect(container.querySelector('search[aria-label="Filters"]')).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('stacks rows below 768 with action, actor and target', async () => {

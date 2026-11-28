@@ -23,7 +23,7 @@ describe('shared states (design §6)', () => {
       level: 1,
       name: "Not available in Acme's Test mode",
     });
-    expect(title.closest('[data-art-host]')).toHaveClass('bg-surface-sunken');
+    expect(title.closest('[data-art-host]')).toHaveClass('bg-(--pk-slate-bg)');
     expect(screen.getByRole('link', { name: 'Go to Logs' })).toBeInTheDocument();
   });
 

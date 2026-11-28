@@ -40,9 +40,9 @@ export function isChunkLoadError(error: unknown): boolean {
 }
 
 /**
- * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy stands inside
+ * Slate card, one sentence, Try again; the request id hides under Details. The sad buddy stands inside
  * the box above the title beside the pulled plug (art/state-art.tsx, as on the SSR 500); inline, a danger tile on
- * the unplugged art. A failure after Retry shakes the art once; the first render never shakes.
+ * the unplugged art. A failure after Try again shakes the art once; the first render never shakes.
  */
 export function ErrorState({
   error,

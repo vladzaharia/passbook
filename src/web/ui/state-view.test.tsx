@@ -44,6 +44,14 @@ describe('StateView', () => {
     expect(tone('not-found')).toBe('neutral');
   });
 
+  it.each(['panel', 'inline'] as const)('draws the slate ground for failed at size %s', (size) => {
+    const { unmount } = render(<StateView state="failed" size={size} title="x" />);
+    expect(view().className).toContain('bg-(--pk-slate-bg)');
+    unmount();
+    render(<StateView state="empty" size={size} title="x" />);
+    expect(view().className).not.toContain('bg-(--pk-slate-bg)');
+  });
+
   it('reads a failure out as an alert, with the sad buddy', () => {
     const { container } = render(<StateView state="failed" alert title="Passes did not load." />);
     expect(screen.getByRole('alert')).toHaveTextContent('Passes did not load.');
