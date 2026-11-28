@@ -78,6 +78,8 @@ export function Turnstile({
           action,
           theme: resolved,
           appearance: 'interaction-only',
+          // A check that cannot run stops; the next submit renders a fresh one.
+          retry: 'never',
           'before-interactive-callback': () => callbacks.current.onInteractive?.(true),
           'after-interactive-callback': () => callbacks.current.onInteractive?.(false),
           callback: (token: string) => callbacks.current.onToken(token),

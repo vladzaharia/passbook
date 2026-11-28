@@ -50,6 +50,8 @@
         sitekey: siteKey,
         action: 'join',
         appearance: 'interaction-only',
+        // A check that cannot run stops instead of retrying; the post then fails closed.
+        retry: 'never',
         theme: 'auto',
         callback: (token) => {
           tokenField.value = token;
