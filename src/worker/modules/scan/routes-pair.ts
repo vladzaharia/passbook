@@ -12,6 +12,7 @@ import { sameOriginOnly } from '../../platform/csrf.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientRatePrefix, rateLimit } from '../../platform/rate-limit.ts';
+import { ownUse, wholeMountUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { completePairing, previewPairing, unpair } from './pairing.ts';
 import { pairedSession } from './pairing-session.ts';
@@ -36,13 +37,13 @@ export const scanPairRoutes = createRouter();
 // This router is mounted over the whole scan API. A terminal's or a till's bearer is no ambient
 // credential (a cross-site page cannot set it), so only those requests skip the origin check.
 const BEARER = /^Bearer\s+(?:wls|wlt|pb|pbp|pbo)_\S+$/i;
-scanPairRoutes.use('*', (c, next) =>
+wholeMountUse(scanPairRoutes, (c, next) =>
   BEARER.test(c.req.header('authorization') ?? '') ? next() : sameOriginOnly(c, next),
 );
 // A pairing code is a guess target: key on the /24 or /64, not the full address.
 scanPairRoutes.use('/pair/*', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
 scanPairRoutes.use('/pair', rateLimit('RL_SCAN_PAIR', clientRatePrefix));
-scanPairRoutes.use('*', limitBody(4 * 1024));
+ownUse(scanPairRoutes, limitBody(4 * 1024));
 
 register(
   scanPairRoutes,

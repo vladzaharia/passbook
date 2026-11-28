@@ -9,6 +9,7 @@ import {
 } from '../../../shared/contracts/wallet-providers.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
 import { listEnrolments } from './enrolment-read.ts';
@@ -22,7 +23,7 @@ import {
 /** Mount at /api/v1/orgs. The session's mode picks the enrolment; Test and Live are separate rows. */
 export const walletEnrolmentRoutes = createRouter();
 guard(walletEnrolmentRoutes, requireTenantSession);
-walletEnrolmentRoutes.use('*', async (c, next) => {
+ownUse(walletEnrolmentRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

@@ -42,7 +42,7 @@ describe('app shell', () => {
     const post = (path: string) =>
       call(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: big });
     expect((await post('/api/v1/holders/assign')).status).toBe(413);
-    expect((await post('/hooks/anything/x')).status).toBe(413);
+    expect((await post('/hooks/connections/x')).status).toBe(413);
   });
 
   it('answers a missing asset with an uncached 404', async () => {
