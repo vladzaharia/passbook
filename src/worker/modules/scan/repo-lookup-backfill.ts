@@ -5,6 +5,11 @@ import { coalesceTo } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import {
+  RACE_BACKFILL_CANDIDATES,
+  RACE_BACKFILL_DONE_WRITE,
+  RACE_BACKFILL_WRITE,
+} from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -83,7 +88,7 @@ export async function backfillCandidates(
 ): Promise<BackfillRow[]> {
   const rows = await all<BackfillRaw>(
     db,
-    `SELECT q.id, q.org_id, q.mode, q.serial, q.row_version, q.credential_generation,
+    `${RACE_BACKFILL_CANDIDATES} SELECT q.id, q.org_id, q.mode, q.serial, q.row_version, q.credential_generation,
     q.lifecycle_generation, q.scan_code, q.barcode_hash, q.lookup_hash,
     q.removed_at, q.personalization, q.pass_json, (${LOOKUP_INPUT}) AS lookup_input
     ${SOURCE} WHERE ${after === null ? '' : 'q.id>? AND'} ${NEEDS_KEYS} AND NOT ${PENDING}
@@ -146,13 +151,14 @@ function settingsGrant(ctx: ServiceContext, target: string): Grant {
   return jobGrant(ctx, { purpose: 'platform.job.scan.backfill', job: 'scan.backfill', target });
 }
 
-function upsertSetting(g: Grant, key: string, value: unknown, now: number): void {
+function upsertSetting(g: Grant, key: string, value: unknown, now: number, tag?: string): void {
   g.upsert(
     'settings',
     ['scope', 'key', 'value', 'updated_at'],
     ['system', key, JSON.stringify(value), now],
     {
       update: ['value', 'updated_at'],
+      tag,
     },
   );
 }
@@ -192,7 +198,7 @@ export async function completeBackfill(
     checks: [noUnkeyedPass],
   });
   const now = ctx.clock.now();
-  upsertSetting(g, doneKey, true, now);
+  upsertSetting(g, doneKey, true, now, RACE_BACKFILL_DONE_WRITE);
   upsertSetting(g, stateKey, FRESH_STATE, now);
   try {
     await g.commit();
@@ -276,6 +282,7 @@ export function backfillGrant(
     },
     where: { id: row.id },
     require: 'one',
+    tag: RACE_BACKFILL_WRITE,
   });
   return g;
 }

@@ -1,5 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { HEADS_UP_SQL, REFUSED_SQL } from './outcome-bucket.ts';
+import { RACE_SUMMARY_TOTALS } from './race-tags.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
 
 /** Time reaches the hour bucketing in 15-minute steps: every zone offset is a multiple of that. */
@@ -63,7 +64,7 @@ export async function readSummaryExtras(
       scanRead(
         db,
         auth,
-        `SELECT COUNT(*) AS total, COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
+        `${RACE_SUMMARY_TOTALS} SELECT COUNT(*) AS total, COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
         COALESCE(SUM(${HEADS_UP_SQL}), 0) AS heads_up, ${refused} AS refused,
         COALESCE(SUM(s.undone_by IS NOT NULL), 0) AS undone,
         MIN(s.at) AS first_at, MAX(s.at) AS last_at ${from}`,

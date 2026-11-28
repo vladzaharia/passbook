@@ -6,6 +6,7 @@ import { getHolderPass } from '../holders/repo.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { BACKFILL_DONE, backfillScanLookups } from './jobs.ts';
+import { RACE_BACKFILL_DONE_WRITE, RACE_BACKFILL_WRITE } from './race-tags.ts';
 import { makeLegacyScanPass, setupScanKit } from './test-kit.ts';
 
 it.each(['same pass', 'different pass'] as const)(
@@ -33,7 +34,7 @@ it.each(['same pass', 'different pass'] as const)(
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = targetDb.prepare(sql);
-            if (!sql.startsWith('UPDATE passes SET scan_code')) return prepared;
+            if (!sql.includes(RACE_BACKFILL_WRITE)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')
@@ -143,7 +144,7 @@ it('does not mark backfill complete when a candidate arrives after the empty rea
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = targetDb.prepare(sql);
-          if (!sql.startsWith('INSERT INTO settings')) return prepared;
+          if (!sql.includes(RACE_BACKFILL_DONE_WRITE)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

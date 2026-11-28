@@ -5,10 +5,10 @@ import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 
-/** Runs `mutate` once, just before the first statement matching `match` executes (the guard has passed). */
+/** Runs `mutate` once, just before the first statement carrying `tag` executes (the guard has passed). */
 async function beforeRead<T>(
   env: { DB: D1Database },
-  match: RegExp,
+  tag: string,
   mutate: (db: D1Database) => Promise<void>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
@@ -26,7 +26,7 @@ async function beforeRead<T>(
             if (member === 'bind')
               return (...values: unknown[]) => {
                 const bound = inner.bind(...values);
-                if (!match.test(sql)) return bound;
+                if (!sql.includes(tag)) return bound;
                 return new Proxy(bound, {
                   get(b, m) {
                     const value = Reflect.get(b, m, b);
@@ -55,6 +55,7 @@ async function beforeRead<T>(
   }
 }
 
+import { RACE_BRANDING_READ } from './race-tags.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { grantScanMembership } from './test-kit.ts';
 
@@ -180,7 +181,7 @@ describe('scanner branding', () => {
       await expectProblem(await logo(headers), 404, 'IMAGE_NOT_FOUND');
       const { result, fired } = await beforeRead(
         kit.env,
-        /SELECT \(SELECT o\.branding FROM orgs/,
+        RACE_BRANDING_READ,
         (db) => change(db, id),
         () => logo(headers),
       );

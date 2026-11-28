@@ -3,6 +3,7 @@ import { countD1 } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first, run, type SqlValue, stmt } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
+import { RACE_RETENTION_PROOF } from './race-tags.ts';
 import {
   clearScanRetentionDeleteStmt,
   readVerifiedScanRetentionProofs,
@@ -416,8 +417,7 @@ describe('detached scan retention provenance', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('scan_retention_proofs') || !sql.includes('duplicate.data'))
-              return prepared;
+            if (!sql.includes(RACE_RETENTION_PROOF)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')
@@ -443,7 +443,7 @@ describe('detached scan retention provenance', () => {
     });
     // The commit carries one conditional ledger insert per possible outcome and the grant composes
     // each into its batch; exactly one raw insert binds the committed event's proof.
-    const writes = captured.filter(({ sql }) => sql.includes('INSERT INTO scan_retention_proofs'));
+    const writes = captured.filter(({ sql }) => sql.includes(RACE_RETENTION_PROOF));
     expect(writes.filter(({ values }) => values.includes(signed.proof.mac))).toHaveLength(1);
     for (const { sql, values } of captured) await stmt(real, `EXPLAIN ${sql}`, values).all();
   });

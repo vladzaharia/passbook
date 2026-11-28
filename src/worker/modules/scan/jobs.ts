@@ -13,6 +13,7 @@ import { getPlatformSettings } from '../settings/service.ts';
 import { lookupHashOf } from './codes.ts';
 import { scanCredentialKeys } from './credential-input.ts';
 import { dailyPinDigest } from './pin-digest.ts';
+import { RACE_BACKFILL_MARKER } from './race-tags.ts';
 import { recoverScans } from './recover.ts';
 import {
   type BackfillKeys,
@@ -58,7 +59,7 @@ export async function backfillScanLookups(ctx: ServiceContext): Promise<void> {
   // Capture the effective KEK set before the first await and use it for the whole batch.
   const credentialEnv = { ...ctx.env };
   const db = credentialEnv.DB;
-  if ((await readSystemValue(db, BACKFILL_DONE)) === true) return;
+  if ((await readSystemValue(db, BACKFILL_DONE, `${RACE_BACKFILL_MARKER} `)) === true) return;
   const keyset = await ensureCredentialRefKeyset(db, credentialEnv);
   let state = parseBackfillState(await readSystemValue(db, BACKFILL_STATE));
   let rows = await backfillCandidates(db, state.after, BACKFILL_BATCH);

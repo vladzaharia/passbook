@@ -3,7 +3,7 @@ import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { stmt } from '../../platform/db.ts';
-import { RACE_STAFF_PIN_ROTATE } from './race-tags.ts';
+import { RACE_APPROVAL_READ, RACE_STAFF_PIN_ROTATE } from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -55,8 +55,8 @@ export const toStaff = (r: StaffRaw): ScanStaffRow =>
 const COLUMNS =
   'id, org_id, name, role, pin_hash, pin_set_at, pin_reset_required, disabled_at, updated_at, auth_epoch';
 
-export const staffStatement = (db: Db, orgId: string, id: string): D1PreparedStatement =>
-  stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`, [id, orgId]);
+export const staffStatement = (db: Db, orgId: string, id: string, tag = ''): D1PreparedStatement =>
+  stmt(db, `${tag}SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`, [id, orgId]);
 
 /**
  * The active managers of an org, for a PIN that names none: a PIN is matched against these. A person
@@ -105,7 +105,7 @@ export const approverStatement = (
   staffId
     ? stmt(
         db,
-        `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ? AND pin_reset_required = 0`,
+        `${RACE_APPROVAL_READ} SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ? AND pin_reset_required = 0`,
         [staffId, orgId],
       )
     : managerRosterStatement(db, orgId, deskOk);

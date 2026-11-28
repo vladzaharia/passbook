@@ -1,3 +1,5 @@
+import { RACE_PASS_OK } from './race-tags.ts';
+
 /**
  * The last batch of a read: the output fences that decide what the answer discloses. A resolve ends in
  * the history bind whose authority term is the actor's read fence over the pass; a lookup ends in the
@@ -6,7 +8,7 @@
 export function isFinalFenceBatch(sql: readonly string[]) {
   return sql.some(
     (text) =>
-      (text.includes('ring AS MATERIALIZED') && text.includes('AS pass_ok')) ||
+      text.includes(RACE_PASS_OK) ||
       (text.includes('AS authorized') && text.includes('EXISTS (WITH actor AS MATERIALIZED')),
   );
 }

@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
+import { RACE_APPROVAL_READ } from './race-tags.ts';
 import { expectNoUndo, kit, raceBatch, scenario } from './repo-undo-authority-test-fixtures.ts';
 import { hashPin } from './staff-pin.ts';
 import { key } from './test-kit.ts';
 import { undo } from './undo.ts';
-
-const approvalRead = 'FROM scan_staff WHERE id = ? AND org_id = ?';
 
 describe('undo commit authority', () => {
   it.each(['role', 'disabled', 'pin', 'generation'] as const)(
@@ -68,7 +67,7 @@ describe('undo commit authority', () => {
     const s = await scenario();
     const manager = await kit.staff('manager');
     kit.clock.advance(11 * 60_000);
-    const race = raceBatch(approvalRead, (db) =>
+    const race = raceBatch(RACE_APPROVAL_READ, (db) =>
       run(db, 'UPDATE passes SET link_generation=link_generation+1 WHERE id=?', [s.pass.id]),
     );
     const result = await undo(race.ctx, s.actor, s.targetId, {
@@ -92,7 +91,7 @@ describe('undo commit authority', () => {
     if (!before) throw new Error('Missing manager');
     kit.clock.advance(11 * 60_000);
     const req = { idempotencyKey: key(), approval: { staffId: manager.id, pin: newPin } };
-    const race = raceBatch(approvalRead, (db) =>
+    const race = raceBatch(RACE_APPROVAL_READ, (db) =>
       run(db, 'UPDATE scan_staff SET pin_hash=?,updated_at=updated_at+1 WHERE id=?', [
         newHash,
         manager.id,
@@ -133,7 +132,7 @@ describe('undo commit authority', () => {
       const rotatedHash = await hashPin(kit.env, manager.id, '654321');
       kit.clock.advance(11 * 60_000);
       const undoKey = key();
-      const race = raceBatch(approvalRead, (db) =>
+      const race = raceBatch(RACE_APPROVAL_READ, (db) =>
         run(
           db,
           change === 'role'

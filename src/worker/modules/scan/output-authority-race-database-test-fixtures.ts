@@ -1,4 +1,9 @@
-import { RACE_KEYSET } from './race-tags.ts';
+import {
+  RACE_KEYSET,
+  RACE_PASS_OK,
+  RACE_PASSLESS_READ,
+  RACE_PREDICATE_AUTHORIZED,
+} from './race-tags.ts';
 
 /**
  * Triggers `change` ahead of the statements that decide what an answer discloses: the output fence's
@@ -36,11 +41,8 @@ export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void
       if (prop === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          if (sql.includes('SELECT 1 AS ok FROM actor_ok')) return wrap(statement);
-          if (
-            sql.includes(RACE_KEYSET) ||
-            (sql.includes('ring AS MATERIALIZED') && sql.includes(' AS pass_ok'))
-          )
+          if (sql.includes(RACE_PASSLESS_READ)) return wrap(statement);
+          if (sql.includes(RACE_KEYSET) || sql.includes(RACE_PASS_OK))
             return new Proxy(statement, {
               get(inner, member) {
                 if (member === 'bind')
@@ -53,21 +55,7 @@ export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void
                 return typeof value === 'function' ? value.bind(inner) : value;
               },
             });
-          if (
-            sql.includes(' AS result_0') &&
-            (sql.includes('json_group_array') ||
-              sql.includes('output_bound_snapshot') ||
-              sql.includes('output_segments'))
-          )
-            return wrap(statement);
-          if (
-            !sql.includes(' AS authorized') ||
-            (!sql.includes('under_inner') &&
-              !sql.startsWith('SELECT CASE WHEN (') &&
-              !sql.includes('output_bound_snapshot') &&
-              !sql.includes('output_segments'))
-          )
-            return statement;
+          if (!sql.includes(RACE_PREDICATE_AUTHORIZED)) return statement;
           return new Proxy(statement, {
             get(inner, member) {
               if (member === 'bind')

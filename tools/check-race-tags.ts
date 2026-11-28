@@ -11,7 +11,7 @@ const MACHINERY = /new Proxy\(|interceptBatches\(|raceFence\(|afterCandidateRead
 const SQL_NAME = '(?:sql|sqlText|text|query|statement|stmt|prepared)';
 const METHOD = String.raw`\.\s*(?:includes|startsWith|endsWith|match|search|test|replace)\s*\(`;
 const MATCHERS = [
-  new RegExp(String.raw`\b${SQL_NAME}${METHOD}\s*(?!RACE_)`),
+  new RegExp(String.raw`\b${SQL_NAME}${METHOD}\s*(?!RACE_|tag\b)`),
   new RegExp(String.raw`/[^/\n]+/[a-z]*\.test\(\s*\w*${SQL_NAME}`, 'i'),
   new RegExp(String.raw`\b${SQL_NAME}\s*\)\s*\.\s*(?:includes|match)\(`),
 ];

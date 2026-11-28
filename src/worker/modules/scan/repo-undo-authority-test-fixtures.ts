@@ -195,7 +195,7 @@ export async function rollReleaseAwayAndBack(db: D1Database) {
 
 /** Run a mutation just before a particular transaction, after all its preflight reads. */
 export function raceBatch(
-  sqlPart: string,
+  tag: string,
   mutate: (db: D1Database) => Promise<unknown>,
 ): { ctx: ServiceContext; raced: () => boolean } {
   const matching = new WeakSet<D1PreparedStatement>();
@@ -205,7 +205,7 @@ export function raceBatch(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(sqlPart)) return prepared;
+          if (!sql.includes(tag)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

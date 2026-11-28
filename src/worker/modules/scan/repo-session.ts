@@ -1,5 +1,5 @@
 import { containsMatch, stmt } from '../../platform/db.ts';
-import { RACE_ORG_NAME } from './race-tags.ts';
+import { RACE_BRANDING_READ, RACE_ORG_NAME } from './race-tags.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 
 type Db = D1Database;
@@ -15,7 +15,7 @@ export const orgBrandingForActorStmt = (db: Db, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = ao.org_id) AS branding
+    `${RACE_BRANDING_READ} SELECT (SELECT o.branding FROM orgs o WHERE o.id = ao.org_id) AS branding
      FROM ${auth.anchor} WHERE ${auth.present}`,
   );
 

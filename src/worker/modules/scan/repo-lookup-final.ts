@@ -3,7 +3,7 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LookupEntry } from './lookup-history.ts';
-import { RACE_KEYSET } from './race-tags.ts';
+import { RACE_KEYSET, RACE_PASS_OK } from './race-tags.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
@@ -54,7 +54,7 @@ export function lookupPassesStmt(
   return scanRead(
     db,
     auth,
-    `SELECT ring.i AS i,
+    `${RACE_PASS_OK} SELECT ring.i AS i,
       CASE WHEN p.id IS NULL THEN 0 WHEN p.image_generation = ring.img THEN 2 ELSE 1 END AS pass_ok,
       hp.id IS NOT NULL AS present,
       CASE WHEN hp.id IS NULL THEN NULL ELSE ${effectiveReleaseIdSql('hp')} END AS head

@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { RACE_APPROVAL_READ } from './race-tags.ts';
 import { expectNoUndo, kit, raceBatch, scenario } from './repo-undo-authority-test-fixtures.ts';
 import { PIN_PERSON_WINDOW_MS, PIN_SCANNER_WINDOW_MS } from './staff-pin.ts';
 import { key } from './test-kit.ts';
 import { undo } from './undo.ts';
-
-const approvalRead = 'FROM scan_staff WHERE id = ? AND org_id = ?';
 
 async function seedBudget(scannerId: string, staffId: string) {
   const now = kit.clock.now();
@@ -52,7 +51,7 @@ describe('undo approval reservation authority', () => {
       await seedBudget(s.scanner.id, manager.id);
       const before = await pinCounters();
       const undoKey = key();
-      const race = raceBatch(approvalRead, (db) => {
+      const race = raceBatch(RACE_APPROVAL_READ, (db) => {
         if (change === 'scanner revoked')
           return run(db, 'UPDATE scanners SET revoked_at=1 WHERE id=?', [s.scanner.id]);
         if (change === 'scanner CSRF')
@@ -82,7 +81,7 @@ describe('undo approval reservation authority', () => {
     kit.clock.advance(11 * 60_000);
     await seedBudget(s.scanner.id, manager.id);
     const before = await pinCounters();
-    const race = raceBatch(approvalRead, (db) =>
+    const race = raceBatch(RACE_APPROVAL_READ, (db) =>
       run(db, 'UPDATE passes SET link_generation=link_generation+1 WHERE id=?', [s.pass.id]),
     );
     await expect(
@@ -130,7 +129,7 @@ describe('undo approval reservation authority', () => {
     const markersBefore = await heldMarkers();
     const req = { idempotencyKey: key(), approval: { staffId: manager.id, pin: manager.pin } };
     let winnerId: string | null = null;
-    const race = raceBatch(approvalRead, async () => {
+    const race = raceBatch(RACE_APPROVAL_READ, async () => {
       const winner = await undo(kit.ctx, s.actor, s.targetId, req);
       expect(winner.outcome).toMatchObject({ kind: 'ok', replay: false });
       if (!winner.outcome.scanId) throw new Error('Missing winning undo scan');

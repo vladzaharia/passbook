@@ -8,6 +8,7 @@ import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { BACKFILL_DONE, backfillScanLookups } from './jobs.ts';
+import { RACE_BACKFILL_CANDIDATES, RACE_BACKFILL_MARKER } from './race-tags.ts';
 import { makeLegacyScanPass, setupScanKit } from './test-kit.ts';
 
 async function keysetTrigger(db: D1Database, name: string): Promise<string> {
@@ -176,8 +177,8 @@ it.each(['completion marker', 'candidate read'] as const)(
             const prepared = targetDb.prepare(sql);
             if (
               point === 'completion marker'
-                ? !sql.includes('SELECT value FROM settings')
-                : !sql.includes('SELECT q.id, q.org_id')
+                ? !sql.includes(RACE_BACKFILL_MARKER)
+                : !sql.includes(RACE_BACKFILL_CANDIDATES)
             )
               return prepared;
             return new Proxy(prepared, {

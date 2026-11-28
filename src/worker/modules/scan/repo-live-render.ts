@@ -3,6 +3,7 @@ import { exactStmt, type SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql } from './effective-release.ts';
 import type { LiveRingRow } from './live-ring.ts';
+import { RACE_PASS_OK } from './race-tags.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import { actorPassScopeSql } from './repo-recipient-scope.ts';
@@ -94,7 +95,7 @@ export function liveRowsStmt(
   return scanRead(
     db,
     auth,
-    `SELECT ring.i AS i,
+    `${RACE_PASS_OK} SELECT ring.i AS i,
       CASE WHEN ring.scan_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scans s
         WHERE s.id = ring.scan_id AND ${auth.tenantOnce('s', 'scans')} AND s.pass_id IS ring.pass_id
           AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}) END AS scan_ok,

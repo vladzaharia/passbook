@@ -17,3 +17,7 @@ export function splitRaceTag(sql: string): { tag: string; body: string } {
   const tag = LEADING_TAG.exec(sql)?.[0] ?? '';
   return { tag: tag.trim(), body: sql.slice(tag.length) };
 }
+
+/** SQL without any inert race marker, wherever it sits, for a lint that refuses comments. */
+export const stripRaceTags = (sql: string): string =>
+  sql.replace(/\/\* race:[a-z0-9-]+ \*\/ ?/g, '');

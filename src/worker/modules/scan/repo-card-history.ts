@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { RACE_CARD_HISTORY } from './race-tags.ts';
 import { passLineagePredicate } from './repo-history-lineage.ts';
 import {
   legacyScanProvenanceSql,
@@ -42,7 +43,7 @@ export interface CardHistoryRow extends Raw {
 
 export const CARD_HISTORY_CANDIDATE_LIMIT = 64;
 
-const CARD_HISTORY_SQL = `WITH selected_scans AS MATERIALIZED (
+const CARD_HISTORY_SQL = `${RACE_CARD_HISTORY} WITH selected_scans AS MATERIALIZED (
        SELECT s.*, p.personalization AS current_personalization,
          p.credential_generation AS current_credential_generation,
          p.lifecycle_generation AS current_lifecycle_generation,
