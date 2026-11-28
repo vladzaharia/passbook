@@ -24,6 +24,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   connection_files:
     'uploaded files of a connection, stored in R2: upload them again after a restore',
   connection_inbox: BOOKKEEPING,
+  connection_links:
+    'upstream links of a connection: the primary ones mirror the passes, link again after a restore',
   connection_ref_versions: BOOKKEEPING,
   connection_runs: 'sync run log of a connection',
   connection_webhook_arrivals: 'what the webhook ingress saw: closed values only, kept 7 days',
@@ -122,6 +124,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   identity_handles: 'reserved platform names, kept after a purge',
   identity_runs: BOOKKEEPING,
   identity_moves: BOOKKEEPING,
+  pass_live_spans: BOOKKEEPING,
+  pass_usage: BOOKKEEPING,
   pass_moves: BOOKKEEPING,
   usage_periods: BOOKKEEPING,
   usage_day_bounds: BOOKKEEPING,

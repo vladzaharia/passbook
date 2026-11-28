@@ -188,6 +188,10 @@ describe('usage periods', () => {
     expect(await zones()).toEqual([{ month: '2026-11', time_zone: 'America/Los_Angeles' }]);
     kit().clock.set(Date.UTC(2026, 10, 30, 12, 0, 0));
     await syncOrgUsage(kit().ctx, o.orgId);
+    expect(await zones()).toEqual([{ month: '2026-11', time_zone: 'America/Los_Angeles' }]);
+    // A zone saved in the last day of the month still applies: the next period is made just before it starts.
+    kit().clock.set(periodOf('2026-11', 'America/Los_Angeles').endMs - 5 * 60_000);
+    await syncOrgUsage(kit().ctx, o.orgId);
     expect(await zones()).toEqual([
       { month: '2026-11', time_zone: 'America/Los_Angeles' },
       { month: '2026-12', time_zone: 'Europe/Berlin' },

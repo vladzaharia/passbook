@@ -84,6 +84,8 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('identity_runs'),
   inOrg('pass_moves'),
   inOrg('identity_moves'),
+  inOrg('pass_live_spans'),
+  inOrg('pass_usage'),
   inOrg('usage_periods'),
   inOrg('usage_day_bounds'),
   inOrg('usage_daily'),

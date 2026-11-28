@@ -118,6 +118,16 @@ describe('links', () => {
     expect(await links(id)).toEqual([]);
   });
 
+  it('mirrors a binding carried by the pass insert itself', async () => {
+    const fresh = await seedPass(kit, kit.org.id, 'live', undefined, {
+      connectionId: id,
+      ref: 'ins-1',
+    });
+    expect(await links(id)).toEqual([
+      { role: 'primary', object_type: 'record', external_id: 'ins-1', local_id: fresh.id },
+    ]);
+  });
+
   it('mirrors the primary binding through PUT /passes/{id}/connection', async () => {
     const res = await call('PUT', `/passes/${passId}/connection`, headers, {
       connectionId: id,

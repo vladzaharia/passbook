@@ -2033,7 +2033,10 @@ describe('tenant isolation', () => {
     const mine = await linkedPass(kit, dto.id, 'm-001');
     const { makeOrg } = await import('../../../../test/helpers/index.ts');
     const other = await makeOrg(kit);
-    const theirs = await linkedPass(kit, dto.id, 'm-001', other.id);
+    // The unique link is a second fence: free the ref's mirror so the sync's own org filter is what is tested.
+    const theirs = await linkedPass(kit, dto.id, 'm-002', other.id);
+    await run(kit.env.DB, 'DELETE FROM connection_links WHERE local_id = ?', [mine.id]);
+    await run(kit.env.DB, 'UPDATE passes SET external_ref = ? WHERE id = ?', ['m-001', theirs.id]);
     await sync(dto.id);
     expect(kit.seams.applied.map((a) => a.passId)).toEqual([mine.id]);
     expect((await passRow(theirs.id))?.last_synced_at).toBeNull();

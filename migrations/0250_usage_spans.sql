@@ -134,3 +134,23 @@ BEGIN
   UPDATE pass_live_spans SET live_to = last_used_at, end_reason = 'deletion'
   WHERE pass_id = OLD.id AND live_to IS NULL;
 END;
+
+-- Undoing a removal or a void gives the pass its latest span back. The pass still sits in the wallet, so it
+-- keeps counting until the usual expiry or idle end.
+CREATE TRIGGER pass_live_spans_restored AFTER UPDATE OF removed_at ON passes
+WHEN OLD.removed_at IS NOT NULL AND NEW.removed_at IS NULL AND NEW.deleted_at IS NULL AND NEW.status != 'voided'
+BEGIN
+  UPDATE pass_live_spans SET live_to = NULL, end_reason = NULL
+  WHERE id = (SELECT l.id FROM pass_live_spans l WHERE l.pass_id = NEW.id ORDER BY l.live_from DESC, l.rowid DESC LIMIT 1)
+    AND end_reason = 'removal'
+    AND NOT EXISTS (SELECT 1 FROM pass_live_spans o WHERE o.pass_id = NEW.id AND o.live_to IS NULL);
+END;
+
+CREATE TRIGGER pass_live_spans_unvoided AFTER UPDATE OF status ON passes
+WHEN OLD.status = 'voided' AND NEW.status != 'voided' AND NEW.removed_at IS NULL AND NEW.deleted_at IS NULL
+BEGIN
+  UPDATE pass_live_spans SET live_to = NULL, end_reason = NULL
+  WHERE id = (SELECT l.id FROM pass_live_spans l WHERE l.pass_id = NEW.id ORDER BY l.live_from DESC, l.rowid DESC LIMIT 1)
+    AND end_reason = 'void'
+    AND NOT EXISTS (SELECT 1 FROM pass_live_spans o WHERE o.pass_id = NEW.id AND o.live_to IS NULL);
+END;

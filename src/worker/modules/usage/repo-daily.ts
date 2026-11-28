@@ -15,11 +15,14 @@ export interface PeriodRow {
 const COLS =
   'org_id, start_ms, end_ms, month, time_zone, utc_fallback, covered_to, recount_closed_at';
 
+/** How long before a period starts the next one is created, so it holds the zone as it stands then. */
+export const PERIOD_LEAD_MS = 10 * 60_000;
+
 /** Orgs a minute run looks at at most. */
 export const ORG_SLICE = 50;
 
 /**
- * Orgs with work due: no period yet, no next period although this one ends within the horizon, day bounds that
+ * Orgs with work due: no period yet, no next period although this one ends within the lead, day bounds that
  * stop short of the horizon, or a period whose recount window is due to close. Settled orgs match nothing.
  */
 export async function orgsDue(
@@ -27,6 +30,7 @@ export async function orgsDue(
   now: number,
   horizonMs: number,
   limit = ORG_SLICE,
+  leadMs = PERIOD_LEAD_MS,
 ): Promise<string[]> {
   const rows = await all<{ id: string }>(
     db,
@@ -34,12 +38,12 @@ export async function orgsDue(
      WHERE o.purged_at IS NULL AND o.closed_at IS NULL AND (
        NOT EXISTS (SELECT 1 FROM usage_periods p WHERE p.org_id = o.id)
        OR EXISTS (SELECT 1 FROM usage_periods p WHERE p.org_id = o.id AND (
-         (p.end_ms <= ?1 + ?2 AND NOT EXISTS (SELECT 1 FROM usage_periods n WHERE n.org_id = p.org_id AND n.start_ms = p.end_ms))
+         (p.end_ms <= ?1 + ?4 AND NOT EXISTS (SELECT 1 FROM usage_periods n WHERE n.org_id = p.org_id AND n.start_ms = p.end_ms))
          OR (p.end_ms > ?1 AND p.start_ms <= ?1 + ?2 AND p.covered_to < MIN(p.end_ms, ?1 + ?2))
          OR (p.recount_closed_at IS NULL AND EXISTS (SELECT 1 FROM usage_periods n
              WHERE n.org_id = p.org_id AND n.start_ms = p.end_ms AND n.end_ms <= ?1)))))
      ORDER BY o.id LIMIT ?3`,
-    [now, horizonMs, limit],
+    [now, horizonMs, limit, leadMs],
   );
   return rows.map((r) => r.id);
 }

@@ -114,6 +114,24 @@ describe('span end', () => {
     });
   });
 
+  it('a released removal or an unvoid reopens the span', async () => {
+    const pass = await kit.pass();
+    await ev(pass, 'device.registered', T0);
+    await sql('UPDATE passes SET removed_at = ? WHERE id = ?', [T0 + DAY, pass.id]);
+    expect((await spansOfPass(kit.env.DB, pass.id))[0]?.endReason).toBe('removal');
+    await sql('UPDATE passes SET removed_at = NULL WHERE id = ?', [pass.id]);
+    expect((await spansOfPass(kit.env.DB, pass.id))[0]).toMatchObject({
+      liveTo: null,
+      endReason: null,
+    });
+    await voidIt(pass, T0 + 2 * DAY);
+    expect((await spansOfPass(kit.env.DB, pass.id))[0]?.endReason).toBe('void');
+    await sql("UPDATE passes SET status = 'active' WHERE id = ?", [pass.id]);
+    const spans = await spansOfPass(kit.env.DB, pass.id);
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({ liveTo: null, endReason: null });
+  });
+
   it('deletion', async () => {
     const pass = await kit.pass();
     await ev(pass, 'pass.printed', T0);
