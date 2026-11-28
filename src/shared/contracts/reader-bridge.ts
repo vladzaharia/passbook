@@ -50,6 +50,7 @@ export const ReaderModelSchema = z.enum(['acr1555u', 'acr1552u', 'ccid']);
 export const ReaderTransportSchema = z.enum(['usb', 'bluetooth', 'web-bluetooth']);
 
 /** One reader as the app reports it. Unknown fields are dropped, so an older page keeps parsing. */
+export const ReaderPinnedBySchema = z.enum(['device', 'staffMenu']);
 export const ReaderStateSchema = z.object({
   /** Opaque: `r-` plus 8 hex of SHA-256(install salt, serial) in the apps. Never a serial or a MAC. */
   id: ReaderIdSchema,
@@ -70,7 +71,7 @@ export const ReaderStateSchema = z.object({
   mode: z.enum(['app', 'keyboard', 'unknown']),
   pinned: z.boolean(),
   /** Who pinned it: the device (BLE pairing, any pin) or the PIN-gated kiosk staff menu. Kiosks read only from `staffMenu`. */
-  pinnedBy: z.enum(['device', 'staffMenu']),
+  pinnedBy: ReaderPinnedBySchema,
   /** Firmware allows `FF 00 00 00`. */
   passThrough: z.boolean(),
   /** Model plus the last 4 of the serial: the one serial fragment kept. */
@@ -173,7 +174,7 @@ export const PROGRAM_NATIVE_INS = [0x71, 0xaf, 0x60, 0x64, 0xf5, 0x5f, 0xc4, 0x8
  * also MIFARE Classic key A auth with a longer body, so any other Lc is refused.
  */
 export const PASS_THROUGH_LC = { 48: 2, 58: 3, 96: 1, 60: 2 } as const;
-export const PASS_THROUGH_NATIVE = [0x30, 0x3a, 0x60, 0x3c] as const;
+export const PASS_THROUGH_NATIVE = Object.keys(PASS_THROUGH_LC).map(Number);
 
 export type ReaderIntent = 'read' | 'program';
 const toBytes = (hex: string): number[] | null =>

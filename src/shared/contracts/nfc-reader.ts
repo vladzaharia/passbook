@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { TimestampSchema } from './common.ts';
-import { ReaderErrorCodeSchema, type ReaderState, ReaderText } from './reader-bridge.ts';
+import {
+  ReaderErrorCodeSchema,
+  ReaderPinnedBySchema,
+  type ReaderState,
+  ReaderText,
+} from './reader-bridge.ts';
 
 /** An external NFC reader on a Staff device or a kiosk: the admin's setting, and what the device reports. */
 export const NfcReaderSettingsSchema = z.strictObject({
@@ -13,6 +18,7 @@ export const NfcReaderStatusSchema = z.strictObject({
   model: z.enum(['acr1555u', 'acr1552u', 'ccid']).nullable(),
   transport: z.enum(['usb', 'bluetooth', 'web-bluetooth', 'keyboard']).nullable(),
   pinned: z.boolean(),
+  pinnedBy: ReaderPinnedBySchema,
   label: ReaderText(40).nullable(),
   firmware: ReaderText(32).nullable(),
   battery: z
