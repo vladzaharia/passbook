@@ -8,7 +8,7 @@ import type {
   ScanRole,
   TemplateManifest,
 } from '../passkit/types.ts';
-import type { MonitorAudience, ScanAppearance, ScannerSettings } from './contracts/scan.ts';
+import type { ScannerSettings } from './contracts/scan.ts';
 import type { DeviceRoleSchema } from './contracts/scanners.ts';
 
 export const DEFAULT_COOLDOWN_MINUTES = 5;
