@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { type APIRequestContext, type Browser, expect, request } from '@playwright/test';
 import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
-import { type Role, saveState, startOidcAs, stateFile } from './auth.ts';
+import { type Role, stateFile, stepUpAdmin } from './auth.ts';
 
 export const BASE = e2eOrigin;
 
@@ -192,10 +192,7 @@ export async function createPass(
 export async function freshAdminApi(browser: Browser): Promise<Api> {
   const context = await browser.newContext({ storageState: stateFile('admin') });
   const page = await context.newPage();
-  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
-  await page.waitForURL(/\/admin/);
-  // A new sign-in ends the old session, so the stored state must follow.
-  await saveState(page, 'admin');
+  await stepUpAdmin(page);
   const api = await apiFrom(context.request);
   return { ...api, dispose: () => context.close() };
 }

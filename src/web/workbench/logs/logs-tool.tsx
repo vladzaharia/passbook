@@ -11,13 +11,13 @@ import { LiveIndicator, useLiveState } from '../bench/live.tsx';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { BenchSplit } from '../bench/split.tsx';
-import { BenchState } from '../bench/state.tsx';
 import { toneOfStatus } from '../bench/status-chip.tsx';
 import { BenchTabs, benchPanelId, benchTabId } from '../bench/tabs.tsx';
 import { SearchField, Toolbar } from '../bench/toolbar.tsx';
 import { useBenchFilters } from '../bench/use-filters.ts';
 import { useBenchSelection } from '../bench/use-selection.ts';
 import { adminLink, useOptionalToolHost } from '../host/tool-host.tsx';
+import { StageState, ToolFailed } from '../states/states.tsx';
 import { type LogKey, readKeys, readOne } from './api.ts';
 import { codeOf } from './curl.ts';
 import { FirstCall, NoMatch } from './empty.tsx';
@@ -131,13 +131,13 @@ export function LogsTool() {
     filters.set('path', null);
   };
 
-  if (log.phase === 'failed') return <BenchState scene="failed" onRetry={log.retry} />;
+  if (log.phase === 'failed') return <ToolFailed error={log.error} onRetry={log.retry} />;
   if (log.phase === 'loading') return <BenchSkeleton rows={5} />;
 
   const nothing = narrowed ? (
     <NoMatch onClear={clearAll} />
   ) : errors ? (
-    <BenchState scene="logs-idle" title={C.state.noErrors} />
+    <StageState scene="inspect" mood="curious" title={C.state.noErrors} />
   ) : (
     <FirstCall
       orgId={orgId}
@@ -161,11 +161,7 @@ export function LogsTool() {
         tone={(r) => toneOfStatus(r.status)}
         selection={selection}
         fresh={log.fresh}
-        footer={{
-          count: C.count(log.items.length, log.hasMore),
-          onMore: log.hasMore ? () => void log.loadMore() : undefined,
-          loading: log.more,
-        }}
+        footer={log.hasMore ? { onMore: () => void log.loadMore(), loading: log.more } : undefined}
       />
       <p className="sr" aria-live="polite">
         {log.announce}
@@ -192,7 +188,7 @@ export function LogsTool() {
     <>
       <BenchSlot name="count">{C.count(log.items.length, log.hasMore)}</BenchSlot>
       <LiveIndicator state={live} onResume={log.resume} />
-      <Toolbar label={C.toolbar} note={C.retention}>
+      <Toolbar label={C.toolbar}>
         <SearchField
           label={C.search}
           value={search}
@@ -274,7 +270,6 @@ export function LogsTool() {
           />
         )}
       </div>
-      {log.items.length > 0 ? <p className="bench-note">{C.retention}</p> : null}
     </>
   );
 }

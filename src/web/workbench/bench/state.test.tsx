@@ -1,9 +1,8 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiveIndicator, useLiveState } from './live.tsx';
 import { BenchSkeleton } from './skeleton.tsx';
-import { BenchGate, BenchState } from './state.tsx';
+import { BenchGate } from './state.tsx';
 
 afterEach(() => {
   cleanup();
@@ -12,44 +11,6 @@ afterEach(() => {
 });
 
 describe('bench states', () => {
-  it('acts each moment out with its own scene and prop, one buddy per card', () => {
-    const scenes = [
-      ['no-sandbox', 'wave', 'No sandbox yet'],
-      ['closed', 'beat', 'Sandbox closed'],
-      ['console-idle', 'nudge', 'Run the request.'],
-      ['webhooks-idle', 'listen', 'Listening for events'],
-      ['logs-idle', 'inspect', 'Waiting for your first call'],
-      ['logs-listen', 'listen', 'Waiting for your first call'],
-      ['keys-none', 'tuck', 'No keys'],
-      ['no-match', 'search', 'No matches'],
-      ['failed', 'plug', 'Did not load'],
-    ] as const;
-    for (const [scene, act, title] of scenes) {
-      const html = renderToStaticMarkup(<BenchState scene={scene} />);
-      const root = document.createElement('div');
-      root.innerHTML = html;
-      const card = root.querySelector('section');
-      expect(card?.getAttribute('data-scene'), scene).toBe(scene);
-      const buddies = card?.querySelectorAll('[data-scene]') ?? [];
-      expect(buddies.length, scene).toBe(1);
-      expect(buddies[0]?.getAttribute('data-scene'), scene).toBe(act);
-      expect(root.querySelector('h2')?.textContent, scene).toBe(title);
-    }
-  });
-
-  it('a failed load carries Retry next to its own action', () => {
-    const onRetry = vi.fn();
-    render(
-      <BenchState scene="failed" onRetry={onRetry}>
-        <a href="/developers/status">Status</a>
-      </BenchState>,
-    );
-    const card = screen.getByRole('region', { name: 'Did not load' });
-    expect(card.textContent).toContain('Status');
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(onRetry).toHaveBeenCalledTimes(1);
-  });
-
   it('signed out is the BX2 gate with the tool line and the way back', () => {
     render(<BenchGate tool="logs" />);
     const signIn = screen.getByRole('link', { name: 'Sign in' });

@@ -20,7 +20,7 @@ function Rows({ children }: { children: ReactNode }) {
 
 function Loading() {
   return (
-    <div role="status" aria-busy className="flex flex-col gap-1 p-3">
+    <div role="status" data-loading="content" className="flex flex-col gap-1 p-3">
       {[0, 1, 2, 3].map((i) => (
         <Skeleton key={i} className="h-9 w-full" />
       ))}
@@ -28,7 +28,7 @@ function Loading() {
   );
 }
 
-function Empty({ line, action }: { line: string; action: ReactNode }) {
+function Empty({ line, action }: { line: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
       <p className="text-sm text-fg-muted">{line}</p>
@@ -56,17 +56,7 @@ export function RecentCalls({
 }) {
   let body: ReactNode;
   if (!rows) body = error ? <ToolFailed error={error} onRetry={onRetry} /> : <Loading />;
-  else if (rows.length === 0)
-    body = (
-      <Empty
-        line={C.calls.empty}
-        action={
-          <Button asChild variant="outline" size="sm">
-            <Link to={wbPath(orgId, 'console')}>{C.next.console}</Link>
-          </Button>
-        }
-      />
-    );
+  else if (rows.length === 0) body = <Empty line={C.calls.empty} />;
   else
     body = (
       <Rows>
@@ -81,7 +71,7 @@ export function RecentCalls({
                 {call.method}
               </span>
               <code className="min-w-0 flex-1 truncate font-mono text-[0.8125rem] text-fg-strong">
-                {call.route ?? call.path}
+                {(call.route ?? call.path).replace(/^\/api\/v1(?=\/)/, '')}
               </code>
               <StatusChip status={call.status} />
               <span className="hidden w-14 shrink-0 text-right font-mono text-xs text-fg-muted sm:block">

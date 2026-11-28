@@ -24,6 +24,8 @@ export const CALLS_POLL_MS = 5_000;
 export const EVENTS_POLL_MS = 5_000;
 export const SUMMARY_POLL_MS = 15_000;
 export const PASSES_POLL_MS = 15_000;
+/** A home read that stalls ends in its failed state with Retry, not a skeleton. */
+export const HOME_READ_TIMEOUT_MS = 20_000;
 
 export type Summary = z.infer<typeof WorkbenchSummarySchema>;
 export type CallRow = z.infer<typeof RequestLogPageSchema>['items'][number];
@@ -34,7 +36,11 @@ export function useHomeSummary(api: WorkbenchApi) {
   return useQuery({
     queryKey: ['workbench', 'home', 'summary', api.orgId] as const,
     queryFn: ({ signal }) =>
-      api.get(P.summary, WorkbenchSummarySchema, { query: { orgId: api.orgId }, signal }),
+      api.get(P.summary, WorkbenchSummarySchema, {
+        query: { orgId: api.orgId },
+        signal,
+        timeoutMs: HOME_READ_TIMEOUT_MS,
+      }),
     refetchInterval: pollEvery(SUMMARY_POLL_MS),
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
@@ -44,11 +50,14 @@ export function useHomeSummary(api: WorkbenchApi) {
 export function useRecentCalls(api: WorkbenchApi) {
   return useQuery({
     queryKey: ['workbench', 'home', 'calls', api.orgId] as const,
-    queryFn: ({ signal }) =>
-      api.get(P.logs, RequestLogPageSchema, {
-        query: { orgId: api.orgId, limit: CALLS_LIMIT },
+    queryFn: async ({ signal }) => {
+      const page = await api.get(P.logs, RequestLogPageSchema, {
+        query: { orgId: api.orgId, limit: CALLS_LIMIT, portal: 'hide' },
         signal,
-      }),
+        timeoutMs: HOME_READ_TIMEOUT_MS,
+      });
+      return page;
+    },
     refetchInterval: pollEvery(CALLS_POLL_MS),
     refetchIntervalInBackground: false,
     placeholderData: keepPreviousData,
@@ -62,6 +71,7 @@ export function useRecentPasses(api: WorkbenchApi) {
       api.get(P.passes, PassListSchema, {
         query: { orgId: api.orgId, limit: PASSES_LIMIT },
         signal,
+        timeoutMs: HOME_READ_TIMEOUT_MS,
       }),
     refetchInterval: pollEvery(PASSES_POLL_MS),
     refetchIntervalInBackground: false,
@@ -118,6 +128,7 @@ export function useRecentEvents(api: WorkbenchApi): RecentEvents {
       api.get(P.events, EventFeedPageSchema, {
         query: { orgId: api.orgId, limit, order, after: order ? undefined : cursor.current },
         signal: ctl.signal,
+        timeoutMs: HOME_READ_TIMEOUT_MS,
       });
 
     // One newest-first page, then only what comes after its newest cursor.

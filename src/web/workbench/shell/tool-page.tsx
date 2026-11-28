@@ -18,6 +18,11 @@ const Resetting = lazy(() =>
   import('../states/states.tsx').then((m) => ({ default: m.ResettingState })),
 );
 
+// One row on a phone (design §5.1): the primary keeps its icon and drops its label to the
+// accessible name (the text stays in the tree at 0 px), so a long action never pushes the head wide.
+const PRIMARY_ON_PHONE =
+  'contents max-sm:[&_:is(a,button):has(>svg)]:w-11 max-sm:[&_:is(a,button):has(>svg)]:gap-0 max-sm:[&_:is(a,button):has(>svg)]:px-0 max-sm:[&_:is(a,button):has(>svg)]:text-[0px]';
+
 const isSeenArea = (tool: WbTool): tool is SeenArea =>
   (SEEN_AREAS as readonly string[]).includes(tool);
 
@@ -29,6 +34,8 @@ export interface ToolPageProps {
   primary?: ReactNode;
   /** Filters and search, one row under the head. */
   toolbar?: ReactNode;
+  /** False hides Mark seen where the view has nothing to mark (an empty feed). */
+  markSeen?: boolean;
   children: ReactNode;
 }
 
@@ -37,7 +44,14 @@ export interface ToolPageProps {
  * the area has attention, then the one primary. Sections rise in, 45 ms apart. The title keeps the
  * head's 40 px line, so a head that wraps its actions on a phone never moves the title.
  */
-export function ToolPage({ tool, count, primary, toolbar, children }: ToolPageProps) {
+export function ToolPage({
+  tool,
+  count,
+  primary,
+  toolbar,
+  markSeen: canMarkSeen = true,
+  children,
+}: ToolPageProps) {
   const { context, attention, seenAt } = useWbShell();
   const { title } = WB_AREA[tool];
   const [countEl, setCount] = useState<HTMLElement | null>(null);
@@ -59,20 +73,22 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
       : undefined,
   );
   return (
-    <div className="wb-rise flex min-w-0 flex-col gap-4">
-      <header className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="wb-rise flex min-w-0 flex-col gap-4 max-sm:gap-3">
+      <header className="flex min-h-10 flex-wrap items-center gap-x-3 gap-y-2 max-sm:flex-nowrap">
         <GlyphTile tool={tool} />
         <h1
           tabIndex={-1}
-          className="grid min-h-10 content-center text-2xl font-semibold tracking-[-0.015em] text-fg-strong outline-none"
+          className="grid min-h-10 min-w-0 shrink-0 content-center text-2xl font-semibold tracking-[-0.015em] text-fg-strong outline-none"
         >
           {title}
         </h1>
-        {count ? <span className="font-mono text-[0.8125rem] text-fg-muted">{count}</span> : null}
+        {count ? (
+          <span className="min-w-0 truncate font-mono text-[0.8125rem] text-fg-muted">{count}</span>
+        ) : null}
         <span
           ref={setCount}
           data-bench-count=""
-          className="font-mono text-[0.8125rem] text-fg-muted empty:hidden"
+          className="min-w-0 truncate font-mono text-[0.8125rem] text-fg-muted empty:hidden"
         />
         <div ref={setStatus} data-bench-status="" className="empty:hidden" />
         {limited ? (
@@ -80,8 +96,8 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
             {POLL_PAUSED}
           </span>
         ) : null}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {area && context && seenAt !== undefined ? (
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
+          {canMarkSeen && area && context && seenAt !== undefined ? (
             <Button
               variant="ghost"
               size="sm"
@@ -91,8 +107,10 @@ export function ToolPage({ tool, count, primary, toolbar, children }: ToolPagePr
               {WB_SHELL_COPY.markSeen}
             </Button>
           ) : null}
-          {primary}
-          <div ref={setAction} className="contents" />
+          <div data-tool-primary="" className={PRIMARY_ON_PHONE}>
+            {primary}
+            <div ref={setAction} className="contents" />
+          </div>
         </div>
       </header>
       <div
