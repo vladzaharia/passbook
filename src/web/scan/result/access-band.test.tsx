@@ -17,20 +17,20 @@ import { ResultCard } from './result-card.tsx';
 const band = () => screen.getByTestId('scan-verdict');
 
 describe('the access band', () => {
-  it('says Access granted with the pill, the zone and the closing time', () => {
+  it('says Checked in with the pill, the zone and the closing time', () => {
     render(<ResultCard outcome={grant({ display: null })} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Access granted');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Checked in');
     expect(screen.getByTestId('scan-dir-pill')).toHaveTextContent('In');
     expect(band()).toHaveTextContent('Gym · until');
   });
-  it('keeps Access granted as the headline with the person under it', () => {
+  it('keeps Checked in as the headline with the person under it', () => {
     render(<ResultCard outcome={grant({ display: fixtureDisplay('ok') })} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Access granted');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Checked in');
     expect(band()).toHaveTextContent('Anna Popescu');
   });
-  it('says Tapped out with the pill, the zone and the stay', () => {
+  it('says Checked out with the pill, the zone and the stay', () => {
     render(<ResultCard outcome={exit({ display: null })} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tapped out');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Checked out');
     expect(screen.getByTestId('scan-dir-pill')).toHaveTextContent('Out');
     expect(band()).toHaveTextContent('Gym · 1 h 32 min');
   });

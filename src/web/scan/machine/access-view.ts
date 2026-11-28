@@ -29,7 +29,7 @@ export const isExit = (o: ScanOutcome): boolean =>
   o.kind === 'ok' &&
   (o.occupancy ? o.occupancy.direction === 'out' : o.checkIn?.direction === 'out');
 
-/** An Access card's grant: the band says Access granted. */
+/** An Access card's grant: the band says Checked in. */
 export const isGrant = (o: ScanOutcome): boolean =>
   o.kind === 'ok' && o.access !== null && !isExit(o) && o.action?.id !== 'undo';
 
@@ -92,7 +92,7 @@ export function accessLines(o: ScanOutcome, now: number): OutcomeLines | null {
     const by = (o as ResolvedOutcome).resolvedBy;
     if (isExit(o) && isZone(o)) {
       const v = accessValues(o, now);
-      return { title: copy.tappedOut, sub: joined(copy.tappedOutSub, v) };
+      return { title: copy.checkedOut, sub: joined(copy.tappedOutSub, v) };
     }
     if (by && o.access) {
       const v = accessValues(o, now);
@@ -147,9 +147,6 @@ export function accessBeatOf(o: ScanOutcome): BuddyBeat | null {
   return null;
 }
 
-/** Holds a person is let in again after: a repeat. Every other hold is a first entry, `anyway`. */
-const REPEAT = new Set<string>(['already_done', 'still_inside']);
-
 export type HoldVerb =
   | { kind: 'turn'; direction: 'in' | 'out'; label: string }
   | { kind: 'letIn'; label: string };
@@ -176,10 +173,7 @@ export function holdVerbs(o: ScanOutcome): HoldVerb[] {
     return [
       {
         kind: 'letIn',
-        label:
-          o.reason && REPEAT.has(o.reason)
-            ? SCAN_COPY.actions.letInAgain
-            : SCAN_COPY.actions.letInAnyway,
+        label: SCAN_COPY.actions.letIn,
       },
     ];
   return [];

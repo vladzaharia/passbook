@@ -83,7 +83,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}. Check ID.' },
   not_inside: { headline: 'Not tapped in', sub: 'No entry recorded. Tap them in first.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
-  network: { headline: 'No connection', sub: 'Not checked. Hold them and scan again.' },
+  network: { headline: 'Offline', sub: 'Waiting for connection' },
   timeout: { headline: 'No answer', sub: 'Not checked. Hold them and scan again.' },
   unconfirmed: { headline: 'Not confirmed', sub: "Checking again when you're back online." },
   still_unconfirmed: { headline: 'Still not confirmed', sub: 'Check Recent before trying again.' },
@@ -92,7 +92,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   forbidden: { headline: 'Not allowed', sub: "This device can't do that. Ask a manager." },
   saved_offline: { headline: '{action}', sub: 'Saved offline' },
   offline_decide: {
-    headline: 'No connection',
+    headline: 'Offline',
     sub: 'Check it by eye. Tap {action} to save it for later.',
   },
   not_listed: { headline: 'Not found', sub: 'Not on the offline list from {time}.' },
@@ -174,7 +174,7 @@ export const SCAN_COPY = {
     redeemed: 'Redeemed',
     /** An Access card's check-in. The sub joins the zone and the closing time that exist. */
     access: {
-      headline: 'Access granted',
+      headline: 'Checked in',
       sub: '{zone} · until {time}',
     },
     /** The pass type and the rule that admitted it: "Day pass · until 11:59 PM". */
@@ -186,8 +186,6 @@ export const SCAN_COPY = {
       once: 'once',
       daily: 'daily',
     },
-    letInAgain: 'Let in again.',
-    tappedOut: 'Tapped out',
     /** The sub of an exit. */
     tappedOutSub: '{zone} · {stay}',
     autoOut: 'Tapped out automatically after {stay} or at {time}.',
@@ -201,14 +199,12 @@ export const SCAN_COPY = {
   },
   actions: {
     done: 'Done',
-    letInAgain: 'Let in again',
     tapIn: 'Tap in',
     tapOut: 'Tap out',
     checkOut: 'Check out',
     markAsOut: 'Mark as out',
     letIn: 'Let in',
     signInToAct: 'Sign in to act',
-    letInAnyway: 'Let in anyway',
     addAnyway: 'Add anyway',
     managerPin: 'Manager PIN',
     askManager: 'Ask a manager',
@@ -237,7 +233,7 @@ export const SCAN_COPY = {
     adminAs: 'Signed in as {who}',
     codeInvalid: 'Code not valid. Ask for a new one.',
     tooManyTries: 'Too many tries. Wait a minute and try again.',
-    offline: "No connection. Pair when you're back online.",
+    offline: "Offline. Pair when you're back online.",
     removedTitle: 'Scanner removed',
     removedLine: 'Ask an admin for a new code.',
     expiredTitle: 'Pairing expired',
@@ -264,6 +260,14 @@ export const SCAN_COPY = {
     rateLimited: 'Too many lookups. Try again in {seconds} s.',
     offline: 'Look up needs a connection.',
   },
+  /** What a public screen says: no subject, no reason beyond the four subs (`CUSTOMER_REASON_SUB`). */
+  public: {
+    seeDesk: 'Please see the desk',
+    notFound: "We couldn't find you",
+    paused: 'Back soon',
+    offline: 'Offline',
+    offlineLine: 'Waiting for connection',
+  },
   direction: { in: 'In', out: 'Out', auto: 'Auto' },
   /** The mode a device scans in. */
   mode: { door: 'Door', desk: 'Desk', manager: 'Manager', operator: 'Operator' },
@@ -272,7 +276,7 @@ export const SCAN_COPY = {
     stripSaving: 'Offline. Saving scans.',
     saved: '{n} waiting to sync',
   },
-  sessionPaused: { line: 'Paused by a manager. Ask them to resume.', check: 'Check again' },
+  sessionPaused: { line: 'Paused by a manager. Ask them to resume.', check: 'Try again' },
   sessionEnded: { title: 'Session ended', line: 'Ask a manager to open a new session.' },
   changeMode: {
     menu: 'Change mode',
@@ -307,7 +311,7 @@ export const SCAN_COPY = {
     headline: 'Closed',
     opens: 'Opens {when}.',
     noOpening: 'No opening set.',
-    check: 'Check again',
+    check: 'Try again',
     openNow: 'Open now',
     openNowTitle: 'Open early',
     alreadyOpen: 'Already open.',

@@ -11538,6 +11538,8 @@ export type ScanSetupAnswer = {
         types?: Array<string | "standard">;
         confirmBasic?: "none" | "staff" | "manager";
       };
+      appearance?: "system" | "light" | "dark";
+      monitorAudience?: "public" | "staff";
       customer?: {
         welcome?: string;
         refusedLine?: string;
@@ -11638,6 +11640,8 @@ export type ScanSetupsCreateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
   };
   timeZone: string;
   watch?: {
@@ -11831,6 +11835,8 @@ export type ScanSetupsUpdateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
   };
   watch?: {
     scannerIds?: Array<string>;
@@ -12313,6 +12319,8 @@ export type ScannerSettings = {
     types?: Array<string | "standard">;
     confirmBasic?: "none" | "staff" | "manager";
   };
+  appearance?: "system" | "light" | "dark";
+  monitorAudience?: "public" | "staff";
 };
 
 export type ScannersCreateParams = {
@@ -12357,6 +12365,8 @@ export type ScannersCreateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
   };
   timeZone: string;
 };
@@ -12435,6 +12445,8 @@ export type ScannersUpdateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
   };
 };
 
@@ -12519,6 +12531,8 @@ export type ScanningSession = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
     customer?: {
       welcome?: string;
       refusedLine?: string;
@@ -12605,6 +12619,8 @@ export type ScanningSessionDetail = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
     customer?: {
       welcome?: string;
       refusedLine?: string;
@@ -12705,6 +12721,8 @@ export type ScanningSessionsCreateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
     customer?: {
       welcome?: string;
       refusedLine?: string;
@@ -12881,6 +12899,8 @@ export type ScanningSessionsSetupParams = {
         types?: Array<string | "standard">;
         confirmBasic?: "none" | "staff" | "manager";
       };
+      appearance?: "system" | "light" | "dark";
+      monitorAudience?: "public" | "staff";
       customer?: {
         welcome?: string;
         refusedLine?: string;
@@ -12936,6 +12956,8 @@ export type ScanningSessionsUpdateParams = {
       types?: Array<string | "standard">;
       confirmBasic?: "none" | "staff" | "manager";
     };
+    appearance?: "system" | "light" | "dark";
+    monitorAudience?: "public" | "staff";
     customer?: {
       welcome?: string;
       refusedLine?: string;

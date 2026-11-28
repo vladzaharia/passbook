@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import type { ScanCheckIn } from '../passkit/template/scan-check-in.ts';
 import type {
   ScanAction,
@@ -7,8 +8,37 @@ import type {
   ScanRole,
   TemplateManifest,
 } from '../passkit/types.ts';
+import type { MonitorAudience, ScanAppearance, ScannerSettings } from './contracts/scan.ts';
+import type { DeviceRoleSchema } from './contracts/scanners.ts';
 
 export const DEFAULT_COOLDOWN_MINUTES = 5;
+
+type DeviceRole = z.infer<typeof DeviceRoleSchema>;
+type ScanAppearance = NonNullable<ScannerSettings['appearance']>;
+type MonitorAudience = NonNullable<ScannerSettings['monitorAudience']>;
+
+/** The theme a role follows when `appearance` is absent. */
+export const DEFAULT_APPEARANCE: Record<DeviceRole, ScanAppearance> = {
+  scan: 'system',
+  customer: 'light',
+  monitor: 'light',
+  kiosk: 'light',
+};
+export const DEFAULT_MONITOR_AUDIENCE: MonitorAudience = 'public';
+
+export function appearanceOf(
+  role: DeviceRole,
+  settings: Pick<ScannerSettings, 'appearance'> | null | undefined,
+): ScanAppearance {
+  return settings?.appearance ?? DEFAULT_APPEARANCE[role];
+}
+
+/** Only an explicit `staff` opens names and reasons. Anything else, absent included, is `public`. */
+export function audienceOf(
+  settings: Pick<ScannerSettings, 'monitorAudience'> | null | undefined,
+): MonitorAudience {
+  return settings?.monitorAudience === 'staff' ? 'staff' : DEFAULT_MONITOR_AUDIENCE;
+}
 
 /** An action with every default applied. Defaults are read-time only and never persisted. */
 export interface ResolvedScanAction extends ScanAction {

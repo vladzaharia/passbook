@@ -905,6 +905,8 @@
               "types": ["generic"],
               "confirmBasic": "staff"
             },
+            "appearance": "system",
+            "monitorAudience": "public",
             "customer": {
               "welcome": "Welcome to Northwind",
               "refusedLine": "Please see the front desk",
@@ -956,7 +958,9 @@
               "level": "off",
               "types": ["generic"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           },
           "capabilities": {
             "width": 320,
@@ -1078,7 +1082,9 @@
             "level": "off",
             "types": ["scan"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         }
       },
       "admin": {
@@ -1199,6 +1205,8 @@
               "types": ["generic"],
               "confirmBasic": "staff"
             },
+            "appearance": "system",
+            "monitorAudience": "public",
             "customer": {
               "welcome": "Welcome to Northwind",
               "refusedLine": "Please see the front desk",
@@ -1250,7 +1258,9 @@
               "level": "off",
               "types": ["generic"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           },
           "capabilities": {
             "width": 320,
@@ -1372,7 +1382,9 @@
             "level": "off",
             "types": ["scan"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         }
       },
       "admin": {
@@ -1514,6 +1526,8 @@
               "types": ["generic"],
               "confirmBasic": "staff"
             },
+            "appearance": "system",
+            "monitorAudience": "public",
             "customer": {
               "welcome": "Welcome to Northwind",
               "refusedLine": "Please see the front desk",
@@ -1565,7 +1579,9 @@
               "level": "off",
               "types": ["generic"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           },
           "capabilities": {
             "width": 320,
@@ -1687,7 +1703,9 @@
             "level": "off",
             "types": ["scan"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         }
       },
       "admin": {
@@ -1808,6 +1826,8 @@
               "types": ["generic"],
               "confirmBasic": "staff"
             },
+            "appearance": "system",
+            "monitorAudience": "public",
             "customer": {
               "welcome": "Welcome to Northwind",
               "refusedLine": "Please see the front desk",
@@ -1859,7 +1879,9 @@
               "level": "off",
               "types": ["generic"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           },
           "capabilities": {
             "width": 320,
@@ -1981,7 +2003,9 @@
             "level": "off",
             "types": ["scan"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         }
       },
       "admin": {
@@ -2104,6 +2128,8 @@
                 "types": ["generic"],
                 "confirmBasic": "staff"
               },
+              "appearance": "system",
+              "monitorAudience": "public",
               "customer": {
                 "welcome": "Welcome to Northwind",
                 "refusedLine": "Please see the front desk",
@@ -2155,7 +2181,9 @@
                 "level": "off",
                 "types": ["generic"],
                 "confirmBasic": "staff"
-              }
+              },
+              "appearance": "system",
+              "monitorAudience": "public"
             },
             "capabilities": {
               "width": 320,
@@ -2277,7 +2305,9 @@
               "level": "off",
               "types": ["scan"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           }
         },
         "admin": {
@@ -3185,6 +3215,8 @@
               "types": ["generic"],
               "confirmBasic": "staff"
             },
+            "appearance": "system",
+            "monitorAudience": "public",
             "customer": {
               "welcome": "Welcome to Northwind",
               "refusedLine": "Please see the front desk",
@@ -3236,7 +3268,9 @@
               "level": "off",
               "types": ["generic"],
               "confirmBasic": "staff"
-            }
+            },
+            "appearance": "system",
+            "monitorAudience": "public"
           },
           "capabilities": {
             "width": 320,
@@ -3358,7 +3392,9 @@
             "level": "off",
             "types": ["scan"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         }
       },
       "admin": {
@@ -4067,6 +4103,8 @@
             "types": ["generic"],
             "confirmBasic": "staff"
           },
+          "appearance": "system",
+          "monitorAudience": "public",
           "customer": {
             "welcome": "Welcome to Northwind",
             "refusedLine": "Please see the front desk",
@@ -4118,7 +4156,9 @@
             "level": "off",
             "types": ["generic"],
             "confirmBasic": "staff"
-          }
+          },
+          "appearance": "system",
+          "monitorAudience": "public"
         },
         "capabilities": {
           "width": 320,

@@ -46,7 +46,7 @@ describe('SCAN_COPY', () => {
     ];
     for (const line of lines)
       for (const [, key] of line.matchAll(/\{(\w+)\}/g)) expect(allowed).toContain(key);
-    expect(SCAN_COPY.verdict.access.headline).toBe('Access granted');
+    expect(SCAN_COPY.verdict.access.headline).toBe('Checked in');
   });
 
   it('has occupancy reasons with one default line each', () => {
@@ -83,7 +83,7 @@ describe('SCAN_COPY', () => {
   });
 
   it('has the occupancy words, terse and without a trailing filler', () => {
-    expect(SCAN_COPY.verdict.tappedOut).toBe('Tapped out');
+    expect(SCAN_COPY.verdict.checkedOut).toBe('Checked out');
     expect(SCAN_COPY.actions).toMatchObject({
       tapIn: 'Tap in',
       tapOut: 'Tap out',

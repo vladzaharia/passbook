@@ -273,6 +273,22 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -401,6 +417,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -431,6 +463,22 @@
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
@@ -3193,6 +3241,22 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "GET /api/v1/scan-setups 200.items[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanSetups",
+    "op": "GET /api/v1/scan-setups",
+    "change": "200.items[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scan-setups 200.items[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanSetups",
+    "op": "GET /api/v1/scan-setups",
+    "change": "200.items[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
@@ -3207,6 +3271,22 @@
     "op": "GET /api/v1/scan-setups/{id}",
     "change": "200.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan-setups/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanSetupsById",
+    "op": "GET /api/v1/scan-setups/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scan-setups/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanSetupsById",
+    "op": "GET /api/v1/scan-setups/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "GET /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
@@ -3319,6 +3399,22 @@
     "op": "GET /api/v1/scan/session",
     "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
@@ -3449,6 +3545,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -3481,6 +3593,22 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "GET /api/v1/scan/visitors operation removed",
     "class": "breaking",
     "operationId": "scan.getScanVisitors",
@@ -3495,6 +3623,22 @@
     "op": "GET /api/v1/scanners",
     "change": "200.items[].deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanners 200.items[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanners",
+    "op": "GET /api/v1/scanners",
+    "change": "200.items[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scanners 200.items[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanners",
+    "op": "GET /api/v1/scanners",
+    "change": "200.items[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "GET /api/v1/scanners 200.items[].staff.name: now nullable",
@@ -3513,6 +3657,22 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "GET /api/v1/scanners/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScannersById",
+    "op": "GET /api/v1/scanners/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scanners/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScannersById",
+    "op": "GET /api/v1/scanners/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "GET /api/v1/scanners/{id} 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScannersById",
@@ -3527,6 +3687,22 @@
     "op": "GET /api/v1/scanners/{id}/pairing",
     "change": "callable by scan-setup:read key",
     "note": "Callable with an org-bound scan-setup:read key; the poll never shows the code."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions 200.items[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessions",
+    "op": "GET /api/v1/scanning-sessions",
+    "change": "200.items[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions 200.items[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessions",
+    "op": "GET /api/v1/scanning-sessions",
+    "change": "200.items[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].alerts: field added",
@@ -3657,6 +3833,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].signInCeiling: field added",
     "class": "additive",
     "operationId": "scanners.getScanningSessionsById",
@@ -3687,6 +3879,22 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
@@ -4984,12 +5192,44 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "PATCH /api/v1/scan-setups/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scan-setups/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "PATCH /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScanSetupsById",
     "op": "PATCH /api/v1/scan-setups/{id}",
     "change": "200.staff.name, adminUser.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "PATCH /api/v1/scan-setups/{id} body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scan-setups/{id} body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "PATCH /api/v1/scan-staff/{id} 200.pinLockedToday: field added",
@@ -5032,6 +5272,22 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "PATCH /api/v1/scanners/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScannersById",
@@ -5046,6 +5302,22 @@
     "op": "PATCH /api/v1/scanners/{id}",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].alerts: field added",
@@ -5176,6 +5448,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].signInCeiling: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -5208,6 +5496,22 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.patchScanningSessionsById",
@@ -5222,6 +5526,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "body.removeDevices: optional input field added",
     "note": "Ending a session can revoke all its devices with removeDevices: true."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.alerts: field added",
@@ -5350,6 +5670,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.personalStaffId: field added",
     "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.signInCeiling: field added",
@@ -8025,6 +8361,38 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "POST /api/v1/scan-setups 201.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "201.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan-setups 201.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "201.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
+    "key": "POST /api/v1/scan-setups body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan-setups body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan-staff 201.pin: now nullable",
     "class": "notable",
     "operationId": "scan-staff.postScanStaff",
@@ -8273,6 +8641,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -8303,6 +8687,22 @@
     "op": "POST /api/v1/scan/device",
     "change": "200.device.surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/device body.capabilities.draftFailures: optional input field added",
@@ -8391,6 +8791,22 @@
     "op": "POST /api/v1/scan/pair",
     "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
@@ -8521,6 +8937,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/pair 200.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.postScanPair",
@@ -8551,6 +8983,22 @@
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
@@ -8591,6 +9039,22 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
@@ -8721,6 +9185,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/role 200.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -8751,6 +9231,22 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
@@ -8823,6 +9319,22 @@
     "op": "POST /api/v1/scan/staff",
     "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
@@ -8953,6 +9465,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
@@ -8985,12 +9513,44 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.scanner.deviceRole: enum value \"kiosk\" added",
     "class": "notable",
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.scanner.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.scanner.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.scanner.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.scanner.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.scanner.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.alerts: field added",
@@ -9105,6 +9665,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.signInCeiling: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
@@ -9135,6 +9711,22 @@
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.session.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.session.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.session.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.session.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -9185,12 +9777,44 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "POST /api/v1/scanners 201.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "201.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanners 201.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "201.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scanners 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanners",
     "op": "POST /api/v1/scanners",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "POST /api/v1/scanners body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanners body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanners callable by scanning:admin and scanning:write keys",
@@ -9209,6 +9833,22 @@
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
+    "key": "POST /api/v1/scanners/{id}/mode 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdMode",
+    "op": "POST /api/v1/scanners/{id}/mode",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/mode 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdMode",
+    "op": "POST /api/v1/scanners/{id}/mode",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scanners/{id}/mode 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScannersByIdMode",
@@ -9223,6 +9863,22 @@
     "op": "POST /api/v1/scanners/{id}/pair-here",
     "change": "200.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pair-here 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdPairHere",
+    "op": "POST /api/v1/scanners/{id}/pair-here",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pair-here 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdPairHere",
+    "op": "POST /api/v1/scanners/{id}/pair-here",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanners/{id}/pair-here 200.staff.name: now nullable",
@@ -9255,6 +9911,22 @@
     "op": "POST /api/v1/scanners/{id}/revoke",
     "change": "200.deviceRole: enum value \"kiosk\" added",
     "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/revoke 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdRevoke",
+    "op": "POST /api/v1/scanners/{id}/revoke",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/revoke 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdRevoke",
+    "op": "POST /api/v1/scanners/{id}/revoke",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanners/{id}/revoke 200.staff.name: now nullable",
@@ -9417,6 +10089,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].signInCeiling: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -9449,12 +10137,44 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions body.settings.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "body.settings.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions body.settings.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "body.settings.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.alerts: field added",
@@ -9583,6 +10303,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.personalStaffId: field added",
     "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.signInCeiling: field added",
@@ -9825,6 +10561,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].signInCeiling: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdHold",
@@ -9855,6 +10607,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].surface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"capacity\" added",
@@ -9927,6 +10695,38 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.sessions[].devices[].surface: enum value \"desk\" removed",
     "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].settings.appearance: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].settings.appearance: field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].settings.monitorAudience: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].settings.monitorAudience: field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.doors[].more.appearance: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.doors[].more.appearance: optional input field added",
+    "note": "Device settings take appearance (system, light or dark). Absent: light on screens and kiosks, system on staff devices."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.doors[].more.monitorAudience: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.doors[].more.monitorAudience: optional input field added",
+    "note": "Device settings take monitorAudience (public or staff). Absent means public, which shows no names, reasons or refusals."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"capacity\" added",

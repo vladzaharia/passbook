@@ -205,7 +205,7 @@ test('customer screens stay pass-agnostic and legible across sizes', async ({ pa
         'data-status',
         'accepted',
       );
-      await expect(page.getByRole('heading', { name: "You're in" })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Checked in' })).toBeVisible();
       await expect(page.getByText('Hi, Sam')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Refresh setup' })).toHaveCount(0);
       await expect(page.getByTestId('duo-customer-display')).not.toContainText(

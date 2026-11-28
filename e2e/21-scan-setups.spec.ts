@@ -201,7 +201,7 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
     await nativeRead(exitScanner.page, memberId);
     await expect(exitScanner.page.getByTestId('scan-result')).toContainText('Checked out');
     await expect(
-      customer.page.getByRole('heading', { name: 'Tapped out', exact: true }),
+      customer.page.getByRole('heading', { name: 'Checked out', exact: true }),
     ).toBeVisible();
     const scans = await api.get(`/api/v1/scans?orgId=${orgId}&passId=${pass.id}`);
     expect(scans.items.filter((s: { outcome: string }) => s.outcome === 'ok')).toHaveLength(2);

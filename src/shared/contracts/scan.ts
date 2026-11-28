@@ -126,6 +126,10 @@ export const ScannerSettingsSchema = z.object({
   approvals: z.enum(['managers', 'desk']).optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
+  appearance: z.enum(['system', 'light', 'dark']).optional(),
+  /** Absent: the role's theme (`appearanceOf`); an absent audience is `public` (`audienceOf`). */
+  /** `public` shows no names, reasons or refusals. */
+  monitorAudience: z.enum(['public', 'staff']).optional(),
 });
 export type ScannerSettings = z.infer<typeof ScannerSettingsSchema>;
 

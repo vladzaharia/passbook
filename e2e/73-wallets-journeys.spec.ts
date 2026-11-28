@@ -425,7 +425,7 @@ test('journey 10: a void inactivates both cards and takes the badges off the pas
     // The door denies at once, before any wallet has heard of the void.
     await door.read('after-void', code);
     await expect(door.result).toContainText(/void/i);
-    await expect(door.result).not.toContainText('Access granted');
+    await expect(door.result).not.toContainText('Checked in');
     await expect(door.result)
       .toHaveAttribute('data-outcome', /./)
       .catch(() => undefined);

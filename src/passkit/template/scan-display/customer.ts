@@ -49,13 +49,7 @@ export function okHeadline(o: {
   direction?: 'in' | 'out' | null;
   event?: boolean;
 }): string {
-  return o.access
-    ? CUSTOMER_COPY.accessGranted
-    : o.direction === 'out'
-      ? CUSTOMER_COPY.tappedOut
-      : o.event
-        ? CUSTOMER_COPY.youreIn
-        : CUSTOMER_COPY.checkedIn;
+  return o.direction === 'out' && !o.access ? CUSTOMER_COPY.checkedOut : CUSTOMER_COPY.checkedIn;
 }
 
 const omit = <T extends object>(value: T, keys: readonly string[]): T =>

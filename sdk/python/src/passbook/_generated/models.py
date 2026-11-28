@@ -13065,6 +13065,8 @@ class ScanSetupAnswer2SessionsItemSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanSetupAnswer2SessionsItemSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanSetupAnswer2SessionsItemSettingsCustomer | None = None
 
 class ScanSetupAnswer2SessionsItemSettingsCheckIn(_Model):
@@ -13155,6 +13157,8 @@ class ScanSetupsCreateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanSetupsCreateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
 
 class ScanSetupsCreateParamsSettingsCheckIn(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
@@ -13345,6 +13349,8 @@ class ScanSetupsUpdateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanSetupsUpdateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
 
 class ScanSetupsUpdateParamsSettingsCheckIn(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
@@ -13800,6 +13806,8 @@ class ScannerSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannerSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
 
 class ScannerSettingsCheckIn(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
@@ -13850,6 +13858,8 @@ class ScannersCreateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannersCreateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
 
 class ScannersCreateParamsSettingsCheckIn(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
@@ -13922,6 +13932,8 @@ class ScannersUpdateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannersUpdateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
 
 class ScannersUpdateParamsSettingsCheckIn(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
@@ -14071,6 +14083,8 @@ class ScanningSessionDetailSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionDetailSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanningSessionDetailSettingsCustomer | None = None
 
 class ScanningSessionDetailSettingsCheckIn(_Model):
@@ -14121,6 +14135,8 @@ class ScanningSessionSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanningSessionSettingsCustomer | None = None
 
 class ScanningSessionSettingsCheckIn(_Model):
@@ -14190,6 +14206,8 @@ class ScanningSessionsCreateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionsCreateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanningSessionsCreateParamsSettingsCustomer | None = None
 
 class ScanningSessionsCreateParamsSettingsCheckIn(_Model):
@@ -14331,6 +14349,8 @@ class ScanningSessionsSetupParamsDoorsItemMore(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionsSetupParamsDoorsItemMoreTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanningSessionsSetupParamsDoorsItemMoreCustomer | None = None
 
 class ScanningSessionsSetupParamsDoorsItemMoreCheckIn(_Model):
@@ -14437,6 +14457,8 @@ class ScanningSessionsUpdateParamsSettings(_Model):
     hardLimit: bool | None = None
     approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionsUpdateParamsSettingsTags | None = None
+    appearance: _Literal["system", "light", "dark"] | str | None = None
+    monitorAudience: _Literal["public", "staff"] | str | None = None
     customer: ScanningSessionsUpdateParamsSettingsCustomer | None = None
 
 class ScanningSessionsUpdateParamsSettingsCheckIn(_Model):

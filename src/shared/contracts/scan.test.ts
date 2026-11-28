@@ -435,3 +435,23 @@ describe('occupancy fields on an outcome', () => {
     );
   });
 });
+
+describe('ScannerSettings appearance and monitorAudience', () => {
+  it('parses with and without the fields', () => {
+    expect(ScannerSettingsSchema.parse(settings)).toEqual(settings);
+    const set = ScannerSettingsSchema.parse({
+      ...settings,
+      appearance: 'dark',
+      monitorAudience: 'staff',
+    });
+    expect(set).toMatchObject({ appearance: 'dark', monitorAudience: 'staff' });
+  });
+  it('rejects a value outside the lists', () => {
+    expect(ScannerSettingsSchema.safeParse({ ...settings, appearance: 'sepia' }).success).toBe(
+      false,
+    );
+    expect(ScannerSettingsSchema.safeParse({ ...settings, monitorAudience: 'all' }).success).toBe(
+      false,
+    );
+  });
+});

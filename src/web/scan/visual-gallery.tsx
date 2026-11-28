@@ -69,7 +69,7 @@ function sessionFor(surface: string): ScanSession {
 }
 
 type Face = { kind: ScanLiveRow['kind']; label: string; headline: string };
-const OK_FACE: Face = { kind: 'ok', label: 'Checked in', headline: "You're in" };
+const OK_FACE: Face = { kind: 'ok', label: 'Checked in', headline: 'Checked in' };
 const LIVE_FACE: Record<string, Face> = {
   out: { kind: 'ok', label: 'Checked out', headline: 'See you soon' },
   refused: { kind: 'refused', label: 'Not accepted', headline: 'Please see the desk' },

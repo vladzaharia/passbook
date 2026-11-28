@@ -126,7 +126,7 @@ describe('the operator record for a scan', () => {
         outcome={fixtureOutcome('heads_up', 'already_done', { action: checkIn })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /Let in again/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Let in/ }));
     expect(c.machine).toHaveBeenCalledWith({ type: 'override', actionId: 'check_in' });
     unmount();
     render(

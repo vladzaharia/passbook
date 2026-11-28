@@ -43,9 +43,9 @@ describe('durations', () => {
 });
 
 describe('access lines', () => {
-  it('a grant says Access granted with the zone and the closing time', () => {
+  it('a grant says Checked in with the zone and the closing time', () => {
     expect(accessLines(grant(), NOW)).toEqual({
-      title: 'Access granted',
+      title: 'Checked in',
       sub: 'Gym · until 9:00 PM',
     });
   });
@@ -57,15 +57,15 @@ describe('access lines', () => {
     const o = grant({ access: accessInfo({ zone: null }), occupancy: null });
     expect(accessLines(o, NOW)?.sub).toBe('');
   });
-  it('an exit says Tapped out with the zone and the stay', () => {
-    expect(accessLines(exit(), NOW)).toEqual({ title: 'Tapped out', sub: 'Gym · 1 h 32 min' });
+  it('an exit says Checked out with the zone and the stay', () => {
+    expect(accessLines(exit(), NOW)).toEqual({ title: 'Checked out', sub: 'Gym · 1 h 32 min' });
   });
   it('an event check-in keeps its own words', () => {
     expect(accessLines(fixtureOutcome('ok'), NOW)).toBeNull();
   });
   it('a desk turn says who let them in', () => {
     const o: ResolvedOutcome = { ...grant(), resolvedBy: 'Sam K.' };
-    expect(accessLines(o, NOW)).toEqual({ title: 'Access granted', sub: 'Gym · Let in by Sam K.' });
+    expect(accessLines(o, NOW)).toEqual({ title: 'Checked in', sub: 'Gym · Let in by Sam K.' });
   });
   it('holds use the occupancy copy', () => {
     expect(
@@ -166,10 +166,10 @@ describe('direction pill, beat and holds', () => {
     ]);
     expect(holdVerbs(fixtureOutcome('refused', 'voided'))).toEqual([]);
   });
-  it('a repeat says Let in again; a first entry says Let in anyway', () => {
+  it('a repeat says Let in; a first entry says Let in', () => {
     const zone = heldIn({ occupancy: { ...heldIn().occupancy!, turnaround: null } });
-    expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in again' }]);
-    expect(holdVerbs(full())).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
+    expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in' }]);
+    expect(holdVerbs(full())).toEqual([{ kind: 'letIn', label: 'Let in' }]);
     // The PIN, not a bare override, is the way past needs_approval.
     expect(holdVerbs({ ...full(), reason: 'needs_approval' })).toEqual([]);
     for (const reason of ['cooldown', 'not_yet_valid', 'ended', 'capacity_full'] as const)
@@ -179,14 +179,14 @@ describe('direction pill, beat and holds', () => {
             action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
           }),
         ),
-      ).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
+      ).toEqual([{ kind: 'letIn', label: 'Let in' }]);
     expect(
       holdVerbs(
         fixtureOutcome('heads_up', 'already_done', {
           action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
         }),
       ),
-    ).toEqual([{ kind: 'letIn', label: 'Let in again' }]);
+    ).toEqual([{ kind: 'letIn', label: 'Let in' }]);
     expect(holdVerbs(fixtureOutcome('refused', 'voided'))).toEqual([]);
   });
 });

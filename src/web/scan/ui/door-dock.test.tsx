@@ -58,27 +58,27 @@ describe('the dock under a verdict', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tap in' }));
     expect(dispatch).toHaveBeenCalledWith({ type: 'turn', direction: 'in' });
   });
-  it('a full zone offers Let in anyway, which overrides the scan', () => {
+  it('a full zone offers Let in, which overrides the scan', () => {
     const dispatch = dock(full());
-    fireEvent.click(screen.getByRole('button', { name: 'Let in anyway' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Let in' }));
     expect(dispatch).toHaveBeenCalledWith({ type: 'override', actionId: 'access' });
   });
-  it('an event hold keeps Let in again', () => {
+  it('an event hold keeps Let in', () => {
     dock(
       fixtureOutcome('heads_up', 'already_done', {
         action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
       }),
     );
-    expect(screen.getByRole('button', { name: 'Let in again' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Let in' })).toBeVisible();
   });
-  it('says Let in anyway for a first entry and Let in again only for a repeat', () => {
+  it('says Let in for a first entry and Let in only for a repeat', () => {
     const cases = [
-      ['capacity_full', 'Let in anyway'],
-      ['not_yet_valid', 'Let in anyway'],
-      ['ended', 'Let in anyway'],
-      ['cooldown', 'Let in anyway'],
-      ['already_done', 'Let in again'],
-      ['still_inside', 'Let in again'],
+      ['capacity_full', 'Let in'],
+      ['not_yet_valid', 'Let in'],
+      ['ended', 'Let in'],
+      ['cooldown', 'Let in'],
+      ['already_done', 'Let in'],
+      ['still_inside', 'Let in'],
     ] as const;
     for (const [reason, label] of cases) {
       const { unmount } = render(

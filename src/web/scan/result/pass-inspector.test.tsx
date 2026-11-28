@@ -92,7 +92,7 @@ describe('the pass sheet', () => {
       />,
       { wrapper: wrap(st) },
     );
-    expect(screen.getByRole('button', { name: 'Let in again' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Let in' })).toBeVisible();
     expect(screen.getByRole('button', { name: /^Undo/ })).toBeVisible();
     expect(screen.queryByRole('button', { name: /Show pass/ })).toBeNull();
     fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });

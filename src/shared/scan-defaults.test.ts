@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ScanAction } from '../passkit/types.ts';
-import { armable, scanOf } from './scan-defaults.ts';
+import {
+  appearanceOf,
+  armable,
+  audienceOf,
+  DEFAULT_MONITOR_AUDIENCE,
+  scanOf,
+} from './scan-defaults.ts';
 
 const only = (action: Partial<ScanAction> & Pick<ScanAction, 'kind'>) =>
   scanOf({ scan: { actions: [{ id: 'a', label: 'A', ...action }] } }).actions[0];
@@ -100,5 +106,27 @@ describe('a pass type check-in mode', () => {
     expect(repeatOf({ mode: 'unlimited' })).toBe('always');
     expect(repeatOf({ mode: 'daily' })).toBe('daily');
     expect(repeatOf({ mode: 'single' }, 'always')).toBe('always');
+  });
+});
+
+describe('appearance and monitor audience defaults', () => {
+  it('gives each role its theme and lets a setting win', () => {
+    expect(appearanceOf('scan', {})).toBe('system');
+    for (const role of ['customer', 'monitor', 'kiosk'] as const) {
+      expect(appearanceOf(role, {})).toBe('light');
+      expect(appearanceOf(role, null)).toBe('light');
+    }
+    expect(appearanceOf('customer', { appearance: 'dark' })).toBe('dark');
+    expect(appearanceOf('scan', { appearance: 'light' })).toBe('light');
+  });
+  it('never reads a missing or unknown audience as staff', () => {
+    expect(DEFAULT_MONITOR_AUDIENCE).toBe('public');
+    expect(audienceOf(undefined)).toBe('public');
+    expect(audienceOf(null)).toBe('public');
+    expect(audienceOf({})).toBe('public');
+    expect(audienceOf({ monitorAudience: undefined })).toBe('public');
+    expect(audienceOf({ monitorAudience: 'public' })).toBe('public');
+    expect(audienceOf({ monitorAudience: 'bogus' as never })).toBe('public');
+    expect(audienceOf({ monitorAudience: 'staff' })).toBe('staff');
   });
 });

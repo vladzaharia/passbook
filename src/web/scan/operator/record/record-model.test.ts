@@ -108,12 +108,12 @@ describe('primary action', () => {
       'Uses 1 visit. None left after this.',
     );
   });
-  it('is Let in anyway on an overridable hold', () => {
+  it('is Let in on an overridable hold', () => {
     const o = fixtureOutcome('heads_up', 'already_done', {
       action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
     });
     expect(actionsOf(o, facts()).primary).toMatchObject({
-      label: 'Let in again',
+      label: 'Let in',
       run: { t: 'override', actionId: 'check_in' },
     });
   });

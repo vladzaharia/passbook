@@ -13114,6 +13114,21 @@
                   }
                 }
               },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
+              },
               "customer": {
                 "type": "object",
                 "properties": {
@@ -13561,6 +13576,21 @@
                 ]
               }
             }
+          },
+          "appearance": {
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
+          },
+          "monitorAudience": {
+            "type": "string",
+            "enum": [
+              "public",
+              "staff"
+            ]
           }
         },
         "required": [
@@ -20745,6 +20775,21 @@
                             }
                           }
                         },
+                        "appearance": {
+                          "type": "string",
+                          "enum": [
+                            "system",
+                            "light",
+                            "dark"
+                          ]
+                        },
+                        "monitorAudience": {
+                          "type": "string",
+                          "enum": [
+                            "public",
+                            "staff"
+                          ]
+                        },
                         "customer": {
                           "type": "object",
                           "properties": {
@@ -21413,6 +21458,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               },
               "customer": {
                 "type": "object",
@@ -75868,6 +75928,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               }
             }
           }
@@ -76157,6 +76232,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               }
             }
           },
@@ -76877,6 +76967,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               }
             }
           },
@@ -77794,6 +77899,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               }
             }
           },
@@ -78816,6 +78936,21 @@
                         }
                       }
                     },
+                    "appearance": {
+                      "type": "string",
+                      "enum": [
+                        "system",
+                        "light",
+                        "dark"
+                      ]
+                    },
+                    "monitorAudience": {
+                      "type": "string",
+                      "enum": [
+                        "public",
+                        "staff"
+                      ]
+                    },
                     "customer": {
                       "type": "object",
                       "properties": {
@@ -79176,6 +79311,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               },
               "customer": {
                 "type": "object",
@@ -79593,6 +79743,21 @@
                     ]
                   }
                 }
+              },
+              "appearance": {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark"
+                ]
+              },
+              "monitorAudience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "staff"
+                ]
               },
               "customer": {
                 "type": "object",
@@ -154917,6 +155082,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -154972,7 +155139,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -155100,7 +155269,9 @@
                           "scan"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     }
                   },
                   "admin": {
@@ -155357,6 +155528,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -155412,7 +155585,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -155540,7 +155715,9 @@
                           "scan"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     }
                   },
                   "admin": {
@@ -155881,6 +156058,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -155936,7 +156115,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -156064,7 +156245,9 @@
                           "scan"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     }
                   },
                   "admin": {
@@ -156258,6 +156441,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -156313,7 +156498,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -156441,7 +156628,9 @@
                           "scan"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     }
                   },
                   "admin": {
@@ -156647,6 +156836,8 @@
                             ],
                             "confirmBasic": "staff"
                           },
+                          "appearance": "system",
+                          "monitorAudience": "public",
                           "customer": {
                             "welcome": "Welcome to Northwind",
                             "refusedLine": "Please see the front desk",
@@ -156702,7 +156893,9 @@
                               "generic"
                             ],
                             "confirmBasic": "staff"
-                          }
+                          },
+                          "appearance": "system",
+                          "monitorAudience": "public"
                         },
                         "capabilities": {
                           "width": 320,
@@ -156830,7 +157023,9 @@
                             "scan"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       }
                     },
                     "admin": {
@@ -160072,6 +160267,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -160127,7 +160324,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -160255,7 +160454,9 @@
                           "scan"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     }
                   },
                   "admin": {
@@ -164329,6 +164530,8 @@
                         ],
                         "confirmBasic": "staff"
                       },
+                      "appearance": "system",
+                      "monitorAudience": "public",
                       "customer": {
                         "welcome": "Welcome to Northwind",
                         "refusedLine": "Please see the front desk",
@@ -164384,7 +164587,9 @@
                           "generic"
                         ],
                         "confirmBasic": "staff"
-                      }
+                      },
+                      "appearance": "system",
+                      "monitorAudience": "public"
                     },
                     "capabilities": {
                       "width": 320,
@@ -166386,7 +166591,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -166527,7 +166734,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -166662,7 +166871,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -166809,7 +167020,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -166959,7 +167172,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -167159,7 +167374,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "timeZone": "America/Los_Angeles",
                       "status": "paired",
@@ -167575,7 +167792,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -167876,7 +168095,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "timeZone": "America/Los_Angeles",
                       "status": "paired",
@@ -168042,7 +168263,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -168341,7 +168564,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -168512,7 +168737,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "timeZone": "America/Los_Angeles",
                   "status": "paired",
@@ -168910,6 +169137,8 @@
                           ],
                           "confirmBasic": "staff"
                         },
+                        "appearance": "system",
+                        "monitorAudience": "public",
                         "customer": {
                           "welcome": "Welcome to Northwind",
                           "refusedLine": "Please see the front desk",
@@ -169063,6 +169292,8 @@
                       ],
                       "confirmBasic": "staff"
                     },
+                    "appearance": "system",
+                    "monitorAudience": "public",
                     "customer": {
                       "welcome": "Welcome to Northwind",
                       "refusedLine": "Please see the front desk",
@@ -169118,7 +169349,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -169345,6 +169578,8 @@
                       ],
                       "confirmBasic": "staff"
                     },
+                    "appearance": "system",
+                    "monitorAudience": "public",
                     "customer": {
                       "welcome": "Welcome to Northwind",
                       "refusedLine": "Please see the front desk",
@@ -169400,7 +169635,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -169615,6 +169852,8 @@
                       ],
                       "confirmBasic": "staff"
                     },
+                    "appearance": "system",
+                    "monitorAudience": "public",
                     "customer": {
                       "welcome": "Welcome to Northwind",
                       "refusedLine": "Please see the front desk",
@@ -169670,7 +169909,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -169908,6 +170149,8 @@
                       ],
                       "confirmBasic": "staff"
                     },
+                    "appearance": "system",
+                    "monitorAudience": "public",
                     "customer": {
                       "welcome": "Welcome to Northwind",
                       "refusedLine": "Please see the front desk",
@@ -169966,7 +170209,9 @@
                             "generic"
                           ],
                           "confirmBasic": "staff"
-                        }
+                        },
+                        "appearance": "system",
+                        "monitorAudience": "public"
                       },
                       "capabilities": {
                         "width": 320,
@@ -170192,7 +170437,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "capabilities": {
                     "width": 320,
@@ -170413,7 +170660,9 @@
                         "generic"
                       ],
                       "confirmBasic": "staff"
-                    }
+                    },
+                    "appearance": "system",
+                    "monitorAudience": "public"
                   },
                   "capabilities": {
                     "width": 320,

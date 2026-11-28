@@ -43,7 +43,6 @@ describe('every reason has scanner and customer copy', () => {
   it('every refusal is one line', () => {
     expect(CUSTOMER_COPY.refusedLine).toBe('Please see the desk');
     expect(CUSTOMER_COPY.welcome).toBe('Hold up your pass');
-    expect(CUSTOMER_COPY.accessGranted).toBe('Access granted');
-    expect(CUSTOMER_COPY.tappedOut).toBe('Tapped out');
+    expect(CUSTOMER_COPY.checkedOut).toBe('Checked out');
   });
 });

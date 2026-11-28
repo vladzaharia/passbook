@@ -13182,6 +13182,8 @@ type ScanSetupAnswer2SessionsItemSettings struct {
 	HardLimit          *bool                                         `json:"hardLimit,omitempty"`
 	Approvals          *string                                       `json:"approvals,omitempty"`
 	Tags               *ScanSetupAnswer2SessionsItemSettingsTags     `json:"tags,omitempty"`
+	Appearance         *string                                       `json:"appearance,omitempty"`
+	MonitorAudience    *string                                       `json:"monitorAudience,omitempty"`
 	Customer           *ScanSetupAnswer2SessionsItemSettingsCustomer `json:"customer,omitempty"`
 }
 
@@ -13285,6 +13287,8 @@ type ScanSetupsCreateParamsSettings struct {
 	HardLimit          *bool                                  `json:"hardLimit,omitempty"`
 	Approvals          *string                                `json:"approvals,omitempty"`
 	Tags               *ScanSetupsCreateParamsSettingsTags    `json:"tags,omitempty"`
+	Appearance         *string                                `json:"appearance,omitempty"`
+	MonitorAudience    *string                                `json:"monitorAudience,omitempty"`
 }
 
 type ScanSetupsCreateParamsSettingsCheckIn struct {
@@ -13508,6 +13512,8 @@ type ScanSetupsUpdateParamsSettings struct {
 	HardLimit          *bool                                  `json:"hardLimit,omitempty"`
 	Approvals          *string                                `json:"approvals,omitempty"`
 	Tags               *ScanSetupsUpdateParamsSettingsTags    `json:"tags,omitempty"`
+	Appearance         *string                                `json:"appearance,omitempty"`
+	MonitorAudience    *string                                `json:"monitorAudience,omitempty"`
 }
 
 type ScanSetupsUpdateParamsSettingsCheckIn struct {
@@ -14056,6 +14062,8 @@ type ScannerSettings struct {
 	HardLimit          *bool                   `json:"hardLimit,omitempty"`
 	Approvals          *string                 `json:"approvals,omitempty"`
 	Tags               *ScannerSettingsTags    `json:"tags,omitempty"`
+	Appearance         *string                 `json:"appearance,omitempty"`
+	MonitorAudience    *string                 `json:"monitorAudience,omitempty"`
 }
 
 type ScannerSettingsCheckIn struct {
@@ -14114,6 +14122,8 @@ type ScannersCreateParamsSettings struct {
 	HardLimit          *bool                                `json:"hardLimit,omitempty"`
 	Approvals          *string                              `json:"approvals,omitempty"`
 	Tags               *ScannersCreateParamsSettingsTags    `json:"tags,omitempty"`
+	Appearance         *string                              `json:"appearance,omitempty"`
+	MonitorAudience    *string                              `json:"monitorAudience,omitempty"`
 }
 
 type ScannersCreateParamsSettingsCheckIn struct {
@@ -14222,6 +14232,8 @@ type ScannersUpdateParamsSettings struct {
 	HardLimit          *bool                                `json:"hardLimit,omitempty"`
 	Approvals          *string                              `json:"approvals,omitempty"`
 	Tags               *ScannersUpdateParamsSettingsTags    `json:"tags,omitempty"`
+	Appearance         *string                              `json:"appearance,omitempty"`
+	MonitorAudience    *string                              `json:"monitorAudience,omitempty"`
 }
 
 type ScannersUpdateParamsSettingsCheckIn struct {
@@ -14387,6 +14399,8 @@ type ScanningSessionDetailSettings struct {
 	HardLimit          *bool                                  `json:"hardLimit,omitempty"`
 	Approvals          *string                                `json:"approvals,omitempty"`
 	Tags               *ScanningSessionDetailSettingsTags     `json:"tags,omitempty"`
+	Appearance         *string                                `json:"appearance,omitempty"`
+	MonitorAudience    *string                                `json:"monitorAudience,omitempty"`
 	Customer           *ScanningSessionDetailSettingsCustomer `json:"customer,omitempty"`
 }
 
@@ -14442,6 +14456,8 @@ type ScanningSessionSettings struct {
 	HardLimit          *bool                            `json:"hardLimit,omitempty"`
 	Approvals          *string                          `json:"approvals,omitempty"`
 	Tags               *ScanningSessionSettingsTags     `json:"tags,omitempty"`
+	Appearance         *string                          `json:"appearance,omitempty"`
+	MonitorAudience    *string                          `json:"monitorAudience,omitempty"`
 	Customer           *ScanningSessionSettingsCustomer `json:"customer,omitempty"`
 }
 
@@ -14520,6 +14536,8 @@ type ScanningSessionsCreateParamsSettings struct {
 	HardLimit          *bool                                         `json:"hardLimit,omitempty"`
 	Approvals          *string                                       `json:"approvals,omitempty"`
 	Tags               *ScanningSessionsCreateParamsSettingsTags     `json:"tags,omitempty"`
+	Appearance         *string                                       `json:"appearance,omitempty"`
+	MonitorAudience    *string                                       `json:"monitorAudience,omitempty"`
 	Customer           *ScanningSessionsCreateParamsSettingsCustomer `json:"customer,omitempty"`
 }
 
@@ -14702,6 +14720,8 @@ type ScanningSessionsSetupParamsDoorsItemMore struct {
 	HardLimit          *bool                                             `json:"hardLimit,omitempty"`
 	Approvals          *string                                           `json:"approvals,omitempty"`
 	Tags               *ScanningSessionsSetupParamsDoorsItemMoreTags     `json:"tags,omitempty"`
+	Appearance         *string                                           `json:"appearance,omitempty"`
+	MonitorAudience    *string                                           `json:"monitorAudience,omitempty"`
 	Customer           *ScanningSessionsSetupParamsDoorsItemMoreCustomer `json:"customer,omitempty"`
 }
 
@@ -14832,6 +14852,8 @@ type ScanningSessionsUpdateParamsSettings struct {
 	HardLimit          *bool                                         `json:"hardLimit,omitempty"`
 	Approvals          *string                                       `json:"approvals,omitempty"`
 	Tags               *ScanningSessionsUpdateParamsSettingsTags     `json:"tags,omitempty"`
+	Appearance         *string                                       `json:"appearance,omitempty"`
+	MonitorAudience    *string                                       `json:"monitorAudience,omitempty"`
 	Customer           *ScanningSessionsUpdateParamsSettingsCustomer `json:"customer,omitempty"`
 }
 
