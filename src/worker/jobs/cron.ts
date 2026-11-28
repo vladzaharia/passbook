@@ -45,6 +45,7 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
+import { dailyCloseSpans } from '../modules/usage/jobs-spans.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { syncGoogleClassReviews } from '../modules/wallet-providers/google-review-sync.ts';
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
@@ -135,6 +136,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'idp.reconcile', run: reconcileIdp },
     { name: 'idp.scim_tokens', run: dailyScimTokens },
     { name: 'retention.receipts', run: dailyReceipts },
+    { name: 'usage.close_spans', run: dailyCloseSpans },
     // Near the end: it spends what the other daily hooks left of the query budget.
     { name: 'retention.guest_passes', run: dailyGuestPasses },
     // Last: a backlog of test data must never starve the checks above.
