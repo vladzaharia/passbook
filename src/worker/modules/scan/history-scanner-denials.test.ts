@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { ACTIVITY_NAME, activityFixture } from './repo-session-activity-authority-test-fixtures.ts';
 
 /*
@@ -11,7 +11,7 @@ import { ACTIVITY_NAME, activityFixture } from './repo-session-activity-authorit
  * snapshot's answer (scans-recent.test.ts).
  */
 
-const PAGE = tagRe(RACE_HISTORY_PAGE);
+const PAGE = RACE_HISTORY_PAGE;
 type Fixture = Awaited<ReturnType<typeof activityFixture>>;
 
 const reads = {

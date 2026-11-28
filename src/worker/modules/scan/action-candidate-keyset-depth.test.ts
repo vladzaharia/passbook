@@ -208,7 +208,7 @@ async function atInitialization(f: Fixture, change: Change, at: 'grant' | 'keyse
           const base = {
             index,
             binds: bound.values.length,
-            guarded: bound.sql.includes('authority_grants'),
+            guarded: bound.sql.includes('authority_grants'), // sql-shape
           };
           // A change before the grant commits on its own, as a concurrent request's write would.
           const before =

@@ -12,7 +12,7 @@ import {
 } from './occupancy/whos-in-test-fixtures.ts';
 import { scanAt, trackedZone } from './occupancy-scan-test-fixtures.ts';
 import { overrideAs, signIn } from './overrides-test-fixtures.ts';
-import { RACE_SCAN_CLAIM } from './race-tags.ts';
+import { RACE_EPOCH_EVENT, RACE_SCAN_CLAIM } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(async () => {
@@ -339,7 +339,7 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     const monitor = await standalone({ eventId: event.id });
     const { result, fired } = await beforeBatch(
       kit.env,
-      /scan_event_templates/,
+      RACE_EPOCH_EVENT,
       async (db) => {
         await run(db, 'UPDATE scan_events SET capacity = 9 WHERE id = ?', [event.id]);
       },

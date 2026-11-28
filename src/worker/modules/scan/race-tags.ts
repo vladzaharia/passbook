@@ -11,8 +11,6 @@ export const RACE_SEARCH_PAGE = '/* race:search-page */';
 // Group A
 export const RACE_HISTORY_PAGE = '/* race:history-page */';
 export const RACE_STAFF_STARTS = '/* race:staff-starts */';
-/** A RegExp matching a tag, for the interceptors that take one. */
-export const tagRe = (tag: string) => new RegExp(tag.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'));
 // Group B
 export const RACE_PRESENCE_WRITE = '/* race:presence-write */';
 export const RACE_SCAN_CLAIM = '/* race:scan-claim */';
@@ -58,3 +56,14 @@ export const RACE_BACKFILL_DONE_WRITE = '/* race:backfill-done-write */';
 export const RACE_APPROVAL_READ = '/* race:approval-read */';
 export const RACE_BRANDING_READ = '/* race:branding-read */';
 export const RACE_TEMPLATE_VERSION_READ = '/* race:template-version-read */';
+// Group E
+export const RACE_TOMBSTONE_CLEAR = '/* race:tombstone-clear */';
+export const RACE_REPLAY_READ = '/* race:replay-read */';
+export const RACE_EPOCH_EVENT = '/* race:epoch-event */';
+export const RACE_TEMPLATE_VERSION_INSERT = '/* race:template-version-insert */';
+export const RACE_TEMPLATE_CANDIDATE_INSERT = '/* race:template-candidate-insert */';
+export const RACE_TEMPLATE_APPROVAL_INSERT = '/* race:template-approval-insert */';
+export const RACE_TEMPLATE_RELEASE_INSERT = '/* race:template-release-insert */';
+export const RACE_TEMPLATE_ASSIGN = '/* race:template-assign */';
+export const RACE_TEMPLATE_STATUS = '/* race:template-status */';
+export const RACE_PASS_PUBLISH = '/* race:pass-publish */';

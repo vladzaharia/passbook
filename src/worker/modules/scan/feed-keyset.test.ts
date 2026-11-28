@@ -9,7 +9,7 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { createScannerStore } from './auth-store.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import {
   codeOf,
   DAY,
@@ -180,7 +180,7 @@ describe('scan history keyset', () => {
     try {
       const { fired } = await beforeBatch(
         kit.env,
-        tagRe(RACE_HISTORY_PAGE),
+        RACE_HISTORY_PAGE,
         async () => {
           restore = await rekey(db, OTHER);
         },

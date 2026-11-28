@@ -17,7 +17,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { startScanCredentialTransfer } from './test-kit.ts';
 
 setupPrivacyKit();
@@ -51,7 +51,7 @@ describe('scan console and feed privacy', () => {
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
       const { result: text, fired } = await beforeBatch(
         kit.env,
-        tagRe(RACE_HISTORY_PAGE),
+        RACE_HISTORY_PAGE,
         async (db) => {
           await runOne(db, 'UPDATE scanners SET org_id = ? WHERE id = ?', [other.id, scanner.id]);
         },
@@ -130,7 +130,7 @@ describe('scan console and feed privacy', () => {
         expect(text).not.toContain(PUBLIC);
       };
 
-      const before = await beforeBatch(kit.env, tagRe(RACE_HISTORY_PAGE), mutate, () =>
+      const before = await beforeBatch(kit.env, RACE_HISTORY_PAGE, mutate, () =>
         body(surface, apiKey),
       );
       expect(before.fired).toBe(true);
@@ -147,7 +147,7 @@ describe('scan console and feed privacy', () => {
       const apiKey = fake.apiKey({ orgId: kit.org.id, scopes: ['scans:read'] });
       const snapshot = await afterBatch(
         kit.env,
-        tagRe(RACE_HISTORY_PAGE),
+        RACE_HISTORY_PAGE,
         async (db) => {
           await runOne(db, "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
         },

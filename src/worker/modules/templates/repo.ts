@@ -6,7 +6,7 @@ import type {
   ValidationReport,
 } from '../../../passkit/types.ts';
 import { all, first, stmt } from '../../platform/db.ts';
-import { RACE_TEMPLATE_VERSION_READ } from '../scan/race-tags.ts';
+import { RACE_TEMPLATE_VERSION_INSERT, RACE_TEMPLATE_VERSION_READ } from '../scan/race-tags.ts';
 import { canonicalJson } from './package/hash.ts';
 import type { SqlText } from './repo-version-hashes.ts';
 
@@ -250,7 +250,7 @@ export function versionStatementSql(v: NewVersion): [SqlText, SqlText] {
   ];
   return [
     {
-      sql: `INSERT INTO template_versions
+      sql: `${RACE_TEMPLATE_VERSION_INSERT} INSERT INTO template_versions
          (template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
        WHERE NOT EXISTS (SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?)

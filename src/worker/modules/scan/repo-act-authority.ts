@@ -5,6 +5,7 @@ import type { EventRow } from '../events/repo.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
+import { RACE_REPLAY_READ } from './race-tags.ts';
 import { resolveReplayEvidence } from './repo-act-replay-proof.ts';
 import { CURRENT_ISSUANCE, NO_PENDING_TRANSFER, RECORDED_PROOF } from './repo-act-replay-sql.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
@@ -25,7 +26,7 @@ export function replayScanByKeyStmt(
 ): D1PreparedStatement {
   return stmt(
     db,
-    `SELECT * FROM scans WHERE actor_key=?
+    `${RACE_REPLAY_READ} SELECT * FROM scans WHERE actor_key=?
     AND idempotency_key=?`,
     [actorKey, key],
   );

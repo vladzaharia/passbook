@@ -2,6 +2,7 @@ import { maxNow } from '../../platform/authority-expr.ts';
 import { first } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { RACE_TEMPLATE_STATUS } from '../scan/race-tags.ts';
 import type { TemplateAuthority } from './access.ts';
 import type { TemplateRow } from './repo.ts';
 import { historyIs, noApprovedLiveHead, noPasses } from './repo-grant-checks.ts';
@@ -77,6 +78,7 @@ export function archiveUploadedTemplate(
       where: target(row, authority),
       require: 'one',
       returning: ['id'],
+      tag: RACE_TEMPLATE_STATUS,
     });
     return ((await g.commit())[0]?.results.length ?? 0) === 1;
   });

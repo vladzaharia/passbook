@@ -5,6 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import type { CommitArgs } from './persist.ts';
 import { writeLineage } from './repo-forks.ts';
 import {
@@ -185,6 +186,7 @@ export async function writeVersion(
         plan.templateId,
         body.version,
       ],
+      RACE_TEMPLATE_VERSION_INSERT,
     ),
   );
   // An edit's base belongs to the version it created; a version that already existed keeps its own.

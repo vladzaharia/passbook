@@ -25,7 +25,7 @@ import {
 } from './console-privacy-test-fixtures.ts';
 import { captureConsoleFeed, recordPage } from './feed-console-page.ts';
 import { createHistoryEvidenceCache } from './history-row-evidence.ts';
-import { RACE_EXPORT_COUNT, RACE_HISTORY_PAGE, RACE_STAFF_STARTS, tagRe } from './race-tags.ts';
+import { RACE_EXPORT_COUNT, RACE_HISTORY_PAGE, RACE_STAFF_STARTS } from './race-tags.ts';
 import { listScanRows } from './repo-feed.ts';
 import { apiKeyReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
@@ -113,7 +113,7 @@ describe('membership revoked before the page statement', () => {
     expect(await (await get(target)).text()).toContain(surface === 'list' ? pass.id : PUBLIC);
     const { result: response, fired } = await beforeBatch(
       kit.env,
-      new RegExp(`${tagRe(RACE_HISTORY_PAGE).source}|${tagRe(RACE_EXPORT_COUNT).source}`),
+      surface === 'list' ? RACE_HISTORY_PAGE : RACE_EXPORT_COUNT,
       revokeMembership,
       async () => {
         const res = await get(target);
@@ -131,7 +131,7 @@ describe('membership revoked before the page statement', () => {
     expect((await get(`/${row.id}`)).status).toBe(200);
     const { result, fired } = await beforeBatch(
       kit.env,
-      tagRe(RACE_HISTORY_PAGE),
+      RACE_HISTORY_PAGE,
       revokeMembership,
       async () => {
         const res = await get(`/${row.id}`);
@@ -155,7 +155,7 @@ describe('membership revoked before the page statement', () => {
     expect(JSON.stringify(await control.json())).toContain(staff.id);
     const { result, fired } = await beforeStatement(
       kit.env,
-      tagRe(RACE_STAFF_STARTS),
+      RACE_STAFF_STARTS,
       revokeMembership,
       async () => {
         const res = await staffList();
@@ -205,7 +205,7 @@ describe('the API key feed', () => {
     expect(await (await get('', apiKey)).text()).toContain(row.id);
     const revoked = await beforeBatch(
       kit.env,
-      tagRe(RACE_HISTORY_PAGE),
+      RACE_HISTORY_PAGE,
       (db) =>
         run(db, 'UPDATE api_keys SET revoked_at = ? WHERE org_id = ?', [
           kit.clock.now(),
@@ -335,7 +335,7 @@ describe('the export loop and the API-key fence', () => {
     const key = `scan:export:${adminUserId}`;
     const { fired } = await beforeBatch(
       kit.env,
-      tagRe(RACE_HISTORY_PAGE),
+      RACE_HISTORY_PAGE,
       () => {
         throw new Error('The count never finishes.');
       },

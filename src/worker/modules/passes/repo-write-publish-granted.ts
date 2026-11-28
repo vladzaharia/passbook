@@ -12,6 +12,7 @@ import type { GrantCond } from '../../platform/authority-cond.ts';
 import type { SetValue } from '../../platform/authority-expr.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { RACE_PASS_PUBLISH } from '../scan/race-tags.ts';
 import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
@@ -123,6 +124,7 @@ export async function casGranted(ctx: ServiceContext, w: GrantedPublish): Promis
     },
     ...(w.commit?.when.length ? { when: w.commit.when } : {}),
     returning: ['version'],
+    tag: RACE_PASS_PUBLISH,
   });
   try {
     if (w.commit) {

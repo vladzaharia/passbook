@@ -3,6 +3,7 @@ import { maxNow } from '../../platform/authority-expr.ts';
 import { first } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { RACE_TEMPLATE_ASSIGN } from '../scan/race-tags.ts';
 import type { PlatformSessionAuthority } from './access.ts';
 import type { TemplateRow } from './repo.ts';
 import { assignable } from './repo-grant-checks.ts';
@@ -82,6 +83,7 @@ export async function assignTemplateOrg(
     },
     require: 'one',
     returning: ['id'],
+    tag: RACE_TEMPLATE_ASSIGN,
   });
   try {
     const results = await grantedBatch(ctx.env.DB, [...touched, writer]);

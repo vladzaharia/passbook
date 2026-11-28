@@ -5,7 +5,7 @@
  */
 export async function tripsFrom(
   env: { DB: D1Database },
-  from: RegExp,
+  from: RegExp | string,
   work: () => Promise<unknown>,
 ) {
   const real = env.DB;
@@ -16,7 +16,8 @@ export async function tripsFrom(
   let trips = 0;
   let calls = 0;
   const begin = (sql: string) => {
-    if (!started && from.test(sql)) started = true;
+    if (!started && (typeof from === 'string' ? sql.includes(from) : from.test(sql)))
+      started = true;
     if (!started) return false;
     if (inflight === 0) trips++;
     inflight++;

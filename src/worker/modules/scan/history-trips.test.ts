@@ -11,13 +11,13 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { ORIGIN } from './test-kit.ts';
 import { tripsFrom } from './trips-test-support.ts';
 
 setupPrivacyKit();
 
-const PAGE = tagRe(RACE_HISTORY_PAGE);
+const PAGE = RACE_HISTORY_PAGE;
 
 async function signedScan() {
   const scanner = await kit.scanner({ templateIds: [templateId] });

@@ -35,6 +35,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { assertTemplateUsable } from '../connections/validate.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { RACE_TEMPLATE_ASSIGN, RACE_TEMPLATE_CANDIDATE_INSERT } from '../scan/race-tags.ts';
 import { countScopedTemplates } from '../scan/repo-event-templates.ts';
 import { firstSampleTemplate } from '../scan/repo-scanners.ts';
 import { setWalletProvidersEnabledForTest } from '../wallet-providers/provider-policy.ts';
@@ -779,7 +780,7 @@ describe('template release API', () => {
     const v1 = await imported('Unshared Mid Flight');
     expect((await assignGlobal(v1.id)).status).toBe(200);
     const authorB = await member(otherOrg.id, ['template_author']);
-    const raced = watchBatch(env, /INSERT\s+INTO\s+template_candidates/i, async () => {
+    const raced = watchBatch(env, RACE_TEMPLATE_CANDIDATE_INSERT, async () => {
       await run(env.DB, 'UPDATE templates SET shared = 0 WHERE id = ?', [v1.id]);
     });
     const response = await app.request(
@@ -1134,7 +1135,7 @@ describe('template release API', () => {
       let intercepted = false;
       let createdCandidate: TemplateCandidate | undefined;
       let createdRelease: TemplateRelease | undefined;
-      const raced = beforeBatch(env, /UPDATE\s+templates\s+SET\s+org_id\b/i, async () => {
+      const raced = beforeBatch(env, RACE_TEMPLATE_ASSIGN, async () => {
         intercepted = true;
         createdCandidate = await candidate(draft.id, draft.version);
         if (kind === 'release') {

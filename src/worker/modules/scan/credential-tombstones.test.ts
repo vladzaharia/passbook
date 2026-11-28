@@ -5,7 +5,7 @@ import { all, run } from '../../platform/db.ts';
 import { captureCredentialKeyEnv, ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { credentialTombstoneRefsForInput, scanCredentialKeys } from './credential-input.ts';
-import { RACE_SEARCH_PAGE } from './race-tags.ts';
+import { RACE_SEARCH_PAGE, RACE_TOMBSTONE_CLEAR } from './race-tags.ts';
 import {
   credentialTombstonesClear,
   noCredentialTombstonesSql,
@@ -447,13 +447,8 @@ describe('scanner credential tombstones', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            // The other-mode precheck (`credentialTombstonesClearStmt`); its predicate is parenthesized.
-            if (
-              !sql.startsWith(
-                'SELECT 1 WHERE (NOT EXISTS (SELECT 1 FROM pass_credential_tombstones',
-              )
-            )
-              return statement;
+            // The other-mode precheck (`credentialTombstonesClearStmt`).
+            if (!sql.includes(RACE_TOMBSTONE_CLEAR)) return statement;
             return new Proxy(statement, {
               get(inner, member) {
                 if (member === 'bind')

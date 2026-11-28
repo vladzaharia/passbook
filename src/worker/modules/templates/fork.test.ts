@@ -7,6 +7,7 @@ import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import { type BlueprintKit, blueprintKit } from './blueprint-test-fixtures.ts';
 import { basicPackage, zipOf } from './package/fixtures.ts';
 import { importZip, watchBatch } from './testing.ts';
@@ -666,7 +667,7 @@ describe('races', () => {
       [id, STORE, version],
     );
     const draft = await draftOf(STORE);
-    const w = watchBatch(kit.env, /INSERT INTO template_versions/, () =>
+    const w = watchBatch(kit.env, RACE_TEMPLATE_VERSION_INSERT, () =>
       run(kit.env.DB, "UPDATE templates SET status = 'archived' WHERE id = ?", [id]),
     );
     const res = await callWith(w.env, `/${id}/use`, {
@@ -688,7 +689,7 @@ describe('races', () => {
     const probe = (await (await kit.post(`/${id}/versions`, { ...edit, dryRun: true })).json()) as {
       version: string;
     };
-    const w = watchBatch(kit.env, /INSERT INTO template_versions/, () =>
+    const w = watchBatch(kit.env, RACE_TEMPLATE_VERSION_INSERT, () =>
       run(
         kit.env.DB,
         'INSERT INTO template_version_tombstones (template_id, version) VALUES (?, ?)',

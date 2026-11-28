@@ -4,7 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { beforeStatement } from './batch-interceptor-test-support.ts';
-import { RACE_STAFF_STARTS, tagRe } from './race-tags.ts';
+import { RACE_STAFF_STARTS } from './race-tags.ts';
 import { getStaff } from './repo-staff.ts';
 import { listStaff, updateStaff } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
@@ -261,7 +261,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
     if (authority.kind !== 'session') throw new Error('Expected session authority');
     const { fired, result } = await beforeStatement(
       kit.ctx.env,
-      tagRe(RACE_STAFF_STARTS),
+      RACE_STAFF_STARTS,
       () =>
         run(kit.env.DB, "UPDATE scanners SET time_zone = 'Pacific/Auckland' WHERE id = ?", [
           scanner.id,
@@ -282,7 +282,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
     // plain account, with no activity.
     const updated = await beforeStatement(
       kit.ctx.env,
-      tagRe(RACE_STAFF_STARTS),
+      RACE_STAFF_STARTS,
       () =>
         run(kit.env.DB, "UPDATE scanners SET time_zone = 'Asia/Tokyo' WHERE id = ?", [scanner.id]),
       () => updateStaff(kit.ctx, session, manage, observed, 'live', { role: 'desk' }),

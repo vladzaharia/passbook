@@ -13,7 +13,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 
 setupPrivacyKit();
 
@@ -31,7 +31,7 @@ const change = (kind: Change) => async (db: D1Database) => {
 async function pageRacing(kind: Change, when: 'before' | 'after') {
   const { result, fired } = await (when === 'before' ? beforeBatch : afterBatch)(
     kit.env,
-    tagRe(RACE_HISTORY_PAGE),
+    RACE_HISTORY_PAGE,
     change(kind),
     () => get(`?orgId=${kit.org.id}`),
   );

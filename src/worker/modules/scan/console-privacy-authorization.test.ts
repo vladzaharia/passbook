@@ -28,7 +28,7 @@ import {
 import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import { recordsOf } from './feed-projection.ts';
 import { createHistoryEvidenceCache } from './history-row-evidence.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { getScanRow } from './repo-feed.ts';
 import { grantScanMembership, ORIGIN } from './test-kit.ts';
 
@@ -260,7 +260,7 @@ describe('scan console and feed privacy', () => {
           ]),
         ).toEqual({ changes: 1 });
       };
-      const match = tagRe(RACE_HISTORY_PAGE);
+      const match = RACE_HISTORY_PAGE;
       const { result: response, fired } = await (when === 'before' ? beforeBatch : afterBatch)(
         kit.env,
         match,

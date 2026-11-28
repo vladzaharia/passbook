@@ -15,7 +15,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
-import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
+import { RACE_EXPORT_COUNT, RACE_HISTORY_PAGE } from './race-tags.ts';
 
 setupPrivacyKit();
 
@@ -42,7 +42,7 @@ describe('scan console and feed privacy', () => {
       await recordedNoMatch(scanner);
       const { result: response, fired } = await afterBatch(
         kit.env,
-        /\/\* race:export-count \*\//,
+        RACE_EXPORT_COUNT,
         revoke(revoked),
         () => get(exportPath()),
       );
@@ -62,7 +62,7 @@ describe('scan console and feed privacy', () => {
       await recordedCheckIn(scanner, pass.id);
       const { result, fired } = await beforeBatch(
         kit.env,
-        tagRe(RACE_HISTORY_PAGE),
+        RACE_HISTORY_PAGE,
         revoke(revoked),
         async () => {
           const response = await get(exportPath());

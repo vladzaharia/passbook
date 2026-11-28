@@ -8,6 +8,7 @@ import { writePart } from '../../platform/authority-include.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { RACE_TEMPLATE_CANDIDATE_INSERT } from '../scan/race-tags.ts';
 import type { ResolvedBase } from './fork-base.ts';
 import {
   APPLE_ADAPTER_CAPABILITIES,
@@ -250,6 +251,7 @@ export async function commitMerge(
     });
     g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), {
       when: [absent],
+      tag: RACE_TEMPLATE_CANDIDATE_INSERT,
     });
   }
   settle(

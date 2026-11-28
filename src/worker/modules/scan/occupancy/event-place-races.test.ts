@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { all, run } from '../../../platform/db.ts';
 import { beforeBatch } from '../batch-interceptor-test-support.ts';
+import { RACE_PRESENCE_WRITE } from '../race-tags.ts';
 import { codeOf, key } from '../test-kit.ts';
 import { eventPlaceKit } from './event-place-test-fixtures.ts';
 
@@ -32,7 +33,7 @@ describe('event place races', () => {
     let rival: Awaited<ReturnType<typeof t.act>> | undefined;
     const { result, fired } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async () => {
         rival = await t.act(a, winner);
       },
@@ -53,7 +54,7 @@ describe('event place races', () => {
     let rival: Awaited<ReturnType<typeof t.act>> | undefined;
     const { result } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async () => {
         rival = await t.act(a, p);
       },
@@ -73,7 +74,7 @@ describe('event place races', () => {
     let rival: Awaited<ReturnType<typeof t.act>> | undefined;
     const { result } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async () => {
         rival = await t.act(a, p);
       },
@@ -91,7 +92,7 @@ describe('event place races', () => {
     let exit: Awaited<ReturnType<typeof t.act>> | undefined;
     const { result } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async () => {
         await t.act(a, p);
         exit = await t.act(out, p);
@@ -110,7 +111,7 @@ describe('event place races', () => {
     const entered = await t.act(a, first);
     const { result } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async () => {
         const res = await t.kit.post(a.headers, `/scans/${entered.scanId}/undo`, {
           idempotencyKey: key(),
@@ -129,7 +130,7 @@ describe('event place races', () => {
     const p = await t.pass();
     const { result } = await beforeBatch(
       t.kit.env,
-      /INSERT INTO scan_presence/i,
+      RACE_PRESENCE_WRITE,
       async (db) => {
         await run(db, 'UPDATE scan_events SET capacity=9 WHERE id=?', [e.id]);
       },

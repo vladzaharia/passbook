@@ -9,6 +9,11 @@ import type { SqlValue } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import {
+  RACE_TEMPLATE_APPROVAL_INSERT,
+  RACE_TEMPLATE_CANDIDATE_INSERT,
+  RACE_TEMPLATE_RELEASE_INSERT,
+} from '../scan/race-tags.ts';
 import type { TemplateAuthority } from './access.ts';
 import { APPLE_ADAPTER_CAPABILITIES } from './release-content.ts';
 import {
@@ -182,7 +187,10 @@ export async function writeCandidate(
       ...keyChecks(authority.kind, authority.kind === 'api_key' && authority.mode === 'live'),
     ],
   });
-  g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), RETURN_ID);
+  g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), {
+    ...RETURN_ID,
+    tag: RACE_TEMPLATE_CANDIDATE_INSERT,
+  });
   g.add(
     audit(
       g,
@@ -234,6 +242,7 @@ export async function writeApproval(
     columns: ['id', 'candidate_hash', 'reviewer_id', 'kind', 'created_at'],
     values: [a.id, a.candidateHash, a.reviewerId, a.kind, a.createdAt],
     returning: ['id'],
+    tag: RACE_TEMPLATE_APPROVAL_INSERT,
   });
   g.add(
     audit(
@@ -295,7 +304,10 @@ export async function writeRelease(
           ]),
     ],
   });
-  g.insertSelect('template_releases', RELEASE_COLUMNS, releaseValues(input), RETURN_ID);
+  g.insertSelect('template_releases', RELEASE_COLUMNS, releaseValues(input), {
+    ...RETURN_ID,
+    tag: RACE_TEMPLATE_RELEASE_INSERT,
+  });
   if (input.metadata)
     g.update('templates', {
       set: {

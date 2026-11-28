@@ -23,6 +23,7 @@ import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { RACE_TEMPLATE_APPROVAL_INSERT } from '../scan/race-tags.ts';
 import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
 import { REVIEW_ROLES } from './repo-sole-reviewer.ts';
 import { fakeAssets, importZip, watchBatch } from './testing.ts';
@@ -264,7 +265,7 @@ describe('sole-reviewer approval', () => {
 
   it('refuses when a second reviewer joins while the approval commits', async () => {
     const { org, owner, t, c } = await soloOrg('Reviewer Race');
-    const raced = watchBatch(env, /INSERT INTO template_approvals/, () =>
+    const raced = watchBatch(env, RACE_TEMPLATE_APPROVAL_INSERT, () =>
       member(org.id, ['template_reviewer']),
     );
     watchers.push(raced.fired);

@@ -261,7 +261,7 @@ describe('card last-scan privacy', () => {
         preloaded,
       ),
     ).not.toBeNull();
-    expect(batches.flat().some((sql) => sql.includes('scan-history-proof-page'))).toBe(false);
+    expect(batches.flat().some((sql) => sql.includes('scan-history-proof-page'))).toBe(false); // sql-shape
     expect(await readCard(ctx, actor, found, planCounts(ctx, actor), 'read', 10, null)).toBeNull();
 
     const nextPlan = planDisplayHistoryRead(ctx, actor, found, displayNeedsFor(found));
@@ -270,6 +270,6 @@ describe('card last-scan privacy', () => {
     batches.length = 0;
     const history = await historyPlan(ctx, actor, found, nextPreload);
     expect(history.requiresHistory).toBe(true);
-    expect(batches.flat().some((sql) => sql.includes('scan-history-proof-page'))).toBe(false);
+    expect(batches.flat().some((sql) => sql.includes('scan-history-proof-page'))).toBe(false); // sql-shape
   });
 });

@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
-import { RACE_EPOCH_SESSION, RACE_EPOCH_STAFF } from './race-tags.ts';
+import { RACE_EPOCH_EVENT, RACE_EPOCH_SESSION, RACE_EPOCH_STAFF } from './race-tags.ts';
 
 /** The staff, session and event rows `captureScanEpochs` reads in one batch with their epochs. */
 export const staffEpochStmt = (db: D1Database, staffId: string, orgId: string) =>
@@ -21,7 +21,7 @@ export const sessionEpochStmt = (db: D1Database, sessionId: string, orgId: strin
 export const eventEpochStmt = (db: D1Database, eventId: string, orgId: string, mode: Mode) =>
   stmt(
     db,
-    `SELECT match_input, match_values, opens_at, closes_at, time_zone, capacity, reentry,
+    `${RACE_EPOCH_EVENT} SELECT match_input, match_values, opens_at, closes_at, time_zone, capacity, reentry,
       archived_at, config_epoch,
       (SELECT json_group_array(template_id) FROM
         (SELECT template_id FROM scan_event_templates WHERE event_id=? ORDER BY template_id)) AS tpl
