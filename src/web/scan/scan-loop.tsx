@@ -158,7 +158,6 @@ export function ScanLoop({
         leave,
         operator,
         duoLayout,
-        handheld,
       }}
       {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
@@ -220,7 +219,7 @@ export function ScanLoop({
       }
       card={cardNode}
       tint={tags.tint ?? view.tint}
-      look={{ sun: handheld && s.prefs.sunlight, leftHand: handheld && s.prefs.leftHand }}
+      look={{ sun: s.prefs.sunlight, leftHand: s.prefs.leftHand }}
       {...(tintDismisses(handheld, result, Boolean(s.overlay || tags.card))
         ? { onTint: () => dispatch({ type: 'dismiss' }) }
         : {})}

@@ -23,7 +23,6 @@ export function LoopMenu(p: {
   leave: () => void;
   operator: boolean;
   duoLayout: boolean;
-  handheld: boolean;
   readerUsable: boolean;
   cameraChoice: CameraChoice;
   setCameraChoice: (choice: CameraChoice) => void;
@@ -41,17 +40,13 @@ export function LoopMenu(p: {
       onSound={(value) => dispatch({ type: 'prefs', prefs: { sound: value } })}
       holdResults={s.prefs.holdResults}
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
-      {...(p.handheld
-        ? {
-            handheld: {
-              sunlight: s.prefs.sunlight,
-              leftHand: s.prefs.leftHand,
-              onSunlight: (value: boolean) => setPref('sunlight', value),
-              onLeftHand: (value: boolean) => setPref('leftHand', value),
-              canBuzz: canBuzz(),
-            },
-          }
-        : {})}
+      handheld={{
+        sunlight: s.prefs.sunlight,
+        leftHand: s.prefs.leftHand,
+        onSunlight: (value: boolean) => setPref('sunlight', value),
+        onLeftHand: (value: boolean) => setPref('leftHand', value),
+        canBuzz: canBuzz(),
+      }}
       camera={p.cameraChoice}
       cameraAvailable={!p.operator || p.duoLayout}
       canSwitchStaff={Boolean(session.staff)}

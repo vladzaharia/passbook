@@ -13,12 +13,15 @@ const IDLE_MS = 30_000;
 /** The PIN alone: the server finds the person. The digits live only in `usePinDraft`. */
 export function StaffPinPad({
   busy,
+  locked = false,
   error,
   shake,
   onPin,
   onName,
 }: {
   busy: boolean;
+  /** Too many wrong PINs: keys and dots are off until the server lets PINs in again. */
+  locked?: boolean;
   error: string;
   /** Counts refusals: each one restarts the dots' shake. */
   shake: number;
@@ -28,7 +31,7 @@ export function StaffPinPad({
   const pin = usePinDraft({
     length: LENGTH,
     idleMs: IDLE_MS,
-    disabled: busy,
+    disabled: busy || locked,
     onFull: onPin,
   });
   return (
@@ -38,9 +41,10 @@ export function StaffPinPad({
         count={busy ? LENGTH : pin.count}
         length={LENGTH}
         shake={shake}
-        invalid={error !== ''}
+        invalid={error !== '' && !locked}
+        off={locked}
       />
-      <Keypad disabled={busy} onDigit={pin.push} onDelete={pin.pop} />
+      <Keypad disabled={busy || locked} onDigit={pin.push} onDelete={pin.pop} />
       <div className="min-h-[3.5rem]">
         {error ? <Callout tone="danger">{error}</Callout> : null}
       </div>

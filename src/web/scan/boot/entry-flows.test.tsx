@@ -209,6 +209,30 @@ describe('scanner entry flows', () => {
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
     expect(signIn).toHaveBeenLastCalledWith({ pin: '123456' });
   });
+  it('turns the keypad off after too many wrong PINs', async () => {
+    const signIn = vi.fn<ScanApi['staffSignIn']>().mockRejectedValue(
+      new ApiError({
+        status: 429,
+        code: 'RATE_LIMITED',
+        detail: 'Too many wrong PINs. Try again later.',
+      }),
+    );
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({ state: 'staff_required' })}
+          api={{ staffSignIn: signIn } as unknown as ScanApi}
+          refetch={vi.fn()}
+        />,
+      ),
+    );
+    const user = userEvent.setup();
+    for (const digit of '000000') await user.click(screen.getByRole('button', { name: digit }));
+    expect(await screen.findByText(/Too many wrong PINs/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-disabled', 'true'),
+    );
+  });
   it('falls back to a name when PIN-only is paused, and can go back to the keypad', async () => {
     const signIn = vi
       .fn<ScanApi['staffSignIn']>()
