@@ -90,3 +90,17 @@ describe('step-up dialog', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });
+
+describe('step-up sheet size', () => {
+  it('opens as a bottom sheet with the same confirm', async () => {
+    const { requestStepUp } = await import('../lib/step-up.ts');
+    const { render } = await import('@testing-library/react');
+    const { StepUpDialog } = await import('./step-up-dialog.tsx');
+    const go = vi.spyOn(stepUpExit, 'go').mockImplementation(() => {});
+    render(<StepUpDialog size="sheet" />);
+    act(() => requestStepUp('/auth/oidc/start?prompt=login&max_age=0'));
+    expect(await screen.findByRole('dialog', { name: "Confirm it's you" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Continue with Polaris ID' }));
+    expect(go).toHaveBeenCalledTimes(1);
+  });
+});

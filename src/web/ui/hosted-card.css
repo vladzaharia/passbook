@@ -1,0 +1,80 @@
+.wl-hosted {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-xl, 18px);
+  background: var(--pk-surface-raised);
+  box-shadow: var(--pk-elevation-1);
+}
+.wl-hosted[data-size="hosted"] {
+  max-width: 26rem;
+}
+.wl-hosted[data-size="stage"] {
+  max-width: 32rem;
+}
+.wl-hosted[data-size="sheet"],
+.wl-hosted[data-size="dialog"] {
+  max-width: 24rem;
+  box-shadow: none;
+}
+.wl-hosted-band {
+  height: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--pk-accent),
+    color-mix(in oklab, var(--pk-accent) 40%, transparent)
+  );
+}
+.wl-hosted[data-size="stage"] .wl-hosted-band {
+  height: 0.75rem;
+}
+.wl-hosted-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.wl-hosted-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--pk-text-strong);
+}
+.wl-hosted[data-size="sheet"] .wl-hosted-title,
+.wl-hosted[data-size="dialog"] .wl-hosted-title {
+  font-size: 1rem;
+}
+.wl-hosted-line {
+  margin: -0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--pk-text-muted);
+}
+.wl-hosted-line[data-error] {
+  color: var(--pk-danger);
+}
+.wl-hosted-field {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.wl-hosted[data-locked] .wl-hosted-field {
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-hosted-line[data-error] + .wl-hosted-field .wl-code {
+    animation: wl-hosted-shake 240ms var(--wl-ease-out);
+  }
+}
+@keyframes wl-hosted-shake {
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}
