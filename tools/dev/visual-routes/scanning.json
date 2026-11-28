@@ -642,7 +642,7 @@
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
-    "name": "scan-admin-designer-scan-screen",
+    "name": "scan-admin-designer-scan-screen-phone",
     "filterOrg": "northwindId",
     "click": [
       "tab:Scan screen",
