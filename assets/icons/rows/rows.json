@@ -1,0 +1,776 @@
+[
+  {
+    "kind": "area",
+    "area": "use",
+    "key": "area-use",
+    "label": "What the plan includes each month"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "live-passes",
+    "label": "Live passes",
+    "was": "ticket"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "extra-live-passes-per-100",
+    "label": "Extra live passes, per 100",
+    "was": "plus"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "passes-issued-a-month",
+    "label": "Passes issued a month",
+    "was": "send"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "extra-passes-issued-per-100",
+    "label": "Extra passes issued, per 100",
+    "was": "send"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "emails-a-month",
+    "label": "Emails a month",
+    "was": "mail"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "extra-emails-per-1-000",
+    "label": "Extra emails, per 1,000",
+    "was": "mail"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "pass-updates-a-month-not-billed-up-to",
+    "label": "Pass updates a month, not billed up to",
+    "was": "refresh-cw"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "scans-a-month-not-billed-up-to",
+    "label": "Scans a month, not billed up to",
+    "was": "scan-line"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "api-calls-a-month-not-billed-up-to",
+    "label": "API calls a month, not billed up to",
+    "was": "code"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "webhook-deliveries-a-month-not-billed-up-to",
+    "label": "Webhook deliveries a month, not billed up to",
+    "was": "webhook"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "test-passes",
+    "label": "Test passes",
+    "was": "flask-conical"
+  },
+  {
+    "kind": "row",
+    "area": "use",
+    "key": "passes-already-sent-keep-working-after-a-downgrade-or-missed",
+    "label": "Passes already sent keep working after a downgrade or missed payment",
+    "was": "shield-check"
+  },
+  {
+    "kind": "area",
+    "area": "wallets",
+    "key": "area-wallets",
+    "label": "Wallets and channels"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "apple-wallet",
+    "label": "Apple Wallet",
+    "was": "smartphone"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "google-wallet",
+    "label": "Google Wallet",
+    "was": "smartphone"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "samsung-wallet",
+    "label": "Samsung Wallet",
+    "was": "smartphone"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "mobile-web-ticket-and-pass-page",
+    "label": "Mobile web ticket and pass page",
+    "was": "globe"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "paper-tickets-and-print-sheets",
+    "label": "Paper tickets and print sheets",
+    "was": "printer"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "nfc-tags-cards-fobs-stickers-wristbands",
+    "label": "NFC tags (cards, fobs, stickers, wristbands)",
+    "was": "nfc"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "lent-tags-with-a-return-time",
+    "label": "Lent tags with a return time",
+    "was": "timer"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "copy-proof-nfc-tags",
+    "label": "Copy-proof NFC tags",
+    "was": "shield-check"
+  },
+  {
+    "kind": "row",
+    "area": "wallets",
+    "key": "tap-with-the-phone-s-wallet",
+    "label": "Tap with the phone's wallet",
+    "was": "radio"
+  },
+  {
+    "kind": "area",
+    "area": "brand",
+    "key": "area-brand",
+    "label": "Identity and brand"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "your-logo-colours-and-support-details",
+    "label": "Your logo, colours and support details",
+    "was": "palette"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "shared-passbook-pass-type-id",
+    "label": "Shared PassBook Pass Type ID",
+    "was": "fingerprint"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "bring-your-own-pass-type-id",
+    "label": "Bring your own Pass Type ID",
+    "was": "fingerprint"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "managed-pass-type-id-in-your-name",
+    "label": "Managed Pass Type ID in your name",
+    "was": "fingerprint"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "small-passbook-footer",
+    "label": "Small PassBook footer",
+    "was": "minimize-2"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "no-passbook-footer",
+    "label": "No PassBook footer",
+    "was": "eye-off"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "your-own-web-address-for-pass-pages",
+    "label": "Your own web address for pass pages",
+    "was": "link-2"
+  },
+  {
+    "kind": "row",
+    "area": "brand",
+    "key": "send-email-from-your-own-domain",
+    "label": "Send email from your own domain",
+    "was": "at-sign"
+  },
+  {
+    "kind": "area",
+    "area": "templates",
+    "key": "area-templates",
+    "label": "Templates and pass features"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "templates",
+    "label": "Templates",
+    "was": "layers"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "all-23-blueprints",
+    "label": "All 23 blueprints",
+    "was": "layout-template"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "visual-designer",
+    "label": "Visual designer",
+    "was": "pen-tool"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "boarding-pass-and-transit-ticket-style",
+    "label": "Boarding pass and transit ticket style",
+    "was": "ship"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "upload-your-own-template-files",
+    "label": "Upload your own template files",
+    "was": "upload"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "stamps-balances-and-packs",
+    "label": "Stamps, balances and packs",
+    "was": "stamp"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "expiry-and-term-rules",
+    "label": "Expiry and term rules",
+    "was": "calendar-x"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "show-on-the-lock-screen-near-a-time",
+    "label": "Show on the lock screen near a time",
+    "was": "map-pin"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "show-on-the-lock-screen-near-a-place",
+    "label": "Show on the lock screen near a place",
+    "was": "map-pin"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "beacons",
+    "label": "Beacons",
+    "was": "bluetooth"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "several-events-or-dates-on-one-pass",
+    "label": "Several events or dates on one pass",
+    "was": "calendar-days"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "bundles-for-groups-and-families",
+    "label": "Bundles for groups and families",
+    "was": "package"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "photo-on-the-pass",
+    "label": "Photo on the pass",
+    "was": "image"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "move-a-pass-to-a-new-holder",
+    "label": "Move a pass to a new holder",
+    "was": "repeat"
+  },
+  {
+    "kind": "row",
+    "area": "templates",
+    "key": "void-and-remove-from-the-phone",
+    "label": "Void and remove from the phone",
+    "was": "trash-2"
+  },
+  {
+    "kind": "area",
+    "area": "sending",
+    "key": "area-sending",
+    "label": "Sending and keeping current"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "push-updates-to-passes",
+    "label": "Push updates to passes",
+    "was": "refresh-cw"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "join-links-and-qr-sign-up-per-day",
+    "label": "Join links and QR sign-up, per day",
+    "was": "qr-code"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "broadcasts-per-day",
+    "label": "Broadcasts per day",
+    "was": "megaphone"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "scheduled-broadcasts",
+    "label": "Scheduled broadcasts",
+    "was": "calendar-clock"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "automatic-reminders-active-rules",
+    "label": "Automatic reminders (active rules)",
+    "was": "bell-ring"
+  },
+  {
+    "kind": "row",
+    "area": "sending",
+    "key": "bulk-changes-per-day",
+    "label": "Bulk changes per day",
+    "was": "list-checks"
+  },
+  {
+    "kind": "area",
+    "area": "data",
+    "key": "area-data",
+    "label": "Connections and commerce"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "connections",
+    "label": "Connections",
+    "was": "plug"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "spreadsheet-link-and-file-upload",
+    "label": "Spreadsheet link and file upload",
+    "was": "file-spreadsheet"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "receive-events-from-any-tool-webhook",
+    "label": "Receive events from any tool (webhook)",
+    "was": "webhook"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "shop-and-payment-presets-shopify-woocommerce-stripe",
+    "label": "Shop and payment presets: Shopify, WooCommerce, Stripe",
+    "was": "shopping-cart"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "booking-and-ticketing-presets-cal-com-ticket-tailor",
+    "label": "Booking and ticketing presets: Cal.com, Ticket Tailor",
+    "was": "calendar-check"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "read-from-another-tool-s-api",
+    "label": "Read from another tool's API",
+    "was": "braces"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "zapier",
+    "label": "Zapier",
+    "was": "zap"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "ready-made-apps-shopify-app-square-eventbrite",
+    "label": "Ready-made apps: Shopify app, Square, Eventbrite",
+    "was": "blocks"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "import-passes-from-a-sheet",
+    "label": "Import passes from a sheet",
+    "was": "file-up"
+  },
+  {
+    "kind": "row",
+    "area": "data",
+    "key": "export-your-data",
+    "label": "Export your data",
+    "was": "download"
+  },
+  {
+    "kind": "area",
+    "area": "dev",
+    "key": "area-dev",
+    "label": "API and developer tools"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "full-api",
+    "label": "Full API",
+    "was": "code"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "test-mode-workbench-and-request-logs",
+    "label": "Test mode, Workbench and request logs",
+    "was": "terminal"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "sdks-and-command-line-tool",
+    "label": "SDKs and command line tool",
+    "was": "package-open"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "api-keys",
+    "label": "API keys",
+    "was": "key-round"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "webhook-endpoints",
+    "label": "Webhook endpoints",
+    "was": "webhook"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "api-requests-per-minute-per-key",
+    "label": "API requests per minute, per key",
+    "was": "gauge"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "api-requests-per-minute-whole-organization",
+    "label": "API requests per minute, whole organization",
+    "was": "gauge"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "restrict-a-key-to-ip-addresses",
+    "label": "Restrict a key to IP addresses",
+    "was": "shield"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "developer-seats",
+    "label": "Developer seats",
+    "was": "user-cog"
+  },
+  {
+    "kind": "row",
+    "area": "dev",
+    "key": "a-staging-organization",
+    "label": "A staging organization",
+    "was": "git-branch"
+  },
+  {
+    "kind": "area",
+    "area": "door",
+    "key": "area-door",
+    "label": "At the door"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "scanners",
+    "label": "Scanners",
+    "was": "scan-line"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "scan-in-a-browser-or-the-iphone-and-android-apps",
+    "label": "Scan in a browser or the iPhone and Android apps",
+    "was": "tablet-smartphone"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "keep-scanning-without-a-connection",
+    "label": "Keep scanning without a connection",
+    "was": "wifi-off"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "hardware-barcode-scanners",
+    "label": "Hardware barcode scanners",
+    "was": "keyboard"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "find-someone-by-name",
+    "label": "Find someone by name",
+    "was": "search"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "door-staff-with-pins",
+    "label": "Door staff with PINs",
+    "was": "user-check"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "live-counts-who-s-in-and-roll-call",
+    "label": "Live counts, who's in and roll call",
+    "was": "users"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "entry-rules-cooldown-re-entry-in-and-out",
+    "label": "Entry rules: cooldown, re-entry, in and out",
+    "was": "door-open"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "entry-rules-capacity-and-auto-tap-out",
+    "label": "Entry rules: capacity and auto tap-out",
+    "was": "users"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "desk-console",
+    "label": "Desk console",
+    "was": "monitor"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "customer-facing-screen",
+    "label": "Customer-facing screen",
+    "was": "monitor-smartphone"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "zones-and-gates",
+    "label": "Zones and gates",
+    "was": "map"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "design-what-staff-see-for-each-pass",
+    "label": "Design what staff see for each pass",
+    "was": "sliders-horizontal"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "manager-approval-and-overrides",
+    "label": "Manager approval and overrides",
+    "was": "shield-alert"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "scan-history-kept",
+    "label": "Scan history kept",
+    "was": "history"
+  },
+  {
+    "kind": "row",
+    "area": "door",
+    "key": "export-scan-history",
+    "label": "Export scan history",
+    "was": "download"
+  },
+  {
+    "kind": "area",
+    "area": "team",
+    "key": "area-team",
+    "label": "Team and governance"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "team-members",
+    "label": "Team members",
+    "was": "users"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "admin-operator-and-read-only-roles",
+    "label": "Admin, operator and read-only roles",
+    "was": "user-round"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "author-reviewer-publisher-and-integration-roles",
+    "label": "Author, reviewer, publisher and integration roles",
+    "was": "users-round"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "locations-with-their-own-staff-and-counts",
+    "label": "Locations with their own staff and counts",
+    "was": "store"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "sign-in-with-your-company-s-identity-provider",
+    "label": "Sign in with your company's identity provider",
+    "was": "log-in"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "add-and-remove-team-members-automatically",
+    "label": "Add and remove team members automatically",
+    "was": "user-plus"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "audit-log",
+    "label": "Audit log",
+    "was": "scroll-text"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "export-the-audit-log",
+    "label": "Export the audit log",
+    "was": "file-down"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "activity-reports",
+    "label": "Activity reports",
+    "was": "bar-chart-3"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "organizations-on-one-bill-sharing-the-allowance",
+    "label": "Organizations on one bill, sharing the allowance",
+    "was": "network"
+  },
+  {
+    "kind": "row",
+    "area": "team",
+    "key": "create-organizations-by-api-with-usage-per-organization",
+    "label": "Create organizations by API, with usage per organization",
+    "was": "git-fork"
+  },
+  {
+    "kind": "area",
+    "area": "service",
+    "key": "area-service",
+    "label": "Service"
+  },
+  {
+    "kind": "row",
+    "area": "service",
+    "key": "support",
+    "label": "Support",
+    "was": "life-buoy"
+  },
+  {
+    "kind": "row",
+    "area": "service",
+    "key": "priority-support",
+    "label": "Priority support",
+    "was": "zap"
+  },
+  {
+    "kind": "row",
+    "area": "service",
+    "key": "uptime-commitment",
+    "label": "Uptime commitment",
+    "was": "activity"
+  },
+  {
+    "kind": "row",
+    "area": "service",
+    "key": "data-processing-agreement",
+    "label": "Data processing agreement",
+    "was": "file-signature"
+  },
+  {
+    "kind": "row",
+    "area": "service",
+    "key": "25-off-for-nonprofits-member-run-clubs-schools-and-public-bo",
+    "label": "25% off for nonprofits, member-run clubs, schools and public bodies",
+    "was": "heart-handshake"
+  }
+]

@@ -1,22 +1,20 @@
-import {
-  BadgeCheck,
-  Gem,
-  Hourglass,
-  Layers,
-  type LucideIcon,
-  Sprout,
-  SquareTerminal,
-  Infinity as Unlimited,
-} from 'lucide-react';
+import { Layers, type LucideIcon, SquareTerminal } from 'lucide-react';
+import { createElement, type FC } from 'react';
+import { PLAN_ICONS } from '@/generated/plan-icons.ts';
+import { PlanIcon } from '@/web/ui/plan-icon.tsx';
+import '@/generated/plan-icons.css';
 
-const PLAN_ICON: Record<string, LucideIcon> = {
-  trial: Hourglass,
-  starter: Sprout,
-  standard: BadgeCheck,
-  premium: Gem,
-  legacy: Unlimited,
-  developer: SquareTerminal,
-};
+export { AREA_ACCENTS, PLAN_ICONS, ROW_ICONS } from '@/generated/plan-icons.ts';
 
-/** The plan's icon; a plan the web does not know gets the generic stack. */
-export const planIcon = (id: string): LucideIcon => PLAN_ICON[id] ?? Layers;
+type IconComponent = FC<{ className?: string; 'aria-hidden'?: boolean }>;
+
+const PLAN_COMPONENTS: Record<string, IconComponent> = Object.fromEntries(
+  Object.keys(PLAN_ICONS).map((id) => [
+    id,
+    (props) => createElement(PlanIcon, { id, className: props.className }),
+  ]),
+);
+
+/** The plan's icon; a plan the web does not know gets the generic stack, the developer sandbox a terminal. */
+export const planIcon = (id: string): IconComponent | LucideIcon =>
+  PLAN_COMPONENTS[id] ?? (id === 'developer' ? SquareTerminal : Layers);
