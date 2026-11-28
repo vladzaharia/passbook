@@ -4977,7 +4977,7 @@ export type OrgsEntitlementsRetrieveResponse = {
   preset: string | null;
   label: string | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;
@@ -4989,7 +4989,7 @@ export type OrgsPlanRetrieveResponse = {
   preset: string | null;
   label: string | null;
   limits: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     limit: number | null;
     used: number | null;
   }>;
@@ -8537,7 +8537,7 @@ export type PlatformOrgsEntitlementsRetrieveResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";
@@ -8569,7 +8569,7 @@ export type PlatformOrgsEntitlementsUpdateResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";
