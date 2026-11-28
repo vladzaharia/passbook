@@ -123,7 +123,7 @@ export function HomeView() {
 
   if (sandbox && context.closed)
     return (
-      <ToolPage tool="home" count={context.name} primary={menu}>
+      <ToolPage tool="home" count={<span className="max-sm:hidden">{context.name}</span>} primary={menu}>
         <StageState
           scene="nudge"
           mood="sad"
@@ -159,7 +159,7 @@ export function HomeView() {
     />
   );
   return (
-    <ToolPage tool="home" count={context.name} primary={primary}>
+    <ToolPage tool="home" count={<span className="max-sm:hidden">{context.name}</span>} primary={primary}>
       <div className="flex min-w-0 flex-col gap-4">
         {sandbox ? null : (
           <p>
