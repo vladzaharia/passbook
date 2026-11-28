@@ -158,7 +158,6 @@ export function ScanLoop({
         leave,
         operator,
         duoLayout,
-        handheld,
       }}
       {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
@@ -195,7 +194,7 @@ export function ScanLoop({
         ...(handheld && access.direction && !access.direction.onCycle
           ? { direction: SCAN_COPY.direction[access.direction.value] }
           : {}),
-        state: capsuleStateOf(s.online, l.s),
+        state: capsuleStateOf(s.online, l.s, s.started),
         menu,
         onTitle: () => showPanel('shift'),
         chips: (
@@ -220,7 +219,7 @@ export function ScanLoop({
       }
       card={cardNode}
       tint={tags.tint ?? view.tint}
-      look={{ sun: handheld && s.prefs.sunlight, leftHand: handheld && s.prefs.leftHand }}
+      look={{ sun: s.prefs.sunlight, leftHand: s.prefs.leftHand }}
       {...(tintDismisses(handheld, result, Boolean(s.overlay || tags.card))
         ? { onTint: () => dispatch({ type: 'dismiss' }) }
         : {})}

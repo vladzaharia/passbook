@@ -180,7 +180,7 @@ test('offline, a saved check-in shows the queue line and View opens the queue', 
   const page = await context.newPage();
   try {
     await open(page, created.pairing.code);
-    await page.getByRole('button', { name: 'Enter code', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Look up', exact: true }).waitFor();
     await context.setOffline(true);
     await read(page, 'q1', passes[0]?.memberId ?? '');
     await page.getByRole('button', { name: 'Let in', exact: true }).click();

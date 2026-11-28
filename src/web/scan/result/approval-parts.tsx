@@ -30,11 +30,14 @@ export function PinDots({
   length,
   shake,
   invalid,
+  off = false,
 }: {
   count: number;
   length: number;
   shake: number;
   invalid: boolean;
+  /** Not taking digits (a lockout): drawn dimmed. */
+  off?: boolean;
 }) {
   return (
     <div
@@ -43,6 +46,7 @@ export function PinDots({
       className="scan-pin-dots"
       data-shake={shake ? '' : undefined}
       data-invalid={invalid ? '' : undefined}
+      data-off={off ? '' : undefined}
       role="img"
       aria-label={COPY.pin.dots.replace('{n}', String(count)).replace('{len}', String(length))}
     >

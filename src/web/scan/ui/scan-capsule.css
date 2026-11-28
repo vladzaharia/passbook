@@ -37,6 +37,11 @@
     -webkit-backdrop-filter: none;
   }
 }
+@media (min-width: 640px) {
+  .scan-capsule {
+    width: min(560px, calc(100% - 24px));
+  }
+}
 @media (min-width: 1024px) {
   .scan-capsule {
     inset-block-start: calc(env(safe-area-inset-top, 0px) + 32px);

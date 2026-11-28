@@ -133,13 +133,15 @@ function ScanBoot() {
                   ? SCAN_COPY.sessionPaused.line
                   : SCAN_COPY.sessionEnded.line}
               </p>
-              <button
-                className={buttonVariants({ variant: 'outline' })}
-                type="button"
-                onClick={() => void session.refetch()}
-              >
-                {SCAN_COPY.sessionPaused.check}
-              </button>
+              {session.session.workspace.session.status === 'paused' ? (
+                <button
+                  className={buttonVariants({ variant: 'outline' })}
+                  type="button"
+                  onClick={() => void session.refetch()}
+                >
+                  {SCAN_COPY.actions.tryAgain}
+                </button>
+              ) : null}
             </BootCard>
           }
         />
@@ -253,15 +255,11 @@ function ScanBoot() {
   ) : session.phase === 'loading' ? (
     <BootCard title="Loading scanner…" />
   ) : session.ended ? (
-    <BootCard title={SCAN_COPY.sessionEnded.title} line={SCAN_COPY.sessionEnded.line}>
-      <button className={buttonVariants()} type="button" onClick={() => void session.refetch()}>
-        {SCAN_COPY.actions.tryAgain}
-      </button>
-    </BootCard>
+    <BootCard title={SCAN_COPY.sessionEnded.title} line={SCAN_COPY.sessionEnded.line} />
   ) : session.phase === 'error' || session.phase === 'blocked' ? (
     <BootCard title="Scanner unavailable" line="Check the connection and try again.">
       <button className={buttonVariants()} type="button" onClick={() => void session.refetch()}>
-        Try again
+        {SCAN_COPY.actions.tryAgain}
       </button>
     </BootCard>
   ) : (

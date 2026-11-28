@@ -1,4 +1,5 @@
 import type { BroadcastDto, BroadcastKind, BroadcastState } from '@/shared/contracts/broadcasts.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatCount, formatDateTime, pluralize } from '../../lib/format.ts';
 
 export const KIND_LABEL: Record<BroadcastKind, string> = {
@@ -35,9 +36,6 @@ export function progressOf(b: BroadcastDto): { done: number; total: number; rati
   const done = Math.min(updated + unchanged + failed, targeted);
   return { done, total: targeted, ratio: targeted === 0 ? 0 : done / targeted };
 }
-
-export const plural = (n: number, one: string, many = `${one}s`) =>
-  `${formatCount(n)} ${n === 1 ? one : many}`;
 
 /** One line of counts, leaving out zeros: "12 updated, 3 unchanged, 1 failed". */
 export function countsLine(b: BroadcastDto): string {

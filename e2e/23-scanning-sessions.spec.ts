@@ -125,7 +125,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await expect(desk.getByTestId('scan-result')).toContainText('Checked in');
     await expect(customer.getByRole('heading', { name: 'Checked in', exact: true })).toBeVisible();
     await expect(customer.getByTestId('duo-customer-display')).not.toContainText(holderName);
-    await phone.getByRole('button', { name: 'Enter code', exact: true }).click();
+    await phone.getByRole('button', { name: 'Look up', exact: true }).click();
     await phone.getByRole('textbox', { name: 'Name, email or code', exact: true }).fill(memberId);
     await phone.getByRole('textbox', { name: 'Name, email or code', exact: true }).press('Enter');
     await expect(phone.getByTestId('scan-result')).toContainText('Checked out');

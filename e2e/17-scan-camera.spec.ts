@@ -211,7 +211,7 @@ test('a decoder download failure offers recovery and lookup pauses camera reads'
     await page.unroute('**/*.wasm*');
     await page.getByRole('button', { name: 'Retry camera' }).click();
     await expect(page.locator('.scan-reticle')).toBeVisible();
-    await page.getByRole('button', { name: 'Enter code', exact: true }).click();
+    await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await showBarcode(page, 0);
     const frame = await page.evaluate(

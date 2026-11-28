@@ -137,6 +137,9 @@
   border: 2px solid var(--sd-muted);
   border-radius: 50%;
 }
+.scan-pin-dots[data-off] {
+  opacity: 0.4;
+}
 .scan-pin-dots > span[data-filled] {
   border-color: var(--sd-strong);
   background: var(--sd-strong);

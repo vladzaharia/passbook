@@ -216,6 +216,7 @@ export function publishScan(
           : out.kind === 'heads_up'
             ? 'Check required'
             : 'Not accepted',
+    ...(out.kind === 'refused' || out.kind === 'heads_up' ? { reason: out.reason } : {}),
     presented: method !== 'manual' || enteredCode,
     ...extra,
   };

@@ -43,7 +43,7 @@ describe('Closed screen', () => {
     mount(closed());
     expect(screen.getByRole('heading', { name: SCAN_COPY.closed.headline })).toBeTruthy();
     expect(screen.getByText(/^Opens \d{1,2}:\d\d [AP]M/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: SCAN_COPY.closed.check })).toBeTruthy();
+    expect(screen.getByRole('button', { name: SCAN_COPY.actions.tryAgain })).toBeTruthy();
   });
   it('says so when nothing opens', () => {
     mount(closed({}, null));
