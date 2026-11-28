@@ -256,7 +256,7 @@ test('Scan as Admin is optional and reuses this browser’s device in a shared s
     expect(setup.adminSession).toBe(true);
     const member = await createPass(api, org.id, { holder: 'Admin Action Guest' });
     await page.getByTestId('scan-start').click();
-    await page.getByRole('button', { name: 'Enter code', exact: true }).click();
+    await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name, email or code' }).fill('Admin Action');
     const asset = page.waitForResponse((r) =>
       r.url().includes(`/scan/passes/${member.id}/assets/`),

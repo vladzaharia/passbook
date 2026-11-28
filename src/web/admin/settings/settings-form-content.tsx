@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { NOT_INCLUDED } from '@/shared/copy/entitlements.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import { Callout, Card, CardHeader, DependentSettings, SegmentedControl } from '@/web/ui/index.ts';
 import type { Draft, SettingField } from './fields.ts';
@@ -186,8 +187,8 @@ export function SettingsFormContent({
           />
           {dirty ? (
             <p className="text-sm text-fg-muted">
-              {dirtyFields.length} unsaved {dirtyFields.length === 1 ? 'change' : 'changes'} · Not
-              applied{advancedDirty ? ` · ${advancedDirty} in Advanced` : ''}
+              {plural(dirtyFields.length, 'unsaved change')} · Not applied
+              {advancedDirty ? ` · ${advancedDirty} in Advanced` : ''}
             </p>
           ) : null}
         </div>

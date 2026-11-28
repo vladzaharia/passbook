@@ -620,7 +620,7 @@ describe('tenant scoping', () => {
       `/${id}/versions/${shared.version}/assets/${encodeURIComponent(asset.name)}`,
       `/${id}/package`,
     ]) {
-      await expectProblem(await call(path, {}, reader.headers), 403, 'ORG_REQUIRED');
+      await expectProblem(await call(path, {}, reader.headers), 422, 'ORG_REQUIRED');
       expect((await call(`${path}?orgId=${org.id}`, {}, reader.headers)).status, path).toBe(200);
       expect((await call(`${path}?orgId=${otherOrg.id}`, {}, reader.headers)).status, path).toBe(
         404,
@@ -633,7 +633,7 @@ describe('tenant scoping', () => {
         path,
       ).toBe(200);
     }
-    await expectProblem(await post(`/${id}/preview`, {}, reader.headers), 403, 'ORG_REQUIRED');
+    await expectProblem(await post(`/${id}/preview`, {}, reader.headers), 422, 'ORG_REQUIRED');
     const preview = await post(`/${id}/preview`, { orgId: org.id }, reader.headers);
     expect(preview.status).toBe(200);
     const previewBody = (await preview.json()) as { assetBaseUrl: string };
@@ -648,7 +648,7 @@ describe('tenant scoping', () => {
       404,
       'TEMPLATE_NOT_FOUND',
     );
-    await expectProblem(await call(`/previews?ids=${id}`, {}, reader.headers), 403, 'ORG_REQUIRED');
+    await expectProblem(await call(`/previews?ids=${id}`, {}, reader.headers), 422, 'ORG_REQUIRED');
     expect((await call(`/previews?ids=${id}&orgId=${org.id}`, {}, reader.headers)).status).toBe(
       200,
     );
@@ -969,7 +969,7 @@ describe('upload', () => {
     failImportStart = true;
     try {
       const res = await upload(zip(), `orgId=${org.id}&name=Fails`);
-      expect(res.status).toBe(502);
+      expect(res.status).toBe(503);
       expect(await res.json()).toMatchObject({ code: 'WORKFLOW_START' });
     } finally {
       failImportStart = false;

@@ -7,6 +7,7 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const INK = '#16132B';
+const BG = 'BG';
 /** Icon file name to preset id (AD1: today's ids, plus business and enterprise). */
 export const PLAN_FILES = {
   stub: 'trial',
@@ -31,12 +32,12 @@ export const AREAS = {
 } as const;
 type Area = keyof typeof AREAS;
 
-// A taller ticket with a slim stub: the notch and perforation sit at the far right and there is no punch hole,
-// so the glyph (drawn in the box x 8.5-29.5, y 15.5-32.5) is scaled up to fill most of the ticket.
-const STOCK =
-  'M8.5 10L35.3 10A2.2 2.2 0 0 0 39.7 10L41 10A3 3 0 0 1 44 13L44 35A3 3 0 0 1 41 38L39.7 38A2.2 2.2 0 0 0 35.3 38L8.5 38A4.5 4.5 0 0 1 4 33.5L4 14.5A4.5 4.5 0 0 1 8.5 10Z';
-const TAIL = `<path d="M37.5 14.2V33.8" stroke="${INK}" stroke-width="1.1" stroke-dasharray="1.6 2.3" fill="none"/>`;
-/** Each glyph's own scale and offset (the "$fit" in its glyphs file): inside the ticket face with 5 units of padding. */
+// An upright ticket: side notches, rounded corners, a 2 unit lip, no perforation. Face x 1..47, y 3..43 in the
+// 48 viewBox; each glyph is fitted into the face inset by 5 units (the "$fit" in its glyphs file).
+const T = { x0: 1, x1: 47, y0: 3, y1: 43, r: 5.5, nr: 3.2, lip: 2 };
+const ym = (T.y0 + T.y1) / 2;
+const STOCK = `M${T.x0 + T.r} ${T.y0}H${T.x1 - T.r}A${T.r} ${T.r} 0 0 1 ${T.x1} ${T.y0 + T.r}V${ym - T.nr}A${T.nr} ${T.nr} 0 0 0 ${T.x1} ${ym + T.nr}V${T.y1 - T.r}A${T.r} ${T.r} 0 0 1 ${T.x1 - T.r} ${T.y1}H${T.x0 + T.r}A${T.r} ${T.r} 0 0 1 ${T.x0} ${T.y1 - T.r}V${ym + T.nr}A${T.nr} ${T.nr} 0 0 0 ${T.x0} ${ym - T.nr}V${T.y0 + T.r}A${T.r} ${T.r} 0 0 1 ${T.x0 + T.r} ${T.y0}Z`;
+/** Each glyph's own scale and offset (the "$fit" in its glyphs file). */
 interface Fit {
   s: number;
   tx: number;
@@ -44,6 +45,9 @@ interface Fit {
 }
 const big = (glyph: string, f: Fit) =>
   `<g transform="translate(${f.tx} ${f.ty}) scale(${f.s})">${glyph}</g>`;
+/** INK is the glyph; BG is a knockout in the ticket's colour (the open ticket in mono). */
+const paint = (glyph: string, ink: string, bg: string) =>
+  glyph.split(`"${INK}"`).join(`"${ink}"`).split(`"${BG}"`).join(`"${bg}"`);
 const shade = (hex: string, k = 0.68) =>
   `#${[1, 3, 5]
     .map((i) =>
@@ -54,9 +58,9 @@ const shade = (hex: string, k = 0.68) =>
     .join('')}`;
 
 export const rowColour = (area: Area, glyph: string, fit: Fit): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><g transform="rotate(-6 24 24)"><path transform="translate(0 2.4)" d="${STOCK}" fill="${shade(AREAS[area])}"/><path d="${STOCK}" fill="${AREAS[area]}"/>${big(glyph, fit)}${TAIL}</g></svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path transform="translate(0 ${T.lip})" d="${STOCK}" fill="${shade(AREAS[area])}"/><path d="${STOCK}" fill="${AREAS[area]}"/>${big(paint(glyph, INK, AREAS[area]), fit)}</svg>`;
 export const rowMono = (key: string, glyph: string, fit: Fit): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><mask id="rm-${key}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="90" height="90"><rect x="-20" y="-20" width="90" height="90" fill="#fff"/>${(big(glyph, fit) + TAIL).split(INK).join('#000')}</mask></defs><g transform="rotate(-6 24 24)" mask="url(#rm-${key})"><path d="${STOCK}" fill="currentColor"/></g></svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><mask id="rm-${key}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="90" height="90"><rect x="-20" y="-20" width="90" height="90" fill="#fff"/>${big(paint(glyph, '#000', '#fff'), fit)}</mask></defs><g transform="translate(0 1)" mask="url(#rm-${key})"><path d="${STOCK}" fill="currentColor"/></g></svg>`;
 
 interface RowSource {
   kind: 'area' | 'row';

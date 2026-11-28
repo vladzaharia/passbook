@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { BroadcastPreviewDto } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatCount } from '../../lib/format.ts';
 import { Callout, FormField, Input, Select, SwitchRow } from '../../ui/index.ts';
 import { useScanEvents } from '../scanning/scanner-api.ts';
@@ -163,7 +164,7 @@ export function AudienceSection({
             : eventFilter && !state.scanEventId
               ? 'Choose an event to count the audience.'
               : 'Counting…'
-          : `${formatCount(c.targeted)} ${c.targeted === 1 ? 'pass' : 'passes'}, ${formatCount(c.onDevice)} on a device.`}
+          : `${plural(c.targeted, 'pass', 'passes')}, ${formatCount(c.onDevice)} on a device.`}
       </p>
       {c && c.overBudget > 0 ? (
         <Callout tone="warning">

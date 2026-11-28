@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { WORKBENCH_ROUTES } from '../../../shared/contracts/workbench.ts';
 import { all } from '../../platform/db.ts';
 import { basicPackage, passJson, zipOf } from '../templates/package/fixtures.ts';
 import { importZip } from '../templates/testing.ts';
@@ -164,6 +165,56 @@ describe('Design on the member token: save, dry run and the designer reads', () 
       ['POST', `/templates/${templateId}/archive`],
     ] as const)
       expect([401, 403]).toContain(
+        (await t.call(method, path, t.asClient(token), { orgId: m.orgId })).status,
+      );
+  });
+
+  it("lists its own templates and the blueprints, and not another org's", async () => {
+    const m = await t.member();
+    const { templateId } = await templateIn(m.orgId, m.user.id);
+    const { token } = await t.wbMint(m.browser, m.orgId);
+    const own = await t.call('GET', `/templates?orgId=${m.orgId}&limit=200`, t.asClient(token));
+    expect(own.status, await own.clone().text()).toBe(200);
+    const ids = ((await own.json()) as { items: { id: string }[] }).items.map((i) => i.id);
+    expect(ids).toContain(templateId);
+    const blueprints = await t.call(
+      'GET',
+      `/templates?orgId=${m.orgId}&blueprint=true&limit=200`,
+      t.asClient(token),
+    );
+    expect(blueprints.status, await blueprints.clone().text()).toBe(200);
+    const other = await t.member();
+    const foreign = await t.call('GET', `/templates?orgId=${other.orgId}`, t.asClient(token));
+    expect([403, 404]).toContain(foreign.status);
+    // Same user, member of the second org too: only the token's org pin refuses it.
+    await t.join(m.user.id, other.orgId, ['org_admin']);
+    await templateIn(other.orgId, m.user.id);
+    const pinned = await t.call('GET', `/templates?orgId=${other.orgId}`, t.asClient(token));
+    expect(pinned.status).toBe(404);
+  });
+
+  it('keeps every template and blueprint write out of the allowlist', () => {
+    const writes = WORKBENCH_ROUTES.filter(
+      (r) => /\/api\/v1\/templates(\/|$)/.test(r) && !r.startsWith('GET '),
+    );
+    expect(writes.sort()).toEqual([
+      'POST /api/v1/templates/:id/preview',
+      'POST /api/v1/templates/:id/release',
+      'POST /api/v1/templates/:id/versions',
+    ]);
+  });
+
+  it('refuses a template create, a blueprint use and a template delete', async () => {
+    const m = await t.member();
+    const { templateId } = await templateIn(m.orgId, m.user.id);
+    const { token } = await t.wbMint(m.browser, m.orgId);
+    for (const [method, path] of [
+      ['POST', '/templates'],
+      ['POST', '/templates/baked:starter-x/use'],
+      ['PATCH', `/templates/${templateId}`],
+      ['DELETE', `/templates/${templateId}`],
+    ] as const)
+      expect([401, 403], `${method} ${path}`).toContain(
         (await t.call(method, path, t.asClient(token), { orgId: m.orgId })).status,
       );
   });

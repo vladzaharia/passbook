@@ -1,0 +1,22 @@
+/* A portrait tablet: the copy takes the space above the buddy and reads at tablet size. */
+@media (min-width: 700px) and (max-aspect-ratio: 1 / 1) {
+  .cstage {
+    grid-template-rows: auto 1fr auto;
+  }
+  .cstage-copy {
+    align-self: center;
+    padding-top: 0;
+  }
+  .cstage-badge {
+    width: clamp(120px, 16vw, 200px);
+  }
+  .cstage-eyebrow {
+    font-size: clamp(20px, 2.8vw, 34px);
+  }
+  .cstage-copy h1 {
+    font-size: clamp(72px, 14vw, 160px);
+  }
+  .cstage-hint {
+    font-size: clamp(26px, 3.4vw, 58px);
+  }
+}

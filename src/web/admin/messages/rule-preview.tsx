@@ -1,9 +1,9 @@
 import type { z } from 'zod';
 import type { RulePreviewSchema } from '@/shared/contracts/message-rules.ts';
 import { RULE_COPY } from '@/shared/copy/message-rules.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatCalendarDate, formatCount } from '../../lib/format.ts';
 import { Skeleton } from '../../ui/index.ts';
-import { plural } from './labels.ts';
 
 type Preview = z.infer<typeof RulePreviewSchema>;
 

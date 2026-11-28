@@ -69,12 +69,8 @@ export function LookupResults({
           <p>Check the spelling, or use the full email.</p>
         </div>
       ) : null}
-      {!tray && !result && !busy ? (
-        <p className="text-sm text-fg-muted">
-          {query.includes('@')
-            ? 'Use the full email address.'
-            : 'Type at least 3 letters to search. Enter a full code to scan.'}
-        </p>
+      {!tray && !result && !busy && query.includes('@') ? (
+        <p className="text-sm text-fg-muted">Use the full email address.</p>
       ) : null}
       {result?.more ? (
         <p className="py-3 text-sm text-fg-muted">

@@ -10,7 +10,7 @@ import {
   ConflictError,
   NotFoundError,
   PayloadTooLargeError,
-  UpstreamError,
+  UnavailableError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -90,7 +90,7 @@ export async function acceptUpload(
     } finally {
       await ctx.env.BUCKET.delete(objectKey);
     }
-    throw new UpstreamError('Could not start the import. Try again.', 'WORKFLOW_START');
+    throw new UnavailableError('Could not start the import. Try again.', 'WORKFLOW_START');
   }
   const actor = actorOf(auth);
   await recordAudit(ctx, {

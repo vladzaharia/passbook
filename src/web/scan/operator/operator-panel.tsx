@@ -64,16 +64,12 @@ export function OperatorPanel({
           <Search size={20} />
         </span>
         <div>
-          <p className="scan-operator-eyebrow">Operator</p>
           <h2 className="text-lg font-semibold">
             {session.workspace?.session.name ?? 'Check-in desk'}
           </h2>
         </div>
       </header>
       <section className="scan-operator-lookup" aria-label="Find a pass">
-        <div className="scan-operator-section-heading">
-          <h2>Find a pass</h2>
-        </div>
         <LookupPanel
           key={generation}
           inline

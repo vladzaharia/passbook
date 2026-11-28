@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
@@ -208,6 +208,60 @@ describe('scanner entry flows', () => {
     for (const digit of '123456') await user.click(screen.getByRole('button', { name: digit }));
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
     expect(signIn).toHaveBeenLastCalledWith({ pin: '123456' });
+  });
+  it('turns the keypad off for the server wait after too many wrong PINs, then back on', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const signIn = vi
+        .fn<ScanApi['staffSignIn']>()
+        .mockRejectedValueOnce(
+          new ApiError({
+            status: 429,
+            code: 'RATE_LIMITED',
+            detail: 'Too many wrong PINs. Try again later.',
+            retryAfter: 90,
+          }),
+        )
+        .mockResolvedValue(sessionFixture());
+      const refetch = vi.fn().mockResolvedValue(undefined);
+      render(
+        wrapper(
+          <StaffStart
+            session={sessionFixture({ state: 'staff_required' })}
+            api={{ staffSignIn: signIn } as unknown as ScanApi}
+            refetch={refetch}
+          />,
+        ),
+      );
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      for (const digit of '000000') await user.click(screen.getByRole('button', { name: digit }));
+      expect(await screen.findByText(/Too many wrong PINs/)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-disabled', 'true'),
+      );
+      expect(signIn).toHaveBeenCalledTimes(1);
+
+      await user.keyboard('123456');
+      for (const digit of '123456') await user.click(screen.getByRole('button', { name: digit }));
+      expect(signIn).toHaveBeenCalledTimes(1);
+
+      // The server said 90 s: 60 s is not enough, 90 s is.
+      act(() => vi.advanceTimersByTime(60_000));
+      expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-disabled', 'true');
+      act(() => vi.advanceTimersByTime(30_000));
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: '1' })).not.toHaveAttribute(
+          'aria-disabled',
+          'true',
+        ),
+      );
+      for (const digit of '123456') await user.click(screen.getByRole('button', { name: digit }));
+      await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+      expect(signIn).toHaveBeenCalledTimes(2);
+      expect(signIn).toHaveBeenLastCalledWith({ pin: '123456' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it('falls back to a name when PIN-only is paused, and can go back to the keypad', async () => {
     const signIn = vi

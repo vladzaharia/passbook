@@ -92,7 +92,7 @@ export function ClosedCard({
             {SCAN_COPY.closed.openNow}
           </Button>
           <Button variant="outline" onClick={() => void refetch()}>
-            {SCAN_COPY.closed.check}
+            {SCAN_COPY.actions.tryAgain}
           </Button>
         </>
       )}

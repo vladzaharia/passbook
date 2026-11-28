@@ -108,7 +108,7 @@ export async function syncNow(
   if (authority && authority.orgId !== conn.orgId) throw new ForbiddenError();
   if (!conn.enabled) throw new ConflictError('The connection is disabled.', 'CONNECTION_DISABLED');
   if (!(await isOrgActive(sctx, conn.orgId))) {
-    throw new ConflictError('The organization is not active.', 'ORG_INACTIVE');
+    throw new ForbiddenError('The organization is not active.', 'ORG_INACTIVE');
   }
   const instanceId = await adminInstanceId(
     conn,

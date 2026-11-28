@@ -1,4 +1,4 @@
-import { Lock, ScanLine, ShieldCheck } from 'lucide-react';
+import { ScanLine, ShieldCheck } from 'lucide-react';
 import { type FormEvent, type Ref, useId, useState } from 'react';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
@@ -41,7 +41,7 @@ export function PairView({
   };
   const b = SCAN_COPY.boot;
   return (
-    <BootCard title={b.pairTitle} line={b.pairLine} testId="scan-pair">
+    <BootCard title={b.pairTitle} testId="scan-pair">
       {error ? <Callout tone="danger">{error}</Callout> : null}
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
@@ -92,10 +92,6 @@ export function PairView({
           ) : null}
         </div>
       ) : null}
-      <p className="scan-card-line scan-pair-footer">
-        <Lock aria-hidden size={16} />
-        {b.pairFooter}
-      </p>
     </BootCard>
   );
 }
