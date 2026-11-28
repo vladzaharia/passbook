@@ -1321,6 +1321,15 @@
       ]
     },
     {
+      "code": "DEVICE_KIND_FIXED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "DEVICE_PASS_BLOCKED",
       "statuses": [
         403
@@ -6240,6 +6249,15 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "STAFF_DEVICE_FIELDS_UNAVAILABLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
       ]
     },
     {

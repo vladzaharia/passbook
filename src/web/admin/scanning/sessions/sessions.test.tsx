@@ -342,7 +342,9 @@ describe('session administration', () => {
     expect(within(dialog).getByText('Wallet pass reader unavailable')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: /^Console/ })).toBeEnabled();
     expect(within(dialog).getByRole('button', { name: /^Handheld/ })).toBeEnabled();
-    expect(within(dialog).getByRole('button', { name: /Customer screen/ })).toBeEnabled();
+    expect(
+      within(dialog).queryByRole('button', { name: /Customer screen/ }),
+    ).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /Desk display/ })).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: /^Pair/ })).not.toBeInTheDocument();
     const user = userEvent.setup();

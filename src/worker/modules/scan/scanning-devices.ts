@@ -35,6 +35,7 @@ import {
   scanningDeviceRows,
 } from './repo-scanning-devices.ts';
 import { readScannerScope } from './repo-scope.ts';
+import { refuseScreenLayout, refuseStaffFields } from './scanning-device-guards.ts';
 import {
   conflictsWithAllScope,
   deviceConfigRevision,
@@ -43,7 +44,6 @@ import {
   projectedDeviceSettings,
   resolveSessionScope,
 } from './scanning-session-dto.ts';
-import { refuseScreenLayout, refuseStaffFields } from './scanning-device-guards.ts';
 import { loadScanningSession } from './scanning-sessions.ts';
 import { newCapture, slotChecks } from './setup-capture.ts';
 import { issuePairing, SETUP_CODES, setupConflict } from './setup-statements.ts';

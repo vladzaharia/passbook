@@ -10,7 +10,6 @@ import {
   ScanActionApprovalSchema,
   ScanAdminScopeSchema,
   ScanDirectionSchema,
-  ScanPinSchema,
   ScanUndoApprovalSchema,
   UuidV7Schema,
 } from './scan-base.ts';

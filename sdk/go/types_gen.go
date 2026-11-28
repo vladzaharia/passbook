@@ -16634,7 +16634,6 @@ type TerminalScansUndoParams struct {
 	IdempotencyKey string                        `json:"idempotencyKey"`
 	Scope          *TerminalScansUndoParamsScope `json:"scope,omitempty"`
 	Approval       any                           `json:"approval,omitempty"`
-	PIN            *string                       `json:"pin,omitempty"`
 }
 
 type TerminalScansUndoParamsApproval1 struct {

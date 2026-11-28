@@ -75607,10 +75607,6 @@
                 "additionalProperties": false
               }
             ]
-          },
-          "pin": {
-            "type": "string",
-            "pattern": "^\\d{6}$"
           }
         },
         "required": [
@@ -169930,6 +169926,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "DEVICE_KIND_FIXED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -169948,6 +169945,7 @@
           "SCAN_MODE_LIVE_ONLY",
           "SCAN_STAFF_CHANGED",
           "SCAN_SURFACE_UNSUPPORTED",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WORKBENCH_TEST_ONLY"
@@ -170185,6 +170183,7 @@
           "SCANNING_SESSION_PAUSED",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCAN_MODE_LIVE_ONLY",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -170328,6 +170327,7 @@
           "SCANNING_SESSION_PAUSED",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCAN_MODE_LIVE_ONLY",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "TEMPLATE_ARCHIVED",
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
@@ -173479,6 +173479,7 @@
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -173614,6 +173615,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -173735,6 +173737,7 @@
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -173870,6 +173873,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -175360,6 +175364,7 @@
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -175495,6 +175500,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",
@@ -175616,6 +175622,7 @@
           "BLUEPRINT_NOT_SCANNABLE",
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "CSRF_ORIGIN",
+          "DEVICE_KIND_FIXED",
           "DEVICE_REQUIRED",
           "ENROLLMENT_ENDED",
           "ENROLLMENT_NOT_FOUND",
@@ -175751,6 +175758,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_DEVICE_FIELDS_UNAVAILABLE",
           "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_ADMIN_RESET",

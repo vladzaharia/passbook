@@ -15884,7 +15884,6 @@ class TerminalScansUndoParams(_Model):
     idempotencyKey: str
     scope: TerminalScansUndoParamsScope | None = None
     approval: TerminalScansUndoParamsApproval1 | TerminalScansUndoParamsApproval2 | TerminalScansUndoParamsApproval3 | None = None
-    pin: str | None = None
 
 class TerminalScansUndoParamsApproval1(_Model):
     staffId: str | None = None

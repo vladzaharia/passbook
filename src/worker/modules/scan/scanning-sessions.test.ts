@@ -208,7 +208,7 @@ describe('legacy standalone monitors', () => {
           camera: 'available',
           keyboard: true,
           nativeBarcode: false,
-          surfaces: ['phone', 'operator', 'customer'],
+          surfaces: ['phone', 'operator'],
           preferred: 'operator',
         },
       },
@@ -216,7 +216,7 @@ describe('legacy standalone monitors', () => {
     );
     expect(report.status).toBe(200);
     expect(await report.json()).toMatchObject({
-      device: { surface: 'desk', effectiveSurface: 'desk' },
+      device: { surface: null, effectiveSurface: null },
     });
     const action = await call(
       'POST',

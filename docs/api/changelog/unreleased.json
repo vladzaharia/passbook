@@ -3265,6 +3265,14 @@
     "note": "A customer body's screen can be review."
   },
   {
+    "key": "GET /api/v1/scan/live 200.rows[].reason: field removed",
+    "class": "breaking",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].reason: field removed",
+    "note": "Rows no longer carry reason; read the refusal from the outcome."
+  },
+  {
     "key": "GET /api/v1/scan/roster 200.entries[].g: field added",
     "class": "additive",
     "operationId": "scan.getScanRoster",
@@ -8639,14 +8647,6 @@
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "body.approval.staffId: input field removed",
     "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
-  },
-  {
-    "key": "POST /api/v1/scan/scans/{scanId}/undo body.pin: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanScansByScanIdUndo",
-    "op": "POST /api/v1/scan/scans/{scanId}/undo",
-    "change": "body.pin: optional input field added",
-    "note": "Optional input for the SD0 approval contract."
   },
   {
     "key": "POST /api/v1/scan/sign-out 200.stillInside: field added",

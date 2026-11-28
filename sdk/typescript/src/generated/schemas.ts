@@ -14315,7 +14315,6 @@ export type TerminalScansUndoParams = {
   } | {
     approveAs: string;
   };
-  pin?: string;
 };
 
 export type TerminalSignOutEverywhereParams = {

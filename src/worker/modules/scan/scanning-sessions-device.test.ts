@@ -224,7 +224,7 @@ describe('session device authorization and live configuration', () => {
   });
 
   it('a name-only edit keeps a screen a screen, and a screen cannot sign staff in', async () => {
-    const { kit, parent, device, pair, call } = fixture;
+    const { kit, parent, pair, call } = fixture;
     const session = await parent('Screens');
     const created = await call('POST', `/scanning-sessions/${session.id}/devices`, {
       name: 'Customer screen',
