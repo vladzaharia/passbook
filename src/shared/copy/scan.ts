@@ -83,7 +83,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}. Check ID.' },
   not_inside: { headline: 'Not tapped in', sub: 'No entry recorded. Tap them in first.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
-  network: { headline: 'Offline', sub: 'Waiting for connection' },
+  network: { headline: 'Offline', sub: 'Not checked. Hold them and scan again.' },
   timeout: { headline: 'No answer', sub: 'Not checked. Hold them and scan again.' },
   unconfirmed: { headline: 'Not confirmed', sub: "Checking again when you're back online." },
   still_unconfirmed: { headline: 'Still not confirmed', sub: 'Check Recent before trying again.' },
