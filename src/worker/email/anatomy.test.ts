@@ -117,7 +117,10 @@ describe('email anatomy', () => {
     });
 
     it('has at most one button', () => {
-      const buttons = visible(html).match(/<a [^>]*>/g)?.filter(isButton) ?? [];
+      const buttons =
+        visible(html)
+          .match(/<a [^>]*>/g)
+          ?.filter(isButton) ?? [];
       // The bundle's per-pass Add links are row actions in a list (see bundle.test.ts).
       expect(buttons.length - (_name === 'bundle' ? 2 : 0)).toBeLessThanOrEqual(1);
     });
