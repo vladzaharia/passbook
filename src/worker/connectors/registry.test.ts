@@ -202,6 +202,16 @@ describe('defineRegistry refuses a declaration that does not match the methods',
       /guest/,
     ],
     [
+      'a two-way field with no master',
+      {
+        ...writer,
+        objects: {
+          member: { label: 'Member', fields: { tier: { type: 'string', direction: 'both' } } },
+        },
+      },
+      /master/,
+    ],
+    [
       'auth oauth2 without OAuth endpoints',
       {
         ...pushed,

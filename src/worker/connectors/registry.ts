@@ -51,6 +51,9 @@ function mismatches(d: ConnectorDefinition): string[] {
     );
   }
   for (const [object, entry] of Object.entries(d.objects ?? {})) {
+    for (const [field, f] of Object.entries(entry.fields)) {
+      need(f.direction !== 'both' || f.master, `two-way field ${object}.${field} needs a master`);
+    }
     const outgoing = Object.values(entry.fields).some((f) => f.direction !== 'in');
     need(
       !outgoing || caps.write?.objects[object],
