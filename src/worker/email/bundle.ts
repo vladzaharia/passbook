@@ -133,7 +133,7 @@ ${footer.html}`;
     header: input.orgName,
     ...(mark ? { headerMark: mark } : {}),
     ...(input.brand ? { brand: input.brand } : {}),
-    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD, tier: 'm' } } : {}),
+    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD } } : {}),
     body,
   });
   const sender = input.senderName?.trim();

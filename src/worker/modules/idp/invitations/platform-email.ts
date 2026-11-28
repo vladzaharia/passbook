@@ -36,7 +36,7 @@ ${buttonHtml(input.link, copy.button, true)}
       ...(images
         ? {
             headerMark: `${input.base}/apple-touch-icon.png`,
-            buddy: { base: input.base, mood: 'happy', tier: 'l' },
+            buddy: { base: input.base, mood: 'happy' },
           }
         : {}),
       body,

@@ -22,7 +22,7 @@ export function notice(base: string, subject: string, body: string): Rendered {
       ...(images
         ? {
             headerMark: `${base}/apple-touch-icon.png`,
-            buddy: { base, mood: 'curious', tier: 'l' },
+            buddy: { base, mood: 'curious' },
           }
         : {}),
       body: html,

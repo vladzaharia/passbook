@@ -106,7 +106,7 @@ ${actions}
       ...(images
         ? {
             headerMark: `${input.base}/apple-touch-icon.png`,
-            buddy: { base: input.base, mood: SIGN_IN_MOOD[input.purpose], tier: 'l' },
+            buddy: { base: input.base, mood: SIGN_IN_MOOD[input.purpose] },
           }
         : {}),
       body,

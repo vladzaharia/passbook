@@ -1,11 +1,6 @@
 import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
 import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
-import {
-  type BuddyTier,
-  EMAIL_BADGE,
-  EMAIL_BUDDY,
-  type EmailMood,
-} from '../../shared/email-art.ts';
+import { EMAIL_BADGE, EMAIL_BUDDY, type EmailMood } from '../../shared/email-art.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { buddySliceHtml } from './buddy.ts';
 
@@ -84,7 +79,7 @@ export function supportFooter(email: string | null, url: string | null) {
 
 /** The card's h1: 24/32, semibold, tight, as the hosted card. */
 export const titleHtml = (text: string, margin: string) =>
-  `<p class="e-strong" style="margin:${margin};${type('2xl')};font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${EMAIL_LIGHT.strong}">${text}</p>`;
+  `<h1 class="e-strong" style="margin:${margin};${type('2xl')};font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${EMAIL_LIGHT.strong}">${text}</h1>`;
 
 /**
  * A full-width 44 px link block (12 px padding, 20 px line): the kit Button's 14/500 type and
@@ -154,8 +149,8 @@ export interface ShellInput {
   headerMark?: string;
   /** The org's web logo and mark level (`emailBrandOf`): the logo replaces the name, the mark ends the column. */
   brand?: EmailBrand;
-  /** The mascot seated on the card's top edge at the right. `base`: PUBLIC_BASE_URL. */
-  buddy?: { base: string; mood: EmailMood; tier: BuddyTier };
+  /** The mascot, 96 px, seated on the card's top edge at the right. `base`: PUBLIC_BASE_URL. */
+  buddy?: { base: string; mood: EmailMood };
   /** Content of the card body, already escaped. */
   body: string;
 }
@@ -175,7 +170,7 @@ const COLUMN = 480;
 export function emailShell(input: ShellInput): string {
   const c = EMAIL_LIGHT;
   const r = T.radius.xl;
-  const art = input.buddy ? { ...EMAIL_BUDDY[input.buddy.tier], ...input.buddy } : null;
+  const art = input.buddy ? { ...EMAIL_BUDDY.m, ...input.buddy } : null;
   const lineHeight = T.text.xl.line;
   const name = `font-size:${T.text.xl.size}px;line-height:${T.text.xl.line}px;mso-line-height-rule:exactly;font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
   // A long name wraps beside the mark, which stays on its first line, not under it.
@@ -189,14 +184,14 @@ export function emailShell(input: ShellInput): string {
   // Alone, the band is the hosted 56 px.
   const inset = art ? PAD - art.clear : 0;
   const band = art
-    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" valign="bottom" style="padding:0 0 ${art.face - lineHeight / 2}px ${PAD + 1}px;${name};vertical-align:bottom">${wordmark}</td><td valign="bottom" align="right" width="${art.width}" style="width:${art.width}px;padding:0 ${inset}px 0 0;vertical-align:bottom;font-size:0;line-height:0">${buddySliceHtml(art.base, art.tier, art.mood, 'top')}</td></tr></table>`
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" valign="bottom" style="padding:0 0 ${art.face - lineHeight / 2}px ${PAD + 1}px;${name};vertical-align:bottom">${wordmark}</td><td valign="bottom" align="right" width="${art.width}" style="width:${art.width}px;padding:0 ${inset}px 0 0;vertical-align:bottom;font-size:0;line-height:0">${buddySliceHtml(art.base, art.mood, 'top')}</td></tr></table>`
     : `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td class="e-strong" style="padding:14px 0 14px ${PAD + 1}px;${name}">${wordmark}</td></tr></table>`;
   const gradient = `background-image:linear-gradient(115deg,${c.foil1},${c.foil2} 55%,${c.foil3});background-size:100% ${FOIL}px;background-repeat:no-repeat;border-radius:${r}px ${r}px 0 0`;
   // The foil: a gradient where clients draw one, else the first foil colour (Outlook). Under the
   // buddy the row is the legs' height, so Outlook gets a 2 px row of its own above it.
   const msoFoil = `<!--[if mso]><tr><td height="${FOIL}" bgcolor="${c.foil1}" style="height:${FOIL}px;background:${c.foil1};font-size:0;line-height:${FOIL}px;mso-line-height-rule:exactly">&nbsp;</td></tr><![endif]-->`;
   const seam = art
-    ? `${msoFoil}<tr><td class="e-seam" align="right" valign="top" style="height:${art.legs}px;padding:0 ${inset - 1}px 0 0;background-color:${c.card};${gradient};font-size:0;line-height:0">${buddySliceHtml(art.base, art.tier, art.mood, 'legs')}</td></tr>`
+    ? `${msoFoil}<tr><td class="e-seam" align="right" valign="top" style="height:${art.legs}px;padding:0 ${inset - 1}px 0 0;background-color:${c.card};${gradient};font-size:0;line-height:0">${buddySliceHtml(art.base, art.mood, 'legs')}</td></tr>`
     : `<tr><td class="e-seam" height="${FOIL}" style="height:${FOIL}px;background-color:${c.foil1};${gradient};font-size:0;line-height:${FOIL}px;mso-line-height-rule:exactly">&nbsp;</td></tr>`;
   const top = art ? PAD - art.legs : PAD - FOIL;
   // Outlook ignores max-width: a fixed ghost table holds the column there.

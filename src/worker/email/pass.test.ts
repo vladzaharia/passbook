@@ -376,7 +376,7 @@ describe('pass email', () => {
       expect(html.indexOf('Harbor Lights Festival</td>')).toBeLessThan(top);
       expect(top).toBeLessThan(html.indexOf('class="e-card"'));
       expect(html.indexOf('class="e-seam"')).toBeLessThan(legs);
-      expect(legs).toBeLessThan(html.indexOf('Your pass is ready</p>'));
+      expect(legs).toBeLessThan(html.indexOf('Your pass is ready</h1>'));
       expect(html).toContain(
         `<source srcset="${BASE}/email/buddy-m-happy-dark-top-2x.png 2x, ${BASE}/email/buddy-m-happy-dark-top-3x.png 3x" media="(prefers-color-scheme: dark)">`,
       );
