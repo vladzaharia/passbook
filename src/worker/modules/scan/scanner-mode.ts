@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
+import { assertLiveFeatures, liveNeeds } from './live-features.ts';
 import {
   adminActorOf,
   adminGrant,
@@ -89,6 +90,15 @@ export async function changeMode(
     scanningDeviceRow(db, row.orgId, id),
     scanningSessionForDevice(db, row.orgId, id),
   ]);
+  // Go live leaves the Test waiver: every waived feature the scanner uses must be on the Live plan.
+  const liveChecks =
+    input.mode === 'live'
+      ? await assertLiveFeatures(
+          ctx,
+          row.orgId,
+          liveNeeds(row.deviceRole, JSON.parse(row.settings)),
+        )
+      : [];
   const now = ctx.clock.now();
   const g = adminGrant(
     ctx,
@@ -100,6 +110,7 @@ export async function changeMode(
       scannerEpoch(id, row.configEpoch),
       exactlyOne('scanners', { id, mode: row.mode }, undefined, 'config'),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
+      ...liveChecks,
     ],
     SCANNER_CODES,
     id,

@@ -1,11 +1,12 @@
 // The request guard for entitlements (design-multi-tenancy.md section 2.3, MT2). A route declares
 // `RouteAuth.feature`; `requireCaller` records it on the principal, and the org's entitlements are
 // checked once the org is known: at once for an org-bound key, in `tenantAuthorityOf` for a session or a
-// platform key. Fail closed: no row, no key or an invalid value refuses. A Test principal gets the
-// Test-waivable keys (billing AD5).
+// platform key. Fail closed: no row, no key or an invalid value refuses. A Test principal gets a
+// Test-waivable key in full (billing AD5) only on a route that opts in with `testWaived`: one whose object
+// carries the principal's mode, never an org-wide write.
 
 import type { Mode } from '../../shared/contracts/common.ts';
-import { valuesInMode } from '../../shared/contracts/entitlements/test-waivable.ts';
+import { isTestWaivable, valuesInMode } from '../../shared/contracts/entitlements/test-waivable.ts';
 import {
   type EntitlementKey,
   entitlementDef,
@@ -17,17 +18,33 @@ import { type Entitlements, entitlementsOf, isEntitled } from './entitlements.ts
 import { FeatureNotIncludedError } from './errors.ts';
 import type { ServiceContext } from './service-context.ts';
 
-/** A key, or a level key with the lowest level that passes. */
-export type FeatureRule = EntitlementKey | { key: EntitlementKey; atLeast: string };
+/**
+ * A key, or a key with the lowest level that passes (levels) and `testWaived` for a route whose object
+ * carries the principal's mode, so a Test principal gets the key in full.
+ */
+export type FeatureRule =
+  | EntitlementKey
+  | { key: EntitlementKey; atLeast?: string; testWaived?: true };
 
 export const featureKeyOf = (rule: FeatureRule): EntitlementKey =>
   typeof rule === 'string' ? rule : rule.key;
 
-/** Throws when a declaration cannot mean what it says: a bare level or list key, or `atLeast` on anything but a level. */
+const atLeastOf = (rule: FeatureRule): string | undefined =>
+  typeof rule === 'string' ? undefined : rule.atLeast;
+
+const waivesIn = (rule: FeatureRule, mode: Mode | undefined): boolean =>
+  typeof rule !== 'string' && rule.testWaived === true && mode === 'test';
+
+/**
+ * Throws when a declaration cannot mean what it says: a bare level or list key, `atLeast` on anything but
+ * a level, or `testWaived` on a key that is never waived.
+ */
 export function checkFeatureRule(where: string, rule: FeatureRule): void {
   const key = featureKeyOf(rule);
   const def = entitlementDef(key);
-  const atLeast = typeof rule === 'string' ? undefined : rule.atLeast;
+  const atLeast = atLeastOf(rule);
+  if (typeof rule !== 'string' && rule.testWaived && (!isTestWaivable(key) || def.kind === 'limit'))
+    throw new Error(`${where}: feature ${key} is not Test-waivable, so it takes no testWaived`);
   if (def.kind === 'list')
     throw new Error(`${where}: feature ${key} is a list; a route cannot guard it`);
   if (def.kind === 'level' && (atLeast === undefined || levelsAtLeast(key, atLeast).length === 0))
@@ -77,10 +94,11 @@ export async function enforceFeatures(
 ): Promise<void> {
   const state = states.get(auth);
   if (!state || state.checked.has(orgId)) return;
-  const entitlements = await entitlementsIn(ctx, orgId, auth.mode ?? 'live');
+  const stored = await entitlementsOf(ctx, orgId);
   for (const rule of [...state.implicit, ...state.declared]) {
     const key = featureKeyOf(rule);
-    if (!isEntitled(entitlements, key, typeof rule === 'string' ? undefined : rule.atLeast))
+    const values = waivesIn(rule, auth.mode) ? valuesInMode(stored, 'test') : stored;
+    if (!isEntitled(values, key, atLeastOf(rule)))
       throw new FeatureNotIncludedError(key, featureNotIncluded(key));
   }
   state.checked.add(orgId);

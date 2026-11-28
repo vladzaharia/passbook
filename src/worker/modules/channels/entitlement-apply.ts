@@ -5,7 +5,7 @@ import {
 } from '../../../shared/channels.ts';
 import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { valuesInMode } from '../../../shared/contracts/entitlements/test-waivable.ts';
+import { valuesInMode, WAIVED_KEYS } from '../../../shared/contracts/entitlements/test-waivable.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -21,9 +21,13 @@ import { pendingRun } from './repo-runs.ts';
 
 const SEND_ATTEMPTS = 3;
 
-/** Only what a plan can block in `mode`: in Test, the waived features (paper, nfc) never block. */
+/**
+ * Only what a plan can block in `mode`: in Test, a waived feature (paper) never blocks. The waiver needs a
+ * row, so a placeholder stands in for each waived key; anything else reads as missing, so blockable.
+ */
 function blockableIn(mode: Mode, channels: readonly Channel[]): Channel[] {
-  const blocked = blockedByEntitlement(valuesInMode({}, mode));
+  const rows = mode === 'test' ? Object.fromEntries(WAIVED_KEYS.map((key) => [key, 0])) : {};
+  const blocked = blockedByEntitlement(valuesInMode(rows, mode));
   return channels.filter((c) => blocked[c] !== undefined);
 }
 

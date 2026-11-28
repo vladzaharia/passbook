@@ -28,6 +28,10 @@ const ORG_WIDE = [
   'org.restricted',
   'passes.issuePaused',
   'templates.uploads',
+  'connectors',
+  'nfc',
+  'nfc.lending',
+  'nfc.wallet',
 ];
 
 describe('Test-mode waiver classification', () => {
@@ -68,8 +72,8 @@ describe('valuesInMode', () => {
   it('turns every waived key full in Test and leaves the rest', () => {
     const test = valuesInMode(trial, 'test');
     expect(entitledValue('print', test.print)).toBe(true);
-    expect(entitledValue('nfc', test.nfc, 'secure')).toBe(true);
-    expect(entitledValue('connectors', test.connectors, 'square')).toBe(true);
+    expect(test.nfc).toEqual(trial.nfc);
+    expect(test.connectors).toEqual(trial.connectors);
     expect(entitledValue('templates.stylesBlocked', test['templates.stylesBlocked'], 'x')).toBe(
       true,
     );
@@ -77,9 +81,9 @@ describe('valuesInMode', () => {
       expect(test[key], key).toEqual(trial[key]);
   });
 
-  it('waives a key the org has no row for', () => {
+  it('waives nothing the org has no row for', () => {
     const none: Partial<Record<EntitlementKey, EntitlementValue>> = {};
-    expect(valuesInMode(none, 'test').print).toBe(1);
-    expect(valuesInMode(none, 'test')['identity.own']).toBeUndefined();
+    expect(valuesInMode(none, 'test')).toEqual({});
+    expect(valuesInMode({ print: 0 }, 'test')).toEqual({ print: 1 });
   });
 });

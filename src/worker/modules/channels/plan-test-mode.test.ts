@@ -5,10 +5,10 @@ import { handleEntitlementApply } from './entitlement-apply.ts';
 import { type Job, legacy, planKit, trial } from './plan-apply-test-fixtures.ts';
 import { levels } from './service.ts';
 
-// Test-mode waiver (billing AD5): paper (print) and nfc are waived in Test; the wallets are not.
+// Test-mode waiver (billing AD5): paper (print) is waived in Test; nfc and the wallets are not.
 
 describe('channel levels in Test mode', () => {
-  it('a trial blocks paper and nfc in Live only; google and samsung stay with the plan in both', async () => {
+  it('a trial blocks paper in Live only; nfc, google and samsung stay with the plan in both', async () => {
     const kit = await ruleKit();
     await run(kit.env.DB, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [
       'trial',
@@ -19,14 +19,13 @@ describe('channel levels in Test mode', () => {
     const test = await levels(kit.ctx, kit.org.id, 'test');
     expect(test.entitlement).toBeDefined();
     expect(test.entitlement?.paper).toBeUndefined();
-    expect(test.entitlement?.nfc).toBeUndefined();
-    for (const p of ['google', 'samsung'] as const)
+    for (const p of ['nfc', 'google', 'samsung'] as const)
       expect(test.entitlement?.[p]).toBe(live.entitlement?.[p]);
   });
 });
 
 describe('a plan change in Test mode', () => {
-  it('records the Test run without the waived channels, and the Live run with them', async () => {
+  it('records the Test run without the waived channel, and the Live run with it', async () => {
     const { t, ctx, change, planRuns } = await planKit(1);
     await t.passIn('test');
     const job = (await change(legacy, trial, 'trial')) as Job;
@@ -38,7 +37,7 @@ describe('a plan change in Test mode', () => {
     );
     const test = JSON.parse(byMode.test?.to_blocked as string) as string[];
     expect(test).not.toContain('paper');
-    expect(test).not.toContain('nfc');
+    expect(test).toContain('nfc');
     expect(JSON.parse(byMode.test?.from_blocked as string)).toEqual([]);
   });
 });

@@ -1,17 +1,16 @@
 // Test-mode waiver (billing plan AD5). A feature whose objects carry a mode is free in Test, so a team can
 // try it before paying; org-wide features and every count are not. Classified by name, so a key a later
 // package adds is already decided; a test fails on any registry key in neither list.
+// A route waives only when it opts in (`feature: { key, testWaived: true }`) and only for a Test principal.
+// No row, no waiver. Anything that moves a Test object to Live (scanner Go live, template promote) re-checks
+// every waived key the object uses against the Live plan and refuses with FEATURE_NOT_INCLUDED.
 import type { Mode } from '../common.ts';
 import type { EntitlementValue } from './kinds.ts';
 import { ENTITLEMENT_KEYS, type EntitlementKey, entitlementDef } from './registry.ts';
 
 /** Flags, levels and lists that pass in Test. Never a limit. */
 export const TEST_WAIVABLE: readonly string[] = [
-  'connectors',
   'print',
-  'nfc',
-  'nfc.lending',
-  'nfc.wallet',
   'scanning.desk',
   'scanning.rules',
   'scanning.approvals',
@@ -28,9 +27,14 @@ export const TEST_WAIVABLE: readonly string[] = [
 
 /**
  * Org-wide features, billing state and every count: the same in Test as in Live. `templates.uploads` is
- * here because an upload makes an org-wide template that releases to Live.
+ * here because an upload makes an org-wide template that releases to Live; `connectors` because a
+ * connection has no mode; NFC because a tag write is not yet checked per mode (E7).
  */
 export const NOT_TEST_WAIVABLE: readonly string[] = [
+  'connectors',
+  'nfc',
+  'nfc.lending',
+  'nfc.wallet',
   'templates.uploads',
   'api',
   'api.rateTier',
@@ -101,11 +105,15 @@ function fullValue(key: EntitlementKey): EntitlementValue {
   }
 }
 
-/** The org's values as a principal in `mode` sees them: Live unchanged, Test with every waived key full. */
+/**
+ * The org's values as a principal in `mode` sees them: Live unchanged, Test with every waived key the org
+ * has a row for full. A key with no row stays missing, so it still refuses.
+ */
 export function valuesInMode<T extends Partial<Record<EntitlementKey, EntitlementValue>>>(
   values: T,
   mode: Mode,
 ): T {
   if (mode !== 'test') return values;
-  return { ...values, ...Object.fromEntries(WAIVED_KEYS.map((key) => [key, fullValue(key)])) };
+  const waived = WAIVED_KEYS.filter((key) => values[key] !== undefined);
+  return { ...values, ...Object.fromEntries(waived.map((key) => [key, fullValue(key)])) };
 }

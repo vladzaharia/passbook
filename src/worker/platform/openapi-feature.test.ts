@@ -34,7 +34,7 @@ const FEATURE_ROUTES: Record<string, unknown> = {
   'post /api/v1/scanners/{id}/revoke': 'scanning.devices',
   'post /api/v1/scanning-sessions/{id}/hold': 'scanning.devices',
   // Declared with `xFeature` (documentation): the service and its grant enforce them.
-  'post /api/v1/passes/{id}/prints': 'print',
+  'post /api/v1/passes/{id}/prints': { key: 'print', testWaived: true },
   'post /api/v1/nfc/passes/{passId}/tags': { key: 'nfc', atLeast: 'basic' },
   'post /api/v1/nfc/passes/{passId}/tags/assign': { key: 'nfc', atLeast: 'basic' },
   'patch /api/v1/nfc/bindings/{bindingId}': { key: 'nfc', atLeast: 'basic' },

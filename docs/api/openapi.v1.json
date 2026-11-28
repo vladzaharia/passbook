@@ -129504,7 +129504,10 @@
     },
     "/api/v1/passes/{id}/prints": {
       "post": {
-        "x-feature": "print",
+        "x-feature": {
+          "key": "print",
+          "testWaived": true
+        },
         "summary": "Print a ticket; an earlier print of the pass is voided",
         "tags": [
           "passes"

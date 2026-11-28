@@ -18,8 +18,9 @@ import { entitled, withinLimit } from './entitlements.ts';
 import { handleError } from './error-handler.ts';
 import { createRouter, register } from './openapi.ts';
 
-// Test-mode waiver (billing plan AD5): a waivable flag or level passes in Test and stays refused in Live;
-// a limit and an org-wide key are refused in both.
+// Test-mode waiver (billing plan AD5): a waivable key passes in Test on a route that opts in
+// (`testWaived`) and stays refused in Live; the same key on a route that does not opt in, nfc, a limit and
+// an org-wide key are refused in both. No row, no waiver.
 
 type Headers = Record<string, string>;
 type Who = 'live session' | 'test session' | 'live key' | 'test key';
@@ -27,7 +28,9 @@ type Who = 'live session' | 'test session' | 'live key' | 'test key';
 let kit: Kit;
 let app: Hono<AppBindings>;
 let orgId: string;
+let bareOrgId: string;
 const who = {} as Record<Who, Headers>;
+let bareTest: Headers;
 
 const OFF: [string, string][] = [
   ['print', '0'],
@@ -41,6 +44,15 @@ const overrideIn = (db: D1Database, org: string, key: string, value: string) =>
     'INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, ?, ?, 1)',
     [org, key, value],
   );
+// Points the org at a preset with no rows, so every key is missing.
+const withoutRows = async (db: D1Database, org: string) => {
+  await run(
+    db,
+    "INSERT OR IGNORE INTO entitlement_preset_meta (preset, label, updated_at) VALUES ('no_rows', 'No rows', 1)",
+    [],
+  );
+  await run(db, "UPDATE org_entitlements SET preset = 'no_rows' WHERE org_id = ?", [org]);
+};
 
 beforeAll(async () => {
   kit = await setupKit();
@@ -52,15 +64,25 @@ beforeAll(async () => {
   who['test session'] = { ...session, [MODE_HEADER]: 'test' };
   who['live key'] = (await makeApiKey(kit.fx, { orgId, scopes })).headers;
   who['test key'] = (await makeApiKey(kit.fx, { orgId, scopes, mode: 'test' })).headers;
+  bareOrgId = (await makeOrg(kit.fx)).id;
+  await withoutRows(kit.env.DB, bareOrgId);
+  const bare = (await eventMember(kit, bareOrgId, ['pass_operator'])).session.headers;
+  bareTest = { ...bare, [MODE_HEADER]: 'test' };
 
   const router = createRouter();
   const auth = { scope: 'passes:read', capability: 'passes:read', requestMode: true } as const;
-  const prove = (path: string, feature: NonNullable<Parameters<typeof register>[2]['auth']>) =>
+  const prove = (
+    path: string,
+    feature: NonNullable<Parameters<typeof register>[2]['auth']>,
+    org = () => orgId,
+  ) =>
     register(router, 't', { method: 'get', path, summary: path, auth: feature }, async (c) => {
-      await tenantAuthorityOf(kit.ctx, authOf(c), orgId, 'passes:read');
+      await tenantAuthorityOf(kit.ctx, authOf(c), org(), 'passes:read');
       return c.json({ ok: true });
     });
+  prove('/opted-in', { ...auth, feature: { key: 'print', testWaived: true } });
   prove('/flag', { ...auth, feature: 'print' });
+  prove('/no-row', { ...auth, feature: { key: 'print', testWaived: true } }, () => bareOrgId);
   prove('/level', { ...auth, feature: { key: 'nfc', atLeast: 'secure' } });
   prove('/limit', { ...auth, feature: 'scanning.devices' });
   prove('/org-wide', { ...auth, feature: 'identity.own' });
@@ -82,8 +104,9 @@ const call = (path: string, headers: Headers) =>
 
 describe('RouteAuth.feature in Test mode', () => {
   const ROUTES: [string, string, boolean][] = [
-    ['/flag', 'print', true],
-    ['/level', 'nfc', true],
+    ['/opted-in', 'print', true],
+    ['/flag', 'print', false],
+    ['/level', 'nfc', false],
     ['/limit', 'scanning.devices', false],
     ['/org-wide', 'identity.own', false],
   ];
@@ -99,13 +122,19 @@ describe('RouteAuth.feature in Test mode', () => {
           await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
           expect(((await res.json()) as { feature?: string }).feature).toBe(feature);
         });
+
+  it('a Test session on an opted-in route is not waived for a key the org has no row for', async () => {
+    const res = await call('/no-row', bareTest);
+    await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
+    expect(((await res.json()) as { feature?: string }).feature).toBe('print');
+  });
 });
 
 describe('entitled() and withinLimit() in Test mode', () => {
   const COUNT = 'SELECT count(*) FROM connections cn WHERE cn.org_id = {org}';
   const cases: [string, Check, boolean][] = [
     ['waivable flag', entitled('print'), true],
-    ['waivable level', entitled('nfc', 'secure'), true],
+    ['nfc level', entitled('nfc', 'secure'), false],
     ['limit', entitled('scanning.devices'), false],
     ['limit count', withinLimit('connections', COUNT), false],
     ['org-wide flag', entitled('identity.own'), false],
@@ -122,6 +151,19 @@ describe('entitled() and withinLimit() in Test mode', () => {
     else expect((await commit('test'))?.code).toBe(code);
     // An org-scoped grant does not fence its rows by mode, so it never waives.
     expect((await commit('test', 'org.test.entitled'))?.code).toBe(code);
+  });
+
+  it('a Test actor is not waived for a key the org has no row for', async () => {
+    const { s, route, member } = await setupGrant('waiver-no-row');
+    await withoutRows(s.f.env.DB, s.org.id);
+    const e = await refusal(
+      grant(route, {
+        purpose: 'org_mode.test.entitled',
+        principal: member({ mode: 'test' }),
+        checks: [entitled('print')],
+      }).commit(),
+    );
+    expect(e?.code).toBe('FEATURE_NOT_INCLUDED');
   });
 
   it('a principal without a mode is not waived', async () => {

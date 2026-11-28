@@ -299,6 +299,19 @@ describe('declarations', () => {
     expect(() => checkFeatureRule('x', { key: 'api', atLeast: 'read' })).not.toThrow();
   });
 
+  it('takes testWaived only on a Test-waivable key', () => {
+    expect(() => checkFeatureRule('x', { key: 'print', testWaived: true })).not.toThrow();
+    expect(() => checkFeatureRule('x', { key: 'identity.own', testWaived: true })).toThrow(
+      /testWaived/,
+    );
+    expect(() => checkFeatureRule('x', { key: 'nfc', atLeast: 'basic', testWaived: true })).toThrow(
+      /testWaived/,
+    );
+    expect(() => checkFeatureRule('x', { key: 'scanning.devices', testWaived: true })).toThrow(
+      /testWaived/,
+    );
+  });
+
   it('refuses a feature on a route that has no tenant principal', () => {
     const router = createRouter();
     expect(() =>

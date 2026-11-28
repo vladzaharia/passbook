@@ -8805,8 +8805,8 @@
     "class": "notable",
     "operationId": "",
     "op": "Test mode",
-    "change": "403 FEATURE_NOT_INCLUDED: no longer returned for Test-waivable features in Test mode",
-    "note": "In Test mode, features whose objects carry a mode (print, nfc, connectors, template styles) pass on any plan. Limits and org-wide features still apply."
+    "change": "403 FEATURE_NOT_INCLUDED: no longer returned in Test mode for Test-waivable features on operations whose x-feature carries testWaived",
+    "note": "Test mode passes print and template styles on any plan; limits, NFC, connectors and org-wide features still apply. Go live checks the Live plan."
   },
   {
     "key": "webhook pass.removed data.runId: field added",

@@ -43,7 +43,7 @@ const lookup = (b: Binds, key: EntitlementKey, expr: (v: string) => string): str
 /**
  * The org may use `key`. A flag must be 1. A level must be at least `want`. A list: `want` is the item,
  * which an allow-list must name (`*`, the item or `type/*`) and a block-list must not. A limit is on unless
- * it is 0 (`null` has no cap). A Test-waivable key passes for a Test actor of an org_mode grant. Reason
+ * it is 0 (`null` has no cap). A Test-waivable key the org has a row for passes for a Test actor of an org_mode grant. Reason
  * `entitlement`.
  */
 export function entitled(key: EntitlementKey, want?: string): Check {
@@ -87,7 +87,10 @@ export function entitled(key: EntitlementKey, want?: string): Check {
     reason: 'entitlement',
     ok: (b, scope) => {
       needOrg(scope);
-      return waivable && scope === 'org_mode' ? `(a.mode IS 'test' OR ${stored(b)})` : stored(b);
+      if (!waivable || scope !== 'org_mode') return stored(b);
+      // No row, no waiver: the key must be on the org's plan at some value.
+      const hasRow = lookup(b, key, () => '1');
+      return `((a.mode IS 'test' AND ${hasRow} IS 1) OR ${stored(b)})`;
     },
   };
 }
