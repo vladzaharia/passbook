@@ -81,26 +81,30 @@ export function UploadReport({
         </section>
       ) : null}
       {finished ? null : (
-        <Card>
-          <CardHeader title="Package checklist" />
-          <CardBody className="flex flex-col gap-4">
-            <PackageChecklist files={files} />
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              iconStart={<Download aria-hidden />}
-              className="self-start"
+        <>
+          {files ? (
+            <Card>
+              <CardHeader title="Package" />
+              <CardBody>
+                <PackageChecklist files={files} />
+              </CardBody>
+            </Card>
+          ) : null}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            iconStart={<Download aria-hidden />}
+            className="self-start"
+          >
+            <a
+              href={`/api/v1/templates/baked:starter-generic/package?orgId=${encodeURIComponent(selectedScope)}`}
+              download
             >
-              <a
-                href={`/api/v1/templates/baked:starter-generic/package?orgId=${encodeURIComponent(selectedScope)}`}
-                download
-              >
-                Download a starter package
-              </a>
-            </Button>
-          </CardBody>
-        </Card>
+              Download a starter package
+            </a>
+          </Button>
+        </>
       )}
     </>
   );

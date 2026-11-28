@@ -144,7 +144,7 @@ export function MigrationSection() {
           </Button>
         }
       >
-        Serving stays blocked while any account has no credential source.
+        Serving stays blocked until every account has a credential source.
       </Callout>
       <DataTable
         caption="Legacy wallet accounts"

@@ -136,7 +136,10 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await expect(page.getByTestId('session-device').filter({ hasText: deviceName })).toContainText(
       '1360 × 900',
     );
-    await page.screenshot({ path: 'test-results/shared-session-admin.png', fullPage: true });
+    await page.screenshot({
+      path: test.info().outputPath('shared-session-admin.png'),
+      fullPage: true,
+    });
     const phoneCard = page.getByTestId('session-device').filter({ hasText: second.name });
     await phoneCard.getByRole('button', { name: 'Configure device', exact: true }).click();
     const configuration = page.getByRole('dialog', { name: `Configure ${second.name}` });
@@ -162,7 +165,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     }).toPass({ timeout: 15_000 });
     await expect(phone.getByTestId('scan-start')).toHaveCount(0);
     await expect(phone.locator('video')).toHaveCount(0);
-    await phone.screenshot({ path: 'test-results/shared-session-phone-operator.png' });
+    await phone.screenshot({ path: test.info().outputPath('shared-session-phone-operator.png') });
     await desk.getByRole('button', { name: /^Close/ }).click();
     const update = await api.send('PATCH', `/api/v1/scanning-sessions/${sessionId}`, {
       settings: { flow: 'choose' },
@@ -179,7 +182,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     expect(await ledger()).toHaveLength(2);
     await desk.getByRole('button', { name: 'Check in', exact: true }).click();
     await expect.poll(async () => (await ledger()).length).toBe(3);
-    await desk.screenshot({ path: 'test-results/shared-session-operator.png' });
+    await desk.screenshot({ path: test.info().outputPath('shared-session-operator.png') });
     await api.send('PATCH', `/api/v1/scanning-sessions/${sessionId}`, {
       status: 'paused',
       revision: update.updatedAt,
@@ -268,7 +271,7 @@ test('signed-out people and regular users have pairing without administrator ent
       await expect(page.getByTestId('scan-pair')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Scan as Admin', exact: true })).toHaveCount(0);
       await page.screenshot({
-        path: `test-results/pairing-${storageState ? 'user' : 'signed-out'}.png`,
+        path: test.info().outputPath(`pairing-${storageState ? 'user' : 'signed-out'}.png`),
       });
     } finally {
       await context.close();

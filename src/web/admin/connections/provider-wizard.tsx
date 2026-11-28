@@ -291,7 +291,7 @@ export function ProviderWizard({
         onNext={next}
         nextLabel={label}
         nextDisabled={(holding && !saved) || (id === 'test' && !verified)}
-        nextHint={holding ? 'Copy the secret.' : 'Waiting for a delivery.'}
+        nextHint={holding ? 'Copy the secret.' : undefined}
         barMenu={barMenu}
         busy={actions.update.isPending}
       >
