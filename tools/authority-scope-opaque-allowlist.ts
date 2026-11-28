@@ -95,7 +95,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
   'src/worker/modules/retention/repo-sweep.ts': {
     reason: 'org scope, eligibility and legal-hold SQL built in this file',
     exprs: ['e.sql'],
-    hash: 'b37360bf2f15',
+    hash: 'a100269bcca5',
   },
   'src/worker/modules/retention/repo-receipts.ts': {
     reason: 'receipt gate: a read-only count, vetted by assertSqlText',
