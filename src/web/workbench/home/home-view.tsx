@@ -144,7 +144,7 @@ export function HomeView() {
 
   const q = sandbox ? summary.data?.quickstart : undefined;
   const next =
-    summary.data === undefined ? (
+    summary.data === undefined && !summary.error ? (
       <Skeleton className="h-28 w-full" />
     ) : (
       <NextStep orgId={orgId} done={q?.done} total={q?.total} />
@@ -177,7 +177,12 @@ export function HomeView() {
             />
           </div>
         </div>
-        <Stats orgId={orgId} summary={summary.data} />
+        <Stats
+          orgId={orgId}
+          summary={summary.data}
+          error={summary.error}
+          onRetry={() => void summary.refetch()}
+        />
         <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           <RecentCalls
             orgId={orgId}

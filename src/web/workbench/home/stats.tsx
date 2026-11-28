@@ -4,6 +4,7 @@ import { type WbTool, wbPath } from '../../../shared/workbench.ts';
 import { cn } from '../../lib/cn.ts';
 import { CARD_SURFACE } from '../../ui/card.tsx';
 import { Skeleton } from '../../ui/skeleton.tsx';
+import { ToolFailed } from '../states/states.tsx';
 import type { Summary } from './data.ts';
 
 interface Stat {
@@ -48,7 +49,18 @@ export function statsOf(s: Summary): Stat[] {
 const meter = (n: number, limit: number | null | undefined) =>
   limit ? Math.min(100, Math.round((n / limit) * 100)) : 0;
 
-export function Stats({ orgId, summary }: { orgId: string; summary: Summary | undefined }) {
+export function Stats({
+  orgId,
+  summary,
+  error,
+  onRetry,
+}: {
+  orgId: string;
+  summary: Summary | undefined;
+  error?: unknown;
+  onRetry: () => unknown;
+}) {
+  if (!summary && error) return <ToolFailed error={error} onRetry={onRetry} />;
   if (!summary)
     return (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" role="status" data-loading="content">

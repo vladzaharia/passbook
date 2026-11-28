@@ -170,6 +170,21 @@ describe('Home (sandbox)', () => {
   });
 });
 
+describe('Home (summary fails)', () => {
+  it('shows a failed state with Retry, not a stats skeleton that never clears', async () => {
+    await renderApp('/workbench/o/sbx', {
+      session: 'developer',
+      handlers: {
+        ...homeHandlers(SANDBOX),
+        '/api/v1/workbench/summary': () => json({ error: 'down' }, 503),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Test passes' });
+    expect(await screen.findAllByRole('button', { name: 'Retry' })).not.toHaveLength(0);
+    expect(document.querySelector('[data-loading="content"]')).toBeNull();
+  });
+});
+
 describe('Home (org)', () => {
   it('says Test data only once and shows what needs a look', async () => {
     await renderApp('/workbench/o/nw', {
