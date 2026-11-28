@@ -188,11 +188,7 @@ export function DeviceSheet({
                   ) : null}
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-fg-muted">
-                Waiting for this device to report its screen and inputs.
-              </p>
-            )}
+            ) : null}
             {changed || error ? (
               <Callout tone={changed ? 'warning' : 'danger'}>
                 {changed ? 'Device settings changed elsewhere.' : error}
@@ -245,7 +241,6 @@ export function DeviceSheet({
                 </section>
               ) : (
                 <>
-                  <p className="text-sm text-fg-muted">This display cannot check anyone in.</p>
                   <DeviceFollows
                     value={overrides}
                     onChange={setOverrides}
