@@ -12,7 +12,6 @@ export interface RoleInput {
   /** Root `semantics` of pass.json. */
   semantics?: SemanticTags;
   barcodes: readonly ViewBarcode[];
-  dates: readonly { start?: string; end?: string }[];
   /** The start and end the template's own inputs name (paper's resolver). */
   declared?: { start?: string; end?: string };
   locations: readonly PassLocation[];
@@ -212,14 +211,14 @@ export const ROLE_RULES: Record<WalletRole, Rule> = {
   eventStart: {
     semantic: dateOf('eventStartDate', 'eventStartDateInfo'),
     style: (i) => {
-      const start = i.declared?.start ?? i.dates[0]?.start;
+      const start = i.declared?.start;
       return start ? dateHit(start) : undefined;
     },
   },
   eventEnd: {
     semantic: dateOf('eventEndDate'),
     style: (i) => {
-      const end = i.declared?.end ?? i.dates[0]?.end;
+      const end = i.declared?.end;
       return end ? dateHit(end) : undefined;
     },
   },
@@ -273,7 +272,7 @@ export const ROLE_RULES: Record<WalletRole, Rule> = {
   },
   validFrom: {
     style: (i) => {
-      const start = i.declared?.start ?? i.dates[0]?.start;
+      const start = i.declared?.start;
       return start ? dateHit(start) : undefined;
     },
   },

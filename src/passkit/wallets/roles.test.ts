@@ -28,7 +28,6 @@ const input = (style: PassStyle, extra: Partial<RoleInput> = {}): RoleInput => (
   org: 'Acme',
   fields: [],
   barcodes: [],
-  dates: [],
   locations: [],
   ...extra,
 });
@@ -67,7 +66,6 @@ interface Row {
 const PRIMARY = field('primary', 'p', 'Primary', { label: 'Pl' });
 const SECONDARY = field('secondary', 'q', 'Secondary');
 const ALL_FIELDS = [PRIMARY, SECONDARY];
-const DATES = [{ start: '2030-01-01T10:00:00Z', end: '2030-01-01T12:00:00Z' }];
 const bare = input('generic', { fields: ALL_FIELDS });
 
 const ROWS: Row[] = [
@@ -112,15 +110,9 @@ const ROWS: Row[] = [
         '2030-03-03T20:00:00Z',
       ],
       [
-        'relevantDates[0] start',
+        'the template start input',
         'style',
-        input('generic', { dates: DATES }),
-        '2030-01-01T10:00:00Z',
-      ],
-      [
-        'the template start input before the relevance date',
-        'style',
-        input('generic', { dates: DATES, declared: { start: '2030-01-01T10:30:00Z' } }),
+        input('generic', { declared: { start: '2030-01-01T10:30:00Z' } }),
         '2030-01-01T10:30:00Z',
       ],
     ],
@@ -138,15 +130,14 @@ const ROWS: Row[] = [
         withSemantics('generic', { eventEndDate: '2030-02-02T23:00:00Z' }),
         '2030-02-02T23:00:00Z',
       ],
-      ['relevantDates[0] end', 'style', input('generic', { dates: DATES }), '2030-01-01T12:00:00Z'],
       [
-        'the template end input before the relevance date',
+        'the template end input',
         'style',
-        input('generic', { dates: DATES, declared: { end: '2030-01-01T12:30:00Z' } }),
+        input('generic', { declared: { end: '2030-01-01T12:30:00Z' } }),
         '2030-01-01T12:30:00Z',
       ],
     ],
-    misses: [['a start only', input('generic', { dates: [{ start: '2030-01-01T10:00:00Z' }] })]],
+    misses: [['a start only', input('generic', { declared: { start: '2030-01-01T10:00:00Z' } })]],
   },
   {
     role: 'doorsOpen',
@@ -158,7 +149,12 @@ const ROWS: Row[] = [
         '2030-02-02T19:00:00Z',
       ],
     ],
-    misses: [['relevantDates are not doors', input('generic', { dates: DATES })]],
+    misses: [
+      [
+        'a declared start is not doors',
+        input('generic', { declared: { start: '2030-01-01T10:00:00Z' } }),
+      ],
+    ],
   },
   {
     role: 'venueName',
@@ -411,9 +407,9 @@ const ROWS: Row[] = [
     role: 'validFrom',
     hits: [
       [
-        'relevantDates[0] start',
+        'the template start input',
         'style',
-        input('generic', { dates: DATES }),
+        input('generic', { declared: { start: '2030-01-01T10:00:00Z' } }),
         '2030-01-01T10:00:00Z',
       ],
     ],

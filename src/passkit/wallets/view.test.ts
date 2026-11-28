@@ -73,6 +73,13 @@ describe('resolveWalletView over every starter and baked template', () => {
 });
 
 describe('resolveWalletView parts', () => {
+  it('does not take the relevance date as the event start', async () => {
+    const view = await viewOf('starter-visitor-pass');
+    expect(view.relevance.dates.length).toBeGreaterThan(0);
+    expect(view.roles.eventStart).toBeUndefined();
+    expect(view.roles.validFrom).toBeUndefined();
+  });
+
   it('reads an event ticket as the poster style with its semantics', async () => {
     const view = await viewOf('starter-event-ticket');
     expect(view.style).toBe('eventTicket');

@@ -6801,6 +6801,14 @@
     "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
   },
   {
+    "key": "POST /api/v1/platform/apple/identity-moves 422.IDEMPOTENCY_KEY_REUSED",
+    "class": "notable",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+    "op": "POST /api/v1/platform/apple/identity-moves",
+    "change": "IDEMPOTENCY_KEY_REUSED on operation starts: now 422",
+    "note": "An operation start or IdP role change with a reused Idempotency-Key and another request is now 422 IDEMPOTENCY_KEY_REUSED, not 409."
+  },
+  {
     "key": "POST /api/v1/platform/apple/identity-moves new operation",
     "class": "additive",
     "operationId": "wallet-identities.postPlatformAppleIdentityMoves",

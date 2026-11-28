@@ -212,7 +212,7 @@ describe('caller-chosen ids (M6)', () => {
     const other = await start({ id: 'shared-id', actor: { type: 'user', id: 'u2' } }).catch(
       (e) => e,
     );
-    expect(toProblem(other)).toMatchObject({ status: 409, code: 'IDEMPOTENCY_KEY_REUSED' });
+    expect(toProblem(other)).toMatchObject({ status: 422, code: 'IDEMPOTENCY_KEY_REUSED' });
     const otherOrg = await makeOrg(kit.fx, { name: 'Other' });
     const crossOrg = await start({
       id: 'shared-id',
