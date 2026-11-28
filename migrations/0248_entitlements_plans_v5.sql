@@ -15,6 +15,7 @@ UPDATE entitlement_preset_meta SET is_plan = 1 WHERE preset IN ('trial', 'starte
 DELETE FROM entitlement_presets WHERE key = 'apps';
 DELETE FROM org_entitlement_overrides WHERE key = 'apps';
 
+-- identity.managed is owned by E11; business follows Appendix A (0).
 INSERT INTO entitlement_presets (preset, key, value) VALUES
   ('business', 'api', '"full"'),
   ('business', 'api.rateTier', '"high"'),
@@ -42,7 +43,7 @@ INSERT INTO entitlement_presets (preset, key, value) VALUES
   ('business', 'brand.mark', '"none"'),
   ('business', 'domains', '1'),
   ('business', 'identity.own', '1'),
-  ('business', 'identity.managed', '1'),
+  ('business', 'identity.managed', '0'),
   ('enterprise', 'api', '"full"'),
   ('enterprise', 'api.rateTier', '"bulk"'),
   ('enterprise', 'api.keys', 'null'),

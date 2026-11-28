@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
+import { PLAN_ICONS } from '@/generated/plan-icons.ts';
 import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
 import { ENTITLEMENT_PRESETS, presetValues } from '@/shared/contracts/entitlements.ts';
 import { PRESET_LABEL } from '@/shared/copy/entitlements.ts';
@@ -40,6 +42,20 @@ describe('PlanPicker', () => {
     ]);
     expect(screen.queryByText('Developer sandbox')).toBeNull();
     expect(screen.getByRole('radio', { name: 'Season Pass' })).toBeChecked();
+  });
+
+  it('shows each sold plan tile with its generated icon and accent', () => {
+    const planIconCss = readFileSync('src/generated/plan-icons.css', 'utf8');
+    render(<Harness current="standard" />);
+    const sold = ['trial', 'starter', 'standard', 'business', 'premium', 'enterprise'] as const;
+    for (const preset of sold) {
+      const face = document.querySelector(`[data-plan-tile="${preset}"]`) as HTMLElement;
+      const icon = face.querySelector(`[data-plan-icon="${preset}"]`);
+      expect(icon?.querySelector('svg')).not.toBeNull();
+      const accent = PLAN_ICONS[preset]?.accent;
+      expect(accent).toMatch(/^#[0-9A-F]{6}$/i);
+      expect(planIconCss).toContain(`--plan-accent-${preset}: ${accent};`);
+    }
   });
 
   it('shows each plan as aligned limits, what it includes and one footer row', () => {

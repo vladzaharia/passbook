@@ -2422,7 +2422,7 @@
     "operationId": "entitlements.getOrgsByIdEntitlements",
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"apps\" removed",
-    "note": "The apps entitlement is gone; nothing read it and no organization used it.",
+    "note": "The apps entitlement is gone; nothing read it and no organization used it. Unversioned: no API consumers before general availability.",
     "unversioned": true
   },
   {
@@ -2487,7 +2487,7 @@
     "operationId": "entitlements.getOrgsByIdPlan",
     "op": "GET /api/v1/orgs/{id}/plan",
     "change": "200.limits[].key: enum value \"apps\" removed",
-    "note": "The apps entitlement is gone; nothing read it and no organization used it.",
+    "note": "The apps entitlement is gone; nothing read it and no organization used it. Unversioned: no API consumers before general availability.",
     "unversioned": true
   },
   {
@@ -2976,7 +2976,7 @@
     "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
     "op": "GET /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"apps\" removed",
-    "note": "The apps entitlement is gone; nothing read it and no organization used it.",
+    "note": "The apps entitlement is gone; nothing read it and no organization used it. Unversioned: no API consumers before general availability.",
     "unversioned": true
   },
   {
@@ -8673,7 +8673,7 @@
     "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
     "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"apps\" removed",
-    "note": "The apps entitlement is gone; nothing read it and no organization used it.",
+    "note": "The apps entitlement is gone; nothing read it and no organization used it. Unversioned: no API consumers before general availability.",
     "unversioned": true
   },
   {

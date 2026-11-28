@@ -247,7 +247,7 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-22` to opt in to every dated change (`2026-11-20` for the first only); without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
+Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-22` to opt in to every dated change (`2026-11-20` for the first only); without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog. Before general availability, a removal may also ship unversioned and is listed in the changelog.
 
 **Deprecation.** A deprecated operation has `deprecated: true` and `x-sunset` in the reference and answers with `Deprecation`, `Sunset` and `Link` headers. It works until its Sunset date, at least 12 months after the deprecation is listed in the changelog, and is then removed for every client, whatever `PassBook-Version` it sends. A deprecated write may answer `410` before its Sunset when the product no longer does what it did; the changelog says so on the day.
 
@@ -757,7 +757,7 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 
 | Route | Needs | Notes |
 |---|---|---|
-| `GET /webhook-endpoints?orgId=` | read | `{ items }`, at most 10 per org and mode |
+| `GET /webhook-endpoints?orgId=` | read | `{ items }`, at most 100 per org and mode (the plan's `webhooks.endpoints` is the usual cap) |
 | `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
 | `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
 | `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 1 \| 24 \| 72 \| 168 }` (default 24). `{ secret }`, shown once |

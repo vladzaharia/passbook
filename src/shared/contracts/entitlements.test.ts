@@ -63,7 +63,10 @@ describe('entitlement registry', () => {
     for (const [i, higher] of ladder.entries()) {
       const lower = ladder[i - 1];
       if (!lower) continue;
-      const { counts } = entitlementImpact(presetValues(lower), presetValues(higher));
+      // identity.managed is owned by E11 and is off on Backstage by design (Appendix A).
+      const { 'identity.managed': _a, ...below } = presetValues(lower);
+      const { 'identity.managed': _b, ...above } = presetValues(higher);
+      const { counts } = entitlementImpact(below, above);
       expect({
         step: `${lower} -> ${higher}`,
         off: counts.off,

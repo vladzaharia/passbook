@@ -110,10 +110,15 @@ export const versionedBreaks = (
   /** The operation ("POST /a") is reached by a browser session only: no API key or other scheme admits it. */
   browserOnly: (op: string) => boolean = () => false,
 ): string[] => {
-  // Only a request-side tightening, or a status only a browser session receives, may ship unversioned; a removed field or the like still needs a version.
+  // Only a request-side tightening, a response enum value removed before general availability (no API consumers yet), or a status only a browser session receives, may ship unversioned; a removed field or the like still needs a version.
   const free = new Set(
     pending
-      .filter((p) => p.unversioned && p.change.endsWith(': unknown keys now refused'))
+      .filter(
+        (p) =>
+          p.unversioned &&
+          (p.change.endsWith(': unknown keys now refused') ||
+            /: enum value ".+" removed$/.test(p.change)),
+      )
       .map((p) => p.key),
   );
   // A route no key can call changes its status (a sandbox action now answers 202): the break is named in the notes.

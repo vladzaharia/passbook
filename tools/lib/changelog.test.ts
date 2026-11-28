@@ -231,6 +231,17 @@ describe('versions', () => {
   });
 });
 
+describe('versionedBreaks for an unversioned enum value removal', () => {
+  it('lets an unversioned enum value removal through', () => {
+    const change = '200.items[].key: enum value "apps" removed';
+    const key = `GET /a ${change}`;
+    expect(
+      versionedBreaks([key], [{ key, op: 'GET /a', change, unversioned: true }] as Pending[]),
+    ).toEqual([]);
+    expect(versionedBreaks([key], [{ key, op: 'GET /a', change }] as Pending[])).toEqual([key]);
+  });
+});
+
 describe('versionedBreaks for a session-only status', () => {
   const pending = [
     {
