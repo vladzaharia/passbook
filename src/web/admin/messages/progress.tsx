@@ -1,4 +1,5 @@
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
+import { plural } from '@/shared/plural.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatCount } from '../../lib/format.ts';
 import { ProgressBar } from '../../ui/progress-bar.tsx';
@@ -20,7 +21,7 @@ export function BroadcastProgress({
         label="Passes handled"
         value={done}
         max={total}
-        valueText={`${formatCount(done)} of ${formatCount(total)} ${total === 1 ? 'pass' : 'passes'}`}
+        valueText={`${formatCount(done)} of ${plural(total, 'pass', 'passes')}`}
         tone={failing ? 'warning' : 'accent'}
       />
       <span className="text-xs tabular-nums text-fg-muted">

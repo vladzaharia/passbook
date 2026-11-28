@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { SettingsImpactSchema } from '@/shared/contracts/settings.ts';
+import { plural } from '@/shared/plural.ts';
 import { api } from '@/web/lib/api.ts';
 
 export function useEmailOnlyUsers() {
@@ -19,9 +20,7 @@ export function MagicLinkImpact() {
   if (n === 0) return <>No active users sign in by email only.</>;
   return (
     <>
-      <strong className="font-semibold text-fg-strong tabular-nums">
-        {n} {n === 1 ? 'user' : 'users'}
-      </strong>{' '}
+      <strong className="font-semibold text-fg-strong tabular-nums">{plural(n, 'user')}</strong>{' '}
       {n === 1 ? 'signs' : 'sign'} in by email only and will not be able to sign in.
     </>
   );

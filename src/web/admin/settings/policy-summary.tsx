@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { PLATFORM_RETENTION_LINES as LINES } from '@/shared/copy/retention.ts';
+import { plural } from '@/shared/plural.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 
@@ -75,7 +76,7 @@ export function PolicySummary({
         </dl>
         {advancedDirty > 0 ? (
           <p className="text-sm text-fg-muted">
-            {advancedDirty} unsaved {advancedDirty === 1 ? 'change' : 'changes'} in Advanced.
+            {plural(advancedDirty, 'unsaved change')} in Advanced.
           </p>
         ) : null}
         {advancedErrors ? (

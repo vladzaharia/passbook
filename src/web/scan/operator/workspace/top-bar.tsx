@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { ScanCounts } from '../../../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
+import { plural } from '../../../../shared/plural.ts';
 import { CountUp } from '../../../ui/count-up.tsx';
 import { ScanOrgLogo } from '../../platform/scan-branding.tsx';
 import { initialsOf } from '../lists/person-avatar.tsx';
@@ -105,9 +106,7 @@ export function TopBar({
           <Layers aria-hidden />
           {T.admits}
           <b className="op-admits-names">{types.join(', ')}</b>
-          <b className="op-admits-count">
-            {types.length === 1 ? T.typeOne : T.types.replace('{n}', String(types.length))}
-          </b>
+          <b className="op-admits-count">{plural(types.length, 'type')}</b>
         </span>
       ) : null}
       <div className="op-top-end">
