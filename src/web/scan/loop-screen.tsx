@@ -55,12 +55,14 @@ export function tintDismisses(
   );
 }
 
-/** The capsule's state line: offline over checking over paused over scanning. */
+/** The capsule's state line: offline over ready (not started) over checking over paused over scanning. */
 export function capsuleStateOf(
   online: boolean,
   loop: string,
-): 'offline' | 'checking' | 'paused' | 'scanning' {
+  started = true,
+): 'offline' | 'checking' | 'paused' | 'scanning' | 'ready' {
   if (!online) return 'offline';
+  if (!started) return 'ready';
   if (loop === 'checking' || loop === 'applying') return 'checking';
   return loop === 'paused' ? 'paused' : 'scanning';
 }

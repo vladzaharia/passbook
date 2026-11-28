@@ -111,7 +111,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await expect(page.getByTestId('scan-count')).toContainText('Today 0');
     await page.screenshot({ path: 'test-results/scanner-m1-android.png', fullPage: true });
     await page.getByRole('button', { name: 'Done', exact: true }).click();
-    await page.getByRole('button', { name: 'Enter code', exact: true }).click();
+    await page.getByRole('button', { name: 'Look up', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name, email or code' }).fill('Lookup');
     await page.getByRole('button', { name: /Lookup Guest/ }).click();
     await expect(page.getByRole('heading', { name: 'Lookup Guest' })).toBeFocused();

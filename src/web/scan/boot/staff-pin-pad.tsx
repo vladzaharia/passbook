@@ -1,5 +1,5 @@
+import { UserRound } from 'lucide-react';
 import { SCAN_STAFF_COPY as COPY } from '../../../shared/copy/scan-staff.ts';
-import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { PinDots } from '../result/approval-parts.tsx';
 import { usePinDraft } from '../result/use-pin-draft.ts';
@@ -44,13 +44,27 @@ export function StaffPinPad({
         invalid={error !== '' && !locked}
         off={locked}
       />
-      <Keypad disabled={busy || locked} onDigit={pin.push} onDelete={pin.pop} />
+      <Keypad
+        disabled={busy || locked}
+        onDigit={pin.push}
+        onDelete={pin.pop}
+        corner={
+          <button
+            type="button"
+            className="scan-key"
+            data-kind="mode"
+            aria-label={COPY.notYou}
+            title={COPY.notYou}
+            disabled={busy}
+            onClick={onName}
+          >
+            <UserRound aria-hidden size={26} />
+          </button>
+        }
+      />
       <div className="min-h-[3.5rem]">
         {error ? <Callout tone="danger">{error}</Callout> : null}
       </div>
-      <Button type="button" variant="ghost" disabled={busy} onClick={onName}>
-        {COPY.notYou}
-      </Button>
     </div>
   );
 }

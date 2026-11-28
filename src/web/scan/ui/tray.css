@@ -95,15 +95,12 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.scan-key[data-kind="delete"],
-.scan-key[data-kind="mode"] {
-  background: none;
-}
 .scan-key[data-kind="mode"] {
   color: var(--sd-accent);
   font-size: 20px;
   letter-spacing: 0.02em;
 }
+.scan-key:disabled,
 .scan-key[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;

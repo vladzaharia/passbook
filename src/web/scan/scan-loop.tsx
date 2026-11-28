@@ -194,7 +194,7 @@ export function ScanLoop({
         ...(handheld && access.direction && !access.direction.onCycle
           ? { direction: SCAN_COPY.direction[access.direction.value] }
           : {}),
-        state: capsuleStateOf(s.online, l.s),
+        state: capsuleStateOf(s.online, l.s, s.started),
         menu,
         onTitle: () => showPanel('shift'),
         chips: (
