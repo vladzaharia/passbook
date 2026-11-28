@@ -2,7 +2,7 @@ import type { ZodType, z } from 'zod';
 import { isPointer } from '../../connectors/lib/pointer.ts';
 import { connectors } from '../../connectors/registry.ts';
 import type { AnyConnector } from '../../connectors/types.ts';
-import { type FieldIssue, ValidationError } from '../../platform/errors.ts';
+import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { assertPublicHost, assertSafeUrl, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -103,22 +103,14 @@ export async function assertTemplateUsable(
     (scope.orgId !== null && scope.orgId !== orgId) ||
     (scope.orgId === null && !(await templateVisibleToOrg(sctx.env.DB, templateId, orgId)))
   ) {
-    throw new ValidationError(
-      'Template not found.',
-      [{ path: 'defaultTemplateId', message: 'Template not found.' }],
-      'TEMPLATE_NOT_FOUND',
-    );
+    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
   }
   if (scope.blueprint) throw blueprintRefusal();
 }
 
 export async function assertOrg(sctx: ServiceContext, orgId: string): Promise<void> {
   if (!(await orgIsActive(sctx.env.DB, orgId))) {
-    throw new ValidationError(
-      'Organization not found.',
-      [{ path: 'orgId', message: 'Organization not found.' }],
-      'ORG_NOT_FOUND',
-    );
+    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
 }
 

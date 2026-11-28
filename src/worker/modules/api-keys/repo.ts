@@ -78,7 +78,7 @@ export async function revokeKey(
     principal,
     target: id,
     checks,
-    codes: { lineage: 'API_KEY_NOT_FOUND' },
+    codes: { lineage: 'API_KEY_CHANGED' },
   });
   g.add(grantedAudit(g, ctx, audit, [exists('api_keys', { id, revoked_at: null })]));
   const now = ctx.clock.now();
@@ -129,7 +129,7 @@ export async function retireKey(
     principal,
     target: id,
     checks,
-    codes: { lineage: 'API_KEY_NOT_FOUND' },
+    codes: { lineage: 'API_KEY_CHANGED' },
   });
   const open = { retire_at: null, revoked_at: null };
   g.add(grantedAudit(g, ctx, audit, [exists('api_keys', { id, ...open })]));

@@ -37,7 +37,7 @@ export async function undoOnScanner(
     const g = scanWriteGrant(ctx, actor, {
       purpose: 'org_mode.scan.tag.unbind',
       now,
-      codes: { stale: 'TAG_NOT_FOUND' },
+      codes: { stale: 'TAG_HOLDER_CHANGED' },
       tables: TABLES,
     });
     endBinding(g, row, 'undo', by, now);

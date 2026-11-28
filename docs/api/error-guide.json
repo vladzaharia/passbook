@@ -47,6 +47,12 @@
     "fix": "Call the rotate endpoint with a key in the same mode as the key you rotate.",
     "retryable": false
   },
+  "API_KEY_CHANGED": {
+    "title": "Key changed",
+    "when": "The key was removed or moved while your request ran.",
+    "fix": "Look up the key again and send the request again.",
+    "retryable": false
+  },
   "API_KEY_NOT_FOUND": {
     "title": "Key not found",
     "when": "No key with this id exists in the current mode and organization.",
