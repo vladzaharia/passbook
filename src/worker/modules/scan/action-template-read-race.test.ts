@@ -18,6 +18,7 @@ import {
   raceRaw,
   stageVersion,
 } from './action-template-read-race-test-fixtures.ts';
+import { RACE_PASS_FENCE } from './race-tags.ts';
 import { effects } from './repo-action-template-read-race-test-fixtures.ts';
 import { candidateById } from './repo-lookup.ts';
 import { makeLegacyScanPass, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -231,7 +232,7 @@ describe('captured action template reads at the final CAS', () => {
       kit,
       scanner.headers,
       body(kit, pass.id),
-      'SELECT (SELECT rules FROM pass_check_in',
+      RACE_PASS_FENCE,
       (db) => run(db, "UPDATE passes SET template_version='v2' WHERE id=?", [pass.id]),
     );
     // A race, not a miss: the client retries the same key.

@@ -3,6 +3,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { effectiveReleaseIs } from './effective-release.ts';
 import { HEADS_UP_SQL, REFUSED_SQL } from './outcome-bucket.ts';
+import { RACE_BRANDING_READ } from './race-tags.ts';
 import type { ScanLogFilter } from './repo-feed.ts';
 import { where } from './repo-feed-scope.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
@@ -17,7 +18,7 @@ export const legacyBrandingStmt = (db: D1Database, auth: LegacyAuth) =>
   legacyRead(
     db,
     auth,
-    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
+    `${RACE_BRANDING_READ} SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
      WHERE ${auth.ok}`,
   );
 

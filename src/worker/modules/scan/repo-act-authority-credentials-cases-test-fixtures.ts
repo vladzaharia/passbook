@@ -6,6 +6,7 @@ import { act as actService } from './act.ts';
 import { expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { CHECK_IN, expectUnavailable, kit, rows, tpl } from './act-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { RACE_PASS_FENCE } from './race-tags.ts';
 import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -175,12 +176,13 @@ export function registerAuthorityCredentials() {
     // Packing is gone. Only the candidate read binds the pass credentials (to match, never to write);
     // no write, grant or ledger statement may carry one.
     const clear = binds
-      .flatMap(({ sql, values }) =>
-        values
-          .filter((v) => typeof v === 'string' && secrets.some((secret) => v.includes(secret)))
-          .map(() => sql.replace(/\s+/g, ' ').slice(0, 90)),
+      .flatMap(
+        ({ sql, values }) =>
+          values
+            .filter((v) => typeof v === 'string' && secrets.some((secret) => v.includes(secret)))
+            .map(() => sql.replace(/\s+/g, ' ').slice(0, 90)), // sql-shape
       )
-      .filter((sql) => !sql.includes('FROM pass_check_in c'));
+      .filter((sql) => !sql.includes(RACE_PASS_FENCE));
     expect(clear).toEqual([]);
     for (const secret of secrets) expect(JSON.stringify(result.outcome)).not.toContain(secret);
   });

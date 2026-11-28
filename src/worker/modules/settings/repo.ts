@@ -143,10 +143,14 @@ export async function writeScope(
 }
 
 /** Internal state (cron runs, identity checks). Not exposed through the settings API. */
-export async function readSystemValue(db: D1Database, key: string): Promise<unknown | null> {
+export async function readSystemValue(
+  db: D1Database,
+  key: string,
+  tag = '',
+): Promise<unknown | null> {
   const row = await first<{ value: string }>(
     db,
-    "SELECT value FROM settings WHERE scope = 'system' AND key = ?",
+    `${tag}SELECT value FROM settings WHERE scope = 'system' AND key = ?`,
     [key],
   );
   return row ? JSON.parse(row.value) : null;

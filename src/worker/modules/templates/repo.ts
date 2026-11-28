@@ -6,6 +6,7 @@ import type {
   ValidationReport,
 } from '../../../passkit/types.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import { RACE_TEMPLATE_VERSION_READ } from '../scan/race-tags.ts';
 import { canonicalJson } from './package/hash.ts';
 import type { SqlText } from './repo-version-hashes.ts';
 
@@ -198,7 +199,7 @@ export async function getVersion(
 ): Promise<VersionRow | null> {
   const row = await first<VersionSql>(
     db,
-    `SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
+    `${RACE_TEMPLATE_VERSION_READ} SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
      FROM template_versions WHERE template_id = ? AND version = ?`,
     [templateId, version],
   );

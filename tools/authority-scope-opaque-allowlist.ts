@@ -11,7 +11,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'caller-built, parenthesized scan predicates (scan-predicate.ts); each write is pinned by its own id, state and at, and binds only the id',
     exprs: ['AMBIGUOUS_SCAN', 'extra.sql', 'original.sql', 'guard.sql'],
     via: ['src/worker/platform/authority-statements.ts'],
-    hash: 'a12f47971edb',
+    hash: '62795280384a',
   },
   'src/worker/modules/scan/repo-act-claim.ts': {
     reason:
@@ -42,7 +42,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/platform/authority-statements.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: '91fc0edfa313',
+    hash: '87899bcde0f5',
   },
   'src/worker/modules/events/repo.ts': {
     reason:
@@ -84,7 +84,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/passes/repo-history-image.ts',
       'src/worker/modules/scan/scan-conjunction.ts',
     ],
-    hash: 'c10c576778bb',
+    hash: 'd5f50f0730a5',
   },
   'src/worker/modules/webhooks/repo-retention.ts': {
     reason:

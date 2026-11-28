@@ -5,6 +5,7 @@ import type { ScanAction } from '../../../passkit/types.ts';
 import { type ScanSession, ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { RACE_TEMPLATE_VERSION_READ } from './race-tags.ts';
 import type { ScanKit } from './test-kit.ts';
 
 export async function session(kit: ScanKit, headers: Record<string, string>) {
@@ -49,7 +50,7 @@ export function duringTemplateRead(
       if (prop !== 'prepare') return passThrough(target, prop);
       return (sql: string) => {
         const statement = target.prepare(sql);
-        if (!sql.includes('FROM template_versions')) return statement;
+        if (!sql.includes(RACE_TEMPLATE_VERSION_READ)) return statement;
         return new Proxy(statement, {
           get(inner, member) {
             if (member !== 'bind') return passThrough(inner, member);

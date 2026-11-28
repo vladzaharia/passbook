@@ -1,5 +1,6 @@
 import { all, first } from '../../platform/db.ts';
 import type { CredentialTransferResult } from '../passes/credential-transfer.ts';
+import { RACE_CARD_HISTORY } from './race-tags.ts';
 
 /** Snapshot only pass-bound effects; a not-found attempt may legitimately create a passless receipt. */
 export async function effects(db: D1Database, passId: string) {
@@ -30,7 +31,7 @@ export function raceCardHistory(db: D1Database, start: () => Promise<CredentialT
       if (property === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          if (!sql.includes('WITH selected_scans AS MATERIALIZED')) return statement;
+          if (!sql.includes(RACE_CARD_HISTORY)) return statement;
           return new Proxy(statement, {
             get(prepared, member) {
               if (member === 'bind')

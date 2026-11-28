@@ -11,6 +11,7 @@ import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
 import { planCounts } from './counts.ts';
 import { planDisplayHistoryRead, rebindDisplayHistoryRead } from './display-history-plan.ts';
 import { knownPhotoUrl } from './member-photo.ts';
+import { RACE_CARD_HISTORY } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -240,9 +241,7 @@ describe('card last-scan privacy', () => {
     expect(expected.length).toBeGreaterThan(0);
     expect(expected.every((sql) => typeof sql === 'string')).toBe(true);
     expect(await readCard(ctx, actor, found, planCounts(ctx, actor), 'read', 10)).not.toBeNull();
-    const cardBatch = batches.find((batch) =>
-      batch.some((sql) => sql.includes('WITH selected_scans AS MATERIALIZED')),
-    );
+    const cardBatch = batches.find((batch) => batch.some((sql) => sql.includes(RACE_CARD_HISTORY)));
     if (!cardBatch) throw new Error('Missing original card batch');
     for (const sql of expected) expect(cardBatch).toContain(sql);
 
