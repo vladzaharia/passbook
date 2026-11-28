@@ -30,8 +30,12 @@ rmSync(varsFile, { force: true });
 // that signs with the Worker's own intermediate (e2e/helpers/platform-root.ts reads it from the state folder).
 // It keeps the real identifier because the platform slot policy requires it; the certificate is signed by this
 // throwaway test CA, lives only in the local e2e database and cannot sign a pass Apple would accept.
+// The device-test pass type (Workbench device passes) is another sibling: e2e/helpers/platform-root.ts seeds it.
 const fixture = await createFixtureIdentity(FIXTURE_IDENTITY, {
-  siblings: [{ ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' }],
+  siblings: [
+    { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook' },
+    { ...FIXTURE_IDENTITY, passTypeIdentifier: 'pass.mobile.passbook.devtest' },
+  ],
 });
 const kek = E2E_KEK_V1;
 writeDevVars(varsFile, {
@@ -54,6 +58,8 @@ writeDevVars(varsFile, {
   SCIM_BEARER_TOKEN: scimToken,
   // The scanner document, off in production until M1.
   SCAN_ENABLED: '1',
+  // Device passes are off in production until the owner's devtest step; this throwaway server runs them.
+  DEVICE_PASS_ENABLED: '1',
   // Provider calls go to test/mock-wallets (honoured only on http loopback, see mock-endpoint.ts).
   WALLET_MOCK_PROVIDERS_URL: walletsUrl,
   ...(release ? { WALLET_E2E_RELEASE: '1' } : {}),
@@ -85,6 +91,9 @@ execFileSync(
   { cwd: root, stdio: 'inherit' },
 );
 writeFileSync(resolve(state, 'platform-root.json'), JSON.stringify(fixture.siblings[0], null, 2), {
+  mode: 0o600,
+});
+writeFileSync(resolve(state, 'device-test.json'), JSON.stringify(fixture.siblings[1], null, 2), {
   mode: 0o600,
 });
 // The Polaris ID binding's own D1 (test/idp-e2e/wrangler.jsonc), with the migration the real Worker deploys.
@@ -165,9 +174,10 @@ if (mode === 'preview') {
   // never reaches preview: 30 pairs a minute from one IP refused the 3rd-Nth device of a run.
   const built = resolve(root, 'dist/wallet/wrangler.json');
   const config = JSON.parse(readFileSync(built, 'utf8'));
-  // Specs sign in more than 10 times a minute (RL_LOGIN), so it is raised the same way.
-  for (const r of config.ratelimits ?? [])
-    if (r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN') r.simple.limit = 100_000;
+  // Specs sign in more than 10 times a minute (RL_LOGIN), and Workbench specs reload tools past the
+  // 60 a minute of RL_API_TRY, so both are raised the same way.
+  const raised = new Set(['RL_SCAN_PAIR', 'RL_LOGIN', 'RL_API_TRY']);
+  for (const r of config.ratelimits ?? []) if (raised.has(r.name)) r.simple.limit = 100_000;
   writeFileSync(built, JSON.stringify(config));
   // This dist/ has raised rate limits: mark it so deploy refuses it (tools/lib/build-stamp.ts).
   writeFileSync(

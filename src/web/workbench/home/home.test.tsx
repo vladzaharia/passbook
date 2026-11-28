@@ -142,13 +142,46 @@ describe('Home (sandbox)', () => {
     }
   });
 
-  it('is gone from the next step once Quickstart is done, and the fan takes its place', async () => {
+  it('names what to try next once Quickstart is done, without the progress ticks', async () => {
     await renderApp('/workbench/o/sbx', {
       session: 'developer',
       handlers: homeHandlers({ ...SANDBOX, quickstart: { done: 5, total: 5 } }),
     });
     await screen.findByRole('heading', { name: 'Test passes' });
-    expect(screen.queryByText('Next step')).not.toBeInTheDocument();
+    expect(screen.getByText('Next step')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hear a webhook' })).toBeInTheDocument();
+    expect(screen.queryByText(/of 5 done/)).not.toBeInTheDocument();
+  });
+
+  it("asks the log to leave out the Workbench's own reads", async () => {
+    const { fetchMock } = await renderApp('/workbench/o/sbx', {
+      session: 'developer',
+      handlers: homeHandlers(SANDBOX, [call('c1', 201)]),
+    });
+    expect(await screen.findByText('/passes')).toBeInTheDocument();
+    const read = fetchMock.mock.calls.find(
+      ([url]) => new URL(String(url), 'http://localhost').pathname === '/api/v1/request-logs',
+    );
+    expect(new URL(String(read?.[0]), 'http://localhost').searchParams.get('portal')).toBe('hide');
+    // Its own reads carry the mark the log filters on.
+    expect(new Headers(((read?.[1] ?? {}) as RequestInit).headers).get('x-passbook-client')).toBe(
+      'portal',
+    );
+  });
+});
+
+describe('Home (summary fails)', () => {
+  it('shows a failed state with Retry, not a stats skeleton that never clears', async () => {
+    await renderApp('/workbench/o/sbx', {
+      session: 'developer',
+      handlers: {
+        ...homeHandlers(SANDBOX),
+        '/api/v1/workbench/summary': () => json({ error: 'down' }, 503),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Test passes' });
+    expect(await screen.findAllByRole('button', { name: 'Retry' })).not.toHaveLength(0);
+    expect(document.querySelector('[data-loading="content"]')).toBeNull();
   });
 });
 
@@ -160,7 +193,7 @@ describe('Home (org)', () => {
     });
     expect(await screen.findByText('Test data only')).toBeVisible();
     expect(screen.getAllByText('Test data only')).toHaveLength(1);
-    expect(screen.queryByText('Next step')).not.toBeInTheDocument();
+    expect(screen.getByText('Next step')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Errors\s*3/ })).toHaveAttribute(
       'href',
       '/workbench/o/nw/logs?status=4xx',

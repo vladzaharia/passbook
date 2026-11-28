@@ -5,6 +5,7 @@ import { api } from '../../lib/api.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { canUseAllScope, readablePassOrgs } from '../../lib/org-lists.ts';
 import { type PassFilters, passKeys } from './api.ts';
+import { allChips, chipFilter } from './find-query.ts';
 
 /** Which list: one organization (the URL's), or every organization the caller can read. */
 export type PassScope = { kind: 'org' } | { kind: 'all' };
@@ -23,8 +24,14 @@ export function useAllScopeOrgIds(all: boolean): ReadonlySet<string> {
 }
 
 /** Whether the search narrows the list; filters this scope ignores do not count. */
-export function isFiltered(search: object, all: boolean): boolean {
+export function isFiltered(
+  search: { q?: string | undefined; m?: string | undefined },
+  all: boolean,
+): boolean {
   const ignored: string[] = all ? [...SINGLE_ORG_KEYS, 'm'] : ['orgIds'];
+  // In All, `m` still carries the holder-email and free-text chips, which are sent.
+  const chips = all ? chipFilter(allChips(search)) : {};
+  if (chips.holderEmail || chips.q) return true;
   return Object.entries(search).some(
     ([k, v]) => v !== undefined && v !== '' && !ignored.includes(k),
   );

@@ -1,3 +1,4 @@
+import { PRESENT } from '../../platform/authority-read.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
@@ -9,8 +10,8 @@ import { CURRENT_ISSUANCE, NO_PENDING_TRANSFER, RECORDED_PROOF } from './repo-ac
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { scanRead, scanReadAuthority } from './repo-read-authority.ts';
-import { passAnswerFence } from './repo-read-fences.ts';
+import { type ScanReadAuthority, scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { type Fence, passAnswerFence } from './repo-read-fences.ts';
 import { ownScansWhere } from './repo-scan-history.ts';
 import type { ScanRow } from './repo-scan-map.ts';
 import { scanPasslessSnapshotPredicate } from './repo-scan-passless.ts';
@@ -184,13 +185,7 @@ export async function replayCurrent(
   // One statement per receipt part: each rebinds the whole receipt, so none can name another scan.
   const statements = [
     ...receiptParts.map((part) => predicateStmt(ctx.env.DB, part)),
-    scanRead(
-      ctx.env.DB,
-      auth,
-      `SELECT 1 AS authorized FROM scans s
-        WHERE ${auth.ok} AND s.id = ? AND ${auth.tenant('s', 'scans')} AND ${own.sql}`,
-      [row.id, ...own.params],
-    ),
+    ownedReceiptStmt(ctx.env.DB, auth, own, row.id),
   ];
   const receiptCount = statements.length;
   let projection = 0;
@@ -208,12 +203,7 @@ export async function replayCurrent(
     });
     statements.push(
       inner
-        ? scanRead(
-            ctx.env.DB,
-            auth,
-            `SELECT 1 AS authorized FROM actor_ok WHERE ${inner.sql}`,
-            inner.params,
-          )
+        ? projectionStmt(ctx.env.DB, auth, inner)
         : predicateStmt(ctx.env.DB, { sql: '0', params: [] }),
     );
     projection = 1;
@@ -250,3 +240,27 @@ export async function replayCurrent(
     if (!authorized(receiptCount + index)) return false;
   return true;
 }
+
+/** One row while the receipt scan is the actor's own, inside its scope, and its authority holds. */
+export const ownedReceiptStmt = (
+  db: D1Database,
+  auth: ScanReadAuthority,
+  own: { sql: string; params: SqlValue[] },
+  scanId: string,
+) =>
+  scanRead(
+    db,
+    auth,
+    `SELECT 1 AS authorized FROM ${auth.rows}scans s
+      WHERE ${auth.present} AND s.id = ? AND ${auth.tenantOnce('s', 'scans')} AND ${own.sql}`,
+    [scanId, ...own.params],
+  );
+
+/** One row while the actor's authority holds and the pass answer's fence does. */
+export const projectionStmt = (db: D1Database, auth: ScanReadAuthority, inner: Fence) =>
+  scanRead(
+    db,
+    auth,
+    `SELECT 1 AS authorized FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${inner.sql}`,
+    inner.params,
+  );

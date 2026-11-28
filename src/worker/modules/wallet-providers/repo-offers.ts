@@ -30,24 +30,26 @@ export async function walletOfferSnapshotCurrent(
 ): Promise<boolean> {
   if (offer?.deliver && (!offer.consumed || provider !== 'samsung')) return false;
   const projection = projectionReleaseBindingPredicateSql({
-    releaseIdSql: 'requested.projection_id',
+    releaseIdSql: 'p.req_projection_id',
     orgIdSql: 'p.org_id',
     modeSql: 'p.mode',
-    providerSql: 'requested.provider',
+    providerSql: 'p.req_provider',
     templateIdSql: 'p.template_id',
     versionSql: 'p.template_version',
     sourceReleaseIdSql: 'p.release_id',
-    nowSql: 'requested.now',
-    credentialKeysetCommitmentSql: 'requested.credential_keyset_commitment',
+    nowSql: 'p.req_now',
+    credentialKeysetCommitmentSql: 'p.req_keyset',
   });
-  // Keep each authority proof in the same statement while preventing the nested
-  // projection and operation predicates from accumulating expression depth.
+  // Every authority proof stays in the one statement. SQLite counts a cursor per CTE reference, so
+  // each CTE is read once, in a chain, and the proofs after the snapshot are correlated on `p`.
   const sql = `WITH requested AS MATERIALIZED (
       SELECT ? AS projection_id, ? AS provider, ? AS now, ${pinnedKeysetSql} AS credential_keyset_commitment
     ),
     offer_snapshot AS MATERIALIZED (
     SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.release_id,
-      p.credential_generation
+      p.credential_generation, requested.projection_id AS req_projection_id,
+      requested.provider AS req_provider, requested.now AS req_now,
+      requested.credential_keyset_commitment AS req_keyset
     FROM passes p JOIN orgs o ON o.id = p.org_id CROSS JOIN requested
     WHERE p.id = ? AND p.org_id = ? AND p.mode = ? AND p.template_id = ?
       AND p.template_version = ? AND p.release_id IS ? AND p.version = ? AND p.revision = ?
@@ -80,29 +82,26 @@ export async function walletOfferSnapshotCurrent(
       AND ${walletProviderEnabledSql('requested.provider', 'p.mode')}
       AND ${walletEnrolmentIssuesSql('p.org_id', 'p.mode', 'requested.provider')}
     ),
-    retirement_blocker AS MATERIALIZED (
-      SELECT 1 FROM offer_snapshot p
-      JOIN wallet_provider_instances prior ON prior.pass_id = p.id
-      WHERE prior.credential_generation != p.credential_generation
-        AND (prior.org_id IS NOT p.org_id OR prior.mode IS NOT p.mode
-          OR NOT ${walletRetiredInstanceSettledSql('prior')})
-      LIMIT 1
-    ),
     projection_binding AS MATERIALIZED (
-      SELECT 1 FROM offer_snapshot p CROSS JOIN requested WHERE ${projection}
+      SELECT p.* FROM offer_snapshot p WHERE ${projection}
+    ),
+    unblocked AS MATERIALIZED (
+      SELECT p.* FROM projection_binding p
+      WHERE NOT EXISTS (SELECT 1 FROM wallet_provider_instances prior
+        WHERE prior.pass_id = p.id AND prior.credential_generation != p.credential_generation
+          AND (prior.org_id IS NOT p.org_id OR prior.mode IS NOT p.mode
+            OR NOT ${walletRetiredInstanceSettledSql('prior')}))
     )
     ${
       offer
-        ? `,
-    offer_candidates AS MATERIALIZED (
-      SELECT i.id AS instance_id, op.id AS operation_id
-      FROM offer_snapshot p CROSS JOIN requested
+        ? `, offer_operation AS MATERIALIZED (
+      SELECT 1 AS ok FROM unblocked p
       JOIN wallet_provider_offer_refs ref
       JOIN wallet_provider_instances i ON i.id = ref.instance_id
       JOIN wallet_provider_instance_operations op ON op.instance_id = i.id
         AND op.version = ref.operation_version
       WHERE ref.ref_hash = ? AND i.id = ? AND i.pass_id = p.id
-        AND i.org_id = p.org_id AND i.mode = p.mode AND i.provider = requested.provider
+        AND i.org_id = p.org_id AND i.mode = p.mode AND i.provider = p.req_provider
         AND i.credential_generation = p.credential_generation
         AND i.credential_keyset_commitment = ${pinnedKeysetSql}
         AND op.credential_keyset_commitment = i.credential_keyset_commitment
@@ -111,21 +110,11 @@ export async function walletOfferSnapshotCurrent(
         AND ref.pass_authority_generation = COALESCE((SELECT generation
           FROM wallet_provider_pass_authority authority WHERE authority.pass_id = p.id), 0)
         AND ref.consumed_at IS ${offer.consumed ? 'NOT NULL' : 'NULL'}
-    ),
-    offer_operation AS MATERIALIZED (
-      SELECT 1
-      FROM offer_candidates candidate
-      JOIN wallet_provider_instances i ON i.id = candidate.instance_id
-      JOIN wallet_provider_instance_operations op ON op.id = candidate.operation_id
-      CROSS JOIN requested
-      WHERE ${walletInstanceOperationCurrentSql('i', 'op', 'requested.now')}
-    )`
-        : ''
-    }
-    SELECT 1 AS ok FROM offer_snapshot
-    WHERE EXISTS (SELECT 1 FROM projection_binding)
-      AND NOT EXISTS (SELECT 1 FROM retirement_blocker)
-      ${offer ? 'AND EXISTS (SELECT 1 FROM offer_operation)' : ''}`;
+        AND ${walletInstanceOperationCurrentSql('i', 'op', 'p.req_now')}
+    )
+    SELECT ok FROM offer_operation`
+        : 'SELECT 1 AS ok FROM unblocked'
+    }`;
   const params = [
     projectionReleaseId,
     provider,

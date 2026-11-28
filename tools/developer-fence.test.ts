@@ -36,8 +36,13 @@ const IMPORT_FILE = 'reads an uploaded import file (a CSV or a template package)
 const CREDENTIALS =
   'reads a provider credential only through runtime-core-credentials.ts, whose gate refuses a developer org';
 
+const DEVICE_PASS =
+  "the one sanctioned exception (Workbench device pass, design 3.4): it signs and pushes only a Test pass of the caller's own sandbox, as the dedicated device-test identity (never the platform identity), behind DEVICE_PASS_ENABLED (off), at most 5 open per sandbox, 3 phones and 24 hours each, with a platform kill switch; routes: modules/workbench/routes-device-pass*.ts";
+
 /** Every file that holds a primitive and no fence of its own, with why that is safe. */
 const EXEMPT: Record<string, Exempt> = {
+  'src/worker/modules/workbench/device-pass-build.ts': { reason: DEVICE_PASS },
+  'src/worker/modules/workbench/device-pass-push.ts': { reason: DEVICE_PASS },
   'src/worker/modules/passes/import-read.ts': { reason: IMPORT_FILE },
   'src/worker/modules/passes/import-check-run.ts': { reason: IMPORT_FILE },
   'src/worker/modules/templates/import-pipeline.ts': { reason: IMPORT_FILE },
@@ -190,6 +195,20 @@ const hits = scan();
 const text = (file: string) => strip(readFileSync(join(root, file), 'utf8'));
 
 describe('the developer fence', () => {
+  it('pins the device-pass exemption to the device-test identity', () => {
+    const exempt = Object.keys(EXEMPT).filter((file) => /workbench\/device-pass-/.test(file));
+    expect(exempt.length).toBeGreaterThan(0);
+    for (const file of exempt) expect(text(file), file).toContain('deviceTestIdentity(');
+    const importers: string[] = [];
+    for (const path of sourceFiles(join(root, 'src')))
+      if (/\bbuildDevicePass\b/.test(readFileSync(path, 'utf8')))
+        importers.push(relative(root, path));
+    expect(importers.filter((f) => !f.endsWith('device-pass-build.ts')).sort()).toEqual([
+      'src/worker/modules/workbench/device-pass-download.ts',
+      'src/worker/modules/workbench/device-pass-wallet.ts',
+    ]);
+  });
+
   it('finds the entry points in the code', () => {
     // A guard against a pattern that stopped matching: these places exist today.
     const files = hits.map((h) => h.file);

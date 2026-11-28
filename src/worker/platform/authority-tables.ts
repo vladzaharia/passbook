@@ -1,5 +1,6 @@
 import { EPOCH_TABLES } from './authority-columns.ts';
-import { CREATOR_ORG_PURPOSE, PERSONAL_ORG_PURPOSE } from './authority-personal.ts';
+import { ENTITLEMENT_EXPIRY_PURPOSE } from './authority-restricted/entitlements.ts';
+import { INSERT_ONLY_PURPOSES, RESTRICTED_TABLES } from './authority-restricted.ts';
 
 /** A declared foreign key from an org-less child to a parent that carries the org (and mode). */
 export interface Edge {
@@ -210,51 +211,6 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
 
-/** The cron that retires one org's expired overrides and journals the change like a platform save (org scope: the grant pins the tenant). */
-export const ENTITLEMENT_EXPIRY_PURPOSE = 'org.job.entitlement_expiry';
-
-const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'revoke_key', 'disable'].map(
-  (p) => `org_mode.nfc.keyset.${p}`,
-);
-
-/**
- * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
- * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
- * Entitlements (0134) are platform-only (design-multi-tenancy.md section 2.2): an org never writes its own.
- */
-export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
-  wallet_credential_checks: ['platform.job.wallet.credential_check'],
-  org_entitlements: [
-    'platform.org.create',
-    PERSONAL_ORG_PURPOSE,
-    CREATOR_ORG_PURPOSE,
-    'platform.job.template_sync',
-    'platform.job.developer_sandbox.create',
-    'platform.org.entitlements_set',
-    ENTITLEMENT_EXPIRY_PURPOSE,
-  ],
-  org_entitlement_overrides: ['platform.org.entitlements_set', ENTITLEMENT_EXPIRY_PURPOSE],
-  entitlement_preset_meta: ['platform.entitlement_preset.update'],
-  entitlement_presets: ['platform.entitlement_preset.update'],
-  // Secure tag keys (0129): the five keyset purposes only (re-enrol and import write side rows, not keys).
-  nfc_tag_keysets: KEYSET_PURPOSES,
-  nfc_tag_keys: KEYSET_PURPOSES,
-};
-
-/**
- * Restricted purposes that may only insert into a table (no update, delete or upsert). Baked-template
- * sync creates the platform org with its `legacy` row, and must never change an org's entitlements.
- */
-const INSERT_ONLY_PURPOSES: Readonly<Record<string, readonly string[]>> = {
-  org_entitlements: [
-    'platform.job.template_sync',
-    'platform.job.developer_sandbox.create',
-    'platform.org.create',
-    PERSONAL_ORG_PURPOSE,
-    CREATOR_ORG_PURPOSE,
-  ],
-};
-
 /** Why `purpose` may not write `table` this way (`op`), or null: the restricted-table and insert-only rules. */
 export function restrictedWriteRefusal(
   table: string,
@@ -303,15 +259,17 @@ export const APPEND_ONLY_TABLES = ['audit_log'] as const;
 /**
  * Unguarded tables whose triggers write a guarded table. An `include` part on one would reach the guarded
  * table through the trigger, so parts refuse them. `request_log`: its insert trigger stamps the guarded
- * `developer_sandboxes` progress columns (0176). A test derives the list from the migrated schema.
+ * `developer_sandboxes` progress columns (0176). `cli_sessions`: ending a CLI token revokes its `api_keys` row
+ * (0245). A test derives the list from the migrated schema.
  */
-export const TRIGGER_WRITES_GUARDED: readonly string[] = ['request_log'];
+export const TRIGGER_WRITES_GUARDED: readonly string[] = ['cli_sessions', 'request_log'];
 
 export {
   MODE_BEARING_TABLES,
   ORG_BEARING_TABLES,
   PASS_BEARING_TABLES,
 } from './authority-bearing-tables.ts';
+export { ENTITLEMENT_EXPIRY_PURPOSE, RESTRICTED_TABLES };
 /**
  * Unguarded tables a holder grant may also write although they carry no `pass_id`: the column that names
  * its pass, or `transfer`, pinned through the transfer row (`pass_credential_transfers.pass_id`).

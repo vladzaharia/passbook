@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { stubTurnstile } from './helpers/turnstile.ts';
+import { signInToWorkbench } from './helpers/workbench.ts';
 
 /** The Workbench as one bench. Needs the prerendered portal: `WALLET_E2E_PREVIEW=1` (tools/e2e-server.ts builds it). */
 const TOOLS = ['console', 'events', 'logs', 'keys'] as const;
@@ -10,31 +10,7 @@ const VIEWS = [
   [390, 844],
 ] as const;
 
-async function signIn(page: Page) {
-  await stubTurnstile(page);
-  await page.route('**/auth/oidc/start*', async (route) => {
-    const response = await route.fetch({ maxRedirects: 0 });
-    const target = response.headers().location;
-    if (!target) return route.fulfill({ response });
-    const location = new URL(target);
-    location.searchParams.set('login_hint', 'e2e-builder');
-    return route.fulfill({
-      response,
-      headers: { ...response.headers(), location: location.toString() },
-    });
-  });
-  await page.goto('/workbench/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
-  // The shell's tool area shows from desktop width.
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
-  if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await create.click();
-    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
-  }
-}
+const signIn = (page: Page) => signInToWorkbench(page);
 
 type Box = { x: number; y: number; width: number; height: number };
 

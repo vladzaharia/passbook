@@ -162,6 +162,7 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
+    align-content: center;
     column-gap: 0.75rem;
     row-gap: 0.375rem;
   }

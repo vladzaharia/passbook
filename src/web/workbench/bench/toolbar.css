@@ -29,13 +29,13 @@
   flex: 0 1 18rem;
   min-width: 10rem;
   height: 36px;
-  border: 1px solid var(--pk-border-subtle);
+  border: 1px solid var(--pk-border-strong);
   border-radius: var(--pk-radius-md);
-  background: var(--pk-surface-sunken);
+  background: var(--wl-field, var(--pk-surface-raised));
   transition: border-color var(--wl-dur-hover) var(--wl-ease-move);
 }
 .bench-search:hover {
-  border-color: var(--pk-border-strong);
+  border-color: var(--pk-text-muted);
 }
 .bench-search:focus-within {
   border-color: var(--pk-accent);
@@ -83,6 +83,11 @@
 .bench-search:focus-within .bench-search-k {
   opacity: 0;
 }
+@media (pointer: coarse) {
+  .bench-search-k {
+    display: none;
+  }
+}
 
 /* ---------- Filters ---------- */
 .bench-fb {
@@ -98,7 +103,7 @@
   gap: 6px;
   height: 36px;
   padding: 0 10px 0 12px;
-  border: 1px solid var(--pk-border-subtle);
+  border: 1px solid var(--pk-border-strong);
   border-radius: var(--pk-radius-md);
   background: var(--pk-surface-raised);
   color: var(--pk-text-muted);
@@ -110,7 +115,7 @@
     background-color var(--wl-dur-hover) var(--wl-ease-move);
 }
 .bench-fs:hover {
-  border-color: var(--pk-border-strong);
+  border-color: var(--pk-text-muted);
 }
 .bench-fs-v {
   color: var(--pk-text-default);
@@ -140,11 +145,6 @@
 .bench-fs:has(.bench-fs-s:focus-visible) {
   outline: 2px solid var(--pk-focus);
   outline-offset: 2px;
-}
-.bench-fb-open[data-set] {
-  border-color: color-mix(in oklab, var(--pk-accent) 55%, transparent);
-  background: var(--pk-accent-subtle);
-  color: var(--pk-accent-fg);
 }
 /* In the phone's sheet the filters stack, full width. */
 .bench-fb-sheet {

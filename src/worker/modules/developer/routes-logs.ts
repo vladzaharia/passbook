@@ -8,6 +8,7 @@ import {
   ResolvedSchema,
   ResolveQuerySchema,
 } from '../../../shared/contracts/index.ts';
+import { CLI_TOKEN_PREFIX } from '../../platform/api-key-token.ts';
 import { apiKeyMissing, bearerOf, keyCaller, requireSession } from '../../platform/auth.ts';
 import { admitTokenSession, resolveBearer } from '../../platform/auth-workbench.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
@@ -44,6 +45,16 @@ export const logCaller = declareKeyAccess(
       if (key?.kind !== 'api_key' || key.via !== 'try' || key.orgId === null) {
         noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The try token is invalid or expired.', 'INVALID_API_KEY');
+      }
+      c.set('auth', key);
+      return next();
+    }
+    // A CLI token reads `/resolve` (`passbook open`): its own allowlist and Test rules ran in the key store.
+    if (token?.startsWith(CLI_TOKEN_PREFIX)) {
+      const key = await resolveBearer(c, token, keyCaller(c), undefined);
+      if (key?.kind !== 'api_key' || key.via !== 'cli' || key.orgId === null) {
+        noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
+        throw new UnauthenticatedError('The CLI token is invalid or expired.', 'INVALID_API_KEY');
       }
       c.set('auth', key);
       return next();

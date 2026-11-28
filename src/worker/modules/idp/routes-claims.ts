@@ -7,6 +7,7 @@ import {
 } from '../../../shared/contracts/idp-access.ts';
 import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { reportKeyAdminRefusal } from './actor.ts';
@@ -22,8 +23,8 @@ const AUTH = {
 } as const;
 
 const noStore = (router: ReturnType<typeof createRouter>) => {
-  router.use('*', reportKeyAdminRefusal);
-  router.use('*', async (c, next) => {
+  ownUse(router, reportKeyAdminRefusal);
+  ownUse(router, async (c, next) => {
     await next();
     c.header('cache-control', 'no-store');
   });

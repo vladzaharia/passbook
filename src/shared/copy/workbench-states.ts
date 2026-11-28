@@ -12,7 +12,6 @@ export const WB_STATES = {
   },
   noAccess: {
     title: 'No Workbench access',
-    description: 'It needs the developer role, or admin access to an organization.',
     action: 'Request access',
   },
   notAllowed: {
@@ -22,7 +21,6 @@ export const WB_STATES = {
   },
   notFound: {
     title: 'Not in your Workbench',
-    description: 'The sandbox or organization is not one you can open.',
     action: 'Go to the Workbench',
   },
   chooser: { title: 'Choose a context' },
@@ -42,13 +40,18 @@ export const WB_STATES = {
   },
 } as const;
 
-/** Each tool's empty line and its action (design §6). Loading and no-match are shared. */
-export const WB_EMPTY: Partial<Record<WbTool, { title: string; action?: string }>> = {
-  logs: { title: 'Waiting for your first call', action: 'Run in Console' },
-  events: { title: 'Listening for events', action: 'Add endpoint' },
-  inbox: { title: 'No test emails', action: 'Send one to me' },
-  passes: { title: 'No passes', action: 'Make one in Design' },
-  activity: { title: 'Nothing running' },
-  keys: { title: 'No keys', action: 'New key' },
-  design: { title: 'No templates', action: 'Start from a blueprint' },
+/** The art names `WB_EMPTY` may pick (a subset of the kit's `ArtName`; shared code cannot import it). */
+export type WbEmptyArt = 'log' | 'pulse' | 'envelope' | 'passes' | 'activity' | 'key' | 'template';
+
+/** Each tool's empty line, art and action (design §6). Loading and no-match are shared. */
+export const WB_EMPTY: Partial<
+  Record<WbTool, { title: string; art: WbEmptyArt; action?: string }>
+> = {
+  logs: { art: 'log', title: 'Waiting for your first call', action: 'Run in Console' },
+  events: { art: 'pulse', title: 'Listening for events', action: 'Add endpoint' },
+  inbox: { art: 'envelope', title: 'No test emails', action: 'Send one to me' },
+  passes: { art: 'passes', title: 'No passes', action: 'Make one in Design' },
+  activity: { art: 'activity', title: 'Nothing running' },
+  keys: { art: 'key', title: 'No keys', action: 'New key' },
+  design: { art: 'template', title: 'No templates', action: 'Start from a blueprint' },
 };

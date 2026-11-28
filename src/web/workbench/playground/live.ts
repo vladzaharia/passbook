@@ -54,6 +54,8 @@ export interface Sent<T> {
   requestId: string | null;
   replayed: boolean;
   etag: string | null;
+  /** A 429's Retry-After, in seconds. */
+  retryAfter?: number;
   body: T | null;
   problem: { code: string | undefined; detail: string } | null;
 }
@@ -142,7 +144,9 @@ export class LiveClient {
       requestId: res.headers.get('x-request-id'),
       replayed: res.headers.get('idempotent-replayed') === 'true',
       etag: res.headers.get('etag'),
-    };
+    } as Omit<Sent<T>, 'ok' | 'body' | 'problem'>;
+    const wait = Number(res.headers.get('retry-after'));
+    if (wait > 0) meta.retryAfter = wait;
     if (res.ok) return { ok: true, ...meta, body: (await res.json()) as T, problem: null };
     const err = await failure(res);
     return { ok: false, ...meta, body: null, problem: { code: err.code, detail: err.message } };

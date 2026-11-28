@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Globe, Layers, RefreshCw, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { BRIDGE_COPY } from '@/shared/copy/workbench-bridge.ts';
 import { useIdpConnected } from '@/web/admin/idp/status-queries.ts';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
@@ -24,6 +25,7 @@ import {
 import { useSession } from '../../lib/session.ts';
 import { useSwatches } from '../../lib/swatches.ts';
 import { useTheme } from '../../lib/theme.tsx';
+import { useWorkbenchBridge } from '../../lib/workbench-bridge.ts';
 import {
   type CommandGroup,
   type CommandItem,
@@ -33,6 +35,7 @@ import {
 } from '../command-palette.tsx';
 import { paletteActions } from './palette-actions.ts';
 import { ACTION_KEYWORDS, chip } from './palette-helpers.ts';
+import { workbenchItems, workbenchWords } from './palette-workbench.ts';
 
 /** Group headings and glyphs, from the entity registry. */
 export const PALETTE_GROUPS = {
@@ -96,6 +99,7 @@ export function AdminPalette({
     enabled: searching && platformReady && term.length >= 2,
     staleTime: 15_000,
   });
+  const bridge = useWorkbenchBridge();
   const polaris = useIdpConnected();
   const nav = adminNavGroups(
     adminScope,
@@ -259,6 +263,14 @@ export function AdminPalette({
                   : orgPath(o.id, '/settings'),
               ),
             })),
+          },
+          {
+            heading: BRIDGE_COPY.group,
+            // Test only: records never deep-link from Live.
+            items:
+              bridge?.records && q
+                ? local(workbenchItems(bridge.href, Boolean(membership?.testOnly)), workbenchWords)
+                : [],
           },
           {
             heading: 'Actions',

@@ -1,80 +1,164 @@
-.wl-hosted {
+/* The hosted card (hosted-card.tsx): the band (brand left, art seated on the card's top edge at
+   the right) and the card. One sheet for the SPA's not-found and the worker's SSR pages (inlined
+   by worker/ssr/hosted.ts). Metrics match /login (portal/login-scene.css, login-card.tsx).
+   Rules are scoped by :where(.hosted), so each keeps one class of specificity and a page's own
+   sheet can still override. */
+.hosted {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: 2rem 0 2.5rem;
+}
+.hosted.inline {
+  min-height: 0;
+  justify-content: flex-start;
+}
+.hosted.wide {
+  max-width: 32rem;
+}
+:where(.hosted) .band {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-inline: calc(1px + 1.5rem) calc(1.5rem - 19px);
+}
+:where(.hosted) .brand {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  height: 72px;
+}
+:where(.hosted) .scene {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: 128px;
+  height: 96px;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+:where(.hosted) .scene .wl-art {
+  width: 128px;
+  height: 96px;
+}
+:where(.hosted) .scene > [data-replay] {
+  display: block;
+}
+:where(.hosted) .card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   overflow: hidden;
   border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-xl, 18px);
+  border-radius: var(--pk-radius-xl);
   background: var(--pk-surface-raised);
   box-shadow: var(--pk-elevation-1);
 }
-.wl-hosted[data-size="hosted"] {
-  max-width: 26rem;
+:where(.hosted) .card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--wl-foil);
 }
-.wl-hosted[data-size="stage"] {
-  max-width: 32rem;
-}
-.wl-hosted[data-size="sheet"],
-.wl-hosted[data-size="dialog"] {
-  max-width: 24rem;
-  box-shadow: none;
-}
-.wl-hosted-band {
-  height: 0.5rem;
-  background: linear-gradient(
-    90deg,
-    var(--pk-accent),
-    color-mix(in oklab, var(--pk-accent) 40%, transparent)
-  );
-}
-.wl-hosted[data-size="stage"] .wl-hosted-band {
-  height: 0.75rem;
-}
-.wl-hosted-body {
+:where(.hosted) .body {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   padding: 1.25rem;
 }
-.wl-hosted-title {
+:where(.hosted) .card h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+  overflow-wrap: break-word;
+  font-size: var(--pk-font-size-2xl);
+  line-height: var(--pk-line-height-2xl);
+  font-weight: var(--pk-font-weight-semibold);
+  letter-spacing: var(--pk-tracking-tight);
   color: var(--pk-text-strong);
 }
-.wl-hosted[data-size="sheet"] .wl-hosted-title,
-.wl-hosted[data-size="dialog"] .wl-hosted-title {
-  font-size: 1rem;
-}
-.wl-hosted-line {
-  margin: -0.5rem 0 0;
+:where(.hosted) .lede {
+  margin: 0.25rem 0 0;
   font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--pk-text-muted);
+  overflow-wrap: anywhere;
+}
+:where(.hosted) .lede b {
+  font-weight: 500;
+  color: var(--pk-text-strong);
+}
+:where(.hosted) .foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--pk-border-subtle);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   color: var(--pk-text-muted);
 }
-.wl-hosted-line[data-error] {
-  color: var(--pk-danger);
+:where(.hosted) .foot svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
 }
-.wl-hosted-field {
-  min-width: 0;
-  margin: 0;
-  border: 0;
-  padding: 0;
-}
-.wl-hosted[data-locked] .wl-hosted-field {
-  opacity: 0.5;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .wl-hosted-line[data-error] + .wl-hosted-field .wl-code {
-    animation: wl-hosted-shake 240ms var(--wl-ease-out);
+@media (min-width: 40rem) {
+  .hosted {
+    padding-top: 3.5rem;
+  }
+  :where(.hosted) .body {
+    padding: 1.5rem;
+  }
+  :where(.hosted) .foot {
+    padding: 1rem 1.5rem;
   }
 }
-@keyframes wl-hosted-shake {
-  25% {
-    transform: translateX(-4px);
+@media (max-width: 39.99rem) {
+  :where(.hosted) .band {
+    padding-inline: calc(1px + 1.25rem) calc(1.25rem - 17px);
   }
-  50% {
-    transform: translateX(4px);
+  :where(.hosted) .brand {
+    height: 63px;
   }
-  75% {
-    transform: translateX(-4px);
+  :where(.hosted) .scene,
+  :where(.hosted) .scene .wl-art {
+    width: 112px;
+    height: 84px;
   }
+}
+
+/* An acted state in the band: the buddy seated on the card's top edge, feet on the line; with a
+   prop (2/3 its size) on its right, the pair ends on the band's right inset. */
+:where(.hosted) .scene > .wl-buddy {
+  top: 100%;
+  left: auto;
+  right: 0;
+  translate: 0 -100%;
+}
+:where(.hosted) .scene > .wl-buddy[data-prop] {
+  right: 40.67%;
+}
+:where(.hosted) .scene .wl-buddy-prop .wl-art {
+  width: 85.33px;
+  height: 64px;
+}
+@media (max-width: 39.99rem) {
+  :where(.hosted) .scene .wl-buddy-prop .wl-art {
+    width: 74.67px;
+    height: 56px;
+  }
+}
+/* The break-glass key draws with the art's line, not the face's heavier ink. */
+:where(.hosted) .scene [data-part="key"] .m {
+  stroke: var(--art-l);
 }

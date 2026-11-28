@@ -362,7 +362,7 @@ cannot release). Test runs first, then Live. Each mode creates or reuses its can
 head newer than Live's previous version stays and answers `test: kept`. Without a usable approval the answer is 409
 `TEMPLATE_REVIEW_REQUIRED` with `plan`; what already ran stays, and the same call resumes. `modes` defaults to `["live","test"]`
 for a person and `["test"]` for a key or a developer org, which may not name Live. `Idempotency-Key` is required: the same key and
-body replays the first answer, the same key with another body is 422 `IDEMPOTENCY_KEY_REUSED`. `?dryRun=true` returns `{version,
+body replays the first answer, the same key with another body is 422 `IDEMPOTENCY_KEY_REUSED` (`POST /scan/tags/bind` still answers 409 to clients that have not pinned `PassBook-Version: 2026-11-22`). `?dryRun=true` returns `{version,
 modes, diff, fromVersion, state}` (steps, passes and devices reached per mode, a grouped diff) and writes nothing. `request: true`,
 or `POST /templates/{id}/review-requests` (`templates:write`), creates or reuses the candidates without approving.
 `GET /templates/{id}/releases/impact?orgId&mode&provider&version` returns what a publish or rollback to

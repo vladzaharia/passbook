@@ -124,10 +124,10 @@ describe('check', () => {
           409,
         ),
     });
-    await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
+    await user.click(await screen.findByRole('button', { name: /^(Import|Create|Update) \d+/ }));
     expect(await screen.findByText('This import was undone.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^(Import|Create|Update) \d+/ })).toHaveAttribute(
       'aria-disabled',
       'true',
     );
@@ -161,9 +161,7 @@ describe('check', () => {
     await user.click(await screen.findByRole('switch', { name: 'Email new holders' }));
     expect(screen.getByRole('combobox', { name: /Send/ }).textContent).toContain('After 5 min');
     expect(screen.getByText('Undo before then and no one is emailed.')).toBeTruthy();
-    await user.click(
-      screen.getByRole('button', { name: 'Create 120 and update 40 (skip 3 errors)' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Import 160' }));
     await waitFor(() =>
       expect(posts).toEqual([{ skipInvalid: true, email: { send: 'held', holdMs: 300_000 } }]),
     );
@@ -183,7 +181,7 @@ describe('check', () => {
     await user.click(await screen.findByRole('switch', { name: 'Email new holders' }));
     await user.click(screen.getByRole('combobox', { name: /Send/ }));
     await user.click(await screen.findByRole('option', { name: 'Now' }));
-    await user.click(screen.getByRole('button', { name: 'Create 120 and update 40' }));
+    await user.click(screen.getByRole('button', { name: 'Import 160' }));
     await waitFor(() => expect(posts).toEqual([{ skipInvalid: false, email: { send: 'now' } }]));
   });
 
@@ -193,7 +191,6 @@ describe('check', () => {
     });
     const sw = await screen.findByRole('switch', { name: 'Email new holders' });
     expect(sw).toHaveProperty('disabled', true);
-    expect(screen.getByText('No new holder has an email.')).toBeTruthy();
   });
 
   it('offers a re-check when the template moved, and blocks commit meanwhile', async () => {
@@ -207,12 +204,29 @@ describe('check', () => {
       },
     });
     expect(await screen.findByText('The template changed. Check again to finish.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^(Import|Create|Update) \d+/ })).toHaveAttribute(
       'aria-disabled',
       'true',
     );
     await user.click(screen.getByRole('button', { name: 'Check again' }));
     await waitFor(() => expect(posts).toHaveLength(1));
+  });
+
+  it('blocks the commit and says so in one short line when no row can be imported', async () => {
+    const user = userEvent.setup();
+    const posts: unknown[] = [];
+    await open(checked({ counts: { ...COUNTS, create: 0, update: 0, unchanged: 0, errors: 2 } }), {
+      '/api/v1/pass-imports/imp1/rows': () => json(ROWS),
+      '/api/v1/pass-imports/imp1/commit': (_u, init) => {
+        posts.push(body(init));
+        return json(committing());
+      },
+    });
+    const button = await screen.findByRole('button', { name: 'Import 0' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button.textContent?.length).toBeLessThan(12);
+    await user.click(button);
+    expect(posts).toEqual([]);
   });
 
   it('goes back to the columns', async () => {
@@ -245,7 +259,7 @@ describe('check', () => {
     await screen.findByRole('button', { name: /Needs a fix/ });
     expect(screen.queryByRole('button', { name: 'Discard' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Fix / })).toBeNull();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^(Import|Create|Update) \d+/ })).toHaveAttribute(
       'aria-disabled',
       'true',
     );

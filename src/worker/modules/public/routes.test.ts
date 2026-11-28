@@ -350,7 +350,7 @@ describe('GET /p/:token', () => {
     expect(body).toContain('class="card" data-state="expired"');
     // The one way on opens the login with the reason; it names no pass, org or address.
     expect(body).toMatch(
-      /<a class="btn" href="\/login\?next=\/&amp;reason=link"><svg[\s\S]*?<\/svg>Email me my passes<\/a>/,
+      /<a class="btn outline" href="\/login\?next=\/&amp;reason=link"><svg[\s\S]*?<\/svg>Email me my passes<\/a>/,
     );
     const oldToken = await linkToken(kit.env, pass);
     await rotateLink(kit.ctx, actor, pass.id, null);

@@ -309,7 +309,7 @@ describe('magic link', () => {
     spy.mockRestore();
   });
 
-  it('says so when the challenge cannot load', async () => {
+  it('stays quiet on load and says so on submit when the challenge cannot load', async () => {
     window.turnstile = {
       render: () => {
         throw new Error('boom');
@@ -317,7 +317,12 @@ describe('magic link', () => {
       reset: vi.fn(),
       remove: vi.fn(),
     };
+    const user = userEvent.setup();
     await renderApp('/login', { session: 'anon' });
+    await screen.findByLabelText('Email');
+    expect(screen.queryByRole('alert')).toBeNull();
+    await user.type(screen.getByLabelText('Email'), 'sam@example.com');
+    await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Could not verify this browser. Reload and try again.',
     );

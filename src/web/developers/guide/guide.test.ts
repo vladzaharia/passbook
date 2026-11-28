@@ -44,6 +44,7 @@ describe('parseGuide', () => {
     expect(() => parseGuide(HEAD.replace('ready', 'later'), 'a.md')).toThrow(/status must be/);
     expect(() => parseGuide(`${HEAD}\`\`\`json\n{}`, 'a.md')).toThrow(/unclosed/);
     expect(() => parseGuide(`${HEAD}# Top`, 'a.md')).toThrow(/## and ###/);
+    expect(() => parseGuide(`${HEAD}{{bogus}}\n`, 'x.md')).toThrow(/unknown directive/);
   });
 
   it('lists the links of an inline string', () => {

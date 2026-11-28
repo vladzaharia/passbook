@@ -208,6 +208,31 @@ describe('who gets in', () => {
     await expectProblem(await invite(k.headers, ['read_only']), 403, 'MISSING_SCOPE');
   });
 
+  it('refuses a template-limited key, and still lists for an unlimited key', async () => {
+    const templateId = f().ids.id();
+    await run(
+      h.env.DB,
+      `INSERT INTO templates (id, org_id, slug, name, origin, created_at, updated_at)
+       VALUES (?, ?, ?, 'T', 'uploaded', 1, 1)`,
+      [templateId, org.id, templateId],
+    );
+    const limited = await makeApiKey(f(), {
+      orgId: org.id,
+      scopes: ['members:read'],
+      templateIds: [templateId],
+      expiresAt: h.clock.now() + 30 * DAY,
+    });
+    for (const path of ['memberships', 'invitations'])
+      await expectProblem(
+        await h.call(`${base()}/${path}`, { headers: limited.headers }),
+        403,
+        'API_KEY_RESTRICTED_ROUTE',
+      );
+    const open = await key(['members:read']);
+    expect((await h.call(`${base()}/memberships`, { headers: open.headers })).status).toBe(200);
+    expect((await h.call(`${base()}/invitations`, { headers: open.headers })).status).toBe(200);
+  });
+
   it('refuses a Test key, another org, and a platform key', async () => {
     const test = await key(['members:write'], { mode: 'test' });
     expect((await invite(test.headers, ['read_only'])).status).toBe(403);

@@ -1233,6 +1233,28 @@
   }
  },
  {
+  "id": "cli.deleteTokensById",
+  "call": "api_keys.cli_tokens.revoke",
+  "published": true,
+  "http": "DELETE",
+  "path": "/api/v1/cli/tokens/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "connections.getConnections",
   "call": "connections.list",
   "published": true,
@@ -6249,6 +6271,68 @@
      "google"
     ]
    }
+  }
+ },
+ {
+  "id": "wallet-health.getOrgsByOrgIdWalletHealth",
+  "call": "wallet_health.list",
+  "published": true,
+  "http": "GET",
+  "path": "/api/v1/orgs/{orgId}/wallet-health",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "provider": "google",
+     "mode": "live",
+     "tone": "ok",
+     "lastSuccessAt": 0,
+     "queued": 0,
+     "failed24h": 0,
+     "uncertain": 0,
+     "uncertainWaiting": 0,
+     "callbackAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+  "call": "wallet_health.retry",
+  "published": true,
+  "http": "POST",
+  "path": "/api/v1/orgs/{orgId}/wallet-health/{provider}/recheck",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   },
+   {
+    "name": "provider",
+    "py": "provider",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "due": 0,
+   "waiting": 0
   }
  },
  {

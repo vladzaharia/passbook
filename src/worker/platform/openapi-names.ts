@@ -9,6 +9,7 @@ import {
 } from '../../shared/contracts/api-keys.ts';
 import { BroadcastSchema } from '../../shared/contracts/broadcasts.ts';
 import { BroadcastUndoResultSchema } from '../../shared/contracts/broadcasts-change.ts';
+import { CliTokenEndedSchema } from '../../shared/contracts/cli.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { ConnectionPreviewSchema } from '../../shared/contracts/connection-preview.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
@@ -166,6 +167,7 @@ const names = {
   ApiKeyDetail: ApiKeyDetailSchema,
   ApiKeyActivity: ApiKeyActivitySchema,
   ApiKeyRetired: RetiredApiKeySchema,
+  CliTokenEnded: CliTokenEndedSchema,
   TemplateSummary: TemplateSummarySchema,
   TemplateDetail: TemplateDetailSchema,
   TemplateInputSchema: TemplateInputSchemaSchema,

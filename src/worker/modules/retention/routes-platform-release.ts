@@ -1,6 +1,7 @@
 import { OkSchema } from '../../../shared/contracts/common.ts';
 import { HoldIdParamsSchema } from '../../../shared/contracts/retention.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { releaseHold } from './holds.ts';
 import { platformBy } from './routes.ts';
@@ -9,7 +10,7 @@ import { platformBy } from './routes.ts';
  * Mount at /api/v1/platform. Releasing a legal hold lets a purge run: a person's call, so a Platform key gets 403 PERSON_REQUIRED.
  */
 export const retentionPlatformReleaseRoutes = createRouter();
-retentionPlatformReleaseRoutes.use('*', async (c, next) => {
+ownUse(retentionPlatformReleaseRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

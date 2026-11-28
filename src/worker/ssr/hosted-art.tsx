@@ -7,9 +7,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { STATE_SCENE_CSS } from '../../web/ui/art/css.ts';
 import { StateArt, type StateArtName } from '../../web/ui/art/state-art.tsx';
-import band from './hosted-art.css?raw';
 
-export const HOSTED_ART_CSS = `${STATE_SCENE_CSS}\n${band}`;
+export const HOSTED_ART_CSS = STATE_SCENE_CSS;
 
 export type HostedArt = StateArtName;
 

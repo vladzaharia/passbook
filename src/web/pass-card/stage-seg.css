@@ -17,9 +17,9 @@
   font-weight: 500;
   line-height: 1.25rem;
 }
-/* Touch: the segments themselves are 44 tall, so the track drops its padding and border (an inset
+/* Touch, or phone width (a narrow window, a webview reporting a fine pointer): the segments themselves are 44 tall, so the track drops its padding and border (an inset
    outline draws the edge) and stays 44. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 639.98px) {
   .wl-seg,
   .pc-seg {
     padding: 0;

@@ -4,6 +4,7 @@
  */
 export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'branding_gc_queue',
+  'dlq_outcomes',
   'credentials',
   'signing_identities',
   'idempotency_keys',
@@ -21,7 +22,9 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'vas_keys',
   'pass_check_in',
   'pass_simulated_devices',
+  'device_passes',
   'request_log',
+  'cli_sessions',
   'request_log_budget',
   'scanner_setups',
   'template_release_reissues',
@@ -109,6 +112,7 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'message_rule_fires',
   'pass_check_in',
   'pass_simulated_devices',
+  'device_passes',
   'sandbox_forward_passes',
   'wallet_provider_instances',
   'wallet_provider_pass_authority',

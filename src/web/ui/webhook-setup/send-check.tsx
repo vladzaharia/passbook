@@ -1,5 +1,5 @@
 import { Send } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import type { BuddyScene } from '../art/index.ts';
@@ -18,8 +18,6 @@ export interface SendProps {
   host: string;
   /** Without the permission the button is not drawn. */
   canSend?: boolean;
-  /** One line under the title: what a test is. */
-  hint?: ReactNode;
   /** Off where a step heading already says it: the title stays for screen readers only. */
   title?: boolean;
   onChange?: (state: {
@@ -44,7 +42,6 @@ export function SendCheck({
   send,
   host,
   canSend = true,
-  hint,
   title = true,
   onChange,
   buddy,
@@ -105,7 +102,6 @@ export function SendCheck({
           ) : (
             <h3 className="sr-only">Send a test</h3>
           )}
-          {hint ? <p className="text-sm text-fg-muted">{hint}</p> : null}
         </div>
         {canSend ? (
           <Button

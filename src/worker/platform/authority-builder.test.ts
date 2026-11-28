@@ -5,7 +5,7 @@ import { grant, grantedBatch, prepareGrantForTest } from './authority.ts';
 import { exactlyOne, rawCheck, rowIs } from './authority-checks.ts';
 import type { AuthorityError } from './authority-error.ts';
 import { coalesceTo, gt, inList, isNotNull, jsonSet, lt, maxNow } from './authority-expr.ts';
-import { authorityPredicate, tenantFilter } from './authority-read.ts';
+import { authorityPredicate } from './authority-read.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { all, first, run } from './db.ts';
@@ -538,31 +538,27 @@ describe('M2: require one and returning', () => {
 });
 
 describe('M3 to M6', () => {
-  it('tenantFilter scopes a read to the actor org and mode', async () => {
+  it('tenant scopes a read to the actor org and mode', async () => {
     const { s, member } = await setupGrant('m3-filter');
     const other = await setupGrant('m3-filter-other');
     const p = authorityPredicate(member(), { scope: 'org_mode', now: s.f.clock.now() });
     const rows = await all<{ id: string }>(
       db,
-      `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('p', 'passes')} AND p.id IN (?, ?)`,
+      `WITH ${p.ctes} SELECT p.id FROM ${p.rows}passes p WHERE ${p.tenant('p', 'passes')} AND p.id IN (?, ?)`,
       [...p.params, s.pass.id, other.s.pass.id],
     );
     expect(rows).toEqual([{ id: s.pass.id }]);
     const unfiltered = await all(
       db,
-      `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND p.id IN (?, ?)`,
+      `WITH ${p.ctes} SELECT p.id FROM ${p.rows}passes p WHERE p.id IN (?, ?)`,
       [...p.params, s.pass.id, other.s.pass.id],
     );
     expect(unfiltered).toHaveLength(2);
     // A table with no template dimension is read by no key limited to templates (authority-restrict.test.ts).
-    const noLimitedKey = ' AND (SELECT limit_key FROM actor_ok) IS NULL';
-    expect(tenantFilter('x', 'settings', 'org')).toBe(
-      `x.scope = 'org:' || (SELECT org_id FROM actor_ok)${noLimitedKey}`,
-    );
-    expect(tenantFilter('o', 'orgs', 'org')).toBe(
-      `o.id = (SELECT org_id FROM actor_ok)${noLimitedKey}`,
-    );
-    expect(code(() => tenantFilter('x', 'users'))).toBe('GRANT_UNGUARDED_TABLE');
+    const noLimitedKey = ' AND ao.limit_key IS NULL';
+    expect(p.tenant('x', 'settings', 'org')).toBe(`x.scope = 'org:' || ao.org_id${noLimitedKey}`);
+    expect(p.tenant('o', 'orgs', 'org')).toBe(`o.id = ao.org_id${noLimitedKey}`);
+    expect(code(() => p.tenant('x', 'users'))).toBe('GRANT_UNGUARDED_TABLE');
   });
 
   it('M4: grants in one batch must share their codes', async () => {

@@ -1,124 +1,72 @@
-import { LogIn } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
-import { cn } from '../lib/cn.ts';
-import { formatTime } from '../lib/format.ts';
-import { Button } from './button.tsx';
+import './art/scenes/common.css';
+import './art/scenes/peek.css';
 import './hosted-card.css';
 
-export type HostedSize = 'hosted' | 'stage' | 'sheet' | 'dialog';
-
-export interface HostedLock {
-  /** When the lock ends, in ms. */
-  until: number;
-  /** The current time, in ms (from `useNow`). */
-  now: number;
-  /** The org zone; default America/Los_Angeles. */
-  timeZone?: string;
-}
-
-/** `Try again in 4:32.` under an hour, else `Try again at 2:00 PM.` in the org zone. */
-export function lockoutLine(until: number, now: number, timeZone = DEFAULT_TIME_ZONE): string {
-  const left = Math.max(0, Math.ceil((until - now) / 1000));
-  if (left >= 3600) return `Try again at ${formatTime(until, timeZone)}.`;
-  return `Try again in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}.`;
-}
-
 export interface HostedCardProps {
-  size?: HostedSize;
-  title: string;
-  /** One line under the title. */
-  line?: ReactNode;
-  /** Replaces the line in place. */
-  error?: string | undefined;
-  /** While active: the title and line say when to retry and the children are disabled and dimmed. */
-  lock?: HostedLock | undefined;
-  /** The field. */
+  /** `main` on a page of its own (SSR); `div` inside the app shell. */
+  as?: 'main' | 'div';
+  /** A wider card (32 rem) for a page that shows a code. */
+  wide?: boolean;
+  /** Inside a page that already has a header (the console): no viewport-tall centring. */
+  inline?: boolean;
+  brand: ReactNode;
+  /** The art seated on the card's top edge. */
+  scene: ReactNode;
+  /** Names the state on the card (`data-state`). */
+  state: string;
+  title: ReactNode;
+  /** One short line under the title. */
+  lede?: ReactNode;
+  /** A callout above the body. */
+  error?: ReactNode;
+  /** Card body after the title: the one action. */
   children?: ReactNode;
-  /** The full-width primary. */
-  action?: ReactNode;
-  /** One optional link. */
-  link?: ReactNode;
-  className?: string;
+  /** The line under the card body, split off by a divider. */
+  footer?: ReactNode;
+  /** After the card, inside the page column. */
+  after?: ReactNode;
 }
 
 /**
- * The hosted card: a brand band, a task title, the field, a full-width primary and one optional
- * link. `hosted` (/login, SSR pages), `stage` (a device screen), `sheet` and `dialog` differ in
- * width and type step only.
+ * The hosted card, one markup for the SPA's not-found and the worker's SSR pages
+ * (worker/ssr/hosted.ts renders it to static markup): the band with the brand and the art, then
+ * the card with its h1. Metrics: hosted-card.css, the same as /login.
  */
 export function HostedCard({
-  size = 'hosted',
+  as: Root = 'div',
+  wide,
+  inline,
+  brand,
+  scene,
+  state,
   title,
-  line,
+  lede,
   error,
-  lock,
   children,
-  action,
-  link,
-  className,
+  footer,
+  after,
 }: HostedCardProps) {
-  const locked = lock !== undefined && lock.until > lock.now;
-  const Heading = size === 'sheet' || size === 'dialog' ? 'h2' : 'h1';
-  const text = locked ? lockoutLine(lock.until, lock.now, lock.timeZone) : error;
   return (
-    <section
-      className={cn('wl-hosted', className)}
-      data-size={size}
-      data-locked={locked ? '' : undefined}
-    >
-      <div aria-hidden className="wl-hosted-band" />
-      <div className="wl-hosted-body">
-        <Heading className="wl-hosted-title">{locked ? 'Too many tries' : title}</Heading>
-        {text ? (
-          <p
-            // Remounts per message, so a new error replays the shake.
-            key={text}
-            role={locked ? 'status' : 'alert'}
-            className="wl-hosted-line"
-            data-error={locked ? undefined : ''}
-          >
-            {text}
-          </p>
-        ) : line ? (
-          <p className="wl-hosted-line">{line}</p>
-        ) : null}
-        {children ? (
-          <fieldset disabled={locked} className="wl-hosted-field">
-            {children}
-          </fieldset>
-        ) : null}
-        {action}
-        {link}
+    <Root className={['hosted', wide && 'wide', inline && 'inline'].filter(Boolean).join(' ')}>
+      <div className="band">
+        <div className="brand">{brand}</div>
+        <div className="scene" aria-hidden="true">
+          {scene}
+        </div>
       </div>
-    </section>
-  );
-}
-
-/** The `Signed out` hosted card: one action. */
-export function SignedOutCard({
-  onSignIn,
-  leaving,
-  size = 'dialog',
-}: {
-  onSignIn: () => void;
-  leaving?: boolean;
-  size?: 'hosted' | 'stage' | 'sheet' | 'dialog';
-}) {
-  return (
-    <HostedCard
-      size={size}
-      title="Signed out"
-      action={
-        <Button
-          loading={leaving ?? false}
-          iconStart={<LogIn aria-hidden />}
-          className="w-full"
-          onClick={onSignIn}
-        >
-          Sign in again
-        </Button>
-      }
-    />
+      <section className="card" data-state={state}>
+        <div className="body">
+          <div>
+            <h1 tabIndex={Root === 'div' ? -1 : undefined}>{title}</h1>
+            {lede ? <p className="lede">{lede}</p> : null}
+          </div>
+          {error}
+          {children}
+        </div>
+        {footer}
+      </section>
+      {after}
+    </Root>
   );
 }

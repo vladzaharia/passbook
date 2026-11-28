@@ -41,7 +41,7 @@ describe('scan console and feed privacy', () => {
       await recordedNoMatch(scanner);
       const { result: response, fired } = await afterBatch(
         kit.env,
-        /SELECT\s+count\(\*\)\s+AS\s+n\s+FROM\s+\(SELECT\s+1\s+FROM\s+scans\s+s/i,
+        /\/\* race:export-count \*\//,
         revoke(revoked),
         () => get(exportPath()),
       );

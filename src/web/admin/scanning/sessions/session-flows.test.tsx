@@ -273,7 +273,6 @@ describe('session configuration flows', () => {
     await user.type(within(dialog).getByRole('textbox', { name: 'Device name' }), 'Visitor phone');
     const automatic = within(dialog).getByRole('button', { name: /^Automatic/ });
     expect(automatic).toHaveAttribute('aria-pressed', 'true');
-    expect(automatic).toHaveTextContent('Scanner or Operator');
     expect(within(dialog).getByText('CHECK-IN')).toBeInTheDocument();
     expect(within(dialog).getByText('CUSTOMER DISPLAY')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /^Customer display/ }));

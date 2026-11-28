@@ -127,7 +127,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
 | Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors, `xl` 896 multi-step dialogs with a side rail (`WizardDialog` only; full screen <640); bottom sheets <640 |
-| Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account cards cap at 48rem |
+| Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account fills the width, two columns at ≥1024 (identity and emails, sessions) |
 | Login and SSR auth pages | `max-w-sm` card, centred |
 | Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; right: notice, the one lead card, the other ways as a quiet list, the details, help). No section labels, one card per job, no card flip (the details list is the one details) |
 

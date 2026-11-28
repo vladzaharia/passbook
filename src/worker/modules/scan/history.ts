@@ -78,7 +78,7 @@ export async function recentFor(
       ctx.env.DB,
       auth,
       // The `+` keeps the planner on the actor's own index, not the org's.
-      { where: own.sql, params: own.params, limit, tenant: auth.tenant('+s', 'scans') },
+      { where: own.sql, params: own.params, limit, tenant: auth.tenantOnce('+s', 'scans') },
       now,
     ),
     undoWindowMinutes(ctx),

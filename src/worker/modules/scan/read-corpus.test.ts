@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { runOne } from '../../../../test/helpers/exact-rows.ts';
 import {
   type makeEnv,
+  makeOrg,
   makeScanEvent,
   makeScanner,
   makeScanStaff,
@@ -16,7 +17,11 @@ import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIs } from './effective-release.ts';
 import { createGuardHarness, get } from './guard-test-fixtures.ts';
 import { pinKeyset } from './keyset-pin.ts';
-import { scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { countScanRows } from './repo-feed.ts';
+import { livePlaceEventStmt } from './repo-live-places.ts';
+import { scanAuthorizedStmt, scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { passlessStmt } from './repo-resolve-passless-read.ts';
+import { orgBrandingForActorStmt } from './repo-session.ts';
 import { copyScanEpochs, scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 
 /*
@@ -79,8 +84,8 @@ describe('scan read corpus', () => {
     const stmt = scanRead(
       env.DB,
       auth,
-      `SELECT x.id FROM scans x JOIN passes p ON p.id = x.pass_id
-        WHERE ${auth.ok} AND ${auth.tenant('x', 'scans')}
+      `SELECT x.id FROM ${auth.rows}scans x JOIN passes p ON p.id = x.pass_id
+        WHERE ${auth.present} AND ${auth.tenantOnce('x', 'scans')}
           AND x.outcome IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           AND ${effectiveReleaseIs('p')}
         LIMIT 50`,
@@ -105,13 +110,11 @@ describe('scan read corpus', () => {
   it('actor_ok is a positive control for the live actor and empty once revoked', async () => {
     const s = await makeScanner(f, { orgId });
     const actor = await capture(s.headers);
-    const read = () =>
-      scanRead(
-        env.DB,
-        scanReadAuthority(actor, { now: clock.now() }),
-        'SELECT org_id FROM actor_ok',
-      ).all();
-    expect((await read()).results).toHaveLength(1);
+    const read = () => {
+      const auth = scanReadAuthority(actor, { now: clock.now() });
+      return scanRead(env.DB, auth, `SELECT ${auth.authorized('p')} FROM actor_ok ao`).all();
+    };
+    expect((await read()).results).toEqual([{ p: 1 }]);
     await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), s.id]);
     expect((await read()).results).toHaveLength(0);
   });
@@ -126,7 +129,7 @@ describe('scan read corpus', () => {
     const strict = scanReadAuthority(paused, { now: clock.now() });
     const relaxed = scanReadAuthority(paused, { now: clock.now(), read: { pausedSession: true } });
     expect(relaxed.params.length).toBeGreaterThan(strict.params.length);
-    await scanRead(env.DB, relaxed, 'SELECT org_id FROM actor_ok').all();
+    await scanRead(env.DB, relaxed, `SELECT ${relaxed.authorized('p')} FROM actor_ok ao`).all();
 
     const monitor: ScanActor = {
       ...actor,
@@ -140,6 +143,48 @@ describe('scan read corpus', () => {
       read: { stafflessMonitor: true },
     });
     expect(skipped.params.length).toBeLessThan(base.params.length);
+  });
+
+  it('a staffed scanner reads through the join-once fence live and reads nothing once revoked', async () => {
+    const { real } = await maximal();
+    const actor = real;
+    const auth = scanReadAuthority(actor, { now: clock.now() });
+    const inner = { sql: 'EXISTS (SELECT 1 FROM orgs o WHERE o.id = ao.org_id)', params: [] };
+    const filter = { mode: 'live', limit: 5, orgId } as const;
+    const rows = async (stmt: D1PreparedStatement) => (await stmt.all()).results;
+    expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 1 }]);
+    expect((await rows(orgBrandingForActorStmt(env.DB, auth))).length).toBeGreaterThan(0);
+    expect((await rows(passlessStmt(env.DB, auth, [inner]))).length).toBeGreaterThan(0);
+    await runOne(env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
+      clock.now(),
+      actor.scanner?.id ?? '',
+    ]);
+    expect(await rows(scanAuthorizedStmt(env.DB, auth))).toEqual([{ authorized: 0 }]);
+    expect(await rows(orgBrandingForActorStmt(env.DB, auth))).toEqual([]);
+    expect(await rows(passlessStmt(env.DB, auth, [inner]))).toEqual([]);
+    expect((await countScanRows(env.DB, auth, filter, 10)).n).toBe(0);
+  });
+
+  it('a scanner whose claimed org is not its own org is not authorised', async () => {
+    const { real } = await maximal();
+    const other = await makeOrg(f);
+    const forged: ScanActor = { ...real, orgId: other.id };
+    const read = async (a: ScanActor) =>
+      (await scanAuthorizedStmt(env.DB, scanReadAuthority(a, { now: clock.now() })).all()).results;
+    expect(await read(real)).toEqual([{ authorized: 1 }]);
+    expect(await read(forged)).toEqual([{ authorized: 0 }]);
+  });
+
+  it('a place read fences the event to the actor org whatever org the binds name', async () => {
+    const { real } = await maximal();
+    const auth = scanReadAuthority(real, { now: clock.now() });
+    const own = await makeScanEvent(f, { orgId, mode: real.mode });
+    const other = await makeOrg(f);
+    const foreign = await makeScanEvent(f, { orgId: other.id, mode: real.mode });
+    const read = async (org: string, id: string) =>
+      livePlaceEventStmt(env.DB, auth, org, real.mode, id).first();
+    expect(await read(orgId, own.id)).not.toBeNull();
+    expect(await read(other.id, foreign.id)).toBeNull();
   });
 
   it('pinKeyset reads the keyset once per context and again for another', async () => {

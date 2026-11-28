@@ -96,10 +96,6 @@ function Field(p: {
 
 function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
   const values = page.values ?? { name: '', email: '' };
-  const keeps = (page.askEmail ? JOIN_COPY.page.keepsWithEmail : JOIN_COPY.page.keeps).replace(
-    '{org}',
-    page.orgName,
-  );
   const inApp = page.device?.inApp === true;
   const nameBad = Boolean(page.error) && page.askName && !values.name;
   return (
@@ -171,7 +167,6 @@ function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
               <button className="btn" type="submit" data-submit="">
                 {JOIN_COPY.page.submit}
               </button>
-              <p className="jn-help jn-keeps">{keeps}</p>
             </form>
           </div>
         </div>

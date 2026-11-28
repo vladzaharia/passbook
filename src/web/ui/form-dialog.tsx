@@ -23,6 +23,8 @@ export interface FormDialogProps {
   size?: 'sm' | 'md' | 'lg';
   /** Unsaved input: Esc, an outside click and the X ask first. Cancel discards at once. */
   dirty?: boolean;
+  /** The exit button's label; "Close" where nothing is left to discard. */
+  cancelLabel?: string;
   /** `useFormErrors(found)`: a refused submit shows its errors and reset hides them again. */
   check?: {
     form: { invalid: boolean; onInvalid: () => void };
@@ -59,6 +61,7 @@ export function FormDialog({
   description,
   size = 'md',
   dirty,
+  cancelLabel = 'Cancel',
   check,
   onSubmit,
   submitLabel,
@@ -153,7 +156,7 @@ export function FormDialog({
           <>
             {extra}
             <Button variant="outline" disabled={working} onClick={close}>
-              Cancel
+              {cancelLabel}
             </Button>
             <Button
               type="submit"

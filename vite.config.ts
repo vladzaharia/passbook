@@ -69,6 +69,8 @@ const VITE_DEV_PATHS = [
   '!/node_modules/*',
   // The dep optimizer's cache (cacheDir below) is served from the project root.
   '!/.cache/*',
+  // Source files outside src/ that the app imports (docs/developers/sdk-status.json, docs/api/webhook-vectors.json). The build inlines them.
+  '!/docs/*',
   '!/@fs/*',
   '!/@id/*',
   '!/@vite/*',
@@ -115,13 +117,15 @@ const e2eRelease = e2eReleaseOn(process.env);
 type RateLimitConfig = { name: string; simple: { limit: number; period: number } };
 
 /**
- * One run pairs dozens of devices from a single IP, far past production's 30 a minute. e2e raises
- * only RL_SCAN_PAIR; the limiter's refusal is covered by
- * src/worker/modules/scan/scanners-pairing-limit.test.ts.
+ * One run pairs dozens of devices from a single IP, far past production's 30 a minute, and a Workbench
+ * spec reloads tool pages back to back on one session: each load mints a token and every token use counts
+ * against RL_API_TRY (60 a minute), so the 429 on the mint left Home's reads with no token. e2e raises only
+ * RL_SCAN_PAIR, RL_LOGIN and RL_API_TRY; the limiters' refusals are covered by unit tests
+ * (src/worker/modules/scan/scanners-pairing-limit.test.ts).
  */
 function e2eRatelimits(all: RateLimitConfig[] = []): RateLimitConfig[] {
   return all.map((r) =>
-    r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN'
+    r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN' || r.name === 'RL_API_TRY'
       ? { ...r, simple: { ...r.simple, limit: 100_000 } }
       : r,
   );

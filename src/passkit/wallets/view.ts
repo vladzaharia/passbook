@@ -69,7 +69,6 @@ export function resolveWalletView(
       fields,
       ...(pass.semantics ? { semantics: pass.semantics } : {}),
       barcodes,
-      dates: relevance.dates,
       declared,
       locations: relevance.locations,
       ...(pass.expirationDate ? { expirationDate: pass.expirationDate } : {}),

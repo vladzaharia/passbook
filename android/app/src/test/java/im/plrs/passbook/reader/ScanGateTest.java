@@ -63,4 +63,15 @@ public class ScanGateTest {
         gate.reset();
         assertFalse(gate.finish(id, 2));
     }
+
+    @Test public void droppingReleasesAnAwaitedIdOnceAndResetForgetsIt() {
+        ScanGate gate = new ScanGate();
+        String first = begin(gate, "barcode", "a", 0, true);
+        assertTrue(gate.ack(first, 100));
+        assertTrue(gate.finish(first, 200)); assertFalse(gate.finish(first, 300));
+        String second = begin(gate, "barcode", "b", 400, true);
+        assertTrue(gate.ack(second, 450));
+        gate.reset();
+        assertFalse(gate.finish(second, 500));
+    }
 }

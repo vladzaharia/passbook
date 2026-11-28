@@ -114,6 +114,8 @@ export function parseGuide(text: string, file: string): GuideDoc {
       i++;
       continue;
     }
+    if (line.trim().startsWith('{{'))
+      throw new GuideError(`${file}:${i + 1}: unknown directive ${line.trim()}`);
     const heading = /^(#{2,3}) (.+)$/.exec(line);
     if (heading) {
       const text = heading[2] as string;

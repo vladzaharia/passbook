@@ -3,6 +3,7 @@ import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
 import { SaveBar, toast, UnsavedChangesDialog, useUnsavedChangesGuard } from '../../../ui/index.ts';
+import { KeepProvider } from '../../../ui/keep.tsx';
 import { type Template, versionNumber } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
@@ -28,7 +29,6 @@ import {
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
 import { useStampsPreview } from './stamp-preview.ts';
-import { KeepProvider } from './ui-keep.tsx';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
 import type { WalletName } from './wallets/roles-model.ts';
@@ -60,6 +60,8 @@ export interface DesignerProps {
   create?: CreateDesign;
   /** The mode and wallet to open on (the page's `?mode=wallets&wallet=samsung`). */
   view?: { mode?: DesignerMode | undefined; wallet?: WalletName | undefined };
+  /** `compact` tightens the tab and head rows at phone width; admin keeps the default. */
+  density?: 'default' | 'compact';
   /** The mode or the focused wallet changed: the page keeps its address in step. */
   onView?: (mode: DesignerMode, wallet: WalletName | undefined) => void;
 }
@@ -74,12 +76,13 @@ export function Designer({
   prompt,
   create,
   view,
+  density = 'default',
   onView,
 }: DesignerProps) {
   const templateId = template.id;
   const name = template.name;
   const phone = useMediaQuery(PHONE);
-  const { orgId: selectedOrg, allows, extras } = useDesignerHost();
+  const { orgId: selectedOrg, allows, extras, unreleased } = useDesignerHost();
   // A host that cannot edit gets a read-only designer whatever the page asked for.
   const readOnly = useMemo<ReadOnlyDesign | undefined>(
     () =>
@@ -115,7 +118,7 @@ export function Designer({
     [readOnly],
   );
   const choose = useCallback((s: Selection) => dispatch({ type: 'select', select: s }), []);
-  const wallets = useWalletChannels(create ? undefined : templateId, selectedOrg);
+  const wallets = useWalletChannels(create ? undefined : templateId, selectedOrg, unreleased);
   const modes = useDesignerModes({
     select: state.select,
     dispatch,
@@ -125,6 +128,15 @@ export function Designer({
     onView,
   });
   const { mode, setMode, focusTarget, openWallets } = modes;
+  const modeSwitch = (
+    <ModeSwitch
+      mode={mode}
+      options={modes.options}
+      onChange={modes.changeMode}
+      compact={density === 'compact'}
+    />
+  );
+  const inHead = density === 'compact' && phone && Boolean(extras);
 
   useFocusOnAdd(state, focusTarget);
 
@@ -209,6 +221,7 @@ export function Designer({
         {/* biome-ignore lint/a11y/noStaticElementInteractions: shortcuts for the whole designer */}
         <div ref={root} data-designer="" onKeyDown={undoKeys(phone || Boolean(readOnly), dispatch)}>
           <DesignerHeader
+            modes={inHead ? modeSwitch : undefined}
             templateId={templateId}
             name={name}
             create={create}
@@ -221,7 +234,7 @@ export function Designer({
           />
           {readOnly?.notice}
           {prompt}
-          <ModeSwitch mode={mode} options={modes.options} onChange={modes.changeMode} />
+          {inHead ? null : modeSwitch}
           {restored && !phone && !readOnly ? (
             <RestoredNotice
               onDiscard={() => {

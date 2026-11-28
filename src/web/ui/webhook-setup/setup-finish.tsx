@@ -19,7 +19,7 @@ export function SetupFinish({
   anotherLabel?: string;
 }) {
   return (
-    <Card data-art-host="" className="wl-buddy-room relative max-w-2xl">
+    <Card data-art-host="" className="wl-buddy-room wl-rise relative max-w-2xl">
       <Buddy size="sm" at="end" mood="happy" scene="cheer" />
       <CardBody className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-fg-strong">{title}</h2>

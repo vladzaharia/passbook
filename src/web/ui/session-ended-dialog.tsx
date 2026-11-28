@@ -3,7 +3,7 @@ import { useRouter } from '@tanstack/react-router';
 import { useState } from 'react';
 import { sessionEndedHref } from '../lib/api.ts';
 import { cn } from '../lib/cn.ts';
-import { SignedOutCard } from './hosted-card.tsx';
+import { SignedOutCard } from './identity-card.tsx';
 import { DIALOG_PANEL, DialogOverlay, focusInitial } from './overlay.tsx';
 
 /**

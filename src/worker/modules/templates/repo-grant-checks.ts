@@ -120,7 +120,9 @@ export const publishable = (f: PublishFacts): Check =>
       `c.${column} >= COALESCE((SELECT h.${column} FROM template_releases h WHERE h.id = ${p(f.headId)}), 0)`;
     const target = () =>
       f.action === 'release'
-        ? `${p(f.targetReleaseId)} IS NULL AND NOT EXISTS (SELECT 1 FROM template_releases r
+        ? f.targetReleaseId !== null
+          ? '0'
+          : `NOT EXISTS (SELECT 1 FROM template_releases r
             WHERE r.candidate_id = c.id AND r.source = 'approved')`
         : `EXISTS (SELECT 1 FROM template_releases r WHERE r.id = ${p(f.targetReleaseId)}
             AND r.template_id = c.template_id AND r.org_id = c.org_id AND r.mode = c.mode
@@ -227,8 +229,12 @@ export const assignable = (templateId: string, destinationOrgId: string | null):
       AND NOT EXISTS (SELECT 1 FROM scanner_templates st WHERE st.template_id = t.id)
       AND NOT EXISTS (SELECT 1 FROM scanning_sessions ss, json_each(ss.accepts, '$.templateIds') j
         WHERE ss.accepts IS NOT NULL AND j.value = t.id)
-      AND (${p(destinationOrgId)} IS NULL OR NOT EXISTS (SELECT 1 FROM passes x
-        WHERE x.template_id = t.id AND x.org_id != ${p(destinationOrgId)} AND x.deleted_at IS NULL)))`,
+      ${
+        destinationOrgId === null
+          ? ''
+          : `AND NOT EXISTS (SELECT 1 FROM passes x
+        WHERE x.template_id = t.id AND x.org_id != ${p(destinationOrgId)} AND x.deleted_at IS NULL)`
+      })`,
   );
 
 export interface AdoptionFacts {

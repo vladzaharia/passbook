@@ -1,16 +1,27 @@
 import { type ComponentProps, lazy, Suspense } from 'react';
 
-// The buddy's scenes are for the empty, idle and failed moments: their own chunk, so a console that
-// is running reads and draws none of it.
-const State = lazy(() => import('../../bench/state.tsx').then((m) => ({ default: m.BenchState })));
+// The Workbench states are their own chunk, so a console that is running reads and draws none of it.
+const Failed = lazy(() =>
+  import('../../states/states.tsx').then((m) => ({ default: m.ToolFailed })),
+);
+const Stage = lazy(() =>
+  import('../../states/states.tsx').then((m) => ({ default: m.StageState })),
+);
 
-type Props = ComponentProps<typeof import('../../bench/state.tsx').BenchState>;
-
-/** `BenchState`, loaded when first needed. */
-export function LazyState(props: Props) {
+/** `ToolFailed`, loaded when first needed. */
+export function LazyFailed(props: ComponentProps<typeof Failed>) {
   return (
     <Suspense fallback={null}>
-      <State {...props} />
+      <Failed {...props} />
+    </Suspense>
+  );
+}
+
+/** `StageState`, loaded when first needed. */
+export function LazyStage(props: ComponentProps<typeof Stage>) {
+  return (
+    <Suspense fallback={null}>
+      <Stage {...props} />
     </Suspense>
   );
 }

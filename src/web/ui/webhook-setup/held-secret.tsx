@@ -39,9 +39,6 @@ export function HeldSecret({
     );
   return (
     <div className="flex max-w-md min-w-0 flex-col gap-4">
-      <p className="text-sm text-fg-muted">
-        The secret was shown once, at Create. Make a new one to copy.
-      </p>
       <RotateSecretForm state={rotate} onDone={onRotated} choices={choices} />
       {rotate.secret ? null : (
         <div>

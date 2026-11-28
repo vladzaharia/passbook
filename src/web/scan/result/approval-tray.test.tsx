@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import '../../lib/test-utils.tsx';
 import type { RawRead } from '../input/types.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
@@ -64,7 +65,7 @@ describe('Manager PIN tray', () => {
     for (const k of screen.getAllByRole('button', { name: /^(\d|Delete)$/ }))
       expect(k).toHaveAttribute('aria-disabled', 'true');
     expect(document.querySelector('input')).toBeNull();
-    expect(document.body.innerHTML).not.toContain('482913');
+    expectSecretAbsent(document.body.innerHTML, '482913');
   });
 
   it('a reader typing a code into the tray is a scan: it never fills or sends the PIN', () => {

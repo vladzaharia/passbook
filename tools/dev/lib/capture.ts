@@ -48,11 +48,22 @@ export const redact = (text: string) =>
     .replace(/\/(p|b|j)\/[A-Za-z0-9_-]{20,}/g, '/$1/:token')
     .replace(/([?&]t=)[A-Za-z0-9_-]+/g, '$1:token');
 
+/** An unpaired scanner reads `/scan/session` as 401 (no device) or 422 (a console user, no device): expected, not a failure. */
+export const isExpectedUnpaired = (url: string, status: number): boolean =>
+  (status === 401 || status === 422) && new URL(url).pathname === '/api/v1/scan/session';
+
 /** Collects console errors and failed or 4xx/5xx requests (capability tokens redacted) on `page`. */
 export function listen(page: Page): { consoleErrors: string[]; failedRequests: string[] } {
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
-  page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text().slice(0, 300)));
+  const expected = /^Failed to load resource: .* status of (401|422)/;
+  page.on(
+    'console',
+    (m) =>
+      m.type() === 'error' &&
+      !(expected.test(m.text()) && /\/api\/v1\/scan\/session$/.test(m.location().url)) &&
+      consoleErrors.push(m.text().slice(0, 300)),
+  );
   page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message.slice(0, 300)}`));
   page.on(
     'requestfailed',
@@ -64,6 +75,7 @@ export function listen(page: Page): { consoleErrors: string[]; failedRequests: s
     'response',
     (r) =>
       r.status() >= 400 &&
+      !isExpectedUnpaired(r.url(), r.status()) &&
       failedRequests.push(redact(`${r.request().method()} ${r.url()} ${r.status()}`)),
   );
   return { consoleErrors, failedRequests };

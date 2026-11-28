@@ -64,8 +64,8 @@ export async function assetReadCurrent(
   const row = await scanRead(
     db,
     auth,
-    `SELECT 1 AS ok FROM passes p
-      WHERE ${auth.ok} AND p.id = ? AND ${auth.tenant('p', 'passes')}
+    `SELECT 1 AS ok FROM ${auth.rows}passes p
+      WHERE ${auth.present} AND p.id = ? AND ${auth.tenantOnce('p', 'passes')}
         AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
         ${photo ? 'AND p.image_generation = ?' : ''}
         AND ${effectiveReleaseIs('p')} AND ${scope.sql}

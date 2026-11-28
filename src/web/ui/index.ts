@@ -33,6 +33,7 @@ export * from './form-dialog.tsx';
 export * from './form-grid.tsx';
 export * from './hosted-card.tsx';
 export * from './icon-button.tsx';
+export * from './identity-card.tsx';
 export * from './inline-add-field.tsx';
 export * from './input.tsx';
 export * from './key-value.tsx';

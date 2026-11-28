@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import type { z } from 'zod';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
+import type { SignInLevel } from '../../shared/sign-in.ts';
 import type { PlatformScope, TenantScope } from './api-scopes.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
@@ -54,7 +55,7 @@ export type RouteAuth =
       tillKey?: true;
       /**
        * The handler enforces a key's template and style limits: through grants (the builder adds them) and reads
-       * (`authorityPredicate` with `tenantFilter`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
+       * (`authorityPredicate` with `tenant`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
        * Set it per route, never on a router guard, and only where every read and write goes through those two.
        */
       templateScoped?: true;
@@ -89,9 +90,10 @@ export type RouteAuth =
       feature?: FeatureRule;
       /**
        * Deny by default: a session needs a strong sign-in (Polaris ID), or an email link inside the console
-       * grace. `any` admits an email link (holder features); `strict` takes no grace.
+       * grace. `any` admits an email link (holder features); `strict` takes no grace; `oidc` admits Polaris ID
+       * only (no break-glass), `x-sign-in: oidc` in the document.
        */
-      signIn?: 'any' | 'strict';
+      signIn?: 'any' | 'strict' | 'oidc';
       stepUp?: StepUp;
       /** Needs developer access (the `developer` role, or a platform admin): else 403 DEVELOPER_ACCESS_REQUIRED. */
       developer?: true;
@@ -135,3 +137,11 @@ export function sessionKindOf(auth: RouteAuth): 'plain' | 'tenant' | 'admin' {
   if ('human' in auth) return auth.requestMode ? 'tenant' : 'plain';
   return auth.session === 'admin' ? 'admin' : 'tenant';
 }
+
+/** The sign-in level a route asks of a session: `oidc` is `strict` plus the Polaris-only check (`requireCaller`). */
+export const signInOf = (auth: RouteAuth): SignInLevel =>
+  'human' in auth || 'scope' in auth
+    ? auth.signIn === 'oidc'
+      ? 'strict'
+      : (auth.signIn ?? 'idp')
+    : 'idp';

@@ -14,8 +14,8 @@ export const orgBrandingForActorStmt = (db: Db, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = (SELECT org_id FROM actor_ok)) AS branding
-     WHERE ${auth.ok}`,
+    `SELECT (SELECT o.branding FROM orgs o WHERE o.id = ao.org_id) AS branding
+     FROM ${auth.anchor} WHERE ${auth.present}`,
   );
 
 /** The sign-in roster: bounded, so a large org never turns a session read into a full table scan. */

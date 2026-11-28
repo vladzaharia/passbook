@@ -12,7 +12,7 @@ const uuidv7 = (): string => {
 };
 
 /** The QR text of the first `n` active passes of an org, filtered to one template when given. */
-async function codes(api: ScanApi, orgId: string, n: number, templateId?: string) {
+export async function codes(api: ScanApi, orgId: string, n: number, templateId?: string) {
   const list = await api.get(`/api/v1/passes?orgId=${orgId}&limit=50&status=active`);
   const picked = (list.items as { id: string; templateId: string }[])
     .filter((p) => !templateId || p.templateId === templateId)

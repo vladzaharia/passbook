@@ -28,6 +28,16 @@ export interface ProjectionReleaseScopeSql {
   nowSql?: string;
 }
 
+/**
+ * AND of the terms as a balanced tree. SQLite parses `a AND b AND c` left-deep, one level per term;
+ * pairing keeps a long fence far below the expression-depth limit. The result is the same conjunction.
+ */
+function balancedAnd(terms: readonly string[]): string {
+  if (terms.length < 2) return terms[0] ?? '1';
+  const mid = Math.ceil(terms.length / 2);
+  return `(${balancedAnd(terms.slice(0, mid))} AND ${balancedAnd(terms.slice(mid))})`;
+}
+
 /** Atomic fence for a previously cryptographically verified projection release. */
 export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseScopeSql): string {
   if (!scope.nowSql || !scope.credentialKeysetCommitmentSql)
@@ -47,11 +57,10 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
   });
   // Separate SELECT cores keep the expanded Apple view and evidence checks below D1's
   // expression-depth limit, while intersecting only the same captured release.
-  return `EXISTS (WITH projection_binding_release AS MATERIALIZED (
-    SELECT id, candidate_id FROM template_releases WHERE id = (${scope.releaseIdSql})
-  )
-  SELECT pr.id FROM projection_binding_release pb
-    JOIN template_releases pr ON pr.id = pb.id
+  // Each core reads the captured release straight from its table: a CTE would be expanded again at every
+  // reference, and each expansion allocates cursors that count against the statement's nesting limit.
+  const captured = `pb.id = (${scope.releaseIdSql})`;
+  return `EXISTS (SELECT pr.id FROM template_releases pr
     JOIN template_candidates pc ON pc.id = pr.candidate_id
     JOIN template_approvals pa ON pa.id = pr.approval_id AND pa.candidate_id = pc.id
     JOIN template_versions pv ON pv.template_id = pc.template_id AND pv.version = pc.version
@@ -59,49 +68,70 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
       AND paccount.org_id = pc.org_id AND paccount.mode = pc.mode AND paccount.provider = pc.provider
       AND paccount.authority_epoch = pc.provider_account_epoch AND ${hasCredentialSql('paccount')}
       AND paccount.revoked_at IS NULL
-    WHERE (pr.org_id = (${scope.orgIdSql}) AND pr.mode = (${scope.modeSql})
-      AND pr.provider = (${scope.providerSql}))
-      AND (pr.provider IN ('google', 'samsung') AND pr.template_id = (${scope.templateIdSql})
-        AND pr.version = (${scope.versionSql}) AND pc.source_release_id = (${scope.sourceReleaseIdSql}))
-      AND (pr.source = 'approved' AND pr.action IN ('release', 'rollback')
-        AND pc.template_id = pr.template_id AND pc.org_id = pr.org_id AND pc.mode = pr.mode
-        AND pc.provider = pr.provider AND pc.version = pr.version)
-      AND (pc.candidate_hash = pr.candidate_hash AND pa.candidate_hash = pc.candidate_hash
-        AND pc.credential_keyset_commitment = (${scope.credentialKeysetCommitmentSql})
-        AND pr.credential_keyset_commitment = pc.credential_keyset_commitment
-        AND pa.credential_keyset_commitment = pc.credential_keyset_commitment)
-      AND (pc.content_hash = pr.content_hash AND pc.adapter_revision = pr.adapter_revision
-        AND pc.adapter_capabilities = pr.adapter_capabilities
-        AND pc.audience_policy_revision = pr.audience_policy_revision)
-      AND (pv.created_by IS pc.version_author_id AND ${approvalStandsSql('pa', 'pc')}
-        AND pr.created_by IS NOT NULL
-        AND pc.projection_json IS NOT NULL AND json_valid(pc.projection_json)
-        AND json_type(pc.projection_json) = 'object' AND length(pc.provider_identity_hash) = 64)
-      AND EXISTS (SELECT 1 FROM template_release_heads head WHERE head.release_id = pr.id)
+    WHERE ${balancedAnd([
+      `pr.id = (${scope.releaseIdSql})`,
+      `pr.org_id = (${scope.orgIdSql})`,
+      `pr.mode = (${scope.modeSql})`,
+      `pr.provider = (${scope.providerSql})`,
+      `pr.provider IN ('google', 'samsung')`,
+      `pr.template_id = (${scope.templateIdSql})`,
+      `pr.version = (${scope.versionSql})`,
+      `pc.source_release_id = (${scope.sourceReleaseIdSql})`,
+      `pr.source = 'approved'`,
+      `pr.action IN ('release', 'rollback')`,
+      'pc.template_id = pr.template_id',
+      'pc.org_id = pr.org_id',
+      'pc.mode = pr.mode',
+      'pc.provider = pr.provider',
+      'pc.version = pr.version',
+      'pc.candidate_hash = pr.candidate_hash',
+      'pa.candidate_hash = pc.candidate_hash',
+      `pc.credential_keyset_commitment = (${scope.credentialKeysetCommitmentSql})`,
+      'pr.credential_keyset_commitment = pc.credential_keyset_commitment',
+      'pa.credential_keyset_commitment = pc.credential_keyset_commitment',
+      'pc.content_hash = pr.content_hash',
+      'pc.adapter_revision = pr.adapter_revision',
+      'pc.adapter_capabilities = pr.adapter_capabilities',
+      'pc.audience_policy_revision = pr.audience_policy_revision',
+      'pv.created_by IS pc.version_author_id',
+      approvalStandsSql('pa', 'pc'),
+      'pr.created_by IS NOT NULL',
+      'pc.projection_json IS NOT NULL',
+      'json_valid(pc.projection_json)',
+      "json_type(pc.projection_json) = 'object'",
+      'length(pc.provider_identity_hash) = 64',
+      'EXISTS (SELECT 1 FROM template_release_heads head WHERE head.release_id = pr.id)',
+    ])}
   INTERSECT
-  SELECT pb.id FROM projection_binding_release pb
+  SELECT pb.id FROM template_releases pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id
     JOIN template_provider_apple_sources ps ON ps.id = pc.source_release_id
-    WHERE (ps.template_id = pc.template_id AND ps.mode = pc.mode
-      AND ps.version = pc.version AND ps.generation = pc.source_release_generation
-      AND ps.candidate_hash = pc.source_release_hash AND ps.content_hash = pc.content_hash)
-      AND (ps.org_id = pc.org_id OR (ps.org_id IS NULL AND ps.origin = 'baked' AND ps.template_org_id IS NULL))
+    WHERE ${balancedAnd([
+      captured,
+      'ps.template_id = pc.template_id',
+      'ps.mode = pc.mode',
+      'ps.version = pc.version',
+      'ps.generation = pc.source_release_generation',
+      'ps.candidate_hash = pc.source_release_hash',
+      'ps.content_hash = pc.content_hash',
+      "(ps.org_id = pc.org_id OR (ps.org_id IS NULL AND ps.origin = 'baked' AND ps.template_org_id IS NULL))",
+    ])}
   INTERSECT
-  SELECT pb.id FROM projection_binding_release pb
+  SELECT pb.id FROM template_releases pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id
-    WHERE EXISTS (SELECT 1 FROM (${source}) projection_apple_head
+    WHERE ${captured} AND EXISTS (SELECT 1 FROM (${source}) projection_apple_head
       WHERE projection_apple_head.id = pc.source_release_id)
   INTERSECT
-  SELECT pb.id FROM projection_binding_release pb
+  SELECT pb.id FROM template_releases pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id
-    WHERE (pc.provider = 'google' AND json_extract(pc.projection_json, '$.schema') = 2
+    WHERE ${captured} AND ((pc.provider = 'google' AND json_extract(pc.projection_json, '$.schema') = 2
         AND pc.adapter_revision = ${GOOGLE_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${google}'
         AND pc.audience_policy_revision = ${GOOGLE_PROJECTION_POLICY.audiencePolicyRevision})
       OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 2
         AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
-        AND (${nowSql}) IS NOT NULL))`;
+        AND (${nowSql}) IS NOT NULL)))`;
 }
 
 /** Reads the effective scoped Apple head without accepting it as native approval. */

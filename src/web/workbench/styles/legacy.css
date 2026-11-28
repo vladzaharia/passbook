@@ -72,7 +72,7 @@
 .wb-legacy :is(code, kbd, pre) {
   font-family: var(--pk-font-mono);
 }
-.wb-legacy a:not(.btn) {
+.wb-legacy a:not(.btn, [class*="inline-flex"]) {
   color: var(--pk-accent-fg);
 }
 .wb-legacy button {

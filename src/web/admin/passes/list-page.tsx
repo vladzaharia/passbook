@@ -1,5 +1,4 @@
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { ImagePlus, Plus, Upload } from 'lucide-react';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
@@ -10,7 +9,6 @@ import { readablePassOrgs } from '../../lib/org-lists.ts';
 import { orgPath } from '../../lib/scope.ts';
 import { useSwatches } from '../../lib/swatches.ts';
 import {
-  Button,
   DataTable,
   EmptyState,
   ErrorState,
@@ -28,6 +26,7 @@ import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
 import { orgIdsOf, PassFindToolbar } from './find-toolbar.tsx';
 import { isFiltered, useAllScopeOrgIds, usePassList } from './list-api.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
+import { CreateActions } from './list-create-actions.tsx';
 import { exportPassesCsv } from './list-export.ts';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
 import { OtherModeHint } from './other-mode-hint.tsx';
@@ -118,8 +117,12 @@ export function PassesListPage({
   );
   const orgs = useMemo(() => new Map(readable.map((m) => [m.orgId, m])), [readable]);
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);
-  // Previews are per organization: the All list shows plain chips.
-  const swatches = useSwatches(all ? [] : templateIds, orgId);
+  // Previews are per organization: in the All scope each template loads from its own.
+  const orgByTemplate = useMemo(
+    () => (all ? new Map(rows.map((r) => [r.templateId, r.orgId] as const)) : undefined),
+    [all, rows],
+  );
+  const swatches = useSwatches(templateIds, orgId, orgByTemplate);
   const showSubtitles = useMemo(() => {
     const seen = new Set<string>();
     return rows.some((r) => {
@@ -197,23 +200,12 @@ export function PassesListPage({
     ],
   );
 
-  const create = (variant: 'primary' | 'outline') => (
-    <>
-      <Button asChild variant="outline" iconStart={<Upload aria-hidden />}>
-        <Link to="/admin/passes/import">Import</Link>
-      </Button>
-      <Button asChild variant="outline" iconStart={<ImagePlus aria-hidden />}>
-        <Link to="/admin/passes/photos">Photos</Link>
-      </Button>
-      <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
-        <Link to="/admin/passes/new">New pass</Link>
-      </Button>
-    </>
-  );
-
   return (
     <div className={selected.size > 0 || allMatching ? 'pb-20' : undefined}>
-      <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
+      <PageHeader
+        title="Passes"
+        actions={canOperate && !truth ? <CreateActions variant="primary" /> : undefined}
+      />
       {shownRun ? (
         <BulkRunCard
           id={shownRun}
@@ -286,7 +278,7 @@ export function PassesListPage({
               action={
                 canOperate ? (
                   <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
-                    {create('primary')}
+                    <CreateActions variant="primary" />
                   </div>
                 ) : undefined
               }

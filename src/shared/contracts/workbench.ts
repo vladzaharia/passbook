@@ -109,6 +109,7 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   // website and time zone settings and its brand (`pass-setup`), both filtered for a token. Channel writes,
   // review, promotion, rollback and the template's lifecycle stay out (`WORKBENCH_NEVER`).
   'GET /api/v1/templates/:id',
+  'GET /api/v1/templates/:id/input-schema',
   'GET /api/v1/templates/:id/versions/:version',
   'GET /api/v1/templates/:id/versions/:version/assets/:name',
   'GET /api/v1/templates/:id/versions/:version/wallet-reports',

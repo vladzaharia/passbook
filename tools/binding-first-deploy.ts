@@ -1,7 +1,7 @@
 // First deploy of workers/polaris-binding. Owner only: an agent never runs this (it uses --remote and deploys).
 //   npm run binding:first-deploy
-// Needs CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and POCKET_ID_API_KEY in the environment (the
-// passbook-polaris-binding profile). Creates the D1 only when absent, writes its id into the binding's
+// Needs POCKET_ID_API_KEY in the environment (the passbook-polaris-binding profile) and a Cloudflare
+// sign-in: `npx wrangler login`, or CLOUDFLARE_API_TOKEN (wrangler reads it itself). The config pins the account. Creates the D1 only when absent, writes its id into the binding's
 // wrangler.jsonc, applies migrations, puts the key over stdin and deploys. Safe to run again.
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -9,7 +9,6 @@ import { resolve } from 'node:path';
 
 const CONFIG = 'workers/polaris-binding/wrangler.jsonc';
 const DB_NAME = 'polaris-binding';
-const REQUIRED = ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'POCKET_ID_API_KEY'] as const;
 
 export type Wrangler = (args: string[], stdin?: string) => { status: number; stdout: string };
 export interface Deps {
@@ -27,14 +26,19 @@ function fail(step: string, out: { status: number }): never {
 
 export function firstDeploy(deps: Deps): void {
   const { root, env, wrangler, log } = deps;
-  const missing = REQUIRED.filter((name) => !env[name]);
-  if (missing.length > 0) {
+  const key = env.POCKET_ID_API_KEY;
+  if (!key) {
     throw new Error(
-      `Missing ${missing.join(', ')}. Run this with the passbook-polaris-binding profile.`,
+      'Missing POCKET_ID_API_KEY. Run this with the passbook-polaris-binding profile.',
     );
   }
-  const key = env.POCKET_ID_API_KEY as string;
   const configFile = resolve(root, CONFIG);
+
+  if (wrangler(['whoami']).status !== 0) {
+    throw new Error(
+      'Not signed in to Cloudflare: run `npx wrangler login`, or set CLOUDFLARE_API_TOKEN',
+    );
+  }
 
   const list = wrangler(['d1', 'list', '--json']);
   if (list.status !== 0) fail('D1 list', list);

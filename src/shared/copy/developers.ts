@@ -52,19 +52,16 @@ export const DEV_COPY = {
       {
         key: 'quickstart',
         title: 'Quickstart',
-        line: 'Sandbox, first request, your pass live.',
         foot: '5 min',
       },
       {
         key: 'playground',
         title: 'Playground',
-        line: 'Edit fields, watch every wallet change.',
         foot: '',
       },
       {
         key: 'reference',
         title: 'API reference',
-        line: 'Every operation, runnable in place.',
         foot: '',
       },
     ],
@@ -109,18 +106,13 @@ export const DEV_COPY = {
     status: 'Status',
   },
   slots: {
-    playground: {
-      title: 'Playground',
-      line: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
-    },
     guides: {
       title: 'Guides',
-      line: 'Each recipe runs in your sandbox and ends at a test preview.',
+      meta: 'PassBook API guides.',
     },
   },
   notFound: {
     title: 'Page not found',
-    line: 'Nothing lives at this address.',
     home: 'Home',
   },
   guides: {

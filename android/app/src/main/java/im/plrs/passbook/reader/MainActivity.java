@@ -56,6 +56,7 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity implements WebSurface.Listener, NfcController.Listener {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ScanGate gate = new ScanGate();
+    private final VerdictStatus verdicts = new VerdictStatus();
     private static final String DATAWEDGE_PROFILE = "PassBook Scanner";
     private static final String DATAWEDGE_COMMAND = "PASSBOOK_PROFILE";
     private static final int DATAWEDGE_PROFILE_VERSION = 2;
@@ -194,7 +195,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         settings.setOnClickListener(view -> notice("Press and hold Settings to change them."));
         settings.setOnLongClickListener(view -> {
             web.send(message("cancelled"));
-            configuring = true; endOneShot(); nfc.stop(); gate.reset(); reportCapabilities();
+            configuring = true; endOneShot(); nfc.stop(); gate.reset(); verdicts.clear(); reportCapabilities();
             SettingsDialog.show(this, config, next -> {
                 // A different origin starts clean: its cookies and storage are cleared and the bridge is re-bound to it.
                 boolean moved = !next.origin().equals(config.origin());
@@ -259,7 +260,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
-        foreground = false; endOneShot(); nfc.stop(); gate.reset(); handler.removeCallbacks(expiry); unregisterBarcode(); unregisterReceiver(nfcReceiver);
+        foreground = false; endOneShot(); nfc.stop(); gate.reset(); verdicts.clear(); handler.removeCallbacks(expiry); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
         if (inputManager != null) inputManager.unregisterInputDeviceListener(inputListener);
         unregisterReceiver(usbReceiver); handler.removeCallbacks(hardwareReport);
@@ -279,7 +280,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         else super.onBackPressed();
     }
     @Override public void reset() {
-        cameraPermissions.cancel(); gate.reset(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
+        cameraPermissions.cancel(); gate.reset(); verdicts.clear(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
     }
     /** A killed renderer would otherwise take the whole app with it. Rebuild the surface; after three in a minute, wait for Reload. */
     @Override public void rendererGone(boolean crashed) {
@@ -312,13 +313,24 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         else nfc.start(config.passTypeIds(), vas, tags);
         lastNfcAvailable = nfc.available();
         scan.setText(armed ? "Pause NFC" : "Start NFC");
-        notice(!web.isReady() ? "Waiting for verifier connection" : !armed || configuring ? "NFC paused"
-            : nfc.isReading() ? "Barcode ready · NFC capture unverified" : "NFC unavailable · barcode ready");
+        notice(idleText());
+    }
+
+    private String idleText() {
+        return !web.isReady() ? "Waiting for verifier connection" : !armed || configuring ? "NFC paused"
+            : nfc.isReading() ? "Barcode ready · NFC capture unverified" : "NFC unavailable · barcode ready";
+    }
+
+    private void write(VerdictStatus.Write write) {
+        if (write == null) return;
+        notice(write.text() == null ? idleText() : write.text());
+        status.setTextColor(write.color());
     }
 
     @Override public void command(JSONObject json) {
         if (json.optString("op").equals("hello")) {
             endOneShot(); vasOn = true; tagOn = false; armed = false;
+            gate.reset(); verdicts.hello(web.feature("scanSettle"));
             if (foreground) resumeReader();
             JSONObject ready = message("ready");
             put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
@@ -343,12 +355,24 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 break;
             case "result":
                 String outcome = json.optString("outcome");
-                if (config.isLocal() || !(outcome.equals("accepted") || outcome.equals("rejected") || outcome.equals("error"))) return;
-                if (!gate.finish(json.optString("id"), SystemClock.elapsedRealtime())) return;
-                notice(outcome.equals("accepted") ? "Accepted" : outcome.equals("rejected") ? "Rejected" : "Unable to verify");
-                status.setTextColor(outcome.equals("accepted") ? 0xff17683d : 0xff9d3025);
+                if (config.isLocal() || !VerdictStatus.validOutcome(outcome)) return;
+                String resultId = json.optString("id");
+                if (!gate.finish(resultId, SystemClock.elapsedRealtime())) return;
+                write(verdicts.result(resultId, outcome));
                 Vibrator vibrator = getSystemService(Vibrator.class);
-                if (vibrator != null && vibrator.hasVibrator()) vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
+                if (verdicts.buzzOnResult() && vibrator != null && vibrator.hasVibrator()) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
+                }
+                break;
+            case "dropped":
+                if (config.isLocal() || !web.feature("scanSettle")) return;
+                String droppedId = json.optString("id");
+                if (!gate.finish(droppedId, SystemClock.elapsedRealtime())) return;
+                write(verdicts.dropped(droppedId, json.optString("reason")));
+                break;
+            case "revise":
+                if (config.isLocal() || !web.feature("scanSettle")) return;
+                write(verdicts.revise(json.optString("id"), json.optString("outcome")));
                 break;
             case "haptic":
                 JSONArray pattern = json.optJSONArray("pattern");
@@ -437,6 +461,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (begin.admit() == ScanGate.Admit.DUPLICATE) return false;
         handler.removeCallbacks(expiry); handler.postDelayed(expiry, 250);
         put(event, "id", begin.id()); put(event, "readAt", System.currentTimeMillis());
+        verdicts.delivered(begin.id());
         status.setTextColor(0xff34415d);
         notice(config.isLocal() ? "Read captured · unverified" : "Checking…");
         if (!web.send(event)) { gate.reset(); notice("Verifier disconnected. Scan again."); return false; }
@@ -676,7 +701,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     /** Additive bridge features, a top-level event field outside the strict capability snapshot. */
-    static JSONArray features() { return new JSONArray().put("scanAck"); }
+    static JSONArray features() { return new JSONArray().put("scanAck").put("scanSettle"); }
 
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
                                          boolean nfcSupported, boolean nfcAvailable, boolean nfcReading) {

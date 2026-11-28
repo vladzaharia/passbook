@@ -34,14 +34,11 @@ import { TestRibbon } from './test-ribbon.tsx';
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
   count: HOLDER_COPY.count,
-  /** The count line when a badge already says "All passes (3)": only what is not live. */
+  /** The line under the title: only what is not live. The stack shows the count. */
   extras: (voided: number, removed = 0) =>
     [voided ? `${voided} voided` : '', removed ? `${removed} removed` : '']
       .filter(Boolean)
       .join(' · '),
-  /** "3 passes · 1 voided · 1 removed" under the title. */
-  summary: (n: number, voided: number, removed = 0) =>
-    `${n} ${n === 1 ? 'pass' : 'passes'}${voided ? ` · ${voided} voided` : ''}${removed ? ` · ${removed} removed` : ''}`,
   allPasses: HOLDER_COPY.allPasses,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Open these passes.',
@@ -186,9 +183,7 @@ function BundleBody(props: BundlePageProps) {
     .filter((i) => i !== front)
     .sort((a, b) => Number(a.state !== 'active') - Number(b.state !== 'active'));
   const mode = apple.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
-  // One count: the badge's "All passes (3)", else the line under the title.
   const labelled = apple.length > 1;
-  const labelShown = labelled && !android && device.device !== 'other' && mode !== 'off';
   const area: AddAreaProps | null =
     mode === 'off'
       ? null
@@ -216,13 +211,9 @@ function BundleBody(props: BundlePageProps) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={{ title: props.name, org: '', kind: null }}
-          meta={
-            <span>
-              {labelShown
-                ? BUNDLE_COPY.extras(voided, removed)
-                : BUNDLE_COPY.summary(items.length, voided, removed)}
-            </span>
-          }
+          {...(voided || removed
+            ? { meta: <span>{BUNDLE_COPY.extras(voided, removed)}</span> }
+            : {})}
         />
         <div className="bd-top">
           {area && android ? (

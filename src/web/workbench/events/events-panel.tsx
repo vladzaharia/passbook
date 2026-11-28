@@ -10,11 +10,10 @@ import { LiveIndicator, useLiveState } from '../bench/live.tsx';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
 import { BenchSlot } from '../bench/slots.tsx';
 import { BenchSplit } from '../bench/split.tsx';
-import { BenchState } from '../bench/state.tsx';
 import { BenchTime } from '../bench/time.tsx';
 import { Toolbar } from '../bench/toolbar.tsx';
 import { useBenchSelection } from '../bench/use-selection.ts';
-import { ToolFailed } from '../states/states.tsx';
+import { StageState, ToolFailed } from '../states/states.tsx';
 import type { EventsParams } from './use-address.ts';
 import { type FeedEvent, useEventFeed } from './use-event-feed.ts';
 import { useEventsApi } from './use-events.ts';
@@ -40,6 +39,8 @@ export function EventsPanel({
   endpoints,
   write,
   empty,
+  sendAction,
+  onEmpty,
 }: {
   orgId: string;
   params: EventsParams;
@@ -47,6 +48,10 @@ export function EventsPanel({
   write: (next: Record<string, string | null>, mode: 'push' | 'replace') => void;
   /** Nothing has arrived and nothing narrows the list. */
   empty: React.ReactNode;
+  /** The head's Send test event: not shown while the empty state offers the one way on. */
+  sendAction: React.ReactNode;
+  /** Whether the empty state is showing. */
+  onEmpty: (empty: boolean) => void;
 }) {
   const api = useEventsApi();
   const feed = useEventFeed(api, { type: params.type, request: params.request, pass: params.pass });
@@ -62,6 +67,11 @@ export function EventsPanel({
   // y copies the selected event's id.
   useBenchKeys({ copyId: () => selected && void copyWithFeedback(selected.id, null) });
   const filters = [params.type, params.request, params.pass].filter(Boolean).length;
+  const showingEmpty = feed.ready && !feed.failed && feed.events.length === 0 && filters === 0;
+  useEffect(() => {
+    onEmpty(showingEmpty);
+    return () => onEmpty(false);
+  }, [showingEmpty, onEmpty]);
   const set = (key: 'type' | 'request' | 'pass', value: string | null) =>
     write({ [key]: value }, 'replace');
   const clear = () => write({ type: null, request: null, pass: null }, 'replace');
@@ -89,6 +99,7 @@ export function EventsPanel({
   return (
     <>
       <LiveIndicator state={live} onResume={feed.resume} />
+      <BenchSlot name="action">{showingEmpty ? null : sendAction}</BenchSlot>
       <BenchSlot name="count">{feed.ready ? `${feed.events.length} events` : null}</BenchSlot>
       <Toolbar label="Filter events">
         <FilterBar active={filters} onClear={clear}>
@@ -109,7 +120,7 @@ export function EventsPanel({
         onClose={() => selection.setOpen(false)}
         main={
           feed.failed ? (
-            <ToolFailed error={new Error('events')} onRetry={feed.reload} />
+            <ToolFailed reason={BENCH_COPY.state.failed} onRetry={feed.reload} />
           ) : !feed.ready ? (
             <BenchSkeleton rows={6} />
           ) : (
@@ -121,11 +132,16 @@ export function EventsPanel({
               fresh={feed.fresh}
               empty={
                 filters > 0 ? (
-                  <BenchState scene="no-match">
-                    <button type="button" className="btn outline" onClick={clear}>
-                      {BENCH_COPY.state.clearFilters}
-                    </button>
-                  </BenchState>
+                  <StageState
+                    scene="search"
+                    mood="curious"
+                    title={BENCH_COPY.state.noMatch}
+                    action={
+                      <button type="button" className="btn outline" onClick={clear}>
+                        {BENCH_COPY.state.clearFilters}
+                      </button>
+                    }
+                  />
                 ) : (
                   empty
                 )
