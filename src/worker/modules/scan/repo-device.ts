@@ -4,9 +4,8 @@ import { type Check, epochIs, exactlyOne, rowIs } from '../../platform/authority
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { inList, maxNow } from '../../platform/authority-expr.ts';
 import { first, run } from '../../platform/db.ts';
-import type { AppEnv } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
-import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 
 type Db = D1Database;
 
@@ -276,11 +275,10 @@ export async function bindStaff(
 
 /**
  * Clear the observed binding. A scanner whose credential moved on, or whose binding is already
- * gone, is left alone: ending a binding only ever reduces access. Callers hold a context; the
- * database form serves the guard and fixtures.
+ * gone, is left alone: ending a binding only ever reduces access. It takes the caller's context so
+ * the grant reads the request clock, never the wall clock.
  */
-export async function unbindStaff(target: Db | ServiceContext, scanner: ScannerRow): Promise<void> {
-  const ctx = 'env' in target ? target : createDetachedContext({ DB: target } as AppEnv);
+export async function unbindStaff(ctx: ServiceContext, scanner: ScannerRow): Promise<void> {
   if (scanner.staffId === null) return;
   const epochs = scannerEpochsOf(scanner);
   const g = grant(ctx, {
