@@ -8,7 +8,7 @@ import { api } from '../lib/api.ts';
 import { isApiError } from '../lib/errors.ts';
 import { safeNext } from '../lib/redirect.ts';
 import { CODE_LENGTH, CodeField } from '../ui/code-field.tsx';
-import { lockoutLine } from '../ui/identity-card.tsx';
+import { lockoutLine } from '../ui/hosted-card.tsx';
 import { Button, Callout, Label, useNow } from '../ui/index.ts';
 import { goTo } from './goto.ts';
 import { type SignInError, signInError } from './login-errors.ts';

@@ -68,7 +68,9 @@ describe('tone tokens', () => {
 
     it(`washes 10 % in light and 14 % in dark (${name})`, () => {
       const wash = tokens.get('--pk-tone-wash');
-      expect(wash).toBe(env.system === 'light' && env.attr !== 'dark' ? '10%' : '14%');
+      expect(wash).toBe(
+        env.system === 'light' && (env as { attr?: string }).attr !== 'dark' ? '10%' : '14%',
+      );
     });
   }
 });

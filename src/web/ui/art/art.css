@@ -36,6 +36,9 @@
 }
 /* Line weight per tier (base.tsx): the lines are non-scaling, so a smaller art draws thinner. L steps
    to 112×84 under 640. */
+.wl-art[data-size="xs"] {
+  --art-w: 1;
+}
 .wl-art[data-size="sm"] {
   --art-w: 1.25;
 }

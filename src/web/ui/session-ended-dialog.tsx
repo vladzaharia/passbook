@@ -3,8 +3,8 @@ import { useRouter } from '@tanstack/react-router';
 import { useState } from 'react';
 import { sessionEndedHref } from '../lib/api.ts';
 import { cn } from '../lib/cn.ts';
-import { SignedOutCard } from './identity-card.tsx';
 import { DIALOG_PANEL, DialogOverlay, focusInitial } from './overlay.tsx';
+import { SignedOutCard } from './signed-out-card.tsx';
 
 /**
  * Shown once when a request comes back 401 (lib/api.ts, ui/session-ended.tsx). It cannot be

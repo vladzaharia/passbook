@@ -38,6 +38,15 @@ const SURFACE: Record<StateTone, string> = {
   slate: 'rounded-lg border border-(--pk-slate-line) bg-(--pk-slate-bg)',
 };
 
+/** The buddy's step per size; inline shows the entity art alone at `xs`. */
+const BUDDY_SIZE = { panel: 'lg', stage: 'xl', hosted: 'xl-scan' } as const;
+/** Room above the box for the buddy (its height plus a 16 px gap), per size. */
+const BUDDY_ROOM: Record<'panel' | 'stage' | 'hosted', string> = {
+  panel: 'mt-[5.5rem]',
+  stage: 'mt-[6.25rem] sm:mt-[7rem]',
+  hosted: 'mt-[10rem] md:mt-[13rem]',
+};
+
 const PAD: Record<StateSize, string> = {
   inline: 'gap-1.5 px-4 py-6',
   panel: 'gap-2 px-6 py-10',
@@ -168,7 +177,7 @@ export function StateView({
       <>
         <EntityArt
           name={art}
-          size="sm"
+          size={inline ? 'xs' : 'sm'}
           className={filtered ? 'opacity-60' : undefined}
           still={still}
           {...(artState ? { state: artState } : {})}
@@ -192,8 +201,9 @@ export function StateView({
         </div>
       ) : (
         // The buddy stands on a zero-height floor under its own height, inside the box.
-        <div ref={artRef} aria-hidden className="relative mt-[4.5rem] mb-1 h-0 w-full">
+        <div ref={artRef} aria-hidden className={cn('relative mb-1 h-0 w-full', BUDDY_ROOM[size])}>
           <Buddy
+            size={BUDDY_SIZE[size]}
             mood={acted || state === 'failed' ? 'sad' : (mood ?? (heading ? 'sad' : 'curious'))}
             still={still}
             scene={scene}
