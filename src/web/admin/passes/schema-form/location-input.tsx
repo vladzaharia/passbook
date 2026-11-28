@@ -45,12 +45,7 @@ export function LocationInput({
   return (
     <FormSpan full>
       <div className="flex flex-col gap-4">
-        <FormField
-          label={label}
-          required={pair.lat.required}
-          help="Latitude, longitude or a Maps link."
-          error={error}
-        >
+        <FormField label={label} required={pair.lat.required} error={error}>
           {(c) => (
             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
               <Input
@@ -87,7 +82,7 @@ export function LocationInput({
           )}
         </FormField>
         {pair.text ? (
-          <FormField label={pair.text.label} help="Shown on the lock screen near this place.">
+          <FormField label={pair.text.label}>
             {(c) => (
               <Input
                 {...c}

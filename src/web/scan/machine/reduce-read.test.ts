@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SCAN_TIMING } from '../timing.ts';
-import { fixtureInput, fixtureOutcome, fixtureState, states } from './fixtures.test-support.ts';
+import {
+  FIXTURE_NOW,
+  fixtureInput,
+  fixtureOutcome,
+  fixtureState,
+  states,
+} from './fixtures.test-support.ts';
 import {
   answerOf,
   at,
@@ -13,8 +19,42 @@ import {
   resetIds,
   step,
 } from './reduce.test-support.ts';
+import { readFate } from './reduce-read.ts';
 
 beforeEach(resetIds);
+
+describe('readFate', () => {
+  const NOW = SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT;
+  const other = fixtureInput({ id: 'x', sig: 'c:OTHER', code: 'OTHER' });
+  const same = fixtureInput({ id: 'y' });
+  it('classifies each loop state', () => {
+    expect(readFate(states.ready(), other, NOW)).toBe('begin');
+    expect(readFate(states.checking(), other, NOW)).toBe('park');
+    expect(readFate(states.checking(), same, NOW)).toBe('duplicate');
+    expect(readFate(states.member(), same, NOW)).toBe('duplicate');
+    expect(readFate(states.member(), other, NOW)).toBe('begin');
+    expect(readFate(states.picking(), other, NOW)).toBe('park');
+    expect(readFate(states.verdict('ok'), same, NOW)).toBe('duplicate');
+    expect(readFate(states.verdict('system'), same, NOW)).toBe('begin');
+    expect(readFate(states.verdict('ok'), other, 0)).toBe('park');
+    expect(readFate(states.verdict('ok'), other, FIXTURE_NOW + NOW)).toBe('begin');
+  });
+  it('an ignore hit is a duplicate, assign mode consumes, a block ignores', () => {
+    const hit = fixtureState({ ignore: [{ sig: other.sig, until: NOW + 1000 } as never] });
+    expect(readFate(hit, other, NOW)).toBe('duplicate');
+    expect(readFate({ ...fixtureState(), assign: {} } as never, other, NOW)).toBe('assign');
+    expect(readFate(states.block('no_scanner' as never), other, NOW)).toBe('duplicate');
+  });
+  it('the reducer parks, begins and drops as the fate says', () => {
+    for (const s of [states.ready(), states.checking(), states.member(), states.picking()]) {
+      const fate = readFate(s, other, FIXTURE_NOW);
+      const { state } = step(s, readOf('OTHER'));
+      const l = state.loop;
+      if (fate === 'begin') expect(l.s).toBe('checking');
+      else expect(state.loop.s).toBe(s.loop.s);
+    }
+  });
+});
 
 const inputOf = (e: ReturnType<typeof readOf>) => {
   if (e.type !== 'read') throw new Error('not a read');

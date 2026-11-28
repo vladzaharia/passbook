@@ -28,7 +28,6 @@ export function DeviceFollows({
       <h2 className="text-sm font-semibold">Scanners shown</h2>
       <SwitchRow
         label="All scanners in this session"
-        help="Greetings from every door appear here."
         checked={!chosen}
         disabled={!scanners.length}
         onCheckedChange={(all) => set(all ? undefined : scanners.map((d) => d.id))}

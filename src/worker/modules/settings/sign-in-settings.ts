@@ -7,8 +7,14 @@ export function changesSignIn(values: unknown): boolean {
   );
 }
 
-/** `key.unless` of the platform settings save: refuse unless the body provably names no sign-in key. */
+/** Settings whose change deletes data in every organization on the default: a person's call, never a key's. */
+const deletesData = (key: string) => key.startsWith('retention.') || key === 'sandbox.purgeDays';
+
+/** `key.unless` of the platform settings save: refuse unless the body provably names no sign-in or data-deleting key. */
 export const needsPerson = (body: Record<string, unknown> | null): boolean =>
   body === null ||
   (body.values !== undefined &&
-    (typeof body.values !== 'object' || body.values === null || changesSignIn(body.values)));
+    (typeof body.values !== 'object' ||
+      body.values === null ||
+      changesSignIn(body.values) ||
+      Object.keys(body.values).some(deletesData)));

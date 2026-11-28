@@ -15,7 +15,7 @@ On Polaris ID v2.19.3 an API key carries no scopes: it is a full admin key of th
 
 ## Prerequisites
 
-- Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `POCKET_ID_API_KEY` (the key from step 2).
+- Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile), and the profile defines `POCKET_ID_API_KEY` (the key from step 2).
 - Set up needs PassBook's Client ID Metadata Document client: `PASSBOOK_CLIENT_ID` in `workers/polaris-binding/wrangler.jsonc` is the metadata URL (`https://passbook.mobile/auth/oidc/client-metadata.json`). It refuses a plain registered client id, so a registered client must be moved to the metadata URL first ([[Go-Live Polaris ID Client]]).
 - You are in the platform admin group (`wallet_admins`). PassBook never writes it.
 
@@ -37,10 +37,10 @@ Create a Polaris ID admin user `passbook-binding` with a verified address you co
 
 ## 3. First deploy
 
-One command. It creates the D1 `polaris-binding` only if it does not exist, writes its id into `workers/polaris-binding/wrangler.jsonc`, applies the migrations, puts the key over stdin and deploys the Worker. It never prints the key and writes only to the binding Worker's own database, secret, config and deployment. It stops without running anything if a profile variable is missing, and it is safe to run again.
+One command. It creates the D1 `polaris-binding` only if it does not exist, writes its id into `workers/polaris-binding/wrangler.jsonc`, applies the migrations, puts the key over stdin and deploys the Worker. It never prints the key and writes only to the binding Worker's own database, secret, config and deployment. It stops without running anything if `POCKET_ID_API_KEY` is missing or Wrangler is not signed in to Cloudflare, and it is safe to run again.
 
 ```sh name=check-profile confirm=no
-for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID POCKET_ID_API_KEY; do [ -n "$(printenv "$v")" ] && echo "$v set" || echo "$v MISSING"; done
+[ -n "$POCKET_ID_API_KEY" ] && echo "POCKET_ID_API_KEY set" || echo "POCKET_ID_API_KEY MISSING"; npx wrangler whoami
 ```
 
 ```sh name=first-deploy confirm="Create the polaris-binding D1 if absent, apply its migrations, set POCKET_ID_API_KEY and deploy the polaris-binding Worker to production?"

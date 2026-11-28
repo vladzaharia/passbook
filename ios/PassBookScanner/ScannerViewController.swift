@@ -246,10 +246,14 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
                   let outcome = request["outcome"] as? String,
                   ["accepted", "rejected", "error"].contains(outcome) else { return }
             releaseGate(id: id, byAck: false)
+        case "revise", "dropped":
+            // scanSettle: no pending ids and no native buzz here; the web view shows the verdict.
+            return
         case "haptic":
             guard let pattern = request["pattern"] as? [Int], let kind = Self.hapticKind(pattern) else { return }
             switch kind {
             case .tap: UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            case .system: UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             case .warning: UINotificationFeedbackGenerator().notificationOccurred(.warning)
             case .error: UINotificationFeedbackGenerator().notificationOccurred(.error)
             }
@@ -277,14 +281,15 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         }
     }
 
-    enum HapticKind { case tap, warning, error }
+    enum HapticKind { case tap, system, warning, error }
 
-    /// The web's pulse pattern, as the nearest system feedback: one pulse, two, three or more.
+    /// The web's pulse pattern, as the nearest system feedback: one short pulse, one long (system), two, three or more.
     /// At most 8 entries, each 0 to 500 ms; anything else is dropped.
     static func hapticKind(_ pattern: [Int]) -> HapticKind? {
         guard !pattern.isEmpty, pattern.count <= 8, pattern.allSatisfy({ (0...500).contains($0) }) else { return nil }
         let pulses = (pattern.count + 1) / 2
-        return pulses == 1 ? .tap : pulses == 2 ? .warning : .error
+        if pulses == 1 { return pattern[0] >= 100 ? .system : .tap }
+        return pulses == 2 ? .warning : .error
     }
 
     private func sendScan(_ value: String, method: String) {

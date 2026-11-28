@@ -120,10 +120,11 @@ describe('account menu', () => {
   it('offers Sign in in place of the avatar when signed out', async () => {
     await renderApp('/nope', { session: 'anon' });
     await screen.findByRole('heading', { name: 'Page not found', level: 1 });
+    // The card's band is the page's header: no bar around it, one Sign in.
     const links = await screen.findAllByRole('link', { name: 'Sign in' });
-    const inBar = links.filter((l) => l.closest('[data-menubar]'));
-    expect(inBar).toHaveLength(1);
-    expect(inBar[0]).toHaveAttribute('href', '/login');
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute('href', '/login');
+    expect(document.querySelector('[data-menubar]')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Account menu' })).toBeNull();
   });
 

@@ -1,6 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
-import { scanRead, scanReadAuthority } from './repo-read-authority.ts';
+import { type ScanReadAuthority, scanRead, scanReadAuthority } from './repo-read-authority.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanRow } from './repo-scans.ts';
 
@@ -19,14 +19,33 @@ export async function collidingClaimCurrent(
     now: ctx.clock.now(),
     extraChecks: credentialRefChecks(refs),
   });
-  const current = await scanRead(
+  const current = await collidingClaimStmt(
     ctx.env.DB,
     auth,
-    `SELECT CASE WHEN ${auth.ok} AND EXISTS (SELECT 1 FROM scans existing
-        WHERE existing.id = ? AND existing.at = ? AND existing.state = ? AND existing.reason IS ?
-          AND existing.actor_key = ? AND existing.idempotency_key = ? AND existing.request_hash = ?
-          AND ${auth.tenant('existing', 'scans')}) THEN 1 ELSE 0 END AS authorized`,
-    [row.id, row.at, row.state, row.reason, actor.actorKey, idempotencyKey, row.requestHash],
+    actor.actorKey,
+    row,
+    idempotencyKey,
   ).first<{ authorized: number }>();
   return current?.authorized === 1;
 }
+
+export const collidingClaimStmt = (
+  db: D1Database,
+  auth: ScanReadAuthority,
+  actorKey: string,
+  row: ScanRow,
+  idempotencyKey: string,
+) =>
+  scanRead(
+    db,
+    auth,
+    `SELECT ${auth.authorized(
+      'authorized',
+      `EXISTS (SELECT 1 FROM scans existing
+        WHERE existing.id = ? AND existing.at = ? AND existing.state = ? AND existing.reason IS ?
+          AND existing.actor_key = ? AND existing.idempotency_key = ? AND existing.request_hash = ?
+          AND ${auth.tenantOnce('existing', 'scans')})`,
+    )}
+     FROM ${auth.anchor}`,
+    [row.id, row.at, row.state, row.reason, actorKey, idempotencyKey, row.requestHash],
+  );

@@ -21,7 +21,6 @@ export const IMPORT_COPY = {
   pasteLabel: 'Rows',
   pastePlaceholder: 'Name,Email,Id\nMaya,maya@example.com,A1',
   linkLabel: 'Link',
-  linkHelp: 'In Google Sheets: File › Share › Publish to web › CSV.',
   xlsx: 'Save the sheet as CSV first.',
   notUtf8: 'The file is not UTF-8. Save it as CSV UTF-8.',
   savedColumns: 'A saved column is not in this file. Choose it again.',
@@ -106,13 +105,9 @@ export const IMPORT_COPY = {
   source: {
     way: 'Source',
     file: 'Spreadsheet',
-    fileHint: 'CSV, paste or a sheet link',
     connection: 'Connection',
-    connectionHint: 'Shopify, Stripe, WooCommerce and more',
-    connectionBody: 'A connection keeps passes in step with another system.',
     connectionGo: 'Set up a connection',
     api: 'API',
-    apiHint: 'POST /pass-imports',
     apiGo: 'Developer docs',
     remove: 'Remove file',
     shape: (rows: number, columns: number) =>
@@ -155,7 +150,6 @@ export const IMPORT_COPY = {
   sheet: {
     title: 'Import',
     email: 'Email new holders',
-    noEmail: 'No new holder has an email.',
   },
   run: {
     leave: 'You can leave this page.',
@@ -228,18 +222,8 @@ export const IMPORT_COPY = {
     emailable > budget
       ? `The first ${budget} get an email. The rest are listed after the import.`
       : `You can send ${budget} more pass emails today.`,
-  commitButton: (c: { create: number; update: number; errors: number }) => {
-    const n = (k: number) => `${k} ${k === 1 ? 'pass' : 'passes'}`;
-    const main =
-      c.create > 0 && c.update > 0
-        ? `Create ${c.create} and update ${c.update}`
-        : c.create > 0
-          ? `Create ${n(c.create)}`
-          : `Update ${n(c.update)}`;
-    return c.errors > 0
-      ? `${main} (skip ${c.errors} ${c.errors === 1 ? 'error' : 'errors'})`
-      : main;
-  },
+  /** One short line: the footer shares a 390 px row with Cancel and Back. Errors are skipped; the tiles count them. */
+  commitButton: (c: { create: number; update: number }) => `Import ${c.create + c.update}`,
   commitLabel,
   progressText: (done: number, total: number) => `${done} of ${total}`,
   removed: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'} removed`,

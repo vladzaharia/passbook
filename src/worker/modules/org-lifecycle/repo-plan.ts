@@ -51,6 +51,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
     where: 'invitation_id IN (SELECT id FROM developer_invitations WHERE org_id = ?1)',
   },
   inOrg('developer_invitations'),
+  inOrg('cli_sessions'),
   inOrg('api_keys'),
   inOrg('outbox'),
   inOrg('captured_emails'),
@@ -91,6 +92,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('idempotent_requests'),
   { ...inOrg('request_log'), slices: true },
   inOrg('request_log_budget'),
+  inOrg('dlq_outcomes'),
   inOrg('org_entitlement_overrides'),
   inOrg('branding_gc_queue'),
   inOrg('org_reply_to'),
@@ -161,6 +163,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
 /** Tables with no tenant rows. The authority tables (grants live inside one batch and are swept) count as well. */
 export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   apns_keys: 'platform push key',
+  device_pass_blocks: 'a platform control on one developer, removed with the user',
   wallet_sa_keys: 'platform service-account key inventory',
   wallet_provider_releases: 'platform release state of each provider and mode, no org',
   auth_identities: 'user sign-in',
@@ -174,6 +177,7 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   platform_invitations: 'platform invitations to Polaris ID groups, no org',
   platform_role_grants: 'platform admin grants of developer or support, no org',
   pass_transfer_asset_gc: 'retired storage keys, collected by the transfer asset sweep',
+  hook_health: 'platform cron and queue hook health, no org',
   idp_dirty: 'Polaris ID drain queue, keyed by subject',
   idp_directory_groups: 'Polaris ID SCIM mirror: opaque ids and flags',
   idp_directory_users: 'Polaris ID SCIM mirror: opaque ids and flags',

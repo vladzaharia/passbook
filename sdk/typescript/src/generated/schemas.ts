@@ -63,6 +63,7 @@ export type ApiKeyDetail = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   lastIpPrefix: string | null;
   parent: {
     id: string;
@@ -98,6 +99,7 @@ export type ApiKeyMinted = {
   rateTier?: "standard" | "high" | "bulk" | null;
   parentKeyId?: string | null;
   rotatedFrom?: string | null;
+  origin?: "app" | "cli";
   secret?: string;
 };
 
@@ -129,6 +131,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
     secret: string;
   } | {
     id: string;
@@ -153,6 +156,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
   previous: {
     id: string;
@@ -177,6 +181,7 @@ export type ApiKeyRotation = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   };
 };
 
@@ -218,6 +223,7 @@ export type ApiKeysListResponse = {
     rateTier?: "standard" | "high" | "bulk" | null;
     parentKeyId?: string | null;
     rotatedFrom?: string | null;
+    origin?: "app" | "cli";
   }>;
   nextCursor: string | null;
   revokedCount?: number;
@@ -758,6 +764,10 @@ export type CapturedEmailDetail = {
 export type CapturedEmailPage = {
   items: Array<CapturedEmail>;
   nextCursor: string | null;
+};
+
+export type CliTokenEnded = {
+  ok: true;
 };
 
 export type ConnectionPreview = {
@@ -1891,6 +1901,23 @@ export type ConnectorsListResponse = {
       import: boolean;
       snapshot: boolean;
       upload?: boolean;
+      read?: {
+        fetch?: boolean;
+        list?: boolean;
+        delta?: boolean;
+        import?: boolean;
+        upload?: boolean;
+      };
+      write?: {
+        objects: Record<string, Array<"create" | "update" | "delete">>;
+      };
+      inbound?: {
+        webhook: "none" | "manual" | "managed";
+      };
+      outbound?: {
+        events: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+      };
+      auth?: "none" | "secret" | "oauth2";
     };
     configSchema?: unknown;
     secretSchema?: unknown;
@@ -2019,6 +2046,23 @@ export type ConnectorsRetrieveResponse = {
     import: boolean;
     snapshot: boolean;
     upload?: boolean;
+    read?: {
+      fetch?: boolean;
+      list?: boolean;
+      delta?: boolean;
+      import?: boolean;
+      upload?: boolean;
+    };
+    write?: {
+      objects: Record<string, Array<"create" | "update" | "delete">>;
+    };
+    inbound?: {
+      webhook: "none" | "manual" | "managed";
+    };
+    outbound?: {
+      events: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.replaced" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+    };
+    auth?: "none" | "secret" | "oauth2";
   };
   configSchema?: unknown;
   secretSchema?: unknown;
@@ -2210,6 +2254,7 @@ export type EmailFailedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type EventPage = {
@@ -4932,7 +4977,7 @@ export type OrgsEntitlementsRetrieveResponse = {
   preset: string | null;
   label: string | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;
@@ -4944,7 +4989,7 @@ export type OrgsPlanRetrieveResponse = {
   preset: string | null;
   label: string | null;
   limits: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     limit: number | null;
     used: number | null;
   }>;
@@ -5052,6 +5097,7 @@ export type PassChannelsChangedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassDetail = {
@@ -6143,9 +6189,12 @@ export type PassInstalledEvent = {
     device: string | null;
     deviceCount: number;
     firstDevice: boolean;
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassIssuedEvent = {
@@ -6162,6 +6211,7 @@ export type PassIssuedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassPage = {
@@ -6184,6 +6234,7 @@ export type PassPrintVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassPrintedEvent = {
@@ -6201,6 +6252,7 @@ export type PassPrintedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassRemovedEvent = {
@@ -6218,6 +6270,7 @@ export type PassRemovedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassReplacedEvent = {
@@ -6233,6 +6286,7 @@ export type PassReplacedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassRestoredEvent = {
@@ -6248,6 +6302,7 @@ export type PassRestoredEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassScanRefusedEvent = {
@@ -6268,6 +6323,7 @@ export type PassScanRefusedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassScanUndoneEvent = {
@@ -6285,6 +6341,7 @@ export type PassScanUndoneEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassScannedEvent = {
@@ -6312,6 +6369,7 @@ export type PassScannedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassSetup = {
@@ -6794,9 +6852,12 @@ export type PassUninstalledEvent = {
     deviceCount: number;
     lastDevice: boolean;
     cause: "wallet" | "push_gone";
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassUnvoidedEvent = {
@@ -6812,6 +6873,7 @@ export type PassUnvoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassUpdatedEvent = {
@@ -6830,6 +6892,7 @@ export type PassUpdatedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassVersion = {
@@ -6876,6 +6939,7 @@ export type PassVoidedEvent = {
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type PassesActivityListResponse = {
@@ -7356,6 +7420,7 @@ export type PassesDevicesListResponse = {
     removal: "pending" | "fetched" | "deleted" | null;
     simulated?: boolean;
     deviceId?: string;
+    devicePass?: true;
   }>;
   removal: {
     removedAt: number;
@@ -8472,7 +8537,7 @@ export type PlatformOrgsEntitlementsRetrieveResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";
@@ -8504,7 +8569,7 @@ export type PlatformOrgsEntitlementsUpdateResponse = {
   revision: number;
   updatedAt: number | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "members.developers" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    key: "templates" | "templates.uploads" | "templates.stylesBlocked" | "wallet.google" | "wallet.samsung" | "email.perDay" | "brand.mark" | "domains" | "print" | "join.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "messages.perDay" | "scanning.devices" | "nfc" | "members" | "members.developers" | "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "identity.own" | "identity.managed" | "connections" | "connectors";
     value: number | string | Array<string> | null;
     presetValue: number | string | Array<string> | null;
     source: "preset" | "override";
@@ -9796,9 +9861,12 @@ export type PushFailedEvent = {
     status?: number;
     reason?: string | null;
     code?: string | null;
+    devicePass?: boolean;
+    devicePassId?: string;
   };
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type ReleaseResponse = {
@@ -14553,6 +14621,25 @@ export type WalletEnrollmentsUpdateResponse = {
   };
 };
 
+export type WalletHealthListResponse = {
+  items: Array<{
+    provider: "google" | "samsung";
+    mode: "live" | "test";
+    tone: "ok" | "attention" | "failing" | "idle";
+    lastSuccessAt: number | null;
+    queued: number;
+    failed24h: number;
+    uncertain: number;
+    uncertainWaiting: number;
+    callbackAt: number | null;
+  }>;
+};
+
+export type WalletHealthRetryResponse = {
+  due: number;
+  waiting: number;
+};
+
 export type WalletIdentitiesListResponse = {
   items: Array<{
     id: string;
@@ -14924,6 +15011,7 @@ export type WebhookTestEvent = {
   data: Record<string, unknown>;
   requestId?: string;
   sample?: true;
+  simulated?: true;
 };
 
 export type WebhookTestResult = {

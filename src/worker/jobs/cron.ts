@@ -31,6 +31,7 @@ import { sweepIdentityMoves } from '../modules/passes/identity-move-sweep.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
+import { sweepPassObjects } from '../modules/passes/orphan-gc.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
@@ -42,6 +43,12 @@ import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { sweepSessionHours } from '../modules/scan/session-hours-job.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import {
+  failureCode,
+  type HookOutcome,
+  recordHookOutcomes,
+} from '../modules/status/hook-health.ts';
+import { pruneDlqOutcomes } from '../modules/status/repo-hooks.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
@@ -51,6 +58,8 @@ import { syncGoogleClassReviews } from '../modules/wallet-providers/google-revie
 import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
+import { endUnclaimedCliTokens } from '../modules/workbench/cli-revoke.ts';
+import { cronDevicePasses } from '../modules/workbench/device-pass-sync.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { sweepIdempotency } from '../platform/idempotency.ts';
@@ -69,6 +78,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'delivery.sweep', run: sweepDelivery },
     { name: 'webhooks.sweep', run: sweepWebhooks },
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
+    { name: 'device_passes.sweep', run: cronDevicePasses },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
     { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },
@@ -107,8 +117,10 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
+    { name: 'cli.unclaimed_tokens', run: async (ctx) => void (await endUnclaimedCliTokens(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'passes.object_gc', run: (ctx) => sweepPassObjects(ctx) },
     { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'operations.sweep', run: sweepOperations },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
@@ -118,6 +130,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'auth.retention', run: dailyAuth },
     { name: 'audit.retention', run: dailyAudit },
     { name: 'events.retention', run: dailyEvents },
+    { name: 'dlq.retention', run: async (ctx) => pruneDlqOutcomes(ctx.env.DB, ctx.clock.now()) },
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
@@ -159,6 +172,7 @@ export async function handleScheduled(
     });
   const failed = (hook: string, error: unknown) =>
     base.log.error('cron.hook_failed', { hook, code: 'CRON_HOOK_FAILED', error });
+  const outcomes: HookOutcome[] = [];
   if (controller.cron === DAILY_CRON) {
     // Sequential under one query budget: a hook that would start past it is skipped until tomorrow.
     const counter = countQueries(env);
@@ -173,7 +187,9 @@ export async function handleScheduled(
       }
       try {
         await hook.run({ ...hookCtx(counter.env, hook.name, counter.count), spent: counter.count });
+        outcomes.push({ hook: hook.name, failure: null });
       } catch (error) {
+        outcomes.push({ hook: hook.name, failure: failureCode(error, 'CRON_HOOK_FAILED') });
         failed(hook.name, error);
       }
     }
@@ -195,9 +211,16 @@ export async function handleScheduled(
       }),
     );
     results.forEach((result, i) => {
-      if (result.status === 'rejected') failed(hooks[i]?.name ?? 'unknown', result.reason);
+      const hook = hooks[i]?.name ?? 'unknown';
+      if (result.status === 'rejected') failed(hook, result.reason);
+      outcomes.push({
+        hook,
+        failure:
+          result.status === 'rejected' ? failureCode(result.reason, 'CRON_HOOK_FAILED') : null,
+      });
     });
   }
+  await recordHookOutcomes(base, controller.cron === DAILY_CRON ? 'daily' : 'minute', outcomes);
   if (controller.cron === MINUTE_CRON) {
     try {
       await recordCronRun(base, 'minute');

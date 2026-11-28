@@ -15,7 +15,6 @@ export function UrlField({
   disabled,
   masked,
   onUrlBlur,
-  urlHelp,
   checking,
   autoFocus,
 }: {
@@ -26,19 +25,13 @@ export function UrlField({
   /** What a reader sees where the URL would be. */
   masked?: WebhookEndpointDto['urlMasked'];
   onUrlBlur?: () => void;
-  urlHelp?: string;
   checking?: boolean;
   /** The dialog or step takes focus into the URL when it opens. */
   autoFocus?: boolean;
 }) {
   return (
     <>
-      <FormField
-        label="URL"
-        required={!disabled}
-        error={errors.url}
-        help={errors.url ? undefined : (urlHelp ?? 'https only.')}
-      >
+      <FormField label="URL" required={!disabled} error={errors.url}>
         {(f) => (
           <Input
             {...f}

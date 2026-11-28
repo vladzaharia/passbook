@@ -99,7 +99,7 @@ describe('restore', () => {
     expect(again.id).toBe(one.id);
     await expectProblem(
       await start(url(q.user.id), 'DELETE', headers),
-      409,
+      422,
       'IDEMPOTENCY_KEY_REUSED',
     );
   });

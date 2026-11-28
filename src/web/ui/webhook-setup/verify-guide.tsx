@@ -42,7 +42,7 @@ export function VerifyGuide({
             During a rotation the header holds one <code className={code}>v1=</code> per live
             secret. Accept any match.
           </li>
-          <li>Reject a timestamp more than 5 minutes old. Each retry is signed again.</li>
+          <li>Reject a timestamp more than 5 minutes off. Each retry is signed again.</li>
           <li>Use the raw bytes, before parsing. Compare in constant time.</li>
         </ul>
       ) : null}

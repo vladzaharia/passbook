@@ -90,11 +90,7 @@ export function WalletsMode({
   const failed = previews.state === 'error';
   return (
     <div className="wallets-mode" data-testid="wallets-mode" aria-busy={checking || undefined}>
-      {phone ? (
-        <Callout tone="info" title="Preview only">
-          The designer needs a tablet or desktop screen.
-        </Callout>
-      ) : null}
+      {phone ? <Callout tone="info" title="Preview only" /> : null}
       {previews.state === 'loading' ? (
         <div className="grid grid-cols-2 gap-3" role="status" aria-label={PREVIEW_COPY.loading}>
           <Skeleton className="h-[4.25rem] rounded-lg" />

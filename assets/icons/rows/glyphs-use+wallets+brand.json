@@ -1,0 +1,196 @@
+{
+  "area-use": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.5 17.5H25.5A3 3 0 0 1 28.5 20.5V29.5A3 3 0 0 1 25.5 32.5H12.5A3 3 0 0 1 9.5 29.5V20.5A3 3 0 0 1 12.5 17.5ZM13 23.5H25A1 1 0 0 1 26 24.5V29A1 1 0 0 1 25 30H13A1 1 0 0 1 12 29V24.5A1 1 0 0 1 13 23.5ZM14.5 15.5H14.499999999999998A1.3 1.3 0 0 1 15.799999999999999 16.8V18.8A1.3 1.3 0 0 1 14.499999999999998 20.1H14.5A1.3 1.3 0 0 1 13.2 18.8V16.8A1.3 1.3 0 0 1 14.5 15.5ZM23.5 15.5H23.5A1.3 1.3 0 0 1 24.8 16.8V18.8A1.3 1.3 0 0 1 23.5 20.1H23.5A1.3 1.3 0 0 1 22.2 18.8V16.8A1.3 1.3 0 0 1 23.5 15.5Z\"/>",
+  "live-passes": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.5 16H25.5A3 3 0 0 1 28.5 19V29A3 3 0 0 1 25.5 32H12.5A3 3 0 0 1 9.5 29V19A3 3 0 0 1 12.5 16ZM13.5 19H19.4A1.3 1.3 0 0 1 20.7 20.3V20.3A1.3 1.3 0 0 1 19.4 21.6H13.5A1.3 1.3 0 0 1 12.2 20.3V20.3A1.3 1.3 0 0 1 13.5 19ZM21.2 26.6a2.1 2.1 0 1 0 4.2 0a2.1 2.1 0 1 0 -4.2 0ZM13.5 25.3H15.899999999999999A1.3 1.3 0 0 1 17.2 26.6V26.6A1.3 1.3 0 0 1 15.899999999999999 27.900000000000002H13.5A1.3 1.3 0 0 1 12.2 26.6V26.6A1.3 1.3 0 0 1 13.5 25.3Z\"/>",
+  "extra-live-passes-per-100": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M11.6 16.5H18.9A2.6 2.6 0 0 1 21.5 19.1V28.9A2.6 2.6 0 0 1 18.9 31.5H11.6A2.6 2.6 0 0 1 9 28.9V19.1A2.6 2.6 0 0 1 11.6 16.5ZM12.6 19.4H17.900000000000002A1.2 1.2 0 0 1 19.1 20.599999999999998V20.599999999999998A1.2 1.2 0 0 1 17.900000000000002 21.799999999999997H12.6A1.2 1.2 0 0 1 11.4 20.599999999999998V20.599999999999998A1.2 1.2 0 0 1 12.6 19.4ZM12.6 24H14.700000000000001A1.2 1.2 0 0 1 15.9 25.2V25.2A1.2 1.2 0 0 1 14.700000000000001 26.4H12.6A1.2 1.2 0 0 1 11.4 25.2V25.2A1.2 1.2 0 0 1 12.6 24Z\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M22.2 22.6H24.400000000000002V20.4H27.2V22.6H29.400000000000002V25.4H27.2V27.6H24.400000000000002V25.4H22.2Z\"/>",
+  "passes-issued-a-month": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M11.6 16.5H17.4A2.6 2.6 0 0 1 20 19.1V28.9A2.6 2.6 0 0 1 17.4 31.5H11.6A2.6 2.6 0 0 1 9 28.9V19.1A2.6 2.6 0 0 1 11.6 16.5ZM12.399999999999999 19.4H16.599999999999998A1.2 1.2 0 0 1 17.799999999999997 20.599999999999998V20.599999999999998A1.2 1.2 0 0 1 16.599999999999998 21.799999999999997H12.399999999999999A1.2 1.2 0 0 1 11.2 20.599999999999998V20.599999999999998A1.2 1.2 0 0 1 12.399999999999999 19.4Z\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M21.5 22.7H25.4V19.2L29.5 24L25.4 28.8V25.3H21.5Z\"/>",
+  "extra-passes-issued-per-100": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M8.8 22.5H11.3V20H14.3V22.5H16.8V25.5H14.3V28H11.3V25.5H8.8Z\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M19 22.6H23.4V19L29.5 24L23.4 29V25.4H19Z\"/>",
+  "emails-a-month": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M11.6 16.5H26.4A2.6 2.6 0 0 1 29 19.1V28.9A2.6 2.6 0 0 1 26.4 31.5H11.6A2.6 2.6 0 0 1 9 28.9V19.1A2.6 2.6 0 0 1 11.6 16.5ZM10.5 19.5L19 26L27.5 19.5V22.4L19 29L10.5 22.4Z\"/>",
+  "extra-emails-per-1-000": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M11.4 17H20.1A2.4 2.4 0 0 1 22.5 19.4V28.6A2.4 2.4 0 0 1 20.1 31H11.4A2.4 2.4 0 0 1 9 28.6V19.4A2.4 2.4 0 0 1 11.4 17ZM10.3 20L15.75 24.3L21.2 20V22.8L15.75 27.1L10.3 22.8Z\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M22.6 22.6H24.6V20.6H27.4V22.6H29.4V25.4H27.4V27.4H24.6V25.4H22.6Z\"/>",
+  "pass-updates-a-month-not-billed-up-to": "<path d=\"M25.1 26.2A6.5 6.5 0 1 1 23.2 19.0\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M25.4 16.2L26.6 22.2L21 21.2Z\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M17.3 24a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0Z\"/>",
+  "scans-a-month-not-billed-up-to": "<path d=\"M9.8 21V18.2Q9.8 16.8 11.2 16.8H14M24 16.8H26.8Q28.2 16.8 28.2 18.2V21M28.2 27V29.8Q28.2 31.2 26.8 31.2H24M14 31.2H11.2Q9.8 31.2 9.8 29.8V27\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M13.799999999999999 22.8H24.2A1.2 1.2 0 0 1 25.4 24V24A1.2 1.2 0 0 1 24.2 25.2H13.799999999999999A1.2 1.2 0 0 1 12.6 24V24A1.2 1.2 0 0 1 13.799999999999999 22.8Z\"/>",
+  "api-calls-a-month-not-billed-up-to": "<path d=\"M14 18.5L9.6 24L14 29.5M24 18.5L28.4 24L24 29.5M20.6 17.2L17.4 30.8\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+  "webhook-deliveries-a-month-not-billed-up-to": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M21.6 15.6L11.2 25.6H17.6L15.8 32.4L27 21.6H20.3Z\"/>",
+  "test-passes": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M16.2 15.8H21.8V21.4L28.4 30Q29.2 32.2 27 32.2H11Q8.8 32.2 9.6 30L16.2 21.4ZM14.5 28.4a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0ZM20.200000000000003 27a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0Z\"/>",
+  "passes-already-sent-keep-working-after-a-downgrade-or-missed": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M19 15.5L27.5 18.2V23.8C27.5 28.4 23.6 31 19 32.6C14.4 31 10.5 28.4 10.5 23.8V18.2Z M14.2 23.6L16.1 21.7L18.2 23.8L22.4 19.4L24.3 21.3L18.2 27.6Z\"/>",
+  "area-wallets": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M13.8 15.5H24.2A1.8 1.8 0 0 1 26 17.3V18.7A1.8 1.8 0 0 1 24.2 20.5H13.8A1.8 1.8 0 0 1 12 18.7V17.3A1.8 1.8 0 0 1 13.8 15.5ZM9.5 24.2Q9.5 22 11.7 22H26.3Q28.5 22 28.5 24.2V29.8Q28.5 32.3 26 32.3H12Q9.5 32.3 9.5 29.8Z\"/>",
+  "apple-wallet": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.8 15.8H25.2A1.8 1.8 0 0 1 27 17.6V17.6A1.8 1.8 0 0 1 25.2 19.400000000000002H12.8A1.8 1.8 0 0 1 11 17.6V17.6A1.8 1.8 0 0 1 12.8 15.8ZM11.9 20.5H26.1A1.9 1.9 0 0 1 28 22.4V22.400000000000002A1.9 1.9 0 0 1 26.1 24.3H11.9A1.9 1.9 0 0 1 10 22.400000000000002V22.4A1.9 1.9 0 0 1 11.9 20.5ZM11.4 25.6H26.6A2.4 2.4 0 0 1 29 28V30A2.4 2.4 0 0 1 26.6 32.4H11.4A2.4 2.4 0 0 1 9 30V28A2.4 2.4 0 0 1 11.4 25.6Z\"/>",
+  "google-wallet": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.2 17H25.8A3.2 3.2 0 0 1 29 20.2V28.8A3.2 3.2 0 0 1 25.8 32H12.2A3.2 3.2 0 0 1 9 28.8V20.2A3.2 3.2 0 0 1 12.2 17ZM12.5 20H20.700000000000003A0.9 0.9 0 0 1 21.6 20.9V20.900000000000002A0.9 0.9 0 0 1 20.700000000000003 21.8H12.5A0.9 0.9 0 0 1 11.6 20.900000000000002V20.9A0.9 0.9 0 0 1 12.5 20ZM21.6 26.6a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0Z\"/>",
+  "samsung-wallet": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M16.4 15.5H21.6A3.4 3.4 0 0 1 25 18.9V29.1A3.4 3.4 0 0 1 21.6 32.5H16.4A3.4 3.4 0 0 1 13 29.1V18.9A3.4 3.4 0 0 1 16.4 15.5ZM16.599999999999998 18H21.4A1.4 1.4 0 0 1 22.799999999999997 19.4V24.6A1.4 1.4 0 0 1 21.4 26H16.599999999999998A1.4 1.4 0 0 1 15.2 24.6V19.4A1.4 1.4 0 0 1 16.599999999999998 18ZM17.9 29.3a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z\"/>",
+  "mobile-web-ticket-and-pass-page": "<path d=\"M19 16.2A7.8 7.8 0 1 1 19 31.8A7.8 7.8 0 1 1 19 16.2Z\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M19 16.2C15.4 19.6 15.4 28.4 19 31.8M19 16.2C22.6 19.6 22.6 28.4 19 31.8M11.2 24H26.8\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+  "paper-tickets-and-print-sheets": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M14 15.5H24A1 1 0 0 1 25 16.5V18.5A1 1 0 0 1 24 19.5H14A1 1 0 0 1 13 18.5V16.5A1 1 0 0 1 14 15.5ZM11.4 21.1H26.6A2.4 2.4 0 0 1 29 23.5V26.300000000000004A2.4 2.4 0 0 1 26.6 28.700000000000003H11.4A2.4 2.4 0 0 1 9 26.300000000000004V23.5A2.4 2.4 0 0 1 11.4 21.1ZM14 30H24A1 1 0 0 1 25 31V31.6A1 1 0 0 1 24 32.6H14A1 1 0 0 1 13 31.6V31A1 1 0 0 1 14 30ZM24.2 24.9a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z\"/>",
+  "nfc-tags-cards-fobs-stickers-wristbands": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M9 24a5.2 5.2 0 1 0 10.4 0a5.2 5.2 0 1 0 -10.4 0ZM12.299999999999999 24a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0 -3.8 0Z\"/><path d=\"M20.8 20.4A7 7 0 0 1 20.8 27.6M24.8 17.6A11 11 0 0 1 24.8 30.4\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+  "lent-tags-with-a-return-time": "<path d=\"M19 18.4A7 7 0 1 1 19 32.4A7 7 0 1 1 19 18.4Z\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M19 21.8V25.4L21.8 27\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M17.5 15.5H20.500000000000004A1.2 1.2 0 0 1 21.700000000000003 16.7V16.7A1.2 1.2 0 0 1 20.500000000000004 17.9H17.5A1.2 1.2 0 0 1 16.3 16.7V16.7A1.2 1.2 0 0 1 17.5 15.5Z\"/>",
+  "copy-proof-nfc-tags": "<path d=\"M15.4 22.5V20.4A3.6 3.6 0 0 1 22.6 20.4V22.5\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M13.1 22H24.9A2.6 2.6 0 0 1 27.5 24.6V29.9A2.6 2.6 0 0 1 24.9 32.5H13.1A2.6 2.6 0 0 1 10.5 29.9V24.6A2.6 2.6 0 0 1 13.1 22ZM17.2 26.4a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0ZM18.8 26.6H19.2A0.8 0.8 0 0 1 20 27.400000000000002V29A0.8 0.8 0 0 1 19.2 29.8H18.8A0.8 0.8 0 0 1 18 29V27.400000000000002A0.8 0.8 0 0 1 18.8 26.6Z\"/>",
+  "tap-with-the-phone-s-wallet": "<path d=\"M10 27A9.4 9.4 0 0 1 28 27M14 27A5.2 5.2 0 0 1 24 27\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M17 29.2H21A1.6 1.6 0 0 1 22.6 30.8V30.9A1.6 1.6 0 0 1 21 32.5H17A1.6 1.6 0 0 1 15.4 30.9V30.8A1.6 1.6 0 0 1 17 29.2Z\"/>",
+  "area-brand": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M19.00 15.30L21.59 21.04L27.84 21.73L23.18 25.96L24.47 32.12L19.00 29.00L13.53 32.12L14.82 25.96L10.16 21.73L16.41 21.04Z\"/>",
+  "your-logo-colours-and-support-details": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M9.8 24a9.2 9.2 0 1 0 18.4 0a9.2 9.2 0 1 0 -18.4 0ZM12.2 21.8a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0ZM17.2 18.9a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0ZM22.2 21.6a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0ZM20.7 28.4a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0Z\"/>",
+  "shared-passbook-pass-type-id": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.5 16H25.5A3 3 0 0 1 28.5 19V29A3 3 0 0 1 25.5 32H12.5A3 3 0 0 1 9.5 29V19A3 3 0 0 1 12.5 16ZM16.3 21.4a2.7 2.7 0 1 0 5.4 0a2.7 2.7 0 1 0 -5.4 0ZM13.8 29.2Q13.8 25.4 19 25.4Q24.2 25.4 24.2 29.2Z\"/>",
+  "bring-your-own-pass-type-id": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M8.8 24a5.2 5.2 0 1 0 10.4 0a5.2 5.2 0 1 0 -10.4 0ZM12.2 24a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0 -3.6 0ZM18 22.8H28.5A1 1 0 0 1 29.5 23.8V24.3A1 1 0 0 1 28.5 25.3H18A1 1 0 0 1 17 24.3V23.8A1 1 0 0 1 18 22.8ZM24.6 24H25A1 1 0 0 1 26 25V27.6A1 1 0 0 1 25 28.6H24.6A1 1 0 0 1 23.6 27.6V25A1 1 0 0 1 24.6 24ZM28.1 24H28.5A1 1 0 0 1 29.5 25V26.4A1 1 0 0 1 28.5 27.4H28.1A1 1 0 0 1 27.1 26.4V25A1 1 0 0 1 28.1 24Z\"/>",
+  "managed-pass-type-id-in-your-name": "<circle cx=\"19\" cy=\"24\" r=\"6.6\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.8\" stroke-dasharray=\"2.6 2.59\"/><path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M13.4 24a5.6 5.6 0 1 0 11.2 0a5.6 5.6 0 1 0 -11.2 0ZM16.7 24a2.3 2.3 0 1 0 4.6 0a2.3 2.3 0 1 0 -4.6 0Z\"/>",
+  "small-passbook-footer": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.5 16H25.5A3 3 0 0 1 28.5 19V29A3 3 0 0 1 25.5 32H12.5A3 3 0 0 1 9.5 29V19A3 3 0 0 1 12.5 16ZM13 18.5H25A1 1 0 0 1 26 19.5V28.5A1 1 0 0 1 25 29.5H13A1 1 0 0 1 12 28.5V19.5A1 1 0 0 1 13 18.5ZM15.7 25.4H22.299999999999997A1.1 1.1 0 0 1 23.4 26.5V26.499999999999996A1.1 1.1 0 0 1 22.299999999999997 27.599999999999998H15.7A1.1 1.1 0 0 1 14.6 26.499999999999996V26.5A1.1 1.1 0 0 1 15.7 25.4Z\"/>",
+  "no-passbook-footer": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12.5 16H25.5A3 3 0 0 1 28.5 19V29A3 3 0 0 1 25.5 32H12.5A3 3 0 0 1 9.5 29V19A3 3 0 0 1 12.5 16ZM13 18.5H25A1 1 0 0 1 26 19.5V28.5A1 1 0 0 1 25 29.5H13A1 1 0 0 1 12 28.5V19.5A1 1 0 0 1 13 18.5Z\"/><path d=\"M16 22.2L22 28.2M22 22.2L16 28.2\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+  "your-own-web-address-for-pass-pages": "<path fill=\"#16132B\" fill-rule=\"evenodd\" d=\"M12 16H26A3 3 0 0 1 29 19V29A3 3 0 0 1 26 32H12A3 3 0 0 1 9 29V19A3 3 0 0 1 12 16ZM12.5 22.4H25.5A1 1 0 0 1 26.5 23.4V29A1 1 0 0 1 25.5 30H12.5A1 1 0 0 1 11.5 29V23.4A1 1 0 0 1 12.5 22.4ZM12.95 18H21.05A0.95 0.95 0 0 1 22 18.95V18.95A0.95 0.95 0 0 1 21.05 19.9H12.95A0.95 0.95 0 0 1 12 18.95V18.95A0.95 0.95 0 0 1 12.95 18Z\"/>",
+  "send-email-from-your-own-domain": "<path d=\"M23.6 30.6A8 8 0 1 1 27 24\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M19 21.2A2.8 2.8 0 1 1 19 26.8A2.8 2.8 0 1 1 19 21.2Z\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M22.2 21.6V25.6\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+  "$fit": {
+    "area-use": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "live-passes": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "extra-live-passes-per-100": {
+      "s": 1.125,
+      "tx": -1.12,
+      "ty": -3
+    },
+    "passes-issued-a-month": {
+      "s": 1.119,
+      "tx": -1.07,
+      "ty": -2.86
+    },
+    "extra-passes-issued-per-100": {
+      "s": 1.108,
+      "tx": -0.74,
+      "ty": -2.59
+    },
+    "emails-a-month": {
+      "s": 1.147,
+      "tx": -1.32,
+      "ty": -3.53
+    },
+    "extra-emails-per-1-000": {
+      "s": 1.125,
+      "tx": -1.12,
+      "ty": -3
+    },
+    "pass-updates-a-month-not-billed-up-to": {
+      "s": 1.135,
+      "tx": -0.92,
+      "ty": -3.21
+    },
+    "scans-a-month-not-billed-up-to": {
+      "s": 1.071,
+      "tx": 0.13,
+      "ty": -1.7
+    },
+    "api-calls-a-month-not-billed-up-to": {
+      "s": 1.072,
+      "tx": 0.11,
+      "ty": -1.73
+    },
+    "webhook-deliveries-a-month-not-billed-up-to": {
+      "s": 1.071,
+      "tx": 0.02,
+      "ty": -1.7
+    },
+    "test-passes": {
+      "s": 1.097,
+      "tx": -0.37,
+      "ty": -2.33
+    },
+    "passes-already-sent-keep-working-after-a-downgrade-or-missed": {
+      "s": 1.052,
+      "tx": 0.49,
+      "ty": -1.3
+    },
+    "area-wallets": {
+      "s": 1.071,
+      "tx": 0.13,
+      "ty": -1.6
+    },
+    "apple-wallet": {
+      "s": 1.084,
+      "tx": -0.12,
+      "ty": -2.12
+    },
+    "google-wallet": {
+      "s": 1.147,
+      "tx": -1.32,
+      "ty": -4.1
+    },
+    "samsung-wallet": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "mobile-web-ticket-and-pass-page": {
+      "s": 1,
+      "tx": 1.48,
+      "ty": 0
+    },
+    "paper-tickets-and-print-sheets": {
+      "s": 1.052,
+      "tx": 0.49,
+      "ty": -1.3
+    },
+    "nfc-tags-cards-fobs-stickers-wristbands": {
+      "s": 1.184,
+      "tx": -1.46,
+      "ty": -4.42
+    },
+    "lent-tags-with-a-return-time": {
+      "s": 0.989,
+      "tx": 1.68,
+      "ty": -0.33
+    },
+    "copy-proof-nfc-tags": {
+      "s": 1.058,
+      "tx": 0.37,
+      "ty": -1.39
+    },
+    "tap-with-the-phone-s-wallet": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -5.03
+    },
+    "area-brand": {
+      "s": 1.068,
+      "tx": 0.18,
+      "ty": -1.34
+    },
+    "your-logo-colours-and-support-details": {
+      "s": 0.978,
+      "tx": 1.89,
+      "ty": 0.53
+    },
+    "shared-passbook-pass-type-id": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "bring-your-own-pass-type-id": {
+      "s": 1.108,
+      "tx": -0.74,
+      "ty": -2.59
+    },
+    "managed-pass-type-id-in-your-name": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "small-passbook-footer": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "no-passbook-footer": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "your-own-web-address-for-pass-pages": {
+      "s": 1.125,
+      "tx": -0.9,
+      "ty": -3
+    },
+    "send-email-from-your-own-domain": {
+      "s": 0.975,
+      "tx": 1.95,
+      "ty": 0.53
+    }
+  }
+}

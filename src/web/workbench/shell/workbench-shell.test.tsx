@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { renderApp } from '../../lib/test-utils.tsx';
 import { forgetTokens } from '../host/token.ts';
 import { setSingleKeys } from './prefs.ts';
-import { handlers } from './test-fixtures.ts';
+import { CONTEXTS, handlers } from './test-fixtures.ts';
 
 afterEach(() => {
   forgetTokens();
@@ -99,7 +99,7 @@ describe('WorkbenchShell', () => {
     });
     await screen.findByRole('heading', { name: 'Home', level: 1 });
     await within(nav()).findByRole('link', { name: 'Logs, 3 new errors' });
-    expect(within(nav()).getByRole('link', { name: 'Events, Listening' })).toBeInTheDocument();
+    expect(within(nav()).getByRole('link', { name: 'Events' })).toBeInTheDocument();
     expect(within(nav()).getByRole('link', { name: 'Inbox, 2 new' })).toBeInTheDocument();
     expect(
       within(nav()).getByRole('link', { name: 'Quickstart, 4 of 5 done' }),
@@ -182,6 +182,17 @@ describe('Workbench entry and states', () => {
       'href',
       '/admin/o/nw?mode=test',
     );
+  });
+
+  it('a long org name is cut in the refused heading, whole in the Test chip', async () => {
+    const name = 'Northwind Traders International Holdings';
+    await renderApp('/workbench/o/nw/sandbox', {
+      session: 'developer',
+      handlers: handlers({}, { ...CONTEXTS, orgs: [{ ...CONTEXTS.orgs[0], name }] }),
+    });
+    const heading = await screen.findByRole('heading', { level: 1, name: /^Not available in / });
+    expect(heading.textContent).toBe("Not available in Northwind Traders Inter…'s Test mode");
+    expect(heading).toHaveClass('line-clamp-2');
   });
 
   it('an unknown context is not in your Workbench', async () => {

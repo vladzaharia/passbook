@@ -12,6 +12,7 @@ import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { ActivityTray } from './activity-tray.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
+import { BridgeChip } from './bridge-chip.tsx';
 import { GraceBanner } from './grace-banner.tsx';
 import { MenubarSearch, shortcutHint } from './menubar.tsx';
 import { ModeAnnouncer } from './mode-announcer.tsx';
@@ -19,6 +20,7 @@ import { ModeSwitch } from './mode-switch.tsx';
 import { AdminPalette } from './palette.tsx';
 import { ScopeSwitcher } from './scope-switcher.tsx';
 import { SidebarNav } from './sidebar.tsx';
+import { SidebarFoot } from './sidebar-foot.tsx';
 import { UserMenu } from './user-menu.tsx';
 import { Wordmark } from './wordmark.tsx';
 
@@ -67,6 +69,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
       <div className="min-h-0 flex-1 overflow-auto">
         <SidebarNav />
       </div>
+      <SidebarFoot />
     </aside>
   );
   const bar: NonNullable<AppShellProps['bar']> = {
@@ -77,6 +80,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         <Wordmark to={home} />
       </div>
     ),
+    nav: <BridgeChip />,
     search: (
       <MenubarSearch
         label="Search"
@@ -111,6 +115,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
               <ScopeSwitcher onNavigate={() => setNavOpen(false)} />
             </div>
             <SidebarNav onNavigate={() => setNavOpen(false)} />
+            <SidebarFoot />
           </SheetContent>
         </Sheet>
         <AdminPalette open={paletteOpen} onOpenChange={setPaletteOpen} />

@@ -123,7 +123,6 @@ export function BrandColorSheet({
             fallback="#0f766e"
             empty="Default"
             error={err(v.accent)}
-            help={BRAND.accentHelp}
             onChange={(accent) => setEdit({ ...edit, accent })}
           />
           <AccentChips value={v.accent ?? ''} onPick={(accent) => setEdit({ ...edit, accent })} />

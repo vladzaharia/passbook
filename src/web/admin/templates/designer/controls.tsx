@@ -1,10 +1,10 @@
 import { useId, useState } from 'react';
 import { FormField, Input, Select, type SelectOption } from '../../../ui/index.ts';
+import { useKept } from '../../../ui/keep.tsx';
 import type { Op } from './apply.ts';
 import type { Source } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { readInputs, scalarInputs } from './inputs.ts';
-import { useKept } from './ui-keep.tsx';
 
 /** A text control that edits through the history; quick keystrokes become one undo step. */
 export function TextEdit({

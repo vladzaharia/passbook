@@ -78,13 +78,16 @@ describe('the review sync tick', () => {
     }
   });
 
-  it('takes at most a batch, oldest check first', async () => {
+  it('takes at most the limit, oldest check first', async () => {
+    // Each extra class needs a real issued offer (about 0.3 s alone, minutes under a loaded CI), so the
+    // limit is small; the tick passes REVIEW_TICK_BATCH to this same statement.
+    const limit = 3;
     const { f } = await pending();
     const klass = await first<{ hash: string; releaseId: string }>(
       f.kit.env.DB,
       'SELECT class_id_hash AS hash, release_id AS releaseId FROM wallet_google_classes',
     );
-    for (let i = 0; i < REVIEW_TICK_BATCH + 5; i++) {
+    for (let i = 0; i < limit + 3; i++) {
       const second = await f.kit.pass({});
       const [offer] = await listWalletOffers(f.kit.ctx, second.id);
       await issueWalletOffer(f.kit.ctx, offer?.href.split('/')[2] ?? '', 'google');
@@ -104,14 +107,38 @@ describe('the review sync tick', () => {
     const due = await listDueGoogleClassReviews(
       f.kit.env.DB,
       f.kit.clock.now() + 10_000_000,
-      REVIEW_TICK_BATCH,
+      limit,
     );
-    expect(due).toHaveLength(REVIEW_TICK_BATCH);
+    expect(due).toHaveLength(limit);
     const checked = await all<{ hash: string }>(
       f.kit.env.DB,
-      `SELECT class_id_hash AS hash FROM wallet_google_classes ORDER BY COALESCE(review_checked_at, 0) LIMIT ${REVIEW_TICK_BATCH}`,
+      `SELECT class_id_hash AS hash FROM wallet_google_classes ORDER BY COALESCE(review_checked_at, 0) LIMIT ${limit}`,
     );
     expect(due.map((d) => d.classIdHash)).toEqual(checked.map((c) => c.hash));
+  });
+
+  it('selects at most REVIEW_TICK_BATCH classes per tick', async () => {
+    const { f } = await pending();
+    const limits: unknown[] = [];
+    const prepare = f.kit.env.DB.prepare.bind(f.kit.env.DB);
+    const spy = vi.spyOn(f.kit.env.DB, 'prepare').mockImplementation((sql: string) => {
+      const st = prepare(sql);
+      if (!sql.includes('review_checked_at') || !sql.includes('GROUP BY c.class_id_hash'))
+        return st;
+      const bind = st.bind.bind(st);
+      st.bind = (...args: unknown[]) => {
+        limits.push(args.at(-1));
+        return bind(...args);
+      };
+      return st;
+    });
+    try {
+      f.kit.clock.advance(61_000);
+      await tick(f);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(limits).toEqual([REVIEW_TICK_BATCH]);
   });
 
   it('reads nothing while the provider is dark', async () => {
@@ -162,7 +189,7 @@ describe('the review sync tick', () => {
       [real?.hash ?? ''],
     );
     expect(ok?.status).toBe('APPROVED');
-    const due = await listDueGoogleClassReviews(f.kit.env.DB, f.kit.clock.now(), 25);
+    const due = await listDueGoogleClassReviews(f.kit.env.DB, f.kit.clock.now(), REVIEW_TICK_BATCH);
     expect(due.map((d) => d.classIdHash)).not.toContain(fake);
   });
 });

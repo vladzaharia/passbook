@@ -10,6 +10,7 @@ import {
   Nfc,
   PackageCheck,
   PenLine,
+  Plug,
   Puzzle,
   Rocket,
   ScanLine,
@@ -33,6 +34,7 @@ export const GUIDE_ICONS: Record<string, LucideIcon> = {
   'check-in-at-the-door': DoorOpen,
   nfc: Nfc,
   'react-to-events': Webhook,
+  'set-up-a-webhook-source': Plug,
   'partner-apps': Puzzle,
   'go-live': Rocket,
 };

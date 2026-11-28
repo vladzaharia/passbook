@@ -12,7 +12,7 @@ import {
   Ticket,
   Zap,
 } from 'lucide-react';
-import { WB_AREA, WB_GROUPS } from '@/shared/copy/workbench-shell.ts';
+import { WB_GROUPS, wbLabel } from '@/shared/copy/workbench-shell.ts';
 import { WB_HOME, type WbTool } from '@/shared/workbench.ts';
 
 /** One glyph per area (entity glyphs where one exists): the nav, the area button, the tool head's tile, the palette. */
@@ -52,7 +52,7 @@ const GROUPS: { id: NavGroup['id']; tools: WbTool[] }[] = [
 
 const item = (tool: WbTool): NavItem => ({
   tool,
-  label: WB_AREA[tool].label,
+  label: wbLabel(tool),
   icon: AREA_ICON[tool],
 });
 

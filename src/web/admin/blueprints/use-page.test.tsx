@@ -23,6 +23,7 @@ const blueprint = templateDetail({
   activeVersion: null,
 });
 const made = templateDetail({ id: 'made1', name: 'Gym membership', activeVersion: null });
+const findName = () => screen.findByRole('textbox', { name: /Name/ });
 const preview = () =>
   json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] });
 
@@ -49,6 +50,16 @@ function open(extra: Record<string, never | ((u: URL, i?: RequestInit) => Respon
   });
 }
 
+type User = ReturnType<typeof userEvent.setup>;
+/** Name to Look. */
+const toLook = async (user: User) =>
+  user.click(await screen.findByRole('button', { name: 'Next' }));
+/** Look to Review, then Create. */
+async function create(user: User) {
+  await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+  await user.click(await screen.findByRole('button', { name: 'Create template' }));
+}
+
 describe('Make it yours', () => {
   it('creates the template with the name and opens it', async () => {
     const user = userEvent.setup();
@@ -65,7 +76,8 @@ describe('Make it yours', () => {
     expect((await axe(container)).violations).toEqual([]);
     await user.clear(name);
     await user.type(name, 'Gym membership');
-    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await toLook(user);
+    await create(user);
     await waitFor(() => expect(bodies).toEqual([{ orgId: ORG.id, name: 'Gym membership' }]));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(`/admin/o/${ORG.id}/templates/made1`),
@@ -76,8 +88,9 @@ describe('Make it yours', () => {
     const user = userEvent.setup();
     await open();
     await user.clear(await screen.findByRole('textbox', { name: /Name/ }));
-    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('Enter a name.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Name the template' })).toBeInTheDocument();
   });
 
   it('writes the colour to the organization brand when Use for all passes is on', async () => {
@@ -98,17 +111,40 @@ describe('Make it yours', () => {
         } as unknown as PassSetupResult);
       },
     });
+    await toLook(user);
     const toggle = await screen.findByRole('switch', { name: 'Use for all passes' });
     await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.change(screen.getByLabelText('Custom colour'), { target: { value: '#0f766e' } });
-    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await create(user);
     await waitFor(() => expect(patches).toHaveLength(1));
     expect(patches[0]?.expectedRevision).toBe(view.revision);
     expect(patches[0]?.brand.passColors.background).toBe('#0f766e');
   });
 
+  it('lists Use for all passes in Review only when something would reach the brand', async () => {
+    const user = userEvent.setup();
+    await open({ [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(newOrgFacts())) });
+    await findName();
+    await toLook(user);
+    await screen.findByRole('switch', { name: 'Use for all passes' });
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(await screen.findByRole('heading', { name: 'Check and create' })).toBeVisible();
+    expect(screen.queryByText('Use for all passes')).toBeNull();
+    expect(screen.queryByText(/won't carry over/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Edit look' }));
+    fireEvent.change(await screen.findByLabelText('Custom colour'), {
+      target: { value: '#0f766e' },
+    });
+    await user.click(screen.getByRole('button', { name: /^(Next|Review)$/ }));
+    expect(await screen.findByText('Use for all passes')).toBeVisible();
+    expect(screen.getByText(/won't carry over to the designer/)).toBeVisible();
+  });
+
   it('starts off for an organization that has its own pass brand', async () => {
+    const user = userEvent.setup();
     await open({ [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(readyFacts())) });
+    await findName();
+    await toLook(user);
     const toggle = await screen.findByRole('switch', { name: 'Use for all passes' });
     expect(toggle).not.toBeChecked();
   });
@@ -123,12 +159,16 @@ describe('Make it yours', () => {
         return json(view);
       },
     });
+    await findName();
+    await toLook(user);
     const overrides = await screen.findAllByRole('button', { name: 'Override for this template' });
     expect(screen.getAllByText('From organization').length).toBe(overrides.length);
     await user.click(overrides[0] as HTMLElement);
     expect(screen.getAllByText('From organization').length).toBe(overrides.length - 1);
-    await user.click(screen.getByRole('button', { name: 'Create' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeEnabled());
+    await create(user);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Create template' })).toBeEnabled(),
+    );
     expect(patches).toEqual([]);
   });
 
@@ -161,10 +201,11 @@ describe('Make it yours', () => {
           ? json({ saved: true, view, diff: [], impact: { passesToUpdate: 0, channelStops: [] } })
           : json(view),
     });
+    await toLook(user);
     const toggle = await screen.findByRole('switch', { name: 'Use for all passes' });
     await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.change(screen.getByLabelText('Custom colour'), { target: { value: '#0f766e' } });
-    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await create(user);
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect(bodies[0]?.version?.manifest.brand?.colors).toBeUndefined();
     await waitFor(() => expect(toggle).toBeEnabled());

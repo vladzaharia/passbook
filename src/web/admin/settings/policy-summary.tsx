@@ -1,6 +1,5 @@
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
-import { PLATFORM_RETENTION_LINES as LINES } from '@/shared/copy/retention.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 
@@ -26,15 +25,15 @@ export function PolicySummary({
   const trust = value('oidc.trustEmail');
   const proof =
     trust === true ? 'Trust Polaris ID emails' : trust === false ? 'Proof required' : 'Unavailable';
-  const rows: [string, string, string?][] = [
+  const rows: [string, string][] = [
     ['Email proof', proof],
     ['Refresh cooldown', number('refresh.userCooldownSeconds', 'seconds per pass')],
     ['Notifications', number('push.budgetPerDay', 'per pass / rolling 24 hours')],
-    ['Pass versions', number('retention.passVersionsKeep', 'historical + current'), LINES.versions],
-    ['Audit retention', number('retention.auditDays', 'days'), LINES.audit],
-    ['Sync log retention', number('retention.eventsDays', 'days'), LINES.events],
-    ['Scan retention', number('retention.scansDays', 'days'), LINES.scans],
-    ['Test data retention', number('sandbox.purgeDays', 'days'), LINES.sandbox],
+    ['Pass versions', number('retention.passVersionsKeep', 'historical + current')],
+    ['Audit retention', number('retention.auditDays', 'days')],
+    ['Sync log retention', number('retention.eventsDays', 'days')],
+    ['Scan retention', number('retention.scansDays', 'days')],
+    ['Test data retention', number('sandbox.purgeDays', 'days')],
     ['Scan undo', number('scan.undoWindowMinutes', 'minutes')],
     ['People lookups', number('scan.lookupsPerHour', 'per scanner / hour')],
   ];
@@ -62,14 +61,13 @@ export function PolicySummary({
               : `${exceptions} ${exceptions === 1 ? 'policy differs' : 'policies differ'} from its default.`}
         </p>
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-          {rows.map(([label, text, note]) => (
+          {rows.map(([label, text]) => (
             <div
               key={label}
               className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 border-b border-border pb-2"
             >
               <dt className="text-fg-muted">{label}</dt>
               <dd className="text-right text-fg-strong">{text}</dd>
-              {note ? <dd className="col-span-2 text-xs text-fg-muted">{note}</dd> : null}
             </div>
           ))}
         </dl>

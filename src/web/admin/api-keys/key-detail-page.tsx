@@ -16,6 +16,7 @@ import {
   useNow,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { OpenInWorkbench } from '@/web/ui/layout/open-in-workbench.tsx';
 import { useKeyActivity, useKeyChildren, useKeyDetail } from './detail-queries.ts';
 import { STATE_TONE } from './key-columns.tsx';
 import { AccessCard, ActivityCard, ChildrenCard } from './key-detail-cards.tsx';
@@ -97,7 +98,12 @@ function KeyDetail({
   const legacy = key.kind === 'platform' && (key.expiresAt === null || key.ipAllow.length === 0);
   // The key the host runs on is never revoked or rotated from its own page.
   const runsHost = host?.own?.(key) === true;
-  const canRotate = !runsHost && live && !legacy && (own || (canManage && key.kind !== 'personal'));
+  const canRotate =
+    !runsHost &&
+    live &&
+    !legacy &&
+    key.origin !== 'cli' &&
+    (own || (canManage && key.kind !== 'personal'));
   // Platform keys have no children; a personal or child key mints none.
   const mints = key.kind === 'service' && key.parentKeyId === null && key.orgId !== null;
   return (
@@ -121,26 +127,31 @@ function KeyDetail({
           </>
         }
         actions={
-          !runsHost && (canManage || own) && (live || state === 'retiring') ? (
-            <>
-              {canRotate ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {!runsHost && key.mode === 'test' && key.orgId !== null ? (
+              <OpenInWorkbench tool="keys" options={{ hash: key.id }} />
+            ) : null}
+            {!runsHost && (canManage || own) && (live || state === 'retiring') ? (
+              <>
+                {canRotate ? (
+                  <Button
+                    variant="outline"
+                    iconStart={<RefreshCw aria-hidden />}
+                    onClick={() => setRotating(true)}
+                  >
+                    Rotate
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
-                  iconStart={<RefreshCw aria-hidden />}
-                  onClick={() => setRotating(true)}
+                  iconStart={<Ban aria-hidden />}
+                  onClick={() => setRevoking(true)}
                 >
-                  Rotate
+                  Revoke
                 </Button>
-              ) : null}
-              <Button
-                variant="outline"
-                iconStart={<Ban aria-hidden />}
-                onClick={() => setRevoking(true)}
-              >
-                Revoke
-              </Button>
-            </>
-          ) : null
+              </>
+            ) : null}
+          </div>
         }
       />
       <div className="grid items-start gap-6 lg:grid-cols-2">

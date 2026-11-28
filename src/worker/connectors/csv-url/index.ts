@@ -5,6 +5,7 @@ import {
   type ConnectorContext,
   type ConnectorDefinition,
   ConnectorError,
+  declareCapabilities,
   type UpstreamRecord,
 } from '../types.ts';
 
@@ -114,7 +115,7 @@ const definition: ConnectorDefinition<Config, unknown> = {
   description: 'Keep passes in sync with a published CSV, such as a Google Sheet.',
   category: 'files',
   order: 20,
-  capabilities: { poll: true },
+  capabilities: declareCapabilities({ read: { fetch: true, list: true }, auth: 'none' }),
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {},

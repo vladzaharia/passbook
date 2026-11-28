@@ -73,14 +73,14 @@ export function TemplateBreakdown({
       {
         header: 'Removed',
         id: 'removed',
-        meta: { numeric: true, hideBelow: 'md' },
+        meta: { numeric: true, hideBelow: 'lg' },
         cell: num('removed'),
       },
       { header: 'Scans', id: 'scans', meta: { numeric: true }, cell: num('scans') },
       {
         header: 'Redemptions',
         id: 'redemptions',
-        meta: { numeric: true, hideBelow: 'md' },
+        meta: { numeric: true, hideBelow: 'lg' },
         cell: num('redemptions'),
       },
     ],

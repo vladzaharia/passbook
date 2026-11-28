@@ -98,7 +98,6 @@ describe('import page', () => {
     const t = setup();
     await t.render();
     await user.click(await screen.findByRole('radio', { name: 'Sheet link' }));
-    expect(screen.getByText(/Publish to web/)).toBeTruthy();
     await user.type(screen.getByLabelText('Link'), 'https://docs.google.com/x/pub?output=csv');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(t.posts).toHaveLength(1));

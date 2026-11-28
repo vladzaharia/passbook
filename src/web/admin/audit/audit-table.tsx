@@ -181,7 +181,7 @@ export function AuditTable({
         <div className="px-4 pb-4">
           <LoadMore
             query={log}
-            shown={rows.length}
+            shown={log.hasNextPage ? rows.length : undefined}
             noun={['entry', 'entries']}
             scoped={scopedMore}
           />

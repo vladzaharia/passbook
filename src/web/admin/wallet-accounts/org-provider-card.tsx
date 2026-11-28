@@ -20,6 +20,7 @@ import { COPY, PROVIDER_NAME, releaseLine, safeError } from './copy.ts';
 import { CredentialRow } from './credential-row.tsx';
 import { blockerOf, gatesOf } from './gates.ts';
 import { useWalletActions } from './queries.ts';
+import { WalletHealthPanel } from './wallet-health.tsx';
 
 type Source = NonNullable<WalletEnrolment['source']>;
 
@@ -147,26 +148,31 @@ export function OrgProviderCard({
             issuance={e.issuance}
           />
         </div>
-        <div className="flex flex-col gap-3 border-t border-border pt-4">
-          {notReleased && e.state !== 'held' ? (
-            <p className="text-sm text-fg-muted">{notReleased}</p>
-          ) : null}
-          {help ? <p className="text-sm text-fg-muted">{help}</p> : null}
-          <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
-            {gatesOf(e).map((g) => (
-              <li key={g.label} className="flex items-center gap-2 text-fg-muted">
-                {g.ok ? (
-                  <CircleCheck aria-hidden className="size-4 text-success" />
-                ) : (
-                  <CircleDashed aria-hidden className="size-4" />
-                )}
-                <span>
-                  {g.label}: {g.state}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {on && !(notReleased && e.state !== 'held') && !help ? null : (
+          <div className="flex flex-col gap-3 border-t border-border pt-4">
+            {notReleased && e.state !== 'held' ? (
+              <p className="text-sm text-fg-muted">{notReleased}</p>
+            ) : null}
+            {help ? <p className="text-sm text-fg-muted">{help}</p> : null}
+            {on ? null : (
+              <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
+                {gatesOf(e).map((g) => (
+                  <li key={g.label} className="flex items-center gap-2 text-fg-muted">
+                    {g.ok ? (
+                      <CircleCheck aria-hidden className="size-4 text-success" />
+                    ) : (
+                      <CircleDashed aria-hidden className="size-4" />
+                    )}
+                    <span>
+                      {g.label}: {g.state}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        <WalletHealthPanel orgId={orgId} provider={e.provider} canOperate={canReissue} />
         <OperationSlot
           kind="wallet.reissue"
           orgId={orgId}

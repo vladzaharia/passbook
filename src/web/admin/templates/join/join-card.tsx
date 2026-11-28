@@ -119,16 +119,10 @@ export function JoinCard(props: JoinCardProps) {
             />
             <SwitchRow
               label={JOIN_COPY.card.email}
-              help={JOIN_COPY.card.emailHelp}
               checked={link?.askEmail ?? false}
               disabled={!canOperate || !canPublish || update.isPending}
               onCheckedChange={(askEmail) => save({ askEmail, revision })}
             />
-            {link?.generated.map((g) => (
-              <p key={g.key} className="text-xs text-fg-muted">
-                {JOIN_COPY.card.generated.replace('{label}', g.label)}
-              </p>
-            ))}
           </fieldset>
           <hr className="border-border" />
           <LimitRow
@@ -262,7 +256,7 @@ function LimitRow({
           min={1}
           max={max}
           aria-invalid={error ? true : undefined}
-          aria-describedby="join-limit-help"
+          aria-describedby={error ? 'join-limit-help' : undefined}
         />
         {link ? (
           <span className="text-sm text-fg-muted tabular-nums">
@@ -270,9 +264,11 @@ function LimitRow({
           </span>
         ) : null}
       </div>
-      <p id="join-limit-help" className={error ? 'text-xs text-danger' : 'text-xs text-fg-muted'}>
-        {error ?? JOIN_COPY.card.dailyLimitHelp}
-      </p>
+      {error ? (
+        <p id="join-limit-help" className="text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

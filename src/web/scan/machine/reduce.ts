@@ -26,7 +26,7 @@ import {
 } from './reduce-door.ts';
 import { openRequest } from './reduce-enroll.ts';
 import { camera, resume, setter, start, visible } from './reduce-env.ts';
-import { read } from './reduce-read.ts';
+import { read, readFate } from './reduce-read.ts';
 import { assignEvent } from './reduce-tags.ts';
 import { tick } from './reduce-tick.ts';
 import type { ReduceResult, ScanMachineDeps, ScanState } from './types.ts';
@@ -54,7 +54,9 @@ function step(s: MachineState, event: MachineEvent, env: Env): Out {
     case 'camera':
       return camera(s, event, env);
     case 'read':
-      return s.assign && !s.block ? assignRead(s, event.input, env) : read(s, event.input, env);
+      return readFate(s, event.input, env.now) === 'assign'
+        ? assignRead(s, event.input, env)
+        : read(s, event.input, env);
     case 'answer':
       return answer(s, event, env);
     case 'fail':

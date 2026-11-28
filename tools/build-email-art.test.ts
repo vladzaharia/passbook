@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { PLAN_ICONS, ROW_ICONS } from '../src/generated/plan-icons.ts';
 import {
   BUDDY_SLICES,
   BUDDY_TIERS,
@@ -53,7 +54,24 @@ describe('public/email buddy PNGs', () => {
           }
 
   it('ships exactly these files, none named with @', () => {
-    expect(new Set(readdirSync(resolve(root, 'public/email')))).toEqual(expected);
+    expect(new Set(readdirSync(resolve(root, 'public/email')))).toEqual(
+      new Set([...expected, 'plans', 'rows']),
+    );
+  });
+});
+
+// Regenerate with `npm run gen:email-icons` when these fail after an icon change.
+describe('public/email plan and row icon PNGs', () => {
+  const pngs = (ids: string[]) => new Set(ids.flatMap((id) => [`${id}-2x.png`, `${id}-3x.png`]));
+  it('ships a 2x and a 3x PNG for every plan icon, and nothing else', () => {
+    expect(new Set(readdirSync(resolve(root, 'public/email/plans')))).toEqual(
+      pngs(Object.keys(PLAN_ICONS)),
+    );
+  });
+  it('ships a 2x and a 3x PNG for every row icon, and nothing else', () => {
+    expect(new Set(readdirSync(resolve(root, 'public/email/rows')))).toEqual(
+      pngs(Object.keys(ROW_ICONS)),
+    );
   });
 });
 

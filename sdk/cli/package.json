@@ -1,7 +1,7 @@
 {
   "name": "@passbook/cli",
-  "version": "0.1.0",
-  "description": "PassBook command line: forward webhook captures to localhost, and generate a template's input type.",
+  "version": "0.2.0",
+  "description": "PassBook command line: sign in, forward webhook captures to localhost, and generate a template's input type.",
   "license": "MIT",
   "type": "module",
   "bin": {

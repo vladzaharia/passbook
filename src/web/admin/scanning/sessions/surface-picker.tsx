@@ -23,10 +23,6 @@ export const SURFACE_ICON = {
   customer: UserRound,
 };
 type SurfaceChoice = Exclude<ScanningDevice['surface'], 'desk'>;
-const HELP: Partial<Record<SurfaceChoice, string>> = {
-  auto: 'Chooses Scanner or Operator for this screen size.',
-  customer: 'Show a simple scan result to the visitor. No check-in controls.',
-};
 
 function SurfacePreview({ surface }: { surface: SurfaceChoice }) {
   const Icon = SURFACE_ICON[surface];
@@ -97,7 +93,6 @@ export function SurfacePicker({
             {SCAN_SURFACE_LABELS[key]}
             {selected ? <Check className="size-4 shrink-0 text-accent-fg" aria-hidden /> : null}
           </span>
-          {HELP[key] ? <span className="mt-1 block text-xs text-fg-muted">{HELP[key]}</span> : null}
         </span>
         <span aria-hidden>
           <SurfacePreview surface={key} />
@@ -110,10 +105,7 @@ export function SurfacePicker({
       <legend className="mb-2 text-sm font-medium text-fg">Device layout</legend>
       {capabilities?.native?.layout?.posture === 'half-folded' ||
       capabilities?.native?.layout?.posture === 'unfolded' ? (
-        <p className="text-xs text-fg-muted">
-          On Duo, Scanner and Operator share the inside displays. Customer display makes this paired
-          device screen-only; the outside face is managed by iOS.
-        </p>
+        <p className="text-xs text-fg-muted">Customer display makes this Duo screen-only.</p>
       ) : null}
       {choice('auto')}
       <div className="grid min-w-0 gap-3">

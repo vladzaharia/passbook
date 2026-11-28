@@ -22,6 +22,7 @@ __all__ = [
     "ApiKeyRotationKey2",
     "ApiKeyRotationPrevious",
     "ApiKeysActivityListResult",
+    "ApiKeysCliTokensRevokeResult",
     "ApiKeysCreateBody",
     "ApiKeysCreateParams",
     "ApiKeysCreateResult",
@@ -164,6 +165,7 @@ __all__ = [
     "CapturedEmail",
     "CapturedEmailDetail",
     "CapturedEmailPage",
+    "CliTokenEnded",
     "ConnectionPreview",
     "ConnectionPreviewColumnsItem",
     "ConnectionPreviewColumnsItemValuesItem",
@@ -323,6 +325,10 @@ __all__ = [
     "ConnectionsWebhookFailuresResolveResult",
     "ConnectorsListItem",
     "ConnectorsListItemCapabilities",
+    "ConnectorsListItemCapabilitiesInbound",
+    "ConnectorsListItemCapabilitiesOutbound",
+    "ConnectorsListItemCapabilitiesRead",
+    "ConnectorsListItemCapabilitiesWrite",
     "ConnectorsListItemDefaults",
     "ConnectorsListItemOutputFieldsValue",
     "ConnectorsListItemRecipesItem",
@@ -333,6 +339,10 @@ __all__ = [
     "ConnectorsListResponse",
     "ConnectorsListResponseItemsItem",
     "ConnectorsListResponseItemsItemCapabilities",
+    "ConnectorsListResponseItemsItemCapabilitiesInbound",
+    "ConnectorsListResponseItemsItemCapabilitiesOutbound",
+    "ConnectorsListResponseItemsItemCapabilitiesRead",
+    "ConnectorsListResponseItemsItemCapabilitiesWrite",
     "ConnectorsListResponseItemsItemDefaults",
     "ConnectorsListResponseItemsItemOutputFieldsValue",
     "ConnectorsListResponseItemsItemRecipesItem",
@@ -359,6 +369,10 @@ __all__ = [
     "ConnectorsRecipeSetupRetrieveResult",
     "ConnectorsRetrieveResponse",
     "ConnectorsRetrieveResponseCapabilities",
+    "ConnectorsRetrieveResponseCapabilitiesInbound",
+    "ConnectorsRetrieveResponseCapabilitiesOutbound",
+    "ConnectorsRetrieveResponseCapabilitiesRead",
+    "ConnectorsRetrieveResponseCapabilitiesWrite",
     "ConnectorsRetrieveResponseDefaults",
     "ConnectorsRetrieveResponseOutputFieldsValue",
     "ConnectorsRetrieveResponseRecipesItem",
@@ -2303,6 +2317,11 @@ __all__ = [
     "WalletEnrollmentsUpdateResponseIssuance1",
     "WalletEnrollmentsUpdateResponseIssuance2",
     "WalletEnrollmentsUpdateResponsePrerequisites",
+    "WalletHealthListResponse",
+    "WalletHealthListResponseItemsItem",
+    "WalletHealthListResult",
+    "WalletHealthRetryResponse",
+    "WalletHealthRetryResult",
     "WalletIdentitiesListResponse",
     "WalletIdentitiesListResponseItemsItem",
     "WalletProviderAccountsRetrieveResponse",
@@ -2455,6 +2474,7 @@ class ApiKeyDetail(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     lastIpPrefix: str | None
     parent: _Dict[str, _Any] | None
     replacedBy: _Dict[str, _Any] | None
@@ -2483,6 +2503,7 @@ class ApiKeyMinted(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str | None = None
 
 class ApiKeyRetired(_Model):
@@ -2515,6 +2536,7 @@ class ApiKeyRotationKey1(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
     secret: str
 
 class ApiKeyRotationKey2(_Model):
@@ -2540,6 +2562,7 @@ class ApiKeyRotationKey2(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeyRotationPrevious(_Model):
     id: str
@@ -2564,6 +2587,7 @@ class ApiKeyRotationPrevious(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysCreateParams(_Model):
     orgId: str | None
@@ -2601,6 +2625,7 @@ class ApiKeysListItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysListResponse(_Model):
     items: _List[ApiKeysListResponseItemsItem]
@@ -2630,6 +2655,7 @@ class ApiKeysListResponseItemsItem(_Model):
     rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
+    origin: _Literal["app", "cli"] | str | None = None
 
 class ApiKeysRetireParams(_Model):
     orgId: str | None
@@ -3212,6 +3238,9 @@ class CapturedEmailDetail(_Model):
 class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
     nextCursor: str | None
+
+class CliTokenEnded(_Model):
+    ok: _Literal[True]
 
 class ConnectionPreview(_Model):
     ok: bool
@@ -4269,6 +4298,27 @@ class ConnectorsListItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListItemCapabilitiesRead | None = None
+    write: ConnectorsListItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListItemDefaults(_Model):
     intervalSeconds: int
@@ -4337,6 +4387,27 @@ class ConnectorsListResponseItemsItemCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsListResponseItemsItemCapabilitiesRead | None = None
+    write: ConnectorsListResponseItemsItemCapabilitiesWrite | None = None
+    inbound: ConnectorsListResponseItemsItemCapabilitiesInbound | None = None
+    outbound: ConnectorsListResponseItemsItemCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsListResponseItemsItemCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsListResponseItemsItemCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsListResponseItemsItemCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
@@ -4483,6 +4554,27 @@ class ConnectorsRetrieveResponseCapabilities(_Model):
     import_: bool = _Field(alias="import")
     snapshot: bool
     upload: bool | None = None
+    read: ConnectorsRetrieveResponseCapabilitiesRead | None = None
+    write: ConnectorsRetrieveResponseCapabilitiesWrite | None = None
+    inbound: ConnectorsRetrieveResponseCapabilitiesInbound | None = None
+    outbound: ConnectorsRetrieveResponseCapabilitiesOutbound | None = None
+    auth: _Literal["none", "secret", "oauth2"] | str | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesInbound(_Model):
+    webhook: _Literal["none", "manual", "managed"] | str
+
+class ConnectorsRetrieveResponseCapabilitiesOutbound(_Model):
+    events: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.replaced", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
+
+class ConnectorsRetrieveResponseCapabilitiesRead(_Model):
+    fetch: bool | None = None
+    list: bool | None = None
+    delta: bool | None = None
+    import_: bool | None = _Field(default=None, alias="import")
+    upload: bool | None = None
+
+class ConnectorsRetrieveResponseCapabilitiesWrite(_Model):
+    objects: _Dict[str, _List[_Literal["create", "update", "delete"] | str]]
 
 class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int
@@ -4674,6 +4766,7 @@ class EmailFailedEvent(_Model):
     data: EmailFailedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class EmailFailedEventData(_Model):
     code: str | None = None
@@ -7141,7 +7234,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -7158,7 +7251,7 @@ class OrgsPlanRetrieveResponseFeaturesItem(_Model):
     level: str | None
 
 class OrgsPlanRetrieveResponseLimitsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     limit: int | None
     used: int | None
 
@@ -7240,6 +7333,7 @@ class PassChannelsChangedEvent(_Model):
     data: PassChannelsChangedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassChannelsChangedEventData(_Model):
     channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
@@ -8163,12 +8257,15 @@ class PassInstalledEvent(_Model):
     data: PassInstalledEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassInstalledEventData(_Model):
     wallet: _Literal["apple"] | str
     device: str | None
     deviceCount: int
     firstDevice: bool
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassIssuedEvent(_Model):
     id: str
@@ -8181,6 +8278,7 @@ class PassIssuedEvent(_Model):
     data: PassIssuedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassIssuedEventData(_Model):
     version: int | None = None
@@ -8202,6 +8300,7 @@ class PassPrintVoidedEvent(_Model):
     data: PassPrintVoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassPrintVoidedEventData(_Model):
     printId: str
@@ -8218,6 +8317,7 @@ class PassPrintedEvent(_Model):
     data: PassPrintedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassPrintedEventData(_Model):
     printId: str
@@ -8235,6 +8335,7 @@ class PassRemovedEvent(_Model):
     data: PassRemovedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassRemovedEventData(_Model):
     version: int | None = None
@@ -8252,6 +8353,7 @@ class PassReplacedEvent(_Model):
     data: PassReplacedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassReplacedEventData(_Model):
     replacedBy: str
@@ -8267,6 +8369,7 @@ class PassRestoredEvent(_Model):
     data: PassRestoredEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassRestoredEventData(_Model):
     version: int | None = None
@@ -8282,6 +8385,7 @@ class PassScanRefusedEvent(_Model):
     data: PassScanRefusedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassScanRefusedEventData(_Model):
     scanId: str | None = None
@@ -8302,6 +8406,7 @@ class PassScanUndoneEvent(_Model):
     data: PassScanUndoneEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassScanUndoneEventData(_Model):
     scanId: str | None = None
@@ -8319,6 +8424,7 @@ class PassScannedEvent(_Model):
     data: PassScannedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassScannedEventData(_Model):
     scanId: str | None = None
@@ -8817,6 +8923,7 @@ class PassUninstalledEvent(_Model):
     data: PassUninstalledEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassUninstalledEventData(_Model):
     wallet: _Literal["apple"] | str
@@ -8824,6 +8931,8 @@ class PassUninstalledEventData(_Model):
     deviceCount: int
     lastDevice: bool
     cause: _Literal["wallet", "push_gone"] | str
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class PassUnvoidedEvent(_Model):
     id: str
@@ -8836,6 +8945,7 @@ class PassUnvoidedEvent(_Model):
     data: PassUnvoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassUnvoidedEventData(_Model):
     actorType: str | None = None
@@ -8851,6 +8961,7 @@ class PassUpdatedEvent(_Model):
     data: PassUpdatedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassUpdatedEventData(_Model):
     version: int | None = None
@@ -8898,6 +9009,7 @@ class PassVoidedEvent(_Model):
     data: PassVoidedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PassVoidedEventData(_Model):
     actorType: str | None = None
@@ -9416,6 +9528,7 @@ class PassesDevicesListResponseDevicesItem(_Model):
     removal: _Literal["pending", "fetched", "deleted", None] | str
     simulated: bool | None = None
     deviceId: str | None = None
+    devicePass: _Literal[True] | None = None
 
 class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
@@ -10526,7 +10639,7 @@ class PlatformOrgsEntitlementsRetrieveResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
 
 class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -10559,7 +10672,7 @@ class PlatformOrgsEntitlementsUpdateResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
 
 class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["templates", "templates.uploads", "templates.stylesBlocked", "wallet.google", "wallet.samsung", "email.perDay", "brand.mark", "domains", "print", "join.perDay", "passes.changesPerDay", "passes.live", "passes.test", "messages.perDay", "scanning.devices", "nfc", "members", "members.developers", "api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "identity.own", "identity.managed", "connections", "connectors"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -11956,12 +12069,15 @@ class PushFailedEvent(_Model):
     data: PushFailedEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class PushFailedEventData(_Model):
     version: int | None = None
     status: int | None = None
     reason: str | None = None
     code: str | None = None
+    devicePass: bool | None = None
+    devicePassId: str | None = None
 
 class ReleaseResponse1(_Model):
     version: str
@@ -16072,6 +16188,24 @@ class WalletEnrollmentsUpdateResponsePrerequisites(_Model):
     check: bool
     roundTrip: bool | None
 
+class WalletHealthListResponse(_Model):
+    items: _List[WalletHealthListResponseItemsItem]
+
+class WalletHealthListResponseItemsItem(_Model):
+    provider: _Literal["google", "samsung"] | str
+    mode: _Literal["live", "test"] | str
+    tone: _Literal["ok", "attention", "failing", "idle"] | str
+    lastSuccessAt: int | None
+    queued: int
+    failed24h: int
+    uncertain: int
+    uncertainWaiting: int
+    callbackAt: int | None
+
+class WalletHealthRetryResponse(_Model):
+    due: int
+    waiting: int
+
 class WalletIdentitiesListResponse(_Model):
     items: _List[WalletIdentitiesListResponseItemsItem]
     nextCursor: str | None
@@ -16453,6 +16587,7 @@ class WebhookTestEvent(_Model):
     data: WebhookTestEventData
     requestId: str | None = None
     sample: _Literal[True] | None = None
+    simulated: _Literal[True] | None = None
 
 class WebhookTestEventData(_Model):
     pass
@@ -16476,6 +16611,8 @@ class UnknownWebhookEvent(_Model):
     data: _Dict[str, _Any] | None = None
 
 ApiKeysActivityListResult = ApiKeyActivity
+
+ApiKeysCliTokensRevokeResult = CliTokenEnded
 
 ApiKeysCreateBody = ApiKeysCreateParams
 
@@ -17462,6 +17599,10 @@ TestEmailsListResult = CapturedEmailPage
 TestEmailsRetrieveResult = CapturedEmailDetail
 
 WalletCredentialsUpsertParams = WalletCredentialsUpsertParams1 | WalletCredentialsUpsertParams2
+
+WalletHealthListResult = WalletHealthListResponse
+
+WalletHealthRetryResult = WalletHealthRetryResponse
 
 WalletProviderAccountsUpsertParams = WalletProviderAccountsUpsertParams1 | WalletProviderAccountsUpsertParams2
 

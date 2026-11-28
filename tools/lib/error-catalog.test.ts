@@ -3,7 +3,8 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { errorStatuses, errorStatusLabels } from '../../src/web/developers/model/error-status.ts';
 import { isInternalCode } from '../../src/worker/platform/internal-codes.ts';
-import { buildErrorCatalog } from './error-catalog.ts';
+import { buildErrorCatalog, type RaiseSite } from './error-catalog.ts';
+import { EXTRA_STATUS_SITES } from './error-status-sites.ts';
 
 /** Each multi-status code with the status shown first: raised at the most sites; on a tie the 5xx when the tie spans 4xx and 5xx, else the lower. */
 const COMMON: Record<string, number> = {
@@ -63,6 +64,19 @@ describe('error catalog statuses', () => {
       Object.fromEntries(multi.filter((c) => c.primary).map((c) => [c.code, c.primary])),
     ).toEqual(TIES);
     expect(catalog.codes.filter((c) => c.statuses.length === 1 && c.primary)).toEqual([]);
+  });
+
+  it('raises a second status only at a listed site', () => {
+    const sites: RaiseSite[] = [];
+    const codes = buildErrorCatalog(sites).codes.filter((c) => c.statuses.length > 1);
+    const extras = new Set(
+      codes.flatMap((c) =>
+        sites
+          .filter((s) => s.code === c.code && s.status !== c.statuses[0])
+          .map((s) => `${s.code} ${s.status} ${s.file}`),
+      ),
+    );
+    expect([...extras].sort()).toEqual([...EXTRA_STATUS_SITES].sort());
   });
 
   it('keeps every status for display', () => {

@@ -259,3 +259,35 @@ test('axe finds nothing serious on the tab at 1440 and 834, light and dark', asy
       expect(serious, `${width} ${scheme}`).toEqual([]);
     }
 });
+
+test('at 390 the Wallets tab is preview only: the notice, the preview and the report, no edit controls', async ({
+  page,
+}) => {
+  await openChannels(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(design('?mode=wallets&wallet=samsung'));
+  await expect(page.getByText('Preview only')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Designer mode' })).toContainText('Wallets');
+  await expect(report(page, 'Samsung')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Samsung Wallet Preview' })).toBeVisible();
+  await expect(page.getByTestId('designer-layout')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Use .* for / })).toHaveCount(0);
+  await rail(page)
+    .getByRole('radio', { name: /^Google Wallet/ })
+    .click();
+  await expect(report(page, 'Google')).toBeVisible();
+  await expect(section(page, /^Google images/)).toHaveCount(0);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  expect(
+    results.violations
+      .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+      .map((v) => v.id),
+  ).toEqual([]);
+  await shots(page, 'wallets-390-preview-only');
+});

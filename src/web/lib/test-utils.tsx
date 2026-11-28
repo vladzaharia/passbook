@@ -43,6 +43,9 @@ installDomShims();
 type AuthedRoles = Extract<SessionResponse, { authenticated: true }>['roles'];
 export type SessionKind = 'admin' | 'developer' | 'user' | 'anon';
 
+/** One sign-in time per module so two fixtures built in a test compare equal. */
+const FIXTURE_AUTH_TIME = Date.now();
+
 export function sessionFixture(kind: SessionKind, amr: SignInMethod = 'oidc'): SessionResponse {
   if (kind === 'anon') {
     return {
@@ -63,6 +66,7 @@ export function sessionFixture(kind: SessionKind, amr: SignInMethod = 'oidc'): S
         : ['user']) as AuthedRoles,
     csrfToken: 'csrf-test',
     amr,
+    authTime: amr === 'magic_link' ? null : FIXTURE_AUTH_TIME,
     expiresAt: 4_000_000_000_000,
   };
 }

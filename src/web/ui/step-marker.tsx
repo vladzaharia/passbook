@@ -14,7 +14,7 @@ export type StepMarkerState =
   | 'failed';
 
 const SIZE = {
-  sm: 'size-5 text-[0.6875rem]',
+  sm: 'size-5 text-xs',
   md: 'size-6 text-xs',
   lg: 'size-9 text-sm',
 } as const;

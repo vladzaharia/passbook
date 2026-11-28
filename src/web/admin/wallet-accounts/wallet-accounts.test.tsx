@@ -50,7 +50,7 @@ describe('organization wallet accounts', () => {
       ]),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
-    expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
+    expect(within(google).getByText('Enrolment check: Passed')).toBeInTheDocument();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
     expect(within(samsung).getByText('Pick a source first.')).toBeInTheDocument();
     expect(within(samsung).getByText("Samsung Wallet isn't released yet.")).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('organization wallet accounts', () => {
     for (const radio of within(google).getAllByRole('radio')) expect(radio).toBeDisabled();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
     expect(within(samsung).queryByText('The account check has not passed.')).toBeNull();
-    expect(within(samsung).getByText('Account check: Needed')).toBeInTheDocument();
+    expect(within(samsung).queryByText('Enrolment check: Needed')).toBeNull();
   });
 
   it('never shows a green check on a credential whose gate says Needed', async () => {
@@ -146,7 +146,7 @@ describe('organization wallet accounts', () => {
       handlers: orgHandlers(
         [
           enrolment({
-            state: 'on',
+            state: 'off',
             source: 'org',
             prerequisites: { check: false, roundTrip: null },
           }),
@@ -158,7 +158,7 @@ describe('organization wallet accounts', () => {
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
     expect(within(google).getByText(/^Last checked/)).toBeInTheDocument();
     expect(within(google).queryByText(/^Checked /)).toBeNull();
-    expect(within(google).getByText('Account check: Needed')).toBeInTheDocument();
+    expect(within(google).getByText('Enrolment check: Needed')).toBeInTheDocument();
   });
 
   it('shows a green check when the gate passes', async () => {
@@ -178,7 +178,7 @@ describe('organization wallet accounts', () => {
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
     expect(within(google).getByText(/^Checked /)).toBeInTheDocument();
-    expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
+    expect(within(google).getByText('Enrolment check: Passed')).toBeInTheDocument();
   });
 
   it('saves credentials, clears the private key and never shows a secret back', async () => {

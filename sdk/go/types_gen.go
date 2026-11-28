@@ -71,6 +71,7 @@ type ApiKeyDetail struct {
 	RateTier      *string        `json:"rateTier,omitempty"`
 	ParentKeyID   *string        `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string        `json:"rotatedFrom,omitempty"`
+	Origin        *string        `json:"origin,omitempty"`
 	LastIPPrefix  *string        `json:"lastIpPrefix"`
 	Parent        map[string]any `json:"parent"`
 	ReplacedBy    map[string]any `json:"replacedBy"`
@@ -100,6 +101,7 @@ type ApiKeyMinted struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        *string  `json:"secret,omitempty"`
 }
 
@@ -135,6 +137,7 @@ type ApiKeyRotationKey1 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 	Secret        string   `json:"secret"`
 }
 
@@ -161,6 +164,7 @@ type ApiKeyRotationKey2 struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeyRotationPrevious struct {
@@ -186,6 +190,7 @@ type ApiKeyRotationPrevious struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysActivityListQuery struct {
@@ -193,6 +198,8 @@ type ApiKeysActivityListQuery struct {
 }
 
 type ApiKeysActivityListResult = ApiKeyActivity
+
+type ApiKeysCliTokensRevokeResult = CliTokenEnded
 
 type ApiKeysCreateBody = ApiKeysCreateParams
 
@@ -235,6 +242,7 @@ type ApiKeysListItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysListQuery struct {
@@ -273,6 +281,7 @@ type ApiKeysListResponseItemsItem struct {
 	RateTier      *string  `json:"rateTier,omitempty"`
 	ParentKeyID   *string  `json:"parentKeyId,omitempty"`
 	RotatedFrom   *string  `json:"rotatedFrom,omitempty"`
+	Origin        *string  `json:"origin,omitempty"`
 }
 
 type ApiKeysRetireBody = ApiKeysRetireParams
@@ -1084,6 +1093,10 @@ type CapturedEmailDetail struct {
 type CapturedEmailPage struct {
 	Items      []CapturedEmail `json:"items"`
 	NextCursor *string         `json:"nextCursor"`
+}
+
+type CliTokenEnded struct {
+	Ok bool `json:"ok"`
 }
 
 type ConnectionPreview struct {
@@ -2361,12 +2374,37 @@ type ConnectorsListItem struct {
 }
 
 type ConnectorsListItemCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                    `json:"poll"`
+	Delta    bool                                    `json:"delta"`
+	Webhook  bool                                    `json:"webhook"`
+	Import   bool                                    `json:"import"`
+	Snapshot bool                                    `json:"snapshot"`
+	Upload   *bool                                   `json:"upload,omitempty"`
+	Read     *ConnectorsListItemCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsListItemCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsListItemCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsListItemCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                 `json:"auth,omitempty"`
+}
+
+type ConnectorsListItemCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsListItemCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsListItemCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsListItemCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsListItemDefaults struct {
@@ -2443,12 +2481,37 @@ type ConnectorsListResponseItemsItem struct {
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                                 `json:"poll"`
+	Delta    bool                                                 `json:"delta"`
+	Webhook  bool                                                 `json:"webhook"`
+	Import   bool                                                 `json:"import"`
+	Snapshot bool                                                 `json:"snapshot"`
+	Upload   *bool                                                `json:"upload,omitempty"`
+	Read     *ConnectorsListResponseItemsItemCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsListResponseItemsItemCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsListResponseItemsItemCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsListResponseItemsItemCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                              `json:"auth,omitempty"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsListResponseItemsItemDefaults struct {
@@ -2615,12 +2678,37 @@ type ConnectorsRetrieveResponse struct {
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                            `json:"poll"`
+	Delta    bool                                            `json:"delta"`
+	Webhook  bool                                            `json:"webhook"`
+	Import   bool                                            `json:"import"`
+	Snapshot bool                                            `json:"snapshot"`
+	Upload   *bool                                           `json:"upload,omitempty"`
+	Read     *ConnectorsRetrieveResponseCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsRetrieveResponseCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsRetrieveResponseCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsRetrieveResponseCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                         `json:"auth,omitempty"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsRetrieveResponseDefaults struct {
@@ -2863,6 +2951,7 @@ type EmailFailedEvent struct {
 	Data       EmailFailedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type EmailFailedEventData struct {
@@ -5963,6 +6052,7 @@ type PassChannelsChangedEvent struct {
 	Data       PassChannelsChangedEventData `json:"data"`
 	RequestID  *string                      `json:"requestId,omitempty"`
 	Sample     *bool                        `json:"sample,omitempty"`
+	Simulated  *bool                        `json:"simulated,omitempty"`
 }
 
 type PassChannelsChangedEventData struct {
@@ -7059,13 +7149,16 @@ type PassInstalledEvent struct {
 	Data       PassInstalledEventData `json:"data"`
 	RequestID  *string                `json:"requestId,omitempty"`
 	Sample     *bool                  `json:"sample,omitempty"`
+	Simulated  *bool                  `json:"simulated,omitempty"`
 }
 
 type PassInstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	FirstDevice bool    `json:"firstDevice"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	FirstDevice  bool    `json:"firstDevice"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassIssuedEvent struct {
@@ -7079,6 +7172,7 @@ type PassIssuedEvent struct {
 	Data       PassIssuedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PassIssuedEventData struct {
@@ -7103,6 +7197,7 @@ type PassPrintVoidedEvent struct {
 	Data       PassPrintVoidedEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassPrintVoidedEventData struct {
@@ -7121,6 +7216,7 @@ type PassPrintedEvent struct {
 	Data       PassPrintedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassPrintedEventData struct {
@@ -7140,6 +7236,7 @@ type PassRemovedEvent struct {
 	Data       PassRemovedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassRemovedEventData struct {
@@ -7159,6 +7256,7 @@ type PassReplacedEvent struct {
 	Data       PassReplacedEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassReplacedEventData struct {
@@ -7176,6 +7274,7 @@ type PassRestoredEvent struct {
 	Data       PassRestoredEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassRestoredEventData struct {
@@ -7193,6 +7292,7 @@ type PassScanRefusedEvent struct {
 	Data       PassScanRefusedEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassScanRefusedEventData struct {
@@ -7215,6 +7315,7 @@ type PassScanUndoneEvent struct {
 	Data       PassScanUndoneEventData `json:"data"`
 	RequestID  *string                 `json:"requestId,omitempty"`
 	Sample     *bool                   `json:"sample,omitempty"`
+	Simulated  *bool                   `json:"simulated,omitempty"`
 }
 
 type PassScanUndoneEventData struct {
@@ -7234,6 +7335,7 @@ type PassScannedEvent struct {
 	Data       PassScannedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassScannedEventData struct {
@@ -7809,14 +7911,17 @@ type PassUninstalledEvent struct {
 	Data       PassUninstalledEventData `json:"data"`
 	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
+	Simulated  *bool                    `json:"simulated,omitempty"`
 }
 
 type PassUninstalledEventData struct {
-	Wallet      string  `json:"wallet"`
-	Device      *string `json:"device"`
-	DeviceCount int64   `json:"deviceCount"`
-	LastDevice  bool    `json:"lastDevice"`
-	Cause       string  `json:"cause"`
+	Wallet       string  `json:"wallet"`
+	Device       *string `json:"device"`
+	DeviceCount  int64   `json:"deviceCount"`
+	LastDevice   bool    `json:"lastDevice"`
+	Cause        string  `json:"cause"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type PassUnvoidedEvent struct {
@@ -7830,6 +7935,7 @@ type PassUnvoidedEvent struct {
 	Data       PassUnvoidedEventData `json:"data"`
 	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
+	Simulated  *bool                 `json:"simulated,omitempty"`
 }
 
 type PassUnvoidedEventData struct {
@@ -7847,6 +7953,7 @@ type PassUpdatedEvent struct {
 	Data       PassUpdatedEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type PassUpdatedEventData struct {
@@ -7907,6 +8014,7 @@ type PassVoidedEvent struct {
 	Data       PassVoidedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PassVoidedEventData struct {
@@ -8549,6 +8657,7 @@ type PassesDevicesListResponseDevicesItem struct {
 	Removal        *string        `json:"removal"`
 	Simulated      *bool          `json:"simulated,omitempty"`
 	DeviceID       *string        `json:"deviceId,omitempty"`
+	DevicePass     *bool          `json:"devicePass,omitempty"`
 }
 
 type PassesDevicesListResult = PassesDevicesListResponse
@@ -11871,13 +11980,16 @@ type PushFailedEvent struct {
 	Data       PushFailedEventData `json:"data"`
 	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
+	Simulated  *bool               `json:"simulated,omitempty"`
 }
 
 type PushFailedEventData struct {
-	Version *int64  `json:"version,omitempty"`
-	Status  *int64  `json:"status,omitempty"`
-	Reason  *string `json:"reason,omitempty"`
-	Code    *string `json:"code,omitempty"`
+	Version      *int64  `json:"version,omitempty"`
+	Status       *int64  `json:"status,omitempty"`
+	Reason       *string `json:"reason,omitempty"`
+	Code         *string `json:"code,omitempty"`
+	DevicePass   *bool   `json:"devicePass,omitempty"`
+	DevicePassID *string `json:"devicePassId,omitempty"`
 }
 
 type ReleaseResponse = any
@@ -16905,6 +17017,31 @@ type WalletEnrollmentsUpdateResponsePrerequisites struct {
 	RoundTrip *bool `json:"roundTrip"`
 }
 
+type WalletHealthListResponse struct {
+	Items []WalletHealthListResponseItemsItem `json:"items"`
+}
+
+type WalletHealthListResponseItemsItem struct {
+	Provider         string `json:"provider"`
+	Mode             string `json:"mode"`
+	Tone             string `json:"tone"`
+	LastSuccessAt    *int64 `json:"lastSuccessAt"`
+	Queued           int64  `json:"queued"`
+	Failed24h        int64  `json:"failed24h"`
+	Uncertain        int64  `json:"uncertain"`
+	UncertainWaiting int64  `json:"uncertainWaiting"`
+	CallbackAt       *int64 `json:"callbackAt"`
+}
+
+type WalletHealthListResult = WalletHealthListResponse
+
+type WalletHealthRetryResponse struct {
+	Due     int64 `json:"due"`
+	Waiting int64 `json:"waiting"`
+}
+
+type WalletHealthRetryResult = WalletHealthRetryResponse
+
 type WalletIdentitiesListResponse struct {
 	Items      []WalletIdentitiesListResponseItemsItem `json:"items"`
 	NextCursor *string                                 `json:"nextCursor"`
@@ -17414,6 +17551,7 @@ type WebhookTestEvent struct {
 	Data       WebhookTestEventData `json:"data"`
 	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
+	Simulated  *bool                `json:"simulated,omitempty"`
 }
 
 type WebhookTestEventData struct{}

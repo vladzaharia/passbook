@@ -1,5 +1,6 @@
 import { expect } from 'vitest';
 import type { AppEnv } from '../../platform/env.ts';
+import { RACE_EVENT_ROWS } from './race-tags.ts';
 
 export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
   /** Intervene before bootstrap/commit, or after the committing transaction has completed. */
@@ -95,7 +96,7 @@ export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
           const rowRead =
             (phase === 'row' || phase === 'before-row') &&
             prop === method &&
-            /\bFROM\s+scan_events\s+e\b/i.test(sql);
+            sql.includes(RACE_EVENT_ROWS);
           const targetRead =
             phase === 'target' &&
             prop === 'first' &&
@@ -139,7 +140,7 @@ export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
             const rowRead =
               (phase === 'row' || phase === 'before-row') &&
               statements.some((statement) =>
-                /\bFROM\s+scan_events\s+e\b/i.test(sqlOf.get(statement) ?? ''),
+                (sqlOf.get(statement) ?? '').includes(RACE_EVENT_ROWS),
               );
             if (rowRead && phase === 'before-row' && !intercepted) {
               intercepted++;

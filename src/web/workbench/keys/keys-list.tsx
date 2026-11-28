@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiKeySchema } from '@/shared/contracts/api-keys.ts';
+import { WB_EMPTY } from '@/shared/copy/workbench-states.ts';
 import { keyPrefix } from '../../admin/api-keys/key-columns.tsx';
 import {
   KeysHeader,
@@ -12,11 +13,12 @@ import { type ApiKey, keyState, useApiKeyPages } from '../../admin/api-keys/quer
 import type { KeyAccess } from '../../admin/api-keys/use-key-access.ts';
 import { useToolApi } from '../../lib/tool-api.tsx';
 import './keys-list.css';
-import { Button, EmptyState, ErrorState, RowLink, SkeletonRows } from '../../ui/index.ts';
+import { Button, EmptyState, RowLink, SkeletonRows } from '../../ui/index.ts';
 import { BenchList } from '../bench/list.tsx';
 import { BenchSplit } from '../bench/split.tsx';
 import { StatusChip, type StatusTone } from '../bench/status-chip.tsx';
 import { useBenchSelection } from '../bench/use-selection.ts';
+import { ToolEmpty, ToolFailed } from '../states/states.tsx';
 
 const KeyDetailView = lazy(() =>
   import('../../admin/api-keys/key-detail-page.tsx').then((m) => ({ default: m.KeyDetailView })),
@@ -58,9 +60,9 @@ export function KeysSplit({
   }, [createRequested, access.state, canManage, onCreateRequestHandled]);
   if (access.state === 'loading') return <SkeletonRows label="Loading organization access" />;
   if (access.state === 'session-error')
-    return <ErrorState subject="session" error={access.error} onRetry={access.retry} />;
+    return <ToolFailed error={access.error} onRetry={access.retry} />;
   if (access.state === 'org-error')
-    return <ErrorState subject="organization access" error={access.error} onRetry={access.retry} />;
+    return <ToolFailed error={access.error} onRetry={access.retry} />;
   if (access.state === 'denied')
     return <EmptyState heading art="lock" title="You do not have access" />;
   return (
@@ -120,7 +122,7 @@ function ScopedKeys({
   const create = (variant: 'primary' | 'outline') =>
     canManage ? (
       <Button variant={variant} iconStart={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-        New API key
+        {WB_EMPTY.keys?.action}
       </Button>
     ) : null;
   const empty = !live.isPending && !live.isError && items.length === 0;
@@ -129,7 +131,7 @@ function ScopedKeys({
     return (
       <>
         {head}
-        <ErrorState error={live.error} onRetry={() => live.refetch()} />
+        <ToolFailed error={live.error} onRetry={() => live.refetch()} />
       </>
     );
   if (live.isPending)
@@ -147,7 +149,7 @@ function ScopedKeys({
       row={(k) => ({
         title: (
           <>
-            {k.name}
+            <span className="wb-key-name">{k.name}</span>
             {host?.own?.(k) ? <span className="wb-keys-own"> In use</span> : null}
           </>
         ),
@@ -156,7 +158,7 @@ function ScopedKeys({
       })}
       tone={(k) => TONE[keyState(k, now)]}
       selection={selection}
-      empty={<EmptyState art="key" title="No API keys" action={create('primary')} />}
+      empty={<ToolEmpty tool="keys" action={create('primary')} />}
       footer={{
         count: `${items.length} ${items.length === 1 ? 'key' : 'keys'}`,
         onMore: live.hasNextPage ? () => void live.fetchNextPage() : undefined,

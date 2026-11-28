@@ -1,6 +1,9 @@
 import * as asn1 from 'asn1js';
 import * as pki from 'pkijs';
 import type { Json, SigningMaterial } from '../types.ts';
+import { hex, sha1Hex } from './sha1.ts';
+
+export { sha1Hex };
 
 const DATA_OID = '1.2.840.113549.1.7.1';
 const SIGNED_DATA_OID = '1.2.840.113549.1.7.2';
@@ -53,12 +56,6 @@ function certificateFromPem(pem: string): pki.Certificate {
 function subjectValue(cert: pki.Certificate, oid: string): string | undefined {
   const value = cert.subject.typesAndValues.find((v) => v.type === oid)?.value.valueBlock.value;
   return typeof value === 'string' ? value : undefined;
-}
-
-function hex(buffer: ArrayBuffer | Uint8Array): string {
-  return Array.from(new Uint8Array(buffer instanceof Uint8Array ? buffer : buffer), (b) =>
-    b.toString(16).padStart(2, '0'),
-  ).join('');
 }
 
 export async function certificateInfo(pem: string): Promise<CertificateInfo> {
@@ -121,10 +118,6 @@ async function importSigningKey(material: SigningMaterial): Promise<CryptoKey> {
     key.catch(() => signingKeys.delete(fingerprint));
   }
   return key;
-}
-
-export async function sha1Hex(bytes: Uint8Array): Promise<string> {
-  return hex(await crypto.subtle.digest('SHA-1', bytes as BufferSource));
 }
 
 /** manifest.json for the given files. `precomputed` skips hashing for entries whose SHA-1 is known. */
