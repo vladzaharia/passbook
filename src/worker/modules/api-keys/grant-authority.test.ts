@@ -104,7 +104,7 @@ describe('API key grants: safety', () => {
     const theirs = await makeApiKey(f(), { orgId: other.id });
     await expect(
       revokeKey(ctx(), theirs.id, authority, entry('api_key.revoke', theirs.id)),
-    ).rejects.toMatchObject({ status: 409, code: 'API_KEY_NOT_FOUND' });
+    ).rejects.toMatchObject({ status: 409, code: 'API_KEY_CHANGED' });
     expect(await keyRow(theirs.id)).toEqual({ revoked_at: null });
     const platform = await makeApiKey(f());
     await expect(

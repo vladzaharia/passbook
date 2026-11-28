@@ -47,6 +47,15 @@
       ]
     },
     {
+      "code": "API_KEY_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_CHILD_CANNOT_MINT",
       "statuses": [
         403
@@ -112,8 +121,7 @@
     {
       "code": "API_KEY_NOT_FOUND",
       "statuses": [
-        404,
-        409
+        404
       ],
       "modules": [
         "api-keys"
@@ -445,12 +453,7 @@
     {
       "code": "ASSET_SIZE",
       "statuses": [
-        413,
-        422
-      ],
-      "primary": [
-        413,
-        422
+        413
       ],
       "modules": [
         "passes"
@@ -1441,8 +1444,7 @@
     {
       "code": "EMAIL_CONFLICT",
       "statuses": [
-        403,
-        409
+        403
       ],
       "modules": [
         "auth"
@@ -1700,12 +1702,7 @@
     {
       "code": "FILE_DAMAGED",
       "statuses": [
-        500,
         422
-      ],
-      "primary": [
-        422,
-        500
       ],
       "modules": [
         "connections"
@@ -2334,8 +2331,7 @@
     {
       "code": "IDENTITY_NOT_FOUND",
       "statuses": [
-        404,
-        422
+        404
       ],
       "modules": [
         "identities",
@@ -2429,8 +2425,7 @@
       "code": "IDENTITY_RUN_INCOMPLETE",
       "statuses": [
         502,
-        409,
-        503
+        409
       ],
       "modules": [
         "identities",
@@ -3839,8 +3834,7 @@
     {
       "code": "NO_RECIPIENT",
       "statuses": [
-        422,
-        409
+        422
       ],
       "modules": [
         "bundles",
@@ -4085,12 +4079,7 @@
     {
       "code": "ORG_INACTIVE",
       "statuses": [
-        403,
-        409
-      ],
-      "primary": [
-        403,
-        409
+        403
       ],
       "modules": [
         "connections",
@@ -4109,8 +4098,7 @@
     {
       "code": "ORG_NOT_FOUND",
       "statuses": [
-        404,
-        422
+        404
       ],
       "modules": [
         "api-keys",
@@ -4180,8 +4168,7 @@
     {
       "code": "ORG_REQUIRED",
       "statuses": [
-        422,
-        403
+        422
       ],
       "modules": [
         "bundles",
@@ -5282,8 +5269,7 @@
     {
       "code": "SCANNER_NOT_FOUND",
       "statuses": [
-        404,
-        422
+        404
       ],
       "modules": [
         "nfc",
@@ -6548,8 +6534,7 @@
     {
       "code": "TAG_NOT_FOUND",
       "statuses": [
-        404,
-        409
+        404
       ],
       "modules": [
         "me",
@@ -6981,8 +6966,7 @@
     {
       "code": "TEMPLATE_NOT_FOUND",
       "statuses": [
-        404,
-        422
+        404
       ],
       "modules": [
         "broadcasts",
@@ -7972,8 +7956,7 @@
     {
       "code": "WORKFLOW_START",
       "statuses": [
-        503,
-        502
+        503
       ],
       "modules": [
         "passes",

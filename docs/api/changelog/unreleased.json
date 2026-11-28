@@ -8,6 +8,14 @@
     "note": "A Bearer header with no key (empty, a placeholder like undefined or $KEY, or a bare key) now answers 401 API_KEY_MISSING instead of UNAUTHENTICATED."
   },
   {
+    "key": "DELETE /api/v1/api-keys/{id} API_KEY_CHANGED: new code",
+    "class": "notable",
+    "operationId": "api-keys.deleteApiKeysById",
+    "op": "DELETE /api/v1/api-keys/{id}",
+    "change": "API_KEY_CHANGED: new code",
+    "note": "A key removed or moved while the request ran now answers 409 API_KEY_CHANGED, not API_KEY_NOT_FOUND."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
@@ -2249,12 +2257,28 @@
     "note": "Platform admins: sandboxes by quickstart step, completion and time to first pass, last 30 days."
   },
   {
+    "key": "GET /api/v1/metrics/platform/developer unknown orgId: now 404",
+    "class": "notable",
+    "operationId": "metrics.getMetricsPlatformDeveloper",
+    "op": "GET /api/v1/metrics/platform/developer",
+    "change": "unknown orgId: now 404",
+    "note": "An unknown orgId is now 404 ORG_NOT_FOUND, not 422."
+  },
+  {
     "key": "GET /api/v1/metrics/platform/overview 200.setup.releasedTemplates: field added",
     "class": "additive",
     "operationId": "metrics.getMetricsPlatformOverview",
     "op": "GET /api/v1/metrics/platform/overview",
     "change": "200.setup.releasedTemplates: field added",
     "note": "setup.releasedTemplates counts templates with a Live release. setup.passes and setup.walletPasses now count Test and Live passes."
+  },
+  {
+    "key": "GET /api/v1/metrics/platform/overview unknown orgId: now 404",
+    "class": "notable",
+    "operationId": "metrics.getMetricsPlatformOverview",
+    "op": "GET /api/v1/metrics/platform/overview",
+    "change": "unknown orgId: now 404",
+    "note": "An unknown orgId is now 404 ORG_NOT_FOUND, not 422."
   },
   {
     "key": "GET /api/v1/nfc/keysets callable by nfc:keys key",
@@ -3121,12 +3145,12 @@
     "note": "A customer body's screen can be review."
   },
   {
-    "key": "GET /api/v1/scan/live 200.rows[].reason: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/scan/live 200.rows[].reason: field added",
+    "class": "additive",
     "operationId": "scan.getScanLive",
     "op": "GET /api/v1/scan/live",
-    "change": "200.rows[].reason: field removed",
-    "note": ""
+    "change": "200.rows[].reason: field added",
+    "note": "Live rows carry the monitor reason for desk roles."
   },
   {
     "key": "GET /api/v1/scan/roster 200.entries[].g: field added",
@@ -3377,6 +3401,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "GET /api/v1/templates/{id} ORG_REQUIRED: now 422",
+    "class": "notable",
+    "operationId": "templates.getTemplatesById",
+    "op": "GET /api/v1/templates/{id}",
+    "change": "ORG_REQUIRED: now 422",
+    "note": "A member who does not name an organization now gets 422 ORG_REQUIRED, not 403. Send orgId."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/candidates 200.current: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdCandidates",
@@ -3487,6 +3519,14 @@
     "op": "GET /api/v1/templates/previews",
     "change": "200.items[].warnings[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/previews ORG_REQUIRED: now 422",
+    "class": "notable",
+    "operationId": "templates.getTemplatesPreviews",
+    "op": "GET /api/v1/templates/previews",
+    "change": "ORG_REQUIRED: now 422",
+    "note": "A member who does not name an organization now gets 422 ORG_REQUIRED, not 403. Send orgId."
   },
   {
     "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
@@ -4320,6 +4360,14 @@
     "note": "Connections carry warning: stale_deliveries while the provider keeps sending events older than its window."
   },
   {
+    "key": "PATCH /api/v1/connections/{id} unknown template or org: now 404",
+    "class": "notable",
+    "operationId": "connections.patchConnectionsById",
+    "op": "PATCH /api/v1/connections/{id}",
+    "change": "unknown template or org: now 404",
+    "note": "An unknown defaultTemplateId or orgId is now 404 TEMPLATE_NOT_FOUND or ORG_NOT_FOUND, not 422. The problem body keeps the field in issues."
+  },
+  {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.patchConnectionsUploadsByFileId",
@@ -4406,6 +4454,14 @@
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id} unknown default identity: now 404",
+    "class": "notable",
+    "operationId": "orgs.patchOrgsById",
+    "op": "PATCH /api/v1/orgs/{id}",
+    "change": "unknown default identity: now 404",
+    "note": "An unknown defaultIdentityId is now 404 IDENTITY_NOT_FOUND, not 422. The problem body keeps the field in issues."
   },
   {
     "key": "PATCH /api/v1/orgs/{id}/memberships/{membershipId} 200.accessPaused: field added",
@@ -4910,6 +4966,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
     "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
+  },
+  {
+    "key": "POST /api/v1/api-keys/{id}/retire API_KEY_CHANGED: new code",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeysByIdRetire",
+    "op": "POST /api/v1/api-keys/{id}/retire",
+    "change": "API_KEY_CHANGED: new code",
+    "note": "A key removed or moved while the request ran now answers 409 API_KEY_CHANGED, not API_KEY_NOT_FOUND."
   },
   {
     "key": "POST /api/v1/api-keys/{id}/rotate 201.key|0.origin: field added",
@@ -5646,6 +5710,14 @@
     "note": "fileId names the uploaded draft a file-upload connection starts from."
   },
   {
+    "key": "POST /api/v1/connections unknown template or org: now 404",
+    "class": "notable",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "unknown template or org: now 404",
+    "note": "An unknown defaultTemplateId or orgId is now 404 TEMPLATE_NOT_FOUND or ORG_NOT_FOUND, not 422. The problem body keeps the field in issues."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/files new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdFiles",
@@ -5654,12 +5726,28 @@
     "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
   },
   {
+    "key": "POST /api/v1/connections/{id}/files ORG_INACTIVE: now 403",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdFiles",
+    "op": "POST /api/v1/connections/{id}/files",
+    "change": "ORG_INACTIVE: now 403",
+    "note": "A connection of a suspended or deleted organization now answers 403 ORG_INACTIVE, not 409."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
     "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
     "change": "new operation",
     "note": "Apply a pending revision (it becomes current) and start a sync."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files/{fileId}/apply ORG_INACTIVE: now 403",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
+    "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
+    "change": "ORG_INACTIVE: now 403",
+    "note": "A connection of a suspended or deleted organization now answers 403 ORG_INACTIVE, not 409."
   },
   {
     "key": "POST /api/v1/connections/{id}/links new operation",
@@ -5692,6 +5780,14 @@
     "op": "POST /api/v1/connections/{id}/sync",
     "change": "202.operationId: field added",
     "note": "operationId names the operation that shows the sync; null when the sync joined a run that was already open. Read it with GET /api/v1/operations/{id}."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/sync ORG_INACTIVE: now 403",
+    "class": "notable",
+    "operationId": "connections.postConnectionsByIdSync",
+    "op": "POST /api/v1/connections/{id}/sync",
+    "change": "ORG_INACTIVE: now 403",
+    "note": "A connection of a suspended or deleted organization now answers 403 ORG_INACTIVE, not 409."
   },
   {
     "key": "POST /api/v1/connections/{id}/webhook-secret 200.firstVerifiedArrivalAt: field added",
@@ -6153,6 +6249,14 @@
     "note": "Lost phone is an operation: follow it at GET /operations/{id}. Only the holder's own session reads it."
   },
   {
+    "key": "POST /api/v1/me/passes/{id}/lost-phone NO_RECIPIENT: now 422",
+    "class": "notable",
+    "operationId": "me.postMePassesByIdLostPhone",
+    "op": "POST /api/v1/me/passes/{id}/lost-phone",
+    "change": "NO_RECIPIENT: now 422",
+    "note": "A pass with no email to send to now answers 422 NO_RECIPIENT, not 409."
+  },
+  {
     "key": "POST /api/v1/me/passes/{id}/lost-phone/confirmation new operation",
     "class": "additive",
     "operationId": "me.postMePassesByIdLostPhoneConfirmation",
@@ -6175,6 +6279,14 @@
     "op": "POST /api/v1/me/passes/{id}/resend",
     "change": "202.operationId: field added",
     "note": "The email is an operation: follow it at GET /operations/{id}. A second request while one runs answers 409 OPERATION_RUNNING with its id."
+  },
+  {
+    "key": "POST /api/v1/me/passes/{id}/resend NO_RECIPIENT: now 422",
+    "class": "notable",
+    "operationId": "me.postMePassesByIdResend",
+    "op": "POST /api/v1/me/passes/{id}/resend",
+    "change": "NO_RECIPIENT: now 422",
+    "note": "A pass with no email to send to now answers 422 NO_RECIPIENT, not 409."
   },
   {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
@@ -6375,6 +6487,14 @@
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs unknown default identity: now 404",
+    "class": "notable",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "unknown default identity: now 404",
+    "note": "An unknown defaultIdentityId is now 404 IDENTITY_NOT_FOUND, not 422. The problem body keeps the field in issues."
   },
   {
     "key": "POST /api/v1/orgs/{id}/developer-invitations 403.code: DEVELOPER_INVITE_ROLE_NEEDS_SESSION added",
@@ -7337,6 +7457,14 @@
     "note": "The pairing preview names the session the device joins."
   },
   {
+    "key": "POST /api/v1/scan/passes/{passId}/photo ASSET_SIZE: now 413",
+    "class": "notable",
+    "operationId": "scan.postScanPassesByPassIdPhoto",
+    "op": "POST /api/v1/scan/passes/{passId}/photo",
+    "change": "ASSET_SIZE: now 413",
+    "note": "An image over the size limit is now 413 ASSET_SIZE, not 422. An empty body is 422 ASSET_NOT_PNG."
+  },
+  {
     "key": "POST /api/v1/scan/resolve 200.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanResolve",
@@ -7489,6 +7617,14 @@
     "note": "Pinned to 2026-11-22, a reused key answers 422, not 409; the SDKs raise ValidationError, not ConflictError."
   },
   {
+    "key": "POST /api/v1/scan/tags/bindings/{bindingId}/undo TAG_HOLDER_CHANGED: new code",
+    "class": "notable",
+    "operationId": "scan.postScanTagsBindingsByBindingIdUndo",
+    "op": "POST /api/v1/scan/tags/bindings/{bindingId}/undo",
+    "change": "TAG_HOLDER_CHANGED: new code",
+    "note": "An undo after the tag changed holder now answers 409 TAG_HOLDER_CHANGED, not TAG_NOT_FOUND."
+  },
+  {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScanners",
@@ -7551,6 +7687,14 @@
     "op": "POST /api/v1/scanners/{id}/revoke",
     "change": "200.staff.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/sample-pass SCANNER_NOT_FOUND: now 404",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdSamplePass",
+    "op": "POST /api/v1/scanners/{id}/sample-pass",
+    "change": "SCANNER_NOT_FOUND: now 404",
+    "note": "An unknown scanner is now 404 SCANNER_NOT_FOUND, not 422."
   },
   {
     "key": "POST /api/v1/scanners/{id}/token 200.token: now nullable",
@@ -7905,6 +8049,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "POST /api/v1/templates/{id}/preview ORG_REQUIRED: now 422",
+    "class": "notable",
+    "operationId": "templates.postTemplatesByIdPreview",
+    "op": "POST /api/v1/templates/{id}/preview",
+    "change": "ORG_REQUIRED: now 422",
+    "note": "A member who does not name an organization now gets 422 ORG_REQUIRED, not 403. Send orgId."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/release new operation",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdRelease",
@@ -8095,6 +8247,14 @@
     "op": "POST /api/v1/templates/{id}/versions",
     "change": "200.template.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/uploads WORKFLOW_START: now 503",
+    "class": "notable",
+    "operationId": "templates.postTemplatesUploads",
+    "op": "POST /api/v1/templates/uploads",
+    "change": "WORKFLOW_START: now 503",
+    "note": "An import that cannot start now answers 503 WORKFLOW_START, not 502. Retry later."
   },
   {
     "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" added",
@@ -8425,6 +8585,14 @@
     "note": "Saves a named column mapping for a template; the same name replaces it."
   },
   {
+    "key": "PUT /api/v1/passes/{id}/assets/{name} ASSET_SIZE: now 413",
+    "class": "notable",
+    "operationId": "passes.putPassesByIdAssetsByName",
+    "op": "PUT /api/v1/passes/{id}/assets/{name}",
+    "change": "ASSET_SIZE: now 413",
+    "note": "An image over the size limit is now 413 ASSET_SIZE, not 422. An empty body is 422 ASSET_NOT_PNG."
+  },
+  {
     "key": "PUT /api/v1/passes/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "passes.putPassesByIdChannels",
@@ -8463,6 +8631,14 @@
     "op": "PUT /api/v1/passes/{id}/connection",
     "change": "200.versions[].source: enum value \"move\" added",
     "note": "A version written by an identity move has source move."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/member-photo ASSET_SIZE: now 413",
+    "class": "notable",
+    "operationId": "passes.putPassesByIdMemberPhoto",
+    "op": "PUT /api/v1/passes/{id}/member-photo",
+    "change": "ASSET_SIZE: now 413",
+    "note": "An image over the size limit is now 413 ASSET_SIZE, not 422. An empty body is 422 ASSET_NOT_PNG."
   },
   {
     "key": "PUT /api/v1/passes/views new operation",
@@ -8639,6 +8815,14 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "Sign-in EMAIL_CONFLICT: now 403",
+    "class": "notable",
+    "operationId": "",
+    "op": "Sign-in",
+    "change": "EMAIL_CONFLICT: now 403",
+    "note": "Signing in with an email that belongs to another account now answers 403 EMAIL_CONFLICT, not 409."
   },
   {
     "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",

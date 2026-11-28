@@ -3,6 +3,7 @@ import { Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ClaimsView, UpdateClaims } from '@/shared/contracts/idp-access.ts';
 import { IDP_COPY } from '@/shared/copy/idp.ts';
+import { plural } from '@/shared/plural.ts';
 import { removeClaimConfirm } from '@/web/lib/confirms-idp.ts';
 import { requestStepUp } from '@/web/lib/step-up.ts';
 import {
@@ -128,7 +129,7 @@ export function ClaimsCard({
         )}
         {other > 0 ? (
           <p className="mt-3 text-xs text-fg-muted">
-            {other} other {other === 1 ? 'claim' : 'claims'} set in Polaris ID.
+            {plural(other, 'other claim')} set in Polaris ID.
           </p>
         ) : null}
       </CardBody>

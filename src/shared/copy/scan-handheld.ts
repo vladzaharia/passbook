@@ -24,7 +24,7 @@ export const SCAN_HANDHELD_COPY = {
     loading: 'Loading pass…',
     gone: 'This pass is no longer available.',
     retry: 'Retry',
-    noScans: 'No scans yet.',
+    noScans: 'No scans on this device.',
     unsure: '{n} scans not confirmed yet. Keep this page open.',
     notConfirmed: 'Not confirmed',
     notConfirmedNote: "Not confirmed yet. It syncs when you're back online.",

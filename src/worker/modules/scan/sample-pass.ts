@@ -1,5 +1,5 @@
 import { batch } from '../../platform/db.ts';
-import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { resolveTemplate } from '../passes/builder.ts';
@@ -28,7 +28,7 @@ export async function createSamplePass(
 ) {
   const db = ctx.env.DB;
   const row = await getConsoleScanner(db, id);
-  if (!row) throw new ValidationError('Scanner not found.', [], 'SCANNER_NOT_FOUND');
+  if (!row) throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
   requirePairingAuthority(authority, userId, row.orgId);
   if (
     authority.mode !== 'test' ||

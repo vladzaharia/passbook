@@ -64,6 +64,18 @@ export function FirstCall({
       scene="listen"
       mood="curious"
       title={(hasKey ? WB_EMPTY.logs?.title : S.noCalls) ?? S.noCalls}
+      action={
+        <>
+          {hasKey ? null : (
+            <Button asChild>
+              <a href={wbPath(orgId, 'keys')}>{S.makeKey}</a>
+            </Button>
+          )}
+          <Button asChild variant={hasKey ? 'primary' : 'outline'}>
+            <a href={wbPath(orgId, 'console')}>{S.console}</a>
+          </Button>
+        </>
+      }
     >
       {hasKey ? (
         <div className="logs-first w-full min-w-0 [&_.code]:max-w-full [&_.code]:overflow-x-auto">
@@ -72,16 +84,6 @@ export function FirstCall({
       ) : (
         <p className="sm muted">{S.noKey}</p>
       )}
-      <div className="logs-first-a">
-        {hasKey ? null : (
-          <Button asChild>
-            <a href={wbPath(orgId, 'keys')}>{S.makeKey}</a>
-          </Button>
-        )}
-        <Button asChild variant={hasKey ? 'primary' : 'outline'}>
-          <a href={wbPath(orgId, 'console')}>{S.console}</a>
-        </Button>
-      </div>
     </StageState>
   );
 }

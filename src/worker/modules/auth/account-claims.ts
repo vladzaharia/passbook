@@ -1,7 +1,7 @@
 import { isUnverifiedEmail, knownEmail, maskEmail, normalizeEmail } from '../../../shared/email.ts';
 import { identityLinkedEmail } from '../../email/identity-linked.ts';
 import { baseUrl } from '../../platform/env.ts';
-import { ConflictError, ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
+import { ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmtWhere } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -16,7 +16,7 @@ export async function createUser(ctx: ServiceContext, email: string, name: strin
   const user = await repo.findUserByPrimaryEmail(ctx.env.DB, email);
   if (!user) throw new Error('user insert lost');
   // Another request took the address between our lookup and insert: do not sign into its account.
-  if (user.id !== id) throw new ConflictError('Email conflict.', 'EMAIL_CONFLICT');
+  if (user.id !== id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   return user;
 }
 

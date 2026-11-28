@@ -52,10 +52,11 @@ export function rejectFile(ctx: ServiceContext, orgId: string, error: unknown): 
       });
     throw new FileRejectedError(error.code, error.message);
   }
+  const damaged = new FileRejectedError('FILE_DAMAGED', 'The file could not be read.');
   ctx.log.error('connection_file.parse_failed', {
     orgId,
-    code: 'FILE_DAMAGED',
+    code: damaged.code,
     errorName: error instanceof Error ? error.name : typeof error,
   });
-  throw new FileRejectedError('FILE_DAMAGED', 'The file could not be read.');
+  throw damaged;
 }

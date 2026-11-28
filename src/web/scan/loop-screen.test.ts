@@ -9,6 +9,8 @@ describe('capsuleStateOf', () => {
     expect(capsuleStateOf(true, 'applying')).toBe('checking');
     expect(capsuleStateOf(true, 'paused')).toBe('paused');
     expect(capsuleStateOf(true, 'ready')).toBe('scanning');
+    expect(capsuleStateOf(true, 'ready', false)).toBe('ready');
+    expect(capsuleStateOf(false, 'ready', false)).toBe('offline');
   });
 });
 

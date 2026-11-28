@@ -1,7 +1,13 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { isStrongAmr } from '../../../shared/sign-in.ts';
 import { bump } from '../../platform/counters.ts';
-import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  NotFoundError,
+  RateLimitedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -20,7 +26,7 @@ async function ownedActive(ctx: ServiceContext, userId: string, passId: string) 
   const row = await repo.getMyPass(ctx.env.DB, userId, passId);
   if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   if (row.status === 'voided') throw new ConflictError('This pass is voided.', 'PASS_VOIDED');
-  if (!row.holder_email) throw new ConflictError('The pass has no email.', 'NO_RECIPIENT');
+  if (!row.holder_email) throw new ValidationError('The pass has no email.', [], 'NO_RECIPIENT');
   return { row, to: row.holder_email };
 }
 

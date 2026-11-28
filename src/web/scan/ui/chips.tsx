@@ -1,5 +1,6 @@
 import { CloudOff, Users, X } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { plural } from '../../../shared/plural.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
 import { pendingBadge, savedCount } from '../machine/derive.ts';
@@ -117,7 +118,7 @@ export function SyncChip({ state }: { state: SyncChipState }) {
   if (state.kind === 'conflicts')
     return (
       <span className="scan-chip" data-tone="amber" data-testid="sync-conflicts">
-        {state.queued} {state.queued === 1 ? 'conflict' : 'conflicts'}
+        {plural(state.queued, 'conflict')}
       </span>
     );
   return state.kind === 'syncing' ? (
