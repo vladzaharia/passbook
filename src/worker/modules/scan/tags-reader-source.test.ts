@@ -78,4 +78,18 @@ describe('tag source', () => {
     });
     expect(res.status).toBe(422);
   });
+
+  it('a UID-only reader or keyboard read is refused where Secure is required', async () => {
+    const { tag } = await bound();
+    const open = await f.desk();
+    const secure = await f.desk({ tags: { level: 'secure' } });
+    for (const source of ['reader', 'keyboard'] as const) {
+      expect(await door.post(open, '/resolve', { ...tag, source })).toMatchObject({
+        kind: 'ready',
+      });
+      const out = await door.post(secure, '/resolve', { ...tag, source });
+      expect(out.kind).not.toBe('ready');
+      expect(out.card ?? null).toBeNull();
+    }
+  });
 });

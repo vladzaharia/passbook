@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { NfcReaderSettingsSchema, NfcReaderStatusSchema } from './nfc-reader.ts';
+import {
+  defaultNfcReaderSettings,
+  NfcReaderSettingsSchema,
+  NfcReaderStatusSchema,
+  readerMayRead,
+} from './nfc-reader.ts';
 import { ScanDeviceCapabilitiesSchema } from './scan-device.ts';
 import { ScanningDeviceSchema } from './scanning-sessions.ts';
 
@@ -8,7 +13,7 @@ const status = {
   model: 'acr1555u',
   transport: 'bluetooth',
   pinned: true,
-  label: 'ACR1555U ·4F21',
+  label: 'ACR1555U 4F21',
   firmware: '1.3.1',
   battery: { percent: 80, low: false, charging: null },
   code: null,
@@ -98,5 +103,43 @@ describe('where the schemas appear', () => {
         connection: 'usb',
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('reader defaults and the read rule', () => {
+  const dev = { pinned: true, pinnedBy: 'device' } as const;
+  const menu = { pinned: true, pinnedBy: 'staffMenu' } as const;
+  it('uses a reader by default on Staff devices and not on kiosks', () => {
+    expect(defaultNfcReaderSettings('scan')).toEqual({
+      use: true,
+      model: 'any',
+      connection: 'auto',
+    });
+    expect(defaultNfcReaderSettings('kiosk').use).toBe(false);
+    expect(NfcReaderSettingsSchema.safeParse(defaultNfcReaderSettings('kiosk')).success).toBe(true);
+  });
+  it('reads on a Staff device when use is on', () => {
+    const settings = { use: true };
+    expect(readerMayRead({ role: 'scan', settings, reader: dev })).toBe(true);
+    expect(
+      readerMayRead({ role: 'scan', settings, reader: { pinned: false, pinnedBy: 'device' } }),
+    ).toBe(true);
+    expect(readerMayRead({ role: 'scan', settings: { use: false }, reader: menu })).toBe(false);
+  });
+  it('reads on a kiosk only from a reader pinned in the staff menu, with use on', () => {
+    expect(readerMayRead({ role: 'kiosk', settings: { use: true }, reader: menu })).toBe(true);
+    expect(readerMayRead({ role: 'kiosk', settings: { use: true }, reader: dev })).toBe(false);
+    expect(
+      readerMayRead({
+        role: 'kiosk',
+        settings: { use: true },
+        reader: { pinned: false, pinnedBy: 'staffMenu' },
+      }),
+    ).toBe(false);
+    expect(readerMayRead({ role: 'kiosk', settings: { use: false }, reader: menu })).toBe(false);
+  });
+  it('bounds status text to printable ASCII', () => {
+    const bad = NfcReaderStatusSchema.safeParse({ ...status, label: 'x\u202Ey' });
+    expect(bad.success).toBe(false);
   });
 });
