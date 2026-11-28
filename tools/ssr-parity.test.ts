@@ -159,7 +159,10 @@ describe('generated SSR kit', () => {
       ),
     );
     expect(hosted).toContain(
-      '.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil);}'.replace(/\s+/g, ''),
+      '.card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil);}'.replace(
+        /\s+/g,
+        '',
+      ),
     );
     expect(read('src/web/styles/kit-controls.css')).toMatch(
       /\.wl-foil-edge::before \{[^}]*height: 2px;\s*background: var\(--wl-foil\);/,
