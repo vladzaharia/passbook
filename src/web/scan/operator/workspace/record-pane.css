@@ -44,7 +44,11 @@
   width: 100%;
 }
 .op-idle {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   max-width: 880px;
+  min-height: 100%;
   margin: 0 auto;
 }
 .op-closed {
@@ -155,9 +159,14 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-top: 16px;
+  flex: 1 1 auto;
+  max-height: 260px;
+  margin-bottom: 16px;
 }
 .op-tile {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding: 14px 16px;
   border: 1px solid var(--op-line);
   border-radius: 12px;
@@ -199,7 +208,8 @@ button.op-tile {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 18px;
-  margin-top: 16px;
+  margin-top: auto;
+  flex: none;
   padding: 14px 16px;
   width: 100%;
   border: 1px solid var(--op-line);
