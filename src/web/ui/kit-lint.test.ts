@@ -24,6 +24,13 @@ describe('kit lint', () => {
     }
   });
 
+  it('keeps the scanner Keypad inside scan', () => {
+    for (const { path, text } of files) {
+      if (path.startsWith('scan/')) continue;
+      expect(text, path).not.toMatch(/from\s*['"][^'"]*scan\/ui\/keypad/);
+    }
+  });
+
   it('shows a Spinner only in buttons and polling rows', () => {
     const allowed = new Set(['ui/button.tsx', 'admin/templates/releases/try-sheet.tsx']);
     for (const { path, text } of files) {

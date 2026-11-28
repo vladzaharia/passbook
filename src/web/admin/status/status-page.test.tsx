@@ -306,7 +306,7 @@ describe('status page', () => {
       },
     });
     expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('lists runs in the card border, linked, with spinning running pills', async () => {

@@ -15,8 +15,8 @@ describe('SessionEndedDialog', () => {
         '/api/v1/me/sessions': () => problem(401, 'UNAUTHENTICATED', 'Sign in.'),
       },
     });
-    const dialog = await screen.findByRole('alertdialog', { name: 'Your session ended' });
-    expect(dialog).toHaveTextContent('Sign in again.');
+    const dialog = await screen.findByRole('alertdialog', { name: 'Signed out' });
+    expect(dialog).toHaveTextContent('Signed out');
     // Two requests failed; one dialog.
     expect(screen.getAllByRole('alertdialog')).toHaveLength(1);
 
@@ -24,7 +24,7 @@ describe('SessionEndedDialog', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
 
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(undefined);
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await user.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(navigate).toHaveBeenCalledWith({
       href: '/login?reason=expired',
       reloadDocument: true,

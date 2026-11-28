@@ -84,10 +84,10 @@ describe('route errors', () => {
     expect(await screen.findByRole('button', { name: /Reload/ })).toBeInTheDocument();
   });
 
-  it('shows other errors with Retry', async () => {
+  it('shows other errors with Try again', async () => {
     const error = new ApiError({ status: 500, code: 'INTERNAL', title: 'Broke' });
     await show(<RouteError {...props(error)} />);
-    expect(await screen.findByRole('button', { name: /Retry/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Try again/ })).toBeInTheDocument();
   });
 });
 

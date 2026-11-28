@@ -156,7 +156,7 @@ describe('LiveCheck listen', () => {
     expect(screen.getByRole('heading', { name: 'Listening · nothing yet' })).toBeInTheDocument();
   });
 
-  it('shows a ledger error inline and resumes on Retry', async () => {
+  it('shows a ledger error inline and resumes on Try again', async () => {
     const load = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue({ rows: [] });
     render(<LiveCheck mode="listen" provider="Shopify" load={load} since={0} />);
     await tick(0);
@@ -164,7 +164,7 @@ describe('LiveCheck listen', () => {
     expect(said()).toBe("Couldn't check for deliveries.");
     await tick(10_000);
     expect(load).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: /Retry/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Try again/ }));
     await tick(0);
     expect(load).toHaveBeenCalledTimes(2);
     expect(screen.getByRole('heading', { name: 'Listening · nothing yet' })).toBeInTheDocument();

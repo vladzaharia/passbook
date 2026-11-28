@@ -195,7 +195,7 @@ describe('Change wizard', () => {
     const user = userEvent.setup();
     await user.click(await toReview(user));
     expect(await screen.findByRole('alert')).toHaveTextContent('Try again in a minute.');
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(sent).toHaveLength(2));
     expect(sent[1]?.key).toBe(sent[0]?.key);
   });

@@ -162,3 +162,59 @@
 :where(.hosted) .scene [data-part="key"] .m {
   stroke: var(--art-l);
 }
+
+/* Sizes beyond hosted and stage: a card inside an overlay has no page around it. */
+.hosted[data-size="sheet"],
+.hosted[data-size="dialog"] {
+  padding: 0;
+}
+:where(.hosted)[data-size="sheet"] .card,
+:where(.hosted)[data-size="dialog"] .card {
+  border: 0;
+  box-shadow: none;
+}
+:where(.hosted)[data-size="sheet"] .card h2,
+:where(.hosted)[data-size="dialog"] .card h2 {
+  margin: 0;
+  font-size: var(--pk-font-size-base);
+  line-height: var(--pk-line-height-base);
+  font-weight: var(--pk-font-weight-semibold);
+  color: var(--pk-text-strong);
+}
+:where(.hosted)[data-size="sheet"] .scene,
+:where(.hosted)[data-size="dialog"] .scene,
+:where(.hosted)[data-size="sheet"] .scene .wl-art,
+:where(.hosted)[data-size="dialog"] .scene .wl-art {
+  width: 96px;
+  height: 72px;
+}
+/* Lockout and error: the line says it, the field is disabled and dimmed. */
+:where(.hosted) .lede[data-error] {
+  color: var(--pk-danger);
+}
+:where(.hosted) .field {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.hosted) .body:has(.lede[data-error]) .wl-code {
+    animation: wl-hosted-shake 240ms var(--wl-ease-out);
+  }
+}
+@keyframes wl-hosted-shake {
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}

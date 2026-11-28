@@ -1,0 +1,19 @@
+@keyframes wl-state-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes wl-state-fade {
+  from {
+    opacity: 0;
+  }
+}
+.wl-state {
+  animation: wl-state-in var(--wl-dur-enter) ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-state {
+    animation: wl-state-fade 120ms linear;
+  }
+}

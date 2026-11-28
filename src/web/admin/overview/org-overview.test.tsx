@@ -360,7 +360,7 @@ describe('organization overview', () => {
       selectedOrg: 'o1',
       handlers: { '/api/v1/metrics/activity': () => problem(500, 'INTERNAL', 'Broken.') },
     });
-    expect(await screen.findByRole('button', { name: /retry/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 });
 

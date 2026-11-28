@@ -194,7 +194,7 @@ test.describe('contexts', () => {
         }),
       );
       await page.goto(`/workbench/o/${encodeURIComponent(org().id)}/logs`);
-      const retry = page.getByRole('button', { name: 'Retry' }).first();
+      const retry = page.getByRole('button', { name: 'Try again' }).first();
       if (status === 403) {
         await expect(page.getByText('You do not have access')).toBeVisible();
         await expect(retry).toHaveCount(0);
@@ -207,7 +207,7 @@ test.describe('contexts', () => {
     }
     await page.route('**/api/v1/request-logs*', (route) => route.abort());
     await page.goto(`/workbench/o/${encodeURIComponent(org().id)}/logs`);
-    await expect(page.getByRole('button', { name: 'Retry' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
     await shot(page, 'state-failed-network');
   });
 
@@ -310,7 +310,7 @@ test.describe('a developer sandbox', () => {
         : route.fallback(),
     );
     await page.goto(wbPath(org, 'keys'));
-    const retry = page.getByRole('button', { name: 'Retry' }).first();
+    const retry = page.getByRole('button', { name: 'Try again' }).first();
     await expect(retry).toBeVisible();
     await expect(page.getByText(WB_STATES.failed.server).first()).toBeVisible();
     await expect(page.getByText('No keys')).toHaveCount(0);

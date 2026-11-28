@@ -57,3 +57,31 @@ describe('CodeField', () => {
     expect(container.querySelector('input')).toHaveAttribute('inputmode', 'numeric');
   });
 });
+
+describe('CodeField autofill', () => {
+  it('is a native one-time-code input', () => {
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    expect(input).toHaveAttribute('pattern', '[0-9]*');
+  });
+  it('a pasted full code, spaces and all, fills it', () => {
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '123 456' } });
+    expect(input.value).toBe('123456');
+    expect(container.querySelector('.wl-code')).toHaveAttribute('data-complete');
+  });
+  it('a pasted grouped Crockford code, lookalikes and separators included, fills it', () => {
+    const { container } = render(<Harness length={10} group={5} alphabet="crockford" />);
+    const input = container.querySelector('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: ' k7qho-m9xtl ' } });
+    expect(input.value).toBe('K7QH0M9XT1');
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+  });
+  it('a disabled field cannot be typed into', () => {
+    const { container } = render(<CodeField id="c" value="" onChange={() => {}} disabled />);
+    expect(container.querySelector('input')).toBeDisabled();
+  });
+});
