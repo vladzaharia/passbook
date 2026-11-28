@@ -64,6 +64,21 @@
   overflow-wrap: anywhere;
   flex: 1 1 14rem;
 }
+/* On a phone the kind and the area share the first line and the text takes its own full width. */
+@media (max-width: 720px) {
+  .cl-text {
+    order: 1;
+    flex-basis: 100%;
+  }
+  .cl-item > .push {
+    margin-left: auto;
+  }
+}
+.cl-version summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
 .cl-item {
   flex-wrap: wrap;
 }

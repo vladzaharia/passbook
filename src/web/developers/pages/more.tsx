@@ -26,7 +26,7 @@ export function ReferenceIndex({ site }: { site: Site }) {
             {g.pages.map((p) => (
               <a key={p.slug} className="card link tile slim" href={pagePath(p)}>
                 <div className="h3">{p.label}</div>
-                <span className="xs muted">{operations(p.ops.length)}</span>
+                <span className="sm muted">{operations(p.ops.length)}</span>
               </a>
             ))}
           </div>

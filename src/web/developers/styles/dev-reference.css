@@ -109,7 +109,7 @@
   justify-content: center;
 }
 .oprow code {
-  color: var(--pk-text-muted);
+  color: var(--pk-text-default);
 }
 .oprow-t {
   font-weight: 500;
