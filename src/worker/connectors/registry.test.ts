@@ -47,7 +47,10 @@ describe('built-in capability declarations', () => {
     ]);
     expect(declared).toEqual([
       ['csv-url', { read: { fetch: true, list: true }, auth: 'none', poll: true }],
-      ['demo', { read: { fetch: true, list: true, delta: true }, auth: 'none', poll: true, delta: true }],
+      [
+        'demo',
+        { read: { fetch: true, list: true, delta: true }, auth: 'none', poll: true, delta: true },
+      ],
       ['file-upload', { read: { fetch: true, upload: true }, auth: 'none', upload: true }],
       [
         'http-json',

@@ -75,7 +75,10 @@ const definition: ConnectorDefinition<Config, undefined> = {
   description: 'Sample records to try a sync.',
   category: 'try',
   order: 10,
-  capabilities: declareCapabilities({ read: { fetch: true, list: true, delta: true }, auth: 'none' }),
+  capabilities: declareCapabilities({
+    read: { fetch: true, list: true, delta: true },
+    auth: 'none',
+  }),
   egress: () => [],
   webhookReferenceMode: 'refs-only',
   configSchema: config,
