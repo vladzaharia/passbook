@@ -3,6 +3,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_DEVICE_DAY_CLEAR } from './race-tags.ts';
 import { deviceDayKey } from './repo-pin-tag.ts';
 import {
   auditActions,
@@ -200,7 +201,7 @@ describe('pairing', () => {
     ]);
     const { result, fired } = await beforeBatch(
       env,
-      /DELETE FROM counters WHERE key = \?/,
+      RACE_DEVICE_DAY_CLEAR,
       (db) => run(db, "UPDATE scanners SET pair_code_hash = 'moved' WHERE id = ?", [body.id]),
       async () => await pairCall('', body.pairing?.code ?? ''),
     );

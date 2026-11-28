@@ -4,6 +4,7 @@ import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
+import { RACE_SESSION_PATCH } from './race-tags.ts';
 import { scanLedgerCommonScopeSql, scanLedgerSuccessfulCandidateSql } from './repo-feed-scope.ts';
 import { scanAuthorizedStmt, withSessionRow } from './repo-read-authority.ts';
 import type { SessionReadAuthority } from './scanning-session-dto.ts';
@@ -132,7 +133,12 @@ export function addScanningSessionUpdate(
 ): GrantedStatement {
   const set: Record<string, SetValue> = { updated_at: maxNow(now) };
   for (const [key, value] of Object.entries(patch)) if (value !== undefined) set[key] = value;
-  return g.update('scanning_sessions', { set, where: { id }, require: 'one' });
+  return g.update('scanning_sessions', {
+    tag: RACE_SESSION_PATCH,
+    set,
+    where: { id },
+    require: 'one',
+  });
 }
 /**
  * The session's device and today's counts, with whether the fence holds, in one snapshot: a count

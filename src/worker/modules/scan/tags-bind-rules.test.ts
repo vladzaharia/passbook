@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { expireBindings } from '../nfc/expiry.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_TAG_BIND } from './race-tags.ts';
 import { TAG_UNDO_MS } from './tags-bind-replay.ts';
 import { addType, clearTypes } from './tags-policy-test-fixtures.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
@@ -61,7 +62,7 @@ describe('user scope', () => {
     const disabled = await f.pass({ owner: true });
     const raced = await beforeBatch(
       f.kit.env,
-      /INSERT INTO tag_bindings/i,
+      RACE_TAG_BIND,
       (real) =>
         run(real, "UPDATE users SET status = 'disabled' WHERE id = ?", [disabled.ownerId ?? '']),
       () => f.bind(lax, { card: disabled.card, binding: 'user' }),
@@ -71,7 +72,7 @@ describe('user scope', () => {
     const moved = await f.pass({ owner: true });
     const changed = await beforeBatch(
       f.kit.env,
-      /INSERT INTO tag_bindings/i,
+      RACE_TAG_BIND,
       (real) => run(real, 'UPDATE passes SET deleted_at = 1 WHERE id = ?', [moved.pass.id]),
       () => f.bind(lax, { card: moved.card, binding: 'user' }),
     );

@@ -14,6 +14,7 @@ import {
   scanCapabilityChecks,
   scanPrincipal,
 } from './authority-checks.ts';
+import { RACE_SESSION_ROW } from './race-tags.ts';
 
 export interface ScanReadAuthority {
   /** CTE list to follow `WITH`: defines `actor` and `actor_ok`. */
@@ -224,7 +225,7 @@ export function withSessionRow<A extends ScanReadAuthority>(
   return {
     ...seal(rest, [...gates, 'EXISTS (SELECT 1 FROM session_row)']),
     ctes: `${auth.ctes},
-    session_row AS MATERIALIZED (SELECT 1 AS ok FROM scanning_sessions
+    session_row AS MATERIALIZED (${RACE_SESSION_ROW} SELECT 1 AS ok FROM scanning_sessions
       WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
   } as A;

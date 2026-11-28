@@ -3,6 +3,7 @@ import type { ScanningDevice, ScanSurface } from '../../../shared/contracts/scan
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
+import { RACE_DEVICE_CAPABILITIES } from './race-tags.ts';
 
 export interface ScanningDeviceRow {
   scanner_id: string;
@@ -120,6 +121,7 @@ export const reportedCapabilitiesStmt = (
   now: number,
 ): GrantedStatement =>
   g.update('scanning_devices', {
+    tag: RACE_DEVICE_CAPABILITIES,
     set: { capabilities: JSON.stringify(capabilities), reported_at: now },
     where: { scanner_id: scannerId },
     require: 'one',

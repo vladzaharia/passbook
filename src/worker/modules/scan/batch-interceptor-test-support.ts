@@ -11,6 +11,8 @@ export async function beforeBatch<T>(
   const matches = (sql: string) =>
     typeof match === 'string' ? sql.includes(match) : match.test(sql);
   let fired = false;
+  const matches = (sql: string) =>
+    typeof match === 'string' ? sql.includes(match) : match.test(sql);
   env.DB = new Proxy(original, {
     get(target, property) {
       if (property === 'prepare')

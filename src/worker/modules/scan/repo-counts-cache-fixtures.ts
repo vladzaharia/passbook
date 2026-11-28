@@ -19,6 +19,7 @@ import {
   withRole,
 } from './actor.ts';
 import { planCounts } from './counts.ts';
+import { RACE_EVENT_CACHE_FILL } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import { getEvent, readScannerScope, type ScanEventRow } from './repo-scope.ts';
@@ -135,7 +136,7 @@ export function raceCache(mutate: (db: D1Database) => Promise<unknown>) {
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.startsWith('UPDATE scan_events SET expected =')) return prepared;
+          if (!sql.includes(RACE_EVENT_CACHE_FILL)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

@@ -4,6 +4,7 @@ import type { Pass } from '../passes/repo-map.ts';
 import type { Override } from './act-override.ts';
 import type { ScanActor } from './actor.ts';
 import type { AdmissionPlan } from './admission-types.ts';
+import { RACE_GATES_OF_PASS } from './race-tags.ts';
 import type { ActionPassFence } from './repo-act-pass-fence.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
 import { verifiedPresenceCtesSql } from './repo-event-attendance.ts';
@@ -71,7 +72,11 @@ export const wonGate = (g: GateKey, scanId: string) => ({
 
 /** Every gate row of a pass (PK prefix): the card reads the door state and cooldowns from these. */
 export const gatesOfPassStmt = (db: Db, passId: string): D1PreparedStatement =>
-  stmt(db, 'SELECT action_id, scope, state, last_at FROM scan_gates WHERE pass_id = ?', [passId]);
+  stmt(
+    db,
+    `${RACE_GATES_OF_PASS} SELECT action_id, scope, state, last_at FROM scan_gates WHERE pass_id = ?`,
+    [passId],
+  );
 
 /** Capacity never rejects a pass already in the event's counted population. */
 export function capacityFullPredicate(
