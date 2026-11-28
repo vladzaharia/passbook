@@ -174,9 +174,10 @@ if (mode === 'preview') {
   // never reaches preview: 30 pairs a minute from one IP refused the 3rd-Nth device of a run.
   const built = resolve(root, 'dist/wallet/wrangler.json');
   const config = JSON.parse(readFileSync(built, 'utf8'));
-  // Specs sign in more than 10 times a minute (RL_LOGIN), so it is raised the same way.
-  for (const r of config.ratelimits ?? [])
-    if (r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN') r.simple.limit = 100_000;
+  // Specs sign in more than 10 times a minute (RL_LOGIN), and Workbench specs reload tools past the
+  // 60 a minute of RL_API_TRY, so both are raised the same way.
+  const raised = new Set(['RL_SCAN_PAIR', 'RL_LOGIN', 'RL_API_TRY']);
+  for (const r of config.ratelimits ?? []) if (raised.has(r.name)) r.simple.limit = 100_000;
   writeFileSync(built, JSON.stringify(config));
   // This dist/ has raised rate limits: mark it so deploy refuses it (tools/lib/build-stamp.ts).
   writeFileSync(
