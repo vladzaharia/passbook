@@ -84,8 +84,9 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/developer/fence.ts',
       'src/worker/modules/passes/repo-history-image.ts',
       'src/worker/modules/scan/scan-conjunction.ts',
+      'src/worker/platform/race-tag.ts',
     ],
-    hash: 'd5f50f0730a5',
+    hash: '8686cee19f7c',
   },
   'src/worker/modules/webhooks/repo-retention.ts': {
     reason:
