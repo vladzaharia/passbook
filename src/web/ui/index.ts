@@ -60,6 +60,7 @@ export * from './session-list.tsx';
 export * from './sheet.tsx';
 export * from './skeleton.tsx';
 export * from './spinner.tsx';
+export * from './state-view.tsx';
 export * from './status-pill.tsx';
 export * from './step-marker.tsx';
 export * from './switch.tsx';

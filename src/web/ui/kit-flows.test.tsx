@@ -258,7 +258,7 @@ describe('ErrorState and offline', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Could not read the response. Reload.');
     expect(container.querySelector('[data-art="unplugged"]')).not.toBeNull();
     expect(container.querySelector('details')).toHaveTextContent('Request req-1');
-    expect(container.firstElementChild?.className).toContain('bg-surface-raised');
+    expect(container.firstElementChild).toHaveAttribute('data-tone', 'system');
   });
 
   it('seats the sad buddy beside the pulled plug; inline keeps the small art alone', () => {
