@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { ScanReason, ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
-import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
+import { entitledIn } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
@@ -46,8 +46,8 @@ async function readOf(
   const read = tagReadOf(input.tag, ctx.env);
   if (!read) return null;
   if ('sun' in read) {
-    // A SUN tag below the plan's Secure level is not allowed.
-    if (!isEntitled(await entitlementsOf(ctx, actor.orgId), 'nfc', 'secure'))
+    // A SUN tag below the plan's Secure level is not allowed; Test waives the level.
+    if (!(await entitledIn(ctx, actor.orgId, 'nfc', actor.mode, 'secure')))
       return { refused: 'tag_not_allowed' };
     return verifiedSunId(ctx, actor, input.tag);
   }

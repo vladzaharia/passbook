@@ -3,7 +3,9 @@ import {
   type EntitlementValues,
   entitlementTransition,
 } from '../../../shared/channels.ts';
-import { CHANNELS } from '../../../shared/contracts/channels.ts';
+import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { valuesInMode } from '../../../shared/contracts/entitlements/test-waivable.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -18,6 +20,12 @@ import {
 import { pendingRun } from './repo-runs.ts';
 
 const SEND_ATTEMPTS = 3;
+
+/** Only what a plan can block in `mode`: in Test, the waived features (paper, nfc) never block. */
+function blockableIn(mode: Mode, channels: readonly Channel[]): Channel[] {
+  const blocked = blockedByEntitlement(valuesInMode({}, mode));
+  return channels.filter((c) => blocked[c] !== undefined);
+}
 
 /**
  * Called after an org's entitlements changed (the platform write, which made entitlement `revision`).
@@ -71,8 +79,9 @@ export async function onEntitlementsChanged(
 
 /**
  * One apply run per (mode, template) with live passes, covering this revision with the plan as it was and
- * as it became. Keyed on the revision: jobs may arrive in any order and more than once, and each revision
- * is journaled once. A job whose neighbour has not arrived yet throws, and the queue retries it.
+ * as it became, as the mode sees it: a Test run still covers the revision when its waived channels drop
+ * out. Keyed on the revision: jobs may arrive in any order and more than once, and each revision is
+ * journaled once. A job whose neighbour has not arrived yet throws, and the queue retries it.
  */
 export async function handleEntitlementApply(
   job: JobOf<'channel.entitlement'>,
@@ -93,8 +102,8 @@ export async function handleEntitlementApply(
           mode,
           templateId,
           revision: job.revision,
-          blockedBefore: job.blockedBefore,
-          blockedAfter: job.blockedAfter,
+          blockedBefore: blockableIn(mode, job.blockedBefore),
+          blockedAfter: blockableIn(mode, job.blockedAfter),
           ...(job.full ? { full: true } : {}),
           requestedBy: job.requestedBy,
         },

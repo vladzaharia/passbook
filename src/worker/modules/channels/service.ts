@@ -15,7 +15,8 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
-import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
+import { isEntitled } from '../../platform/entitlements.ts';
+import { entitlementsIn } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { getOrgSettings, getPlatformSettings, type OrgSettings } from '../settings/service.ts';
@@ -40,7 +41,7 @@ export async function levels(
   const [platformSettings, org, entitlements] = await Promise.all([
     getPlatformSettings(ctx),
     settings ?? getOrgSettings(ctx, orgId),
-    entitlementsOf(ctx, orgId),
+    entitlementsIn(ctx, orgId, mode),
   ]);
   const platform: Per<ChannelReason> = {};
   if (!platformSettings['print.enabled']) platform.paper = 'printing_off';

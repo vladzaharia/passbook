@@ -1,6 +1,8 @@
 // Grant checks over the org's entitlements (design-multi-tenancy.md section 2.3). The one lookup is the
 // `org_entitlement_values` view for the actor's org. Every check fails closed: a missing row, an invalid
 // value or a NULL denies; only JSON `null` on a limit means "no limit".
+
+import { isTestWaivable } from '../../shared/contracts/entitlements/test-waivable.ts';
 import {
   type EntitlementKey,
   entitlementDef,
@@ -41,7 +43,8 @@ const lookup = (b: Binds, key: EntitlementKey, expr: (v: string) => string): str
 /**
  * The org may use `key`. A flag must be 1. A level must be at least `want`. A list: `want` is the item,
  * which an allow-list must name (`*`, the item or `type/*`) and a block-list must not. A limit is on unless
- * it is 0 (`null` has no cap). Reason `entitlement`.
+ * it is 0 (`null` has no cap). A Test-waivable key passes for a Test actor of an org_mode grant. Reason
+ * `entitlement`.
  */
 export function entitled(key: EntitlementKey, want?: string): Check {
   const def = entitlementDef(key);
@@ -51,35 +54,40 @@ export function entitled(key: EntitlementKey, want?: string): Check {
     throw bad(`entitled(${key}) needs a level of ${def.levels.join(', ')}.`);
   if (def.kind === 'list' && (want === undefined || want.includes('*')))
     throw bad(`entitled(${key}) needs an item, not a pattern.`);
+  // Test-mode waiver (billing AD5): only an org_mode grant fences its rows to the actor's mode.
+  const waivable = isTestWaivable(key) && def.kind !== 'limit';
+  const stored = (b: Binds): string => {
+    switch (def.kind) {
+      case 'flag':
+        return lookup(b, key, (v) => `${v} = ${b.bind(entitlementJson(1))}`);
+      case 'level': {
+        const marks = levels.map((l) => b.bind(entitlementJson(l))).join(', ');
+        return lookup(b, key, (v) => `${v} IN (${marks})`);
+      }
+      case 'list': {
+        const marks = items.map((m) => b.bind(m)).join(', ');
+        const hit = (v: string) =>
+          `EXISTS (SELECT 1 FROM json_each(${v}) ent_j WHERE ent_j.value IN (${marks}))`;
+        return lookup(
+          b,
+          key,
+          (v) => `json_type(${v}) = 'array' AND ${def.block ? 'NOT ' : ''}${hit(v)}`,
+        );
+      }
+      case 'limit':
+        return lookup(
+          b,
+          key,
+          (v) =>
+            `CASE json_type(${v}) WHEN 'null' THEN 1 WHEN 'integer' THEN CAST(${v} AS INTEGER) > 0 ELSE 0 END`,
+        );
+    }
+  };
   return {
     reason: 'entitlement',
     ok: (b, scope) => {
       needOrg(scope);
-      switch (def.kind) {
-        case 'flag':
-          return lookup(b, key, (v) => `${v} = ${b.bind(entitlementJson(1))}`);
-        case 'level': {
-          const marks = levels.map((l) => b.bind(entitlementJson(l))).join(', ');
-          return lookup(b, key, (v) => `${v} IN (${marks})`);
-        }
-        case 'list': {
-          const marks = items.map((m) => b.bind(m)).join(', ');
-          const hit = (v: string) =>
-            `EXISTS (SELECT 1 FROM json_each(${v}) ent_j WHERE ent_j.value IN (${marks}))`;
-          return lookup(
-            b,
-            key,
-            (v) => `json_type(${v}) = 'array' AND ${def.block ? 'NOT ' : ''}${hit(v)}`,
-          );
-        }
-        case 'limit':
-          return lookup(
-            b,
-            key,
-            (v) =>
-              `CASE json_type(${v}) WHEN 'null' THEN 1 WHEN 'integer' THEN CAST(${v} AS INTEGER) > 0 ELSE 0 END`,
-          );
-      }
+      return waivable && scope === 'org_mode' ? `(a.mode IS 'test' OR ${stored(b)})` : stored(b);
     },
   };
 }

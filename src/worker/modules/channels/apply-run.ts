@@ -1,7 +1,8 @@
 import { blockedByEntitlement, templateDefault } from '../../../shared/channels.ts';
 import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
-import { entitlementsOf } from '../../platform/entitlements.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import { AppError } from '../../platform/errors.ts';
+import { entitlementsIn } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { journal } from './apply-journal.ts';
 import { getPolicy, type Policy, templateDefaultsOf } from './repo.ts';
@@ -60,9 +61,9 @@ export async function effectiveFrom(
   return { from, fromBlocked, viaFailed };
 }
 
-/** The channels the org's plan blocks now. */
-async function blockedNow(ctx: ServiceContext, orgId: string): Promise<Channel[]> {
-  const blocked = blockedByEntitlement(await entitlementsOf(ctx, orgId));
+/** The channels the org's plan blocks now, in the run's mode. */
+async function blockedNow(ctx: ServiceContext, orgId: string, mode: Mode): Promise<Channel[]> {
+  const blocked = blockedByEntitlement(await entitlementsIn(ctx, orgId, mode));
   return CHANNELS.filter((c) => blocked[c] !== undefined);
 }
 
@@ -98,7 +99,8 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
         await templateDefaultsOf(ctx.env.DB, run.templateId, run.orgId, run.mode),
       ) &&
       (begin.fromBlocked === null ||
-        begin.fromBlocked.join() === (run.toBlocked ?? (await blockedNow(ctx, run.orgId))).join())
+        begin.fromBlocked.join() ===
+          (run.toBlocked ?? (await blockedNow(ctx, run.orgId, run.mode))).join())
     ) {
       // A plan change that joined the run since it was read keeps it alive.
       if (!(await writeDrop(ctx, run))) return 'moved';

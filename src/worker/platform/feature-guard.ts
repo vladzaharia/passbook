@@ -1,7 +1,11 @@
 // The request guard for entitlements (design-multi-tenancy.md section 2.3, MT2). A route declares
 // `RouteAuth.feature`; `requireCaller` records it on the principal, and the org's entitlements are
 // checked once the org is known: at once for an org-bound key, in `tenantAuthorityOf` for a session or a
-// platform key. Fail closed: no row, no key or an invalid value refuses.
+// platform key. Fail closed: no row, no key or an invalid value refuses. A Test principal gets the
+// Test-waivable keys (billing AD5).
+
+import type { Mode } from '../../shared/contracts/common.ts';
+import { valuesInMode } from '../../shared/contracts/entitlements/test-waivable.ts';
 import {
   type EntitlementKey,
   entitlementDef,
@@ -9,7 +13,7 @@ import {
 } from '../../shared/contracts/entitlements.ts';
 import { featureNotIncluded } from '../../shared/copy/entitlements.ts';
 import type { AuthContext } from './auth.ts';
-import { entitlementsOf, isEntitled } from './entitlements.ts';
+import { type Entitlements, entitlementsOf, isEntitled } from './entitlements.ts';
 import { FeatureNotIncludedError } from './errors.ts';
 import type { ServiceContext } from './service-context.ts';
 
@@ -73,13 +77,33 @@ export async function enforceFeatures(
 ): Promise<void> {
   const state = states.get(auth);
   if (!state || state.checked.has(orgId)) return;
-  const entitlements = await entitlementsOf(ctx, orgId);
+  const entitlements = await entitlementsIn(ctx, orgId, auth.mode ?? 'live');
   for (const rule of [...state.implicit, ...state.declared]) {
     const key = featureKeyOf(rule);
     if (!isEntitled(entitlements, key, typeof rule === 'string' ? undefined : rule.atLeast))
       throw new FeatureNotIncludedError(key, featureNotIncluded(key));
   }
   state.checked.add(orgId);
+}
+
+/** The org's entitlements as seen in `mode`: in Test, the waivable keys are full (billing AD5). */
+export async function entitlementsIn(
+  ctx: ServiceContext,
+  orgId: string,
+  mode: Mode,
+): Promise<Entitlements> {
+  return valuesInMode(await entitlementsOf(ctx, orgId), mode);
+}
+
+/** `isEntitled` for work in one mode. Use it wherever the objects the feature acts on carry a mode. */
+export async function entitledIn(
+  ctx: ServiceContext,
+  orgId: string,
+  key: EntitlementKey,
+  mode: Mode,
+  want?: string,
+): Promise<boolean> {
+  return isEntitled(await entitlementsIn(ctx, orgId, mode), key, want);
 }
 
 /**
