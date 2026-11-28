@@ -144,20 +144,13 @@ export function SettingsCard({ identity }: { identity: Identity }) {
             )}
           </div>
           <div className="flex flex-col gap-4 border-t border-border pt-4">
-            <SwitchRow
-              label="NFC"
-              help="Needs Apple's NFC entitlement on the pass type ID."
-              checked={draft.nfc}
-              onCheckedChange={(c) => edit({ nfc: c })}
-            />
+            <SwitchRow label="NFC" checked={draft.nfc} onCheckedChange={(c) => edit({ nfc: c })} />
             {identity.isDefault ? (
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-fg-strong">Default identity</p>
                   <p className="mt-0.5 text-xs text-fg-muted">
-                    {env
-                      ? 'Set in the environment'
-                      : 'Select another identity to change it; existing passes keep their identity.'}
+                    {env ? 'Set in the environment' : 'Existing passes keep their identity.'}
                   </p>
                 </div>
                 <StatusPill status="default" />
@@ -166,13 +159,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
               <Locked locked={env}>
                 <SwitchRow
                   label="Default identity"
-                  help={
-                    env
-                      ? 'Set in the environment'
-                      : identity.isDefault
-                        ? 'Select another identity to change it. Existing passes keep theirs.'
-                        : 'Fallback for organizations without their own. Existing passes keep theirs.'
-                  }
+                  help={env ? 'Set in the environment' : 'Existing passes keep theirs.'}
                   checked={draft.isDefault}
                   disabled={env}
                   onCheckedChange={(c) => edit({ isDefault: c })}

@@ -260,7 +260,6 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
               fallback="#0f766e"
               empty="Default"
               error={errors.accent}
-              help={COPY.accentHelp}
               tag={<SourceTag source={v.accent ? 'org' : 'passbook'} />}
               onChange={(accent) => edit({ accent })}
             />

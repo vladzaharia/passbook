@@ -12,8 +12,8 @@ import {
 import { type RetentionScope, usePlaceHold } from './queries.ts';
 
 const SCOPES = [
-  { value: 'org', label: RETENTION_COPY.placeOrg, hint: 'Every record of the organization.' },
-  { value: 'pass', label: RETENTION_COPY.placePass, hint: 'One pass and its history.' },
+  { value: 'org', label: RETENTION_COPY.placeOrg },
+  { value: 'pass', label: RETENTION_COPY.placePass },
 ];
 
 export function PlaceHoldDialog({
@@ -51,7 +51,7 @@ export function PlaceHoldDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={RETENTION_COPY.place}
-      description="Deletion pauses for what you hold. Every organization admin is emailed."
+      description="Every organization admin is emailed."
       dirty={reason.trim() !== ''}
       check={check}
       onSubmit={submit}

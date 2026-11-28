@@ -11,10 +11,10 @@ import { stageImage } from './images.ts';
 import './brand.css';
 
 const COPY = PASS_SETUP_COPY.brand;
-const TEXT: Record<ImageSlot, { label: string; help: string; choose: string }> = {
-  logo: { label: COPY.logo, help: COPY.logoHelp, choose: COPY.chooseLogo },
-  icon: { label: COPY.icon, help: COPY.iconHelp, choose: COPY.chooseIcon },
-  webLogo: { label: COPY.webLogo, help: COPY.webLogoHelp, choose: COPY.chooseWebLogo },
+const TEXT: Record<ImageSlot, { label: string; choose: string }> = {
+  logo: { label: COPY.logo, choose: COPY.chooseLogo },
+  icon: { label: COPY.icon, choose: COPY.chooseIcon },
+  webLogo: { label: COPY.webLogo, choose: COPY.chooseWebLogo },
 };
 
 /**
@@ -122,11 +122,7 @@ export function AssetTile({
         />
       )}
       <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        {error ? (
-          <p className="min-w-0 flex-1 basis-40 text-xs text-danger">{error}</p>
-        ) : (
-          <p className="min-w-0 flex-1 basis-40 text-xs text-fg-muted">{text.help}</p>
-        )}
+        {error ? <p className="min-w-0 flex-1 basis-40 text-xs text-danger">{error}</p> : null}
         <span className="ml-auto flex max-w-full min-w-0 flex-wrap items-center justify-end gap-1">
           {extra}
           {src && canEdit && !note ? (
