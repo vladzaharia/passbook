@@ -188,11 +188,7 @@ export function DeviceSheet({
                   ) : null}
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-fg-muted">
-                Waiting for this device to report its screen and inputs.
-              </p>
-            )}
+            ) : null}
             {changed || error ? (
               <Callout tone={changed ? 'warning' : 'danger'}>
                 {changed ? 'Device settings changed elsewhere.' : error}
@@ -222,11 +218,7 @@ export function DeviceSheet({
                   />
                 )}
               </FormField>
-              <SurfacePicker
-                value={surface}
-                onChange={setSurface}
-                capabilities={device.capabilities}
-              />
+              <SurfacePicker value={surface} onChange={setSurface} />
               {layout !== 'customer' ? (
                 <section className="grid gap-4 border-t border-border pt-4">
                   <div className="flex items-center justify-between gap-2">
@@ -245,7 +237,6 @@ export function DeviceSheet({
                 </section>
               ) : (
                 <>
-                  <p className="text-sm text-fg-muted">This display cannot check anyone in.</p>
                   <DeviceFollows
                     value={overrides}
                     onChange={setOverrides}
