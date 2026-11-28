@@ -25,7 +25,7 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
                 <Link
                   to={item.to}
                   search={item.search}
-                  className="inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline pointer-coarse:min-h-11"
+                  className="inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                 >
                   {item.label}
                 </Link>

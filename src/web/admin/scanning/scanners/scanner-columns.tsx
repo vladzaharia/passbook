@@ -69,7 +69,7 @@ export function scannerColumns(
           <Link
             to="/admin/o/$orgId/scanning/sessions/$sessionId"
             params={{ orgId: found.orgId, sessionId: found.id }}
-            className="font-medium text-accent-fg"
+            className="inline-flex items-center font-medium text-accent-fg pointer-coarse:min-h-11"
           >
             {found.name}
           </Link>

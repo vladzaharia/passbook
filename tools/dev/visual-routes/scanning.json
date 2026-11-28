@@ -633,35 +633,70 @@
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-scan-screen",
     "filterOrg": "northwindId",
-    "click": "text=Scan screen"
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")"
+    ],
+    "viewports": ["desktop", "tablet"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-scan-screen-phone",
+    "filterOrg": "northwindId",
+    "click": [
+      "tab:Scan screen",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")"
+    ],
+    "viewports": ["mobile"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-dark",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:text-is(\"Dark\"), [role=radio]:text-is(\"Dark\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:text-is(\"Dark\"), [role=radio]:text-is(\"Dark\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-role-desk",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:text-is(\"Desk\"), [role=radio]:text-is(\"Desk\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:text-is(\"Desk\"), [role=radio]:text-is(\"Desk\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-role-manager",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:text-is(\"Manager\"), [role=radio]:text-is(\"Manager\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:text-is(\"Manager\"), [role=radio]:text-is(\"Manager\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-device-ipad",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:text-is(\"iPad\"), [role=radio]:text-is(\"iPad\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:text-is(\"iPad\"), [role=radio]:text-is(\"iPad\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
@@ -669,9 +704,11 @@
     "name": "scan-admin-designer-device-landscape",
     "filterOrg": "northwindId",
     "click": [
-      "text=Scan screen",
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
       "button:text-is(\"Landscape\"), [role=radio]:text-is(\"Landscape\")"
-    ]
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
@@ -679,44 +716,71 @@
     "name": "scan-admin-designer-device-operator",
     "filterOrg": "northwindId",
     "click": [
-      "text=Scan screen",
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
       "button:text-is(\"Operator\"), [role=radio]:text-is(\"Operator\")"
-    ]
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-state-card",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:has-text(\"Card\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:has-text(\"Card\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-state-guest-in",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "tab:Guest in"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "tab:Guest in"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-state-heads-up",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:has-text(\"Heads-up\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:has-text(\"Heads-up\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-state-refused",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:has-text(\"Refused\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:has-text(\"Refused\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",
     "path": "/admin/templates/{memberTemplateId}/design",
     "name": "scan-admin-designer-pass-tab",
     "filterOrg": "northwindId",
-    "click": ["text=Scan screen", "button:text-is(\"Pass\"), [role=radio]:text-is(\"Pass\")"]
+    "click": [
+      "[role=radio]:text-is(\"Scan screen\")",
+      "[role=radio]:text-is(\"Door\"), p:text-is(\"Use a larger screen\")",
+      "button:text-is(\"Pass\"), [role=radio]:text-is(\"Pass\")"
+    ],
+    "viewports": ["desktop", "tablet"]
   },
   {
     "role": "org",

@@ -50,42 +50,44 @@ export function AccountPage({ focusAdd = false, verified }: AccountPageProps) {
   }, [verified, navigate]);
   const Method = authed?.amr === 'oidc' ? KeyRound : Mail;
   return (
-    <div className="max-w-3xl">
+    <>
       <PageHeader title="Account" />
-      <div className="flex min-w-0 flex-col gap-6">
-        {authed ? (
-          <Card>
-            <CardBody className="flex flex-wrap items-center gap-3">
-              <EntityAvatar
-                kind="user"
-                id={authed.user.id}
-                name={personLabel(authed.user)}
-                size={48}
-              />
-              <div className="min-w-0 flex-1 basis-40">
-                {authed.user.name ? (
-                  <p className="truncate text-sm font-semibold text-fg-strong">
-                    {authed.user.name}
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-6">
+          {authed ? (
+            <Card>
+              <CardBody className="flex flex-wrap items-center gap-3">
+                <EntityAvatar
+                  kind="user"
+                  id={authed.user.id}
+                  name={personLabel(authed.user)}
+                  size={48}
+                />
+                <div className="min-w-0 flex-1 basis-52">
+                  {authed.user.name ? (
+                    <p className="truncate text-sm font-semibold text-fg-strong">
+                      {authed.user.name}
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-fg-muted">
+                    {authed.user.primaryEmail ? (
+                      <BreakableEmail email={authed.user.primaryEmail} />
+                    ) : (
+                      NO_EMAIL_LABEL
+                    )}
                   </p>
-                ) : null}
-                <p className="text-sm text-fg-muted">
-                  {authed.user.primaryEmail ? (
-                    <BreakableEmail email={authed.user.primaryEmail} />
-                  ) : (
-                    NO_EMAIL_LABEL
-                  )}
-                </p>
-              </div>
-              <Badge tone="neutral" className="shrink-0">
-                <Method aria-hidden />
-                {signInMethodLabel(authed.amr)}
-              </Badge>
-            </CardBody>
-          </Card>
-        ) : null}
-        <EmailsSection focusAdd={focusAdd} userId={authed?.user.id} />
+                </div>
+                <Badge tone="neutral" className="shrink-0">
+                  <Method aria-hidden />
+                  {signInMethodLabel(authed.amr)}
+                </Badge>
+              </CardBody>
+            </Card>
+          ) : null}
+          <EmailsSection focusAdd={focusAdd} userId={authed?.user.id} />
+        </div>
         <SessionsSection />
       </div>
-    </div>
+    </>
   );
 }

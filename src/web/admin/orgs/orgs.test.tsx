@@ -1094,7 +1094,7 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    expect(await screen.findByRole('link', { name: 'Manage identities' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Signing identities' })).toHaveAttribute(
       'href',
       '/admin/identities',
     );

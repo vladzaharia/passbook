@@ -18,6 +18,7 @@ import {
   type ScanFixtures,
   scanApi,
 } from './lib/scan-api.ts';
+import { deskBridgeStates, doorBridgeStates, installFakeApp } from './lib/scan-bridge.ts';
 import { seedScans } from './lib/scan-seed.ts';
 import { eventDeskStates, type Run, tabletStates } from './lib/scan-states.ts';
 import { touchOptions } from './lib/touch.ts';
@@ -101,6 +102,61 @@ async function pairedDevice(
     await tabletStates({ page, context, base: c.base, api, fx, pins, snap: shot } as Run);
   } finally {
     await context.close();
+  }
+}
+
+/** The native bridge (W82): settle, drop and a late band, with a fake app host. */
+async function bridge(
+  c: Ctx,
+  api: ScanApi,
+  fx: ScanFixtures,
+  viewport: ViewportName,
+  theme: Theme,
+) {
+  // Take passes nothing has scanned yet (the seed and earlier runs did), so the reads are check-ins.
+  const scanned = new Set(
+    (
+      (await api.get(`/api/v1/scans?orgId=${fx.orgId}&limit=100`)).items as { passId: string }[]
+    ).map((s) => s.passId),
+  );
+  const first = (await api.get(`/api/v1/passes?orgId=${fx.orgId}&limit=1&status=active`)).items[0];
+  const fresh = (
+    (await api.get(`/api/v1/passes?orgId=${fx.orgId}&limit=50&status=active`)).items as {
+      id: string;
+      templateId: string;
+    }[]
+  )
+    .filter((p) => p.templateId === first.templateId && !scanned.has(p.id))
+    .slice(0, 2);
+  const codes: string[] = [];
+  for (const p of fresh) {
+    const message = (await api.get(`/api/v1/passes/${p.id}`)).passJson?.barcodes?.[0]?.message;
+    if (typeof message === 'string') codes.push(message);
+  }
+  if (codes.length < 2) throw new Error('No unscanned passes left for the bridge: reseed.');
+  for (const role of ['door', 'desk'] as const) {
+    const context = await newContext(c, viewport, theme);
+    try {
+      const page = await context.newPage();
+      const { snap } = recorder(c, context, `native bridge ${role}`, viewport, theme);
+      await api.send('PATCH', `/api/v1/scanning-sessions/${fx.sessionId}`, {
+        settings: { roleWithoutSignIn: role, staffSignIn: false },
+      });
+      await installFakeApp(page);
+      await pairBrowser(page, c.base, await newPairingCode(api, fx.deviceId));
+      const run = {
+        page,
+        context,
+        base: c.base,
+        api,
+        fx,
+        pins: new Map(),
+        snap: snap(page),
+      } as Run;
+      await (role === 'door' ? doorBridgeStates(run, codes) : deskBridgeStates(run, codes));
+    } finally {
+      await context.close();
+    }
   }
 }
 
@@ -220,7 +276,7 @@ async function main() {
     ['Gate A', fx.gate.id, fx.gate.orgId],
   ] as const)
     console.log(
-      `scans, ${name}: ${await seedScans(base, api, scanner, org, 6).catch((e) => `skipped, ${(e as Error).message}`)}`,
+      `scans, ${name}: ${await seedScans(base, api, scanner, org, 4).catch((e) => `skipped, ${(e as Error).message}`)}`,
     );
   const pins = new Map<string, string>();
   for (const s of fx.staff) pins.set(s.id, await resetPin(api, fx.orgId, s.id));
@@ -237,10 +293,16 @@ async function main() {
   try {
     for (const theme of themes) {
       for (const viewport of DEVICE_VIEWPORTS.filter(only)) {
+        if (has('--bridge-only')) {
+          await bridge(c, api, fx, viewport, theme);
+          continue;
+        }
         await pairedDevice(c, api, fx, pins, viewport, theme);
+        await bridge(c, api, fx, viewport, theme);
         await monitor(c, api, fx, viewport, theme);
         await eventDesk(c, api, fx, viewport, theme);
       }
+      if (has('--bridge-only')) continue;
       for (const viewport of DISPLAY_VIEWPORTS.filter(only))
         await customerDisplay(c, viewport, theme);
     }

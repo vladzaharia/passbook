@@ -56,9 +56,10 @@ export function useGroupMembers(key: string) {
   });
 }
 
-export function useGroupClaims(key: string) {
+export function useGroupClaims(key: string, enabled = true) {
   return useQuery({
     queryKey: groupKeys.claims(key),
+    enabled,
     queryFn: ({ signal }) => api.get(at(key, '/claims'), ClaimsViewSchema, { signal }),
   });
 }
