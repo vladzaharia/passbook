@@ -7,12 +7,11 @@ import {
   type SetValue,
   type WhereValue,
 } from './authority-expr.ts';
+import { buildInsertSelect, type InsertOptions } from './authority-insert.ts';
 import type { GrantScope } from './authority-principal.ts';
 import { keyedSet, restrictRow } from './authority-restrict.ts';
 import {
   type BuiltStatement,
-  buildInsertSelect,
-  type InsertOptions,
   rejectOwned,
   returningSql,
   tableScope,

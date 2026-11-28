@@ -8,7 +8,7 @@ const root = resolve(import.meta.dirname, '..');
 const SCAN = 'src/worker/modules/scan';
 const TEST_FILE = /(?:\.test|-fixtures?|-fixture|-test-fixtures)\.ts$/;
 const MACHINERY = /new Proxy\(|interceptBatches\(|raceFence\(|afterCandidateRead\(/;
-const SQL_NAME = String.raw`(?:sql|sqlText|text|query|statement|stmt|prepared)`;
+const SQL_NAME = '(?:sql|sqlText|text|query|statement|stmt|prepared)';
 const METHOD = String.raw`\.\s*(?:includes|startsWith|endsWith|match|search|test|replace)\s*\(`;
 const MATCHERS = [
   new RegExp(String.raw`\b${SQL_NAME}${METHOD}\s*(?!RACE_)`),

@@ -4,6 +4,7 @@ import { exactlyOne } from './authority-checks.ts';
 import { type GrantCond, whenSql } from './authority-cond.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier, type SetValue, type WhereValue } from './authority-expr.ts';
+import type { InsertOptions } from './authority-insert.ts';
 import { holderTable, pinWhere } from './authority-pin.ts';
 import type { GrantScope } from './authority-principal.ts';
 import { setRestriction } from './authority-restrict.ts';
@@ -11,7 +12,6 @@ import {
   assignments,
   type BuiltStatement,
   conditions,
-  type InsertOptions,
   rejectOwned,
   returningSql,
   scopePredicate,
