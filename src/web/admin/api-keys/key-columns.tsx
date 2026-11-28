@@ -123,14 +123,14 @@ export function keyColumns({
           ...held.map((s) => SCOPE_LABEL[s] ?? s),
         ].join(', ');
         return (
-          <span className="block max-w-56 whitespace-normal break-words text-fg">{scopes}</span>
+          <span className="block max-w-72 whitespace-normal break-words text-fg">{scopes}</span>
         );
       },
     },
     {
       header: 'Created',
       id: 'created',
-      meta: { nowrap: true, stackHidden: true, hideBelow: 'md' },
+      meta: { nowrap: true, stackHidden: true, hideBelow: 'lg' },
       cell: ({ row }) => {
         const { createdAt, createdBy, createdByName } = row.original;
         return (

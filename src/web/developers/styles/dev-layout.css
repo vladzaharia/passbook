@@ -29,6 +29,8 @@
   align-self: start;
   max-height: calc(100dvh - var(--dev-bar));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 48px;
 }
 .sidenav h4 {
   font-size: 11px;

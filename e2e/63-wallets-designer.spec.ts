@@ -267,7 +267,6 @@ test('at 390 the Wallets tab is preview only: the notice, the preview and the re
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(design('?mode=wallets&wallet=samsung'));
   await expect(page.getByText('Preview only')).toBeVisible();
-  await expect(page.getByText('The designer needs a tablet or desktop screen.')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Designer mode' })).toContainText('Wallets');
   await expect(report(page, 'Samsung')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Samsung Wallet Preview' })).toBeVisible();

@@ -148,7 +148,7 @@ export function OperationTray({
           )}
           <span
             aria-hidden
-            className="pointer-events-none absolute -top-1 -right-1 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.625rem] leading-4 font-semibold tabular-nums text-accent-on"
+            className="pointer-events-none absolute -top-1 -right-1 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-xs leading-4 font-semibold tabular-nums text-accent-on"
           >
             {busy ? active.length : unseen}
           </span>
