@@ -193,7 +193,12 @@
 .scan-in-who {
   font: 650 16px / 20px var(--pk-font-sans);
   color: var(--sd-strong);
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 .scan-in-plan,
 .scan-in-flag {
