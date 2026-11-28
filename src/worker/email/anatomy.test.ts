@@ -43,6 +43,17 @@ const EMAILS: Record<string, { html: string; buddy: boolean }> = {
     buddy: true,
   },
   pass: { html: pass().html, buddy: true },
+  'pass with every wallet': {
+    html: pass({
+      publicBaseUrl: BASE,
+      walletOffers: (['google', 'samsung'] as const).map((provider) => ({
+        provider,
+        href: `/p/t/wallet/${provider}`,
+        installation: 'unknown' as const,
+      })),
+    }).html,
+    buddy: true,
+  },
   'pass without art': { html: pass({ buddyBase: null }).html, buddy: false },
   bundle: {
     html: renderBundleEmail({
@@ -94,6 +105,11 @@ const EMAILS: Record<string, { html: string; buddy: boolean }> = {
 /** Word-only fallbacks sit in `[if mso]` comments and repeat the button. */
 const visible = (html: string) => html.replace(/<!--\[if mso\]>[\s\S]*?<!\[endif\]-->/g, '');
 
+/** A button is an e-btn/e-block anchor or any anchor drawn with a border and padding. */
+const isButton = (tag: string) =>
+  /class="e-(btn|block)"/.test(tag) ||
+  (/border:1px solid/.test(tag) && /padding:\d+px \d+px/.test(tag));
+
 describe('email anatomy', () => {
   describe.each(Object.entries(EMAILS))('%s', (_name, { html, buddy }) => {
     it('has one title', () => {
@@ -101,7 +117,9 @@ describe('email anatomy', () => {
     });
 
     it('has at most one button', () => {
-      expect(visible(html).match(/<a class="e-(btn|block)"/g)?.length ?? 0).toBeLessThanOrEqual(1);
+      const buttons = visible(html).match(/<a [^>]*>/g)?.filter(isButton) ?? [];
+      // The bundle's per-pass Add links are row actions in a list (see bundle.test.ts).
+      expect(buttons.length - (_name === 'bundle' ? 2 : 0)).toBeLessThanOrEqual(1);
     });
 
     it('draws the buddy at 96 px, or not at all', () => {

@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { Banner, type BannerTone } from './banner.tsx';
 
 const TONES: [BannerTone, string][] = [
-  ['offline', 'alert'],
+  ['offline', 'status'],
   ['read-only', 'status'],
   ['restricted', 'alert'],
-  ['suspended', 'alert'],
+  ['suspended', 'status'],
   ['test', 'status'],
   ['past-due', 'status'],
   ['grace', 'status'],
@@ -20,6 +20,16 @@ describe('Banner', () => {
     expect(banner).toHaveAttribute('data-banner', tone);
     expect(banner.querySelector('svg')).not.toBeNull();
     expect(banner).toHaveTextContent('Line');
+  });
+
+  it('draws offline and suspended slate, not refused red', () => {
+    for (const tone of ['offline', 'suspended'] as const) {
+      const { unmount } = render(<Banner tone={tone}>Line</Banner>);
+      expect(screen.getByRole('status')).toHaveAttribute('data-look', 'system');
+      unmount();
+    }
+    render(<Banner tone="restricted">Line</Banner>);
+    expect(screen.getByRole('alert')).toHaveAttribute('data-look', 'refused');
   });
 
   it('carries at most one action', () => {

@@ -59,7 +59,7 @@ export function IncludedFromView({
   return (
     <StateView
       size="stage"
-      state="no-access"
+      state="empty"
       heading
       mood="curious"
       picture={<StateArt name="plan-ticket" plan={plan.id} size="sm" />}

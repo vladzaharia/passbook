@@ -120,9 +120,9 @@
   }
 }
 
-/* The ok hop and the attract wave overshoot once (unify-screens spec §2). */
+/* Own token, so --pk-ease-spring (4%) stays. The ok hop and the attract wave overshoot once (unify-screens spec §2). */
 :root {
-  --pk-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --wl-ease-hop: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Screen tones (unify-screens spec §1): ok, heads up, refused and system, once for every surface.

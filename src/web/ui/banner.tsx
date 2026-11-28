@@ -26,9 +26,9 @@ export type BannerTone =
 type Look = 'refused' | 'heads-up' | 'system';
 
 const TONE: Record<BannerTone, { icon: LucideIcon; look: Look }> = {
-  offline: { icon: WifiOff, look: 'refused' },
+  offline: { icon: WifiOff, look: 'system' },
   restricted: { icon: OctagonX, look: 'refused' },
-  suspended: { icon: Ban, look: 'refused' },
+  suspended: { icon: Ban, look: 'system' },
   'read-only': { icon: Eye, look: 'system' },
   test: { icon: FlaskConical, look: 'heads-up' },
   'past-due': { icon: CreditCard, look: 'heads-up' },
@@ -60,6 +60,7 @@ export function Banner({ tone, children, action, className, ...rest }: BannerPro
     <div
       role={look === 'refused' ? 'alert' : 'status'}
       data-banner={tone}
+      data-look={look}
       className={cn(
         'flex min-h-8 flex-wrap items-center justify-center gap-x-2 gap-y-1 border-b px-safe py-1 text-xs font-medium',
         LOOK[look],

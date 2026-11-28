@@ -41,6 +41,13 @@ const names = () =>
     .filter(Boolean);
 
 describe('IncludedFromView', () => {
+  it('is a neutral state, never a refusal', async () => {
+    await show();
+    const view = screen.getByTestId('state-view');
+    expect(view).toHaveAttribute('data-tone', 'neutral');
+    expect(view).not.toHaveAttribute('data-state', 'no-access');
+  });
+
   it.each([
     ['standard', 'Season Pass'],
     ['business', 'Backstage'],
