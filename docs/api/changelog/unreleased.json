@@ -3142,7 +3142,7 @@
     "operationId": "session.getSession",
     "op": "GET /api/v1/session",
     "change": "200|0.authTime: field added",
-    "note": "The session reports authTime, when the sign-in happened in ms, or null for an email link."
+    "note": "The session reports authTime, when the sign-in happened in ms, or null for an email link or when Polaris ID sent none."
   },
   {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
