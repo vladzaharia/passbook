@@ -22,7 +22,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { RACE_TEMPLATE_STATUS } from '../scan/race-tags.ts';
+import { RACE_TEMPLATE_INSERT, RACE_TEMPLATE_STATUS } from '../scan/race-tags.ts';
 import { behaviors } from './build-check.ts';
 import { analyzePackage } from './package/analyze.ts';
 import { basicPackage, makePng, zipOf } from './package/fixtures.ts';
@@ -1285,7 +1285,7 @@ describe('clone source lineage', () => {
         get(target, prop) {
           if (prop === 'prepare')
             return (sql: string) => {
-              if (/INSERT\s+INTO\s+templates\s*\(/i.test(sql)) prepared = true;
+              if (sql.includes(RACE_TEMPLATE_INSERT)) prepared = true;
               return target.prepare(sql);
             };
           if (prop === 'batch')

@@ -13,6 +13,7 @@ import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
+import { RACE_PASS_PUBLISH } from '../scan/race-tags.ts';
 import { CREATE_CODES, createRefusal } from './create-grant.ts';
 import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
@@ -161,6 +162,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
         : {}),
     },
     returning: ['version'],
+    tag: RACE_PASS_PUBLISH,
   });
   try {
     const result = (await g.commit())[g.indexOf(update)];

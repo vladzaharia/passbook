@@ -745,12 +745,52 @@
     "note": "Read a draft upload."
   },
   {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.auth: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.auth: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.inbound: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.inbound: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.outbound: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.outbound: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.read: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.read: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].capabilities.upload: field added",
     "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors 200.items[].capabilities.write: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectors",
+    "op": "GET /api/v1/connectors",
+    "change": "200.items[].capabilities.write: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/connectors 200.items[].category: field added",
@@ -817,12 +857,52 @@
     "note": "Each sender recipe carries setupVersion, the version of its setup guide. It is content, not an API version."
   },
   {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.auth: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.auth: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.inbound: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.inbound: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.outbound: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.outbound: field removed",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.read: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.read: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
     "class": "additive",
     "operationId": "connectors.getConnectorsByType",
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.capabilities.upload: field added",
     "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.write: field removed",
+    "class": "breaking",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.write: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/connectors/{type} 200.category: field added",

@@ -1,7 +1,7 @@
 import { IdSchema, type Mode } from '../../../shared/contracts/common.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan.ts';
 import { first, stmt } from '../../platform/db.ts';
-import { RACE_EVENT_BY_ID } from './race-tags.ts';
+import { RACE_EVENT_BY_ID, RACE_EVENT_SCOPE_PIN } from './race-tags.ts';
 import { usableScanTemplateSql } from './repo-scope-releases.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
 
@@ -169,7 +169,7 @@ export async function readValidEventScope(
   if (!IdSchema.safeParse(eventId).success) return null;
   const results = await db.batch([
     stmt(db, EVENT_SQL, [eventId, orgId]),
-    stmt(db, EVENT_SCOPE_TEMPLATES_SQL, [orgId, mode, eventId]),
+    stmt(db, `${RACE_EVENT_SCOPE_PIN} ${EVENT_SCOPE_TEMPLATES_SQL}`, [orgId, mode, eventId]),
   ]);
   return eventScopeOf(
     mode,

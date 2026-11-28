@@ -4,6 +4,7 @@ import { exists } from '../../platform/authority-cond.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { RACE_TEMPLATE_RELEASE_INSERT } from '../scan/race-tags.ts';
 
 export interface BakedSystemRelease {
   id: string;
@@ -134,6 +135,7 @@ export function addBakedRelease(
   const generation = (head?.generation ?? 0) + 1;
   g.insertSelect('template_releases', BAKED_COLUMNS, bakedValues(r, generation, head), {
     returning: ['id'],
+    tag: RACE_TEMPLATE_RELEASE_INSERT,
   });
   g.add(
     grantedAudit(

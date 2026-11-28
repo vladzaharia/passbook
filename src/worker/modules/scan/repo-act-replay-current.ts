@@ -5,6 +5,7 @@ import type { ActRequest } from './act-claim.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
+import { RACE_PREDICATE_AUTHORIZED } from './race-tags.ts';
 import type { ReplayEvidence } from './repo-act-authority.ts';
 import { CURRENT_ISSUANCE, NO_PENDING_TRANSFER, RECORDED_PROOF } from './repo-act-replay-sql.ts';
 import { noCredentialTombstonesSql } from './repo-credential-tombstones.ts';
@@ -251,7 +252,7 @@ export const ownedReceiptStmt = (
   scanRead(
     db,
     auth,
-    `SELECT 1 AS authorized FROM ${auth.rows}scans s
+    `${RACE_PREDICATE_AUTHORIZED} SELECT 1 AS authorized FROM ${auth.rows}scans s
       WHERE ${auth.present} AND s.id = ? AND ${auth.tenantOnce('s', 'scans')} AND ${own.sql}`,
     [scanId, ...own.params],
   );
@@ -261,6 +262,6 @@ export const projectionStmt = (db: D1Database, auth: ScanReadAuthority, inner: F
   scanRead(
     db,
     auth,
-    `SELECT 1 AS authorized FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${inner.sql}`,
+    `${RACE_PREDICATE_AUTHORIZED} SELECT 1 AS authorized FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${inner.sql}`,
     inner.params,
   );

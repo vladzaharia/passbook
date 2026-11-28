@@ -5,7 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
+import { RACE_TEMPLATE_INSERT, RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import type { CommitArgs } from './persist.ts';
 import { writeLineage } from './repo-forks.ts';
 import {
@@ -154,7 +154,7 @@ export async function writeVersion(
         now,
         now,
       ],
-      { returning: ['id'] },
+      { returning: ['id'], tag: RACE_TEMPLATE_INSERT },
     );
   const insertIndex = plan.isNew ? 1 : 0;
   const content: SqlValue[] = [

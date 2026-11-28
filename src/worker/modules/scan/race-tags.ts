@@ -59,7 +59,8 @@ export const RACE_TEMPLATE_VERSION_READ = '/* race:template-version-read */';
 // Group E
 export const RACE_TOMBSTONE_CLEAR = '/* race:tombstone-clear */';
 export const RACE_REPLAY_READ = '/* race:replay-read */';
-export const RACE_EPOCH_EVENT = '/* race:epoch-event */';
+export const RACE_EVENT_SCOPE_PIN = '/* race:event-scope-pin */';
+export const RACE_TEMPLATE_INSERT = '/* race:template-insert */';
 export const RACE_TEMPLATE_VERSION_INSERT = '/* race:template-version-insert */';
 export const RACE_TEMPLATE_CANDIDATE_INSERT = '/* race:template-candidate-insert */';
 export const RACE_TEMPLATE_APPROVAL_INSERT = '/* race:template-approval-insert */';

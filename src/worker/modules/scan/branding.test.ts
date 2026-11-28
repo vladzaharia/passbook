@@ -4,6 +4,9 @@ import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import { ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
 import { makePng } from '../templates/package/fixtures.ts';
+import { RACE_BRANDING_READ } from './race-tags.ts';
+import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
+import { grantScanMembership } from './test-kit.ts';
 
 /** Runs `mutate` once, just before the first statement carrying `tag` executes (the guard has passed). */
 async function beforeRead<T>(
@@ -54,10 +57,6 @@ async function beforeRead<T>(
     env.DB = original;
   }
 }
-
-import { RACE_BRANDING_READ } from './race-tags.ts';
-import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
-import { grantScanMembership } from './test-kit.ts';
 
 const fixture = scanningSessionsFixture();
 beforeAll(fixture.setup);

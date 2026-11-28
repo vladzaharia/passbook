@@ -45,7 +45,7 @@ export async function raceGate(
   input: unknown,
   mutate: (db: D1Database) => Promise<unknown>,
   over: Record<string, unknown> = {},
-  RACE_TAG = RACE_GRANT_INSERT,
+  raceTag = RACE_GRANT_INSERT,
   skipBatches = 0,
   send: typeof act = act,
 ): Promise<Response> {
@@ -58,7 +58,7 @@ export async function raceGate(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(RACE_TAG)) return prepared;
+          if (!sql.includes(raceTag)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
