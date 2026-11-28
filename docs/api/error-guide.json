@@ -155,6 +155,18 @@
     "fix": "Leave apnsBinding out of the request.",
     "retryable": false
   },
+  "APPROVAL_GRANT_INVALID": {
+    "title": "Approval no longer valid",
+    "when": "The approval grant on the request was used, expired or changed before the action ran.",
+    "fix": "Ask for a new approval, then send the request again.",
+    "retryable": false
+  },
+  "APPROVE_AS_NOT_ALLOWED": {
+    "title": "Cannot approve as this staff member",
+    "when": "The approving staff member may not approve on behalf of the one named.",
+    "fix": "Approve as yourself, or ask a staff member who is allowed to approve.",
+    "retryable": false
+  },
   "ARCHIVE_TOO_LARGE": {
     "title": "Archive too large",
     "when": "The uploaded template archive is over 15 MB.",

@@ -2725,8 +2725,14 @@ type CreatedScanningDevice struct {
 	ID               string                         `json:"id"`
 	SessionID        string                         `json:"sessionId"`
 	Name             string                         `json:"name"`
-	Surface          string                         `json:"surface"`
-	EffectiveSurface string                         `json:"effectiveSurface"`
+	DeviceRole       string                         `json:"deviceRole"`
+	Surface          *string                        `json:"surface"`
+	EffectiveSurface *string                        `json:"effectiveSurface"`
+	Ownership        *string                        `json:"ownership,omitempty"`
+	PersonalStaffID  *string                        `json:"personalStaffId,omitempty"`
+	SignInCeiling    *string                        `json:"signInCeiling,omitempty"`
+	Alerts           *string                        `json:"alerts,omitempty"`
+	Coverage         []string                       `json:"coverage,omitempty"`
 	Overrides        CreatedScanningDeviceOverrides `json:"overrides"`
 	Settings         ScannerSettings                `json:"settings"`
 	Capabilities     ScanDeviceCapabilities         `json:"capabilities"`
@@ -12752,6 +12758,7 @@ type ScanOutcome struct {
 	Overridable         bool                `json:"overridable"`
 	ExitAllowed         *bool               `json:"exitAllowed,omitempty"`
 	Approvals           bool                `json:"approvals"`
+	RequestHash         *string             `json:"requestHash,omitempty"`
 	Group               map[string]any      `json:"group"`
 	Bundle              map[string]any      `json:"bundle,omitempty"`
 	InBundle            *bool               `json:"inBundle,omitempty"`
@@ -13065,10 +13072,10 @@ type ScanSetupAnswer2SessionsItem struct {
 }
 
 type ScanSetupAnswer2SessionsItemDevicesItem struct {
-	Name      string                                           `json:"name"`
-	Surface   string                                           `json:"surface"`
-	Overrides ScanSetupAnswer2SessionsItemDevicesItemOverrides `json:"overrides"`
 	Ref       string                                           `json:"ref"`
+	Name      string                                           `json:"name"`
+	Surface   *string                                          `json:"surface,omitempty"`
+	Overrides ScanSetupAnswer2SessionsItemDevicesItemOverrides `json:"overrides"`
 	Role      string                                           `json:"role"`
 }
 
@@ -14166,8 +14173,14 @@ type ScanningDevice struct {
 	ID               string                  `json:"id"`
 	SessionID        string                  `json:"sessionId"`
 	Name             string                  `json:"name"`
-	Surface          string                  `json:"surface"`
-	EffectiveSurface string                  `json:"effectiveSurface"`
+	DeviceRole       string                  `json:"deviceRole"`
+	Surface          *string                 `json:"surface"`
+	EffectiveSurface *string                 `json:"effectiveSurface"`
+	Ownership        *string                 `json:"ownership,omitempty"`
+	PersonalStaffID  *string                 `json:"personalStaffId,omitempty"`
+	SignInCeiling    *string                 `json:"signInCeiling,omitempty"`
+	Alerts           *string                 `json:"alerts,omitempty"`
+	Coverage         []string                `json:"coverage,omitempty"`
 	Overrides        ScanningDeviceOverrides `json:"overrides"`
 	Settings         ScannerSettings         `json:"settings"`
 	Capabilities     ScanDeviceCapabilities  `json:"capabilities"`
@@ -14464,9 +14477,15 @@ type ScanningSessionsCreateParamsSettingsTags struct {
 type ScanningSessionsDevicesCreateBody = ScanningSessionsDevicesCreateParams
 
 type ScanningSessionsDevicesCreateParams struct {
-	Name      *string                                       `json:"name,omitempty"`
-	Surface   *string                                       `json:"surface,omitempty"`
-	Overrides *ScanningSessionsDevicesCreateParamsOverrides `json:"overrides,omitempty"`
+	Name            *string                                       `json:"name,omitempty"`
+	DeviceRole      *string                                       `json:"deviceRole,omitempty"`
+	Surface         *string                                       `json:"surface,omitempty"`
+	Ownership       *string                                       `json:"ownership,omitempty"`
+	PersonalStaffID *string                                       `json:"personalStaffId,omitempty"`
+	SignInCeiling   *string                                       `json:"signInCeiling,omitempty"`
+	Alerts          *string                                       `json:"alerts,omitempty"`
+	Coverage        []string                                      `json:"coverage,omitempty"`
+	Overrides       *ScanningSessionsDevicesCreateParamsOverrides `json:"overrides,omitempty"`
 }
 
 type ScanningSessionsDevicesCreateParamsOverrides struct {
@@ -14483,10 +14502,15 @@ type ScanningSessionsDevicesCreateResult = CreatedScanningDevice
 type ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
 
 type ScanningSessionsDevicesUpdateParams struct {
-	Name      *string                                       `json:"name,omitempty"`
-	Surface   *string                                       `json:"surface,omitempty"`
-	Overrides *ScanningSessionsDevicesUpdateParamsOverrides `json:"overrides,omitempty"`
-	Revision  *int64                                        `json:"revision,omitempty"`
+	Name            *string                                       `json:"name,omitempty"`
+	Surface         *string                                       `json:"surface,omitempty"`
+	Ownership       *string                                       `json:"ownership,omitempty"`
+	PersonalStaffID *string                                       `json:"personalStaffId,omitempty"`
+	SignInCeiling   *string                                       `json:"signInCeiling,omitempty"`
+	Alerts          *string                                       `json:"alerts,omitempty"`
+	Coverage        []string                                      `json:"coverage,omitempty"`
+	Overrides       *ScanningSessionsDevicesUpdateParamsOverrides `json:"overrides,omitempty"`
+	Revision        *int64                                        `json:"revision,omitempty"`
 }
 
 type ScanningSessionsDevicesUpdateParamsOverrides struct {
@@ -16411,26 +16435,34 @@ type TemplatesVersionsRetrieveWalletReportsResult = TemplatesVersionsRetrieveWal
 type TerminalActBody = TerminalActParams
 
 type TerminalActParams struct {
-	IdempotencyKey  string                     `json:"idempotencyKey"`
-	Input           any                        `json:"input"`
-	ClientTs        int64                      `json:"clientTs"`
-	DayStart        *int64                     `json:"dayStart,omitempty"`
-	Scope           *TerminalActParamsScope    `json:"scope,omitempty"`
-	ActionID        string                     `json:"actionId"`
-	Amount          *float64                   `json:"amount,omitempty"`
-	Value           any                        `json:"value,omitempty"`
-	Direction       *string                    `json:"direction,omitempty"`
-	OverrideOf      *string                    `json:"overrideOf,omitempty"`
-	Confirmed       *bool                      `json:"confirmed,omitempty"`
-	ExpectedVersion *int64                     `json:"expectedVersion,omitempty"`
-	Group           *string                    `json:"group,omitempty"`
-	Approval        *TerminalActParamsApproval `json:"approval,omitempty"`
+	IdempotencyKey  string                  `json:"idempotencyKey"`
+	Input           any                     `json:"input"`
+	ClientTs        int64                   `json:"clientTs"`
+	DayStart        *int64                  `json:"dayStart,omitempty"`
+	Scope           *TerminalActParamsScope `json:"scope,omitempty"`
+	ActionID        string                  `json:"actionId"`
+	Amount          *float64                `json:"amount,omitempty"`
+	Value           any                     `json:"value,omitempty"`
+	Direction       *string                 `json:"direction,omitempty"`
+	OverrideOf      *string                 `json:"overrideOf,omitempty"`
+	Confirmed       *bool                   `json:"confirmed,omitempty"`
+	ExpectedVersion *int64                  `json:"expectedVersion,omitempty"`
+	Group           *string                 `json:"group,omitempty"`
+	Approval        any                     `json:"approval,omitempty"`
 }
 
-type TerminalActParamsApproval struct {
+type TerminalActParamsApproval1 struct {
 	StaffID *string `json:"staffId,omitempty"`
 	PIN     string  `json:"pin"`
 	Alone   *bool   `json:"alone,omitempty"`
+}
+
+type TerminalActParamsApproval2 struct {
+	RequestID string `json:"requestId"`
+}
+
+type TerminalActParamsApproval3 struct {
+	ApproveAs string `json:"approveAs"`
 }
 
 type TerminalActParamsInput1 struct {
@@ -16524,14 +16556,23 @@ type TerminalResolveResult = ScanOutcome
 type TerminalScansUndoBody = TerminalScansUndoParams
 
 type TerminalScansUndoParams struct {
-	IdempotencyKey string                           `json:"idempotencyKey"`
-	Scope          *TerminalScansUndoParamsScope    `json:"scope,omitempty"`
-	Approval       *TerminalScansUndoParamsApproval `json:"approval,omitempty"`
+	IdempotencyKey string                        `json:"idempotencyKey"`
+	Scope          *TerminalScansUndoParamsScope `json:"scope,omitempty"`
+	Approval       any                           `json:"approval,omitempty"`
+	PIN            *string                       `json:"pin,omitempty"`
 }
 
-type TerminalScansUndoParamsApproval struct {
+type TerminalScansUndoParamsApproval1 struct {
 	StaffID *string `json:"staffId,omitempty"`
 	PIN     string  `json:"pin"`
+}
+
+type TerminalScansUndoParamsApproval2 struct {
+	RequestID string `json:"requestId"`
+}
+
+type TerminalScansUndoParamsApproval3 struct {
+	ApproveAs string `json:"approveAs"`
 }
 
 type TerminalScansUndoParamsScope struct {

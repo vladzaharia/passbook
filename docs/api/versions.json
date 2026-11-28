@@ -9,6 +9,11 @@
       "date": "2026-11-22",
       "summary": "POST /scan/tags/bind answers 422 IDEMPOTENCY_KEY_REUSED when a key is reused with another request.",
       "migration": "Send PassBook-Version: 2026-11-22 to opt in. A reused Idempotency-Key on POST /scan/tags/bind then returns 422 IDEMPOTENCY_KEY_REUSED (a validation error), not 409. The SDKs raise ValidationError, not ConflictError. Without the header nothing changes."
+    },
+    {
+      "date": "2026-11-28",
+      "summary": "Scanning devices carry deviceRole (scan, customer, monitor, kiosk); staff approval is the contract in scan-device, and the surface roles desk and customer are replaced.",
+      "migration": "Send PassBook-Version: 2026-11-28 to opt in. Scanning-device bodies and responses then use deviceRole in place of the desk and customer surfaces, and scan approvals no longer take staffId, pin or alone. Without the header nothing changes."
     }
   ]
 }

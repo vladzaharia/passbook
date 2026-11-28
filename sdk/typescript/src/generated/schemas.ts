@@ -2077,7 +2077,7 @@ export type CreatedScanner = {
   orgId: string;
   mode: "live" | "test";
   kind: "device" | "terminal" | "display";
-  deviceRole: "scan" | "customer" | "monitor";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
   name: string;
   accepts: {
     templateIds: Array<string>;
@@ -2112,8 +2112,14 @@ export type CreatedScanningDevice = {
   id: string;
   sessionId: string;
   name: string;
-  surface: "auto" | "phone" | "operator" | "desk" | "customer";
-  effectiveSurface: "phone" | "operator" | "desk" | "customer";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
+  surface: "auto" | "phone" | "operator" | null;
+  effectiveSurface: "phone" | "operator" | null;
+  ownership?: "shared" | "personal";
+  personalStaffId?: string | null;
+  signInCeiling?: "door" | "desk" | "manager";
+  alerts?: "ring" | "badge" | "off";
+  coverage?: Array<string> | null;
   overrides: {
     flow?: "auto" | "choose";
     reader?: "none" | "barcode" | "nfc";
@@ -10758,8 +10764,8 @@ export type ScanDeviceCapabilities = {
     state: "ready" | "active" | "off" | "needs-permission" | "unavailable" | "error";
   }>;
   draftFailures?: number;
-  surfaces: Array<"phone" | "operator" | "desk" | "customer">;
-  preferred: "phone" | "operator" | "desk" | "customer";
+  surfaces: Array<"phone" | "operator">;
+  preferred: "phone" | "operator";
 } | null;
 
 export type ScanDisplaysPreviewResponse = {
@@ -10942,6 +10948,7 @@ export type ScanOutcome = {
   overridable: boolean;
   exitAllowed?: boolean;
   approvals: boolean;
+  requestHash?: string | null;
   group: {
     total: number;
     done: number;
@@ -11277,7 +11284,7 @@ export type ScanSession = {
     id: string;
     name: string;
     kind: "device" | "terminal" | "display";
-    deviceRole: "scan" | "customer" | "monitor";
+    deviceRole: "scan" | "customer" | "monitor" | "kiosk";
     mode: "live" | "test";
     orgId: string;
     orgName: string;
@@ -11506,8 +11513,9 @@ export type ScanSetupAnswer = {
       };
     };
     devices: Array<{
+      ref: string;
       name: string;
-      surface: "auto" | "phone" | "operator" | "desk" | "customer";
+      surface?: "auto" | "phone" | "operator";
       overrides: {
         flow?: "auto" | "choose";
         reader?: "none" | "barcode" | "nfc";
@@ -11516,7 +11524,6 @@ export type ScanSetupAnswer = {
         showPhoto?: boolean;
         follows?: Array<string>;
       };
-      ref: string;
       role: "scan" | "customer" | "monitor";
     }>;
   }>;
@@ -11614,7 +11621,7 @@ export type ScanSetupsCreateResponse = {
   orgId: string;
   mode: "live" | "test";
   kind: "device" | "terminal" | "display";
-  deviceRole: "scan" | "customer" | "monitor";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
   name: string;
   accepts: {
     templateIds: Array<string>;
@@ -11664,7 +11671,7 @@ export type ScanSetupsListResponse = {
     orgId: string;
     mode: "live" | "test";
     kind: "device" | "terminal" | "display";
-    deviceRole: "scan" | "customer" | "monitor";
+    deviceRole: "scan" | "customer" | "monitor" | "kiosk";
     name: string;
     accepts: {
       templateIds: Array<string>;
@@ -11710,7 +11717,7 @@ export type ScanSetupsRetrieveResponse = {
   orgId: string;
   mode: "live" | "test";
   kind: "device" | "terminal" | "display";
-  deviceRole: "scan" | "customer" | "monitor";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
   name: string;
   accepts: {
     templateIds: Array<string>;
@@ -11805,7 +11812,7 @@ export type ScanSetupsUpdateResponse = {
   orgId: string;
   mode: "live" | "test";
   kind: "device" | "terminal" | "display";
-  deviceRole: "scan" | "customer" | "monitor";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
   name: string;
   accepts: {
     templateIds: Array<string>;
@@ -11961,8 +11968,14 @@ export type ScanWorkspace = {
     id: string;
     sessionId: string;
     name: string;
-    surface: "auto" | "phone" | "operator" | "desk" | "customer";
-    effectiveSurface: "phone" | "operator" | "desk" | "customer";
+    deviceRole: "scan" | "customer" | "monitor" | "kiosk";
+    surface: "auto" | "phone" | "operator" | null;
+    effectiveSurface: "phone" | "operator" | null;
+    ownership?: "shared" | "personal";
+    personalStaffId?: string | null;
+    signInCeiling?: "door" | "desk" | "manager";
+    alerts?: "ring" | "badge" | "off";
+    coverage?: Array<string> | null;
     overrides: {
       flow?: "auto" | "choose";
       reader?: "none" | "barcode" | "nfc";
@@ -12207,7 +12220,7 @@ export type Scanner = {
   orgId: string;
   mode: "live" | "test";
   kind: "device" | "terminal" | "display";
-  deviceRole: "scan" | "customer" | "monitor";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
   name: string;
   accepts: {
     templateIds: Array<string>;
@@ -12395,8 +12408,14 @@ export type ScanningDevice = {
   id: string;
   sessionId: string;
   name: string;
-  surface: "auto" | "phone" | "operator" | "desk" | "customer";
-  effectiveSurface: "phone" | "operator" | "desk" | "customer";
+  deviceRole: "scan" | "customer" | "monitor" | "kiosk";
+  surface: "auto" | "phone" | "operator" | null;
+  effectiveSurface: "phone" | "operator" | null;
+  ownership?: "shared" | "personal";
+  personalStaffId?: string | null;
+  signInCeiling?: "door" | "desk" | "manager";
+  alerts?: "ring" | "badge" | "off";
+  coverage?: Array<string> | null;
   overrides: {
     flow?: "auto" | "choose";
     reader?: "none" | "barcode" | "nfc";
@@ -12675,7 +12694,13 @@ export type ScanningSessionsCreateParams = {
 
 export type ScanningSessionsDevicesCreateParams = {
   name?: string;
-  surface?: "auto" | "phone" | "operator" | "desk" | "customer";
+  deviceRole?: "scan" | "customer" | "monitor";
+  surface?: "auto" | "phone" | "operator";
+  ownership?: "shared" | "personal";
+  personalStaffId?: string | null;
+  signInCeiling?: "door" | "desk" | "manager";
+  alerts?: "ring" | "badge" | "off";
+  coverage?: Array<string> | null;
   overrides?: {
     flow?: "auto" | "choose";
     reader?: "none" | "barcode" | "nfc";
@@ -12688,7 +12713,12 @@ export type ScanningSessionsDevicesCreateParams = {
 
 export type ScanningSessionsDevicesUpdateParams = {
   name?: string;
-  surface?: "auto" | "phone" | "operator" | "desk" | "customer";
+  surface?: "auto" | "phone" | "operator";
+  ownership?: "shared" | "personal";
+  personalStaffId?: string | null;
+  signInCeiling?: "door" | "desk" | "manager";
+  alerts?: "ring" | "badge" | "off";
+  coverage?: Array<string> | null;
   overrides?: {
     flow?: "auto" | "choose";
     reader?: "none" | "barcode" | "nfc";
@@ -14194,6 +14224,10 @@ export type TerminalActParams = {
     staffId?: string;
     pin: string;
     alone?: boolean;
+  } | {
+    requestId: string;
+  } | {
+    approveAs: string;
   };
 };
 
@@ -14242,7 +14276,12 @@ export type TerminalScansUndoParams = {
   approval?: {
     staffId?: string;
     pin: string;
+  } | {
+    requestId: string;
+  } | {
+    approveAs: string;
   };
+  pin?: string;
 };
 
 export type TerminalSignOutEverywhereParams = {

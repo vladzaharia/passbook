@@ -6939,6 +6939,8 @@
   "scan post /actions": [
     "ACTOR_CHANGED",
     "API_KEY_NO_APPROVAL",
+    "APPROVAL_GRANT_INVALID",
+    "APPROVE_AS_NOT_ALLOWED",
     "ASSET_NOT_FOUND",
     "ASSET_SLOT",
     "AUTHORITY_DENIED",
@@ -7494,6 +7496,8 @@
   "scan post /scans/{scanId}/undo": [
     "ACTOR_CHANGED",
     "API_KEY_NO_APPROVAL",
+    "APPROVAL_GRANT_INVALID",
+    "APPROVE_AS_NOT_ALLOWED",
     "ASSET_NOT_FOUND",
     "ASSET_SLOT",
     "AUTHORITY_DENIED",

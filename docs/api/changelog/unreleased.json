@@ -257,12 +257,28 @@
     "note": "DELETE /scan/draft takes keep=ready to clear only the draft and leave the ready card."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.staff.pinResetRequired: field added",
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.draftFailures: field added",
@@ -281,12 +297,132 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
@@ -2945,12 +3081,28 @@
     "note": "What an id is in your Test data. kind live means it exists in Live; open it in admin. Browser and try token only, no key."
   },
   {
+    "key": "GET /api/v1/scan-setups 200.items[].deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.getScanSetups",
+    "op": "GET /api/v1/scan-setups",
+    "change": "200.items[].deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanSetups",
     "op": "GET /api/v1/scan-setups",
     "change": "200.items[].staff.name, items[].adminUser.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scan-setups/{id} 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.getScanSetupsById",
+    "op": "GET /api/v1/scan-setups/{id}",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
     "key": "GET /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
@@ -3001,6 +3153,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/scan/devices 200.items[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanDevices",
+    "op": "GET /api/v1/scan/devices",
+    "change": "200.items[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/devices 200.items[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanDevices",
+    "op": "GET /api/v1/scan/devices",
+    "change": "200.items[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field added",
     "class": "additive",
     "operationId": "scan.getScanLive",
@@ -3025,12 +3193,28 @@
     "note": "Roster entries of one pass share an opaque g; a door admits them as one."
   },
   {
+    "key": "GET /api/v1/scan/session 200.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
     "op": "GET /api/v1/scan/session",
     "change": "200.staff.pinResetRequired: field added",
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.draftFailures: field added",
@@ -3049,12 +3233,132 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
     "op": "GET /api/v1/scan/session",
     "change": "200.workspace.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "GET /api/v1/scan/visitors operation removed",
@@ -3065,12 +3369,28 @@
     "note": "Removed. Action: read who is inside with GET /scan/live/inside."
   },
   {
+    "key": "GET /api/v1/scanners 200.items[].deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.getScanners",
+    "op": "GET /api/v1/scanners",
+    "change": "200.items[].deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scanners 200.items[].staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.getScanners",
     "op": "GET /api/v1/scanners",
     "change": "200.items[].staff.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners/{id} 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.getScannersById",
+    "op": "GET /api/v1/scanners/{id}",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
     "key": "GET /api/v1/scanners/{id} 200.staff.name: now nullable",
@@ -3089,6 +3409,14 @@
     "note": "Callable with an org-bound scan-setup:read key; the poll never shows the code."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scanners.getScanningSessionsById",
@@ -3105,6 +3433,38 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
     "class": "additive",
     "operationId": "scanners.getScanningSessionsById",
@@ -3113,12 +3473,100 @@
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.getScanningSessionsById",
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].overrides.follows: field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
@@ -4376,6 +4824,14 @@
     "note": "Platform admins read and set custom Polaris ID claims on users and groups. Session only, with a recent sign-in; values are never stored or logged."
   },
   {
+    "key": "PATCH /api/v1/scan-setups/{id} 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "PATCH /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScanSetupsById",
@@ -4416,6 +4872,14 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "PATCH /api/v1/scanners/{id} 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScannersById",
@@ -4430,6 +4894,14 @@
     "op": "PATCH /api/v1/scanners/{id}",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.draftFailures: field added",
@@ -4448,6 +4920,38 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].configRevision: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -4456,12 +4960,100 @@
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].overrides.follows: field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
@@ -4480,6 +5072,14 @@
     "note": "Ending a session can revoke all its devices with removeDevices: true."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
@@ -4496,12 +5096,84 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.configRevision: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -4512,12 +5184,116 @@
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.alerts: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.alerts: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.coverage: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.coverage: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: optional input field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "body.overrides.follows: optional input field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.ownership: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.ownership: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.personalStaffId: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.personalStaffId: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.signInCeiling: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.signInCeiling: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
@@ -7025,6 +7801,14 @@
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
   },
   {
+    "key": "POST /api/v1/scan-setups 201.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "201.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan-staff 201.pin: now nullable",
     "class": "notable",
     "operationId": "scan-staff.postScanStaff",
@@ -7105,12 +7889,36 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
-    "key": "POST /api/v1/scan/actions body.approval.alone: optional input field added",
+    "key": "POST /api/v1/scan/actions 200.requestHash: field added",
     "class": "additive",
     "operationId": "scan.postScanActions",
     "op": "POST /api/v1/scan/actions",
-    "change": "body.approval.alone: optional input field added",
-    "note": "The only staff member who can approve sends alone: true with their own PIN to approve their own request; it is audited as scan.approved_alone."
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/actions body.approval.alone: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.approval.alone: input field removed",
+    "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
+  },
+  {
+    "key": "POST /api/v1/scan/actions body.approval.pin: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.approval.pin: input field removed",
+    "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
+  },
+  {
+    "key": "POST /api/v1/scan/actions body.approval.staffId: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.approval.staffId: input field removed",
+    "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
   },
   {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
@@ -7119,6 +7927,22 @@
     "op": "POST /api/v1/scan/batch",
     "change": "200.items[].outcome.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/batch 200.items[].outcome.requestHash: field added",
+    "class": "additive",
+    "operationId": "scan.postScanBatch",
+    "op": "POST /api/v1/scan/batch",
+    "change": "200.items[].outcome.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.draftFailures: field added",
@@ -7137,12 +7961,132 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "200.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scan/device body.capabilities.draftFailures: optional input field added",
@@ -7161,12 +8105,52 @@
     "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
   },
   {
+    "key": "POST /api/v1/scan/device body.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/mark-out 200.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanMarkOut",
     "op": "POST /api/v1/scan/mark-out",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/mark-out 200.requestHash: field added",
+    "class": "additive",
+    "operationId": "scan.postScanMarkOut",
+    "op": "POST /api/v1/scan/mark-out",
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/overrides 200.exitAllowed: field added",
@@ -7177,12 +8161,36 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
+    "key": "POST /api/v1/scan/overrides 200.requestHash: field added",
+    "class": "additive",
+    "operationId": "scan.postScanOverrides",
+    "op": "POST /api/v1/scan/overrides",
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.postScanPair",
     "op": "POST /api/v1/scan/pair",
     "change": "200.staff.pinResetRequired: field added",
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.draftFailures: field added",
@@ -7201,12 +8209,132 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/pair 200.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.postScanPair",
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
@@ -7225,12 +8353,36 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
+    "key": "POST /api/v1/scan/resolve 200.requestHash: field added",
+    "class": "additive",
+    "operationId": "scan.postScanResolve",
+    "op": "POST /api/v1/scan/resolve",
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
     "op": "POST /api/v1/scan/role",
     "change": "200.staff.pinResetRequired: field added",
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.draftFailures: field added",
@@ -7249,6 +8401,38 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -7257,12 +8441,132 @@
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
+    "key": "POST /api/v1/scan/role 200.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanScansByScanIdUndo",
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo 200.requestHash: field added",
+    "class": "additive",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo body.approval.pin: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "body.approval.pin: input field removed",
+    "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo body.approval.staffId: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "body.approval.staffId: input field removed",
+    "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo body.pin: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "body.pin: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
   },
   {
     "key": "POST /api/v1/scan/sign-out 200.stillInside: field added",
@@ -7297,12 +8601,28 @@
     "note": "A scans:write key naming a Desk terminal in x-passbook-device may sign a person out, as for /scan/actions."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.staff.pinResetRequired: field added",
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.draftFailures: field added",
@@ -7321,12 +8641,148 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.scanner.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.scanner.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.alerts: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.draftFailures: field added",
@@ -7337,12 +8793,132 @@
     "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
   },
   {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.configRevision: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.coverage: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.ownership: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -7377,6 +8953,14 @@
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
   },
   {
+    "key": "POST /api/v1/scanners 201.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "201.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanners 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanners",
@@ -7393,12 +8977,28 @@
     "note": "Callable with a live scanning:admin key (a device gets its code, once) or a scanning:write key (pairing: null, either mode)."
   },
   {
+    "key": "POST /api/v1/scanners/{id}/mode 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdMode",
+    "op": "POST /api/v1/scanners/{id}/mode",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanners/{id}/mode 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScannersByIdMode",
     "op": "POST /api/v1/scanners/{id}/mode",
     "change": "200.staff.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pair-here 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdPairHere",
+    "op": "POST /api/v1/scanners/{id}/pair-here",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
   },
   {
     "key": "POST /api/v1/scanners/{id}/pair-here 200.staff.name: now nullable",
@@ -7425,6 +9025,14 @@
     "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
   },
   {
+    "key": "POST /api/v1/scanners/{id}/revoke 200.deviceRole: enum value \"kiosk\" added",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdRevoke",
+    "op": "POST /api/v1/scanners/{id}/revoke",
+    "change": "200.deviceRole: enum value \"kiosk\" added",
+    "note": "Scanning devices may now be kiosk, monitor, customer or scan by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanners/{id}/revoke 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScannersByIdRevoke",
@@ -7449,6 +9057,14 @@
     "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.draftFailures: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -7465,12 +9081,84 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].configRevision: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "201.devices[].configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
@@ -7481,12 +9169,68 @@
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.draftFailures: field added",
@@ -7505,12 +9249,84 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.configRevision: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.configRevision: field added",
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -7521,6 +9337,78 @@
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.alerts: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.alerts: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.coverage: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.coverage: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.deviceRole: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.deviceRole: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -7529,12 +9417,60 @@
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.ownership: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.ownership: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.personalStaffId: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.personalStaffId: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.signInCeiling: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.signInCeiling: optional input field added",
+    "note": "Optional input for the SD0 approval contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "callable by scanning:admin and scanning:write keys",
     "note": "Callable with a live scanning:admin key (the code, once) or a scanning:write key (pairing: null, either mode)."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].alerts: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].alerts: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.draftFailures: field added",
@@ -7553,6 +9489,38 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.preferred: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.preferred: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.surfaces[]: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].configRevision: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdHold",
@@ -7561,12 +9529,100 @@
     "note": "Devices carry configRevision, a digest of name, surface and overrides; send it as revision on update. A device's own writes no longer make it stale."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].coverage: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].coverage: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].deviceRole: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].deviceRole: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].effectiveSurface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].effectiveSurface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].effectiveSurface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].effectiveSurface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdHold",
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].overrides.follows: field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].ownership: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].ownership: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].personalStaffId: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].personalStaffId: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].signInCeiling: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].signInCeiling: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].surface: enum value null added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].surface: enum value null added",
+    "note": "The surface is null for a device that has only a deviceRole."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"capacity\" added",
@@ -7623,6 +9679,22 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.sessions[].devices[].overrides.follows: field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].surface: enum value \"customer\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].devices[].surface: enum value \"customer\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].surface: enum value \"desk\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].devices[].surface: enum value \"desk\" removed",
+    "note": "The desk and customer surface roles are replaced by deviceRole."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"capacity\" added",
@@ -7687,6 +9759,14 @@
     "op": "POST /api/v1/scans/{id}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scans/{id}/undo 200.requestHash: field added",
+    "class": "additive",
+    "operationId": "scans.postScansByIdUndo",
+    "op": "POST /api/v1/scans/{id}/undo",
+    "change": "200.requestHash: field added",
+    "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
     "key": "POST /api/v1/status/incidents new operation",
@@ -8521,6 +10601,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "Scanning devices: deviceRole, staff fields, approval forms",
+    "class": "notable",
+    "operationId": "",
+    "op": "Scanning devices and scan approvals",
+    "change": "deviceRole added; surface narrowed; approval union",
+    "note": "Scanning devices gain deviceRole and Staff device fields; surface is phone, operator or auto, null on screens. Approvals take requestId or approveAs."
+  },
+  {
     "key": "Test key: shared org writes MODE_LIVE_REQUIRED added",
     "class": "notable",
     "operationId": "",
@@ -8567,13 +10655,5 @@
     "op": "Workbench token",
     "change": "template file reads: own rate limit",
     "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
-  },
-  {
-    "key": "Scanning devices: deviceRole, staff fields, approval forms",
-    "class": "notable",
-    "operationId": "",
-    "op": "Scanning devices and scan approvals",
-    "change": "deviceRole added; surface narrowed; approval union",
-    "note": "Scanning devices gain deviceRole and Staff device fields; surface is phone, operator or auto, null on screens. Approvals take requestId or approveAs."
   }
 ]

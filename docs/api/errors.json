@@ -311,6 +311,24 @@
       ]
     },
     {
+      "code": "APPROVAL_GRANT_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "APPROVE_AS_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "ARCHIVE_TOO_LARGE",
       "statuses": [
         413

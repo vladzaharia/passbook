@@ -3,4 +3,4 @@
 package passbook
 
 // apiVersion is the default PassBook-Version.
-const apiVersion = "2026-11-22"
+const apiVersion = "2026-11-28"
