@@ -206,5 +206,21 @@ export function demoPlans(ids: {
       holder: emailOf('Jonas Weber'),
     },
   );
+  // Spare members for the scanner sweep: each bridge run checks in two unscanned passes.
+  for (const [k, name] of [
+    'Ivy Park',
+    'Omar Haddad',
+    'Lena Fox',
+    'Theo Marsh',
+    'Ada Cole',
+    'Ravi Nair',
+    'Mina Sato',
+    'Ben Ortiz',
+  ].entries())
+    plans.push({
+      template: member,
+      org: northwind,
+      input: { holder: name, memberId: `NW-M${910 + k}`, tier: 'Plus', points: 100 + k * 20 },
+    });
   return plans;
 }

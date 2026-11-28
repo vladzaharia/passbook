@@ -140,7 +140,7 @@ describe('gallery groups and search', () => {
     expect(await screen.findByRole('link', { name: 'Access card' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Staff badge' })).toBeNull();
     const choice = screen.getByRole('radiogroup', { name: 'Access card for' });
-    await user.click(within(choice).getByRole('radio', { name: 'Business' }));
+    await user.click(within(choice).getByRole('radio', { name: 'Staff' }));
     expect(screen.getByRole('link', { name: 'Staff badge' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Staff badge' })).toBeInTheDocument();
     // The alias of either one finds the tile.

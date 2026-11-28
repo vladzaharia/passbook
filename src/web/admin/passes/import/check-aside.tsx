@@ -34,7 +34,10 @@ export function EmailSettings({
       />
       {on ? (
         <>
-          <FormField label={C.check.send}>
+          <FormField
+            label={C.check.send}
+            help={value.hold === 'now' ? undefined : C.check.undoHelp}
+          >
             {(c) => (
               <Select
                 {...c}

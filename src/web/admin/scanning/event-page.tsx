@@ -179,7 +179,7 @@ function EventDetail({
                 {admitting.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-2">
                     <Link
-                      className="inline-flex items-center text-accent-fg pointer-coarse:min-h-11"
+                      className="inline-flex items-center justify-center text-accent-fg pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                       to="/admin/o/$orgId/scanning/sessions/$sessionId"
                       params={{ orgId: s.orgId, sessionId: s.id }}
                     >
@@ -249,13 +249,13 @@ function EventDetail({
                       event.templateIds.includes(t.id),
                   )
                   .map((t) => (
-                    <p key={t.id} className="flex flex-wrap items-center text-sm">
+                    <p key={t.id} className="flex flex-wrap items-center gap-x-1 text-sm">
                       Result screen: {t.name}
                       {canAuthor && (t.orgId !== null || t.origin === 'baked' || isAdmin) ? (
                         <>
                           {' · '}
                           <a
-                            className="inline-flex items-center text-accent-fg pointer-coarse:min-h-11"
+                            className="inline-flex items-center justify-center text-accent-fg pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                             href={`/admin/templates/${encodeURIComponent(t.id)}/design?mode=scan`}
                           >
                             Edit

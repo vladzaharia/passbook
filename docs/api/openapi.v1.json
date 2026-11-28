@@ -89111,6 +89111,13 @@
                           ],
                           "minimum": 0
                         },
+                        "authTime": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
                         "consoleGroupRequired": {
                           "type": "boolean"
                         },
@@ -89169,6 +89176,7 @@
                   "csrfToken": "csrf_demo_northwind",
                   "amr": "oidc",
                   "consoleUntil": 1798790399999,
+                  "authTime": 5,
                   "consoleGroupRequired": false,
                   "expiresAt": 1798790399999
                 }

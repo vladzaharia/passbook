@@ -63,7 +63,7 @@ test('the sample CSV imports with 0 errors', async ({ page }, testInfo) => {
   await expect(page.getByRole('table', { name: 'Problems' })).toHaveCount(0);
   await sweep(page, 'sample-3-check');
 
-  await page.getByRole('button', { name: 'Create 1 pass', exact: true }).click();
+  await page.getByRole('button', { name: 'Import 1', exact: true }).click();
   await expect(page.getByText('1 done')).toBeVisible({ timeout: 60_000 });
   await sweep(page, 'sample-4-done');
 });
@@ -128,7 +128,7 @@ test('the export: fix 3 rows, issue, undo', async ({ page }) => {
 
   // Issue with the email held, so the undo window is open.
   await page.getByRole('switch', { name: 'Email new holders' }).click();
-  await page.getByRole('button', { name: `Create ${ROWS} passes`, exact: true }).click();
+  await page.getByRole('button', { name: `Import ${ROWS}`, exact: true }).click();
   await expect(page.getByText(`${ROWS} done`)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(new RegExp(`until ${ROWS} emails go out`))).toBeVisible();
   await sweep(page, 'export-4-issued');

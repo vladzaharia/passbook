@@ -44,7 +44,7 @@ const rank = (b: Summary) => {
   return i < 0 ? ORDER.length : i;
 };
 
-/** One tile: a blueprint, or the Access card with its Membership / Business choice. */
+/** One tile: a blueprint, or the Access card with its Member / Staff choice. */
 export interface Entry {
   id: string;
   group: BlueprintGroup | 'more';
@@ -52,8 +52,8 @@ export interface Entry {
 }
 
 const ACCESS = [
-  { slug: 'access-card', label: 'Membership' },
-  { slug: 'staff-badge', label: 'Business' },
+  { slug: 'access-card', label: 'Member' },
+  { slug: 'staff-badge', label: 'Staff' },
 ] as const;
 
 const groupOf = (b: Summary): Entry['group'] =>
