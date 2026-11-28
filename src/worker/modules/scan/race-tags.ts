@@ -7,3 +7,9 @@ export { RACE_GRANT_INSERT, RACE_KEYSET_INSERT } from '../../platform/race-tag.t
 export const RACE_MISS_COUNTER = '/* race:miss-counter */';
 export const RACE_CANDIDATE_READ = '/* race:candidate-read */';
 export const RACE_SEARCH_PAGE = '/* race:search-page */';
+
+// Group A
+export const RACE_HISTORY_PAGE = '/* race:history-page */';
+export const RACE_STAFF_STARTS = '/* race:staff-starts */';
+/** A RegExp matching a tag, for the interceptors that take one. */
+export const tagRe = (tag: string) => new RegExp(tag.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'));

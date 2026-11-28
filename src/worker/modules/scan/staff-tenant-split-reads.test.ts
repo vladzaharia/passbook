@@ -6,6 +6,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { RACE_STAFF_STARTS } from './race-tags.ts';
 import { getStaff } from './repo-staff.ts';
 import { createStaff, listStaff, resetStaffPin, updateStaff } from './staff-admin.ts';
 import { makeStaffTenantFixture, type StaffTenantFixture } from './staff-tenant-split-fixture.ts';
@@ -103,7 +104,7 @@ describe('staff read and response authority', () => {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) =>
-            sql.includes('SELECT s.csrf_secret,s.created_at,s.expires_at')
+            sql.includes('SELECT s.csrf_secret,s.created_at,s.expires_at') // sql-shape
               ? wrap(target.prepare(sql))
               : target.prepare(sql);
         const value = Reflect.get(target, prop, target);
@@ -132,7 +133,7 @@ describe('staff read and response authority', () => {
         get(target, prop) {
           if (prop === 'bind') return (...values: unknown[]) => wrap(target.bind(...values), sql);
           const value = Reflect.get(target, prop, target);
-          if (prop === 'all' && /\bstarts AS \(/i.test(sql)) {
+          if (prop === 'all' && sql.includes(RACE_STAFF_STARTS)) {
             return async (...values: unknown[]) => {
               if (!intercepted++) {
                 if (change === 'session revoked') {
@@ -166,7 +167,7 @@ describe('staff read and response authority', () => {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) =>
-            /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql), sql) : target.prepare(sql);
+            sql.includes(RACE_STAFF_STARTS) ? wrap(target.prepare(sql), sql) : target.prepare(sql);
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       },
@@ -207,7 +208,7 @@ describe('staff read and response authority', () => {
         get(target, prop) {
           if (prop === 'prepare')
             return (sql: string) =>
-              /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+              sql.includes(RACE_STAFF_STARTS) ? wrap(target.prepare(sql)) : target.prepare(sql);
           const value = Reflect.get(target, prop, target);
           return typeof value === 'function' ? value.bind(target) : value;
         },

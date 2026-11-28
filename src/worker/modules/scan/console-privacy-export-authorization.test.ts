@@ -15,6 +15,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
+import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
 
 setupPrivacyKit();
 
@@ -61,7 +62,7 @@ describe('scan console and feed privacy', () => {
       await recordedCheckIn(scanner, pass.id);
       const { result, fired } = await beforeBatch(
         kit.env,
-        /page AS MATERIALIZED/,
+        tagRe(RACE_HISTORY_PAGE),
         revoke(revoked),
         async () => {
           const response = await get(exportPath());

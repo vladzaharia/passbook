@@ -9,6 +9,7 @@ import {
 import { run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
 import {
   app,
   clock,
@@ -282,7 +283,7 @@ describe('scanner recent and summary privacy', () => {
     // snapshot answers and the next request shows the change.
     const early = await beforeBatch(
       env,
-      /page AS MATERIALIZED/,
+      tagRe(RACE_HISTORY_PAGE),
       (db) => setStatus(db, 'voided'),
       recent,
     );
@@ -290,7 +291,7 @@ describe('scanner recent and summary privacy', () => {
     expect(early.result).toMatchObject(redacted);
     const earlySummary = await beforeBatch(
       env,
-      /page AS MATERIALIZED/,
+      tagRe(RACE_HISTORY_PAGE),
       (db) => setStatus(db, 'voided'),
       async () => (await scannerGet(scanner.headers, '/summary')).json(),
     );
@@ -299,7 +300,7 @@ describe('scanner recent and summary privacy', () => {
     expect(await recent()).toMatchObject(shown);
     const late = await afterBatch(
       env,
-      /page AS MATERIALIZED/,
+      tagRe(RACE_HISTORY_PAGE),
       (db) => setStatus(db, 'voided'),
       recent,
     );
@@ -312,12 +313,12 @@ describe('scanner recent and summary privacy', () => {
     // request is refused.
     const revoke = (db: D1Database) =>
       run(db, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [clock.now(), scanner.id]);
-    const lateRevoke = await afterBatch(env, /page AS MATERIALIZED/, revoke, recent);
+    const lateRevoke = await afterBatch(env, tagRe(RACE_HISTORY_PAGE), revoke, recent);
     expect(lateRevoke.fired).toBe(true);
     expect(lateRevoke.result).toMatchObject({ status: 200, body: { items: [{ scanId: row.id }] } });
     expect((await recent()).status).toBe(401);
     await run(env.DB, 'UPDATE scanners SET revoked_at = NULL WHERE id = ?', [scanner.id]);
-    const earlyRevoke = await beforeBatch(env, /page AS MATERIALIZED/, revoke, recent);
+    const earlyRevoke = await beforeBatch(env, tagRe(RACE_HISTORY_PAGE), revoke, recent);
     expect(earlyRevoke.fired).toBe(true);
     expect(earlyRevoke.result.status).toBe(401);
   });

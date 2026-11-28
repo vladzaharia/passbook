@@ -1,5 +1,6 @@
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { dayStartMs } from './dto-console.ts';
+import { RACE_HISTORY_PAGE, RACE_STAFF_STARTS } from './race-tags.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
 import { HISTORY_COLUMNS, HISTORY_JOINS } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
@@ -53,7 +54,7 @@ export async function readStaffActivity(
   // The padded row of an unauthorized or empty page has no person: its person columns stay NULL.
   const ofPerson = (expr: string) => `CASE WHEN st.id IS NULL THEN NULL ELSE ${expr} END`;
   const zoneStarts = JSON.stringify(zones.map((zone) => ({ zone, since: dayStartMs(zone, now) })));
-  const ctes = `starts AS (SELECT ? AS zones), page AS MATERIALIZED (
+  const ctes = `${RACE_STAFF_STARTS} starts AS (SELECT ? AS zones), ${RACE_HISTORY_PAGE} page AS MATERIALIZED (
       SELECT ${auth.authorized('auth_ok')}, ${snapshotOk} AS snapshot_ok,
         st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
         st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
