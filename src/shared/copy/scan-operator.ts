@@ -90,7 +90,7 @@ export const OPERATOR_COPY = {
     offline: 'Offline',
     saved: 'Offline · {n} saved',
     syncing: 'Syncing',
-    reconnecting: 'Reconnecting',
+    reconnecting: 'Waiting for connection',
     test: 'Test',
     signIn: 'Sign in',
     more: 'More',
@@ -102,7 +102,7 @@ export const OPERATOR_COPY = {
     offline: 'Offline',
     synced: 'Synced {time}',
     live: 'Live',
-    reconnecting: 'Reconnecting',
+    reconnecting: 'Waiting for connection',
   },
   help: {
     title: 'Keyboard shortcuts',

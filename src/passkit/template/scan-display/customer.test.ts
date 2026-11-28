@@ -151,8 +151,8 @@ describe('renderCustomerView', () => {
   it('names the ok headline from the caller, with the system words as its default', () => {
     expect(okHeadline({})).toBe('Checked in');
     expect(okHeadline({ direction: 'out' })).toBe('Checked out');
-    expect(okHeadline({ event: true })).toBe('Checked in');
-    expect(okHeadline({ access: true })).toBe('Checked in');
+    expect(okHeadline({ direction: 'in' })).toBe('Checked in');
+    expect(okHeadline({ direction: null })).toBe('Checked in');
     const paid = opts('ok', { headline: 'Paid $12.00', sub: 'Balance $30.50' });
     expect(renderCustomerView(named, scope, paid).band).toEqual({
       headline: 'Paid $12.00',

@@ -15,6 +15,7 @@ import {
 } from './scan-base.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
 import { ScanOccupancySchema, ScanPlaceCountSchema } from './scan-occupancy.ts';
+import { ScanReasonSchema } from './scan-reasons.ts';
 import { ScanValueSchema } from './scan-value.ts';
 
 export { type ScanAccess, ScanAccessSchema } from './scan-access.ts';
@@ -32,6 +33,12 @@ export { type ScanTarget, ScanTargetSchema } from './scan-target.ts';
 import { ScanBundleSchema, ScanGroupMemberSchema } from './scan-group.ts';
 
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
+export {
+  SCAN_HEADS_UP_REASONS,
+  SCAN_REFUSED_REASONS,
+  type ScanReason,
+  ScanReasonSchema,
+} from './scan-reasons.ts';
 export { ScanValueSchema } from './scan-value.ts';
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
@@ -56,54 +63,6 @@ export type ScanOutcomeKind = z.infer<typeof ScanOutcomeKindSchema>;
 export const ScanRecordOutcomeSchema = z.enum(['ok', 'heads_up', 'refused']);
 /** What `scans.action_kind` can hold: the action kinds, and `undo` for the row an undo writes. */
 export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'undo']);
-/** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
-export const SCAN_REFUSED_REASONS = [
-  'not_found',
-  'code_replaced',
-  'ambiguous',
-  'test_pass',
-  'live_pass',
-  'not_accepted',
-  'wrong_event',
-  'removed',
-  'voided',
-  'expired',
-  'no_balance',
-  'card_full',
-  'managed_elsewhere',
-  'limit_reached',
-  'zone_not_included',
-  'outside_hours',
-  'guest_expired',
-  'guest_visits_used',
-  'suspended',
-  'tag_lost',
-  'tag_not_allowed',
-  'tag_invalid',
-  'tag_expired',
-  'channel_off',
-  'print_replaced',
-  'print_voided',
-] as const;
-export const SCAN_HEADS_UP_REASONS = [
-  'already_done',
-  'cooldown',
-  'not_yet_valid',
-  'ended',
-  'capacity_full',
-  'check_required',
-  'needs_approval',
-  'stale',
-  'in_progress',
-  'still_inside',
-  'not_inside',
-] as const;
-export const ScanReasonSchema = z.enum([
-  ...SCAN_REFUSED_REASONS,
-  ...SCAN_HEADS_UP_REASONS,
-  'choose',
-]);
-export type ScanReason = z.infer<typeof ScanReasonSchema>;
 export const ScannerSettingsSchema = z.object({
   checkIn: CheckInPolicySchema.optional(),
   direction: SetupDirectionSchema.optional(),
@@ -126,9 +85,9 @@ export const ScannerSettingsSchema = z.object({
   approvals: z.enum(['managers', 'desk']).optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
+  /** Absent: the role's theme (`appearanceOf`). */
   appearance: z.enum(['system', 'light', 'dark']).optional(),
-  /** Absent: the role's theme (`appearanceOf`); an absent audience is `public` (`audienceOf`). */
-  /** `public` shows no names, reasons or refusals. */
+  /** `public` shows no names, reasons or refusals; absent is `public` (`audienceOf`). */
   monitorAudience: z.enum(['public', 'staff']).optional(),
 });
 export type ScannerSettings = z.infer<typeof ScannerSettingsSchema>;

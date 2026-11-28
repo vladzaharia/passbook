@@ -131,10 +131,7 @@ function customerRow(
           screen: 'ok',
           // The receipt names the value, so it rides a visible pass like the doc-named panel.
           say: receiptSay(recipient, visible ? entry.receipt : null) ?? {
-            headline: okHeadline({
-              direction: row.direction,
-              event: entry.eventId !== null && entry.eventId !== undefined,
-            }),
+            headline: okHeadline({ direction: row.direction }),
             sub: null,
           },
         })

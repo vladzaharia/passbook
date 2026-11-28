@@ -89,7 +89,7 @@ export const SCAN_TAG_COPY = {
       headline: 'This tag changes its ID',
       sub: "It can't be assigned. Try another tag.",
     },
-    notAssigned: { headline: 'Not assigned', sub: 'No connection. Try again.' },
+    notAssigned: { headline: 'Not assigned', sub: 'Offline. Try again.' },
     tooMany: {
       headline: 'Too many tries',
       sub: 'Try again in {seconds} s.',

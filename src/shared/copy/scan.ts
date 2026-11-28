@@ -1,4 +1,5 @@
 import type { ScanReason } from '../contracts/scan.ts';
+import { CUSTOMER_COPY } from './scan-customer.ts';
 import { SCAN_HELP_COPY } from './scan-help.ts';
 import { SCAN_TAG_COPY } from './scan-tags.ts';
 
@@ -262,11 +263,11 @@ export const SCAN_COPY = {
   },
   /** What a public screen says: no subject, no reason beyond the four subs (`CUSTOMER_REASON_SUB`). */
   public: {
-    seeDesk: 'Please see the desk',
+    seeDesk: CUSTOMER_COPY.refusedLine,
     notFound: "We couldn't find you",
     paused: 'Back soon',
     offline: 'Offline',
-    offlineLine: 'Waiting for connection',
+    offlineLine: CUSTOMER_COPY.reconnecting,
   },
   direction: { in: 'In', out: 'Out', auto: 'Auto' },
   /** The mode a device scans in. */

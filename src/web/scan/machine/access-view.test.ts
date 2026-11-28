@@ -166,7 +166,7 @@ describe('direction pill, beat and holds', () => {
     ]);
     expect(holdVerbs(fixtureOutcome('refused', 'voided'))).toEqual([]);
   });
-  it('a repeat says Let in; a first entry says Let in', () => {
+  it('a hold offers Let in; needs_approval offers none', () => {
     const zone = heldIn({ occupancy: { ...heldIn().occupancy!, turnaround: null } });
     expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in' }]);
     expect(holdVerbs(full())).toEqual([{ kind: 'letIn', label: 'Let in' }]);

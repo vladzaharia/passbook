@@ -71,7 +71,7 @@ describe('the dock under a verdict', () => {
     );
     expect(screen.getByRole('button', { name: 'Let in' })).toBeVisible();
   });
-  it('says Let in for a first entry and Let in only for a repeat', () => {
+  it('labels the hold button Let in for every holdable reason', () => {
     const cases = [
       ['capacity_full', 'Let in'],
       ['not_yet_valid', 'Let in'],

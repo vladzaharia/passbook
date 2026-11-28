@@ -44,12 +44,8 @@ export type CustomerViewOptions =
   | (CustomerViewBase & { screen: 'ready' | 'see_desk'; headline?: undefined });
 
 /** The system headline of an ok body that carries no value receipt. */
-export function okHeadline(o: {
-  access?: boolean;
-  direction?: 'in' | 'out' | null;
-  event?: boolean;
-}): string {
-  return o.direction === 'out' && !o.access ? CUSTOMER_COPY.checkedOut : CUSTOMER_COPY.checkedIn;
+export function okHeadline(o: { direction?: 'in' | 'out' | null }): string {
+  return o.direction === 'out' ? CUSTOMER_COPY.checkedOut : CUSTOMER_COPY.checkedIn;
 }
 
 const omit = <T extends object>(value: T, keys: readonly string[]): T =>

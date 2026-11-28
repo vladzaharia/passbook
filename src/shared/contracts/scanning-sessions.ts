@@ -48,6 +48,8 @@ export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   direction: true,
   lookup: true,
   showPhoto: true,
+  monitorAudience: true,
+  appearance: true,
 })
   .extend({ follows: z.array(IdSchema).min(1).max(SESSION_DEVICE_CAP).optional() }) // absent: all
   .partial()

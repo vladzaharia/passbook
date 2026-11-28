@@ -2,6 +2,7 @@ import { Monitor } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { CUSTOMER_COPY } from '../../../shared/copy/scan-customer.ts';
 import { Button } from '../../ui/button.tsx';
 import { CustomerStage } from '../customer-stage.tsx';
@@ -231,7 +232,7 @@ export function LiveScreen({
         </span>
         <MonitorHardware online={connected} />
         <span role="status" className="scan-live-status" data-connected={connected}>
-          {connected ? 'Live' : 'Reconnecting…'}
+          {connected ? 'Live' : SCAN_COPY.public.offlineLine}
         </span>
       </header>
       <MonitorBoard
