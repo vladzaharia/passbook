@@ -208,9 +208,8 @@ export const CATALOG_V1: Catalog = {
     autoUp: { on: true, listed: false, plans: ['starter', 'standard', 'business'] },
   },
   terms: {
-    cheapestPlan: true,
     overageCap: { default: 'next_plan_price', alertsPct: [50, 80, 100] },
     discountClass: { pct: 25, onPlan: true, onAddons: true, onExtras: false, withAnnual: false },
-    hold: { months: 3, undoDays: 7, onCheapestPlanMonth: false },
+    hold: { months: 3, undoDays: 7 },
   },
 };

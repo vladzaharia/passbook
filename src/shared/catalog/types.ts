@@ -161,12 +161,10 @@ export interface CatalogSwitches {
 }
 
 export interface CatalogTerms {
-  /** Each month is billed on the cheapest plan that covers it, own plan and sellable plans above. */
-  cheapestPlan: true;
   /** The overage cap always clamps: new passes pause at it and extras past it are never billed. */
   overageCap: { default: 'next_plan_price'; alertsPct: readonly number[] };
   discountClass: { pct: number; onPlan: true; onAddons: true; onExtras: false; withAnnual: false };
-  hold: { months: number; undoDays: number; onCheapestPlanMonth: false };
+  hold: { months: number; undoDays: number };
 }
 
 export interface Catalog {

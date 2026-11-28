@@ -120,7 +120,7 @@ describe('catalog v1', () => {
     expect(c.switches.allAccessUptime.on).toBe(false);
     expect(c.terms.overageCap).toEqual({ default: 'next_plan_price', alertsPct: [50, 80, 100] });
     expect(c.terms.discountClass.pct).toBe(25);
-    expect(c.terms.hold).toEqual({ months: 3, undoDays: 7, onCheapestPlanMonth: false });
+    expect(c.terms.hold).toEqual({ months: 3, undoDays: 7 });
   });
 
   it('uses only generated icons', () => {
