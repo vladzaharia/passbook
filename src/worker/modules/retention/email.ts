@@ -17,7 +17,7 @@ export function noticeEmail(base: string, subject: string, body: string) {
       title: subject,
       header: 'PassBook',
       ...(images
-        ? { headerMark: `${base}/apple-touch-icon.png`, buddy: { base, mood: 'happy', tier: 'l' } }
+        ? { headerMark: `${base}/apple-touch-icon.png`, buddy: { base, mood: 'happy' } }
         : {}),
       body: html,
     }),

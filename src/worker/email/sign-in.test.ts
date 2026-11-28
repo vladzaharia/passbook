@@ -83,7 +83,7 @@ describe('code first (asked from the installed app)', () => {
     const { subject, html } = codeFirst();
     expect(subject).toBe('Your sign-in code');
     expect(html).toContain('<title>Your sign-in code</title>');
-    expect(html).toMatch(/font-weight:600;letter-spacing:-0\.015em;[^"]*">Your sign-in code<\/p>/);
+    expect(html).toMatch(/font-weight:600;letter-spacing:-0\.015em;[^"]*">Your sign-in code<\/h1>/);
     const chip = html.indexOf('>123456</span>');
     const or = html.indexOf('>Or open this link</p>');
     const button = html.indexOf('class="e-block"');
@@ -102,7 +102,7 @@ describe('code first (asked from the installed app)', () => {
 
   it('keeps the seated buddy, the mark and the expiry line', () => {
     const { html } = codeFirst();
-    expect(buddyTag(html)).toContain('buddy-happy-light-top-2x.png');
+    expect(buddyTag(html)).toContain('buddy-m-happy-light-top-2x.png');
     expect(html).toContain('apple-touch-icon.png');
     expect(html).toContain(
       'Expires in 15 minutes. Ignore this email if you did not ask for it.</p>',
@@ -132,22 +132,22 @@ describe('code first (asked from the installed app)', () => {
 
 describe('seated buddy', () => {
   const top = (mood: string, scheme: string, d: number) =>
-    `${BASE}/email/buddy-${mood}-${scheme}-top-${d}x.png`;
+    `${BASE}/email/buddy-${mood === 'happy' ? 'm-' : ''}${mood}-${scheme}-top-${d}x.png`;
 
   it('is happy when a sign-in link is sent and curious when an address is confirmed', () => {
     expect(SIGN_IN_MOOD).toEqual({ sign_in: 'happy', verify_email: 'curious' });
     expect(buddyTag(signIn().html)).toContain(`src="${top('happy', 'light', 2)}"`);
     expect(buddyTag(verify().html)).toContain(`src="${top('curious', 'light', 2)}"`);
     expect(signIn().html).not.toContain('buddy-curious');
-    expect(verify().html).not.toContain('buddy-happy');
+    expect(verify().html).not.toContain('buddy-m-happy');
   });
 
   it('is decorative, fixed-size, from PUBLIC_BASE_URL, with 3x and dark sources', () => {
     const tag = buddyTag(signIn().html) ?? '';
     expect(tag).toContain('alt=""');
     expect(tag).toContain('role="presentation"');
-    // L: the sign-in email is PassBook's own band.
-    expect(tag).toContain(`width="${EMAIL_BUDDY.l.width}" height="${EMAIL_BUDDY.l.seam}"`);
+    // M for every email: 96 px.
+    expect(tag).toContain(`width="${EMAIL_BUDDY.m.width}" height="${EMAIL_BUDDY.m.seam}"`);
     expect(tag).toContain('border="0"');
     expect(tag).toContain(
       `srcset="${top('happy', 'light', 2)} 2x, ${top('happy', 'light', 3)} 3x"`,
@@ -165,17 +165,17 @@ describe('seated buddy', () => {
     expect(html.indexOf('PassBook</td>')).toBeLessThan(at);
     expect(at).toBeLessThan(html.indexOf('class="e-card"'));
     expect(html.indexOf('class="e-seam"')).toBeLessThan(legs);
-    expect(legs).toBeLessThan(html.indexOf('Sign in to PassBook</p>'));
+    expect(legs).toBeLessThan(html.indexOf('Sign in to PassBook</h1>'));
     expect(legs).toBeLessThan(html.indexOf('class="e-btn"'));
     // Table cells only: the top on the band's bottom edge, the legs from the seam row's top.
     expect(html).toMatch(
       new RegExp(
-        `<td valign="bottom" align="right" width="${EMAIL_BUDDY.l.width}" style="[^"]*vertical-align:bottom;font-size:0;line-height:0"><picture>`,
+        `<td valign="bottom" align="right" width="${EMAIL_BUDDY.m.width}" style="[^"]*vertical-align:bottom;font-size:0;line-height:0"><picture>`,
       ),
     );
     expect(html).toMatch(
       new RegExp(
-        `<td class="e-seam" align="right" valign="top" style="height:${EMAIL_BUDDY.l.legs}px;[^"]*background-size:100% 2px;`,
+        `<td class="e-seam" align="right" valign="top" style="height:${EMAIL_BUDDY.m.legs}px;[^"]*background-size:100% 2px;`,
       ),
     );
   });

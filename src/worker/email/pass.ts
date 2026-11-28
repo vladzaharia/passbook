@@ -143,12 +143,7 @@ function actionsHtml(input: PassEmailInput): string {
   const badge = input.downloadUrl
     ? `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`
     : null;
-  const print = safeUrl(input.printUrl);
-  const items = [
-    ...(badge ? [badge] : []),
-    badgeButtonHtml(input.manageUrl, OPEN_LABEL),
-    ...(print ? [badgeButtonHtml(print, PRINT_LABEL)] : []),
-  ];
+  const items = [...(badge ? [badge] : []), badgeButtonHtml(input.manageUrl, OPEN_LABEL)];
   const [first, second] = items;
   if (badge && items.length === 2 && first && second) return stackHtml(first, second);
   const rows = items
@@ -159,6 +154,10 @@ function actionsHtml(input: PassEmailInput): string {
     .join('');
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 ${badge ? 4 : 24}px;border-collapse:collapse">${rows}</table>`;
 }
+
+/** Print is a link under the one button, not a second button. */
+const printLinkHtml = (url: string) =>
+  `<p style="margin:8px 0 16px"><a class="e-link" href="${escapeHtml(url)}" style="${type('sm')};color:${c.text};text-decoration:underline">${PRINT_LABEL}</a></p>`;
 
 /** Only render capability links for the same pass as the Apple and public-page links. */
 function emailWalletOffers(
@@ -236,6 +235,7 @@ ${input.notice ? muted('0 0 16px', escapeHtml(input.notice.line)) : ''}
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
+${printUrl ? printLinkHtml(printUrl) : ''}
 ${input.downloadUrl ? muted('0 0 24px', ADD_LINE) : ''}
 ${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
@@ -251,7 +251,7 @@ ${footer.html}`;
     header: input.orgName,
     ...(mark ? { headerMark: mark } : {}),
     ...(input.brand ? { brand: input.brand } : {}),
-    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD, tier: 'm' } } : {}),
+    ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD } } : {}),
     body,
   });
   const sender = input.senderName?.trim();

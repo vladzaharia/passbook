@@ -61,7 +61,7 @@ ${alt ? `<p class="e-muted" style="margin:0 0 16px;${type('xs')};color:${c.muted
       ...(images
         ? {
             headerMark: `${input.base}/apple-touch-icon.png`,
-            buddy: { base: input.base, mood: 'happy', tier: 'l' },
+            buddy: { base: input.base, mood: 'happy' },
           }
         : {}),
       body,
