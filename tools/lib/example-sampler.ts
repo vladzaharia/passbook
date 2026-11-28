@@ -173,6 +173,7 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
       /^(version|templateVersion|activeVersion|baseVersion|fromVersion|toVersion|appVersion)$/,
       () => (k === 'appVersion' ? '1.4.2' : TEXT.version),
     ],
+    [/^firmware$/, '1.3.1'],
     [/^timeZone$|^effectiveTimeZone$/, TEXT.timeZone],
     [/^locale$/, TEXT.locale],
     [/^currency$/, 'USD'],

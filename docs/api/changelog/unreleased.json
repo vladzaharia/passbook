@@ -318,7 +318,7 @@
     "operationId": "scan.deleteScanStaff",
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -406,7 +406,7 @@
     "operationId": "scan.deleteScanStaff",
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.nfcReaderStatus: field added",
@@ -414,7 +414,7 @@
     "operationId": "scan.deleteScanStaff",
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.ownership: field added",
@@ -3398,7 +3398,7 @@
     "operationId": "scan.getScanSession",
     "op": "GET /api/v1/scan/session",
     "change": "200.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -3486,7 +3486,7 @@
     "operationId": "scan.getScanSession",
     "op": "GET /api/v1/scan/session",
     "change": "200.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.nfcReaderStatus: field added",
@@ -3494,7 +3494,7 @@
     "operationId": "scan.getScanSession",
     "op": "GET /api/v1/scan/session",
     "change": "200.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.ownership: field added",
@@ -3630,7 +3630,7 @@
     "operationId": "scanners.getScanningSessionsById",
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
@@ -3718,7 +3718,7 @@
     "operationId": "scanners.getScanningSessionsById",
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].nfcReaderStatus: field added",
@@ -3726,7 +3726,7 @@
     "operationId": "scanners.getScanningSessionsById",
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -5181,7 +5181,7 @@
     "operationId": "scanners.patchScanningSessionsById",
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
@@ -5269,7 +5269,7 @@
     "operationId": "scanners.patchScanningSessionsById",
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].nfcReaderStatus: field added",
@@ -5277,7 +5277,7 @@
     "operationId": "scanners.patchScanningSessionsById",
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -5389,7 +5389,7 @@
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.preferred: enum value \"customer\" removed",
@@ -5477,7 +5477,7 @@
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.nfcReaderStatus: field added",
@@ -5485,7 +5485,7 @@
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -8302,7 +8302,7 @@
     "operationId": "scan.postScanActions",
     "op": "POST /api/v1/scan/actions",
     "change": "body.input|2.tag.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/actions body.input|2.tag.source: enum value \"reader\" added",
@@ -8310,7 +8310,7 @@
     "operationId": "scan.postScanActions",
     "op": "POST /api/v1/scan/actions",
     "change": "body.input|2.tag.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
@@ -8366,7 +8366,7 @@
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "200.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8454,7 +8454,7 @@
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "200.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.nfcReaderStatus: field added",
@@ -8462,7 +8462,7 @@
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "200.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.ownership: field added",
@@ -8542,7 +8542,7 @@
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "body.capabilities.nfcReader: optional input field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/device body.capabilities.preferred: enum value \"customer\" removed",
@@ -8662,7 +8662,7 @@
     "operationId": "scan.postScanPair",
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8750,7 +8750,7 @@
     "operationId": "scan.postScanPair",
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.nfcReaderStatus: field added",
@@ -8758,7 +8758,7 @@
     "operationId": "scan.postScanPair",
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.ownership: field added",
@@ -8846,7 +8846,7 @@
     "operationId": "scan.postScanResolve",
     "op": "POST /api/v1/scan/resolve",
     "change": "body.input|2.tag.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/resolve body.input|2.tag.source: enum value \"reader\" added",
@@ -8854,7 +8854,7 @@
     "operationId": "scan.postScanResolve",
     "op": "POST /api/v1/scan/resolve",
     "change": "body.input|2.tag.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scan/role 200.scanner.deviceRole: enum value \"kiosk\" added",
@@ -8910,7 +8910,7 @@
     "operationId": "scan.postScanRole",
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8998,7 +8998,7 @@
     "operationId": "scan.postScanRole",
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.nfcReaderStatus: field added",
@@ -9006,7 +9006,7 @@
     "operationId": "scan.postScanRole",
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.ownership: field added",
@@ -9118,7 +9118,7 @@
     "operationId": "scan.postScanSignOut",
     "op": "POST /api/v1/scan/sign-out",
     "change": "body.read.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/sign-out body.read.source: enum value \"reader\" added",
@@ -9126,7 +9126,7 @@
     "operationId": "scan.postScanSignOut",
     "op": "POST /api/v1/scan/sign-out",
     "change": "body.read.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scan/sign-out keys: accepted at a Desk terminal",
@@ -9190,7 +9190,7 @@
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -9278,7 +9278,7 @@
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scan/staff 200.workspace.device.nfcReaderStatus: field added",
@@ -9286,7 +9286,7 @@
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scan/staff 200.workspace.device.ownership: field added",
@@ -9374,7 +9374,7 @@
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -9462,7 +9462,7 @@
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.nfcReaderStatus: field added",
@@ -9470,7 +9470,7 @@
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.ownership: field added",
@@ -9534,7 +9534,7 @@
     "operationId": "scan.postScanTagEnrollmentsByIdComplete",
     "op": "POST /api/v1/scan/tag-enrollments/{id}/complete",
     "change": "body.tag.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/tag-enrollments/{id}/complete body.tag.source: enum value \"reader\" added",
@@ -9542,7 +9542,7 @@
     "operationId": "scan.postScanTagEnrollmentsByIdComplete",
     "op": "POST /api/v1/scan/tag-enrollments/{id}/complete",
     "change": "body.tag.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scan/tags/bind 200.opensDefault: field added",
@@ -9566,7 +9566,7 @@
     "operationId": "scan.postScanTagsBind",
     "op": "POST /api/v1/scan/tags/bind",
     "change": "body.tag.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/tags/bind body.tag.source: enum value \"reader\" added",
@@ -9574,7 +9574,7 @@
     "operationId": "scan.postScanTagsBind",
     "op": "POST /api/v1/scan/tags/bind",
     "change": "body.tag.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scan/tags/bindings/{bindingId}/undo TAG_HOLDER_CHANGED: new code",
@@ -9590,7 +9590,7 @@
     "operationId": "scan.postScanTagsInspect",
     "op": "POST /api/v1/scan/tags/inspect",
     "change": "body.tag.source: enum value \"keyboard\" added",
-    "note": ""
+    "note": "A tag ID typed by a keyboard-mode reader is sent with source keyboard and no ndef."
   },
   {
     "key": "POST /api/v1/scan/tags/inspect body.tag.source: enum value \"reader\" added",
@@ -9598,7 +9598,7 @@
     "operationId": "scan.postScanTagsInspect",
     "op": "POST /api/v1/scan/tags/inspect",
     "change": "body.tag.source: enum value \"reader\" added",
-    "note": ""
+    "note": "A tag read from an external NFC reader is sent with source reader."
   },
   {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
@@ -9758,7 +9758,7 @@
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "201.devices[].capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.preferred: enum value \"customer\" removed",
@@ -9846,7 +9846,7 @@
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "201.devices[].nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].nfcReaderStatus: field added",
@@ -9854,7 +9854,7 @@
     "operationId": "scanners.postScanningSessions",
     "op": "POST /api/v1/scanning-sessions",
     "change": "201.devices[].nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
@@ -9958,7 +9958,7 @@
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.preferred: enum value \"customer\" removed",
@@ -10046,7 +10046,7 @@
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.nfcReaderStatus: field added",
@@ -10054,7 +10054,7 @@
     "operationId": "scanners.postScanningSessionsByIdDevices",
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -10230,7 +10230,7 @@
     "operationId": "scanners.postScanningSessionsByIdHold",
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.nfcReader: field added",
-    "note": ""
+    "note": "A device report may carry the external NFC reader state: no tag data, no serial beyond the label."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.preferred: enum value \"customer\" removed",
@@ -10318,7 +10318,7 @@
     "operationId": "scanners.postScanningSessionsByIdHold",
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].nfcReader: field added",
-    "note": ""
+    "note": "The device setting for an external NFC reader."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].nfcReaderStatus: field added",
@@ -10326,7 +10326,7 @@
     "operationId": "scanners.postScanningSessionsByIdHold",
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].nfcReaderStatus: field added",
-    "note": ""
+    "note": "The external NFC reader a device last reported; null when none."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
