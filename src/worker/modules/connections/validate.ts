@@ -103,14 +103,18 @@ export async function assertTemplateUsable(
     (scope.orgId !== null && scope.orgId !== orgId) ||
     (scope.orgId === null && !(await templateVisibleToOrg(sctx.env.DB, templateId, orgId)))
   ) {
-    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
+    throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND', [
+      { path: 'defaultTemplateId', message: 'Template not found.' },
+    ]);
   }
   if (scope.blueprint) throw blueprintRefusal();
 }
 
 export async function assertOrg(sctx: ServiceContext, orgId: string): Promise<void> {
   if (!(await orgIsActive(sctx.env.DB, orgId))) {
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND', [
+      { path: 'orgId', message: 'Organization not found.' },
+    ]);
   }
 }
 

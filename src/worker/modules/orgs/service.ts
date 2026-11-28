@@ -62,6 +62,7 @@ async function checkIdentity(ctx: ServiceContext, orgId: string | null, identity
     throw new NotFoundError(
       'Default identity not found for this organization.',
       'IDENTITY_NOT_FOUND',
+      [{ path: 'defaultIdentityId', message: 'Unknown identity.' }],
     );
 }
 
