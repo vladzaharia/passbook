@@ -112,7 +112,7 @@ export const DEV_COPY = {
     },
     guides: {
       title: 'Guides',
-      line: 'Each recipe runs in your sandbox and ends at a test preview.',
+      meta: 'PassBook API guides.',
     },
   },
   notFound: {

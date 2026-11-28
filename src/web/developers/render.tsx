@@ -218,7 +218,7 @@ export function renderSite(
   page(
     PATHS.guides,
     DEV_COPY.slots.guides.title,
-    DEV_COPY.slots.guides.line,
+    DEV_COPY.slots.guides.meta,
     'guides',
     <GuidesIndex guides={guides} />,
     { dir: true, md: guidesIndexMarkdown(guides) },
