@@ -21,7 +21,6 @@ export const IMPORT_COPY = {
   pasteLabel: 'Rows',
   pastePlaceholder: 'Name,Email,Id\nMaya,maya@example.com,A1',
   linkLabel: 'Link',
-  linkHelp: 'In Google Sheets: File › Share › Publish to web › CSV.',
   xlsx: 'Save the sheet as CSV first.',
   notUtf8: 'The file is not UTF-8. Save it as CSV UTF-8.',
   savedColumns: 'A saved column is not in this file. Choose it again.',
@@ -44,7 +43,6 @@ export const IMPORT_COPY = {
     byEmail: 'Email',
     byNone: "Don't match",
     keepManual: "Don't overwrite edits made in the console",
-    keepManualHelp: 'Off: the file overwrites them.',
     save: 'Remember this mapping',
     needExternalId: 'Map an External ID column to match on it.',
     needEmail: 'Map a Holder email column to match on it.',
@@ -106,13 +104,9 @@ export const IMPORT_COPY = {
   source: {
     way: 'Source',
     file: 'Spreadsheet',
-    fileHint: 'CSV, paste or a sheet link',
     connection: 'Connection',
-    connectionHint: 'Shopify, Stripe, WooCommerce and more',
-    connectionBody: 'A connection keeps passes in step with another system.',
     connectionGo: 'Set up a connection',
     api: 'API',
-    apiHint: 'POST /pass-imports',
     apiGo: 'Developer docs',
     remove: 'Remove file',
     shape: (rows: number, columns: number) =>
@@ -144,7 +138,6 @@ export const IMPORT_COPY = {
     sameNote: (n: number) =>
       `${n} ${n === 1 ? 'row already matches' : 'rows already match'}. Nothing to do.`,
     send: 'Send',
-    undoHelp: 'Undo before then and no one is emailed.',
     emailLine: (emailable: number, budget: number) =>
       `${emailable} have an email · ${budget} left today`,
     template: 'Template',
@@ -155,7 +148,6 @@ export const IMPORT_COPY = {
   sheet: {
     title: 'Import',
     email: 'Email new holders',
-    noEmail: 'No new holder has an email.',
   },
   run: {
     leave: 'You can leave this page.',

@@ -143,9 +143,7 @@ export function MigrationSection() {
             Run migration
           </Button>
         }
-      >
-        Serving stays blocked while any account has no credential source.
-      </Callout>
+      />
       <DataTable
         caption="Legacy wallet accounts"
         loading={report.isPending}

@@ -118,7 +118,6 @@ export function MatchSettings({
       {state.find === 'none' ? null : (
         <SwitchRow
           label={C.match.keepManual}
-          help={C.match.keepManualHelp}
           checked={value.keepManual}
           onCheckedChange={(keepManual) => onValue({ ...value, keepManual })}
         />

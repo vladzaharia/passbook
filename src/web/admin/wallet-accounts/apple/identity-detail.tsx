@@ -108,7 +108,6 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
             <Badge>{orgName(identity.orgId)}</Badge>
             {identity.isDefault ? <StatusPill status="default" /> : null}
             <span className="font-mono text-xs">{identity.passTypeIdentifier}</span>
-            {uploaded ? null : <span>From environment</span>}
           </>
         }
         actions={

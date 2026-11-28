@@ -90,10 +90,7 @@ export function CheckInFields({
           )}
         </FormField>
       ))}
-      <FormField
-        label="Duration in minutes"
-        help="Optional. Measured from issue or the first successful scan."
-      >
+      <FormField label="Duration in minutes">
         {(p) => (
           <NumberField
             {...p}

@@ -160,7 +160,6 @@ describe('check', () => {
     });
     await user.click(await screen.findByRole('switch', { name: 'Email new holders' }));
     expect(screen.getByRole('combobox', { name: /Send/ }).textContent).toContain('After 5 min');
-    expect(screen.getByText('Undo before then and no one is emailed.')).toBeTruthy();
     await user.click(
       screen.getByRole('button', { name: 'Create 120 and update 40 (skip 3 errors)' }),
     );
@@ -193,7 +192,6 @@ describe('check', () => {
     });
     const sw = await screen.findByRole('switch', { name: 'Email new holders' });
     expect(sw).toHaveProperty('disabled', true);
-    expect(screen.getByText('No new holder has an email.')).toBeTruthy();
   });
 
   it('offers a re-check when the template moved, and blocks commit meanwhile', async () => {

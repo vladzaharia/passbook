@@ -94,11 +94,7 @@ export function SettingsFormContent({
                 resets.has(field.key) ? 'Reset pending' : changedField ? 'Not saved' : null,
               ].filter(Boolean)
             : [];
-        const ceiling = !platform && entry?.ceiling !== undefined ? entry.ceiling : undefined;
-        const unset = !platform && entry?.source === 'default' && entry.default != null;
         const orgParts = [
-          ceiling === undefined ? null : `Up to ${ceiling}${field.unit ? ` ${field.unit}` : ''}`,
-          unset && !changedField ? 'Default' : null,
           entry?.blockedByPlatform ? 'Off for all organizations.' : null,
           entry?.blockedByPlan ? NOT_INCLUDED : null,
         ].filter(Boolean);
