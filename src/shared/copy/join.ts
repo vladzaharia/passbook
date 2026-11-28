@@ -53,8 +53,6 @@ export const JOIN_COPY = {
     firstName: 'First name',
     email: 'Email',
     submit: 'Get my card',
-    keeps: '{org} keeps your name for this card.',
-    keepsWithEmail: '{org} keeps your name and email for this card.',
     inApp: 'Open in Safari to add to Apple Wallet.',
     copyLink: 'Copy link',
     testStrip: 'Test card. It is not real and will be deleted.',
@@ -72,7 +70,7 @@ export const JOIN_COPY = {
     dailyLimit: 'No more cards today. Ask staff.',
     closed: 'Not taking new cards right now. Ask staff.',
     /** Unknown, rotated and expired links look alike on purpose; the first sentence is the heading. */
-    expired: 'This link does not work. Ask staff for a new one.',
+    expired: 'This link does not work.',
   },
   /** The pass email of a joined card says "card", as the page and the sign do. */
   mailTitle: 'Your card is ready',
