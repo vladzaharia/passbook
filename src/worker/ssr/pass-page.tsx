@@ -44,6 +44,7 @@ import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage, type PageAction, REPLAY_SCRIPT } from './hosted.ts';
 import { OrgBar, OrgMark } from './org-bar.tsx';
 import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
+import passPageCss from './pass-page.css?raw';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
 import { THEME_CSS } from './theme.ts';
 
@@ -58,6 +59,7 @@ const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear, tuck].
 export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${holderOthersCss}\n${savePhoneCss}\n${addCss}\n${RIBBON_CSS}
 ${ORG_SHELL_CSS}
 body{padding:0}
+${passPageCss}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
 
 export interface PassPageProps {
@@ -240,7 +242,6 @@ const DEAD_LINK_ACTION: PageAction = {
   label: HOLDER_COPY.emailMyPasses,
   href: '/login?next=/&reason=link',
   icon: WalletCards,
-  primary: true,
 };
 
 /**
@@ -261,7 +262,6 @@ export function renderNotFoundPage(
     theme,
     title: HOLDER_COPY.deadLinkTitle(what),
     art: 'expired',
-    lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(DEAD_LINK_ACTION),
     replay,
     // A retired /p link also retires this phone's saved copy of it (DROP_SCRIPT).

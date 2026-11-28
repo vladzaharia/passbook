@@ -153,7 +153,7 @@ describe('copy', () => {
   });
 
   it('keeps the words of the design', () => {
-    expect(JOIN_COPY.refusal.expired).toBe('This link does not work. Ask staff for a new one.');
+    expect(JOIN_COPY.refusal.expired).toBe('This link does not work.');
     expect(JOIN_COPY.refusal.turnstile).toBe('Verification failed. Try again.');
     expect(JOIN_COPY.rotateConfirm.confirm).toBe('Make new link');
   });
