@@ -6,6 +6,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from './auth-store.ts';
 import { afterBatch } from './batch-interceptor-test-support.ts';
+import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
 import {
   codeOf,
   grantScanMembership,
@@ -233,7 +234,7 @@ it('answers a detail from its snapshot when a credential transfer follows the re
   const db = s.kit.env.DB;
   const { result: response, fired } = await afterBatch(
     s.kit.env,
-    /page AS MATERIALIZED/,
+    tagRe(RACE_HISTORY_PAGE),
     async () => {
       expect(await startScanCredentialTransfer(s.kit, s.pass.id, { db })).toMatchObject({
         state: 'completed',

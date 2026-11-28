@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
+import { RACE_STAFF_STARTS } from './race-tags.ts';
 import { listStaff } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import {
@@ -213,7 +214,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
           };
         if (prop === 'prepare')
           return (sql: string) =>
-            /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+            sql.includes(RACE_STAFF_STARTS) ? wrap(target.prepare(sql)) : target.prepare(sql);
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       },

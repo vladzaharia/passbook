@@ -3,6 +3,7 @@ import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { exportPath, get, kit, PUBLIC, setupPrivacyKit } from './console-privacy-test-fixtures.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 setupPrivacyKit();
@@ -85,8 +86,8 @@ describe('export over a large template manifest', () => {
       get(target, property) {
         if (property === 'prepare')
           return (sql: string) => {
-            if (/AS \(VALUES \(\?, \?, \?\)/.test(sql)) manifestReads++;
-            if (/page AS MATERIALIZED/.test(sql)) pages++;
+            if (/AS \(VALUES \(\?, \?, \?\)/.test(sql)) manifestReads++; // sql-shape
+            if (sql.includes(RACE_HISTORY_PAGE)) pages++;
             return target.prepare(sql);
           };
         const value = Reflect.get(target, property, target);

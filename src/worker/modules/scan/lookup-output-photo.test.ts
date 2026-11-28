@@ -155,7 +155,7 @@ describe('lookup output authority', () => {
     expect((await lookup(ctx, actor, pass.scanCode!)).items.map((item) => item.passId)).toEqual([
       pass.id,
     ]);
-    const final = bindings.filter(({ sql }) => sql.includes('ring AS MATERIALIZED'));
+    const final = bindings.filter(({ sql }) => sql.includes('ring AS MATERIALIZED')); // sql-shape
     expect(final.length).toBeGreaterThan(0);
     for (const { values } of final)
       for (const value of values)

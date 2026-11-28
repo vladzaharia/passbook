@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { RACE_HISTORY_PAGE, tagRe } from './race-tags.ts';
 import { activityFixture } from './repo-session-activity-authority-test-fixtures.ts';
 import { tripsFrom } from './trips-test-support.ts';
 
-const PAGE = /page AS MATERIALIZED/;
+const PAGE = tagRe(RACE_HISTORY_PAGE);
 const AUTHORIZED = /AS authorized/;
 
 /*

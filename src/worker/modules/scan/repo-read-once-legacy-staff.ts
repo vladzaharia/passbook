@@ -2,6 +2,7 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { dayStartMs } from './dto-console.ts';
+import { RACE_HISTORY_PAGE, RACE_STAFF_STARTS } from './race-tags.ts';
 import { SELECT_WITH_COUNT } from './repo-events.ts';
 import { scanLedgerScopeSql } from './repo-feed.ts';
 import { HISTORY_COLUMNS, HISTORY_JOINS, type HistorySelector } from './repo-history-rows.ts';
@@ -27,7 +28,7 @@ export function legacyStaffActivityStmt(
   const cursor = afterCursorSql(page.cursor);
   const mode = '(SELECT mode FROM actor_ok)';
   const starts = zones.map((zone) => ({ zone, since: dayStartMs(zone, now) }));
-  const ctes = `starts AS (
+  const ctes = `${RACE_STAFF_STARTS} starts AS (
       SELECT json_extract(value, '$.zone') AS zone, json_extract(value, '$.since') AS since
       FROM json_each(?)
     ), scope AS (
@@ -37,7 +38,7 @@ export function legacyStaffActivityStmt(
           WHERE ${auth.tenant('current_sc', 'scanners')}
             AND NOT EXISTS (SELECT 1 FROM starts WHERE starts.zone = current_sc.time_zone)
         ) AS snapshot_ok
-    ), page AS MATERIALIZED (
+    ), ${RACE_HISTORY_PAGE} page AS MATERIALIZED (
       SELECT st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
         st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
         EXISTS (
@@ -141,7 +142,7 @@ export const legacyHistoryPageStmt = (
      ORDER BY s.at DESC, s.id DESC`,
     [now],
     {
-      ctes: `page AS MATERIALIZED (
+      ctes: `${RACE_HISTORY_PAGE} page AS MATERIALIZED (
     SELECT s.id AS scan_id FROM scans s
     WHERE ${auth.ok} AND ${sel.tenant ?? auth.tenant('s', 'scans')} AND ${sel.where}
     ORDER BY s.at DESC, s.id DESC LIMIT ?)`,

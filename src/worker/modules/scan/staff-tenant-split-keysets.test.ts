@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { beforeStatement } from './batch-interceptor-test-support.ts';
+import { RACE_STAFF_STARTS, tagRe } from './race-tags.ts';
 import { makeStaffTenantFixture, type StaffTenantFixture } from './staff-tenant-split-fixture.ts';
 
 let env: StaffTenantFixture['env'];
@@ -74,7 +75,7 @@ describe('staff keyset bootstrap and availability', () => {
     expect(((await control.json()) as { items: unknown[] }).items).toHaveLength(1);
     const { result: response, fired } = await beforeStatement(
       env,
-      /\bstarts AS \(/i,
+      tagRe(RACE_STAFF_STARTS),
       async (real) => {
         await run(real, 'UPDATE sessions SET revoked_at = ? WHERE id_hash = ?', [
           clock.now(),

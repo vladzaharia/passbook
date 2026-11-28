@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { beforeStatement } from './batch-interceptor-test-support.ts';
+import { RACE_STAFF_STARTS, tagRe } from './race-tags.ts';
 import { getStaff } from './repo-staff.ts';
 import { listStaff, updateStaff } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
@@ -76,7 +77,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
             };
           if (prop === 'prepare')
             return (sql: string) =>
-              /\bstarts AS \(/i.test(sql) ? wrap(target.prepare(sql)) : target.prepare(sql);
+              sql.includes(RACE_STAFF_STARTS) ? wrap(target.prepare(sql)) : target.prepare(sql);
           const value = Reflect.get(target, prop, target);
           return typeof value === 'function' ? value.bind(target) : value;
         },
@@ -223,8 +224,8 @@ describe('mode-specific staff activity and device PIN locks', () => {
     }
     // Zones, the roster with every name proof, then the manifests and keyset: no statement per person.
     const statements = counted.sql();
-    const roster = statements.findIndex((sql) => /\bstarts AS \(/.test(sql));
-    expect(statements.filter((sql) => /\bstarts AS \(/.test(sql))).toHaveLength(1);
+    const roster = statements.findIndex((sql) => sql.includes(RACE_STAFF_STARTS));
+    expect(statements.filter((sql) => sql.includes(RACE_STAFF_STARTS))).toHaveLength(1);
     // After the roster only the manifests and the keyset pin are read, together.
     expect(statements.length - roster - 1).toBeLessThanOrEqual(2);
 
@@ -260,7 +261,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
     if (authority.kind !== 'session') throw new Error('Expected session authority');
     const { fired, result } = await beforeStatement(
       kit.ctx.env,
-      /\bstarts AS \(/,
+      tagRe(RACE_STAFF_STARTS),
       () =>
         run(kit.env.DB, "UPDATE scanners SET time_zone = 'Pacific/Auckland' WHERE id = ?", [
           scanner.id,
@@ -281,7 +282,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
     // plain account, with no activity.
     const updated = await beforeStatement(
       kit.ctx.env,
-      /\bstarts AS \(/,
+      tagRe(RACE_STAFF_STARTS),
       () =>
         run(kit.env.DB, "UPDATE scanners SET time_zone = 'Asia/Tokyo' WHERE id = ?", [scanner.id]),
       () => updateStaff(kit.ctx, session, manage, observed, 'live', { role: 'desk' }),
