@@ -186,6 +186,7 @@ describe('audit page', () => {
     await screen.findByRole('table', { name: 'Audit log' });
     expect(auditCalls(fetchMock)[0]).not.toContain('orgId=');
     expect(router.state.location.search.filterOrgId).toBeUndefined();
+    expect(screen.getByText('Organization filter: All organizations')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Organization' })).toBeInTheDocument();
   });
 
@@ -217,6 +218,7 @@ describe('audit page', () => {
       fetchMock.mock.calls.some(([url]) => /^\/api\/v1\/audit(?:\?|$)/.test(String(url))),
     ).toBe(false);
     expect(screen.queryByRole('columnheader', { name: 'Organization' })).toBeNull();
+    expect(screen.getByText('Organization filter: o-north')).toBeInTheDocument();
     await user.click(screen.getByRole('combobox', { name: /^Action/ }));
     await user.click(await screen.findByRole('option', { name: 'Pass voided' }));
     await waitFor(() =>
@@ -292,6 +294,7 @@ describe('audit page', () => {
       expect(router.state.location.search.filterOrgId).toBeUndefined();
       expect(router.state.location.search.action).toBe('pass.void');
     });
+    expect(screen.getByText('Organization filter: All organizations')).toBeInTheDocument();
   });
 
   it('preserves numeric organization and target IDs while changing another filter', async () => {
@@ -307,7 +310,7 @@ describe('audit page', () => {
         },
       },
     });
-    await screen.findByRole('table', { name: 'Audit log' });
+    expect(await screen.findByText(`Organization filter: ${id}`)).toBeInTheDocument();
     const user = userEvent.setup();
     await user.click(screen.getByRole('combobox', { name: /^Action/ }));
     await user.click(await screen.findByRole('option', { name: 'Pass voided' }));

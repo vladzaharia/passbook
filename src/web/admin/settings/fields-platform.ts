@@ -32,6 +32,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     group: 'Identity trust',
     label: 'Trust Polaris ID emails',
     kind: 'boolean',
+    help: 'Off requires extra email proof on a matching sign-in.',
     schema: P['oidc.trustEmail'],
   },
   {
@@ -50,6 +51,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     label: 'Notifications per pass per day',
     kind: 'int',
     range: [0, 50],
+    help: 'Updates past this arrive silently.',
     schema: P['push.budgetPerDay'],
   },
   {
@@ -135,6 +137,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     group: 'Join links',
     label: 'Join links',
     kind: 'boolean',
+    help: 'Off closes every link.',
     schema: P['join.enabled'],
   },
   {
@@ -153,6 +156,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     label: 'Join cards per day',
     kind: 'int',
     range: [1, 1000000],
+    help: 'Over it every link answers closed.',
     schema: P['join.platformDailyCap'],
   },
   {

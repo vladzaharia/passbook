@@ -27,7 +27,7 @@ type Role = AccessView['roles'][number];
 type Act = { kind: 'restore' | 'revoke' | 'remove'; role: Role['role'] };
 
 /** Why the role is on: the sources PassBook counted, or what Polaris ID showed. */
-function why(r: Role): string | undefined {
+function why(r: Role): string {
   if (r.held) return IDP_COPY.paused;
   const orgs = (list: Role['memberships']) => list.map((m) => m.org.name).join(', ');
   if (r.role === 'console' && r.wanted)
@@ -35,7 +35,7 @@ function why(r: Role): string | undefined {
   if (r.sponsorships.length) return `Sponsored by ${orgs(r.sponsorships)}`;
   if (r.grantedAt) return `Granted ${formatDateTime(r.grantedAt, '')}`;
   if (r.presence === 'external') return IDP_COPY.account.external;
-  return undefined;
+  return 'Not given';
 }
 
 function state(r: Role) {

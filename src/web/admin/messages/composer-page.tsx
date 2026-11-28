@@ -283,7 +283,7 @@ function ComposerForm({
               Cancel
             </Button>
             {blocked ? (
-              <p id="compose-blocked" className="sr-only">
+              <p id="compose-blocked" className="w-full text-xs text-fg-muted">
                 {blocked}
               </p>
             ) : null}

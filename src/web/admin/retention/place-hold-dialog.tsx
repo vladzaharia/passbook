@@ -51,6 +51,7 @@ export function PlaceHoldDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={RETENTION_COPY.place}
+      description="Every organization admin is emailed."
       dirty={reason.trim() !== ''}
       check={check}
       onSubmit={submit}

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Card, CardBody, PageHeader } from '@/web/ui/index.ts';
+import { Badge, Card, CardBody, PageHeader } from '@/web/ui/index.ts';
 import { useOrgPages } from '../orgs/org-pages.ts';
 import { useOrgList } from '../orgs/queries.ts';
 import { AuditFilters } from './audit-filters.tsx';
@@ -56,6 +56,11 @@ export function AuditPage({
             path="/api/v1/audit/platform/export"
             query={{ ...filters, filterOrgId: undefined, orgId }}
           />
+        }
+        meta={
+          <Badge className="max-w-full break-words whitespace-normal">
+            Organization filter: {orgId ? (orgName(orgId) ?? orgId) : 'All organizations'}
+          </Badge>
         }
       />
       <Card className="mb-6">

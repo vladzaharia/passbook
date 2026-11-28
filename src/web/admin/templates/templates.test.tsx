@@ -1266,7 +1266,9 @@ describe('template upload', () => {
         '/api/v1/templates/tpl1': () => json(templateDetail({ orgId: null, orgName: null })),
       },
     });
-    expect(await screen.findByRole('button', { name: 'Upload version' })).toBeDisabled();
+    expect(await screen.findByText(/Uploads create inactive versions/)).toBeInTheDocument();
+    expect(screen.getByText(/The Test view does not isolate template changes/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Upload version' })).toBeDisabled();
   });
 
   async function fill(user: ReturnType<typeof userEvent.setup>) {

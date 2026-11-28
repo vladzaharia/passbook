@@ -43,6 +43,7 @@ export const IMPORT_COPY = {
     byEmail: 'Email',
     byNone: "Don't match",
     keepManual: "Don't overwrite edits made in the console",
+    keepManualHelp: 'Off: the file overwrites them.',
     save: 'Remember this mapping',
     needExternalId: 'Map an External ID column to match on it.',
     needEmail: 'Map a Holder email column to match on it.',

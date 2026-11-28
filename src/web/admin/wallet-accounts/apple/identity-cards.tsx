@@ -147,13 +147,19 @@ export function SettingsCard({ identity }: { identity: Identity }) {
             <SwitchRow label="NFC" checked={draft.nfc} onCheckedChange={(c) => edit({ nfc: c })} />
             {identity.isDefault ? (
               <div className="flex items-start justify-between gap-4">
-                <p className="text-sm font-medium text-fg-strong">Default identity</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg-strong">Default identity</p>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    {env ? 'Set in the environment' : 'Existing passes keep their identity.'}
+                  </p>
+                </div>
                 <StatusPill status="default" />
               </div>
             ) : (
               <Locked locked={env}>
                 <SwitchRow
                   label="Default identity"
+                  help={env ? 'Set in the environment' : 'Existing passes keep theirs.'}
                   checked={draft.isDefault}
                   disabled={env}
                   onCheckedChange={(c) => edit({ isDefault: c })}

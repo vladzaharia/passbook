@@ -272,6 +272,9 @@ export function UploadForm({
           </Button>
         }
       />
+      <Callout tone="info" className="mb-6">
+        Uploads create inactive versions. The Test view does not isolate template changes.
+      </Callout>
       {status.isError ? (
         <ErrorState
           error={status.error}

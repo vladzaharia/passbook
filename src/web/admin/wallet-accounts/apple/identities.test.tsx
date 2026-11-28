@@ -422,6 +422,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     const label = await screen.findByLabelText(/Label/);
+    expect(screen.getByText(/Existing passes keep their identity/)).toBeInTheDocument();
     await ui.clear(label);
     await ui.type(label, 'Renamed');
     await ui.clear(screen.getByLabelText('APNs binding'));
@@ -452,7 +453,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     expect(screen.queryByLabelText('APNs binding')).not.toBeInTheDocument();
-    expect(await screen.findByText('Default identity')).toBeInTheDocument();
+    expect(await screen.findByText('Set in the environment')).toBeInTheDocument();
     expect(screen.queryByRole('switch', { name: 'Default identity' })).toBeNull();
     expect(screen.getByText('Default identity')).toBeInTheDocument();
     await ui.click(screen.getByRole('switch', { name: 'NFC' }));
