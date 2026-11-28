@@ -101,17 +101,16 @@ export async function tabletStates(r: Run): Promise<void> {
   const person = r.fx.staff.find((s) => s.name === 'Mara Lopez') ?? r.fx.staff[0];
   const pin = person && r.pins.get(person.id);
   if (person && pin) {
-    await page.getByRole('combobox', { name: 'Staff member' }).click();
-    await page.getByRole('option', { name: person.name }).click();
-    await page.getByLabel('PIN').first().click();
-    await page.keyboard.type('000000');
+    const key = async (digits: string) => {
+      for (const d of digits)
+        await page.getByTestId('scan-keypad').getByRole('button', { name: d, exact: true }).click();
+    };
+    await key('00000');
     await r.snap('device-staff-pin-entered');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await key('0');
     await page.waitForTimeout(1_200);
     await r.snap('device-staff-wrong-pin');
-    await page.getByLabel('PIN').first().click();
-    await page.keyboard.type(pin);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await key(pin);
     await page.waitForTimeout(1_500);
     await r.snap('device-staff-signed-in-start');
     if (await start(r).isVisible()) await start(r).click();
