@@ -6,7 +6,7 @@ import { act as actService } from './act.ts';
 import { expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { CHECK_IN, expectUnavailable, kit, rows, tpl } from './act-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GATE_WRITE, RACE_GRANT_INSERT } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
@@ -36,7 +36,7 @@ export function registerAuthorityCredentials() {
               [change === 'csrf' ? `changed-${key()}` : 'e'.repeat(64), scanner.id],
             ),
           { idempotencyKey },
-          phase === 'admission' ? 'INSERT INTO scan_gates' : commitBatchSql,
+          phase === 'admission' ? RACE_GATE_WRITE : RACE_GRANT_INSERT,
         );
         // A rotated credential bumps the scanner's credential epoch: a 401 re-pair, not a masked miss.
         await expectBlocked(response, pass.id, idempotencyKey, 'SCANNER_REPAIR');

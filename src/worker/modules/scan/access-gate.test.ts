@@ -16,6 +16,7 @@ import {
 } from './access-test-fixtures.ts';
 import { act, CHECK_IN, HOUR, kit, MINUTE, out, setupActionFixture } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
@@ -25,7 +26,7 @@ const rules = (visitGapMinutes: number, reentryMinutes: number | null): AccessMa
   ...ACCESS,
   rules: { visitGapMinutes, reentryMinutes },
 });
-const commit = /INSERT INTO scan_gates/;
+const commit = RACE_GATE_WRITE;
 
 describe('access gate: the wait, the limit and the visit', () => {
   it('holds a second door inside the wait even when every grant is a visit (gap 0)', async () => {

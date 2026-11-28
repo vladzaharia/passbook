@@ -4,6 +4,7 @@ import type { Pass } from '../passes/repo-map.ts';
 import { act, CHECK_IN, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import {
   actTag,
   bindTag,
@@ -226,7 +227,7 @@ describe('the commit fence', () => {
     const pass = await kit.scanPass(tpl);
     const { result, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       () => change(pass),
       () => act(s.headers, codeOf(pass), { actionId: CHECK_IN.id }),
     );

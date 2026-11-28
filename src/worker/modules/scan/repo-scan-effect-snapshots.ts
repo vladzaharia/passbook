@@ -1,5 +1,6 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { PresenceRow } from './admission-types.ts';
+import { RACE_GATE_SNAPSHOT } from './race-tags.ts';
 import type { GateKey } from './repo-gates.ts';
 import type {
   ScanEffectSnapshot,
@@ -88,7 +89,7 @@ export function readScanEffectStmt(
 ): D1PreparedStatement {
   return stmt(
     db,
-    `SELECT (SELECT ${jsonObject(gateFields)} FROM scan_gates g
+    `${RACE_GATE_SNAPSHOT} SELECT (SELECT ${jsonObject(gateFields)} FROM scan_gates g
       LEFT JOIN scans h ON h.id=g.last_scan_id WHERE g.pass_id=? AND g.action_id=? AND g.scope=?) AS gate,
       (SELECT ${jsonObject(presenceFields)} FROM scan_presence p WHERE p.pass_id=? AND p.scope=?) AS presence`,
     [gate.passId, gate.actionId, gate.scope, gate.passId, presenceScope],

@@ -5,6 +5,7 @@ import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
 import { showBalance } from './act-value-test-fixtures.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { beforeBatch } from './repo-action-template-read-race-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
@@ -238,7 +239,7 @@ describe('value actions: push budget', () => {
       const s = await desk([t]);
       const pass = await kit.scanPass(t, { balance: 0 });
       const real = kit.env.DB;
-      const hooked = beforeBatch(real, 'INSERT INTO scan_gates', (db) =>
+      const hooked = beforeBatch(real, RACE_GATE_WRITE, (db) =>
         approveAppleRelease(kit, {
           db,
           templateId: t,

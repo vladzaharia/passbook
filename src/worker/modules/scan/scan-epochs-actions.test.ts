@@ -1,6 +1,7 @@
 import { beforeAll, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
+import { RACE_SCAN_CLAIM } from './race-tags.ts';
 import { key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -34,7 +35,7 @@ function raceBeforeClaim(mutate: () => Promise<unknown>) {
         };
       if (prop === 'batch')
         return async (statements: D1PreparedStatement[]) => {
-          if (!fired && statements.some((s) => sqlOf.get(s)?.includes('INSERT INTO scans'))) {
+          if (!fired && statements.some((s) => sqlOf.get(s)?.includes(RACE_SCAN_CLAIM))) {
             fired = true;
             await mutate();
           }

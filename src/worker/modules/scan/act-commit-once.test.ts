@@ -3,6 +3,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -31,7 +32,7 @@ const outcome = async (res: Response) => {
   expect(res.status).toBe(200);
   return (await res.json()) as ScanOutcome;
 };
-const COMMIT = /INSERT INTO scan_gates/;
+const COMMIT = RACE_GATE_WRITE;
 
 describe('one heads-up is let through once', () => {
   async function headsUp() {

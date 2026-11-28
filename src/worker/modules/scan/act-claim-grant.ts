@@ -12,6 +12,7 @@ import {
 } from '../nfc/repo-sun.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
+import { RACE_SCAN_CLAIM } from './race-tags.ts';
 import type { Claim } from './repo-scans.ts';
 import { capturedStatement, capturingDb } from './scan-capture.ts';
 import { partSql, scanWriteGrant } from './scan-write-grant.ts';
@@ -93,7 +94,7 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       claim.clientTs,
       claim.now,
     ],
-    { doNothing: true, returning: ['id', 'at'] },
+    { doNothing: true, returning: ['id', 'at'], tag: RACE_SCAN_CLAIM },
   );
 }
 

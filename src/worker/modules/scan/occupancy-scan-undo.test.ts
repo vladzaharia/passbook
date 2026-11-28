@@ -11,6 +11,7 @@ import {
   undoScan,
   zoneDoor,
 } from './occupancy-scan-test-fixtures.ts';
+import { RACE_PRESENCE_WRITE } from './race-tags.ts';
 
 beforeAll(setupActionFixture);
 afterEach(() => kit.clock.set(TEST_NOW));
@@ -23,7 +24,7 @@ async function interleave(
   const seen: { second?: ScanOutcome } = {};
   const { result, fired } = await beforeBatch(
     kit.env,
-    /INSERT INTO scan_presence/,
+    RACE_PRESENCE_WRITE,
     async () => {
       seen.second = await second();
     },

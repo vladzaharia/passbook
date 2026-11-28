@@ -7,3 +7,9 @@ export { RACE_GRANT_INSERT, RACE_KEYSET_INSERT } from '../../platform/race-tag.t
 export const RACE_MISS_COUNTER = '/* race:miss-counter */';
 export const RACE_CANDIDATE_READ = '/* race:candidate-read */';
 export const RACE_SEARCH_PAGE = '/* race:search-page */';
+
+// Group B
+export const RACE_PRESENCE_WRITE = '/* race:presence-write */';
+export const RACE_SCAN_CLAIM = '/* race:scan-claim */';
+export const RACE_SCAN_UNDO = '/* race:scan-undo */';
+export const RACE_GATE_SNAPSHOT = '/* race:gate-snapshot */';
