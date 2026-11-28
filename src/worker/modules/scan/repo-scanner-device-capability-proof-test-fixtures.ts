@@ -11,6 +11,7 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { scannerActor, scanScannerCsrfProof } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { pairHere } from './pairing-token.ts';
+import { RACE_DEVICE_CAPABILITIES } from './race-tags.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -120,7 +121,7 @@ export function intercept(db: D1Database, race?: () => Promise<void>) {
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('UPDATE scanning_devices SET capabilities')) return prepared;
+          if (!sql.includes(RACE_DEVICE_CAPABILITIES)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

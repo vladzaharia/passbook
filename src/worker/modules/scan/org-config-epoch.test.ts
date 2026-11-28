@@ -3,6 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
+import { RACE_GRANT_INSERT, RACE_LINEAGE } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -29,7 +30,7 @@ beforeAll(async () => {
 // `suspend-restore` is an access_revision A-B-A, which the read fences see.
 type Change = 'rename' | 'suspend' | 'suspend-restore';
 // The door's commit batch (its write grant), after every preflight read of the request.
-const COMMIT = 'INSERT INTO authority_grants';
+const COMMIT = RACE_GRANT_INSERT;
 
 async function change(db: D1Database, kind: Change) {
   if (kind === 'rename')
@@ -42,8 +43,8 @@ async function change(db: D1Database, kind: Change) {
 const restore = () =>
   run(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
 
-/** Apply `kind` once, just before the first batch carrying `marker`, after the request's reads. */
-async function racing(marker: string, kind: Change, work: () => Promise<Response>) {
+/** Apply `kind` once, just before the first batch carrying `tag`, after the request's reads. */
+async function racing(tag: string, kind: Change, work: () => Promise<Response>) {
   const real = kit.env.DB;
   const marked = new WeakSet<D1PreparedStatement>();
   let raced = false;
@@ -52,7 +53,7 @@ async function racing(marker: string, kind: Change, work: () => Promise<Response
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(marker)) return prepared;
+          if (!sql.includes(tag)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
@@ -81,7 +82,7 @@ async function racing(marker: string, kind: Change, work: () => Promise<Response
   Object.assign(kit.env, { DB: db });
   try {
     const response = await work();
-    expect(raced, `no batch carried ${marker}`).toBe(true);
+    expect(raced, `no batch carried ${tag}`).toBe(true);
     return response;
   } finally {
     Object.assign(kit.env, { DB: real });
@@ -165,7 +166,7 @@ describe('org config epoch at the door', () => {
     for (const kind of ['rename', 'suspend-restore'] as const) {
       const s = await scanning(`History ${kind}`);
       const done = await outcome(await s.act());
-      const read = await outcome(await racing('FROM passes lineage', kind, s.read));
+      const read = await outcome(await racing(RACE_LINEAGE, kind, s.read));
       expect(read.kind).toBe('ready');
       expect(read.card?.lastScans.map((row) => row.scanId)).toEqual([done.scanId]);
       // The display's scan history (header and panel) is read from the same proofs.

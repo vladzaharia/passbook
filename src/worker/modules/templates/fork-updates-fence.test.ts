@@ -6,6 +6,7 @@ import { CRON_HOOKS, MINUTE_CRON } from '../../jobs/cron.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createJobContext } from '../../platform/service-context.ts';
+import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import { type ForkKit, forkKit, upload } from './fork-updates-test-fixtures.ts';
 import { basicPackage, makePng, passJson, zipOf } from './package/fixtures.ts';
 import { upstreamReadable } from './repo-fork-updates.ts';
@@ -33,7 +34,7 @@ describe('the fence', () => {
     const { s, id } = await started();
     await k.publish(s, { tier: 'Level' });
     const { watchBatch } = await import('./testing.ts');
-    const watched = watchBatch(k.kit.env, /INSERT INTO template_versions/, async () => {
+    const watched = watchBatch(k.kit.env, RACE_TEMPLATE_VERSION_INSERT, async () => {
       await k.edit(id, (d) => ({ ...d, passJson: { ...d.passJson, description: 'Human' } }));
     });
     await k.tick(watched.env);
@@ -342,7 +343,7 @@ describe('a refusal that a re-plan would not change', () => {
     const { s, id } = await started();
     await k.publish(s, { tier: 'Level' });
     const { watchBatch } = await import('./testing.ts');
-    const watched = watchBatch(k.kit.env, /INSERT INTO template_versions/, () =>
+    const watched = watchBatch(k.kit.env, RACE_TEMPLATE_VERSION_INSERT, () =>
       run(k.kit.env.DB, "UPDATE template_forks SET tracking = 'paused' WHERE template_id = ?", [
         id,
       ]),

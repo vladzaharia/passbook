@@ -59,7 +59,7 @@ export const IMPORT_BOUNDARIES: Record<string, string[]> = {
   [`${W}repo-delivery-state.ts`]: ['deliver', 'dispatch', 'jobs', 'kick'].map((n) => `${W}${n}.ts`),
   'src/worker/platform/authority-receipt.ts': [
     'src/worker/modules/retention/receipt-service.ts',
-    'src/worker/platform/authority.ts',
+    'src/worker/platform/authority-grant.ts',
   ],
   [`${W}repo-retention.ts`]: [`${W}jobs.ts`, `${W}purge-run.ts`],
 };

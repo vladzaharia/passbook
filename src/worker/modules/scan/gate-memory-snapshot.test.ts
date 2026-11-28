@@ -5,6 +5,7 @@ import { act } from './act.ts';
 import type { ActRequest } from './act-claim.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { deepFreeze } from './freeze.ts';
+import { RACE_GATE_SNAPSHOT } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { key, proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
@@ -45,7 +46,7 @@ it('freezes the actor and request: a mutation during preflight throws and the ga
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('AS gate') || !sql.includes('AS presence')) return prepared;
+          if (!sql.includes(RACE_GATE_SNAPSHOT)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

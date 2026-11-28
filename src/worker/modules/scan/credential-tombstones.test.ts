@@ -5,6 +5,7 @@ import { all, run } from '../../platform/db.ts';
 import { captureCredentialKeyEnv, ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { credentialTombstoneRefsForInput, scanCredentialKeys } from './credential-input.ts';
+import { RACE_SEARCH_PAGE, RACE_TOMBSTONE_CLEAR } from './race-tags.ts';
 import {
   credentialTombstonesClear,
   noCredentialTombstonesSql,
@@ -382,8 +383,7 @@ describe('scanner credential tombstones', () => {
       get(target, prop) {
         if (prop === 'prepare')
           return (sql: string) => {
-            if (sql.includes('FROM passes p JOIN templates t') && sql.includes('LIMIT 50 OFFSET'))
-              searches++;
+            if (sql.includes(RACE_SEARCH_PAGE)) searches++;
             return target.prepare(sql);
           };
         const value = Reflect.get(target, prop, target);
@@ -447,13 +447,8 @@ describe('scanner credential tombstones', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            // The other-mode precheck (`credentialTombstonesClearStmt`); its predicate is parenthesized.
-            if (
-              !sql.startsWith(
-                'SELECT 1 WHERE (NOT EXISTS (SELECT 1 FROM pass_credential_tombstones',
-              )
-            )
-              return statement;
+            // The other-mode precheck (`credentialTombstonesClearStmt`).
+            if (!sql.includes(RACE_TOMBSTONE_CLEAR)) return statement;
             return new Proxy(statement, {
               get(inner, member) {
                 if (member === 'bind')

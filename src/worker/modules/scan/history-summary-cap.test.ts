@@ -3,6 +3,7 @@ import { makePass, makeTemplate } from '../../../../test/helpers/index.ts';
 import { ScanSummarySchema } from '../../../shared/contracts/scan-session.ts';
 import { run } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { setupScanKit } from './test-kit.ts';
 
 type Kit = Awaited<ReturnType<typeof setupScanKit>>;
@@ -60,11 +61,7 @@ async function summaryReads(kit: Kit, headers: Record<string, string>) {
         return (statements: D1PreparedStatement[]) => {
           for (const statement of statements) {
             const entry = bound.get(statement);
-            if (
-              entry &&
-              /page AS MATERIALIZED/.test(entry.sql) &&
-              /s\.undone_by IS NULL/.test(entry.sql)
-            )
+            if (entry?.sql.includes(RACE_HISTORY_PAGE) && /s\.undone_by IS NULL/.test(entry.sql))
               reads.push(Number(entry.params.at(-2)));
           }
           return target.batch(statements);

@@ -478,6 +478,8 @@ async function assertIssued(passId: string, ws: Workspace, release: Release) {
   ).not.toBeNull();
 }
 
+const INSERT_PASSES = /^\s*(?:\/\*.*?\*\/\s*)?INSERT\s+INTO\s+passes\b/i; // sql-shape
+
 /** Interleave a real D1 mutation at the last statement, including batched statements. */
 async function atMutation<T>(
   table: 'passes' | 'pass_events' | 'outbox' | 'idempotency_keys',
@@ -494,7 +496,10 @@ async function atMutation<T>(
   const intervene = async (sql: string) => {
     if (
       !intercepted &&
-      new RegExp(`^\\s*INSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${table}\\b`, 'i').test(sql)
+      new RegExp(
+        `^\\s*(?:/\\*.*?\\*/\\s*)?INSERT\\s+(?:OR\\s+\\w+\\s+)?INTO\\s+${table}\\b`,
+        'i',
+      ).test(sql) // sql-shape
     ) {
       intercepted++;
       await change(db);
@@ -852,10 +857,7 @@ describe('approved issuance over tenant HTTP', () => {
         if (prop === 'prepare') return (sql: string) => wrap(target.prepare(sql), sql);
         if (prop === 'batch')
           return async (batch: D1PreparedStatement[]) => {
-            if (
-              !failed &&
-              batch.some((s) => /^\s*INSERT\s+INTO\s+passes\b/i.test(sqlOf.get(s)?.sql ?? ''))
-            ) {
+            if (!failed && batch.some((s) => INSERT_PASSES.test(sqlOf.get(s)?.sql ?? ''))) {
               failed++;
               throw new Error('D1_ERROR: Network connection lost');
             }
@@ -930,10 +932,7 @@ describe('approved issuance over tenant HTTP', () => {
             const result = await target.batch(
               batch.map((statement) => statements.get(statement)?.native ?? statement),
             );
-            if (
-              !lostResponse &&
-              entries.some((entry) => /^\s*INSERT\s+INTO\s+passes\b/i.test(entry?.sql ?? ''))
-            ) {
+            if (!lostResponse && entries.some((entry) => INSERT_PASSES.test(entry?.sql ?? ''))) {
               lostResponse = true;
               throw new Error('D1 response lost after commit');
             }

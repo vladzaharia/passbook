@@ -3,6 +3,7 @@ import { setLimit } from '../../../../test/helpers/index.ts';
 import { createPassRow } from '../passes/create.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { beforeBatch } from '../scan/batch-interceptor-test-support.ts';
+import { RACE_GRANT_INSERT } from '../scan/race-tags.ts';
 import { jobCtxOf } from './delivery-test-fixtures.ts';
 import { emailCaps } from './email-limits.ts';
 import { enqueuePassEmail } from './issuance-intent.ts';
@@ -64,7 +65,7 @@ describe('emails per day', () => {
     await setLimit(kit.env.DB, kit.org.id, 'email.perDay', null);
     const { result: raced, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO authority_grants/i,
+      RACE_GRANT_INSERT,
       () => setLimit(kit.env.DB, kit.org.id, 'email.perDay', 0),
       () => send(p),
     );

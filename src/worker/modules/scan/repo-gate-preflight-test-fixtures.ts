@@ -4,6 +4,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import type { GateKey } from './repo-gates.ts';
 import {
   type ScanEffectSnapshot,
@@ -95,7 +96,7 @@ export async function atGate<T>(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+          if (!sql.includes(RACE_GATE_WRITE)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

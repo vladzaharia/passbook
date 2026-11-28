@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { RACE_PREVIEW_AUDIT, RACE_PREVIEW_CURRENT } from './race-tags.ts';
 
 export function previewAuthorityRaces(env: AppEnv) {
   /** Temporarily permit a sentinel mutation to exercise races across the real D1 read fences. */
@@ -83,7 +84,7 @@ export function previewAuthorityRaces(env: AppEnv) {
         get(target, prop) {
           const value = Reflect.get(target, prop, target);
           if (prop === 'bind') return (...args: unknown[]) => wrap(target.bind(...args), sql);
-          if (prop === 'run' && sql.includes('INSERT INTO audit_log')) {
+          if (prop === 'run' && sql.includes(RACE_PREVIEW_AUDIT)) {
             return async (...args: unknown[]) => {
               if (hits++ === 0) await intervene(real);
               return (value as (...values: unknown[]) => Promise<unknown>).apply(target, args);
@@ -97,7 +98,7 @@ export function previewAuthorityRaces(env: AppEnv) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            return sql.includes('INSERT INTO audit_log') ? wrap(statement, sql) : statement;
+            return sql.includes(RACE_PREVIEW_AUDIT) ? wrap(statement, sql) : statement;
           };
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
@@ -126,7 +127,7 @@ export function previewAuthorityRaces(env: AppEnv) {
         get(target, prop) {
           const value = Reflect.get(target, prop, target);
           if (prop === 'bind') return (...args: unknown[]) => wrap(target.bind(...args), sql);
-          if (prop === 'run' && sql.includes('INSERT INTO audit_log'))
+          if (prop === 'run' && sql.includes(RACE_PREVIEW_AUDIT))
             return async (...args: unknown[]) => {
               const result = await (value as (...values: unknown[]) => Promise<unknown>).apply(
                 target,
@@ -135,7 +136,7 @@ export function previewAuthorityRaces(env: AppEnv) {
               audited = true;
               return result;
             };
-          if (prop === 'first' && sql.includes('AS pass_ok'))
+          if (prop === 'first' && sql.includes(RACE_PREVIEW_CURRENT))
             return async (...args: unknown[]) => {
               if (audited && hits === 0) {
                 hits++;
@@ -151,7 +152,7 @@ export function previewAuthorityRaces(env: AppEnv) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            return sql.includes('INSERT INTO audit_log') || sql.includes('AS pass_ok')
+            return sql.includes(RACE_PREVIEW_AUDIT) || sql.includes(RACE_PREVIEW_CURRENT)
               ? wrap(statement, sql)
               : statement;
           };

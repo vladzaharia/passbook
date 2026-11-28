@@ -14,6 +14,7 @@ import type { Pass } from '../passes/repo.ts';
 import { createScannerStore } from './auth-store.ts';
 import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import {
   codeOf,
   grantScanMembership,
@@ -195,7 +196,7 @@ export async function atActivityRead<T>(
   options: { when?: 'before' | 'after' } = {},
 ): Promise<T> {
   const hook = options.when === 'after' ? afterBatch : beforeBatch;
-  const { result, fired } = await hook(env, /page AS MATERIALIZED/, change, operation);
+  const { result, fired } = await hook(env, RACE_HISTORY_PAGE, change, operation);
   expect(fired).toBe(true);
   return result;
 }

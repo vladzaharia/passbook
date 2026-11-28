@@ -15,6 +15,7 @@ import { createApiKey, createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from './auth-store.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import {
   clock,
   ctx,
@@ -292,12 +293,7 @@ describe('GET /scans (API key)', () => {
         }
       };
       // The key is read in the page statement's own snapshot: a change before it refuses the feed.
-      const { result: response, fired } = await beforeBatch(
-        env,
-        /page AS MATERIALIZED/,
-        mutate,
-        send,
-      );
+      const { result: response, fired } = await beforeBatch(env, RACE_HISTORY_PAGE, mutate, send);
       expect(fired).toBe(true);
       expect(response.status).toBe(401);
       const body = await response.text();

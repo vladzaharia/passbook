@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_ORG_NAME, RACE_STAFF_BIND } from './race-tags.ts';
 import { setupScanKit } from './test-kit.ts';
 
 /**
@@ -34,7 +35,7 @@ describe('the session read classifies a lost credential with the shared rule', (
     expect((await kit.get(scanner.headers, '/session')).status).toBe(200);
     const { result, fired } = await beforeBatch(
       kit.env,
-      /SELECT name FROM orgs WHERE id = \?/,
+      RACE_ORG_NAME,
       move(scanner.id, change),
       () => kit.get(scanner.headers, '/session'),
     );
@@ -60,7 +61,7 @@ describe('the staff bind classifies a lost credential with the shared rule', () 
     const person = await kit.staff('door', 'Dana');
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scanners SET staff_id/i,
+      RACE_STAFF_BIND,
       move(scanner.id, change),
       () => kit.post(scanner.headers, '/staff', { staffId: person.id, pin: person.pin }),
     );

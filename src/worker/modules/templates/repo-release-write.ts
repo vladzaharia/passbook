@@ -5,12 +5,15 @@ import { releaseHead } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { writePart } from '../../platform/authority-include.ts';
-import type { SqlValue } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import {
+  RACE_TEMPLATE_APPROVAL_INSERT,
+  RACE_TEMPLATE_CANDIDATE_INSERT,
+  RACE_TEMPLATE_RELEASE_INSERT,
+} from '../scan/race-tags.ts';
 import type { TemplateAuthority } from './access.ts';
-import { APPLE_ADAPTER_CAPABILITIES } from './release-content.ts';
 import {
   approvable,
   candidateTemplate,
@@ -19,6 +22,12 @@ import {
   publishable,
 } from './repo-grant-checks.ts';
 import { templateGrant } from './repo-grants.ts';
+import {
+  CANDIDATE_COLUMNS,
+  candidateValues,
+  RELEASE_COLUMNS,
+  releaseValues,
+} from './repo-release-columns.ts';
 import { invalidateEventCache } from './repo-release-effects.ts';
 import type { ApprovalRow, CandidateRow } from './repo-releases.ts';
 import { type VersionHashes, versionHashesSql } from './repo-version-hashes.ts';
@@ -38,90 +47,7 @@ export interface ActivateReleaseArgs {
   metadata: { name: string; description: string | null; styles: PassStyle[] } | null;
 }
 
-const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
-
-const RETURN_ID = { returning: ['id'] };
-
-// The grant supplies org_id; the mode is the caller's (an org grant does not own it).
-export const CANDIDATE_COLUMNS = [
-  'id',
-  'template_id',
-  'mode',
-  'provider',
-  'version',
-  'candidate_hash',
-  'content_hash',
-  'adapter_revision',
-  'adapter_capabilities',
-  'audience_policy_revision',
-  'author_id',
-  'version_author_id',
-  'created_at',
-];
-const RELEASE_COLUMNS = [
-  'id',
-  'template_id',
-  'mode',
-  'provider',
-  'generation',
-  'version',
-  'candidate_hash',
-  'content_hash',
-  'adapter_revision',
-  'adapter_capabilities',
-  'audience_policy_revision',
-  'source',
-  'action',
-  'candidate_id',
-  'approval_id',
-  'previous_release_id',
-  'rollback_of_release_id',
-  'created_by',
-  'created_at',
-];
-
-export function candidateValues(c: CandidateRow): SqlValue[] {
-  return [
-    c.id,
-    c.templateId,
-    c.mode,
-    c.provider,
-    c.version,
-    c.candidateHash,
-    c.contentHash,
-    c.adapterRevision,
-    JSON.stringify(c.adapterCapabilities),
-    c.audiencePolicyRevision,
-    c.authorId,
-    c.versionAuthorId,
-    c.createdAt,
-  ];
-}
-
-function releaseValues(input: ActivateReleaseArgs): SqlValue[] {
-  const c = input.candidate;
-  return [
-    input.id,
-    c.templateId,
-    c.mode,
-    c.provider,
-    input.expectedGeneration + 1,
-    c.version,
-    c.candidateHash,
-    c.contentHash,
-    c.adapterRevision,
-    capabilities,
-    c.audiencePolicyRevision,
-    'approved',
-    input.action,
-    c.id,
-    input.approvalId,
-    input.expectedReleaseId,
-    input.targetReleaseId,
-    input.createdBy,
-    input.createdAt,
-  ];
-}
+const returningId = (tag: string) => ({ returning: ['id'], tag });
 
 /** A refused release write is a concurrent change: the same 409 the service has always raised. */
 const CODES = {
@@ -182,7 +108,12 @@ export async function writeCandidate(
       ...keyChecks(authority.kind, authority.kind === 'api_key' && authority.mode === 'live'),
     ],
   });
-  g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), RETURN_ID);
+  g.insertSelect(
+    'template_candidates',
+    CANDIDATE_COLUMNS,
+    candidateValues(c),
+    returningId(RACE_TEMPLATE_CANDIDATE_INSERT),
+  );
   g.add(
     audit(
       g,
@@ -234,6 +165,7 @@ export async function writeApproval(
     columns: ['id', 'candidate_hash', 'reviewer_id', 'kind', 'created_at'],
     values: [a.id, a.candidateHash, a.reviewerId, a.kind, a.createdAt],
     returning: ['id'],
+    tag: RACE_TEMPLATE_APPROVAL_INSERT,
   });
   g.add(
     audit(
@@ -295,7 +227,12 @@ export async function writeRelease(
           ]),
     ],
   });
-  g.insertSelect('template_releases', RELEASE_COLUMNS, releaseValues(input), RETURN_ID);
+  g.insertSelect(
+    'template_releases',
+    RELEASE_COLUMNS,
+    releaseValues(input),
+    returningId(RACE_TEMPLATE_RELEASE_INSERT),
+  );
   if (input.metadata)
     g.update('templates', {
       set: {

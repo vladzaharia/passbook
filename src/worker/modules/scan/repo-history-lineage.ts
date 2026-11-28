@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { RACE_LINEAGE } from './race-tags.ts';
 import type { ScanPredicate } from './scan-predicate.ts';
 
 /** The pass state a history read was made under. */
@@ -17,7 +18,7 @@ export interface PassLineage {
  */
 export function passLineagePredicate(lineage: PassLineage): ScanPredicate {
   return {
-    sql: `EXISTS (SELECT 1 FROM passes lineage
+    sql: `EXISTS (${RACE_LINEAGE} SELECT 1 FROM passes lineage
       WHERE lineage.id = ? AND lineage.org_id = ? AND lineage.mode = ?
         AND lineage.deleted_at IS NULL AND lineage.test_data_quarantined = 0
         AND lineage.lifecycle_generation = ? AND lineage.credential_generation = ?

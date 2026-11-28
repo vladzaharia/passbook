@@ -1,4 +1,5 @@
 import { exactStmt } from '../../platform/db.ts';
+import { RACE_APPROVAL_READ } from './race-tags.ts';
 import { type Raw, type ScanRow, toScan } from './repo-scan-map.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
@@ -103,7 +104,7 @@ export async function readUndo(
       [scanId, orgId],
     ),
     // Without an approval this reads no row (`id` is never NULL).
-    staffStatement(db, orgId, approverId ?? ''),
+    staffStatement(db, orgId, approverId ?? '', `${RACE_APPROVAL_READ} `),
     undoGroupStmt(db, orgId, scanId),
   ]);
   const row = <T>(r: D1Result | undefined) => (r?.results?.[0] ?? null) as T | null;

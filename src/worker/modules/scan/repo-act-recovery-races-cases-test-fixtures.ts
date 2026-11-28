@@ -5,6 +5,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { cronWithInterleave, stage } from './act-recovery-test-fixtures.ts';
 import { act, expectUnavailable, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { reconcileScans } from './jobs.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { recoverScans } from './recover.ts';
 import { scanByKey } from './repo-scans.ts';
 import { codeOf, key } from './test-kit.ts';
@@ -30,7 +31,7 @@ export function registerRecoveryRaces() {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+            if (!sql.includes(RACE_GATE_WRITE)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')

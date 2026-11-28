@@ -1,6 +1,7 @@
 import { PRESENT } from '../../platform/authority-read.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './guard.ts';
+import { RACE_PASSLESS_READ } from './race-tags.ts';
 import { eventMatchSql } from './repo-event-match.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import type { Fence } from './repo-read-fences.ts';
@@ -68,7 +69,7 @@ export function passlessStmt(
   return scanRead(
     db,
     auth,
-    `SELECT 1 AS ok FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${parts.map((part) => `(${part.sql})`).join(' AND ')}`,
+    `${RACE_PASSLESS_READ} SELECT 1 AS ok FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${parts.map((part) => `(${part.sql})`).join(' AND ')}`,
     parts.flatMap((part) => part.params),
   );
 }

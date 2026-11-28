@@ -8,6 +8,7 @@ import {
   registerLookupOutputFixture,
   templateId,
 } from './lookup-output-test-fixtures.ts';
+import { RACE_KEYSET_INSERT } from './race-tags.ts';
 import { principal } from './read-grant-expiry-core-test-fixtures.ts';
 import { key } from './test-kit.ts';
 
@@ -42,8 +43,7 @@ describe('passless resolve final-clock authority', () => {
       let candidateBatch = false;
       let fired = false;
       const traced = interceptBatches(counted.db, async (sql) => {
-        if (sql.some((text) => text.includes('INSERT INTO credential_ref_keyset')))
-          candidateBatch = true;
+        if (sql.some((text) => text.includes(RACE_KEYSET_INSERT))) candidateBatch = true;
       });
       Object.assign(kit.env, { DB: traced.db });
       const nativeDigest = crypto.subtle.digest.bind(crypto.subtle);

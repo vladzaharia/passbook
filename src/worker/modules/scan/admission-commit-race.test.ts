@@ -4,6 +4,7 @@ import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first } from '../../platform/db.ts';
 import { putPassCheckIn } from '../passes/check-in.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -43,7 +44,7 @@ async function race(loser: () => Promise<ScanOutcome>, rival: () => Promise<Scan
   let won: ScanOutcome | undefined;
   const { result, fired } = await beforeBatch(
     kit.env,
-    /INSERT INTO scan_gates/i,
+    RACE_GATE_WRITE,
     async () => {
       won = await rival();
     },

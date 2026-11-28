@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
+import { RACE_SUMMARY_TOTALS } from './race-tags.ts';
 import { policyRevisionHelpers } from './repo-policy-revision-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -144,7 +145,7 @@ describe('scanner history event and source proofs', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('COUNT(*) AS total')) return prepared;
+            if (!sql.includes(RACE_SUMMARY_TOTALS)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')

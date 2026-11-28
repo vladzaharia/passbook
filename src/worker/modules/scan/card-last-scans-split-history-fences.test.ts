@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { cardLastScansSplitFixture } from './card-last-scans-split-fixture.ts';
+import { RACE_CARD_HISTORY } from './race-tags.ts';
 import { type CardHistoryRow, cardHistoryFence, cardHistoryStmt } from './repo-card-history.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
@@ -86,7 +87,7 @@ describe('card last-scan privacy', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            if (!sql.includes('WITH selected_scans AS MATERIALIZED')) return statement;
+            if (!sql.includes(RACE_CARD_HISTORY)) return statement;
             return new Proxy(statement, {
               get(prepared, member) {
                 if (member === 'bind')

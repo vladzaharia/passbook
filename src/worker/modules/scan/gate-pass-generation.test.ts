@@ -1,6 +1,7 @@
 import { beforeAll, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import {
   codeOf,
   key,
@@ -31,7 +32,7 @@ async function checkInRacing(pass: Pass, requestKey: string, change: Column | nu
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+          if (!sql.includes(RACE_GATE_WRITE)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

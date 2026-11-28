@@ -98,7 +98,7 @@ describe('card last-scan privacy', () => {
     expect(result?.card.lastScans.find((row) => row.scanId === scanId)).toMatchObject({
       undoable: false,
     });
-    expect(prepared.some((sql) => sql.includes('FROM settings'))).toBe(false);
+    expect(prepared.some((sql) => sql.includes('FROM settings'))).toBe(false); // sql-shape
   });
 
   it('omits a pass-bound actionless refusal from exposable card history', async () => {

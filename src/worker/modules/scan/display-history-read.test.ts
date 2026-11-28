@@ -11,6 +11,7 @@ import {
   planDisplayHistoryRead,
   rebindDisplayHistoryRead,
 } from './display-history-plan.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { candidateById } from './repo-lookup.ts';
 import { claimScanStmt } from './repo-scans-test-support.ts';
@@ -113,7 +114,7 @@ describe('display history read', () => {
     expect(plan.stmts).toHaveLength(1);
     expect(
       recorder.prepared.some(
-        (entry) => entry.sql.includes('WITH page AS MATERIALIZED') && entry.values.length <= 100,
+        (entry) => entry.sql.includes(RACE_HISTORY_PAGE) && entry.values.length <= 100,
       ),
     ).toBe(true);
     const preloaded = await plan.finish(await recorder.db.batch(plan.stmts));
@@ -202,9 +203,9 @@ describe('display history read', () => {
     expect(complete?.ids).toHaveLength(102);
     expect(complete?.rows.size).toBe(1);
     expect(complete?.rows.has(s.scanId)).toBe(true);
-    expect(
-      recorder.prepared.filter((entry) => entry.sql.includes('WITH page AS MATERIALIZED')),
-    ).toHaveLength(2);
+    expect(recorder.prepared.filter((entry) => entry.sql.includes(RACE_HISTORY_PAGE))).toHaveLength(
+      2,
+    );
     const batched = planDisplayHistoryRead(ctx, actor, found, needs, 102);
     expect(batched.stmts).toHaveLength(2);
     const allPages = await batched.finish(await recorder.db.batch(batched.stmts));
@@ -269,7 +270,7 @@ describe('display history read', () => {
     expect(JSON.stringify(source)).not.toContain(s.walletSecret);
     expect(
       recorder.prepared.some(
-        (entry) => entry.sql.includes("s.state = 'pending'") && entry.values.length <= 100,
+        (entry) => entry.sql.includes("s.state = 'pending'") && entry.values.length <= 100, // sql-shape
       ),
     ).toBe(true);
     expect(

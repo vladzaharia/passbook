@@ -21,6 +21,7 @@ import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { createScannerStore } from './auth-store.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_EVENT_PATCH } from './race-tags.ts';
 import { grantScanMembership } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -112,7 +113,7 @@ describe('archived templates on an event', () => {
     await archive(kept);
     const { result, fired } = await beforeBatch(
       env,
-      /UPDATE scan_events SET/i,
+      RACE_EVENT_PATCH,
       async (db) =>
         void (await run(db, "UPDATE templates SET status='deleted' WHERE id=?", [kept])),
       async () =>

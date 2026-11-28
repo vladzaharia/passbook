@@ -2,12 +2,13 @@
 /** Runs `mutate` on the real database once, just before the first batch holding a statement that matches. */
 export async function beforeBatch<T>(
   env: { DB: D1Database },
-  match: RegExp,
+  match: string,
   mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
   const original = env.DB;
   const sqlOf = new WeakMap<D1PreparedStatement, string>();
+  const matches = (sql: string) => sql.includes(match);
   let fired = false;
   env.DB = new Proxy(original, {
     get(target, property) {
@@ -27,7 +28,7 @@ export async function beforeBatch<T>(
           });
       if (property === 'batch')
         return async (statements: D1PreparedStatement[]) => {
-          if (!fired && statements.some((st) => match.test(sqlOf.get(st) ?? ''))) {
+          if (!fired && statements.some((st) => matches(sqlOf.get(st) ?? ''))) {
             fired = true;
             await mutate(original);
           }
@@ -47,7 +48,7 @@ export async function beforeBatch<T>(
 /** Runs `mutate` on the real database once, just after the first batch holding a statement that matches. */
 export async function afterBatch<T>(
   env: { DB: D1Database },
-  match: RegExp,
+  match: string,
   mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
@@ -73,7 +74,7 @@ export async function afterBatch<T>(
       if (property === 'batch')
         return async (statements: D1PreparedStatement[]) => {
           const results = await target.batch(statements);
-          if (!fired && statements.some((st) => match.test(sqlOf.get(st) ?? ''))) {
+          if (!fired && statements.some((st) => (sqlOf.get(st) ?? '').includes(match))) {
             fired = true;
             await mutate(original);
           }
@@ -93,7 +94,7 @@ export async function afterBatch<T>(
 /** Runs `mutate` on the real database once, just before the first single statement that matches reads. */
 export async function beforeStatement<T>(
   env: { DB: D1Database },
-  match: RegExp,
+  match: string,
   mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
@@ -104,7 +105,7 @@ export async function beforeStatement<T>(
       get(target, member) {
         if (member === 'bind') return (...values: unknown[]) => wrap(target.bind(...values), sql);
         const value = Reflect.get(target, member, target);
-        if ((member === 'all' || member === 'first') && match.test(sql))
+        if ((member === 'all' || member === 'first') && sql.includes(match))
           return async (...args: unknown[]) => {
             if (!fired) {
               fired = true;

@@ -6,6 +6,7 @@ import { exists, type GrantCond, notExists, tenantCheck } from '../../platform/a
 import { gt, gte, lt, lte, ne, orNull } from '../../platform/authority-expr.ts';
 import { all, first, stmt } from '../../platform/db.ts';
 import type { OccZone } from './occupancy/rules.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { readScanEffectStmt } from './repo-scan-effect-snapshots.ts';
 import type { AccessTemplateRow } from './zones-plans.ts';
 
@@ -216,6 +217,7 @@ export function writeAccessGate(
     prev_visit_at: 'visit_at',
   };
   const visit = g.upsert('scan_gates', COLUMNS, values, {
+    tag: RACE_GATE_WRITE,
     when,
     returning: ['last_scan_id'],
     copy,
@@ -232,6 +234,7 @@ export function writeAccessGate(
     w.gapMs === 0
       ? null
       : g.upsert('scan_gates', COLUMNS, values, {
+          tag: RACE_GATE_WRITE,
           when,
           returning: ['last_scan_id'],
           copy,

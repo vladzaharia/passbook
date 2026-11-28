@@ -13,12 +13,13 @@ import {
 } from './access-test-fixtures.ts';
 import { act, HOUR, kit, setupActionFixture } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
 afterEach(() => kit.clock.set(TEST_NOW));
 
-const commit = /INSERT INTO scan_gates/;
+const commit = RACE_GATE_WRITE;
 
 describe('access: what holds at commit (C6)', () => {
   it('refuses a grant whose zone was archived after the read, and writes no gate', async () => {

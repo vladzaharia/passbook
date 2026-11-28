@@ -9,6 +9,7 @@ import {
   tenantSql,
 } from '../../../platform/authority-cond.ts';
 import { gt, inList, orNull } from '../../../platform/authority-expr.ts';
+import { RACE_PRESENCE_WRITE } from '../race-tags.ts';
 import { allOf } from '../scan-write-statements.ts';
 import type { ZoneFence } from './rules.ts';
 
@@ -138,6 +139,7 @@ export function enterRow(
   const values = [w.passId, w.place, 'in', 1, w.now, w.now, w.now, w.scanId, w.dueAt];
   return g.upsert('scan_presence', COLUMNS, values, {
     when: w.when,
+    tag: RACE_PRESENCE_WRITE,
     copy: PREV,
     update: w.keep
       ? ['last_entry_at', 'last_scan_id']
@@ -152,6 +154,7 @@ export function exitRow(g: Grant, w: RowWrite): GrantedStatement {
   const values = [w.passId, w.place, 'out', 1, null, w.now, w.now, w.scanId, null];
   return g.upsert('scan_presence', COLUMNS, values, {
     when: w.when,
+    tag: RACE_PRESENCE_WRITE,
     copy: PREV,
     update: ['state', 'tracking', 'entered_at', 'last_scan_id', 'due_at'],
     where: { state: 'in' },

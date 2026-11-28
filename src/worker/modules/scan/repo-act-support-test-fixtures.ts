@@ -1,9 +1,5 @@
 import { all, first } from '../../platform/db.ts';
 
-/** Every scan commit, held finish and stop opens its batch with the grant insert. */
-export const commitBatchSql = 'INSERT INTO authority_grants';
-export const actionGateInsertSql = commitBatchSql;
-
 export function scanGateRows(db: D1Database, passId: string) {
   return all<{ pass_id: string }>(db, 'SELECT pass_id FROM scan_gates WHERE pass_id=?', [passId]);
 }

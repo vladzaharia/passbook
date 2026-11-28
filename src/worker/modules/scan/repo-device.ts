@@ -7,6 +7,7 @@ import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
+import { RACE_STAFF_BIND, RACE_STAFF_UNBIND } from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -266,6 +267,7 @@ export async function bindStaff(
     codes: STAFF_CODES,
   });
   g.update('scanners', {
+    tag: RACE_STAFF_BIND,
     set: { staff_id: staff.id, staff_since: now, staff_seen_at: now, updated_at: maxNow(now) },
     where: { id: scanner.id },
     returning: ['id'],
@@ -289,6 +291,7 @@ export async function unbindStaff(target: Db | ServiceContext, scanner: ScannerR
     target: scanner.id,
   });
   g.update('scanners', {
+    tag: RACE_STAFF_UNBIND,
     set: { staff_id: null, staff_since: null, staff_seen_at: null },
     inc: ['updated_at'],
     where: { id: scanner.id, staff_id: scanner.staffId, staff_since: scanner.staffSince },

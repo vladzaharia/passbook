@@ -1,4 +1,5 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
+import { RACE_PREDICATE_AUTHORIZED } from './race-tags.ts';
 
 /**
  * Check the captured authority and pin the keyset once, within the initialization transaction.
@@ -11,7 +12,7 @@ export function credentialKeysetAuthorityStmt(
 ): D1PreparedStatement {
   return stmt(
     db,
-    `SELECT CASE WHEN (${guard.sql}) THEN 1 ELSE 0 END AS authorized,
+    `${RACE_PREDICATE_AUTHORIZED} SELECT CASE WHEN (${guard.sql}) THEN 1 ELSE 0 END AS authorized,
       CASE WHEN COALESCE((SELECT commitment FROM credential_ref_keyset WHERE id = 1) = ?, 0) THEN 1 ELSE 0 END AS matches`,
     [...guard.params, commitment],
   );

@@ -1,6 +1,7 @@
 import type { Grant } from '../../platform/authority.ts';
 import { type GrantCond, tenantSql } from '../../platform/authority-cond.ts';
 import { type GrantPart, writePart } from '../../platform/authority-include.ts';
+import { RACE_RETENTION_PROOF } from './race-tags.ts';
 import { scanRetentionExcludedSql } from './repo-scan-retention.ts';
 import type { PreparedScanRetentionProof } from './scan-retention-proof.ts';
 import { proofKind } from './scan-retention-proof-data.ts';
@@ -79,6 +80,7 @@ export function retentionProofPart(prepared: PreparedScanRetentionProof): GrantP
           ]
         : []),
     ],
+    RACE_RETENTION_PROOF,
   );
 }
 

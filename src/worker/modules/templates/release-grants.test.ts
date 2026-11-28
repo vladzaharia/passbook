@@ -31,6 +31,11 @@ import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import {
+  RACE_TEMPLATE_APPROVAL_INSERT,
+  RACE_TEMPLATE_RELEASE_INSERT,
+  RACE_TEMPLATE_VERSION_INSERT,
+} from '../scan/race-tags.ts';
 import { authorizeTemplateWrite } from './access.ts';
 import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
 import { createTemplateRegistry } from './registry.ts';
@@ -100,7 +105,7 @@ const post = (path: string, body: unknown, actor: Actor, e: AppEnv = env) =>
 /** Every race installed by a test must have fired, or the test could pass without testing anything. */
 const watchers: (() => number)[] = [];
 const raceBefore = (
-  sql: RegExp,
+  sql: string,
   action: () => Promise<unknown>,
   base: AppEnv = env,
   options: { always?: boolean } = {},
@@ -206,7 +211,7 @@ describe('release writes refuse a changed authority', () => {
   it('refuses a publish after the publisher’s membership is revoked, and leaves no release', async () => {
     const { t, c, a } = await reviewed('Revoked Publisher');
     const leaving = await member(org.id, ['template_publisher']);
-    const raced = raceBefore(/INSERT INTO template_releases/, () =>
+    const raced = raceBefore(RACE_TEMPLATE_RELEASE_INSERT, () =>
       run(env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
         clock.now(),
         leaving.membershipId,
@@ -221,7 +226,7 @@ describe('release writes refuse a changed authority', () => {
   it('refuses an approval after the org is suspended', async () => {
     const t = await uploaded('Suspended Org');
     const c = await candidateOf(t.templateId, t.version);
-    const raced = raceBefore(/INSERT INTO template_approvals/, () =>
+    const raced = raceBefore(RACE_TEMPLATE_APPROVAL_INSERT, () =>
       run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]),
     );
     const res = await approve(t.templateId, c, reviewer, raced);
@@ -234,7 +239,7 @@ describe('release writes refuse a changed authority', () => {
 
   it('refuses a publish whose head moved since the caller read it', async () => {
     const { t, c, a } = await reviewed('Head Race');
-    const moved = raceBefore(/INSERT INTO template_releases/, async () => {
+    const moved = raceBefore(RACE_TEMPLATE_RELEASE_INSERT, async () => {
       await run(env.DB, 'UPDATE templates SET active_version = ? WHERE id = ?', [
         t.version,
         t.templateId,
@@ -294,7 +299,7 @@ describe('release writes survive unrelated org changes', () => {
       t.templateId,
       c,
       reviewer,
-      raceBefore(/INSERT INTO template_approvals/, rename),
+      raceBefore(RACE_TEMPLATE_APPROVAL_INSERT, rename),
     );
     expect(approving.status).toBe(201);
     const a = TemplateApprovalSchema.parse(await approving.json());
@@ -302,14 +307,14 @@ describe('release writes survive unrelated org changes', () => {
       `/${t.templateId}/releases`,
       publishBody(c, a.id),
       publisher,
-      raceBefore(/INSERT INTO template_releases/, rename),
+      raceBefore(RACE_TEMPLATE_RELEASE_INSERT, rename),
     );
     expect(res.status).toBe(201);
     expect(TemplateReleaseSchema.parse(await res.json()).generation).toBe(1);
   });
 
   it('commits an import through a settings save', async () => {
-    const raced = raceBefore(/INSERT INTO template_versions/, rename);
+    const raced = raceBefore(RACE_TEMPLATE_VERSION_INSERT, rename);
     const result = await importZip(raced, clock, {
       orgId: org.id,
       createdBy: author.userId,
@@ -337,7 +342,7 @@ describe('baked sync', () => {
       CF_VERSION: { id: 'grants-worker', tag: '', timestamp: '9999-01-01T00:00:00Z' },
     };
     const racing = raceBefore(
-      /INSERT INTO template_releases/,
+      RACE_TEMPLATE_RELEASE_INSERT,
       async () => {
         await run(env.DB, "UPDATE orgs SET name = name || ' renamed' WHERE id = ?", [org.id]);
         await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [otherOrg.id]);
@@ -589,7 +594,7 @@ describe('baked sync grant', () => {
     };
     let contended = true;
     const racing = raceBefore(
-      /INSERT INTO template_releases/,
+      RACE_TEMPLATE_RELEASE_INSERT,
       () =>
         contended
           ? run(

@@ -9,6 +9,7 @@ import { all, first } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from './auth-store.ts';
+import { RACE_PAIR_CODE, RACE_PAIR_CREDENTIAL, RACE_PASS_INSERT } from './race-tags.ts';
 import { grantScanMembership, type ScanKit, setupScanKit } from './test-kit.ts';
 
 export const ORIGIN = 'https://wallet.test';
@@ -116,9 +117,9 @@ export async function atCommit<T>(
   >();
   let intercepted = 0;
   const matches = (sql: string) => {
-    if (targetKind === 'pass') return /^\s*INSERT\s+INTO\s+passes\b/i.test(sql);
-    if (targetKind === 'code') return /^\s*UPDATE\s+scanners\s+SET\s+pair_code_hash\b/i.test(sql);
-    return /^\s*UPDATE\s+scanners\s+SET\s+token_prefix\b/i.test(sql);
+    if (targetKind === 'pass') return sql.includes(RACE_PASS_INSERT);
+    if (targetKind === 'code') return sql.includes(RACE_PAIR_CODE);
+    return sql.includes(RACE_PAIR_CREDENTIAL);
   };
   const intervene = async (sql: string) => {
     if (!intercepted && matches(sql)) {

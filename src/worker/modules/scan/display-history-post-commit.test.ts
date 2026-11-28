@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { run } from '../../platform/db.ts';
+import { RACE_LINEAGE } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -36,8 +37,6 @@ beforeAll(async () => {
 type Flow = 'choose' | 'answer' | 'stop';
 type Gap = 'lifecycle moved' | 'credential transfer pending' | 'none';
 
-const LINEAGE = 'FROM passes lineage';
-
 /** Apply `gap` once, just before the first batch that carries the lineage check (after the commit). */
 async function withGap(gap: Gap, work: () => Promise<Response>): Promise<Response> {
   const real = kit.env.DB;
@@ -49,7 +48,7 @@ async function withGap(gap: Gap, work: () => Promise<Response>): Promise<Respons
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(LINEAGE)) return prepared;
+          if (!sql.includes(RACE_LINEAGE)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

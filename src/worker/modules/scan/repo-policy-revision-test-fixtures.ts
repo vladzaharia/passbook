@@ -1,6 +1,7 @@
 import { expect } from 'vitest';
 import { run } from '../../platform/db.ts';
 import { scannerActor, withRole } from './actor.ts';
+import { RACE_CANDIDATE_READ, RACE_GATE_WRITE } from './race-tags.ts';
 import { getScanner } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import { key, proofedScanActor, type ScanKit } from './test-kit.ts';
@@ -111,9 +112,7 @@ export function policyRevisionHelpers(getKit: () => ScanKit) {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            return sql.includes('AS active_release_candidate_hash') && sql.includes('FROM passes p')
-              ? wrap(statement)
-              : statement;
+            return sql.includes(RACE_CANDIDATE_READ) ? wrap(statement) : statement;
           };
         if (prop === 'batch')
           return async (statements: D1PreparedStatement[]) => {
@@ -153,7 +152,7 @@ export function policyRevisionHelpers(getKit: () => ScanKit) {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+            if (!sql.includes(RACE_GATE_WRITE)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')

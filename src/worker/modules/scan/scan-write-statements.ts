@@ -3,6 +3,7 @@ import { exists, type GrantCond, notExists } from '../../platform/authority-cond
 import { gte, lte, ne, orNull, type WhereValue } from '../../platform/authority-expr.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { AdmissionPlan } from './admission-types.ts';
+import { RACE_GATE_WRITE, RACE_PRESENCE_WRITE } from './race-tags.ts';
 import type { GateRule } from './repo-gates.ts';
 import type { ScanGateSnapshot, ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { wonGate } from './scan-write-grant.ts';
@@ -179,7 +180,11 @@ export function writeGate(g: Grant, w: GateWrite, when: GrantCond[]): GrantedSta
   ];
   const base = { when, returning: ['last_scan_id'] };
   if (!w.before && !w.takeOver)
-    return g.upsert('scan_gates', columns, values, { ...base, doNothing: true });
+    return g.upsert('scan_gates', columns, values, {
+      ...base,
+      doNothing: true,
+      tag: RACE_GATE_WRITE,
+    });
   const rule: Record<string, WhereValue> =
     w.rule.rule === 'once'
       ? { state: 'undone' }
@@ -188,6 +193,7 @@ export function writeGate(g: Grant, w: GateWrite, when: GrantCond[]): GrantedSta
         : {};
   return g.upsert('scan_gates', columns, values, {
     ...base,
+    tag: RACE_GATE_WRITE,
     copy: { prev_state: 'state', prev_last_at: 'last_at', prev_scan_id: 'last_scan_id' },
     update: ['state', 'last_at', 'last_scan_id'],
     inc: ['count'],
@@ -227,9 +233,15 @@ export function writeAdmissionRecord(
     scanId,
   ];
   const when = [wonGate(gate, scanId)];
-  if (!before) return g.upsert('scan_presence', columns, values, { when, doNothing: true });
+  if (!before)
+    return g.upsert('scan_presence', columns, values, {
+      when,
+      doNothing: true,
+      tag: RACE_PRESENCE_WRITE,
+    });
   return g.upsert('scan_presence', columns, values, {
     when,
+    tag: RACE_PRESENCE_WRITE,
     copy: {
       prev_state: 'state',
       prev_tracking: 'tracking',

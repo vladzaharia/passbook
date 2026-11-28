@@ -5,6 +5,7 @@ import { accessTemplate, grantOf, makeZone } from './access-test-fixtures.ts';
 import { act, CHECK_IN, HOUR, kit, out, setupActionFixture } from './act-test-fixtures.ts';
 import { admitsJson } from './admits.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
@@ -260,7 +261,7 @@ describe('admits: scope fences', () => {
     const pass = await kit.scanPass(tpl);
     const { result, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       (db) => run(db, 'UPDATE scan_events SET capacity = 5 WHERE id = ?', [event.id]),
       () => act(d.headers, codeOf(pass)),
     );

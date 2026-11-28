@@ -1,5 +1,6 @@
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetMatch } from '../passes/repo-credential-keyset.ts';
+import { RACE_TOMBSTONE_CLEAR } from './race-tags.ts';
 
 type Scope = { orgIdSql: string; modeSql: string };
 type Predicate = { sql: string; params: SqlValue[] };
@@ -84,7 +85,7 @@ export function credentialTombstonesClearStmt(
   if (predicate.sql === '0') return stmt(db, 'SELECT 1 WHERE 0');
   return stmt(
     db,
-    `SELECT 1 WHERE ${predicate.sql}`,
+    `${RACE_TOMBSTONE_CLEAR} SELECT 1 WHERE ${predicate.sql}`,
     refs.length === 0 ? predicate.params : [orgId, mode, ...predicate.params],
   );
 }

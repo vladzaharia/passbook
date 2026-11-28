@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { scannerActor, withRole } from './actor.ts';
 import { planCounts } from './counts.ts';
+import { RACE_EVENT_CACHE_FILL, RACE_EVENT_CACHE_READ } from './race-tags.ts';
 import {
   adminFor,
   cache,
@@ -192,10 +193,8 @@ export function registerCountsCacheReleaseCases() {
       kit.clock.advance(61_000);
       const plan = planCounts(ctx, actor, undefined, actor, guard);
       const results = await db.batch(plan.stmts);
-      expect(bound.some(({ sql }) => sql.startsWith('UPDATE scan_events SET expected ='))).toBe(
-        true,
-      );
-      expect(bound.some(({ sql }) => sql.startsWith('SELECT CASE WHEN changes()=0'))).toBe(true);
+      expect(bound.some(({ sql }) => sql.includes(RACE_EVENT_CACHE_FILL))).toBe(true);
+      expect(bound.some(({ sql }) => sql.includes(RACE_EVENT_CACHE_READ))).toBe(true);
       expect(bound.every(({ count }) => count <= 100)).toBe(true);
       expect(results[3]?.results?.[0]).toMatchObject({ n: 1 });
       expect((await plan.read(results)).counts.event?.expected).toBe(1);

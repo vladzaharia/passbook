@@ -8,6 +8,7 @@ import { tenantAuthorityOf } from '../modules/passes/http.ts';
 import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { insertWorkflowRun } from '../modules/passes/repo.ts';
 import type { ReissuePrincipal } from '../modules/passes/repo-bulk-principal.ts';
+import { RACE_PASS_PUBLISH } from '../modules/scan/race-tags.ts';
 import { watchBatch } from '../modules/templates/testing.ts';
 import { first, run } from '../platform/db.ts';
 import { runBulkReissue } from './bulk-reissue.ts';
@@ -173,7 +174,7 @@ describe('bulk reissue re-checks the principal that started it', () => {
     const created = [await kit.pass(), await kit.pass()];
     const m = await membership(['pass_operator']);
     const before = await Promise.all(created.map((p) => versionOf(p.id)));
-    const watched = watchBatch(kit.env, /UPDATE\s+passes\s+SET/i, async () => {
+    const watched = watchBatch(kit.env, RACE_PASS_PUBLISH, async () => {
       await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
         kit.clock.now(),
         m.membershipId,

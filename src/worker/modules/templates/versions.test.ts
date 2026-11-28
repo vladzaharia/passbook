@@ -18,6 +18,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import { behaviors, PREVIEW_SCAN_CODE } from './build-check.ts';
 import { analyzePackage } from './package/analyze.ts';
 import { basicPackage, makePng, passJson } from './package/fixtures.ts';
@@ -667,7 +668,7 @@ describe('POST /templates/{id}/versions', () => {
         get(target, prop) {
           if (prop === 'prepare')
             return (sql: string) => {
-              if (/INSERT\s+INTO\s+template_versions/i.test(sql)) prepared = true;
+              if (sql.includes(RACE_TEMPLATE_VERSION_INSERT)) prepared = true;
               return target.prepare(sql);
             };
           if (prop === 'batch')

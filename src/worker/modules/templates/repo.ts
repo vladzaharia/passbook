@@ -6,6 +6,7 @@ import type {
   ValidationReport,
 } from '../../../passkit/types.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import { RACE_TEMPLATE_VERSION_INSERT, RACE_TEMPLATE_VERSION_READ } from '../scan/race-tags.ts';
 import { canonicalJson } from './package/hash.ts';
 import type { SqlText } from './repo-version-hashes.ts';
 
@@ -198,7 +199,7 @@ export async function getVersion(
 ): Promise<VersionRow | null> {
   const row = await first<VersionSql>(
     db,
-    `SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
+    `${RACE_TEMPLATE_VERSION_READ} SELECT template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at
      FROM template_versions WHERE template_id = ? AND version = ?`,
     [templateId, version],
   );
@@ -280,7 +281,9 @@ export function versionStatementSql(v: NewVersion): [SqlText, SqlText] {
 
 /** Both statements belong in the same batch, before any dependent release writes. */
 export function insertVersionStmts(db: D1Database, v: NewVersion): D1PreparedStatement[] {
-  return versionStatementSql(v).map(({ sql, params }) => stmt(db, sql, params));
+  return versionStatementSql(v).map(({ sql, params }, i) =>
+    stmt(db, i === 0 ? `${RACE_TEMPLATE_VERSION_INSERT} ${sql}` : sql, params),
+  );
 }
 
 export { orgIdentity as getOrgName } from '../orgs/repo.ts';

@@ -6,12 +6,13 @@ import { accessTemplate, gateRow } from './access-test-fixtures.ts';
 import { kit, MINUTE, setupActionFixture } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { inNow, placeRow, scanAt, trackedZone, zoneDoor } from './occupancy-scan-test-fixtures.ts';
+import { RACE_PRESENCE_WRITE } from './race-tags.ts';
 
 beforeAll(setupActionFixture);
 afterEach(() => kit.clock.set(TEST_NOW));
 
 /** The commit batch of a scan at a tracked zone writes the in/out row. */
-const COMMIT = /INSERT INTO scan_presence/;
+const COMMIT = RACE_PRESENCE_WRITE;
 
 /** `first` reads and plans, then `second` runs whole and commits, then `first` commits. */
 async function interleave(

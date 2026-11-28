@@ -1,6 +1,7 @@
 import type { Grant } from '../../platform/authority.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { writePart } from '../../platform/authority-include.ts';
+import { splitRaceTag } from '../../platform/race-tag.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   consumeSun,
@@ -11,6 +12,7 @@ import {
 } from '../nfc/repo-sun.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
+import { RACE_SCAN_CLAIM } from './race-tags.ts';
 import type { Claim } from './repo-scans.ts';
 import { capturedStatement, capturingDb } from './scan-capture.ts';
 import { partSql, scanWriteGrant } from './scan-write-grant.ts';
@@ -92,7 +94,7 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       claim.clientTs,
       claim.now,
     ],
-    { doNothing: true, returning: ['id', 'at'] },
+    { doNothing: true, returning: ['id', 'at'], tag: RACE_SCAN_CLAIM },
   );
 }
 
@@ -121,5 +123,5 @@ export function keysetOnGrant(g: Grant, db: D1Database, commitment: string): voi
   const seen = capturedStatement(statement);
   if (!seen)
     throw new AuthorityError('GRANT_FOREIGN_STATEMENT', 'The keyset statement was not captured.');
-  g.include(writePart(partSql(seen.sql), seen.params));
+  g.include(writePart(partSql(seen.sql), seen.params, splitRaceTag(seen.sql).tag || undefined));
 }

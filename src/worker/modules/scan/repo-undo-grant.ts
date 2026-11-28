@@ -2,6 +2,7 @@ import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import { bumpRev } from './occupancy/repo.ts';
+import { RACE_SCAN_UNDO } from './race-tags.ts';
 import { ACCESS_GATE } from './repo-access.ts';
 import { includeSystemRetentionProof } from './repo-scan-retention-part.ts';
 import type { ScanRow } from './repo-scans.ts';
@@ -141,6 +142,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
   const writes = [
     gateWrite,
     g.update('scans', {
+      tag: RACE_SCAN_UNDO,
       set: { undone_by: id, undone_at: now },
       where: {
         id: target.id,

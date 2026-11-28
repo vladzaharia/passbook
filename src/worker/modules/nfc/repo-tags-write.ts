@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { RACE_TAG_BIND } from '../scan/race-tags.ts';
 import {
   consumeSun,
   enrolSun,
@@ -223,6 +224,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       now,
     );
   const insert = g.insertJoined('tag_bindings', {
+    tag: RACE_TAG_BIND,
     parents: { tag_id: p.tagId, pass_id: p.passId },
     columns: [
       'id',

@@ -42,7 +42,7 @@
     "changelog:release": "node tools/changelog-release.ts",
     "deploy:check": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
-    "check:rules": "node tools/check-log-codes.ts && node tools/check-migrations.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/check-apple-binding.ts && node tools/check-idp-binding.ts && node tools/check-openapi.ts && node tools/gen-reference-examples.ts --check && node tools/check-vocabulary.ts && node tools/check-developers.ts && node tools/gen-sdk-ts.ts --check && node tools/gen-sdk-py.ts --check && node tools/gen-sdk-go.ts --check && node tools/gen-snippets.ts --check && node tools/authority-scope.ts --strict && knip",
+    "check:rules": "node tools/check-log-codes.ts && node tools/check-migrations.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/check-race-tags.ts && node tools/check-apple-binding.ts && node tools/check-idp-binding.ts && node tools/check-openapi.ts && node tools/gen-reference-examples.ts --check && node tools/check-vocabulary.ts && node tools/check-developers.ts && node tools/gen-sdk-ts.ts --check && node tools/gen-sdk-py.ts --check && node tools/gen-sdk-go.ts --check && node tools/gen-snippets.ts --check && node tools/authority-scope.ts --strict && knip",
     "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run build",
     "dev:oidc": "OIDC_CLIENT_ID=wallet-dev node test/mock-oidc/server.ts 5174"
   },

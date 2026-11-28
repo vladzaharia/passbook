@@ -8,6 +8,7 @@ import {
 } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { effectiveReleaseIs, usedRelease } from './effective-release.ts';
+import { RACE_PASS_FENCE } from './race-tags.ts';
 import {
   validCredentialKeysetCommitment,
   validCredentialTombstoneRefs,
@@ -154,7 +155,7 @@ export function prepareSnapshotFence(
   // access revision, and the client retries.
   const statement = exactStmt(
     db,
-    `SELECT (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS rules
+    `${RACE_PASS_FENCE} SELECT (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS rules
      FROM passes p WHERE p.id=? AND p.org_id=? AND p.mode=? AND ${standing}
        AND ${effectiveReleaseIs('p')}${
          used === null ? ' AND p.release_id IS NULL AND p.template_version=?' : ''

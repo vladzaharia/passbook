@@ -10,6 +10,7 @@ import { scanEpochsOf } from './scan-epochs.ts';
 
 type Db = D1Database;
 
+import { RACE_EVENT_CACHE_FILL } from './race-tags.ts';
 import { expectedCount, expectedCountQuery, type Predicate } from './repo-counts-query.ts';
 
 export {
@@ -110,7 +111,7 @@ export function setExpectedStmt(
     ...fence.params,
   ];
   if (params.length >= 100) return null;
-  const sql = `UPDATE scan_events SET expected = (${count.sql}), expected_at = ?
+  const sql = `${RACE_EVENT_CACHE_FILL} UPDATE scan_events SET expected = (${count.sql}), expected_at = ?
     WHERE id = ? AND org_id = ? AND mode = ?
       AND archived_at IS NULL AND (expected_at IS NULL OR expected_at <= ?)
       AND config_epoch = ?

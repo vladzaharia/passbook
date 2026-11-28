@@ -5,6 +5,7 @@ import { tenantSql } from '../../platform/authority-cond.ts';
 import { inList, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, stmt } from '../../platform/db.ts';
 import { admitsJson, storedAdmits } from './admits.ts';
+import { RACE_EVENT_ASSIGN, RACE_EVENT_PATCH } from './race-tags.ts';
 import { eventScannersAre, eventSessionsAre } from './repo-admin-grant.ts';
 import { clearTemplatesOfScanners } from './repo-admin-unguarded.ts';
 
@@ -105,7 +106,7 @@ export function addEventUpdate(g: Grant, id: string, p: EventPatch, now: number)
   if (p.reentry !== undefined) set.reentry = p.reentry ? 1 : 0;
   if (p.hardLimit !== undefined) set.hard_limit = p.hardLimit ? 1 : 0;
   if (p.note !== undefined) set.note = p.note;
-  return g.update('scan_events', { set, where: { id }, require: 'one' });
+  return g.update('scan_events', { tag: RACE_EVENT_PATCH, set, where: { id }, require: 'one' });
 }
 
 /** A new event has no links; an existing one is cleared first. The event is in the grant's org. */
@@ -249,6 +250,7 @@ export function addEventAssign(
   for (let at = 0; at < ids.length; at += 20)
     out.push(
       g.update('scanners', {
+        tag: RACE_EVENT_ASSIGN,
         set: { event_id: eventId, updated_at: maxNow(now) },
         where: { id: inList(ids.slice(at, at + 20)) },
         returning: ['id'],

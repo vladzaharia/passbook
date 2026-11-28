@@ -5,7 +5,7 @@ import { first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { expectBlocked, raceGate, tenantActor } from './act-authority-test-fixtures.ts';
 import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import { codeOf, grantScanMembership, key } from './test-kit.ts';
 
 // The kit's fake session store cannot resolve cookies persisted by makeSession, so a tenant session
@@ -39,7 +39,7 @@ export function registerAuthorityMisses() {
       { code: 'STALE-MISS-INPUT', method: 'camera' },
       (db) => run(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), scanner.id]),
       { idempotencyKey },
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     await expectBlocked(response, 'no-pass', idempotencyKey, 'SCANNER_REPAIR');
     const counterKey = `scan:miss:${JSON.stringify([kit.org.id, 'live', `s:${scanner.id}`])}`;
@@ -111,7 +111,7 @@ export function registerAuthorityMisses() {
           actionId: 'check_in',
           scope: { orgId: kit.org.id, templateIds: [tpl], timeZone: 'UTC' },
         },
-        commitBatchSql,
+        RACE_GRANT_INSERT,
         0,
         sessionAct,
       );

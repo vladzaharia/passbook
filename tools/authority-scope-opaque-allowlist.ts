@@ -10,8 +10,8 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     reason:
       'caller-built, parenthesized scan predicates (scan-predicate.ts); each write is pinned by its own id, state and at, and binds only the id',
     exprs: ['AMBIGUOUS_SCAN', 'extra.sql', 'original.sql', 'guard.sql'],
-    via: ['src/worker/platform/authority-statements.ts'],
-    hash: 'a12f47971edb',
+    via: ['src/worker/platform/authority-statements.ts', 'src/worker/platform/authority-insert.ts'],
+    hash: '84d23ef0e76f',
   },
   'src/worker/modules/scan/repo-act-claim.ts': {
     reason:
@@ -23,7 +23,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/scan/repo-read-fences.ts',
       'src/worker/modules/scan/repo-read-authority.ts',
     ],
-    hash: 'deebee906cd4',
+    hash: 'bd6497ff3fa2',
   },
   'src/worker/modules/scan/repo-counts.ts': {
     reason:
@@ -40,9 +40,10 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/scan/repo-scan-passless.ts',
       'src/worker/modules/scan/repo-scan-retention.ts',
       'src/worker/platform/authority-statements.ts',
+      'src/worker/platform/authority-insert.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: '423281ba0c20',
+    hash: 'fa72c597e439',
   },
   'src/worker/modules/events/repo.ts': {
     reason:
@@ -83,8 +84,9 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/modules/developer/fence.ts',
       'src/worker/modules/passes/repo-history-image.ts',
       'src/worker/modules/scan/scan-conjunction.ts',
+      'src/worker/platform/race-tag.ts',
     ],
-    hash: 'c10c576778bb',
+    hash: '1e40166ca95a',
   },
   'src/worker/modules/webhooks/repo-retention.ts': {
     reason:

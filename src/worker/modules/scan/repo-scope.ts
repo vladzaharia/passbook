@@ -1,6 +1,7 @@
 import { IdSchema, type Mode } from '../../../shared/contracts/common.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan.ts';
 import { first, stmt } from '../../platform/db.ts';
+import { RACE_EVENT_BY_ID, RACE_EVENT_SCOPE_PIN } from './race-tags.ts';
 import { usableScanTemplateSql } from './repo-scope-releases.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
 
@@ -42,9 +43,8 @@ export interface Raw {
   archived_at: number | null;
 }
 
-export const EVENT_SQL = `SELECT id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
-            capacity, reentry, hard_limit, note, updated_at, archived_at
-     FROM scan_events WHERE id = ? AND org_id = ?`;
+export const EVENT_SQL = `${RACE_EVENT_BY_ID} SELECT id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
+            capacity, reentry, hard_limit, note, updated_at, archived_at FROM scan_events WHERE id = ? AND org_id = ?`;
 
 const toEvent = (r: Raw): ScanEventRow => ({
   id: r.id,
@@ -169,7 +169,7 @@ export async function readValidEventScope(
   if (!IdSchema.safeParse(eventId).success) return null;
   const results = await db.batch([
     stmt(db, EVENT_SQL, [eventId, orgId]),
-    stmt(db, EVENT_SCOPE_TEMPLATES_SQL, [orgId, mode, eventId]),
+    stmt(db, `${RACE_EVENT_SCOPE_PIN} ${EVENT_SCOPE_TEMPLATES_SQL}`, [orgId, mode, eventId]),
   ]);
   return eventScopeOf(
     mode,

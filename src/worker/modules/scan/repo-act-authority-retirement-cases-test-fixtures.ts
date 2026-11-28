@@ -12,6 +12,7 @@ import {
   tpl,
 } from './act-test-fixtures.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
+import { RACE_PASS_FENCE } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 export function registerAuthorityRetirement() {
@@ -221,7 +222,7 @@ export function registerAuthorityRetirement() {
           if (prop === 'prepare')
             return (sql: string) => {
               const prepared = target.prepare(sql);
-              if (!sql.includes('SELECT (SELECT rules FROM pass_check_in')) return prepared;
+              if (!sql.includes(RACE_PASS_FENCE)) return prepared;
               return new Proxy(prepared, {
                 get(statement, member) {
                   if (member === 'bind')

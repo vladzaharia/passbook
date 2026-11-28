@@ -3,6 +3,7 @@ import type { ScanActor } from './actor.ts';
 import type { HistoryRaw, HistoryRow } from './history-row.ts';
 import { toHistoryRow } from './history-row.ts';
 import { HEADS_UP_SQL } from './outcome-bucket.ts';
+import { RACE_SUMMARY_TOTALS } from './race-tags.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
 import { historyPageStmt } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -131,7 +132,7 @@ export async function readSummary(
     scanRead(
       db,
       auth,
-      `SELECT COUNT(*) AS total,
+      `${RACE_SUMMARY_TOTALS} SELECT COUNT(*) AS total,
         COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
         COALESCE(SUM(${HEADS_UP_SQL}), 0) AS heads_up,
         COALESCE(SUM(s.outcome IS NOT 'ok' AND NOT ${HEADS_UP_SQL}), 0) AS refused,

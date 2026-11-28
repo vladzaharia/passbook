@@ -13,7 +13,7 @@ import {
   rows,
   tpl,
 } from './act-test-fixtures.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GATE_WRITE, RACE_GRANT_INSERT } from './race-tags.ts';
 import { candidateById } from './repo-lookup.ts';
 import { codeOf, key } from './test-kit.ts';
 
@@ -107,7 +107,7 @@ export function registerAuthorityRelease() {
             });
           },
           { idempotencyKey: key() },
-          held ? commitBatchSql : 'INSERT INTO scan_gates',
+          held ? RACE_GRANT_INSERT : RACE_GATE_WRITE,
         );
         expect(response.status).toBe(200);
         const outcome = await out(response);

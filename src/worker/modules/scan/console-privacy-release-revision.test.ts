@@ -26,6 +26,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { key } from './test-kit.ts';
 
 setupPrivacyKit();
@@ -275,7 +276,7 @@ describe('scan console and feed privacy', () => {
       // policy and the pass it projects are one snapshot, never a mix.
       const { result, fired } = await beforeBatch(
         kit.env,
-        /page AS MATERIALIZED/,
+        RACE_HISTORY_PAGE,
         moveHead,
         async () => {
           const response = await get(path);

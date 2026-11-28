@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_EPOCH_STAFF, RACE_SESSION_PATCH, RACE_STAFF_PIN_ROTATE } from './race-tags.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
@@ -52,7 +53,7 @@ describe('scanning sessions are fenced to the console mode and write only what t
     const session = (await made.json()) as { id: string };
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scanning_sessions SET/i,
+      RACE_SESSION_PATCH,
       async (db) =>
         void (await run(
           db,
@@ -127,7 +128,7 @@ describe('staff sign-in answers from the committed state', () => {
     const person = await kit.staff('door', 'Dana');
     const { result, fired } = await beforeBatch(
       kit.env,
-      /SELECT role, disabled_at, pin_hash, auth_epoch FROM scan_staff/i,
+      RACE_EPOCH_STAFF,
       async (db) =>
         void (await run(db, "UPDATE scan_staff SET role = 'desk' WHERE id = ?", [person.id])),
       () => kit.post(scanner.headers, '/staff', { staffId: person.id, pin: person.pin }),
@@ -149,7 +150,7 @@ describe('a PIN reset is derived from the credential it read', () => {
     );
     const { result, fired } = await beforeBatch(
       staffKit.env,
-      /UPDATE scan_staff SET/i,
+      RACE_STAFF_PIN_ROTATE,
       async (db) =>
         void (await run(db, "UPDATE scan_staff SET pin_hash = 'moved' WHERE name = 'Stale'")),
       () => Promise.resolve(staffKit.send('POST', staffKit.resetPath(person.staff.id))),

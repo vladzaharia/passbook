@@ -216,12 +216,12 @@ export async function setTemplateStatus(
 
 /**
  * Test hook: an env whose database runs `action` just before the first batch (every batch with
- * `always`) that contains a statement matching `sql`. `fired()` says whether it ran, so a test cannot
+ * `always`) that contains a statement holding the SQL comment `tag`. `fired()` says whether it ran, so a test cannot
  * pass vacuously. It models a change committed between a request's checks and its write.
  */
 export function watchBatch(
   env: AppEnv,
-  sql: RegExp,
+  tag: string,
   action: () => Promise<unknown>,
   options: { always?: boolean } = {},
 ): { env: AppEnv; fired: () => number } {
@@ -231,7 +231,7 @@ export function watchBatch(
     get(target, prop) {
       if (prop === 'prepare')
         return (text: string) => {
-          if (sql.test(text)) seen = true;
+          if (text.includes(tag)) seen = true;
           return target.prepare(text);
         };
       if (prop === 'batch')
@@ -251,6 +251,6 @@ export function watchBatch(
 }
 
 /** `watchBatch` for tests that only need the env. */
-export function beforeBatch(env: AppEnv, sql: RegExp, action: () => Promise<unknown>): AppEnv {
-  return watchBatch(env, sql, action).env;
+export function beforeBatch(env: AppEnv, tag: string, action: () => Promise<unknown>): AppEnv {
+  return watchBatch(env, tag, action).env;
 }

@@ -3,7 +3,7 @@ import { first } from '../../platform/db.ts';
 /** Mutate the actual D1 state just before the batch that would commit an action or its grants. */
 export function beforeBatch(
   db: D1Database,
-  marker: string,
+  tag: string,
   change: (db: D1Database) => Promise<unknown>,
 ) {
   const matched = new WeakSet<D1PreparedStatement>();
@@ -13,7 +13,7 @@ export function beforeBatch(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(marker)) return prepared;
+          if (!sql.includes(tag)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

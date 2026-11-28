@@ -2,6 +2,7 @@ import type { SqlValue } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { HistoryRaw, HistoryRow } from './history-row.ts';
 import { toHistoryRow } from './history-row.ts';
+import { RACE_HISTORY_PAGE } from './race-tags.ts';
 import { uniqueScanEventIdSql } from './repo-history-provenance.ts';
 import {
   EVENT_PINNED_KEY,
@@ -70,7 +71,10 @@ export interface HistorySelector {
   tenant?: string;
 }
 
-const PAGE_SCANS = (auth: ScanReadAuthority, sel: HistorySelector) => `page AS MATERIALIZED (
+const PAGE_SCANS = (
+  auth: ScanReadAuthority,
+  sel: HistorySelector,
+) => `${RACE_HISTORY_PAGE} page AS MATERIALIZED (
     SELECT s.id AS scan_id FROM ${auth.rows}scans s
     WHERE ${auth.present} AND ${sel.tenant ?? auth.tenantOnce('s', 'scans')} AND ${sel.where}
     ORDER BY s.at DESC, s.id DESC LIMIT ?)`;

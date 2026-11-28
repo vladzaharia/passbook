@@ -2,6 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import {
+  RACE_GATE_SNAPSHOT,
+  RACE_GATE_WRITE,
+  RACE_REPLAY_READ,
+  RACE_SCAN_UNDO,
+} from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -28,15 +34,15 @@ const problem = async (res: Response) => ({
 /** Statements that open each phase of `POST /actions`. */
 const AT = {
   /** The first batch: replay lookup and the actor fences, before the claim. */
-  start: /SELECT \* FROM scans WHERE actor_key=/,
+  start: RACE_REPLAY_READ,
   /** The admission and preflight reads, after the claim. */
-  preflight: /LEFT JOIN scans h ON h\.id=g\.last_scan_id/,
+  preflight: RACE_GATE_SNAPSHOT,
   /** The commit grant. */
-  commit: /INSERT INTO scan_gates/,
+  commit: RACE_GATE_WRITE,
 } as const;
 
 async function scanWhile(
-  at: RegExp,
+  at: string,
   change: (db: D1Database) => Promise<unknown>,
   headers: Record<string, string>,
   p: Pass,
@@ -172,7 +178,7 @@ describe('only a lost credential unpairs a scanner mid-request', () => {
     const undo = () => kit.post(s.headers, `/scans/${done.scanId}/undo`, { idempotencyKey: key() });
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scans SET undone_by/,
+      RACE_SCAN_UNDO,
       async (db) => void (await pairCode(s.id)(db)),
       undo,
     );

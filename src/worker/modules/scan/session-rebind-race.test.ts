@@ -9,6 +9,7 @@ import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { RACE_DEVICE_CAPABILITIES, RACE_SESSION_ROW, RACE_STAFF_UNBIND } from './race-tags.ts';
 import { approveScanReleases, type ScanKit, setupScanKit } from './test-kit.ts';
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
@@ -256,11 +257,10 @@ function interleave(real: D1Database, f: Fixture, phase: Phase, change: Change) 
           // around the batch.
           const report =
             ((phase === 'before report' || phase === 'after report') &&
-              sql.includes('UPDATE scanning_devices SET capabilities')) ||
-            (phase === 'unbind' && /UPDATE scanners SET staff_id = \?/.test(sql));
+              sql.includes(RACE_DEVICE_CAPABILITIES)) ||
+            (phase === 'unbind' && sql.includes(RACE_STAFF_UNBIND));
           const final =
-            (phase === 'final guard' || phase === 'final report') &&
-            sql.includes('session_row AS MATERIALIZED');
+            (phase === 'final guard' || phase === 'final report') && sql.includes(RACE_SESSION_ROW);
           if (!report && !final) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {

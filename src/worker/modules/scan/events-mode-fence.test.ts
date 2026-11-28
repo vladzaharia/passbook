@@ -5,6 +5,7 @@ import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_EVENT_ASSIGN, RACE_EVENT_PATCH } from './race-tags.ts';
 import { type ScanKit, setupScanKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -73,7 +74,7 @@ describe('event writes are fenced to the console mode', () => {
     const b = await kit.scanner();
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scanners SET event_id/i,
+      RACE_EVENT_ASSIGN,
       async (db) => void (await run(db, "UPDATE scanners SET mode = 'test' WHERE id = ?", [b.id])),
       () => call('POST', `/${event.id}/scanners`, { scannerIds: [a.id, b.id] }),
     );
@@ -87,7 +88,7 @@ describe('event writes are fenced to the console mode', () => {
     const event = await kit.event({});
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scan_events SET/i,
+      RACE_EVENT_PATCH,
       async (db) =>
         void (await run(db, "UPDATE scan_events SET name = 'Renamed meanwhile' WHERE id = ?", [
           event.id,

@@ -2,6 +2,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { RACE_EVENT_CACHE_READ } from './race-tags.ts';
 import { eventMatch, eventMatchSql } from './repo-event-match.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
@@ -122,7 +123,11 @@ export function expectedCountAfterCacheStmt(
   now: number,
 ): D1PreparedStatement {
   const count = expectedCountQuery(event, templateIds, now);
-  return stmt(db, `SELECT CASE WHEN changes()=0 THEN (${count.sql}) END AS n`, count.params);
+  return stmt(
+    db,
+    `${RACE_EVENT_CACHE_READ} SELECT CASE WHEN changes()=0 THEN (${count.sql}) END AS n`,
+    count.params,
+  );
 }
 
 /** Decode a count whether it came from the cache CAS or its immediately following read. */

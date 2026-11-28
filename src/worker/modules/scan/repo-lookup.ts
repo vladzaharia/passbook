@@ -3,6 +3,7 @@ import { chunk, type SqlValue, stmt } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { RACE_CANDIDATE_READ } from './race-tags.ts';
 import {
   type LiveTemplateSnapshot,
   liveTemplateSnapshotColumnsSql,
@@ -126,7 +127,7 @@ export const channelEpochSql = (org: string, mode: string): string => `(
     WHERE tp.org_id=${org} AND tp.mode=${mode} AND tp.template_id=p.template_id), 0)
   || '/' || (SELECT COUNT(*) FROM pass_prints pp WHERE pp.pass_id=p.id))`;
 
-const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
+const PROJECTION = `${RACE_CANDIDATE_READ} SELECT p.*, snapshot.pass_json AS pass_json,
     snapshot.version AS wallet_version, snapshot.personalization AS version_personalization,
     snapshot.template_version AS wallet_template_version,
     ${walletIdentityColumn('pass_type_identifier')} AS identity_pass_type_identifier, ${walletIdentityColumn('team_identifier')} AS identity_team_identifier,

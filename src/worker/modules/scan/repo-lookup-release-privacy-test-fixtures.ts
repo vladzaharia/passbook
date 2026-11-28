@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { rollbackRelease } from '../templates/releases.ts';
+import { RACE_CANDIDATE_READ } from './race-tags.ts';
 import { candidateById } from './repo-lookup.ts';
 import { CHECK_IN, kit, stageVersion } from './repo-lookup-release-test-fixtures.ts';
 import { key } from './test-kit.ts';
@@ -45,8 +46,7 @@ export function registerLookupReleasePrivacyCases() {
           if (prop === 'prepare')
             return (sql: string) => {
               const statement = target.prepare(sql);
-              if (!sql.includes('credential_keyset.commitment AS credential_keyset_commitment'))
-                return statement;
+              if (!sql.includes(RACE_CANDIDATE_READ)) return statement;
               return new Proxy(statement, {
                 get(inner, member) {
                   if (member === 'bind')

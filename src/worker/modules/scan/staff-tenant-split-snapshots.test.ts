@@ -81,7 +81,8 @@ describe('staff read and response authority', () => {
         }
         if (prop === 'prepare')
           return (sql: string) => {
-            if (intercepted && /\b(?:FROM|JOIN)\s+scan_staff\b/i.test(sql))
+            const rereadsStaff = /\b(?:FROM|JOIN)\s+scan_staff\b/i.test(sql); // sql-shape
+            if (intercepted && rereadsStaff)
               throw new Error('Staff was reread after session revocation');
             return target.prepare(sql);
           };

@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { Pass } from '../passes/repo.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 export const ACTION = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
@@ -94,7 +95,7 @@ export function traceD1(db: D1Database, hooks: { before?: Hook; after?: Hook } =
 }
 
 export const hasGate = (batch: RecordedBatch) =>
-  batch.some(({ sql }) => /INSERT\s+INTO\s+scan_gates\b/i.test(sql));
+  batch.some(({ sql }) => sql.includes(RACE_GATE_WRITE));
 export const hasReservation = (batch: RecordedBatch) =>
   batch.some(({ values }) =>
     values.some((value) => typeof value === 'string' && value.startsWith('scan:pin-reservation:')),

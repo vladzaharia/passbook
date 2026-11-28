@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { all, run } from '../../../platform/db.ts';
 import { kit, setupActionFixture } from '../act-test-fixtures.ts';
 import { beforeBatch } from '../batch-interceptor-test-support.ts';
+import { RACE_PRESENCE_WRITE } from '../race-tags.ts';
 import { key } from '../test-kit.ts';
 import {
   DISPLAY_TPL,
@@ -206,7 +207,7 @@ describe('mark as out: races, keys and the ledger', () => {
     const s = await station([tpl], [pool.id]);
     const { result, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_presence/,
+      RACE_PRESENCE_WRITE,
       async (db) => {
         await run(
           db,

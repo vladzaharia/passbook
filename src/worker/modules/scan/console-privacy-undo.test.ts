@@ -13,6 +13,7 @@ import {
   setupPrivacyKit,
   templateId,
 } from './console-privacy-test-fixtures.ts';
+import { RACE_SCAN_UNDO } from './race-tags.ts';
 import { grantScanMembership, key, ORIGIN } from './test-kit.ts';
 
 setupPrivacyKit();
@@ -123,9 +124,7 @@ describe('console undo tenant authority', () => {
           return async (statements: D1PreparedStatement[]) => {
             if (
               intercepted === 0 &&
-              statements.some((statement) =>
-                /\bUPDATE\s+scan_gates\s+SET\b/i.test(sqlOf.get(statement) ?? ''),
-              )
+              statements.some((statement) => sqlOf.get(statement)?.includes(RACE_SCAN_UNDO))
             ) {
               intercepted++;
               const sessionRevoked = change === 'session revoked';

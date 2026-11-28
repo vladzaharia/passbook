@@ -4,7 +4,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
 import { reconcileScans } from './jobs.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GATE_WRITE, RACE_GRANT_INSERT } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 export function registerAuthorityGates() {
@@ -128,7 +128,7 @@ export function registerAuthorityGates() {
         if (prop === 'prepare')
           return (sql: string) => {
             const prepared = target.prepare(sql);
-            if (!sql.includes('INSERT INTO scan_gates')) return prepared;
+            if (!sql.includes(RACE_GATE_WRITE)) return prepared;
             return new Proxy(prepared, {
               get(statement, member) {
                 if (member === 'bind')
@@ -226,7 +226,7 @@ export function registerAuthorityGates() {
       codeOf(pass),
       (db) => run(db, 'UPDATE scan_gates SET last_at=last_at+1 WHERE pass_id=?', [pass.id]),
       {},
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     // The gate's last_at is a volatile fact, not authority: the heads-up is recorded once.
     expect(response.status).toBe(200);
@@ -254,7 +254,7 @@ export function registerAuthorityGates() {
         codeOf(next),
         (db) => run(db, `UPDATE passes SET ${set} WHERE id=?`, [occupant.id]),
         {},
-        commitBatchSql,
+        RACE_GRANT_INSERT,
       );
       // The occupancy moved under the commit: no stale capacity_full heads-up is recorded. A
       // quarantined occupant is a classified 409; a deleted one must not count as occupying at all.
