@@ -32,13 +32,7 @@ export function DesignerLayout({
   if (phone) {
     return (
       <div className="grid gap-4">
-        {previewOnPhone ? (
-          <Callout tone="info" title="Preview only">
-            The designer needs a tablet or desktop screen.
-          </Callout>
-        ) : (
-          <Callout tone="info" title="Use a larger screen" />
-        )}
+        <Callout tone="info" title={previewOnPhone ? 'Preview only' : 'Use a larger screen'} />
         {Link ? (
           <Button asChild variant="outline" className="justify-self-center">
             <Link place={{ to: 'template', templateId }}>Back to template</Link>
