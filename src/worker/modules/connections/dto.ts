@@ -130,6 +130,21 @@ export function connectorInfo(def: AnyConnector): z.infer<typeof ConnectorInfoSc
       import: caps.import === true,
       snapshot: caps.snapshot === true,
       upload: caps.upload === true,
+      read: {
+        fetch: caps.read?.fetch === true,
+        list: caps.read?.list === true,
+        delta: caps.read?.delta === true,
+        import: caps.read?.import === true,
+        upload: caps.read?.upload === true,
+      },
+      write: {
+        objects: Object.fromEntries(
+          Object.entries(caps.write?.objects ?? {}).map(([object, ops]) => [object, [...ops]]),
+        ),
+      },
+      inbound: { webhook: caps.inbound?.webhook ?? 'none' },
+      outbound: { events: [...(caps.outbound?.events ?? [])] },
+      auth: caps.auth,
     },
     configSchema: jsonSchemaOf(def.configSchema),
     secretSchema: def.secretSchema ? jsonSchemaOf(def.secretSchema) : null,

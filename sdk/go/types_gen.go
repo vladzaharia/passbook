@@ -2374,12 +2374,37 @@ type ConnectorsListItem struct {
 }
 
 type ConnectorsListItemCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                    `json:"poll"`
+	Delta    bool                                    `json:"delta"`
+	Webhook  bool                                    `json:"webhook"`
+	Import   bool                                    `json:"import"`
+	Snapshot bool                                    `json:"snapshot"`
+	Upload   *bool                                   `json:"upload,omitempty"`
+	Read     *ConnectorsListItemCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsListItemCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsListItemCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsListItemCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                 `json:"auth,omitempty"`
+}
+
+type ConnectorsListItemCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsListItemCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsListItemCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsListItemCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsListItemDefaults struct {
@@ -2456,12 +2481,37 @@ type ConnectorsListResponseItemsItem struct {
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                                 `json:"poll"`
+	Delta    bool                                                 `json:"delta"`
+	Webhook  bool                                                 `json:"webhook"`
+	Import   bool                                                 `json:"import"`
+	Snapshot bool                                                 `json:"snapshot"`
+	Upload   *bool                                                `json:"upload,omitempty"`
+	Read     *ConnectorsListResponseItemsItemCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsListResponseItemsItemCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsListResponseItemsItemCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsListResponseItemsItemCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                              `json:"auth,omitempty"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsListResponseItemsItemCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsListResponseItemsItemDefaults struct {
@@ -2628,12 +2678,37 @@ type ConnectorsRetrieveResponse struct {
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
-	Poll     bool  `json:"poll"`
-	Delta    bool  `json:"delta"`
-	Webhook  bool  `json:"webhook"`
-	Import   bool  `json:"import"`
-	Snapshot bool  `json:"snapshot"`
-	Upload   *bool `json:"upload,omitempty"`
+	Poll     bool                                            `json:"poll"`
+	Delta    bool                                            `json:"delta"`
+	Webhook  bool                                            `json:"webhook"`
+	Import   bool                                            `json:"import"`
+	Snapshot bool                                            `json:"snapshot"`
+	Upload   *bool                                           `json:"upload,omitempty"`
+	Read     *ConnectorsRetrieveResponseCapabilitiesRead     `json:"read,omitempty"`
+	Write    *ConnectorsRetrieveResponseCapabilitiesWrite    `json:"write,omitempty"`
+	Inbound  *ConnectorsRetrieveResponseCapabilitiesInbound  `json:"inbound,omitempty"`
+	Outbound *ConnectorsRetrieveResponseCapabilitiesOutbound `json:"outbound,omitempty"`
+	Auth     *string                                         `json:"auth,omitempty"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesInbound struct {
+	Webhook string `json:"webhook"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesOutbound struct {
+	Events []string `json:"events"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesRead struct {
+	Fetch  *bool `json:"fetch,omitempty"`
+	List   *bool `json:"list,omitempty"`
+	Delta  *bool `json:"delta,omitempty"`
+	Import *bool `json:"import,omitempty"`
+	Upload *bool `json:"upload,omitempty"`
+}
+
+type ConnectorsRetrieveResponseCapabilitiesWrite struct {
+	Objects map[string][]string `json:"objects"`
 }
 
 type ConnectorsRetrieveResponseDefaults struct {

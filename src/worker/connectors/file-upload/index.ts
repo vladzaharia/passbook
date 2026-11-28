@@ -1,4 +1,4 @@
-import { type ConnectorDefinition, ConnectorError } from '../types.ts';
+import { type ConnectorDefinition, ConnectorError, declareCapabilities } from '../types.ts';
 import { type Config, config } from './config.ts';
 import { list } from './list.ts';
 
@@ -12,7 +12,7 @@ const definition: ConnectorDefinition<Config, unknown> = {
   description: 'Keep passes in sync with a CSV, Excel or JSON file you upload.',
   category: 'files',
   order: 10,
-  capabilities: { upload: true },
+  capabilities: declareCapabilities({ read: { fetch: true, upload: true }, auth: 'none' }),
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {},

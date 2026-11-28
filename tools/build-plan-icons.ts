@@ -36,8 +36,14 @@ type Area = keyof typeof AREAS;
 const STOCK =
   'M8.5 10L35.3 10A2.2 2.2 0 0 0 39.7 10L41 10A3 3 0 0 1 44 13L44 35A3 3 0 0 1 41 38L39.7 38A2.2 2.2 0 0 0 35.3 38L8.5 38A4.5 4.5 0 0 1 4 33.5L4 14.5A4.5 4.5 0 0 1 8.5 10Z';
 const TAIL = `<path d="M37.5 14.2V33.8" stroke="${INK}" stroke-width="1.1" stroke-dasharray="1.6 2.3" fill="none"/>`;
-const big = (glyph: string) =>
-  `<g transform="translate(20.2 24) scale(1.3) translate(-19 -24)">${glyph}</g>`;
+/** Each glyph's own scale and offset (the "$fit" in its glyphs file): inside the ticket face with 5 units of padding. */
+interface Fit {
+  s: number;
+  tx: number;
+  ty: number;
+}
+const big = (glyph: string, f: Fit) =>
+  `<g transform="translate(${f.tx} ${f.ty}) scale(${f.s})">${glyph}</g>`;
 const shade = (hex: string, k = 0.68) =>
   `#${[1, 3, 5]
     .map((i) =>
@@ -47,10 +53,10 @@ const shade = (hex: string, k = 0.68) =>
     )
     .join('')}`;
 
-export const rowColour = (area: Area, glyph: string): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><g transform="rotate(-6 24 24)"><path transform="translate(0 2.4)" d="${STOCK}" fill="${shade(AREAS[area])}"/><path d="${STOCK}" fill="${AREAS[area]}"/>${big(glyph)}${TAIL}</g></svg>`;
-export const rowMono = (key: string, glyph: string): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><mask id="rm-${key}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="90" height="90"><rect x="-20" y="-20" width="90" height="90" fill="#fff"/>${(big(glyph) + TAIL).split(INK).join('#000')}</mask></defs><g transform="rotate(-6 24 24)" mask="url(#rm-${key})"><path d="${STOCK}" fill="currentColor"/></g></svg>`;
+export const rowColour = (area: Area, glyph: string, fit: Fit): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><g transform="rotate(-6 24 24)"><path transform="translate(0 2.4)" d="${STOCK}" fill="${shade(AREAS[area])}"/><path d="${STOCK}" fill="${AREAS[area]}"/>${big(glyph, fit)}${TAIL}</g></svg>`;
+export const rowMono = (key: string, glyph: string, fit: Fit): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><mask id="rm-${key}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="90" height="90"><rect x="-20" y="-20" width="90" height="90" fill="#fff"/>${(big(glyph, fit) + TAIL).split(INK).join('#000')}</mask></defs><g transform="rotate(-6 24 24)" mask="url(#rm-${key})"><path d="${STOCK}" fill="currentColor"/></g></svg>`;
 
 interface RowSource {
   kind: 'area' | 'row';
@@ -77,18 +83,28 @@ export function composeIcons(root: string) {
     plans[preset] = { svg: fluid(src.svg), mono: fluid(src.mono), accent: src.color };
   }
   const rows = readJson<RowSource[]>('assets/icons/rows/rows.json');
-  const glyphs: Record<string, string> = Object.assign(
-    {},
-    ...readdirSync(resolve(root, 'assets/icons/rows'))
-      .filter((f) => /^glyphs-.*\.json$/.test(f))
-      .sort()
-      .map((f) => readJson<Record<string, string>>(`assets/icons/rows/${f}`)),
-  );
+  const glyphs: Record<string, string> = {};
+  const fits: Record<string, Fit> = {};
+  for (const f of readdirSync(resolve(root, 'assets/icons/rows'))
+    .filter((f) => /^glyphs-.*\.json$/.test(f))
+    .sort()) {
+    const { $fit, ...own } = readJson<Record<string, string | Record<string, Fit>>>(
+      `assets/icons/rows/${f}`,
+    );
+    Object.assign(glyphs, own as Record<string, string>);
+    Object.assign(fits, $fit);
+  }
   const rowIcons: Record<string, { area: Area; svg: string; mono: string }> = {};
   for (const r of rows) {
     const glyph = glyphs[r.key];
     if (!glyph) throw new Error(`assets/icons/rows has no glyph for "${r.key}"`);
-    rowIcons[r.key] = { area: r.area, svg: rowColour(r.area, glyph), mono: rowMono(r.key, glyph) };
+    const fit = fits[r.key];
+    if (!fit) throw new Error(`assets/icons/rows has no $fit for "${r.key}"`);
+    rowIcons[r.key] = {
+      area: r.area,
+      svg: rowColour(r.area, glyph, fit),
+      mono: rowMono(r.key, glyph, fit),
+    };
   }
   return { plans, rowIcons };
 }
