@@ -154,7 +154,7 @@ export function ScanAppView({
               />
             }
           >
-            {screen.s === 'loop' ? dockRow : null}
+            {dockRow}
           </Dock>
         ) : null
       }

@@ -3,6 +3,7 @@ import type { ScanReason } from '@/shared/contracts/scan.ts';
 import type { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
 import { SCAN_REASON_COPY } from '@/shared/copy/scan.ts';
 import { SCAN_HANDHELD_COPY } from '@/shared/copy/scan-handheld.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatCount, formatTime } from '../../lib/format.ts';
 import type { Counts } from '../machine/types.ts';
 
@@ -129,9 +130,7 @@ export function Handover({ summary, timeZone }: { summary: Summary; timeZone: st
       <h3 className="text-sm font-semibold text-fg-muted">Handover</h3>
       {count ? (
         <>
-          <p>
-            {count} {count === 1 ? 'override' : 'overrides'} this shift.
-          </p>
+          <p>{plural(count, 'override')} this shift.</p>
           <ul className="flex flex-col gap-1 text-sm">
             {latest.map((o) => (
               <li key={o.scanId}>

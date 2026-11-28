@@ -1,7 +1,7 @@
 import { checkImageSize, IMAGE_RULES } from '../../../passkit/schema/image-rules.ts';
 import { slotOf } from '../../../passkit/template/package.ts';
 import type { ImageSlot } from '../../../passkit/types.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { PayloadTooLargeError, ValidationError } from '../../platform/errors.ts';
 import { isPngInfo, parsePng } from '../templates/package/png.ts';
 
 export const MAX_ASSET_BYTES = 1_000_000;
@@ -58,9 +58,8 @@ export function readPng(bytes: Uint8Array): PngInfo {
 
 /** Checks the PNG against the slot rules for its name; an older legacy size passes. */
 export function validateAsset(name: string, bytes: Uint8Array): PngInfo & ParsedAssetName {
-  if (bytes.length === 0 || bytes.length > MAX_ASSET_BYTES) {
-    throw new ValidationError('The image must be 1 MB or smaller.', [], 'ASSET_SIZE');
-  }
+  if (bytes.length > MAX_ASSET_BYTES)
+    throw new PayloadTooLargeError('The image must be 1 MB or smaller.', 'ASSET_SIZE');
   const parsed = parseAssetName(name);
   const info = readPng(bytes);
   const verdict = checkImageSize(name, parsed.slot, parsed.scale, info.width, info.height);

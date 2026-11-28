@@ -40,7 +40,7 @@ export function LastScanStrip({
             ? `${entry.title}. ${entry.meta}`
             : entry
               ? `Last scan: ${entry.title} ${entry.meta}. Open details`
-              : 'No scans yet. Open recent scans'
+              : 'None on this device. Open recent scans'
         }
       >
         <span aria-hidden className="scan-strip-disc" data-kind={entry?.kind}>
@@ -48,7 +48,7 @@ export function LastScanStrip({
         </span>
         <span aria-hidden className="scan-strip-text">
           <span className="scan-strip-title" dir="auto">
-            {entry ? entry.title : 'No scans yet'}
+            {entry ? entry.title : 'None on this device'}
           </span>
           {entry ? (
             <>

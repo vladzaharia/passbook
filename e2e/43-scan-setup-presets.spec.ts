@@ -81,7 +81,7 @@ for (const [preset, at] of PRESETS) {
 
       const memberId = uid('MEMBER').toUpperCase();
       await createPass(api, orgId, { holder: uid('Holder'), memberId });
-      await scanner.getByRole('button', { name: 'Enter code', exact: true }).click();
+      await scanner.getByRole('button', { name: 'Look up', exact: true }).click();
       const field = scanner.getByRole('textbox', { name: 'Name, email or code', exact: true });
       await field.fill(memberId);
       await field.press('Enter');

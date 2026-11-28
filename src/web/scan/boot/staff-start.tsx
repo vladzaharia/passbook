@@ -8,10 +8,20 @@ import { Callout } from '../../ui/callout.tsx';
 import { CodeField } from '../../ui/code-field.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Select } from '../../ui/select.tsx';
+import { ScanApiError } from '../api/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { ScanTextField } from '../input/wedge-field.tsx';
 import { BootCard } from '../ui/boot-card.tsx';
 import { StaffPinPad } from './staff-pin-pad.tsx';
+
+// Fallback only: the server's 429 carries Retry-After (staff-pin.ts lockedError), which wins.
+const LOCK_MS = 60_000;
+
+function lockMsOf(cause: ApiError): number {
+  const ms = cause instanceof ScanApiError ? cause.retryAfterMs : undefined;
+  const wait = ms ?? (cause.retryAfter === undefined ? undefined : cause.retryAfter * 1000);
+  return wait === undefined ? LOCK_MS : Math.max(1000, wait);
+}
 
 type Person = NonNullable<ScanSession['staffList']>[number];
 
@@ -43,6 +53,7 @@ export function StaffStart({
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [locked, setLocked] = useState<number | null>(null);
   // A cut roster: the list holds the first people only, so a name is looked up on the server.
   const truncated = session.staffTruncated === true;
   const [text, setText] = useState('');
@@ -67,6 +78,12 @@ export function StaffStart({
   for (const person of listed) seen.current.set(person.id, person);
   const chosen = seen.current.get(staffId);
   const people = chosen && !listed.some((p) => p.id === staffId) ? [chosen, ...listed] : listed;
+  // The lockout is the server's; the keys come back after its Retry-After and the server decides again.
+  useEffect(() => {
+    if (locked === null) return;
+    const id = setTimeout(() => setLocked(null), locked);
+    return () => clearTimeout(id);
+  }, [locked]);
   async function submit(digits: string, named: boolean) {
     setBusy(true);
     setError('');
@@ -77,6 +94,7 @@ export function StaffStart({
       setError(pinMessage(errorMessage(cause)));
       setRefusals((n) => n + 1);
       setPin('');
+      if (cause instanceof ApiError && cause.code === 'RATE_LIMITED') setLocked(lockMsOf(cause));
       if (!named && cause instanceof ApiError && cause.code === 'STAFF_NAME_REQUIRED')
         setByName(true);
     } finally {
@@ -114,7 +132,14 @@ export function StaffStart({
             <p className="text-sm text-fg-muted">No one by that name.</p>
           ) : null}
           <FormField label="PIN">
-            {(p) => <CodeField id={p.id} value={pin} onChange={setPin} disabled={busy} />}
+            {(p) => (
+              <CodeField
+                id={p.id}
+                value={pin}
+                onChange={setPin}
+                disabled={busy || locked !== null}
+              />
+            )}
           </FormField>
           {error ? <Callout tone="danger">{error}</Callout> : null}
           {!people.length && !truncated ? (
@@ -122,7 +147,11 @@ export function StaffStart({
               Add staff in the administration panel to use this session.
             </Callout>
           ) : null}
-          <Button type="submit" disabled={!staffId || pin.length !== 6} loading={busy}>
+          <Button
+            type="submit"
+            disabled={locked !== null || !staffId || pin.length !== 6}
+            loading={busy}
+          >
             Sign in
           </Button>
           <Button type="button" variant="ghost" disabled={busy} onClick={() => setByName(false)}>
@@ -132,6 +161,7 @@ export function StaffStart({
       ) : (
         <StaffPinPad
           busy={busy}
+          locked={locked !== null}
           error={error}
           shake={refusals}
           onPin={(digits) => void submit(digits, false)}

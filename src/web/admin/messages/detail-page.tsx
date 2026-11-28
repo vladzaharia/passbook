@@ -3,6 +3,7 @@ import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { Ban, Pencil, RotateCcw, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
+import { plural } from '@/shared/plural.ts';
 import { cancelBroadcastConfirm } from '../../lib/confirms.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { useMode } from '../../lib/mode.ts';
@@ -32,7 +33,6 @@ import {
   isQuiet,
   KIND_LABEL,
   messageText,
-  plural,
   SCOPE_CHANGED,
   SENDING_TOAST,
   stopLine,

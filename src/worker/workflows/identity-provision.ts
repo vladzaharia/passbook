@@ -37,7 +37,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-  UnavailableError,
+  UpstreamError,
 } from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 
@@ -159,7 +159,7 @@ async function resolvePassType(ctx: ServiceContext, rpc: AppleRpc, runId: string
     if (!found) throw new NotFoundError('Apple has no such pass type.', 'ASC_NOT_FOUND');
     return recordPassType(ctx, runId, found);
   }
-  if (!ref.handle) throw new UnavailableError('The run has no handle.', 'IDENTITY_RUN_INCOMPLETE');
+  if (!ref.handle) throw new UpstreamError('The run has no handle.', 'IDENTITY_RUN_INCOMPLETE');
   const identifier = passTypeOf(ref.handle);
   const orgName = await orgNameOf(ctx, run.target_id);
   const created = await rpc.createPassType(ref.handle, `${orgName} (PassBook)`, runId);

@@ -206,6 +206,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
       onOpen={(item) => item.passId && op.open(item.passId, 'activity')}
       onUndo={op.undo}
       onProblems={() => op.changeView('problems')}
+      onHelp={() => op.send({ t: 'help', open: true })}
     />
   );
   const activeResult =

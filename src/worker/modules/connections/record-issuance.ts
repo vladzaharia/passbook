@@ -1,5 +1,5 @@
 import type { Json } from '../../../shared/contracts/common.ts';
-import { AppError, ConflictError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ConnectionDeps, getDeps } from './deps.ts';
 import type { Applied, ApplyIncomingOptions } from './records.ts';
@@ -96,7 +96,7 @@ export async function createIncomingPass(
   }
   const template = await templateScope(db, conn.defaultTemplateId);
   if (template?.status !== 'active' || (template.orgId !== null && template.orgId !== conn.orgId)) {
-    throw new ValidationError('The connection template is unavailable.', [], 'TEMPLATE_NOT_FOUND');
+    throw new NotFoundError('The connection template is unavailable.', 'TEMPLATE_NOT_FOUND');
   }
   const release = options.release;
   if (!release || release.kind === 'blocked') {

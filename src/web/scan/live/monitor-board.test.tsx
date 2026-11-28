@@ -76,4 +76,17 @@ describe('monitor board', () => {
     expect(screen.getByText('Full')).toBeVisible();
     expect(screen.getByText('Ready for the first scan')).toBeVisible();
   });
+  it('says 15 minutes once, and names why a scan was refused', () => {
+    render(
+      <MonitorBoard
+        rows={[
+          row('1', { holder: null, kind: 'refused', label: 'Not accepted', reason: 'expired' }),
+        ]}
+        places={[]}
+        now={NOW}
+      />,
+    );
+    expect(screen.getAllByText(/last 15 min/i)).toHaveLength(1);
+    expect(screen.getByText(/Not accepted · /)).toBeVisible();
+  });
 });

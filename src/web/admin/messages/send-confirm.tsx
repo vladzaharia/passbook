@@ -1,8 +1,8 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { BroadcastKind, BroadcastPreviewDto } from '@/shared/contracts/broadcasts.ts';
+import { plural } from '@/shared/plural.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import { ConfirmDialog } from '../../ui/index.ts';
-import { plural } from './labels.ts';
 
 /**
  * The one confirm before a message or change goes out, for the composer and for a saved draft.

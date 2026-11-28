@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
-import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
+import { ScannerSettingsSchema, ScanReasonSchema, TimeZoneSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { ScanCustomerViewSchema } from './scan-customer.ts';
 import { ScanLiveDraftSchema } from './scan-draft.ts';
@@ -71,6 +71,8 @@ export const ScanLiveRowSchema = z.object({
   kind: z.enum(['ok', 'heads_up', 'refused', 'ready', 'undo']),
   direction: z.enum(['in', 'out']).nullable(),
   label: z.string(),
+  /** Why a refusal or hold happened; staff views only, never on a redacted row. */
+  reason: ScanReasonSchema.nullable().optional(),
   /** Manual lookup must never publish a person's identity to the customer screen. */
   presented: z.boolean(),
   occupancy: ScanOccupancySchema.nullable().optional(),

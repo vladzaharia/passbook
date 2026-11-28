@@ -102,7 +102,7 @@ describe('lookup review and keyboard navigation', () => {
     const { user, lookup, onClose } = setup();
     const field = await search(user, 'An');
     expect(lookup).not.toHaveBeenCalled();
-    expect(screen.getByText(/Type at least 3 letters/)).toBeVisible();
+    expect(screen.queryByText(/Type at least 3 letters/)).toBeNull();
     await user.keyboard('{Escape}');
     expect(field).toHaveValue('');
     expect(onClose).not.toHaveBeenCalled();

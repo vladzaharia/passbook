@@ -8,42 +8,26 @@ import { EXTRA_STATUS_SITES } from './error-status-sites.ts';
 
 /** Each multi-status code with the status shown first: raised at the most sites; on a tie the 5xx when the tie spans 4xx and 5xx, else the lower. */
 const COMMON: Record<string, number> = {
-  API_KEY_NOT_FOUND: 404,
-  ASSET_SIZE: 413,
   DEVICE_REQUIRED: 403,
-  EMAIL_CONFLICT: 403,
   EMAIL_TAKEN: 403,
-  FILE_DAMAGED: 500,
   IDEMPOTENCY_KEY_REUSED: 422,
-  IDENTITY_NOT_FOUND: 404,
   IDENTITY_RUN_INCOMPLETE: 502,
   IDP_REFUSED: 409,
-  NO_RECIPIENT: 422,
   OPERATION_NOT_RETRYABLE: 404,
-  ORG_INACTIVE: 403,
-  ORG_NOT_FOUND: 404,
-  ORG_REQUIRED: 422,
-  SCANNER_NOT_FOUND: 404,
   SCANNER_REVOKED: 401,
   SCANNING_SESSION_CLOSED: 403,
   SCANNING_SESSION_PAUSED: 409,
   SCANNING_SESSION_SETTINGS_INVALID: 422,
   SCAN_MODE_MISMATCH: 403,
-  TAG_NOT_FOUND: 404,
   TEMPLATE_ARCHIVED: 409,
-  TEMPLATE_NOT_FOUND: 404,
   VERSION_INVALID: 409,
   WEBHOOK_STALE_CONTEXT: 503,
-  WORKFLOW_START: 503,
 };
 
 /** The statuses tied for most common raise site. */
 const TIES: Record<string, number[]> = {
-  ASSET_SIZE: [413, 422],
   EMAIL_TAKEN: [403, 409],
-  FILE_DAMAGED: [422, 500],
   OPERATION_NOT_RETRYABLE: [404, 409],
-  ORG_INACTIVE: [403, 409],
   SCANNER_REVOKED: [401, 409],
   SCANNING_SESSION_CLOSED: [403, 409],
   SCAN_MODE_MISMATCH: [403, 422],
@@ -56,7 +40,7 @@ describe('error catalog statuses', () => {
 
   it('shows a multi-status code with its most common raise site', () => {
     expect(Object.fromEntries(multi.map((c) => [c.code, c.statuses[0]]))).toEqual(COMMON);
-    expect(multi).toHaveLength(27);
+    expect(multi).toHaveLength(14);
   });
 
   it('carries the tied set where raise sites tie', () => {

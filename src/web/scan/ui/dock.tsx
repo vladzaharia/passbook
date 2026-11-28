@@ -1,8 +1,6 @@
-import { Flashlight, Hash, Nfc, Search, Users } from 'lucide-react';
+import { Flashlight, Nfc, Search, Users } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
-import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
-import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { ACCESS_COPY } from './copy-access.ts';
@@ -67,7 +65,6 @@ export function DoorThumbRow({
   /** Desk scanners with a tracked place: Who's in {42}. */
   inside?: { count: number; onOpen: () => void };
 }) {
-  const phone = useMediaQuery(PHONE);
   return (
     <>
       {tapToRead ? (
@@ -77,8 +74,8 @@ export function DoorThumbRow({
         </DockButton>
       ) : null}
       <DockButton onClick={onLookUp}>
-        {phone ? <Hash aria-hidden size={20} /> : <Search aria-hidden size={20} />}
-        {phone ? SCAN_TRAY_COPY.enterCode : SCAN_COPY.actions.lookUp}
+        <Search aria-hidden size={20} />
+        {SCAN_COPY.actions.lookUp}
       </DockButton>
       {inside ? (
         <DockButton data-testid="scan-inside-open" onClick={inside.onOpen}>
