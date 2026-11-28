@@ -56,7 +56,7 @@ describe('HostedCard', () => {
   });
   it('sets the size on the card', () => {
     const { container, rerender } = render(<HostedCard state="s" title="T" />);
-    expect(container.firstElementChild).toHaveAttribute('data-size', 'hosted');
+    expect(container.firstElementChild).not.toHaveAttribute('data-size');
     rerender(<HostedCard state="s" title="T" size="stage" />);
     expect(container.firstElementChild).toHaveClass('wide');
     rerender(<HostedCard state="s" title="T" size="dialog" />);
@@ -69,7 +69,7 @@ describe('HostedCard', () => {
         body
       </HostedCard>,
     );
-    expect(html).toContain('<main class="hosted" data-size="hosted">');
+    expect(html).toContain('<main class="hosted">');
     expect(html).toContain('<div class="band"><div class="brand">B</div>');
     expect(html).toContain('<h1>T</h1>');
     expect(html).toContain('<p class="lede">L</p>');

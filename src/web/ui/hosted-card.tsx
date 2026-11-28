@@ -87,7 +87,7 @@ export function HostedCard({
       className={['hosted', size === 'stage' && 'wide', (inline || overlay) && 'inline']
         .filter(Boolean)
         .join(' ')}
-      data-size={size}
+      data-size={size === 'hosted' ? undefined : size}
       data-locked={locked ? '' : undefined}
     >
       {brand || scene ? (
