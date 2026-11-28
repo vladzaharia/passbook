@@ -3,11 +3,12 @@ import { safeNextPath } from '../../shared/next.ts';
 import {
   canUseConsole,
   isStrongAmr,
-  STEP_UP_SECONDS,
   type SignInLevel,
+  STEP_UP_SECONDS,
 } from '../../shared/sign-in.ts';
 
 export { STEP_UP_SECONDS };
+
 import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import type { SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
