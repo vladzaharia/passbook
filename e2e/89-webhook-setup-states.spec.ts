@@ -16,8 +16,20 @@ async function serious(page: Page) {
 }
 
 /** Pictures at three widths in both themes, then axe at the two ends. */
+/** Every finite animation (entrances, transitions) is over; looping ones are left running. */
+async function settled(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
+}
+
 async function check(page: Page, name: string) {
-  await page.waitForTimeout(700);
+  await settled(page);
   await shots(page, name);
   for (const [width, height] of [
     [1440, 900],
@@ -26,8 +38,8 @@ async function check(page: Page, name: string) {
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
-      // A resize remounts the state and its entrance runs again; axe reads colours after it.
-      await page.waitForTimeout(1200);
+      // The layout swaps at a breakpoint and the entrance runs again; axe reads colours after it.
+      await settled(page);
       expect(await serious(page), `${name} ${width} ${scheme}`).toEqual([]);
     }
   }
@@ -59,7 +71,7 @@ async function timedShots(
       await expect(head(page, 'Listening · nothing yet')).toBeVisible();
       await page.clock.fastForward(minutes * 60_000 + 1000);
       await until();
-      await page.waitForTimeout(700);
+      await settled(page);
       if (dir)
         await page.screenshot({ path: `${dir}/${name}-${width}-${scheme}.png`, fullPage: true });
       if (width !== 834) expect(await serious(page), `${name} ${width} ${scheme}`).toEqual([]);
