@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { AREA_ACCENTS, ROW_ICONS } from '@/generated/plan-icons.ts';
 import { cn } from '@/web/lib/cn.ts';
+import { svgElement } from './plan-icon.tsx';
 
 export interface RowIconProps {
   /** Pricing-row key, such as live-passes or area-use. */
@@ -23,8 +24,8 @@ export function RowIcon({ icon, label, mono, className }: RowIconProps) {
       style={{ '--row-accent': AREA_ACCENTS[found.area] } as CSSProperties}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       className={cn('inline-flex size-5 shrink-0 [&>svg]:size-full', className)}
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: generated, static svg
-      dangerouslySetInnerHTML={{ __html: mono ? found.mono : found.svg }}
-    />
+    >
+      {svgElement(mono ? found.mono : found.svg)}
+    </span>
   );
 }
