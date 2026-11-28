@@ -310,6 +310,24 @@ describe('the absent-anchor read leaks nowhere once the guard is on', () => {
     expect(() => assertActorOnce(sql)).not.toThrow();
   });
 
+  it.each([['ao.limit_key IS NULL'], ['ao.role IS NULL'], ['ao.mode IS NULL']])(
+    'refuses %s as the gate',
+    async (gate) => {
+      const c = await build();
+      const sql = c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${gate}`);
+      expect(() => assertActorOnce(sql)).toThrow(/anchor needs|only its anchor columns/);
+    },
+  );
+
+  it.each([['ao.org_id IS NULL'], [`x.scope = 'org:' || ao.org_id`], ['x.org_id = ao.org_id']])(
+    'accepts %s as the gate',
+    async (gate) => {
+      const c = await build();
+      const sql = c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${gate}`);
+      expect(() => assertActorOnce(sql)).not.toThrow();
+    },
+  );
+
   it('a plain presence gate returns no foreign row for the same absent actor', async () => {
     const c = await build();
     const sql = c.stmt(`SELECT x.id FROM ${c.A} CROSS JOIN passes x WHERE ${c.P} = 1`);

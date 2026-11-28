@@ -169,14 +169,14 @@ export function assertAnchorShape(blanked: string): void {
 
 const NON_ANCHOR = String.raw`(?<![\w.])\+?(?!ao\.)[\w.?]+`;
 const GATE = new RegExp(
-  String.raw`\bao\.authority_present_k7\s*=\s*1\b|\bao\.(?:org_id|mode|limit_key)\s+IS\s+NULL\b|${NON_ANCHOR}\s*=\s*(?:''\s*\|\|\s*)?ao\.org_id\b|\bao\.org_id\s*=\s*\+?(?!ao\.)[\w.?]+`,
+  String.raw`\bao\.authority_present_k7\s*=\s*1\b|\bao\.org_id\s+IS\s+NULL\b|${NON_ANCHOR}\s*=\s*(?:''\s*\|\|\s*)?ao\.org_id\b|\bao\.org_id\s*=\s*\+?(?!ao\.)[\w.?]+`,
   'i',
 );
 
 /**
  * WHERE, ON and HAVING of the holder (and of the root that reads a holder CTE) are one AND chain: an OR at paren depth 0
  * lets the other arm pass for an absent actor. The holder core (unless it only outputs `authorized()`) needs a gate as
- * a depth-0 term of its WHERE or of an inner join's ON: `ao.authority_present_k7 = 1`, `ao.<c> IS NULL` (the platform term) or `<non-anchor col> = ao.org_id`.
+ * a depth-0 term of its WHERE or of an inner join's ON: `ao.authority_present_k7 = 1`, `ao.org_id IS NULL` (the platform term) or `<non-anchor col> = ao.org_id`.
  * `ao.* = ao.*` is no gate: an absent actor's anchor columns all hold the same sentinel.
  */
 function assertFilters(core: Core, mustGate: boolean): void {
@@ -229,7 +229,7 @@ function assertFilters(core: Core, mustGate: boolean): void {
       );
   if (mustGate && !GATE.test(gate))
     refuse(
-      'the anchor needs WHERE/ON ao.authority_present_k7 = 1, ao.<c> IS NULL or <non-anchor col> = ao.org_id as a top-level AND term',
+      'the anchor needs WHERE/ON ao.authority_present_k7 = 1, ao.org_id IS NULL or <non-anchor col> = ao.org_id as a top-level AND term',
     );
 }
 
