@@ -69,7 +69,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
   await start([HEAD, ...good, row(refs[2] as string, 'Cy', '30')].join('\n'));
   await check();
   await tile('Same', 3);
-  await expect(page.getByRole('button', { name: /^(Create|Update) \d+/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Nothing to import' })).toBeDisabled();
 
   // 4. Results of the first run: download, then undo what it created.
   await page.goto(first);
