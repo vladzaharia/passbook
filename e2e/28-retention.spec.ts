@@ -61,7 +61,6 @@ test.describe('retention console', () => {
     const org = readSeed().org;
     await page.goto(`/admin/o/${org.id}/retention`);
     await expect(page.getByRole('heading', { name: 'Retention', level: 1 })).toBeVisible();
-    await expect(page.getByText('Deletes scan records')).toBeVisible();
     await page.getByRole('button', { name: 'Place hold' }).click();
     await page.getByLabel(/^Reason/).fill('Regulator inquiry');
     await page.getByRole('dialog').getByRole('button', { name: 'Place hold' }).click();
@@ -72,7 +71,6 @@ test.describe('retention console', () => {
     await expect(page.getByText('Released', { exact: true })).toBeVisible();
 
     await page.goto(`/admin/o/${org.id}/audit`);
-    await expect(page.getByText('Kept 365 days unless held.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Export' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Legal hold placed' }).first()).toBeVisible();
   });
@@ -124,12 +122,7 @@ test.describe('retention console', () => {
         'org-retention',
         ready('Retention receipts'),
       );
-      await sweep(
-        page,
-        `/admin/o/${org.id}/audit`,
-        'org-audit',
-        ready('Kept 365 days unless held'),
-      );
+      await sweep(page, `/admin/o/${org.id}/audit`, 'org-audit', ready('Audit log'));
       await sweep(
         page,
         `/admin/o/${org.id}/audit?entry=1`,

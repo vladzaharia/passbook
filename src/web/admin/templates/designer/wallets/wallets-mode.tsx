@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
 import { PHONE, useMediaQuery } from '../../../../lib/media.ts';
-import { Button, Skeleton } from '../../../../ui/index.ts';
+import { Button, Callout, Skeleton } from '../../../../ui/index.ts';
 import { useDesigner } from '../context.tsx';
 import { useDesignerHost } from '../host.tsx';
 import { type Dict, legacyStyleOf, previewTargetOf } from '../model.ts';
@@ -90,6 +90,7 @@ export function WalletsMode({
   const failed = previews.state === 'error';
   return (
     <div className="wallets-mode" data-testid="wallets-mode" aria-busy={checking || undefined}>
+      {phone ? <Callout tone="info" title="Preview only" /> : null}
       {previews.state === 'loading' ? (
         <div className="grid grid-cols-2 gap-3" role="status" aria-label={PREVIEW_COPY.loading}>
           <Skeleton className="h-[4.25rem] rounded-lg" />
