@@ -8567,5 +8567,13 @@
     "op": "Workbench token",
     "change": "template file reads: own rate limit",
     "note": "A Workbench token's template file reads (GET .../assets/{name}) now have their own limit, 600 a minute per session."
+  },
+  {
+    "key": "Scanning devices: deviceRole, staff fields, approval forms",
+    "class": "notable",
+    "operationId": "",
+    "op": "Scanning devices and scan approvals",
+    "change": "deviceRole added; surface narrowed; approval union",
+    "note": "Scanning devices gain deviceRole and Staff device fields; surface is phone, operator or auto, null on screens. Approvals take requestId or approveAs."
   }
 ]

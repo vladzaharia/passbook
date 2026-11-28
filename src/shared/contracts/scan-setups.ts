@@ -3,14 +3,10 @@ import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from '
 import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { ScanCustomerViewSchema } from './scan-customer.ts';
+import { CreatableDeviceRoleSchema } from './scan-device.ts';
 import { ScanLiveDraftSchema } from './scan-draft.ts';
 import { ScanOccupancySchema, ScanOutCauseSchema, ScanPlaceRevSchema } from './scan-occupancy.ts';
-import {
-  DeviceRoleSchema,
-  ScannerAcceptsSchema,
-  ScannerKindSchema,
-  ScannerSchema,
-} from './scanners.ts';
+import { ScannerAcceptsSchema, ScannerKindSchema, ScannerSchema } from './scanners.ts';
 
 export const ScanWatchSchema = z.strictObject({
   scannerIds: z.array(IdSchema).max(8).default([]),
@@ -34,7 +30,7 @@ export const CreateScannerSetupSchema = z.object({
   orgId: IdSchema,
   name: PlainLineSchema(40),
   kind: ScannerKindSchema.default('device'),
-  deviceRole: DeviceRoleSchema.default('scan'),
+  deviceRole: CreatableDeviceRoleSchema.default('scan'),
   accepts: ScannerAcceptsSchema.nullable().optional(),
   settings: ScannerSettingsSchema.partial().optional(),
   timeZone: TimeZoneSchema,
@@ -44,7 +40,7 @@ export const CreateScannerSetupSchema = z.object({
 });
 export const UpdateScannerSetupSchema = z.object({
   name: PlainLineSchema(40).optional(),
-  deviceRole: DeviceRoleSchema.optional(),
+  deviceRole: CreatableDeviceRoleSchema.optional(),
   accepts: ScannerAcceptsSchema.nullable().optional(),
   settings: ScannerSettingsSchema.partial().optional(),
   watch: ScanWatchSchema.nullable().optional(),
