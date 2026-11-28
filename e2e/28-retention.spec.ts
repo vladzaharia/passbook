@@ -107,7 +107,9 @@ test.describe('retention console', () => {
         `/api/v1/platform/orgs/${org.id}/retention/holds`,
       );
       holdId = list.items.find((h) => h.placedByKind === 'platform')?.id ?? '';
-      await page.route('**/retention/receipts*', (route) => route.fulfill({ json: receipts }));
+      await page.route('**/api/**/retention/receipts*', (route) =>
+        route.fulfill({ json: receipts }),
+      );
       await page.goto(`/admin/o/${org.id}/retention`);
       await expect(page.getByText('PassBook placed this hold')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Release' })).toHaveCount(0);
