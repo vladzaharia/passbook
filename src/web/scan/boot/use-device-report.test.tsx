@@ -109,7 +109,7 @@ describe('scanner device capabilities', () => {
       height: 844,
       camera: 'available',
       touch: true,
-      surfaces: ['phone', 'operator', 'customer'],
+      surfaces: ['phone', 'operator'],
       preferred: 'phone',
     });
     expect(getUserMedia).not.toHaveBeenCalled();

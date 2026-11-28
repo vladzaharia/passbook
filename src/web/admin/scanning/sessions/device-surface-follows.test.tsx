@@ -5,12 +5,14 @@ import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { managedSession } from './test-fixtures.ts';
 
 describe('device sheet follows', () => {
-  it('keeps follows when Automatic resolves to a customer display for this device', async () => {
+  it('keeps follows when a customer screen is saved', async () => {
     const session = structuredClone(managedSession);
     const device = session.devices[0];
     if (!device?.capabilities) throw new Error('Missing fixture device.');
     device.overrides = { follows: ['door-1'] };
-    device.capabilities.surfaces = ['phone'];
+    device.deviceRole = 'customer';
+    device.surface = null;
+    device.effectiveSurface = null;
     let saved: { overrides?: { follows?: string[] } } | undefined;
     await renderApp('/admin/scanning/sessions/session-1?deviceId=device-1', {
       session: 'admin',
@@ -29,7 +31,7 @@ describe('device sheet follows', () => {
       },
     });
     const dialog = await screen.findByRole('dialog', { name: 'Configure Admin phone' });
-    await userEvent.click(within(dialog).getByRole('button', { name: /^Automatic/ }));
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Device name' }), ' 2');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save device' }));
     await waitFor(() => expect(saved?.overrides?.follows).toEqual(['door-1']));
   });
