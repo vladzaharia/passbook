@@ -13,7 +13,6 @@ export type Attention =
   | { kind: 'danger'; value: number; label: string }
   | { kind: 'count'; value: number; label: string }
   | { kind: 'running'; value: number; label: string }
-  | { kind: 'live'; label: string }
   | { kind: 'warn'; label: string };
 
 export type AttentionMap = Partial<Record<WbTool, Attention>>;
@@ -23,7 +22,7 @@ export function navAttention(summary: WbSummary | undefined, running: number): A
   if (running > 0)
     map.activity = { kind: 'running', value: running, label: ATTENTION_LABEL.running(running) };
   if (!summary) return map;
-  const { quickstart: qs, errors, failedDeliveries, listening, inboxNew, keysExpiring } = summary;
+  const { quickstart: qs, errors, failedDeliveries, inboxNew, keysExpiring } = summary;
   if (qs && qs.done < qs.total)
     map.quickstart = {
       kind: 'progress',
@@ -33,13 +32,13 @@ export function navAttention(summary: WbSummary | undefined, running: number): A
     };
   if (errors > 0)
     map.logs = { kind: 'danger', value: errors, label: ATTENTION_LABEL.errors(errors) };
+  // Events carries a mark only for unseen failures: listening is a state the page shows, not news.
   if (failedDeliveries > 0)
     map.events = {
       kind: 'danger',
       value: failedDeliveries,
       label: ATTENTION_LABEL.failedDeliveries(failedDeliveries),
     };
-  else if (listening) map.events = { kind: 'live', label: ATTENTION_LABEL.listening };
   if (inboxNew > 0)
     map.inbox = { kind: 'count', value: inboxNew, label: ATTENTION_LABEL.inboxNew(inboxNew) };
   if (keysExpiring > 0) map.keys = { kind: 'warn', label: ATTENTION_LABEL.keyExpiring };

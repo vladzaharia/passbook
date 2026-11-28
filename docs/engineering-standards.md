@@ -31,6 +31,8 @@ Rules `npm run check` enforces, and where.
 - A mutation and its audit row go in one `db.batch` with `auditStmt` (`audit/repo.ts`); `recordAudit` is for audits that follow an external call.
 - Router links use typed `to` and `params`. No `as never`.
 
+- `@absorbs CODE` in a function's JSDoc tells `gen-op-codes` that the function catches what it calls and answers with the named codes only: callees' codes stop there. It covers the whole function, so a route that calls one and also lets another error escape is not seen; keep an absorbing function's body wholly inside its try.
+
 ## Indexes
 
 `LIKE` is case-insensitive, so a prefix search needs a `COLLATE NOCASE` index. Search several columns with one indexed lookup each, merged by `id IN (... UNION ...)`, not an `OR` of `LIKE`s.

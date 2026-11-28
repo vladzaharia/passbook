@@ -1,5 +1,8 @@
 import type { Arrival, SetupTopic } from './types.ts';
 
+/** The panel's heading while it simply waits. */
+export const LISTENING = 'Listening · nothing yet';
+
 export type ListenPhase = 'listening' | 'signed' | 'rejected';
 
 export interface Verdict {

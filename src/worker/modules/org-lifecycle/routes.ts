@@ -14,6 +14,7 @@ import {
 import { requireAdmin, requireStrictSession } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
@@ -56,7 +57,7 @@ async function platformCallerOwnsPersonal(c: C, next: () => Promise<void>) {
 /** Mount at /api/v1/orgs. Platform: close, reopen, read, export. Org admin: close with the slug, read, export. */
 export const orgLifecycleRoutes = createRouter();
 guard(orgLifecycleRoutes, requireTenantSession);
-orgLifecycleRoutes.use('*', async (c, next) => {
+ownUse(orgLifecycleRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

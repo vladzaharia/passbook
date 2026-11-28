@@ -502,6 +502,18 @@ describe('the door script', () => {
   const run = async (opts: { saved: boolean; wake: boolean }) => {
     const caches = fakeCaches();
     if (opts.saved) await seed(caches);
+    // The script hashes with the real async digest, then asks caches.has: wait for that lookup
+    // itself, not for a fixed number of timer ticks.
+    let looked: (p: Promise<boolean>) => void = () => {};
+    const lookup = new Promise<Promise<boolean>>((r) => {
+      looked = r;
+    });
+    const has = caches.has;
+    caches.has = (name: string) => {
+      const p = has(name);
+      looked(p);
+      return p;
+    };
     const note = { hidden: true };
     const request = vi.fn(async () => ({}));
     const listeners: Record<string, (e: unknown) => void> = {};
@@ -522,7 +534,7 @@ describe('the door script', () => {
       caches,
       { pathname: PATH },
     );
-    await tick();
+    await await lookup;
     await tick();
     return { note, request, listeners };
   };
@@ -530,6 +542,19 @@ describe('the door script', () => {
   it('says Works offline only where a copy is held', async () => {
     expect((await run({ saved: true, wake: false })).note.hidden).toBe(false);
     expect((await run({ saved: false, wake: false })).note.hidden).toBe(true);
+  });
+
+  it('waits out a slow digest before showing the note', async () => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    const spy = vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (...a) => {
+      await new Promise((r) => setTimeout(r, 25));
+      return digest(...a);
+    });
+    try {
+      expect((await run({ saved: true, wake: false })).note.hidden).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('holds the screen awake only where the browser can', async () => {

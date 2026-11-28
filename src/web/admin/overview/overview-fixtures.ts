@@ -105,7 +105,21 @@ export const audit = {
   nextCursor: null,
 };
 
+export const funnel = {
+  windowDays: 30,
+  sandboxes: 40,
+  viewed: 32,
+  called: 20,
+  passed: 14,
+  previewed: 9,
+  completion: 0.4375,
+  ttfpP50Ms: 240_000,
+  ttfpP90Ms: 1_080_000,
+  ttfpSamples: 14,
+};
+
 export const ok = {
+  '/api/v1/metrics/platform/developer': () => json(funnel),
   '/api/v1/metrics/platform/overview': () => json(overview()),
   '/api/v1/status': () => json(status),
   '/api/v1/audit/platform': () => json(audit),

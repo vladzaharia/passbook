@@ -5,10 +5,10 @@ import { FacePair } from '../../../channel-previews/face-pair.tsx';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { PassCardStage } from '../../../pass-card/index.tsx';
 import { Badge, LoadingRail, Skeleton } from '../../../ui/index.ts';
+import { useKept } from '../../../ui/keep.tsx';
 import { useLoadedUrls } from './assets.ts';
 import { previewAssetMap } from './images.ts';
 import { allKeys, type DraftAsset } from './model.ts';
-import { useKept } from './ui-keep.tsx';
 
 /**
  * A field that first shows up in the dry run drops onto the card (translate and scale, 320 ms

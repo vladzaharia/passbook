@@ -8,7 +8,10 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
   // A malformed body is deterministic; retrying only delays the error state.
   if (
     isApiError(error) &&
-    (!error.isTransient || error.code === 'invalid_response' || error.code === 'timeout')
+    (!error.isTransient ||
+      error.status === 429 ||
+      error.code === 'invalid_response' ||
+      error.code === 'timeout')
   )
     return false;
   return failureCount < 2;

@@ -50,6 +50,23 @@ describe('the Workbench client (L13)', () => {
     expect(headers['x-csrf-token']).toBeUndefined();
   });
 
+  it('marks a tool read as the Workbench’s own, and a write as the developer’s', async () => {
+    const fetch = vi.fn(async () => json({ ok: true }));
+    const api = createToolApi({
+      orgId: 'org_1',
+      token: async () => 'pbtry_abc',
+      drop: () => undefined,
+      fetch,
+    });
+    const schema = z.object({ ok: z.boolean() });
+    await api.get('/api/v1/passes', schema);
+    await api.post('/api/v1/passes', schema, {});
+    const sent = (i: number) =>
+      new Headers((fetch.mock.calls[i] as unknown as [string, RequestInit])[1].headers);
+    expect(sent(0).get('x-passbook-client')).toBe('portal');
+    expect(sent(1).get('x-passbook-client')).toBeNull();
+  });
+
   it('mints once more after a 401, then lets the error stand', async () => {
     let n = 0;
     const tokens = ['t1', 't2', 't3'];

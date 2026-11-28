@@ -24,6 +24,7 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { ModePill } from '../../../ui/layout/mode-pill.tsx';
+import { OpenInWorkbench } from '../../../ui/layout/open-in-workbench.tsx';
 import { useDraftPreview, useTemplate } from '../../templates/api.ts';
 import { usePassActions } from '../api.ts';
 import { useCreated } from '../created.tsx';
@@ -195,7 +196,14 @@ export function LoadedPassDetail({
             </span>
           </>
         }
-        actions={<HeaderActionsView runner={runner} />}
+        actions={
+          <HeaderActionsView
+            runner={runner}
+            lead={
+              p.mode === 'test' ? <OpenInWorkbench tool="passes" options={{ hash: p.id }} /> : null
+            }
+          />
+        }
       />
       <PreviewLayout
         title={entityLabel(p.title, 'Pass')}

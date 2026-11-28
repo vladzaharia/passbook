@@ -1,11 +1,10 @@
 import { RefreshCw, Smartphone } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { PassDevicesDto, PassSyncDeviceDto } from '@/shared/contracts/events.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { useInsertHighlight } from '../../../lib/motion.ts';
 import {
-  Card,
   CardBody,
-  CardHeader,
   EmptyState,
   ErrorState,
   Handoff,
@@ -17,8 +16,9 @@ import {
 } from '../../../ui/index.ts';
 import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { usePassDevices } from './sync-api.ts';
+import { SIMULATED_DEVICE } from './sync-labels.ts';
 import { pushReason, shortDevice } from './sync-model.ts';
-import { WalletProviderStatus } from './wallet-provider-status.tsx';
+import { TabCard } from './tab-card.tsx';
 
 const SYNC_PILL = {
   current: 'device_current',
@@ -89,8 +89,22 @@ function summary(data: PassDevicesDto): string | null {
   return `${current} of ${live.length} ${live.length === 1 ? 'device' : 'devices'} up to date (limit ${DEVICE_CAP})`;
 }
 
-/** One row per device: did it get the current version, and if not, why. */
-export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: boolean }) {
+/**
+ * One row per device: did it get the current version, and if not, why. `extra` is what admin adds
+ * under it (the wallet providers' status); the Workbench's token does not read that.
+ */
+export function DevicesTab({
+  pass,
+  active,
+  flat,
+  extra,
+}: {
+  pass: PassDetailDto;
+  active: boolean;
+  /** The Workbench inspector: no card around it. */
+  flat?: boolean;
+  extra?: ReactNode;
+}) {
   const query = usePassDevices(pass.id, active);
   const now = useNow();
   const data = query.data;
@@ -99,37 +113,39 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
     return (
       <div className="grid min-w-0 gap-6">
         <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
-        <WalletProviderStatus pass={pass} active={active} />
+        {extra}
       </div>
     );
   const removing = data?.removal != null;
+  const Body = flat ? 'div' : CardBody;
   return (
     <div className="grid min-w-0 gap-6">
-      <Card className="min-w-0">
-        <CardHeader
-          title="Devices"
-          actions={
-            <>
-              {data && summary(data) ? (
-                <span role="status" className="text-xs text-fg-muted tabular-nums">
-                  {summary(data)}
-                </span>
-              ) : null}
-              <IconButton
-                size="sm"
-                label="Reload devices"
-                data-busy={query.isFetching ? 'spin' : undefined}
-                icon={<RefreshCw aria-hidden />}
-                onClick={() => void query.refetch()}
-              />
-            </>
-          }
-        />
+      <TabCard
+        flat={flat}
+        title="Devices"
+        bodyless
+        actions={
+          <>
+            {data && summary(data) ? (
+              <span role="status" className="text-xs text-fg-muted tabular-nums">
+                {summary(data)}
+              </span>
+            ) : null}
+            <IconButton
+              size="sm"
+              label="Reload devices"
+              data-busy={query.isFetching ? 'spin' : undefined}
+              icon={<RefreshCw aria-hidden />}
+              onClick={() => void query.refetch()}
+            />
+          </>
+        }
+      >
         <Handoff loading={!data} skeleton={<SkeletonRows rows={2} label="Loading devices" />}>
           {data && data.devices.length === 0 ? (
             <EmptyState inline art="phone" title="No devices yet" />
           ) : (
-            <CardBody>
+            <Body>
               <ListRows label="Devices">
                 {data?.devices.map((d) => (
                   <ListRow
@@ -139,6 +155,7 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
                     leading={<Smartphone aria-hidden />}
                     title={
                       <span className="font-mono text-xs" title={d.device}>
+                        {d.simulated ? `${SIMULATED_DEVICE} · ` : null}
                         {shortDevice(d.device)}
                       </span>
                     }
@@ -147,11 +164,11 @@ export function DevicesTab({ pass, active }: { pass: PassDetailDto; active: bool
                   />
                 ))}
               </ListRows>
-            </CardBody>
+            </Body>
           )}
         </Handoff>
-      </Card>
-      <WalletProviderStatus pass={pass} active={active} />
+      </TabCard>
+      {extra}
     </div>
   );
 }

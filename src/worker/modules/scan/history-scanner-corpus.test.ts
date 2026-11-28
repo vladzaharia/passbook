@@ -92,7 +92,7 @@ describe('scanner history reads at their widest shape', () => {
       const page = await readHistoryPage(
         db,
         auth,
-        { ...selector, tenant: auth.tenant('+s', 'scans') },
+        { ...selector, tenant: auth.tenantOnce('+s', 'scans') },
         now,
       );
       expect(page).toEqual({ authorized: true, rows: [] });

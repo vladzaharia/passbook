@@ -32,7 +32,7 @@ export async function contextOrg(
 ): Promise<string> {
   if (orgId === undefined) return orgOfCaller(ctx, auth);
   if (auth?.kind === 'api_key') {
-    if (auth.via === 'try' && auth.orgId === orgId) return orgId;
+    if ((auth.via === 'try' || auth.via === 'cli') && auth.orgId === orgId) return orgId;
     throw notFound();
   }
   if (auth?.kind !== 'session') return orgOfCaller(ctx, auth);

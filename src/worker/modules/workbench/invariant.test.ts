@@ -29,6 +29,9 @@ const OWN_CREDENTIAL = new Set([
   'POST /api/v1/invitations/confirm',
   'POST /api/v1/invitations/preview',
   'POST /api/v1/invitations/setup',
+  // CLI sign-in: a start is open on purpose, a poll's credential is its device code.
+  'POST /api/v1/cli/sessions',
+  'POST /api/v1/cli/sessions/token',
   'POST /api/v1/scan/pair',
   'POST /api/v1/scan/pair/preview',
   'POST /api/v1/scan/unpair',

@@ -1,14 +1,18 @@
 import { z } from 'zod';
 import type { TagRead } from '../../../shared/contracts/nfc-tags.ts';
+import {
+  createNativeSettle,
+  type DropReason,
+  type ReaderOutcome,
+  type ReadResult,
+} from './native-settle.ts';
 import type { RawRead } from './types.ts';
 
 /** The bridge versions this page speaks. The app answers `ready` with the highest it shares. */
 export const BRIDGE_VERSIONS = [1, 2] as const;
 export const TAG_READ_MAX_MS = 60_000;
 /** Additive `hello` features. Both sides ignore ones they do not know; the wire stays v2. */
-export const BRIDGE_FEATURES = ['scanAck'] as const;
-/** Scans that can await a verdict at once: a read during review or a result is held, not refused. */
-const MAX_PENDING = 8;
+export const BRIDGE_FEATURES = ['scanAck', 'scanSettle'] as const;
 
 interface Bridge {
   postMessage(message: string): void;
@@ -42,7 +46,6 @@ const Scan = z.discriminatedUnion('source', [
   }),
 ]);
 
-type ReaderOutcome = 'accepted' | 'rejected' | 'error';
 type CustomerDisplayStatus =
   | 'ready'
   | 'checking'
@@ -66,26 +69,31 @@ const CustomerBranding = z.strictObject({
 /** Receipt is acknowledged at once (`scanAck`); acceptance only after this exact read receives a server verdict. */
 export function connectNativeReader(
   options: {
-    read(read: RawRead): string | null;
+    read(read: RawRead): ReadResult;
+    /** Run the page's answer step on the current state: a verdict reached during `read` is owed now. */
+    settleNow?(): void;
     cancelled(inputId: string): void;
     unsupported(): void;
     capabilities?(value: Record<string, unknown>): void;
+    /** The handshake settled whether the app takes v2 haptics (`scanAck` and `scanSettle` listed). */
+    settleReady?(on: boolean, haptic: (pattern: number[]) => void): void;
     /** A one-shot `tagRead` ended without a tag (sheet cancelled or timed out). */
     tagEnded?(why: 'cancelled' | 'timeout'): void;
   },
   bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,
 ) {
   if (!bridge) return null;
-  /** Input id to native id, oldest first. A new scan no longer drops the one before it. */
-  const pending = new Map<string, string>();
   /** Until the app answers `ready`, everything but `hello` speaks v1. */
   let version: 1 | 2 = 1;
   /** The app named `scanAck` in its `features`; until then it is never sent one. */
   let appAcks = false;
+  /** The app named `scanSettle`: it plays no buzz of its own on `result`, so the page may send `haptic`. */
+  let appSettles = false;
   let tagFormats = false;
   let tagSeq = 0;
   let tagPending: string | null = null;
   const send = (message: object) => bridge.postMessage(JSON.stringify({ version, ...message }));
+  const haptic = (pattern: number[]) => send({ op: 'haptic', pattern });
   let customerDisplayAvailable = false;
   let lastCustomerStatus: {
     status: CustomerDisplayStatus;
@@ -104,17 +112,19 @@ export function connectNativeReader(
   const sendResult = (id: string, outcome: ReaderOutcome) => {
     send({ op: 'result', id, outcome });
   };
-  const track = (inputId: string, nativeId: string) => {
-    pending.set(inputId, nativeId);
-    for (const oldest of pending.keys()) {
-      if (pending.size <= MAX_PENDING) break;
-      pending.delete(oldest);
+  /** `revise` and `dropped` go only to an app that listed `scanSettle`; others get today's answers. */
+  const settles = () => version >= 2 && appAcks && appSettles;
+  const settle = createNativeSettle(send, settles);
+  const answerRead = (nativeId: string, result: ReadResult) => {
+    if ('error' in result) sendResult(nativeId, 'error');
+    else if ('drop' in result) settle.dropNative(nativeId, result.drop);
+    else {
+      settle.track(result.track, nativeId);
+      options.settleNow?.();
     }
   };
   const cancel = () => {
-    const inputs = [...pending.keys()];
-    pending.clear();
-    for (const inputId of inputs) options.cancelled(inputId);
+    for (const inputId of settle.takeAll()) options.cancelled(inputId);
   };
   const onMessage: NonNullable<Bridge['onmessage']> = ({ data }) => {
     let message: Record<string, unknown>;
@@ -128,8 +138,15 @@ export function connectNativeReader(
     // A message newer than the handshake is not from the app we agreed a version with.
     if (message.version > version) return;
     if (message.event === 'ready' || message.event === 'capabilities') {
-      if (Array.isArray(message.features)) appAcks = message.features.includes('scanAck');
-      else if (message.event === 'ready') appAcks = false;
+      if (Array.isArray(message.features)) {
+        appAcks = message.features.includes('scanAck');
+        appSettles = message.features.includes('scanSettle');
+      } else if (message.event === 'ready') {
+        appAcks = false;
+        appSettles = false;
+      }
+      if (message.event === 'ready') settle.clear();
+      options.settleReady?.(settles(), haptic);
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
       const display = CustomerDisplay.safeParse(capabilities.data.customerDisplay);
@@ -172,9 +189,7 @@ export function connectNativeReader(
         ...(scan.tag.ndef ? { ndef: scan.tag.ndef } : {}),
         source: 'native',
       };
-      const tagInput = options.read({ method: 'nfc', tag });
-      if (!tagInput) sendResult(scan.id, 'error');
-      else track(tagInput, scan.id);
+      answerRead(scan.id, options.read({ method: 'nfc', tag }));
       return;
     }
     if (scan.source === 'apple-vas') {
@@ -182,9 +197,7 @@ export function connectNativeReader(
       options.unsupported();
       return;
     }
-    const inputId = options.read({ method: scan.method ?? 'wedge', code: scan.value });
-    if (!inputId) sendResult(scan.id, 'error');
-    else track(inputId, scan.id);
+    answerRead(scan.id, options.read({ method: scan.method ?? 'wedge', code: scan.value }));
   };
   bridge.onmessage = onMessage;
   bridge.postMessage(
@@ -222,14 +235,15 @@ export function connectNativeReader(
       send({ op: 'tagCancel', id: tagPending });
       tagPending = null;
     },
+    /** A buzz at the negotiated version. */
+    haptic,
     start: () => send({ op: 'start', ...formats() }),
-    result(inputId: string, outcome: ReaderOutcome) {
-      const nativeId = pending.get(inputId);
-      if (nativeId === undefined) return false;
-      pending.delete(inputId);
-      sendResult(nativeId, outcome);
-      return true;
-    },
+    /** The verdict for a tracked read: `result` once, then `revise` when it changes. */
+    result: settle.answer,
+    /** End a tracked read that got no verdict. */
+    dropped: (inputId: string, reason: DropReason) => settle.drop(inputId, reason),
+    /** Input ids sent to the app that have no terminal yet. */
+    unanswered: settle.unanswered,
     customerStatus(status: CustomerDisplayStatus, inputId: string | null = null) {
       const terminal = ['accepted', 'checkedOut', 'rejected', 'failed'].includes(
         lastCustomerStatus.status,

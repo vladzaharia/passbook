@@ -91,6 +91,7 @@ import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbac
 import { walletCredentialRoutes } from './modules/wallet-providers/routes-credentials.ts';
 import { walletEnrolmentRoutes } from './modules/wallet-providers/routes-enrolments.ts';
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
+import { walletHealthRoutes } from './modules/wallet-providers/routes-health.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletPlatformRoutes } from './modules/wallet-providers/routes-platform-credentials.ts';
 import { walletReissueRoutes } from './modules/wallet-providers/routes-reissue.ts';
@@ -98,7 +99,10 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { cliPlatformRoutes, cliRoutes } from './modules/workbench/cli-routes.ts';
 import { workbenchRoutes } from './modules/workbench/routes.ts';
+import { devicePassPlatformRoutes } from './modules/workbench/routes-device-pass-platform.ts';
+import { devicePassPublicRoutes } from './modules/workbench/routes-device-pass-public.ts';
 import { requestLogRoutes } from './modules/workbench/routes-logs.ts';
 import { resolveRoutes, workbenchReadRoutes } from './modules/workbench/routes-read.ts';
 import { apiVersionGate } from './platform/api-version.ts';
@@ -111,6 +115,7 @@ import { hostPolicy } from './platform/host-policy.ts';
 import { buildOpenApiDocument } from './platform/openapi-document.ts';
 import { keyCallableOnly } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
+import { assertScopedPatterns } from './platform/router-scope.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
 
@@ -123,7 +128,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing|d)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -189,11 +194,14 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/developer', developerRoutes);
   app.route('/api/v1/workbench', workbenchRoutes);
+  app.route('/api/v1/cli', cliRoutes);
+  app.route('/api/v1/platform', cliPlatformRoutes);
   app.route('/api/v1', resolveRoutes);
   app.route('/api/v1/workbench', workbenchReadRoutes);
   app.route('/api/v1/request-logs', requestLogRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
+  app.route('/api/v1/orgs', walletHealthRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
   app.route('/api/v1/invitations', invitationRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
@@ -207,6 +215,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   // Platform routes that declare their own key access.
   app.route('/api/v1/platform', platformSettingsRoutes);
+  app.route('/api/v1/platform', devicePassPlatformRoutes);
   app.route('/api/v1/platform', retentionPlatformReleaseRoutes);
   // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
   app.route('/api/v1/platform', idpOperationRoutes);
@@ -279,6 +288,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
   app.route('/scan', scanShellSwRoutes);
+  app.route('/d', devicePassPublicRoutes);
   app.route('/p', walletOfferRoutes);
   app.route('/w/i', walletImageRoutes);
   app.route('/brand', brandAssetRoutes);
@@ -305,5 +315,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.get('/api/v1/openapi.json', document);
   app.get('/api/v1/docs', document);
 
+  assertScopedPatterns(app);
   return app;
 }

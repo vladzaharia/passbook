@@ -16,7 +16,7 @@ export function CodeTab({ sample }: { sample?: Dict }) {
       fallback={
         <div
           role="status"
-          aria-busy
+          data-loading="content"
           className="mt-4 grid gap-3 rounded-lg border border-border bg-surface p-3"
         >
           <span className="sr-only">Loading code</span>

@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/wallet-release.ts';
 import { platformActorOf } from '../../platform/actor.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { enableReady, releaseReport } from './release-readiness.ts';
@@ -14,7 +15,7 @@ import { enableReady, releaseReport } from './release-readiness.ts';
  * Mount at /api/v1/platform: the report and the dry run take a Platform key, the apply is a person's (the owner's go/no-go).
  */
 export const walletReleaseRoutes = createRouter();
-walletReleaseRoutes.use('*', async (c, next) => {
+ownUse(walletReleaseRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

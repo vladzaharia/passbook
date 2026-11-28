@@ -2,6 +2,7 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import type { LookupEntry } from './lookup-history.ts';
+import { RACE_KEYSET } from './race-tags.ts';
 import { passVisibleSql } from './repo-pass-visible.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
@@ -53,15 +54,14 @@ export function lookupPassesStmt(
     db,
     auth,
     `SELECT ring.i AS i,
-      COALESCE((SELECT CASE WHEN p.image_generation = ring.img THEN 2 ELSE 1 END FROM passes p
-        WHERE p.id = ring.pass_id AND ${auth.tenant('p', 'passes')}
-          AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
-          AND ${effectiveReleaseIdSql('p')} IS ring.rel AND ${scope.sql} AND ${cleared.sql}), 0) AS pass_ok,
-      EXISTS (SELECT 1 FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenant('hp', 'passes')}) AS present,
-      (SELECT ${effectiveReleaseIdSql('hp')} FROM passes hp
-        WHERE hp.id = ring.pass_id AND ${auth.tenant('hp', 'passes')}) AS head
-    FROM ring WHERE ${auth.ok}`,
+      CASE WHEN p.id IS NULL THEN 0 WHEN p.image_generation = ring.img THEN 2 ELSE 1 END AS pass_ok,
+      hp.id IS NOT NULL AS present,
+      CASE WHEN hp.id IS NULL THEN NULL ELSE ${effectiveReleaseIdSql('hp')} END AS head
+    FROM ${auth.rows}ring
+      LEFT JOIN passes p ON p.id = ring.pass_id AND ${auth.tenantOnce('p', 'passes')}
+        AND ${passVisibleSql('p', { credential: 'ring.cred', lifecycle: 'ring.life' })}
+        AND ${scope.sql} AND ${cleared.sql} AND ${effectiveReleaseIdSql('p')} IS ring.rel
+      LEFT JOIN passes hp ON hp.id = ring.pass_id AND ${auth.tenantOnce('hp', 'passes')}`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,
@@ -78,5 +78,7 @@ export const lookupGateStmt = (db: D1Database, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `SELECT ${auth.ok} AS authorized, (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset`,
+    `${RACE_KEYSET}
+    SELECT COALESCE(${auth.present}, 0) AS authorized,
+      (SELECT commitment FROM credential_ref_keyset WHERE id = 1) AS keyset FROM ${auth.anchor}`,
   );

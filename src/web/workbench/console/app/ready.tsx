@@ -8,7 +8,7 @@ import { takesTemplate } from '../request.ts';
 import { firstTemplateId } from '../template-sample.ts';
 import type { RunOp } from '../types.ts';
 import { OpConsole } from './console.tsx';
-import { LazyState } from './lazy-state.tsx';
+import { LazyFailed } from './lazy-state.tsx';
 import { type LogRead, useFill } from './use-launch.ts';
 
 const NO_LAUNCH: Launch = { op: null, sample: null, from: null, prefill: null };
@@ -83,9 +83,7 @@ export function Ready({
     log ?? { state: 'none' },
   );
   if (loaded === 'missing')
-    return (
-      <LazyState scene="failed" title={CONSOLE_COPY.loadFailed} onRetry={() => location.reload()} />
-    );
+    return <LazyFailed reason={CONSOLE_COPY.loadFailed} onRetry={() => location.reload()} />;
   // A Logs row is read before the form is drawn: it starts from what that call sent.
   if (!loaded || found === undefined || log?.state === 'loading') return <BenchSkeleton rows={3} />;
   return (

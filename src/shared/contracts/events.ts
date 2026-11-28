@@ -175,6 +175,8 @@ export const PassSyncDeviceSchema = z.object({
   /** Set on a device made by Simulate (Test passes only), with the id Simulate returned for it. */
   simulated: z.boolean().optional(),
   deviceId: z.string().optional(),
+  /** Set on the developer's own phone that holds a device pass of this pass ('My phone'). */
+  devicePass: z.literal(true).optional(),
 });
 export type PassSyncDeviceDto = z.infer<typeof PassSyncDeviceSchema>;
 

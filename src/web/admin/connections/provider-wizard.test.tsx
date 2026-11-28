@@ -79,8 +79,6 @@ describe.each(RECIPE_IDS)('setup page: %s', (recipe) => {
       await screen.findByRole('heading', { name: 'Listening · nothing yet', level: 4 }),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Done' })).toHaveAttribute('aria-disabled', 'true');
-    // Led by the provider, where it says where; the sentence itself is the guide's.
-    expect(document.body.textContent).toContain(strip(guide.test.text).slice(1));
   });
 });
 
@@ -295,9 +293,9 @@ describe('setup page: the pieces', () => {
     expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument();
   });
 
-  it('the Test step leads with the live check, led by the provider', async () => {
+  it('the Test step leads with the live check', async () => {
     await open('shopify-orders');
-    expect(await screen.findByText(/In Shopify: row menu/)).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Listening · nothing yet' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Skip for now' })).toBeVisible();
   });
 

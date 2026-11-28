@@ -1,0 +1,14 @@
+[
+  {
+    "id": "webhook-setup-guide",
+    "title": "Read a sender's setup guide",
+    "guide": "set-up-a-webhook-source",
+    "ops": [
+      "connectors.getConnectorsWebhookPushRecipesByRecipeSetup"
+    ],
+    "files": {
+      "ts": "webhook-setup-guide.ts",
+      "curl": "webhook-setup-guide.sh"
+    }
+  }
+]

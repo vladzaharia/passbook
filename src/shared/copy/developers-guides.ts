@@ -61,6 +61,12 @@ export const DEV_GUIDES = [
   },
   { id: 'nfc', title: 'NFC', line: 'Tags and bindings', step: 'door' },
   { id: 'react-to-events', title: 'React to events', line: 'Webhooks or polling', step: 'connect' },
+  {
+    id: 'set-up-a-webhook-source',
+    title: 'Set up a webhook source',
+    line: 'Shopify, Stripe and more',
+    step: 'connect',
+  },
   { id: 'partner-apps', title: 'Partner apps', line: 'Installations', step: 'connect' },
   { id: 'go-live', title: 'Go live', line: 'The checklist', step: 'launch' },
 ] as const satisfies readonly { id: string; title: string; line: string; step: DevGuideStep }[];

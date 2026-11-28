@@ -1,11 +1,13 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { makeEnv } from '../../../../test/helpers/env.ts';
+import { fixtures, makeOrg, makeUser } from '../../../../test/helpers/factories.ts';
 import {
   AUTHORITY_TABLES,
   GUARDED_TABLES,
   ORG_BEARING_TABLES,
 } from '../../platform/authority-tables.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { PURGE_KEEP, PURGE_NOT_TENANT, PURGE_STEPS, type PurgeStep } from './repo-plan.ts';
 import { remaining } from './repo-purge.ts';
 
@@ -131,6 +133,24 @@ describe('the purge plan against the migrated schema', () => {
         );
     }
     expect(problems).toEqual([]);
+  });
+
+  it('purges the CLI sessions of an org with the org, ahead of the keys they point at', async () => {
+    const f = fixtures(await makeEnv());
+    const [org, other, user] = [await makeOrg(f), await makeOrg(f), await makeUser(f)];
+    const add = (id: string, orgId: string) =>
+      run(
+        env.DB,
+        `INSERT INTO cli_sessions (id, device_hash, code_mac, client, created_at, expires_at, user_id, org_id)
+         VALUES (?1, ?1, ?1, '{}', 1, 2, ?2, ?3)`,
+        [id, user.id, orgId],
+      );
+    await add('cli-a', org.id);
+    await add('cli-b', other.id);
+    const step = flat().find((s) => s.table === 'cli_sessions');
+    expect(step).toBeDefined();
+    expect(await remaining(env.DB, step as PurgeStep, org.id)).toBe(1);
+    expect(positionOf('cli_sessions')).toBeLessThan(positionOf('api_keys'));
   });
 
   it('every step is valid SQL against the schema', async () => {

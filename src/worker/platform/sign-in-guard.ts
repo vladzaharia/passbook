@@ -5,7 +5,13 @@ import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import type { SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import { reportDenied } from './denied.ts';
-import { ForbiddenError, IdpSignInRequiredError, StepUpRequiredError } from './errors.ts';
+import {
+  cliTokenNotAllowed,
+  ForbiddenError,
+  IdpSignInRequiredError,
+  StepUpRequiredError,
+} from './errors.ts';
+import { innerOf } from './router-scope.ts';
 import { serviceContext } from './service-context.ts';
 
 // A session guard registers the level it enforces, so the route inventory test and the OpenAPI
@@ -25,7 +31,7 @@ export function declareOidcOnly<T extends object>(guard: T): T {
   oidcOnly.add(guard);
   return guard;
 }
-export const isOidcOnly = (guard: object): boolean => oidcOnly.has(guard);
+export const isOidcOnly = (guard: object): boolean => oidcOnly.has(innerOf(guard));
 
 /** How a `platform` route treats a key: `key` (any request), `conditional` (`key.unless`), `person` (never). */
 export type PlatformKeyMode = 'key' | 'conditional' | 'person';
@@ -42,7 +48,7 @@ export function declarePlatformKey<T extends object>(
 }
 export const platformKeyOf = (
   guard: object,
-): { mode: PlatformKeyMode; scope: string } | undefined => platformKeys.get(guard);
+): { mode: PlatformKeyMode; scope: string } | undefined => platformKeys.get(innerOf(guard));
 
 const platformKeysOwn = new WeakSet<object>();
 
@@ -51,10 +57,10 @@ export function declarePlatformKeysOwn<T extends object>(guard: T): T {
   platformKeysOwn.add(guard);
   return guard;
 }
-export const isPlatformKeysOwn = (guard: object): boolean => platformKeysOwn.has(guard);
+export const isPlatformKeysOwn = (guard: object): boolean => platformKeysOwn.has(innerOf(guard));
 
 /** The level a guard enforces, or undefined when it is no session guard. */
-export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(guard);
+export const signInLevelOf = (guard: object): SignInLevel | undefined => levels.get(innerOf(guard));
 
 /** Where a refused caller signs in with Polaris ID: back to the surface they were using. */
 function surfaceFor(c: Context<AppBindings>): string {
@@ -147,7 +153,7 @@ export function declareStepUp<T extends object>(guard: T, decl: StepUpDecl): T {
 }
 
 /** The step-up a guard enforces, or undefined. */
-export const stepUpOf = (guard: object): StepUpDecl | undefined => stepUps.get(guard);
+export const stepUpOf = (guard: object): StepUpDecl | undefined => stepUps.get(innerOf(guard));
 
 /**
  * Step-up for a session, registered per route (`router.post(path, requireStepUp(...))`) ahead of its
@@ -160,6 +166,8 @@ export const requireStepUp = (
   declareStepUp(
     async (c, next) => {
       const auth = c.var.auth;
+      // A CLI token never meets a step-up: the Workbench does that work (`CLI_TOKEN_NOT_ALLOWED`).
+      if (auth?.kind === 'api_key' && auth.via === 'cli') throw cliTokenNotAllowed();
       const person =
         auth?.kind === 'session'
           ? auth

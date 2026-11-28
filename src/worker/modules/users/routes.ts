@@ -18,6 +18,7 @@ import { currentUserId } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { assertStrictSignIn, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
@@ -33,7 +34,7 @@ export const usersRoutes = createRouter();
 // A Platform key with `platform:users` reaches the reads, the disable and the session revokes. The email routes
 // (P4: they move a person's sign-in identity) are person-only: `{ platform }` with no `key`.
 const KEY = { platform: 'platform:users', key: true } as const;
-usersRoutes.use('*', limitBody(64 * 1024));
+ownUse(usersRoutes, limitBody(64 * 1024));
 
 register(
   usersRoutes,
@@ -69,6 +70,7 @@ register(
         c.req.valid('param').id,
         ownSession(c),
         platformActorOf(c).userId ?? '',
+        c.var.auth?.kind !== 'session',
       ),
     ),
 );

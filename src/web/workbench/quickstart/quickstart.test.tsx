@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const q = vi.hoisted(() => ({
   value: {} as Record<string, unknown>,
   refresh: vi.fn(),
+  poll: vi.fn(),
   beacon: vi.fn(),
 }));
 vi.mock('./use-quickstart.ts', () => ({ useQuickstart: () => q.value }));
@@ -42,6 +43,7 @@ const base = (over: Record<string, unknown> = {}) => ({
   skew: 0,
   home: null,
   refresh: q.refresh,
+  poll: q.poll,
   ...over,
 });
 const ready = { kind: 'ready', csrf: 'c', sandbox: { id: 's' }, siteKey: 'k' } as never;
@@ -101,16 +103,16 @@ describe('Quickstart', () => {
     });
     await act(async () => vi.advanceTimersByTimeAsync(3100));
     expect(q.beacon).toHaveBeenCalledWith('c', 'home');
-    expect(q.refresh).not.toHaveBeenCalled();
+    expect(q.poll).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
-  it('reads the home again every three seconds while the pass is made and the track is open', async () => {
+  it('reads the home again on the shared loop while the pass is made and the track is open', async () => {
     vi.useFakeTimers();
     q.value = base({ home: { state: 'open', progress: { startedAt: 1, passAt: 2 } } });
     render(<Quickstart session={ready} />);
     await act(async () => vi.advanceTimersByTimeAsync(3100));
-    expect(q.refresh).toHaveBeenCalled();
+    expect(q.poll).toHaveBeenCalled();
     vi.useRealTimers();
   });
 });

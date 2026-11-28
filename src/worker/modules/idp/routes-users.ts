@@ -9,6 +9,7 @@ import { IdParamSchema } from '../../../shared/contracts/index.ts';
 import { platformActorOf } from '../../platform/actor.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { reportKeyAdminRefusal } from './actor.ts';
@@ -41,8 +42,8 @@ const OFFBOARD = {
 
 /** Mount at /api/v1/users, before `usersRoutes`. */
 export const userAccessRoutes = createRouter();
-userAccessRoutes.use('*', reportKeyAdminRefusal);
-userAccessRoutes.use('*', async (c, next) => {
+ownUse(userAccessRoutes, reportKeyAdminRefusal);
+ownUse(userAccessRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

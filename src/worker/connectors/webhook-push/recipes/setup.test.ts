@@ -14,15 +14,15 @@ import unverified from './UNVERIFIED.md?raw';
  * `version` and a new pin, so the change shows in review.
  */
 const PINS: Record<string, { version: string; hash: string }> = {
-  custom: { version: '2026-11-25', hash: 'c562346d2e5815ee' },
-  'shopify-orders': { version: '2026-11-26', hash: 'fe748ace1570bf4c' },
-  'shopify-customers': { version: '2026-11-26', hash: 'f06806108706e608' },
+  custom: { version: '2026-11-27', hash: 'd404d7b563a0c490' },
+  'shopify-orders': { version: '2026-11-27', hash: '879575630397542f' },
+  'shopify-customers': { version: '2026-11-27', hash: 'a949924ea959ff77' },
   'stripe-subscriptions': { version: '2026-11-26', hash: '925695bb1e1880b0' },
   'stripe-payments': { version: '2026-11-26', hash: '749b4fbfff2a5136' },
   'calcom-bookings': { version: '2026-11-26', hash: '6a8ba432d4c963fd' },
   'woocommerce-orders': { version: '2026-11-26', hash: '8d488a9a7090af45' },
   'tickettailor-tickets': { version: '2026-11-26', hash: '3d21cf7fc9450d1f' },
-  outbound: { version: '2026-11-25', hash: 'a5865438d72b9cc4' },
+  outbound: { version: '2026-11-27', hash: 'd36a3d3bcfad314f' },
 };
 
 async function contentHash(guide: SetupGuide): Promise<string> {

@@ -237,3 +237,63 @@ test('Shopify: an accepted delivery whose work failed reads Accepted, not issued
     await api.dispose();
   }
 });
+
+test('Shopify: the panel clock survives a resize; a failed check and a pause show in the strip', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await createThrough(page, 'shopify-orders', `E2E Chip ${uid('c')}`);
+  for (let i = 0; i < 3; i++) await next(page);
+  await page.getByRole('button', { name: /^Create/ }).click();
+  await page.waitForURL(/\/connections\/[^/]+\/setup$/);
+  await expect(page.getByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+  await next(page);
+  await expect(page.getByRole('heading', { name: 'Paste the secret', level: 2 })).toBeVisible();
+  await page.getByLabel(/^Signing secret/).fill(`shpss_${uid('k')}${'0'.repeat(12)}`);
+  await page.getByRole('button', { name: 'Save secret' }).click();
+  await expect(page.getByRole('heading', { name: 'Send a test', level: 2 })).toBeVisible();
+
+  await page.clock.install();
+  const widths = [
+    [834, 1112],
+    [390, 844],
+    [1440, 900],
+  ] as const;
+  for (const [width, height] of widths) {
+    await page.setViewportSize({ width, height });
+    await page.clock.runFor(60_000);
+  }
+  // Three minutes across three widths: the slow notice means no resize restarted the clock.
+  await expect(page.getByRole('heading', { name: 'Nothing arrived yet', level: 4 })).toBeVisible();
+  await check(page, 'chip-resize-midlisten');
+
+  // The 15-minute pause lands on the clock started before the resizes.
+  await page.clock.runFor(13 * 60_000);
+  await expect(page.getByRole('heading', { name: 'Paused listening', level: 4 })).toBeVisible();
+  for (const [width, height] of widths) {
+    await page.setViewportSize({ width, height });
+    await expect(page.getByText('Listening ·', { exact: false })).toHaveCount(0);
+    await shots(page, 'chip-paused');
+  }
+});
+
+test('Shopify: a failed arrivals check reads as such, not Listening', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await createThrough(page, 'shopify-orders', `E2E Chip ${uid('e')}`);
+  for (let i = 0; i < 3; i++) await next(page);
+  await page.getByRole('button', { name: /^Create/ }).click();
+  await page.waitForURL(/\/connections\/[^/]+\/setup$/);
+  await page.route('**/webhook-arrivals*', (r) =>
+    r.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
+  );
+  await expect(page.getByRole('heading', { name: 'Add the webhook', level: 2 })).toBeVisible();
+  await next(page);
+  await page.getByLabel(/^Signing secret/).fill(`shpss_${uid('k')}${'0'.repeat(12)}`);
+  await page.getByRole('button', { name: 'Save secret' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: "Couldn't check for deliveries" }),
+  ).toBeVisible();
+  await shots(page, 'chip-errored');
+});
