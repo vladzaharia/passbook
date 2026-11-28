@@ -9,9 +9,9 @@ import { usePalette } from '../../lib/palette.ts';
 import { signOut, useSession } from '../../lib/session.ts';
 import { StateArt } from '../art/state-art.tsx';
 import { Button } from '../button.tsx';
-import { EmptyState } from '../empty-state.tsx';
 import { ErrorState, isChunkLoadError } from '../error-state.tsx';
 import { HostedCard } from '../hosted-card.tsx';
+import { StateView } from '../state-view.tsx';
 import { AppShell } from './app-shell.tsx';
 import { PORTAL_BAR } from './portal-layout.tsx';
 import { Wordmark } from './wordmark.tsx';
@@ -36,9 +36,11 @@ export function ForbiddenPage() {
   // A holder who followed an admin link gets a way back to their passes.
   const holder = authed?.roles.includes('user') === true;
   return (
-    <EmptyState
-      heading
+    <StateView
+      size="stage"
+      state="no-access"
       art="lock"
+      heading
       title={STATE_COPY.forbidden}
       action={
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -60,9 +62,11 @@ export function ForbiddenPage() {
 export function PolarisIdPage() {
   const here = useRouterState({ select: (s) => s.location.href });
   return (
-    <EmptyState
-      heading
+    <StateView
+      size="stage"
+      state="no-access"
       art="lock"
+      heading
       title={AUTH_PAGE_COPY.signInPolarisId}
       action={
         <Button asChild>
@@ -109,11 +113,13 @@ export function ScopeRefusal({
   entry: { to: string; label: string | undefined } | undefined;
 }) {
   return (
-    <EmptyState
-      heading
+    <StateView
+      size="stage"
+      state="no-access"
       art="lock"
+      heading
       title={STATE_COPY.forbidden}
-      description={description}
+      line={description}
       action={
         <Button variant="outline" asChild>
           <Link to={entry?.to ?? '/admin/account'}>

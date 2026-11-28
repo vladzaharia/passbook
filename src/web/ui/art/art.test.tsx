@@ -308,10 +308,10 @@ describe('entity art', () => {
   // scanner, stub and badge arts. Then to 16.5 kB (16,846 B measured) for the portal buddy kit
   // (BX1): the catch scene's envelope, the face's brows, look group and hop. The lazy scenes rose to 10.75 kB (10,602 B measured) for
   // listen, catch and explain. Then to 16.75 kB (16,995 B measured) for the face's flat and sad moods (BX2, Status).
-  it('fits the 16.75 kB gzip budget; the lazy scenes fit 10.75 kB; the state parts 2.5 kB', () => {
+  it('fits the 16.75 kB gzip budget; the lazy scenes fit 10.75 kB; the state parts 3.25 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
-    const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
+    const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx', 'state-props.tsx'];
     const files = readdirSync(DIR)
       .filter((f) => !f.includes('.test.') && f !== 'css.ts' && f.includes('.'))
       .filter((f) => !states.includes(f))
@@ -321,7 +321,7 @@ describe('entity art', () => {
     const gz = (paths: string[]) =>
       gzipSync(paths.map((f) => readFileSync(f, 'utf8')).join('\n'), { level: 9 }).length;
     expect(gz(kit)).toBeLessThanOrEqual(16.75 * 1024);
-    expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(2.5 * 1024);
+    expect(gz(states.map((f) => join(DIR, f)))).toBeLessThanOrEqual(3.25 * 1024);
     // Nothing in the kit's entry pulls them in.
     for (const f of ['index.ts', 'buddy.tsx', 'buddy-art.tsx', 'wallet.tsx'])
       expect(readFileSync(join(DIR, f), 'utf8')).not.toMatch(

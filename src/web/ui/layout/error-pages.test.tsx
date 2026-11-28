@@ -11,7 +11,13 @@ import { ApiError } from '../../lib/errors.ts';
 import { AppProviders } from '../../lib/providers.tsx';
 import { createQueryClient } from '../../lib/query-client.ts';
 import { membershipFixture, renderApp } from '../../lib/test-utils.tsx';
-import { RouteError, ScopedDeniedPage, ScopeRefusal } from './error-pages.tsx';
+import {
+  NotFoundPage,
+  PolarisIdPage,
+  RouteError,
+  ScopedDeniedPage,
+  ScopeRefusal,
+} from './error-pages.tsx';
 
 async function show(node: React.ReactNode) {
   const root = createRootRoute({ component: () => node });
@@ -109,5 +115,33 @@ describe('not found', () => {
   it('offers My passes to a signed-in holder', async () => {
     await renderApp('/definitely-not-a-page', { session: 'user' });
     expect(await screen.findByRole('link', { name: /My passes/ })).toBeInTheDocument();
+  });
+});
+
+describe('route errors on StateView and the hosted card', () => {
+  it('draws a refusal as a no-access stage state with the page h1', async () => {
+    await show(<ScopeRefusal description="No access." entry={undefined} />);
+    const view = screen.getByTestId('state-view');
+    expect(view).toHaveAttribute('data-state', 'no-access');
+    expect(view).toHaveAttribute('data-size', 'stage');
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'You do not have access' }),
+    ).toBeInTheDocument();
+    expect(view.querySelector('[data-art="lock"]')).not.toBeNull();
+  });
+
+  it('draws the Polaris ID page the same way, with one way in', async () => {
+    await show(<PolarisIdPage />);
+    expect(screen.getByTestId('state-view')).toHaveAttribute('data-state', 'no-access');
+    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/auth/oidc/start?next='),
+    );
+  });
+
+  it('draws not found on the hosted card', async () => {
+    await show(<NotFoundPage />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+    expect(document.querySelector('[data-state="lost"]')).not.toBeNull();
   });
 });

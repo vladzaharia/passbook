@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -63,5 +65,36 @@ describe('state art', () => {
     // A refused form makes any of them sad.
     const failed = renderToStaticMarkup(<StateArt name="break-glass" failed />);
     expect(failed).toContain('data-mood="sad"');
+  });
+
+  it('draws each new state once, at every step', () => {
+    for (const size of ['xs', 'lg', 'xl', 'xl-scan'] as const) {
+      const html = (name: StateArtName) =>
+        renderToStaticMarkup(<StateArt name={name} size={size} plan="standard" />);
+      expect(html('empty'), size).toContain('data-state="empty"');
+      expect(html('filtered'), size).toContain('data-art="lens-overlay"');
+      expect(html('paused'), size).toContain('data-art="sign"');
+      expect(html('closed'), size).toContain('data-art="clock"');
+      expect(html('plan-ticket'), size).toContain(`data-size="${size}"`);
+    }
+  });
+
+  it('suspended is the forbidden composition; paused and closed are flat', () => {
+    expect(composition(ssr('suspended'))).toEqual(composition(ssr('no-access')));
+    for (const name of ['paused', 'closed'] as const) {
+      expect(ssr(name).querySelector('[data-part="w"]')?.getAttribute('data-mood'), name).toBe(
+        'flat',
+      );
+    }
+  });
+
+  it('plan-ticket shows the plan icon and rises once', () => {
+    const body = document.createElement('div');
+    body.innerHTML = renderToStaticMarkup(<StateArt name="plan-ticket" plan="business" />);
+    expect(body.querySelector('[data-art="plan-ticket"]')).toHaveAttribute('data-plan', 'business');
+    expect(body.querySelector('[data-plan-icon="business"] svg')).not.toBeNull();
+    const css = readFileSync(join(process.cwd(), 'src/web/ui/art/wallet-states.css'), 'utf8');
+    expect(css).toMatch(/animation: wl-plan-rise 400ms[^;]*;/);
+    expect(css).not.toMatch(/infinite/);
   });
 });

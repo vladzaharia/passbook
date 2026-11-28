@@ -1,14 +1,16 @@
 import { KeyRound } from 'lucide-react';
 import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
 import { Button } from '../button.tsx';
-import { EmptyState } from '../empty-state.tsx';
+import { StateView } from '../state-view.tsx';
 
 /** What an email-link session sees at Admin: the way in through Polaris ID, not the console. */
 export function PolarisIdRequired({ space, next }: { space: string; next: string }) {
   return (
-    <EmptyState
-      heading
+    <StateView
+      size="stage"
+      state="no-access"
       art="lock"
+      heading
       title={POLARIS_ID_COPY.needs(space)}
       action={
         <Button asChild variant="outline" iconStart={<KeyRound aria-hidden />}>
