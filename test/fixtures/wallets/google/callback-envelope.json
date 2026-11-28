@@ -1,4 +1,5 @@
 {
+  "provenance": "doc-shape",
   "note": "Synthetic ECv2SigningOnly callback signed with throwaway P-256 keys; not recorded from Google.",
   "issuerId": "33880000000223344",
   "clock": 1794873600000,

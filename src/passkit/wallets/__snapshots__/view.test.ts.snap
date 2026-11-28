@@ -342,7 +342,6 @@ exports[`resolveWalletView over every starter and baked template > starter-board
     "locations": 0,
   },
   "roles": {
-    "eventEnd": "style date: 2030-06-01T20:30:00Z",
     "eventStart": "style date: 2030-06-01T08:00:00-07:00",
     "memberName": "semantics text: Alex Morgan",
     "seat": "semantics text: 14A",
@@ -428,7 +427,6 @@ exports[`resolveWalletView over every starter and baked template > starter-booki
     "locations": 0,
   },
   "roles": {
-    "eventEnd": "style date: 2030-11-24T16:00:00Z",
     "eventStart": "style date: 2030-11-24T09:30:00-05:00",
     "subtitle": "style text: Cut and colour",
     "title": "style text: 2030-11-24T09:30:00-05:00",
@@ -1902,7 +1900,6 @@ exports[`resolveWalletView over every starter and baked template > starter-trans
     "locations": 0,
   },
   "roles": {
-    "eventEnd": "style date: 2030-11-21T12:15:00Z",
     "eventStart": "style date: 2030-11-21T07:15:00-05:00",
     "subtitle": "style text: Sam Reed",
     "title": "style text: Newport",
@@ -1981,11 +1978,8 @@ exports[`resolveWalletView over every starter and baked template > starter-visit
     "locations": 0,
   },
   "roles": {
-    "eventEnd": "style date: 2030-11-19T01:00:00Z",
-    "eventStart": "style date: 2030-11-18T16:30:00Z",
     "subtitle": "style text: Priya Shah",
     "title": "style text: Leo Brandt",
-    "validFrom": "style date: 2030-11-18T16:30:00Z",
     "validUntil": "style date: 2030-11-18T17:00:00-08:00",
   },
   "schemes": [],

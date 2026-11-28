@@ -131,16 +131,13 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
                   label="Signing identity"
                   error={errors.defaultIdentityId}
                   help={
-                    <>
-                      For new passes only.
-                      {identities.isPending
-                        ? ' Loading identities…'
-                        : identities.isError
-                          ? ' Identity options could not be loaded.'
-                          : identities.data?.nextCursor
-                            ? ' Only the first 200 identities are listed.'
-                            : ''}
-                    </>
+                    identities.isPending
+                      ? 'Loading identities…'
+                      : identities.isError
+                        ? 'Identity options could not be loaded.'
+                        : identities.data?.nextCursor
+                          ? 'Only the first 200 identities are listed.'
+                          : undefined
                   }
                 >
                   {(p) => (

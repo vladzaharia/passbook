@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 import base from './playwright.config.ts';
 import { writeCameraVideo } from './tools/lib/camera-fixture.ts';
 import { e2ePorts } from './tools/lib/e2e-ports.ts';
+import { e2eWebServer } from './tools/lib/e2e-web-server.ts';
 
 const cameraVideo = resolve('.wrangler/camera-qr.y4m');
 writeCameraVideo(cameraVideo);
@@ -51,12 +52,7 @@ export default defineConfig({
     })),
   ],
   webServer: [
-    {
-      command: 'node tools/e2e-server.ts',
-      url: `http://localhost:${e2ePorts.web}/health`,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-    },
+    e2eWebServer(),
     {
       command: 'node tools/e2e-camera-proxy.ts',
       url: `https://localhost:${e2ePorts.camera}/health`,

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { fixtureCard, states } from './fixtures.test-support.ts';
 import { answerOf, at, readOf, requestKey, resetIds, step } from './reduce.test-support.ts';
 import type { Card, ScanState } from './types.ts';
@@ -100,7 +101,7 @@ describe('the desk picks a value action', () => {
       s: 'applying',
       draft: { actionId: 'stamp', amount: 1 },
     });
-    expect(JSON.stringify(approved.state)).not.toContain('123456');
+    expectSecretAbsent(JSON.stringify(approved.state), '123456');
     expect(approved.cmds).toContainEqual(
       expect.objectContaining({
         c: 'act',
@@ -149,7 +150,7 @@ describe('the desk picks a value action', () => {
     const approved = step(needs.state, { type: 'approve', pin: '123456' }, at(400));
     const done = step(approved.state, answerOf(requestKey(approved.cmds), 'ok', null), at(500));
     expect(done.state.loop).toMatchObject({ s: 'verdict', draft: { actionId: 'stamp' } });
-    expect(JSON.stringify(done.state.loop)).not.toContain('123456');
+    expectSecretAbsent(JSON.stringify(done.state.loop), '123456');
   });
 
   it('shows the same needs_approval card again with the tries left, then locked', () => {
@@ -174,7 +175,7 @@ describe('the desk picks a value action', () => {
       draft: { actionId: 'stamp' },
       pin: { triesLeft: 2 },
     });
-    expect(JSON.stringify(wrong.state.loop)).not.toContain('482913');
+    expectSecretAbsent(JSON.stringify(wrong.state.loop), '482913');
     const again = step(wrong.state, { type: 'approve', pin: '735261' }, at(600));
     const shut = step(
       again.state,

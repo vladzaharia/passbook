@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { countD1, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -150,13 +151,13 @@ describe('approval action D1 budget and original scalar authority', () => {
 
       for (const { values } of trace.batches.flat()) expect(values).not.toContain(manager.pin);
       expect(JSON.stringify(result)).not.toContain(hashRow.pin_hash);
-      expect(JSON.stringify(result)).not.toContain(manager.pin);
+      expectSecretAbsent(JSON.stringify(result), manager.pin);
       for (const row of await all<{ data: string }>(
         real,
         'SELECT data FROM pass_events WHERE pass_id=?',
         [pass.id],
       )) {
-        expect(row.data).not.toContain(manager.pin);
+        expectSecretAbsent(row.data, manager.pin);
         expect(row.data).not.toContain(hashRow.pin_hash);
       }
       expect(

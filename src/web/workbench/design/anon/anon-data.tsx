@@ -53,7 +53,7 @@ function Json() {
 
 /** The sample as data (design §1.9): a form with a JSON toggle; the Design tab waits for a sign-in. */
 export function AnonData(): ReactNode {
-  const { blueprint, mode, setMode, edited } = useAnon();
+  const { blueprint, mode, setMode } = useAnon();
   return (
     <Tabs value="data" className="min-w-0">
       <div className="flex items-center gap-2 border-b border-border">
@@ -74,18 +74,22 @@ export function AnonData(): ReactNode {
         </Button>
       </div>
       <TabsContent value="data" className="pt-4">
-        {edited ? <p className="mb-3 text-xs text-fg-muted">{WB_DESIGN.anon.editsInCode}</p> : null}
         {mode === 'json' ? <Json key={blueprint.preview.id} /> : <Form />}
       </TabsContent>
     </Tabs>
   );
 }
 
-export function ShareButton() {
+export function ShareButton({ iconOnly = false }: { iconOnly?: boolean }) {
   const { share } = useAnon();
   return (
-    <Button variant="outline" iconStart={<Share2 aria-hidden />} onClick={share}>
-      {WB_DESIGN.anon.share}
+    <Button
+      variant="outline"
+      aria-label={iconOnly ? WB_DESIGN.anon.share : undefined}
+      iconStart={<Share2 aria-hidden />}
+      onClick={share}
+    >
+      {iconOnly ? null : WB_DESIGN.anon.share}
     </Button>
   );
 }

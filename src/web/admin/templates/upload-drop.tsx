@@ -179,7 +179,6 @@ export function UploadDrop({
         >
           {file ? 'Choose another' : 'Choose file'}
         </Button>
-        <p className="text-xs text-fg-muted">.zip or .pkpasstemplate, up to 15 MB</p>
       </div>
       {error ? (
         <p role="alert" className="text-xs text-danger">

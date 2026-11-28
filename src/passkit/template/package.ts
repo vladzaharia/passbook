@@ -1,4 +1,4 @@
-import { sha1Hex } from '../sign/index.ts';
+import { sha1Hex } from '../sign/sha1.ts';
 import { renderStampFiles } from '../stamps/package.ts';
 import type { AssetEntry, ImageSlot, PassJson, TemplateManifest } from '../types.ts';
 import { stripBlock } from './counters.ts';

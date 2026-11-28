@@ -56,7 +56,7 @@ function Body() {
   if (contexts.isError)
     return <ToolFailed error={contexts.error} onRetry={() => contexts.refetch()} />;
   if (!contexts.data || sandbox)
-    return <Skeleton role="status" aria-busy className="h-11 w-full max-w-md" />;
+    return <Skeleton role="status" data-loading="content" className="h-11 w-full max-w-md" />;
   if (!authed || !hasDeveloperAccess(authed.roles)) return <NoWorkbenchAccess />;
   return <MakeHere onMade={() => void contexts.refetch()} />;
 }

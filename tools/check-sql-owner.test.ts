@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { optionalBindPredicate, replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
+import {
+  optionalBindPredicate,
+  presenceStamp,
+  replaceOnIdentities,
+  sqlOutsideRepo,
+} from './check-sql-owner.ts';
 
 describe('check-sql-owner', () => {
   it('flags SQL in a service and allows it in repo files', () => {
@@ -7,6 +12,27 @@ describe('check-sql-owner', () => {
     expect(sqlOutsideRepo('src/worker/modules/a/service.ts', text)).toMatch(/outside a repo/);
     expect(sqlOutsideRepo('src/worker/modules/a/repo-sync.ts', text)).toBeNull();
     expect(sqlOutsideRepo('src/worker/platform/workflow-runs.ts', text)).toBeNull();
+  });
+
+  it('refuses the presence stamp outside the anchor builder, its guard and their tests', () => {
+    const text = 'WHERE ao.authority_present_k7 = 1';
+    expect(presenceStamp('src/worker/modules/scan/repo-feed.ts', text)).toMatch(/presence stamp/);
+    expect(presenceStamp('src/worker/modules/scan/read-corpus.test.ts', text)).toMatch(
+      /presence stamp/,
+    );
+    expect(presenceStamp('src/worker/platform/authority-restrict.ts', text)).toMatch(
+      /presence stamp/,
+    );
+    for (const ok of [
+      'authority-read.ts',
+      'authority-read-once.ts',
+      'authority-read-shape.ts',
+      'authority-read-join-guard.test.ts',
+    ])
+      expect(presenceStamp(`src/worker/platform/${ok}`, text)).toBeNull();
+    expect(
+      presenceStamp('src/worker/modules/scan/repo-feed.ts', 'WHERE ao.present = 1'),
+    ).toBeNull();
   });
 
   it('ignores prose', () => {
@@ -53,6 +79,24 @@ describe('check-sql-owner', () => {
     expect(optionalBindPredicate('src/worker/modules/a/x-fixtures.ts', sql)).toEqual([]);
     expect(optionalBindPredicate('src/web/a.ts', sql)).toEqual([]);
     expect(optionalBindPredicate(rel, "'WHERE (pass_id IS NULL OR pass_id = ?)'")).toEqual([]);
+  });
+
+  it('flags a bind interpolated through a helper, not a column helper', () => {
+    const rel = 'src/worker/platform/a.ts';
+    const at = (text: string) => optionalBindPredicate(rel, text.replaceAll('@', '$'));
+    for (const text of [
+      'const s = `(@{p(destinationOrgId)} IS NULL OR NOT EXISTS (SELECT 1))`;',
+      'const s = `(k.org_id IS NULL OR @{b.bind(named)} IS NULL OR k.org_id = @{b.bind(named)})`;',
+      'const s = `@{bind(x)} IS NOT NULL`;',
+    ])
+      expect(at(text), text).toHaveLength(1);
+    for (const text of [
+      'const s = `(@{value} IS NULL OR @{exists})`;',
+      'const s = `(@{key} IS NULL OR @{rowBody(table, alias, key)})`;',
+      'const s = `(@{col} IS NULL OR @{renderCond(q, c, v, params)})`;',
+      'const s = `@{p(x)} = 1 AND (@{col} IS NULL OR y)`;',
+    ])
+      expect(at(text), text).toEqual([]);
   });
 
   it('catches flag, subselect and NULLIF forms', () => {

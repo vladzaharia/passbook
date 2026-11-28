@@ -1,5 +1,4 @@
 import { OrgSettingsSchema } from '@/shared/contracts/settings.ts';
-import { RETENTION_LINES } from '@/shared/copy/retention.ts';
 import { DATA_CLASSES, RETENTION_CLASSES } from '@/shared/privacy/data-classes.ts';
 import type { SettingField } from './fields.ts';
 
@@ -12,7 +11,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Time zone',
     kind: 'zone',
     optional: true,
-    help: 'The clock for sites without their own time zone.',
     schema: O['org.timeZone'],
   },
   {
@@ -37,7 +35,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Email From name',
     kind: 'text',
     optional: true,
-    help: 'Shown as "Name via PassBook". Replies go to the confirmed support email. Empty: the organization name.',
     schema: O['email.fromName'],
   },
   {
@@ -53,7 +50,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Emails per recipient per hour',
     kind: 'int',
     optional: true,
-    help: '1 to 20.',
     range: [1, 20],
     schema: O['email.recipientCapPerHour'],
   },
@@ -63,7 +59,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Emails per day',
     kind: 'int',
     optional: true,
-    help: '10 to 5000.',
     range: [10, 5000],
     schema: O['email.orgCapPerDay'],
   },
@@ -80,7 +75,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Support email',
     kind: 'text',
     optional: true,
-    help: 'Shown to holders. A new address must be confirmed before replies go to it.',
     schema: O['support.email'],
   },
   {
@@ -127,7 +121,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
       kind: 'int',
       suffix: 'days',
       optional: true,
-      help: RETENTION_LINES[cls],
       range: [DATA_CLASSES[cls].floor, DATA_CLASSES[cls].ceiling],
       unit: 'days',
       schema: O[DATA_CLASSES[cls].key],

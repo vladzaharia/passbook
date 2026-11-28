@@ -62,7 +62,10 @@ describe('PhotosPage', () => {
     m.upload.mockImplementation(async (e: object) => ({ ...e, state: 'done' }));
     render(<PhotosPage />);
     const user = userEvent.setup();
-    await user.upload(screen.getByLabelText('Drop photos or choose'), [png('a.png'), png('b.png')]);
+    await user.upload(screen.getByLabelText('Drop photos named by external ID or serial'), [
+      png('a.png'),
+      png('b.png'),
+    ]);
     expect(await screen.findByText('2 files')).toBeInTheDocument();
     expect(screen.getByText('No pass')).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: /Include photos/ }));
@@ -83,7 +86,10 @@ describe('PhotosPage', () => {
     m.upload.mockImplementation(async (e: object) => ({ ...e, state: 'failed', error: 'Too big' }));
     render(<PhotosPage />);
     const user = userEvent.setup();
-    await user.upload(screen.getByLabelText('Drop photos or choose'), png('a.png'));
+    await user.upload(
+      screen.getByLabelText('Drop photos named by external ID or serial'),
+      png('a.png'),
+    );
     await user.click(await screen.findByRole('button', { name: 'Upload 1' }));
     expect((await screen.findAllByText('Could not import the photos')).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
@@ -94,7 +100,9 @@ describe('PhotosPage', () => {
   it('reports a match that failed, and clears the list', async () => {
     m.match.mockRejectedValue(new Error('down'));
     render(<PhotosPage />);
-    await userEvent.setup().upload(screen.getByLabelText('Drop photos or choose'), png('a.png'));
+    await userEvent
+      .setup()
+      .upload(screen.getByLabelText('Drop photos named by external ID or serial'), png('a.png'));
     expect((await screen.findAllByText('Could not import the photos')).length).toBeGreaterThan(0);
     expect(screen.getByRole('list', { name: 'Import photos' })).toHaveTextContent(
       'Match files to passes (failed)',

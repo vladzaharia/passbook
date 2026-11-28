@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { saveState, startOidcAs } from './helpers/auth.ts';
+import { stepUpAdmin } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots as allShots } from './helpers/shots.ts';
 
@@ -43,9 +43,7 @@ test('L17: Add endpoint runs the admin wizard in Test and returns to the Workben
 }) => {
   test.setTimeout(160_000);
   // Adding an endpoint needs a recent sign-in; a long CI shard's stored session is stale.
-  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
-  await page.waitForURL(/\/admin/);
-  await saveState(page, 'admin');
+  await stepUpAdmin(page);
   const org = encodeURIComponent(readSeed().org.id);
 
   // Only the Workbench's own calls: the admin wizard rides the session, not the token.
@@ -227,9 +225,7 @@ test('Events: the feed, an event with its deliveries, and a stored request (shot
   page,
 }) => {
   test.setTimeout(120_000);
-  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
-  await page.waitForURL(/\/admin/);
-  await saveState(page, 'admin');
+  await stepUpAdmin(page);
   const org = encodeURIComponent(readSeed().org.id);
   const capture = iso({
     id: 'we-cap',

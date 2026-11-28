@@ -200,6 +200,17 @@ describe('payload allowlist', () => {
     expect(WebhookEventSchema.safeParse(event).success).toBe(true);
   });
 
+  it('marks a simulated event and leaves a real one unmarked', () => {
+    const sim = buildEnvelope(
+      row({ type: 'pass.updated', kind: 'pass.updated', data: '{"simulated":true,"version":2}' }),
+    );
+    expect(sim.simulated).toBe(true);
+    expect(sim.data).not.toHaveProperty('simulated');
+    expect(WebhookEventSchema.safeParse(sim).success).toBe(true);
+    const real = buildEnvelope(row({ type: 'pass.updated', kind: 'pass.updated', data: '{}' }));
+    expect(real).not.toHaveProperty('simulated');
+  });
+
   it('is pure: a replay builds the identical event', () => {
     const r = row({ type: 'pass.updated', kind: 'pass.updated', data: '{"version":2}' });
     expect(bodyOf(buildEnvelope(r))).toBe(bodyOf(buildEnvelope(r)));

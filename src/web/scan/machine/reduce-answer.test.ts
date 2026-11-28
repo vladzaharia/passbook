@@ -224,6 +224,73 @@ describe('fail', () => {
     expect(cmdsOf(off.cmds, 'announce')[0]).toMatchObject({ polite: true });
   });
 
+  it('a late answer to an earlier request does not overwrite the verdict of a newer scan of the same pass', () => {
+    const { state, key: keyA } = sent();
+    const failedA = step(state, { type: 'fail', key: keyA, error: 'network' }, at(100));
+    const closed = step(failedA.state, { type: 'dismiss' }, at(200));
+    // Past the retry window the same pass is a new request under a new key.
+    const rereadAt = 100 + SCAN_TIMING.UNSURE_RETRY_WINDOW;
+    const b = step(closed.state, readOf('AAAA1111'), at(rereadAt));
+    const keyB = requestKey(b.cmds);
+    expect(keyB).not.toBe(keyA);
+    const verdictB = step(b.state, answerOf(keyB, 'refused'), at(rereadAt + 50));
+    expect(verdictB.state.loop).toMatchObject({ s: 'verdict', outcome: { kind: 'refused' } });
+    const lateA = step(verdictB.state, answerOf(keyA, 'ok'), at(rereadAt + 100));
+    // B's verdict stays on screen; A's answer only settles A's own row.
+    expect(lateA.state.loop).toMatchObject({ s: 'verdict', outcome: { kind: 'refused' } });
+    expect(lateA.state.unsure.find((u) => u.key === keyA)).toBeUndefined();
+    expect(cmdsOf(lateA.cmds, 'unsure.drop')).toHaveLength(1);
+  });
+
+  it('unsure expiry does not mark a newer verdict of the same pass unconfirmed', () => {
+    const { state, key: keyA } = sent();
+    const failedA = step(state, { type: 'fail', key: keyA, error: 'network' }, at(100));
+    const closed = step(failedA.state, { type: 'dismiss' }, at(200));
+    const b = step(closed.state, readOf('AAAA1111'), at(150 + SCAN_TIMING.UNSURE_RETRY_WINDOW));
+    const keyB = requestKey(b.cmds);
+    const verdictB = step(
+      b.state,
+      { type: 'fail', key: keyB, error: 'network' },
+      at(160 + SCAN_TIMING.UNSURE_RETRY_WINDOW),
+    );
+    const expired = step(
+      verdictB.state,
+      { type: 'tick' },
+      at(100 + SCAN_TIMING.UNSURE_RETRY_WINDOW),
+    );
+    expect(expired.state.unsure.find((u) => u.key === keyA)?.state).toBe('expired');
+    expect(expired.state.loop).toMatchObject({ s: 'verdict', outcome: { reason: 'unconfirmed' } });
+  });
+
+  it('a late answer does not band a card opened by another request', () => {
+    const { state, key: keyA } = sent();
+    const failedA = step(state, { type: 'fail', key: keyA, error: 'network' }, at(100));
+    const closed = step(failedA.state, { type: 'dismiss' }, at(200));
+    const desk = { ...closed.state, posture: 'desk' as const };
+    const when = 150 + SCAN_TIMING.UNSURE_RETRY_WINDOW;
+    const b = step(desk, readOf('AAAA1111'), at(when));
+    const keyB = requestKey(b.cmds);
+    const opened = step(
+      b.state,
+      answerOf(keyB, 'ready', null, { card: fixtureCard() }),
+      at(when + 10),
+    );
+    expect(opened.state.loop.s).toBe('member');
+    const late = step(opened.state, answerOf(keyA, 'ok'), at(when + 20));
+    expect(late.state.loop).toMatchObject({ s: 'member', band: null });
+  });
+
+  it('a late answer replaces the verdict of the retry that shares its key', () => {
+    const { state, key } = sent();
+    const failed = step(state, { type: 'fail', key, error: 'network' }, at(100));
+    const closed = step(failed.state, { type: 'dismiss' }, at(200));
+    const retry = step(closed.state, readOf('AAAA1111'), at(300));
+    expect(requestKey(retry.cmds)).toBe(key);
+    const failedAgain = step(retry.state, { type: 'fail', key, error: 'network' }, at(400));
+    const late = step(failedAgain.state, answerOf(key, 'ok'), at(500));
+    expect(late.state.loop).toMatchObject({ s: 'verdict', outcome: { kind: 'ok' } });
+  });
+
   it('fail on an unsure retry is ignored', () => {
     const { state, key } = sent();
     const failed = step(state, { type: 'fail', key, error: 'network' }, at(100));

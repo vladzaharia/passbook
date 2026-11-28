@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -8,11 +8,34 @@ import { setTimeout as delay } from 'node:timers/promises';
  */
 const ROOT = '.wrangler/tmp/email';
 
+/**
+ * Each miniflare instance owns one <id> dir and removes it on exit, so a server (or vitest pool)
+ * from another run in this checkout can delete a dir between listing and reading it.
+ */
+const gone = (error: unknown) => (error as NodeJS.ErrnoException).code === 'ENOENT';
+
+function listDir(dir: string): string[] {
+  try {
+    return readdirSync(dir);
+  } catch (error) {
+    if (gone(error)) return [];
+    throw error;
+  }
+}
+
+function readText(file: string): string | null {
+  try {
+    return readFileSync(file, 'utf8');
+  } catch (error) {
+    if (gone(error)) return null;
+    throw error;
+  }
+}
+
 function textFiles(): string[] {
-  if (!existsSync(ROOT)) return [];
-  return readdirSync(ROOT).flatMap((dir) => {
+  return listDir(ROOT).flatMap((dir) => {
     const text = join(ROOT, dir, 'email-text');
-    return existsSync(text) ? readdirSync(text).map((f) => join(text, f)) : [];
+    return listDir(text).map((f) => join(text, f));
   });
 }
 
@@ -29,7 +52,8 @@ export async function nextSignInMail(before: Set<string>, timeoutMs = 20_000): P
   while (Date.now() < deadline) {
     const fresh = textFiles().filter((f) => !before.has(f));
     for (const file of fresh) {
-      const text = readFileSync(file, 'utf8');
+      const text = readText(file);
+      if (text === null) continue;
       const link = /https?:\/\/\S+\/auth\/magic\?t=\S+/.exec(text)?.[0];
       if (link) return { link, code: /Code:\s*(\d{6})/.exec(text)?.[1] ?? null, text };
     }
@@ -47,7 +71,8 @@ export async function nextOrgInvitationToken(
   while (Date.now() < deadline) {
     const fresh = textFiles().filter((f) => !before.has(f));
     for (const file of fresh) {
-      const text = readFileSync(file, 'utf8');
+      const text = readText(file);
+      if (text === null) continue;
       const token = /https?:\/\/[^\s<>"']+\/invite#(m_[A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(
         text,
       )?.[1];

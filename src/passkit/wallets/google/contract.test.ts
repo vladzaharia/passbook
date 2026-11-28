@@ -1,6 +1,7 @@
 /** Contract fixtures: compiled bodies and documented examples against Google's field shapes. */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bakedSlugs, loadBaked } from '../../template/baked-fixtures.ts';
+import { loadFixtures } from '../contract-fixtures.ts';
 import { NOW } from '../view-fixtures.ts';
 import { GOOGLE_COMPILERS } from './compilers.ts';
 import { googleView } from './fixtures.ts';
@@ -201,5 +202,21 @@ describe('documented bodies', () => {
       }),
     ).toBe(false);
     expect(parse({ ...generic, id: 'issuer.o_x' })).toBe(false);
+  });
+});
+
+describe('fixtures', () => {
+  it('declares where every Google fixture came from, a doc-shape one with a note', () => {
+    const all = loadFixtures('google');
+    expect(all.length).toBeGreaterThan(0);
+    for (const f of all) {
+      expect(['recorded', 'doc-shape'], f.name).toContain(f.provenance);
+      if (f.provenance === 'doc-shape') expect(f.note, f.name).toBeTruthy();
+    }
+  });
+
+  it('keeps the synthetic callback envelope marked doc-shape', () => {
+    const [envelope] = loadFixtures('google', 'callback-envelope');
+    expect(envelope?.provenance).toBe('doc-shape');
   });
 });

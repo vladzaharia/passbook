@@ -2,6 +2,7 @@
 // scanning, bundles, join links and the emails they send. Each step is idempotent by name and
 // logs a skip when the API refuses, so one refusal never stops the run.
 import type { Session } from './demo-client.ts';
+import { seedCustomGroup, seedSentBroadcasts } from './demo-coverage.ts';
 import { seedHenrysScanning, seedWebhook } from './demo-sweep-data.ts';
 
 type Ids = { northwind: string; harbor: string; henrys: string; member: string; crew: string };
@@ -45,6 +46,9 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       await make('Opening hours (scheduled)', 'schedule', 'New hours from Friday.');
     return 'draft and scheduled; a send to test mode needs test-mode passes, left out';
   });
+
+  await step('sent message and change run', () => seedSentBroadcasts(owner, northwind, member));
+  await step('custom group', () => seedCustomGroup(owner));
 
   // Henry's: the sweep's {orgId} is the first org with passes, and an import page needs its own org.
   await step('pass import', async () => {

@@ -64,7 +64,8 @@ register(
   {
     method: 'get',
     path: '/',
-    summary: 'List Apple identities',
+    summary:
+      'List Apple identities. With `orgId`, a member lists their organization. Without it, a platform admin session or a Platform key with `platform:identities` or `platform:read` lists all.',
     query: IdentityListQuerySchema,
     response: IdentityListSchema.or(OrgIdentityListSchema),
   },

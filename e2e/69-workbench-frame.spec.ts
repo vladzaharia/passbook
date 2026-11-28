@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { stubTurnstile } from './helpers/turnstile.ts';
+import { signInToWorkbench } from './helpers/workbench.ts';
 
 /**
  * The Workbench frame around the four moved tools. The v1 bench head (switcher, strip, skip-to-tool,
@@ -41,28 +41,7 @@ test('signed in, every tool opens in the same frame and nothing scrolls sideways
   page,
 }) => {
   test.setTimeout(120_000);
-  await stubTurnstile(page);
-  await page.route('**/auth/oidc/start*', async (route) => {
-    const response = await route.fetch({ maxRedirects: 0 });
-    const target = response.headers().location;
-    if (!target) return route.fulfill({ response });
-    const location = new URL(target);
-    location.searchParams.set('login_hint', 'e2e-builder');
-    return route.fulfill({
-      response,
-      headers: { ...response.headers(), location: location.toString() },
-    });
-  });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/workbench/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
-  await page.waitForURL((u) => u.pathname === '/workbench/quickstart');
-  const create = page.getByRole('button', { name: 'Create sandbox' });
-  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
-  if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await create.click();
-    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
-  }
+  await signInToWorkbench(page);
 
   for (const [width, height] of VIEWS) {
     await page.setViewportSize({ width, height });

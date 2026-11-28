@@ -6,6 +6,9 @@ import type { RunEnv } from './run-env.ts';
 /** More platform admins gone than this at once is a feed fault, not an owner's edit: report, revoke nothing. */
 export const ADMIN_BREAKER = 5;
 
+/** Most linked admin accounts one reconcile judges at once. */
+const LINKED_ADMIN_CAP = 1000;
+
 /**
  * People whose last sign-in was as platform admin and none of whose Polaris ID accounts is still in the admin
  * group: their admin sessions end. A person is judged by all their subjects, and a person already reported stays
@@ -21,7 +24,12 @@ export async function retireAdmins(
   const { ctx } = env;
   const db = ctx.env.DB;
   if (!groupSeen || admins.size === 0) return;
-  const linked = await linkedAdmins(db, 200);
+  const linked = await linkedAdmins(db, LINKED_ADMIN_CAP + 1);
+  // A truncated list would close reports of admins it left out: judge nothing rather than wrongly.
+  if (linked.length > LINKED_ADMIN_CAP) {
+    ctx.log.error('idp.reconcile.admins_truncated', { code: 'IDP_ADMINS_TRUNCATED' });
+    return;
+  }
   const byUser = new Map<string, string[]>();
   for (const a of linked) byUser.set(a.user_id, [...(byUser.get(a.user_id) ?? []), a.subject]);
   const stillAdmin = new Set(linked.map((a) => a.subject));

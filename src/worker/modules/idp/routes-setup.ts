@@ -6,6 +6,7 @@ import {
 import { StartedOperationSchema } from '../../../shared/contracts/operations.ts';
 import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { callerOf, startRotate, startSetup } from './ops-start.ts';
@@ -23,7 +24,7 @@ const WRITE = {
 
 /** Mount at /api/v1/platform. */
 export const idpSetupRoutes = createRouter();
-idpSetupRoutes.use('*', async (c, next) => {
+ownUse(idpSetupRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

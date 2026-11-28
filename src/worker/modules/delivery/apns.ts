@@ -12,6 +12,8 @@ export interface ApnsTarget {
   apnsBinding: string | null;
   /** Apple team of the identity; selects the push key when there is no mTLS binding. */
   teamIdentifier?: string;
+  /** Pass id: APNs keeps only the newest of pushes queued with the same id for an offline device. */
+  collapseId?: string;
 }
 
 export type ApnsMethod = 'certificate' | 'key' | 'none';
@@ -33,6 +35,19 @@ export interface ApnsTransport {
 
 const APNS_HOST = 'https://api.push.apple.com';
 
+const MAX_COLLAPSE_ID_BYTES = 64;
+
+/** APNs rejects a collapse id over 64 bytes; send without it rather than lose the push. */
+function collapseHeader(target: ApnsTarget): Record<string, string> {
+  const id = target.collapseId;
+  if (!id) return {};
+  if (new TextEncoder().encode(id).length > MAX_COLLAPSE_ID_BYTES) {
+    createLogger({}).error('apns.collapse_id_too_long', { code: 'APNS_COLLAPSE_ID_TOO_LONG' });
+    return {};
+  }
+  return { 'apns-collapse-id': id };
+}
+
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 async function pushOne(
@@ -50,6 +65,7 @@ async function pushOne(
         'apns-push-type': 'background',
         'apns-priority': '5',
         'apns-expiration': String(Math.floor(now / 1000) + 7 * 86400),
+        ...collapseHeader(target),
         'content-type': 'application/json',
         ...extra,
       },

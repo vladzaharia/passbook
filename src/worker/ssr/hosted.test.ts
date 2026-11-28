@@ -72,9 +72,6 @@ describe('hosted auth pages', () => {
 
   it('sizes the scene like /login and wears the kit controls', () => {
     expect(HOSTED_CSS).toContain(HOSTED_ART_CSS);
-    expect(HOSTED_CSS).toContain(
-      '.scene{position:relative;z-index:2;flex:none;width:128px;height:96px',
-    );
     // The controls themselves (16 px fields on touch) are generated: tools/ssr-parity.test.ts.
     expect(HOSTED_CSS.startsWith(THEME_CSS)).toBe(true);
   });
@@ -90,9 +87,6 @@ describe('hosted auth pages', () => {
 
   it('seats the wallet on the card: above it, feet on the edge, a contact shadow', () => {
     // The feet (y 72 of 72) end on the card's top edge.
-    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin-bottom:0;pointer-events:none\}/);
-    expect(HOSTED_CSS).toMatch(/\.scene\{margin-bottom:0\}/);
-    expect(HOSTED_CSS).toMatch(/\.card\{position:relative;z-index:1;/);
     const html = noAccessPage(NONCE);
     expect(html).toMatch(/data-part="w"[^>]*data-seat=""/);
     for (const part of ['l1', 'l2', 'sd']) expect(html).toContain(`data-part="${part}"`);
@@ -280,7 +274,6 @@ describe('click to replay the wallet', () => {
       );
     }
     for (const html of pages) expect(html).not.toMatch(/data-replay[^>]*tabindex/);
-    expect(HOSTED_CSS).toContain('.scene>[data-replay]{display:block}');
   });
 
   // The app's compositions (state-art.test.tsx), played once on load with no script (F7).

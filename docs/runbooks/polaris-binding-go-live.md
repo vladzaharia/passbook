@@ -15,7 +15,7 @@ Budgets and the breaker still apply: one run removes at most 25 roles and disabl
 
 ## Prerequisites
 
-Profile `passbook-polaris-binding` defines `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+Signed in with `npx wrangler login` (or `CLOUDFLARE_API_TOKEN` in the profile `passbook-polaris-binding`).
 
 ## 1. Review the dry-run ledger
 

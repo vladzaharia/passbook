@@ -23,6 +23,7 @@ export function Inspector({
   id,
   actions,
   facts,
+  stage,
   tabs,
   tab,
   onTab,
@@ -41,6 +42,8 @@ export function Inspector({
   actions?: ReactNode;
   /** One quiet line under the header (time, duration, key). */
   facts?: ReactNode;
+  /** What the item looks like, above the tabs (a pass's card and its actions). */
+  stage?: ReactNode;
   tabs?: readonly BenchTab[];
   tab?: string;
   onTab?: (id: string) => void;
@@ -127,6 +130,7 @@ export function Inspector({
         ) : null}
       </header>
       {facts ? <div className="bench-insp-f">{facts}</div> : null}
+      {stage ? <div className="bench-insp-stage">{stage}</div> : null}
       {tabbed ? (
         <BenchTabs base={base} tabs={tabs} selected={tab} onSelect={onTab} label={label} />
       ) : null}

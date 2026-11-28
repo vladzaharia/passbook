@@ -196,7 +196,7 @@ export function TemplatesListPage({
   const footer = (
     <LoadMore
       query={list}
-      shown={items.length || undefined}
+      shown={list.hasNextPage ? items.length : undefined}
       noun={['template', 'templates']}
       scoped
     />

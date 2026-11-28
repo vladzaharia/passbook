@@ -242,7 +242,7 @@ export function OperationView({ page, op, site }: { page: ResourcePage; op: OpVi
               <Prose text={op.description} />
             </p>
           ) : null}
-          <p className="muted sm mt2">
+          <p className="muted sm mt2 meta-links">
             Send <code className="inline-code">Authorization: Bearer</code> <EnvChip />.{' '}
             <a href={`${opPath(page, op)}.md`}>Markdown</a>
           </p>

@@ -10,7 +10,7 @@ import { createAuthStores } from '../stores.ts';
 import { requireCaller } from './auth.ts';
 import { grant } from './authority.ts';
 import { db } from './authority-ext-fixtures.ts';
-import { authorityPredicate, tenantFilter } from './authority-read.ts';
+import { authorityPredicate } from './authority-read.ts';
 import { world } from './authority-restrict-fixtures.ts';
 import { type AppBindings, requestContext } from './context.ts';
 import { all } from './db.ts';
@@ -31,7 +31,7 @@ async function setup(label: string) {
     const p = authorityPredicate(principal, { scope: 'org_mode', now: f.clock.now() });
     const rows = await all<{ id: string }>(
       db,
-      `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('p', 'passes')} ORDER BY p.id`,
+      `WITH ${p.ctes} SELECT p.id FROM ${p.rows}passes p WHERE ${p.tenant('p', 'passes')} ORDER BY p.id`,
       p.params,
     );
     return c.json({ ids: rows.map((r) => r.id), limited: auth.limited === true });

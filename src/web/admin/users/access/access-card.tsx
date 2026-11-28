@@ -160,7 +160,7 @@ export function AccessCard({
                 leading={r.held ? <Pause aria-hidden /> : <ShieldCheck aria-hidden />}
                 title={IDP_COPY.role[r.role]}
                 pills={state(r)}
-                meta={r.error ? `Last change failed (${r.error}). It retries on its own.` : why(r)}
+                meta={r.error ? `Last change failed: ${r.error}` : why(r)}
                 trailing={
                   <RowActions label={`${IDP_COPY.role[r.role]} actions`} actions={rowActions(r)} />
                 }

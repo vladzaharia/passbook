@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
 import { Buddy } from './art/buddy.tsx';
+import { Kbd } from './kbd.tsx';
 import { DialogOverlay, restoreOpener, useOpener } from './overlay.tsx';
 
 export interface CommandItem {
@@ -240,23 +241,23 @@ export function CommandPalette({
               className="flex items-center gap-4 border-t border-border px-3 py-2 text-xs text-fg-muted max-sm:hidden"
             >
               <span className="flex items-center gap-1">
-                <kbd className="rounded-sm border border-border px-1">↑</kbd>
-                <kbd className="rounded-sm border border-border px-1">↓</kbd>
+                <Kbd>↑</Kbd>
+                <Kbd>↓</Kbd>
                 move
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="rounded-sm border border-border px-1">↵</kbd>
+                <Kbd>↵</Kbd>
                 open
               </span>
               {canNewTab ? (
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm border border-border px-1">⌘</kbd>
-                  <kbd className="rounded-sm border border-border px-1">↵</kbd>
+                  <Kbd>⌘</Kbd>
+                  <Kbd>↵</Kbd>
                   new tab
                 </span>
               ) : (
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded-sm border border-border px-1">esc</kbd>
+                  <Kbd>esc</Kbd>
                   close
                 </span>
               )}

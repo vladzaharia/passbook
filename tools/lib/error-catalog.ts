@@ -16,6 +16,13 @@ export interface CatalogCode {
   /** Directories under src/worker/modules (or the top-level worker directory) that throw it. */
   modules: string[];
 }
+/** One raise site, for tests that pin where a second status comes from. */
+export interface RaiseSite {
+  code: string;
+  status: number;
+  /** Relative to src/worker. */
+  file: string;
+}
 export interface ErrorCatalog {
   codes: CatalogCode[];
 }
@@ -133,12 +140,14 @@ function statusByClass(sources: string[]): Map<string, number> {
   return map;
 }
 
-export function buildErrorCatalog(): ErrorCatalog {
+export function buildErrorCatalog(sites?: RaiseSite[]): ErrorCatalog {
   const paths = files(WORKER).sort();
   const sources = paths.map((p) => readFileSync(p, 'utf8'));
   const statuses = statusByClass(sources);
   const found = new Map<string, { statuses: Map<number, number>; modules: Set<string> }>();
+  let at = '(declared)';
   const add = (code: string, status: number, module: string): void => {
+    sites?.push({ code, status, file: at });
     const e = found.get(code) ?? { statuses: new Map(), modules: new Set() };
     e.statuses.set(status, (e.statuses.get(status) ?? 0) + 1);
     e.modules.add(module);
@@ -148,6 +157,7 @@ export function buildErrorCatalog(): ErrorCatalog {
   for (const [code, status] of Object.entries(FILE_PARSER_CODES)) add(code, status, 'connections');
   paths.forEach((file, i) => {
     const src = sources[i] ?? '';
+    at = relative(WORKER, file);
     const mod = moduleOf(file);
     const isErrors = file.endsWith('platform/errors.ts');
     // `new XError(msg, 'CODE')` and `new AppError('CODE', status, msg)`.

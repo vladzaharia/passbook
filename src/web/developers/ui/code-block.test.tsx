@@ -1,8 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { Samples } from '../../workbench/events/samples-tabs.tsx';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Sample } from '../model/samples.ts';
 import { initCopy } from '../shell/copy.ts';
 import { JsonBlock, SampleTabs } from './code.tsx';
@@ -77,39 +75,5 @@ describe('prerendered blocks', () => {
     await waitFor(() => expect(written).toHaveLength(2));
     expect(written[0]).toBe('curl one');
     expect(written[1]).toBe('{\n  "a": 1\n}');
-  });
-});
-
-describe('webhooks verify block (an island)', () => {
-  beforeAll(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: async () => {} },
-      configurable: true,
-    });
-  });
-  const samples = [
-    { id: 'py', label: 'Python', lang: 'py', code: 'one' },
-    { id: 'go', label: 'Go', lang: 'go', code: 'two' },
-  ] as const;
-
-  it('keeps Copy out of the tablist and opens on the language picked last', async () => {
-    localStorage.setItem('passbook-dev-lang', 'go');
-    render(<Samples samples={samples} />);
-    const list = screen.getByRole('tablist', { name: 'Language' });
-    expect(list.querySelectorAll('button:not([role="tab"])')).toHaveLength(0);
-    expect(screen.getByRole('tab', { name: 'Go' }).getAttribute('aria-selected')).toBe('true');
-    await userEvent.click(screen.getByRole('tab', { name: 'Python' }));
-    expect(localStorage.getItem('passbook-dev-lang')).toBe('py');
-    expect(screen.getByRole('region', { name: 'Verify: Python sample' })).toBeTruthy();
-  });
-
-  it('Copy as offers each language and Markdown', async () => {
-    render(<Samples samples={samples} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Copy as' }));
-    expect(screen.getAllByRole('menuitem').map((b) => b.textContent)).toEqual([
-      'Python',
-      'Go',
-      'Markdown',
-    ]);
   });
 });

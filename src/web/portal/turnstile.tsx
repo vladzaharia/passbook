@@ -1,37 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { TURNSTILE_ACTION } from '../../shared/turnstile.ts';
 import { useTheme } from '../lib/theme.tsx';
-import { turnstileScriptUrl } from '../lib/turnstile-script.ts';
-
-interface TurnstileApi {
-  render(el: HTMLElement, options: Record<string, unknown>): string;
-  reset(id: string): void;
-  remove(id: string): void;
-}
+import {
+  loadTurnstile,
+  TURNSTILE_BASE_OPTIONS,
+  type TurnstileApi,
+} from '../lib/turnstile-script.ts';
 
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
   }
-}
-
-let scriptPromise: Promise<TurnstileApi> | undefined;
-
-function loadTurnstile(): Promise<TurnstileApi> {
-  if (window.turnstile) return Promise.resolve(window.turnstile);
-  scriptPromise ??= new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = turnstileScriptUrl();
-    script.async = true;
-    script.onload = () =>
-      window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile missing'));
-    script.onerror = () => {
-      scriptPromise = undefined;
-      reject(new Error('turnstile blocked'));
-    };
-    document.head.appendChild(script);
-  });
-  return scriptPromise;
 }
 
 export interface TurnstileProps {
@@ -77,7 +56,7 @@ export function Turnstile({
           sitekey: siteKey,
           action,
           theme: resolved,
-          appearance: 'interaction-only',
+          ...TURNSTILE_BASE_OPTIONS,
           'before-interactive-callback': () => callbacks.current.onInteractive?.(true),
           'after-interactive-callback': () => callbacks.current.onInteractive?.(false),
           callback: (token: string) => callbacks.current.onToken(token),

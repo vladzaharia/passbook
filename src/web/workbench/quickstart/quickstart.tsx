@@ -16,8 +16,8 @@ import { HearStep } from './hear-step.tsx';
 import { ADMISSIONS, fixFor } from './model.ts';
 import { EmptyStage, Layout, Progress, Step, type StepState } from './parts.tsx';
 import { SandboxStep } from './sandbox-step.tsx';
+import { useSinglePoll } from './single-poll.ts';
 import { QsTransport } from './transport.tsx';
-import { usePoll } from './use-home.ts';
 import { useQuickstart } from './use-quickstart.ts';
 
 // The pass cards, the wallets' previews and the finished page load when there is a pass to draw, not with the steps.
@@ -97,7 +97,7 @@ export function Quickstart({
   const current = done.indexOf(false);
   const stateOf = (i: number): StepState => (done[i] ? 'done' : i === current ? 'current' : 'todo');
   // Calls from a terminal and the webhook that follows tick on the server: read the home again while they are due.
-  usePoll(open && finished !== true && done[2] === true, () => void q.refresh(), 3000);
+  useSinglePoll('home', open && finished !== true && done[2] === true, q.poll, 6000);
   const elapsed = useRunTime(progress?.startedAt ?? null, q.skew, progress?.doneAt ?? null);
 
   const fix = useMemo(() => {

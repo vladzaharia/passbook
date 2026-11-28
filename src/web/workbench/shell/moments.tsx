@@ -1,5 +1,5 @@
 import { KeyRound } from 'lucide-react';
-import { POLARIS_ID_COPY } from '@/shared/copy/sign-in.ts';
+import { POLARIS_ID_COPY } from '@/shared/copy/auth-page.ts';
 import { STATE_COPY } from '@/shared/copy/states.ts';
 import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { Buddy } from '../../ui/art/index.ts';
@@ -16,7 +16,12 @@ export function SignInCard({ next }: { next: string }) {
         <Buddy size="sm" scene="wave" mood="happy" state="login" at="end" />
       </div>
       <p className="mb-2.5 text-sm font-medium text-fg-strong">{WB_STATES.signedOut.title}</p>
-      <Button asChild size="sm" iconStart={<KeyRound aria-hidden />} className="w-full">
+      <Button
+        asChild
+        size="sm"
+        iconStart={<KeyRound aria-hidden />}
+        className="w-full max-lg:min-h-11 pointer-coarse:min-h-11"
+      >
         <a href={`/auth/oidc/start?next=${encodeURIComponent(next)}`}>{POLARIS_ID_COPY.signIn}</a>
       </Button>
     </div>

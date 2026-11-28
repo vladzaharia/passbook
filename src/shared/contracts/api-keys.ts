@@ -143,6 +143,8 @@ export const ApiKeySchema = z.object({
   parentKeyId: IdSchema.nullable().default(null),
   /** The key this one replaced when it was rotated. */
   rotatedFrom: IdSchema.nullable().default(null),
+  /** `cli`: made by `passbook login` (`pbcli_test_…`): Test only, 30 days, a short route list. */
+  origin: z.enum(['app', 'cli']).default('app'),
 });
 /** The literal query value `null` selects platform-wide keys; an org key leaves `orgId` out. */
 export const ApiKeyScopeQuerySchema = z.object({

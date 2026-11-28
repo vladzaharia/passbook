@@ -20,12 +20,13 @@ type Waiter = (token: string | null) => void;
 /**
  * Turnstile tokens for the sign-in request and resends. Tokens are single use: taking one resets
  * the widget for the next. An early submit waits for the token (up to 10 s) instead of failing.
+ * A failed check says nothing until a submit needs it: the page loads quiet.
  */
 export function useChallenge() {
   const token = useRef<string | null>(null);
   const waiters = useRef(new Set<Waiter>());
   const [resetKey, setResetKey] = useState(0);
-  const [failed, setFailed] = useState(false);
+  const failed = useRef(false);
 
   const settle = useCallback((value: string | null) => {
     for (const wait of waiters.current) wait(value);
@@ -35,7 +36,7 @@ export function useChallenge() {
     (value: string | null) => {
       token.current = value;
       if (value) {
-        setFailed(false);
+        failed.current = false;
         if (waiters.current.size) {
           token.current = null;
           setResetKey((k) => k + 1);
@@ -46,7 +47,7 @@ export function useChallenge() {
     [settle],
   );
   const onError = useCallback(() => {
-    setFailed(true);
+    failed.current = true;
     settle(null);
   }, [settle]);
 
@@ -61,6 +62,11 @@ export function useChallenge() {
   const wait = useCallback(
     (ms: number) =>
       new Promise<string | null>((resolve) => {
+        // The widget gave up earlier: a submit is the visitor's retry, so it gets a fresh challenge.
+        if (failed.current) {
+          failed.current = false;
+          setResetKey((k) => k + 1);
+        }
         const done: Waiter = (value) => {
           clearTimeout(timer);
           waiters.current.delete(done);
@@ -71,7 +77,7 @@ export function useChallenge() {
       }),
     [],
   );
-  return { resetKey, failed, onToken, onError, takeNow, wait };
+  return { resetKey, onToken, onError, takeNow, wait };
 }
 
 /**
@@ -122,7 +128,7 @@ export function useMagicRequest(next: string | null) {
     }),
     [challenge.resetKey, challenge.onToken, challenge.onError],
   );
-  return { send, phase, widget, challengeFailed: challenge.failed };
+  return { send, phase, widget };
 }
 
 export type MagicRequest = ReturnType<typeof useMagicRequest>;

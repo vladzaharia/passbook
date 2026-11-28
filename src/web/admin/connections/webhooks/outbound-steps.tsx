@@ -37,7 +37,6 @@ export function OutboundStepWhere({
         errors={errors}
         checking={checking}
         onUrlBlur={onUrlBlur}
-        urlHelp="https only."
       />
     </>
   );

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const ROOT = join(import.meta.dirname, '../../..');
 const squash = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, '');
 const spa = squash(readFileSync(join(ROOT, 'src/web/portal/login-scene.css'), 'utf8'));
+const ssrShell = squash(readFileSync(join(ROOT, 'src/web/ui/hosted-card.css'), 'utf8'));
 const ssr = squash(readFileSync(join(ROOT, 'src/worker/ssr/hosted.ts'), 'utf8'));
 
 /** [padding-inline, brand height] at 640 and up, then under 640. */
@@ -38,13 +39,13 @@ describe('sign-in band', () => {
   });
 
   it('matches the worker pages: insets, the face line and the seat', () => {
-    expect(bandMetrics(ssr, '\\.band', '\\.brand')).toEqual(
+    expect(bandMetrics(ssrShell, '\\.band', '\\.brand')).toEqual(
       bandMetrics(spa, '\\.wl-login-band', '\\.wl-login-brand'),
     );
     expect(spa).toMatch(
       /\.wl-login-scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:0;/,
     );
-    expect(ssr).toMatch(/\.scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:0;/);
+    expect(ssrShell).toMatch(/\.scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:0;/);
   });
 
   it('sizes the worker wordmark like the lg Wordmark: 20 px, a 24 px mark, 10 px apart', () => {

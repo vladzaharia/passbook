@@ -1,0 +1,34 @@
+/* The hosted pass page between phone and desktop. holder-pass.css (shared with the portal) holds
+   one column until 1024; /p holds two from 768, the pass sticky at left. The lead's card keeps 4 rem
+   above it for the buddy: on the pass column when side by side, on the card when stacked. */
+.wl-holder:has(.wl-holder-add .wl-hero > [data-buddy]) > .wl-holder-add {
+  margin-top: 4rem;
+}
+.wl-holder[data-lead]:has(.wl-holder-add .wl-hero > [data-buddy]) > .wl-holder-add {
+  margin-top: 0;
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .wl-holder,
+  .wl-holder[data-lead] {
+    grid-template-columns: 20rem minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr;
+    grid-template-areas:
+      "pass add"
+      "pass more"
+      "pass details"
+      "pass help"
+      "pass .";
+    column-gap: 2rem;
+  }
+  .wl-holder-pass {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+  .wl-holder:has(.wl-holder-add .wl-hero > [data-buddy]) > .wl-holder-add {
+    margin-top: 0;
+  }
+  .wl-holder:has(.wl-holder-add .wl-hero > [data-buddy]) > .wl-holder-pass {
+    margin-top: 4rem;
+  }
+}

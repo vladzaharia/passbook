@@ -66,12 +66,12 @@
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}",
+    "path": "/admin/o/{northwindId}/connections/webhooks/{endpointId}",
     "name": "admin-webhook-detail"
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}/setup",
+    "path": "/admin/o/{northwindId}/connections/webhooks/{endpointId}/setup",
     "name": "admin-webhook-setup"
   },
   {
@@ -86,7 +86,7 @@
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/messages/{broadcastId}",
+    "path": "/admin/o/{northwindId}/messages/{broadcastId}",
     "name": "admin-message-detail"
   },
   {
@@ -136,7 +136,7 @@
   },
   {
     "role": "org",
-    "path": "/admin/o/{orgId}/passes/change/{runId}",
+    "path": "/admin/o/{northwindId}/passes/change/{runId}",
     "name": "admin-pass-change-run"
   },
   {

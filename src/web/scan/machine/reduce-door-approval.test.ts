@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import type { OfflineMode } from '../../../shared/scan-offline.ts';
 import { states } from './fixtures.test-support.ts';
 import { answerOf, at, hasCmd, readOf, requestKey, resetIds, step } from './reduce.test-support.ts';
@@ -30,7 +31,7 @@ describe('a Manager PIN at the door', () => {
   it('re-sends that read with the approval under a new key, and keeps the PIN out of state', () => {
     const approved = step(held().state, { type: 'approve', staffId: 'm1', pin: '482913' }, at(200));
     expect(approved.state.loop).toMatchObject({ s: 'applying', draft: { actionId: 'auto' } });
-    expect(JSON.stringify(approved.state)).not.toContain('482913');
+    expectSecretAbsent(JSON.stringify(approved.state), '482913');
     expect(approved.cmds).toContainEqual(
       expect.objectContaining({
         c: 'act',
@@ -70,7 +71,7 @@ describe('a Manager PIN at the door', () => {
       outcome: { reason: 'needs_approval' },
       pin: { triesLeft: 2 },
     });
-    expect(JSON.stringify(wrong.state)).not.toContain('482913');
+    expectSecretAbsent(JSON.stringify(wrong.state), '482913');
   });
 
   it.each(['stop', 'list', 'decide'] as const)(
@@ -89,7 +90,7 @@ describe('a Manager PIN at the door', () => {
           pin: { unreachable: true },
         });
         expect(lost.state.recent.every((r) => r.outcome.kind !== 'ok')).toBe(true);
-        expect(JSON.stringify(lost.state)).not.toContain('482913');
+        expectSecretAbsent(JSON.stringify(lost.state), '482913');
       }
     },
   );

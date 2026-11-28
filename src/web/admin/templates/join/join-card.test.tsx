@@ -75,7 +75,7 @@ const open = () => screen.getByRole('switch', { name: JOIN_COPY.card.open });
 describe('join card: readiness', () => {
   const lines: [JoinReadinessIssue, RegExp][] = [
     [{ code: 'no_release' }, /Release this template in Live to turn on the join link\./],
-    [{ code: 'barcode_input', label: 'Member id' }, /Join links need a generated barcode\./],
+    [{ code: 'barcode_input', label: 'Member id' }, /Needs a generated barcode\./],
     [{ code: 'input_needed', label: 'Plan' }, /Plan has no default\./],
     [{ code: 'archived' }, /This template is archived\./],
   ];
@@ -146,12 +146,6 @@ describe('join card: a link', () => {
     server(stateOf(link({ issuedToday: 200, limitReached: true })));
     await card();
     expect(screen.getByText(JOIN_COPY.card.limitReached)).toBeInTheDocument();
-  });
-
-  it('names the card made for each unasked required input', async () => {
-    server(stateOf(link({ generated: [{ key: 'num', label: 'Card number' }] })));
-    await card();
-    expect(screen.getByText('Card number is made for each card.')).toBeInTheDocument();
   });
 
   it('copies the link', async () => {

@@ -129,6 +129,20 @@ export function buildOpCodes(known: ReadonlySet<string>): Record<string, string[
       if (seen.has(node)) continue;
       seen.add(node);
       for (const c of codesIn(node, classDefault)) out.add(c);
+      // A function tagged `@absorbs` catches what it calls and throws its own code: the callees' codes stop here.
+      const owner = node.parent;
+      const absorbs = owner
+        ? ts.getJSDocTags(owner).filter((t) => t.tagName.text === 'absorbs')
+        : [];
+      if (absorbs.length) {
+        // The codes the tag names are the ones the function answers with.
+        for (const t of absorbs)
+          for (const m of (ts.getTextOfJSDocComment(t.comment) ?? '').matchAll(
+            /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/g,
+          ))
+            out.add(m[0]);
+        continue;
+      }
       const walk = (n: ts.Node): void => {
         if (ts.isIdentifier(n) || ts.isPropertyAccessExpression(n))
           for (const b of bodies(ts.isPropertyAccessExpression(n) ? n.name : n)) stack.push(b);
