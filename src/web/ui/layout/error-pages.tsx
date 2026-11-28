@@ -12,6 +12,7 @@ import { EmptyState } from '../empty-state.tsx';
 import { ErrorState, isChunkLoadError } from '../error-state.tsx';
 import { AppShell } from './app-shell.tsx';
 import { PORTAL_BAR } from './portal-layout.tsx';
+import { Wordmark } from './wordmark.tsx';
 
 // Words, art and action weights match the SSR pages (worker/ssr/error-page.tsx): outline ways back.
 
@@ -135,6 +136,7 @@ export function NotFoundPage() {
       art="wallet"
       artState="lost"
       surface="card"
+      brand={<Wordmark hello={false} size="lg" />}
       title={STATE_COPY.pageNotFound}
       action={
         inAdmin ? (

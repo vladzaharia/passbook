@@ -15,7 +15,6 @@ import {
 } from './art/index.ts';
 import { ACTED_STATES, type ActedState } from './art/state-acts.ts';
 import { Button } from './button.tsx';
-import { Wordmark } from './layout/wordmark.tsx';
 
 export interface EmptyStateProps {
   /** Every empty state names its art; there is no generic picture. */
@@ -43,6 +42,8 @@ export interface EmptyStateProps {
    * edge, the title and action on a solid card. Not found uses it, as the SSR error pages do.
    */
   surface?: 'stage' | 'card';
+  /** The card surface's band content (the app wordmark); kept a slot so the Workbench chunk does not import it. */
+  brand?: ReactNode;
   className?: string;
 }
 
@@ -82,6 +83,7 @@ export function EmptyState({
   heading = false,
   still = false,
   surface,
+  brand,
   className,
 }: EmptyStateProps) {
   const filtered = variant === 'filtered';
@@ -109,13 +111,9 @@ export function EmptyState({
   );
   if (surface === 'card' && !inline) {
     return (
-      <div
-        className={cn('mx-auto flex w-full max-w-sm flex-col pt-8 pb-10 sm:pt-14', className)}
-      >
+      <div className={cn('mx-auto flex w-full max-w-sm flex-col pt-8 pb-10 sm:pt-14', className)}>
         <div className="flex items-end justify-between gap-4 ps-[calc(1px+1.25rem)] pe-[calc(1.25rem-17px)] sm:ps-[calc(1px+1.5rem)] sm:pe-[calc(1.5rem-19px)]">
-          <div className="flex h-[63px] items-center sm:h-[72px]">
-            <Wordmark hello={false} size="lg" />
-          </div>
+          <div className="flex h-[63px] items-center sm:h-[72px]">{brand}</div>
           <div
             aria-hidden
             className="pointer-events-none relative z-20 h-[84px] w-28 flex-none sm:h-24 sm:w-32 [&>.wl-buddy]:top-full! [&>.wl-buddy]:right-0! [&>.wl-buddy]:left-auto! [&>.wl-buddy]:translate-x-0! [&>.wl-buddy]:-translate-y-full!"
