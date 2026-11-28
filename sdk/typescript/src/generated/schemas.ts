@@ -2164,6 +2164,8 @@ export type CreatedScanningDevice = {
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
+  nfcReader?: NfcReaderSettings;
+  nfcReaderStatus?: NfcReaderStatus;
   reportedAt: number | null;
   paired: boolean;
   online: boolean;
@@ -4114,6 +4116,28 @@ export type NfcKeysetsRotateResponse = {
     tags: number;
   }>;
 };
+
+export type NfcReaderSettings = {
+  use: boolean;
+  model: "any" | "acr1555u" | "acr1552u";
+  connection: "auto" | "usb" | "bluetooth" | "keyboard";
+};
+
+export type NfcReaderStatus = {
+  state: "none" | "ready" | "connecting" | "disconnected" | "standby" | "error" | "keyboard";
+  model: "acr1555u" | "acr1552u" | "ccid" | null;
+  transport: "usb" | "bluetooth" | "web-bluetooth" | "keyboard" | null;
+  pinned: boolean;
+  label: string | null;
+  firmware: string | null;
+  battery: {
+    percent: number | null;
+    low: boolean;
+    charging: boolean | null;
+  } | null;
+  code: "READER_NOT_FOUND" | "READER_PERMISSION" | "READER_BT_OFF" | "READER_DISCONNECTED" | "READER_NOT_PAIRED" | "READER_AUTH_MODE" | "READER_LOCKED" | "READER_UNSUPPORTED" | "READER_UNENCRYPTED" | "READER_BUSY" | "APDU_REFUSED" | "CARD_LOST" | null;
+  reportedAt: number;
+} | null;
 
 export type NfcTagTypesArchiveParams = {
   version: number;
@@ -10791,12 +10815,26 @@ export type ScanDeviceCapabilities = {
     };
   };
   hardware?: Array<{
-    kind: "camera" | "barcode" | "nfc" | "keyboard" | "usb" | "hid" | "serial" | "bluetooth" | "display";
+    kind: "camera" | "barcode" | "nfc" | "nfc-reader" | "keyboard" | "usb" | "hid" | "serial" | "bluetooth" | "display";
     count: number;
     builtIn: boolean;
     connected: boolean | null;
     state: "ready" | "active" | "off" | "needs-permission" | "unavailable" | "error";
   }>;
+  nfcReader?: {
+    state: "none" | "ready" | "connecting" | "disconnected" | "standby" | "error" | "keyboard";
+    model: "acr1555u" | "acr1552u" | "ccid" | null;
+    transport: "usb" | "bluetooth" | "web-bluetooth" | "keyboard" | null;
+    pinned: boolean;
+    label: string | null;
+    firmware: string | null;
+    battery: {
+      percent: number | null;
+      low: boolean;
+      charging: boolean | null;
+    } | null;
+    code: "READER_NOT_FOUND" | "READER_PERMISSION" | "READER_BT_OFF" | "READER_DISCONNECTED" | "READER_NOT_PAIRED" | "READER_AUTH_MODE" | "READER_LOCKED" | "READER_UNSUPPORTED" | "READER_UNENCRYPTED" | "READER_BUSY" | "APDU_REFUSED" | "CARD_LOST" | null;
+  };
   draftFailures?: number;
   surfaces: Array<"phone" | "operator">;
   preferred: "phone" | "operator";
@@ -12019,6 +12057,8 @@ export type ScanWorkspace = {
     };
     settings: ScannerSettings;
     capabilities: ScanDeviceCapabilities;
+    nfcReader?: NfcReaderSettings;
+    nfcReaderStatus?: NfcReaderStatus;
     reportedAt: number | null;
     paired: boolean;
     online: boolean;
@@ -12460,6 +12500,8 @@ export type ScanningDevice = {
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
+  nfcReader?: NfcReaderSettings;
+  nfcReaderStatus?: NfcReaderStatus;
   reportedAt: number | null;
   paired: boolean;
   online: boolean;
@@ -14232,7 +14274,7 @@ export type TerminalActParams = {
         type: "U" | "T";
         value: string;
       };
-      source: "native" | "webnfc";
+      source: "native" | "webnfc" | "reader" | "keyboard";
     };
     method: "nfc";
     passId?: string;
@@ -14282,7 +14324,7 @@ export type TerminalResolveParams = {
         type: "U" | "T";
         value: string;
       };
-      source: "native" | "webnfc";
+      source: "native" | "webnfc" | "reader" | "keyboard";
     };
     method: "nfc";
     passId?: string;
@@ -14328,7 +14370,7 @@ export type TerminalSignOutEverywhereParams = {
       type: "U" | "T";
       value: string;
     };
-    source: "native" | "webnfc";
+    source: "native" | "webnfc" | "reader" | "keyboard";
   };
   tag?: "returned" | "not_returned" | "none";
 };

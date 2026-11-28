@@ -1,0 +1,60 @@
+import type { ReaderErrorCode } from '../contracts/reader-bridge.ts';
+
+/** Scanner words for external NFC readers: states, errors, pairing and limits. `{name}` marks a value. */
+export const SCAN_READER_COPY = {
+  title: 'NFC reader',
+  builtIn: "Using this device's NFC",
+  removed: 'Reader removed by an admin.',
+  reconnecting: 'Reader reconnecting',
+  lowBattery: 'Reader battery low',
+  keyboardLimit: 'Keyboard mode reads the tag ID only. Secure tags need NDEF.',
+  firmware: "Update the reader's firmware to read this tag.",
+  state: {
+    none: 'No reader',
+    connecting: 'Connecting',
+    ready: 'Ready',
+    card: 'Reading',
+    standby: 'Standby',
+    disconnected: 'Disconnected',
+    off: 'Off',
+    'needs-permission': 'Needs permission',
+    error: 'Error',
+    keyboard: 'Keyboard',
+  },
+  transport: {
+    usb: 'USB',
+    bluetooth: 'Bluetooth',
+    'web-bluetooth': 'Bluetooth',
+    keyboard: 'Keyboard',
+  },
+  action: {
+    discover: 'Find reader',
+    pair: 'Pair',
+    connect: 'Connect reader',
+    reconnect: 'Reconnect reader',
+    forget: 'Forget reader',
+    mode: 'Mode',
+  },
+  mode: { app: 'App', keyboard: 'Keyboard', unknown: 'Unknown' },
+  pairing: {
+    press: "Press the reader's Bluetooth button.",
+    searching: 'Looking for the reader',
+    confirm: "Press the reader's mode button to confirm.",
+    paired: 'Paired: {name}',
+  },
+  /** One line per error: what happened and what to do. `APDU_REFUSED` and `READER_BUSY` show nothing. */
+  error: {
+    READER_NOT_FOUND: 'No reader found. Turn it on and hold the Bluetooth button.',
+    READER_PERMISSION: 'Allow Bluetooth for PassBook in Settings.',
+    READER_BT_OFF: 'Bluetooth is off.',
+    READER_DISCONNECTED: 'Reader reconnecting',
+    READER_NOT_PAIRED: "This isn't the paired reader.",
+    READER_AUTH_MODE: "This reader is locked to another app. Reset it with ACS's tool.",
+    READER_LOCKED: 'This reader is locked. Contact ACS.',
+    READER_UNSUPPORTED: "This reader isn't supported.",
+    READER_UNENCRYPTED: 'Pair the reader again.',
+    READER_BUSY: null,
+    APDU_REFUSED: null,
+    CARD_LOST: 'Tag moved away. Tap it again.',
+  } satisfies Record<ReaderErrorCode, string | null>,
+} as const;

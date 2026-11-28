@@ -56,6 +56,7 @@ export const ReportedHardwareSchema = z.strictObject({
     'camera',
     'barcode',
     'nfc',
+    'nfc-reader',
     'keyboard',
     'usb',
     'hid',

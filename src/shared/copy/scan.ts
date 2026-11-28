@@ -1,5 +1,6 @@
 import type { ScanReason } from '../contracts/scan.ts';
 import { SCAN_HELP_COPY } from './scan-help.ts';
+import { SCAN_READER_COPY } from './scan-readers.ts';
 import { SCAN_TAG_COPY } from './scan-tags.ts';
 
 /** Reasons that only the client makes: they never reach the wire. */
@@ -164,6 +165,7 @@ export const SCAN_COPY = {
   reasons: SCAN_REASON_COPY,
   display: SCAN_DISPLAY_COPY,
   tags: SCAN_TAG_COPY,
+  readers: SCAN_READER_COPY,
   verdict: {
     checkedIn: 'Checked in',
     /** The word of an `already_done` headline: a check-in is `checked in`, any other action `done`. */

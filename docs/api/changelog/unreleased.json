@@ -305,6 +305,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scan.deleteScanStaff",
@@ -383,6 +399,22 @@
     "op": "DELETE /api/v1/scan/staff",
     "change": "200.workspace.device.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.ownership: field added",
@@ -3353,6 +3385,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scan.getScanSession",
@@ -3431,6 +3479,22 @@
     "op": "GET /api/v1/scan/session",
     "change": "200.workspace.device.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.ownership: field added",
@@ -3553,6 +3617,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.getScanningSessionsById",
@@ -3631,6 +3711,22 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -5072,6 +5168,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.patchScanningSessionsById",
@@ -5150,6 +5262,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
@@ -5248,6 +5376,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
@@ -5326,6 +5470,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
@@ -8137,6 +8297,22 @@
     "note": "Approval is carried by the approval grant, not by staffId, pin or alone."
   },
   {
+    "key": "POST /api/v1/scan/actions body.input|2.tag.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.input|2.tag.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/actions body.input|2.tag.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "body.input|2.tag.source: enum value \"reader\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
     "class": "additive",
     "operationId": "scan.postScanBatch",
@@ -8175,6 +8351,22 @@
     "op": "POST /api/v1/scan/device",
     "change": "200.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.nfcReader: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8257,6 +8449,22 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.nfcReaderStatus: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.ownership: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -8319,6 +8527,22 @@
     "op": "POST /api/v1/scan/device",
     "change": "body.capabilities.hardware: optional input field added",
     "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.nfcReader: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.nfcReader: optional input field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/device body.capabilities.preferred: enum value \"customer\" removed",
@@ -8425,6 +8649,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scan.postScanPair",
@@ -8503,6 +8743,22 @@
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.ownership: field added",
@@ -8585,6 +8841,22 @@
     "note": "Added by the SD0 scan help and Staff device contract."
   },
   {
+    "key": "POST /api/v1/scan/resolve body.input|2.tag.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanResolve",
+    "op": "POST /api/v1/scan/resolve",
+    "change": "body.input|2.tag.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/resolve body.input|2.tag.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanResolve",
+    "op": "POST /api/v1/scan/resolve",
+    "change": "body.input|2.tag.source: enum value \"reader\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/role 200.scanner.deviceRole: enum value \"kiosk\" added",
     "class": "notable",
     "operationId": "scan.postScanRole",
@@ -8623,6 +8895,22 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8703,6 +8991,22 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.ownership: field added",
@@ -8809,6 +9113,22 @@
     "note": "Tap the lent tag instead of naming the pass (passId or read). tag defaults to none (pass) or returned (read). Not lent: 409 TAG_NOT_LENT."
   },
   {
+    "key": "POST /api/v1/scan/sign-out body.read.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "body.read.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out body.read.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "body.read.source: enum value \"reader\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/sign-out keys: accepted at a Desk terminal",
     "class": "additive",
     "operationId": "scan.postScanSignOut",
@@ -8855,6 +9175,22 @@
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -8937,6 +9273,22 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.nfcReaderStatus: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.workspace.device.ownership: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
@@ -9007,6 +9359,22 @@
     "op": "POST /api/v1/scan/staff/pin",
     "change": "200.session.workspace.device.capabilities.draftFailures: field added",
     "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.nfcReader: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.preferred: enum value \"customer\" removed",
@@ -9089,6 +9457,22 @@
     "note": "The surface is null for a device that has only a deviceRole."
   },
   {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.nfcReaderStatus: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.ownership: field added",
     "class": "additive",
     "operationId": "scan.postScanStaffPin",
@@ -9145,6 +9529,22 @@
     "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   },
   {
+    "key": "POST /api/v1/scan/tag-enrollments/{id}/complete body.tag.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagEnrollmentsByIdComplete",
+    "op": "POST /api/v1/scan/tag-enrollments/{id}/complete",
+    "change": "body.tag.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/tag-enrollments/{id}/complete body.tag.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagEnrollmentsByIdComplete",
+    "op": "POST /api/v1/scan/tag-enrollments/{id}/complete",
+    "change": "body.tag.source: enum value \"reader\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/tags/bind 200.opensDefault: field added",
     "class": "additive",
     "operationId": "scan.postScanTagsBind",
@@ -9161,12 +9561,44 @@
     "note": "Pinned to 2026-11-22, a reused key answers 422, not 409; the SDKs raise ValidationError, not ConflictError."
   },
   {
+    "key": "POST /api/v1/scan/tags/bind body.tag.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "body.tag.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/tags/bind body.tag.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "body.tag.source: enum value \"reader\" added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/tags/bindings/{bindingId}/undo TAG_HOLDER_CHANGED: new code",
     "class": "notable",
     "operationId": "scan.postScanTagsBindingsByBindingIdUndo",
     "op": "POST /api/v1/scan/tags/bindings/{bindingId}/undo",
     "change": "TAG_HOLDER_CHANGED: new code",
     "note": "An undo after the tag changed holder now answers 409 TAG_HOLDER_CHANGED, not TAG_NOT_FOUND."
+  },
+  {
+    "key": "POST /api/v1/scan/tags/inspect body.tag.source: enum value \"keyboard\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagsInspect",
+    "op": "POST /api/v1/scan/tags/inspect",
+    "change": "body.tag.source: enum value \"keyboard\" added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scan/tags/inspect body.tag.source: enum value \"reader\" added",
+    "class": "additive",
+    "operationId": "scan.postScanTagsInspect",
+    "op": "POST /api/v1/scan/tags/inspect",
+    "change": "body.tag.source: enum value \"reader\" added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
@@ -9313,6 +9745,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.postScanningSessions",
@@ -9391,6 +9839,22 @@
     "op": "POST /api/v1/scanning-sessions",
     "change": "201.devices[].effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
@@ -9481,6 +9945,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -9559,6 +10039,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
@@ -9721,6 +10217,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.hardware[].kind: enum value \"nfc-reader\" added",
+    "note": "Devices report an external NFC reader as hardware kind nfc-reader."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.nfcReader: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.preferred: enum value \"customer\" removed",
     "class": "breaking",
     "operationId": "scanners.postScanningSessionsByIdHold",
@@ -9799,6 +10311,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].effectiveSurface: enum value null added",
     "note": "The surface is null for a device that has only a deviceRole."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].nfcReader: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].nfcReader: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].nfcReaderStatus: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].nfcReaderStatus: field added",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",

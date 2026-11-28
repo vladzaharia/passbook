@@ -114,6 +114,7 @@ export const ScannerSettingsSchema = z.object({
   roleWithoutSignIn: z.enum(['door', 'desk']),
   staffSignIn: z.boolean(),
   letInAgain: z.enum(['anyone', 'manager', 'never']),
+  /** The built-in reader: a hand-held's barcode engine or the device's own NFC. External NFC readers are `nfcReader` (`nfc-reader.ts`). */
   reader: z.enum(['none', 'barcode', 'nfc']),
   lookup: z.boolean(),
   offline: z.boolean(),

@@ -689,6 +689,8 @@ __all__ = [
     "NfcKeysetsRotateResponse",
     "NfcKeysetsRotateResponseVersionsItem",
     "NfcKeysetsRotateResult",
+    "NfcReaderSettings",
+    "NfcReaderStatus",
     "NfcTagTypesArchiveBody",
     "NfcTagTypesArchiveParams",
     "NfcTagTypesArchiveResponse",
@@ -4667,6 +4669,8 @@ class CreatedScanningDevice(_Model):
     overrides: CreatedScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
+    nfcReader: NfcReaderSettings | None = None
+    nfcReaderStatus: NfcReaderStatus | None = None
     reportedAt: int | None
     paired: bool
     online: bool
@@ -6521,6 +6525,11 @@ class NfcKeysetsRotateResponseVersionsItem(_Model):
     stateAt: int | None
     revokedAt: int | None
     tags: int
+
+class NfcReaderSettings(_Model):
+    use: bool
+    model: _Literal["any", "acr1555u", "acr1552u"] | str
+    connection: _Literal["auto", "usb", "bluetooth", "keyboard"] | str
 
 class NfcTagTypesArchiveParams(_Model):
     version: int
@@ -13954,6 +13963,8 @@ class ScanningDevice(_Model):
     overrides: ScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
+    nfcReader: NfcReaderSettings | None = None
+    nfcReaderStatus: NfcReaderStatus | None = None
     reportedAt: int | None
     paired: bool
     online: bool
@@ -15829,7 +15840,7 @@ class TerminalActParamsInput3Tag(_Model):
     uidRandom: bool | None = None
     tech: _Literal["a", "b", "isodep", "unknown"] | str
     ndef: TerminalActParamsInput3TagNdef | None = None
-    source: _Literal["native", "webnfc"] | str
+    source: _Literal["native", "webnfc", "reader", "keyboard"] | str
 
 class TerminalActParamsInput3TagNdef(_Model):
     type: _Literal["U", "T"] | str
@@ -15867,7 +15878,7 @@ class TerminalResolveParamsInput3Tag(_Model):
     uidRandom: bool | None = None
     tech: _Literal["a", "b", "isodep", "unknown"] | str
     ndef: TerminalResolveParamsInput3TagNdef | None = None
-    source: _Literal["native", "webnfc"] | str
+    source: _Literal["native", "webnfc", "reader", "keyboard"] | str
 
 class TerminalResolveParamsInput3TagNdef(_Model):
     type: _Literal["U", "T"] | str
@@ -15913,7 +15924,7 @@ class TerminalSignOutEverywhereParamsRead(_Model):
     uidRandom: bool | None = None
     tech: _Literal["a", "b", "isodep", "unknown"] | str
     ndef: TerminalSignOutEverywhereParamsReadNdef | None = None
-    source: _Literal["native", "webnfc"] | str
+    source: _Literal["native", "webnfc", "reader", "keyboard"] | str
 
 class TerminalSignOutEverywhereParamsReadNdef(_Model):
     type: _Literal["U", "T"] | str
@@ -16983,6 +16994,8 @@ NfcKeysetsRotateParams = NfcKeysetsRotateParams1 | NfcKeysetsRotateParams2 | Nfc
 NfcKeysetsRotateBody = NfcKeysetsRotateParams
 
 NfcKeysetsRotateResult = NfcKeysetsRotateResponse
+
+NfcReaderStatus = _Dict[str, _Any] | None
 
 NfcTagTypesArchiveBody = NfcTagTypesArchiveParams
 

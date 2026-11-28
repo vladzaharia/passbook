@@ -12729,6 +12729,12 @@
               "capabilities": {
                 "$ref": "#/components/schemas/ScanDeviceCapabilities"
               },
+              "nfcReader": {
+                "$ref": "#/components/schemas/NfcReaderSettings"
+              },
+              "nfcReaderStatus": {
+                "$ref": "#/components/schemas/NfcReaderStatus"
+              },
               "reportedAt": {
                 "type": [
                   "integer",
@@ -13856,6 +13862,7 @@
                     "camera",
                     "barcode",
                     "nfc",
+                    "nfc-reader",
                     "keyboard",
                     "usb",
                     "hid",
@@ -13901,6 +13908,128 @@
             },
             "maxItems": 16
           },
+          "nfcReader": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "ready",
+                  "connecting",
+                  "disconnected",
+                  "standby",
+                  "error",
+                  "keyboard"
+                ]
+              },
+              "model": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "acr1555u",
+                  "acr1552u",
+                  "ccid",
+                  null
+                ]
+              },
+              "transport": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "usb",
+                  "bluetooth",
+                  "web-bluetooth",
+                  "keyboard",
+                  null
+                ]
+              },
+              "pinned": {
+                "type": "boolean"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 40
+              },
+              "firmware": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 32
+              },
+              "battery": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "percent": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "low": {
+                    "type": "boolean"
+                  },
+                  "charging": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "percent",
+                  "low",
+                  "charging"
+                ],
+                "additionalProperties": false
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "READER_NOT_FOUND",
+                  "READER_PERMISSION",
+                  "READER_BT_OFF",
+                  "READER_DISCONNECTED",
+                  "READER_NOT_PAIRED",
+                  "READER_AUTH_MODE",
+                  "READER_LOCKED",
+                  "READER_UNSUPPORTED",
+                  "READER_UNENCRYPTED",
+                  "READER_BUSY",
+                  "APDU_REFUSED",
+                  "CARD_LOST",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "state",
+              "model",
+              "transport",
+              "pinned",
+              "label",
+              "firmware",
+              "battery",
+              "code"
+            ],
+            "additionalProperties": false
+          },
           "draftFailures": {
             "type": "integer",
             "minimum": 1,
@@ -13935,6 +14064,167 @@
           "nativeBarcode",
           "surfaces",
           "preferred"
+        ],
+        "additionalProperties": false
+      },
+      "NfcReaderSettings": {
+        "type": "object",
+        "properties": {
+          "use": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string",
+            "enum": [
+              "any",
+              "acr1555u",
+              "acr1552u"
+            ]
+          },
+          "connection": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "usb",
+              "bluetooth",
+              "keyboard"
+            ]
+          }
+        },
+        "required": [
+          "use",
+          "model",
+          "connection"
+        ],
+        "additionalProperties": false
+      },
+      "NfcReaderStatus": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "none",
+              "ready",
+              "connecting",
+              "disconnected",
+              "standby",
+              "error",
+              "keyboard"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "acr1555u",
+              "acr1552u",
+              "ccid",
+              null
+            ]
+          },
+          "transport": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "usb",
+              "bluetooth",
+              "web-bluetooth",
+              "keyboard",
+              null
+            ]
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 40
+          },
+          "firmware": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 32
+          },
+          "battery": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "percent": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100
+              },
+              "low": {
+                "type": "boolean"
+              },
+              "charging": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "percent",
+              "low",
+              "charging"
+            ],
+            "additionalProperties": false
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "READER_NOT_FOUND",
+              "READER_PERMISSION",
+              "READER_BT_OFF",
+              "READER_DISCONNECTED",
+              "READER_NOT_PAIRED",
+              "READER_AUTH_MODE",
+              "READER_LOCKED",
+              "READER_UNSUPPORTED",
+              "READER_UNENCRYPTED",
+              "READER_BUSY",
+              "APDU_REFUSED",
+              "CARD_LOST",
+              null
+            ]
+          },
+          "reportedAt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "state",
+          "model",
+          "transport",
+          "pinned",
+          "label",
+          "firmware",
+          "battery",
+          "code",
+          "reportedAt"
         ],
         "additionalProperties": false
       },
@@ -21961,6 +22251,12 @@
           "capabilities": {
             "$ref": "#/components/schemas/ScanDeviceCapabilities"
           },
+          "nfcReader": {
+            "$ref": "#/components/schemas/NfcReaderSettings"
+          },
+          "nfcReaderStatus": {
+            "$ref": "#/components/schemas/NfcReaderStatus"
+          },
           "reportedAt": {
             "type": [
               "integer",
@@ -22168,6 +22464,12 @@
           },
           "capabilities": {
             "$ref": "#/components/schemas/ScanDeviceCapabilities"
+          },
+          "nfcReader": {
+            "$ref": "#/components/schemas/NfcReaderSettings"
+          },
+          "nfcReaderStatus": {
+            "$ref": "#/components/schemas/NfcReaderStatus"
           },
           "reportedAt": {
             "type": [
@@ -74989,7 +75291,9 @@
                 "type": "string",
                 "enum": [
                   "native",
-                  "webnfc"
+                  "webnfc",
+                  "reader",
+                  "keyboard"
                 ]
               }
             },
@@ -75151,7 +75455,9 @@
                         "type": "string",
                         "enum": [
                           "native",
-                          "webnfc"
+                          "webnfc",
+                          "reader",
+                          "keyboard"
                         ]
                       }
                     },
@@ -75333,7 +75639,9 @@
                         "type": "string",
                         "enum": [
                           "native",
-                          "webnfc"
+                          "webnfc",
+                          "reader",
+                          "keyboard"
                         ]
                       }
                     },
@@ -160641,7 +160949,9 @@
                         "type": "string",
                         "enum": [
                           "native",
-                          "webnfc"
+                          "webnfc",
+                          "reader",
+                          "keyboard"
                         ]
                       }
                     },
@@ -160881,7 +161191,9 @@
                         "type": "string",
                         "enum": [
                           "native",
-                          "webnfc"
+                          "webnfc",
+                          "reader",
+                          "keyboard"
                         ]
                       }
                     },
@@ -161744,7 +162056,9 @@
                         "type": "string",
                         "enum": [
                           "native",
-                          "webnfc"
+                          "webnfc",
+                          "reader",
+                          "keyboard"
                         ]
                       }
                     },
@@ -164083,6 +164397,7 @@
                                 "camera",
                                 "barcode",
                                 "nfc",
+                                "nfc-reader",
                                 "keyboard",
                                 "usb",
                                 "hid",
@@ -164127,6 +164442,128 @@
                           "additionalProperties": false
                         },
                         "maxItems": 16
+                      },
+                      "nfcReader": {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "ready",
+                              "connecting",
+                              "disconnected",
+                              "standby",
+                              "error",
+                              "keyboard"
+                            ]
+                          },
+                          "model": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "acr1555u",
+                              "acr1552u",
+                              "ccid",
+                              null
+                            ]
+                          },
+                          "transport": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "usb",
+                              "bluetooth",
+                              "web-bluetooth",
+                              "keyboard",
+                              null
+                            ]
+                          },
+                          "pinned": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 40
+                          },
+                          "firmware": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 32
+                          },
+                          "battery": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "percent": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0,
+                                "maximum": 100
+                              },
+                              "low": {
+                                "type": "boolean"
+                              },
+                              "charging": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "percent",
+                              "low",
+                              "charging"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "code": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "READER_NOT_FOUND",
+                              "READER_PERMISSION",
+                              "READER_BT_OFF",
+                              "READER_DISCONNECTED",
+                              "READER_NOT_PAIRED",
+                              "READER_AUTH_MODE",
+                              "READER_LOCKED",
+                              "READER_UNSUPPORTED",
+                              "READER_UNENCRYPTED",
+                              "READER_BUSY",
+                              "APDU_REFUSED",
+                              "CARD_LOST",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "model",
+                          "transport",
+                          "pinned",
+                          "label",
+                          "firmware",
+                          "battery",
+                          "code"
+                        ],
+                        "additionalProperties": false
                       },
                       "draftFailures": {
                         "type": "integer",

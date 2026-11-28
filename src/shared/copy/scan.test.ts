@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { READER_ERROR_CODES } from '../contracts/reader-bridge.ts';
 import { ScanReasonSchema } from '../contracts/scan.ts';
 import { OVERRIDE_NOTES } from '../contracts/scan-occupancy.ts';
 import {
@@ -139,5 +140,20 @@ describe('SCAN_COUNTER_COPY', () => {
       expect(line.headline.length).toBeGreaterThan(0);
       expect(line.sub.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('SCAN_COPY.readers', () => {
+  it('words every reader error, with silence only for the internal ones', () => {
+    const silent = ['READER_BUSY', 'APDU_REFUSED'];
+    for (const code of READER_ERROR_CODES) {
+      const line = SCAN_COPY.readers.error[code];
+      if (silent.includes(code)) expect(line).toBeNull();
+      else expect(line?.length).toBeGreaterThan(0);
+    }
+  });
+  it('words the firmware and keyboard limits', () => {
+    expect(SCAN_COPY.readers.firmware).toBe("Update the reader's firmware to read this tag.");
+    expect(SCAN_COPY.readers.keyboardLimit).toContain('Secure tags need NDEF');
   });
 });

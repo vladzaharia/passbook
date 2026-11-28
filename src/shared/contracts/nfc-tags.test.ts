@@ -39,6 +39,18 @@ describe('TagRead', () => {
     expect(TagReadSchema.safeParse({ tech: 'isodep', source: 'webnfc', ndef }).success).toBe(true);
   });
 
+  it('takes the reader and keyboard sources, and a typed UID carries no NDEF', () => {
+    for (const source of ['reader', 'keyboard'] as const)
+      expect(TagReadSchema.safeParse({ ...read, source }).success).toBe(true);
+    expect(TagReadSchema.safeParse({ ...read, source: 'other' }).success).toBe(false);
+    const ndef = { type: 'U', value: 'https://x.test/t/abcd2345?p=00&m=00' };
+    expect(TagReadSchema.safeParse({ ...read, source: 'reader', ndef }).success).toBe(true);
+    expect(TagReadSchema.safeParse({ ...read, source: 'keyboard', ndef }).success).toBe(false);
+    expect(TagReadSchema.safeParse({ tech: 'unknown', source: 'keyboard', ndef }).success).toBe(
+      false,
+    );
+  });
+
   it('refuses an empty read', () => {
     expect(TagReadSchema.safeParse({ tech: 'a', source: 'native' }).success).toBe(false);
     expect(TagReadSchema.safeParse({ tech: 'a', source: 'native', uidRandom: true }).success).toBe(

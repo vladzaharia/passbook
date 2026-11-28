@@ -12,6 +12,10 @@ import { BroadcastUndoResultSchema } from '../../shared/contracts/broadcasts-cha
 import { CliTokenEndedSchema } from '../../shared/contracts/cli.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { ConnectionPreviewSchema } from '../../shared/contracts/connection-preview.ts';
+import {
+  NfcReaderSettingsSchema,
+  NfcReaderStatusSchema,
+} from '../../shared/contracts/nfc-reader.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import { BulkRunSchema, CurrentBulkRunSchema } from '../../shared/contracts/pass-bulk-runs.ts';
 import {
@@ -132,6 +136,8 @@ const names = {
   ScanningDevice: ScanningDeviceSchema,
   ScanningSessionDetail: ScanningSessionDetailSchema,
   ScanDeviceCapabilities: ScanDeviceCapabilitiesSchema,
+  NfcReaderSettings: NfcReaderSettingsSchema,
+  NfcReaderStatus: NfcReaderStatusSchema,
   NativeScannerCapabilities: NativeScannerCapabilitiesSchema,
   ScanWorkspace: ScanWorkspaceSchema,
   SessionActivity: SessionActivitySchema,

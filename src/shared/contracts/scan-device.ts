@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema } from './common.ts';
+import { NfcReaderStatusSchema } from './nfc-reader.ts';
 import { ScanRoleSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { NativeHardwareEntrySchema, ReportedHardwareSchema } from './scan-hardware.ts';
@@ -42,6 +43,7 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
     reader: z.enum(['proximityReader', 'android-native', 'none']),
     reason: z.string().max(240),
   }),
+  /** Keyboard wedge presence; not NFC readers. Deprecated for new uses: readers travel in the bridge `readers` event (`reader-bridge.ts`). Removed when no supported app sends it. */
   externalReader: z.strictObject({
     mode: z.enum(['keyboard', 'unknown']),
     connected: z.boolean().nullable(),
@@ -78,6 +80,8 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   native: NativeScannerCapabilitiesSchema.omit({ hardware: true }).optional(),
   /** Found hardware by kind and state; failed customer-screen drafts (`scan.draft_failed`). Optional. */
   hardware: z.array(ReportedHardwareSchema).max(16).optional(),
+  /** The external NFC reader's state; the server stamps `reportedAt`. No tag data, no serial beyond the label. */
+  nfcReader: NfcReaderStatusSchema.omit({ reportedAt: true }).optional(),
   draftFailures: z.number().int().min(1).max(1_000_000).optional(),
   surfaces: z.array(ScanSurfaceSchema).min(1).max(2),
   preferred: ScanSurfaceSchema,

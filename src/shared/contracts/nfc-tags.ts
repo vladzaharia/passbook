@@ -12,7 +12,11 @@ export const TagUidSchema = z
   .string()
   .regex(/^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$/, 'A tag ID has 4, 7 or 10 bytes.');
 export const TagTechSchema = z.enum(['a', 'b', 'isodep', 'unknown']);
-export const TagSourceSchema = z.enum(['native', 'webnfc']);
+/**
+ * Where a read came from: informational and untrusted, and the server ignores it. `reader` is an external
+ * reader's full read; `keyboard` is a UID typed by a keyboard-mode reader, so it never carries `ndef`.
+ */
+export const TagSourceSchema = z.enum(['native', 'webnfc', 'reader', 'keyboard']);
 
 /** One tag read from a reader. `uid` or `ndef` is required; the server never trusts `uidRandom` alone. */
 export const TagReadSchema = z
@@ -31,7 +35,11 @@ export const TagReadSchema = z
       .optional(),
     source: TagSourceSchema,
   })
-  .refine((read) => read.uid !== undefined || read.ndef !== undefined, 'The read has no tag data.');
+  .refine((read) => read.uid !== undefined || read.ndef !== undefined, 'The read has no tag data.')
+  .refine(
+    (read) => read.source !== 'keyboard' || read.ndef === undefined,
+    'A typed UID has no NDEF.',
+  );
 export type TagRead = z.infer<typeof TagReadSchema>;
 
 export const TagAssuranceSchema = z.enum(['basic', 'secure']);

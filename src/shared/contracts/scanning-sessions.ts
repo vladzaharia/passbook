@@ -7,6 +7,7 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
+import { NfcReaderSettingsSchema, NfcReaderStatusSchema } from './nfc-reader.ts';
 import { SessionTagRulesSchema } from './nfc-tags.ts';
 import {
   ScanApprovalSchema,
@@ -204,6 +205,9 @@ export const ScanningDeviceSchema = z.object({
   overrides: ScanDeviceOverridesSchema,
   settings: ScannerSettingsSchema,
   capabilities: ScanDeviceCapabilitiesSchema.nullable(),
+  /** The external NFC reader setting and its last report (NR8 fills them); absent until the server sends them. */
+  nfcReader: NfcReaderSettingsSchema.optional(),
+  nfcReaderStatus: NfcReaderStatusSchema.nullable().optional(),
   reportedAt: TimestampSchema.nullable(),
   paired: z.boolean(),
   online: z.boolean(),

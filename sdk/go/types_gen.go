@@ -2811,6 +2811,8 @@ type CreatedScanningDevice struct {
 	Overrides        CreatedScanningDeviceOverrides `json:"overrides"`
 	Settings         ScannerSettings                `json:"settings"`
 	Capabilities     ScanDeviceCapabilities         `json:"capabilities"`
+	NFCReader        *NfcReaderSettings             `json:"nfcReader,omitempty"`
+	NFCReaderStatus  NfcReaderStatus                `json:"nfcReaderStatus,omitempty"`
 	ReportedAt       *int64                         `json:"reportedAt"`
 	Paired           bool                           `json:"paired"`
 	Online           bool                           `json:"online"`
@@ -5081,6 +5083,14 @@ type NfcKeysetsRotateResponseVersionsItem struct {
 }
 
 type NfcKeysetsRotateResult = NfcKeysetsRotateResponse
+
+type NfcReaderSettings struct {
+	Use        bool   `json:"use"`
+	Model      string `json:"model"`
+	Connection string `json:"connection"`
+}
+
+type NfcReaderStatus = map[string]any
 
 type NfcTagTypesArchiveBody = NfcTagTypesArchiveParams
 
@@ -14259,6 +14269,8 @@ type ScanningDevice struct {
 	Overrides        ScanningDeviceOverrides `json:"overrides"`
 	Settings         ScannerSettings         `json:"settings"`
 	Capabilities     ScanDeviceCapabilities  `json:"capabilities"`
+	NFCReader        *NfcReaderSettings      `json:"nfcReader,omitempty"`
+	NFCReaderStatus  NfcReaderStatus         `json:"nfcReaderStatus,omitempty"`
 	ReportedAt       *int64                  `json:"reportedAt"`
 	Paired           bool                    `json:"paired"`
 	Online           bool                    `json:"online"`
