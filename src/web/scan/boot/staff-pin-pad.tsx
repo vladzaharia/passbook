@@ -41,7 +41,9 @@ export function StaffPinPad({
         invalid={error !== ''}
       />
       <Keypad disabled={busy} onDigit={pin.push} onDelete={pin.pop} />
-      {error ? <Callout tone="danger">{error}</Callout> : null}
+      <div className="min-h-[3.5rem]">
+        {error ? <Callout tone="danger">{error}</Callout> : null}
+      </div>
       <Button type="button" variant="ghost" disabled={busy} onClick={onName}>
         {COPY.notYou}
       </Button>

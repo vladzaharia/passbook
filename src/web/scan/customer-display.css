@@ -308,9 +308,9 @@
 
 /* Readable at every width; two short lines, so the button stays clear of the buddy in the middle. */
 button.scan-hold-switch {
-  max-width: 9rem;
+  max-width: 11rem;
   min-height: 44px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.2;
   white-space: normal;
   text-align: start;

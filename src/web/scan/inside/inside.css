@@ -226,15 +226,13 @@
   white-space: nowrap;
 }
 @media (max-width: 420px) {
-  /* A narrow phone: the action drops under the details, in line with the name, at full size. */
-  .scan-in-row {
-    flex-wrap: wrap;
+  /* A narrow phone: the action keeps the row's line as an icon button; its name is the aria-label. */
+  .scan-in-mark {
+    min-width: 44px;
+    padding-inline: 0;
   }
-  .scan-in-open {
-    flex-basis: 100%;
-  }
-  .scan-in-trailing {
-    margin-inline-start: 52px;
+  .scan-in-mark-text {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: no-preference) {

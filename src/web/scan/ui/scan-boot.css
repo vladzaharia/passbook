@@ -104,15 +104,6 @@
 .scan-boot-body:empty {
   display: none;
 }
-.scan-boot-body .scan-pair-footer {
-  justify-content: center;
-  padding-top: 16px;
-  border-top: 1px solid var(--pk-border-subtle);
-  color: var(--pk-text-muted);
-  font-size: 12px;
-  line-height: 18px;
-  text-align: center;
-}
 .scan-boot-body button {
   min-height: 44px;
 }

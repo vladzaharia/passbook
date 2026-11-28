@@ -151,8 +151,10 @@
 .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
   z-index: 11;
 }
-.scan-shell[data-surface="operator"]:has(.scan-result) .scan-operator-activity {
-  visibility: hidden;
+@media (max-width: 899px) {
+  .scan-shell[data-surface="operator"]:has(.scan-result) .scan-operator-activity {
+    visibility: hidden;
+  }
 }
 
 .scan-shell[data-surface="operator"]:not(:has(.scan-result)) > .scan-buddy-seat {
