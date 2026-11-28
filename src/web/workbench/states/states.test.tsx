@@ -46,13 +46,13 @@ describe('shared states (design §6)', () => {
     expect(failedLine(refused)).toBe('Not available with a Workbench token.');
     const { unmount } = render(<ToolFailed error={refused} onRetry={() => undefined} />);
     expect(screen.getByText('Not available with a Workbench token.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
     unmount();
     for (const status of [0, 429, 500]) {
       const view = render(
         <ToolFailed error={new ApiError({ status, code: 'x' })} onRetry={() => undefined} />,
       );
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
       view.unmount();
     }
   });
