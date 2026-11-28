@@ -2,7 +2,8 @@ import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import type { UpdateScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
-import { ConflictError } from '../../platform/errors.ts';
+import { roleOfStoredSurface } from '../../../shared/scan-surfaces.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { admitsJson } from './admits.ts';
@@ -91,6 +92,12 @@ export async function updateSetup(
       'SCANNER_CHANGED',
     );
   const role = input.deviceRole ?? row.deviceRole;
+  if (
+    device &&
+    input.deviceRole !== undefined &&
+    input.deviceRole !== roleOfStoredSurface(device.surface)
+  )
+    throw new ValidationError('The kind of device cannot change.', [], 'DEVICE_KIND_FIXED');
   const changingWatch = input.deviceRole !== undefined || input.watch !== undefined;
   const meta = changingWatch ? await setupMeta(ctx.env.DB, row.orgId, id) : null;
   const watch = input.watch === undefined ? watchOf(meta) : input.watch;

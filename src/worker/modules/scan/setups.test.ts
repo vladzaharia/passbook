@@ -233,6 +233,31 @@ describe('managed scanner setups', () => {
     expect(scan.status).toBe(200);
   });
 
+  it('refuses a deviceRole save that would change the kind, and takes one that keeps it', async () => {
+    const made = await send('/scan-setups', 'POST', {
+      orgId: kit.org.id,
+      name: 'Kind fixed monitor',
+      kind: 'display',
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { allOrg: true },
+    });
+    const { id } = CreatedScannerSetupSchema.parse(await made.json());
+    await expectProblem(
+      await send(`/scan-setups/${id}`, 'PATCH', { deviceRole: 'customer', watch: null }),
+      422,
+      'DEVICE_KIND_FIXED',
+    );
+    expect(
+      (
+        await send(`/scan-setups/${id}`, 'PATCH', {
+          deviceRole: 'monitor',
+          watch: { allOrg: true },
+        })
+      ).status,
+    ).toBe(200);
+  });
+
   it('refuses to edit a setup from the other mode', async () => {
     const made = await send('/scan-setups', 'POST', {
       orgId: kit.org.id,

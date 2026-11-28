@@ -1,4 +1,4 @@
-import type { ScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
+import type { ReportedScanDeviceCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import {
@@ -226,7 +226,7 @@ export async function scanWorkspace(
 export async function reportScanDevice(
   context: ServiceContext,
   sourceActor: ScanActor,
-  raw: ScanDeviceCapabilities,
+  raw: ReportedScanDeviceCapabilities,
 ) {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   const actor = cloneObservedScanActor(sourceActor);
@@ -240,6 +240,8 @@ export async function reportScanDevice(
       'SCANNING_DEVICE_CHANGED',
     );
   }
+  if ([...raw.surfaces, raw.preferred].some((v) => v === 'customer' || v === 'desk'))
+    ctx.log.info('scan.report.legacy_surface', { orgId: actor.orgId });
   const capabilities = reportedCapabilities(raw);
   await commitReportedDevice(ctx, actor, observed, capabilities, bindScanningSession);
   return scanWorkspace(ctx, actor, scanSessionCountAuthority(actor));

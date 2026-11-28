@@ -17,13 +17,19 @@ function dropKeys(value: unknown, path: readonly PropertyKey[], keys: readonly s
   if (node && typeof node === 'object') for (const key of keys) delete node[key];
 }
 
-/** Reports from before Screens left the layouts listed `customer` and `desk`: drop those entries. */
+/**
+ * Reports from before Screens left the layouts listed `customer` and `desk`: drop those entries.
+ * Both fields are required, so a legacy `preferred` becomes the first layout left, and an empty
+ * list becomes Handheld.
+ */
 function dropLegacyLayouts(value: unknown): void {
   if (!value || typeof value !== 'object') return;
   const report = value as { surfaces?: unknown; preferred?: unknown };
   const legacy = (v: unknown) => v === 'customer' || v === 'desk';
   if (Array.isArray(report.surfaces)) report.surfaces = report.surfaces.filter((v) => !legacy(v));
-  if (legacy(report.preferred)) delete report.preferred;
+  if (Array.isArray(report.surfaces) && !report.surfaces.length) report.surfaces = ['phone'];
+  if (legacy(report.preferred))
+    report.preferred = Array.isArray(report.surfaces) ? report.surfaces[0] : 'phone';
 }
 
 /** Parses a stored report, dropping unknown keys. Null when it is not JSON or not a report. */

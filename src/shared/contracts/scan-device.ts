@@ -83,6 +83,14 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   preferred: ScanSurfaceSchema,
 });
 export type ScanDeviceCapabilities = z.infer<typeof ScanDeviceCapabilitiesSchema>;
+/** Layouts an old cached client may still report; a report never sets the kind, so they are ignored. */
+export const LEGACY_REPORTED_LAYOUTS = ['customer', 'desk'] as const;
+const ReportedLayoutSchema = z.enum([...ScanSurfaceSchema.options, ...LEGACY_REPORTED_LAYOUTS]);
+export const ReportedScanDeviceCapabilitiesSchema = ScanDeviceCapabilitiesSchema.extend({
+  surfaces: z.array(ReportedLayoutSchema).min(1).max(2),
+  preferred: ReportedLayoutSchema,
+});
+export type ReportedScanDeviceCapabilities = z.infer<typeof ReportedScanDeviceCapabilitiesSchema>;
 
 /** Shared: anyone allowed signs in. Personal: only `personalStaffId`, PIN only (SDA §2). */
 export const DeviceOwnershipSchema = z.enum(['shared', 'personal']);

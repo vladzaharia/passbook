@@ -18,6 +18,7 @@ import {
 import { HoursSpanSchema, SESSION_DEVICE_CAP, ZoneIdsSchema } from './scan-access.ts';
 import {
   CreatableDeviceRoleSchema,
+  ReportedScanDeviceCapabilitiesSchema,
   ScanDeviceCapabilitiesSchema,
   ScanSurfaceChoiceSchema,
   ScanSurfaceSchema,
@@ -291,6 +292,6 @@ export const ScanWorkspaceSchema = z.object({
 });
 export type ScanWorkspace = z.infer<typeof ScanWorkspaceSchema>;
 export const ReportScanDeviceSchema = z.object({
-  capabilities: ScanDeviceCapabilitiesSchema,
+  capabilities: ReportedScanDeviceCapabilitiesSchema,
   scope: z.object({ orgId: IdSchema, setupId: IdSchema, timeZone: TimeZoneSchema }).optional(),
 });

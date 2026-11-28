@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { DeviceRoleSchema } from './contracts/scanners.ts';
 import {
   type ScanDeviceCapabilities,
+  type ReportedScanDeviceCapabilities,
   type ScanSurface,
   type ScanSurfaceChoice,
   ScanSurfaceChoiceSchema,
@@ -11,7 +12,7 @@ import {
 type DeviceRole = z.infer<typeof DeviceRoleSchema>;
 type ScreenOrStaff = Exclude<DeviceRole, 'kiosk'>;
 
-export function reportedCapabilities(raw: ScanDeviceCapabilities): ScanDeviceCapabilities {
+export function reportedCapabilities(raw: ReportedScanDeviceCapabilities): ScanDeviceCapabilities {
   const surfaces: ScanSurface[] = ['phone', 'operator'];
   return { ...raw, surfaces, preferred: raw.width >= 900 ? 'operator' : 'phone' };
 }
@@ -48,8 +49,8 @@ export function storedSurfaceFor(
   capabilities: ScanDeviceCapabilities | null,
 ): StoredEffectiveSurface {
   if (stored === 'customer') return 'customer';
-  // A stored `desk` choice folds into the Console: the acting monitor (SD12 removes it).
-  if (stored === 'desk' || stored === 'operator') return 'operator';
+  if (stored === 'desk') return 'desk';
+  if (stored === 'operator') return 'operator';
   return stored === 'auto' ? surfaceFor('auto', capabilities) : 'phone';
 }
 export const roleOfStoredSurface = (surface: string): ScreenOrStaff =>

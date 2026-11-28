@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeUser } from '../../../../test/helpers/index.ts';
 import { CreatedScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
@@ -104,6 +104,42 @@ describe('session device authorization and live configuration', () => {
     );
     expect(operatorAction.status).toBe(200);
   });
+  it('takes a cached client that still reports customer or desk, ignores it and logs it', async () => {
+    const { parent, device, pair, call } = fixture;
+    const session = await parent('Legacy report');
+    const made = await device(session.id, 'Cached client');
+    const headers = await pair(made.pairing?.code ?? '');
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      const report = await call(
+        'POST',
+        '/scan/device',
+        {
+          capabilities: {
+            width: 390,
+            height: 800,
+            touch: true,
+            camera: 'available',
+            keyboard: true,
+            nativeBarcode: false,
+            surfaces: ['phone', 'customer'],
+            preferred: 'desk',
+          },
+        },
+        headers,
+      );
+      expect(report.status).toBe(200);
+      expect(await report.json()).toMatchObject({
+        device: { capabilities: { surfaces: ['phone', 'operator'], preferred: 'phone' } },
+      });
+      expect(log.mock.calls.some((c) => String(c[0]).includes('scan.report.legacy_surface'))).toBe(
+        true,
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('keeps standalone legacy desk monitors read-only when they report capabilities', async () => {
     const { kit, call, pair } = fixture;
     const source = await kit.scanner();
@@ -313,6 +349,15 @@ describe('session device authorization and live configuration', () => {
     const patch = (id: string, body: unknown) =>
       call('PATCH', `/scanning-sessions/${session.id}/devices/${id}`, body);
     await expectProblem(await patch(screen.id, { surface: 'phone' }), 422, 'DEVICE_KIND_FIXED');
+    const monitorMade = await call('POST', `/scanning-sessions/${session.id}/devices`, {
+      deviceRole: 'monitor',
+    });
+    const monitor = CreatedScanningDeviceSchema.parse(await monitorMade.json());
+    await expectProblem(
+      await patch(monitor.id, { alerts: 'off' }),
+      422,
+      'STAFF_DEVICE_FIELDS_UNAVAILABLE',
+    );
     const staff = await device(session.id, 'Staff device', 'phone');
     await expectProblem(
       await patch(staff.id, { alerts: 'off' }),
