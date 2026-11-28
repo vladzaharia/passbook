@@ -106,10 +106,6 @@ export const DEV_COPY = {
     status: 'Status',
   },
   slots: {
-    playground: {
-      title: 'Playground',
-      line: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
-    },
     guides: {
       title: 'Guides',
       meta: 'PassBook API guides.',
@@ -117,7 +113,6 @@ export const DEV_COPY = {
   },
   notFound: {
     title: 'Page not found',
-    line: 'Nothing lives at this address.',
     home: 'Home',
   },
   guides: {

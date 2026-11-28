@@ -252,7 +252,7 @@ export function renderSite(
       {
         url: PATHS.home,
         title: `${DEV_COPY.notFound.title} · ${base}`,
-        description: DEV_COPY.notFound.line,
+        description: DEV_COPY.notFound.title,
         body: fr.shell('', undefined, <NotFoundView />),
       },
       origin,
