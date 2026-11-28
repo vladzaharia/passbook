@@ -754,7 +754,7 @@ describe('template release API', () => {
     expect(await shared.json()).toMatchObject({ shared: true, orgId: null });
     expect((await share(true)).status).toBe(200);
     expect(await audits()).toEqual(['template.shared']);
-    expect((await share(false, authorB)).status).toBe(403);
+    expect((await share(false, authorB)).status).toBe(422);
     expect((await call(`/${v1.id}?orgId=${otherOrg.id}`, authorB)).status).toBe(200);
     const visible = await call(`?orgId=${otherOrg.id}`, authorB);
     expect(

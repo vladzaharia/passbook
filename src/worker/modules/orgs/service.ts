@@ -59,10 +59,10 @@ export async function requireOrg(ctx: ServiceContext, id: string): Promise<OrgRo
 
 async function checkIdentity(ctx: ServiceContext, orgId: string | null, identityId: string | null) {
   if (identityId && !(await identityUsableBy(ctx.env.DB, identityId, orgId)))
-    throw new ValidationError(
+    throw new NotFoundError(
       'Default identity not found for this organization.',
-      [{ path: 'defaultIdentityId', message: 'Unknown identity.' }],
       'IDENTITY_NOT_FOUND',
+      [{ path: 'defaultIdentityId', message: 'Unknown identity.' }],
     );
 }
 

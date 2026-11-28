@@ -282,7 +282,7 @@ describe('metrics api', () => {
       app.request(`/api/v1/metrics/platform/overview${q}`, { headers }, base);
     await expectProblem(await platform(fake.user()), 403, 'FORBIDDEN');
     expect((await platform(fake.apiKey())).status).toBe(403);
-    expect((await platform(fake.admin(), '?orgId=missing')).status).toBe(422);
+    expect((await platform(fake.admin(), '?orgId=missing')).status).toBe(404);
     const ok = await platform(fake.admin(), '?range=24h');
     expect(ok.status).toBe(200);
     expect(MetricsOverviewSchema.parse(await ok.json()).source).toBe('d1');

@@ -122,7 +122,11 @@ function closeOf(src: string, open: number): number {
 
 /** Class name to HTTP status, from `super(code, 404, ...)` and `extends` chains across the worker. */
 function statusByClass(sources: string[]): Map<string, number> {
-  const map = new Map<string, number>([['AppError', 500]]);
+  // FileRejectedError picks its status from the parser code (`statusOf`), so a literal at a `new` site is the 422 kind.
+  const map = new Map<string, number>([
+    ['AppError', 500],
+    ['FileRejectedError', 422],
+  ]);
   const classes = sources.flatMap((s) =>
     [...s.matchAll(/class (\w+) extends (\w+)[^{]*\{([\s\S]*?)\n\}/g)].map((m) => ({
       name: m[1] ?? '',

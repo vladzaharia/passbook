@@ -117,7 +117,7 @@ beforeAll(async () => {
 it('starter sources and clones refuse callers outside the org', async () => {
   const { org, outsider, call } = t;
   const unscoped = await call('/baked:starter-generic');
-  expect(unscoped.status).toBe(403);
+  expect(unscoped.status).toBe(422);
   expect(await unscoped.json()).toMatchObject({ code: 'ORG_REQUIRED' });
   expect((await call(`/baked:starter-generic?orgId=${org.id}`, undefined, outsider)).status).toBe(
     404,
