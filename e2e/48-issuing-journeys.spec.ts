@@ -128,7 +128,7 @@ test('the export: fix 3 rows, issue, undo', async ({ page }) => {
 
   // Issue with the email held, so the undo window is open.
   await page.getByRole('switch', { name: 'Email new holders' }).click();
-  await page.getByRole('button', { name: `Create ${ROWS} passes`, exact: true }).click();
+  await page.getByRole('button', { name: `Import ${ROWS}`, exact: true }).click();
   await expect(page.getByText(`${ROWS} done`)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(new RegExp(`until ${ROWS} emails go out`))).toBeVisible();
   await sweep(page, 'export-4-issued');
