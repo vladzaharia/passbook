@@ -3,6 +3,7 @@ import { tenantSql } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { readPart, writePart } from '../../platform/authority-include.ts';
 import { addOrgEntitlements } from '../../platform/entitlements.ts';
+import { RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import type { NewVersion } from './repo.ts';
 import { versionStatementSql } from './repo.ts';
 import { adoptionUnchanged } from './repo-grant-checks.ts';
@@ -135,6 +136,6 @@ export function addArchiveStale(g: Grant, keepIds: readonly string[], now: numbe
 /** The immutable version row (inserted once) and the read-back that proves its content is unchanged. */
 export function addVersion(g: Grant, v: NewVersion): void {
   const [insert, verify] = versionStatementSql(v);
-  g.include(writePart(`${insert.sql} AND {grant}`, insert.params));
+  g.include(writePart(`${insert.sql} AND {grant}`, insert.params, RACE_TEMPLATE_VERSION_INSERT));
   g.include(readPart(`${verify.sql} WHERE {grant}`, verify.params));
 }

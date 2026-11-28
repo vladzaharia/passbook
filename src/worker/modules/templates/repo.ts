@@ -250,7 +250,7 @@ export function versionStatementSql(v: NewVersion): [SqlText, SqlText] {
   ];
   return [
     {
-      sql: `${RACE_TEMPLATE_VERSION_INSERT} INSERT INTO template_versions
+      sql: `INSERT INTO template_versions
          (template_id, version, build_key, manifest, pass_json, assets, report, created_by, created_at)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
        WHERE NOT EXISTS (SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?)
@@ -281,7 +281,9 @@ export function versionStatementSql(v: NewVersion): [SqlText, SqlText] {
 
 /** Both statements belong in the same batch, before any dependent release writes. */
 export function insertVersionStmts(db: D1Database, v: NewVersion): D1PreparedStatement[] {
-  return versionStatementSql(v).map(({ sql, params }) => stmt(db, sql, params));
+  return versionStatementSql(v).map(({ sql, params }, i) =>
+    stmt(db, i === 0 ? `${RACE_TEMPLATE_VERSION_INSERT} ${sql}` : sql, params),
+  );
 }
 
 export { orgIdentity as getOrgName } from '../orgs/repo.ts';

@@ -8,7 +8,7 @@ import { writePart } from '../../platform/authority-include.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
-import { RACE_TEMPLATE_CANDIDATE_INSERT } from '../scan/race-tags.ts';
+import { RACE_TEMPLATE_CANDIDATE_INSERT, RACE_TEMPLATE_VERSION_INSERT } from '../scan/race-tags.ts';
 import type { ResolvedBase } from './fork-base.ts';
 import {
   APPLE_ADAPTER_CAPABILITIES,
@@ -25,7 +25,7 @@ import {
   upstreamActive,
 } from './repo-fork-update-checks.ts';
 import { type ForkBase, writeLineage } from './repo-forks.ts';
-import { CANDIDATE_COLUMNS, candidateValues } from './repo-release-write.ts';
+import { CANDIDATE_COLUMNS, candidateValues } from './repo-release-columns.ts';
 import type { CandidateRow } from './repo-releases.ts';
 import { type VersionHashes, versionHashesSql } from './repo-version-hashes.ts';
 
@@ -230,7 +230,7 @@ export async function commitMerge(
   const g = templateMergeGrant(ctx, u.orgId, { checks: fences(u, state), target: u.id });
   const now = ctx.clock.now();
   const [insert] = versionStatementSql(m.version);
-  g.include(writePart(`${insert.sql} AND {grant}`, insert.params));
+  g.include(writePart(`${insert.sql} AND {grant}`, insert.params, RACE_TEMPLATE_VERSION_INSERT));
   const h = versionHashesSql(u.templateId, m.version.version, m.hashes, now);
   g.include(writePart(`${h.sql} AND {grant}`, h.params));
   bases(g, ctx, u, m.version.version, [
