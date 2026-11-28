@@ -1,6 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { IDP_COPY } from '@/shared/copy/idp.ts';
 import { STEP_UP_COPY } from '@/shared/copy/step-up.ts';
@@ -252,6 +252,27 @@ describe('Groups and Claims', () => {
         dismissStepUp();
       }
     });
+  });
+
+  it('asks to sign in when the window regains focus past the step-up window', async () => {
+    const signedIn = Date.now() - 9 * 60_000;
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      handlers: {
+        ...base,
+        '/api/v1/session': () => json({ ...sessionFixture('admin', 'oidc'), authTime: signedIn }),
+        '/api/v1/users/u2/access': () => json(access()),
+        '/api/v1/users/u2/claims': () => json({ claims: {}, otherKeys: 0 }),
+      },
+    });
+    expect(await screen.findByText('Add claim')).toBeInTheDocument();
+    const real = Date.now;
+    vi.spyOn(Date, 'now').mockImplementation(() => real() + 2 * 60_000);
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
+    expect(await screen.findByText(IDP_COPY.claimsStale)).toBeInTheDocument();
+    vi.restoreAllMocks();
   });
 
   it('lists manual groups and claims, and adds a typed claim', async () => {

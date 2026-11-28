@@ -29,3 +29,10 @@ export function canUseConsole(
 
 /** How recent a sign-in a sensitive action asks for. */
 export const STEP_UP_SECONDS = 600;
+
+/** Whether a sign-in at `authTime` (ms; null when the session has none) is within `maxAgeSec` of `now`. */
+export const isRecentSignIn = (
+  authTime: number | null | undefined,
+  now: number,
+  maxAgeSec: number,
+): boolean => authTime != null && now - authTime <= maxAgeSec * 1000;

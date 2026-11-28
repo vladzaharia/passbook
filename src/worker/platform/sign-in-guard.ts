@@ -2,13 +2,11 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { safeNextPath } from '../../shared/next.ts';
 import {
   canUseConsole,
+  isRecentSignIn,
   isStrongAmr,
   type SignInLevel,
   STEP_UP_SECONDS,
 } from '../../shared/sign-in.ts';
-
-export { STEP_UP_SECONDS };
-
 import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import type { SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
@@ -21,6 +19,8 @@ import {
 } from './errors.ts';
 import { innerOf } from './router-scope.ts';
 import { serviceContext } from './service-context.ts';
+
+export { STEP_UP_SECONDS };
 
 // A session guard registers the level it enforces, so the route inventory test and the OpenAPI
 // document (`x-sign-in`) read it from one place. Deny by default: an undeclared session guard is `idp`.
@@ -134,7 +134,7 @@ export function assertStepUp(
   maxAgeSec: number,
 ): void {
   const now = serviceContext(c).clock.now();
-  if (session.authTime != null && now - session.authTime <= maxAgeSec * 1000) return;
+  if (isRecentSignIn(session.authTime, now, maxAgeSec)) return;
   const next = encodeURIComponent(stepUpNext(c));
   throw new StepUpRequiredError(
     session.amr === 'breakglass'

@@ -3137,6 +3137,14 @@
     "note": "Scans report passState (voided, expired or suspended) when a tap-out was recorded for a pass in that state."
   },
   {
+    "key": "GET /api/v1/session 200|0.authTime: field added",
+    "class": "additive",
+    "operationId": "session.getSession",
+    "op": "GET /api/v1/session",
+    "change": "200|0.authTime: field added",
+    "note": "The session reports authTime, when the sign-in happened in ms, or null for an email link."
+  },
+  {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
     "class": "additive",
     "operationId": "session.getSession",
