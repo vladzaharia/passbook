@@ -26,14 +26,14 @@ async function bound() {
 
 describe('tag source', () => {
   it('reader and keyboard reads resolve and act exactly like native ones', async () => {
-    const { tag } = await bound();
+    const { tag, pass } = await bound();
     const s = await f.desk();
     const base = await door.post(s, '/resolve', tag);
     expect(base).toMatchObject({ kind: 'ready' });
     for (const source of SOURCES) {
       const read = { ...tag, source };
       const out = await door.post(s, '/resolve', read);
-      expect(out).toMatchObject({ kind: base.kind, card: { passId: base.card.passId } });
+      expect(out).toMatchObject({ kind: base.kind, card: { passId: pass.id } });
       expect(await door.post(s, '/actions', read)).toMatchObject({ kind: 'ok' });
     }
   });
