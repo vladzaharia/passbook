@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { DeviceRoleSchema } from './contracts/scanners.ts';
 import {
-  type ScanDeviceCapabilities,
   type ReportedScanDeviceCapabilities,
+  type ScanDeviceCapabilities,
   type ScanSurface,
   type ScanSurfaceChoice,
   ScanSurfaceChoiceSchema,
