@@ -1,6 +1,6 @@
 import { beforeAll, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -26,7 +26,7 @@ async function racePurpose<T>(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(commitBatchSql)) return prepared;
+          if (!sql.includes(RACE_GRANT_INSERT)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

@@ -13,3 +13,8 @@ export const RACE_HISTORY_PAGE = '/* race:history-page */';
 export const RACE_STAFF_STARTS = '/* race:staff-starts */';
 /** A RegExp matching a tag, for the interceptors that take one. */
 export const tagRe = (tag: string) => new RegExp(tag.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'));
+// Group B
+export const RACE_PRESENCE_WRITE = '/* race:presence-write */';
+export const RACE_SCAN_CLAIM = '/* race:scan-claim */';
+export const RACE_SCAN_UNDO = '/* race:scan-undo */';
+export const RACE_GATE_SNAPSHOT = '/* race:gate-snapshot */';

@@ -6,8 +6,8 @@ import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { act, CHECK_IN, kit, out, tpl } from './act-test-fixtures.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import {
-  actionGateInsertSql,
   scanByIdempotencyKey,
   scanEventIds,
   scanGateRows,
@@ -45,7 +45,7 @@ export async function raceGate(
   input: unknown,
   mutate: (db: D1Database) => Promise<unknown>,
   over: Record<string, unknown> = {},
-  statementSql = actionGateInsertSql,
+  RACE_TAG = RACE_GRANT_INSERT,
   skipBatches = 0,
   send: typeof act = act,
 ): Promise<Response> {
@@ -58,7 +58,7 @@ export async function raceGate(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(statementSql)) return prepared;
+          if (!sql.includes(RACE_TAG)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')

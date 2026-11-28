@@ -4,7 +4,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, retireCredential, rows, tpl } from './act-test-fixtures.ts';
 import { credentialTombstoneRefsForInput } from './credential-input.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import { codeOf, key, startScanCredentialTransfer } from './test-kit.ts';
 
 export function registerAuthorityIdentity() {
@@ -48,7 +48,7 @@ export function registerAuthorityIdentity() {
               await set(db, identity.team_identifier, identity.pass_type_identifier);
           },
           { idempotencyKey: key() },
-          commitBatchSql,
+          RACE_GRANT_INSERT,
         );
         expect(response.status).toBe(200);
         expect(await out(response)).toMatchObject({ kind: 'refused', reason: 'voided' });
@@ -82,7 +82,7 @@ export function registerAuthorityIdentity() {
         }
       },
       { idempotencyKey },
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     await expectBlocked(response, pass.id, idempotencyKey, 'SCAN_PASS_CHANGED');
   });
@@ -121,7 +121,7 @@ export function registerAuthorityIdentity() {
       codeOf(pass),
       (db) => run(db, "UPDATE scanners SET device_role='monitor' WHERE id=?", [s.id]),
       { idempotencyKey },
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     await expectBlocked(response, pass.id, idempotencyKey, 'SCAN_CONFIG_CHANGED');
   });
@@ -141,7 +141,7 @@ export function registerAuthorityIdentity() {
             ? run(db, 'UPDATE passes SET test_data_quarantined=1 WHERE id=?', [pass.id])
             : run(db, "UPDATE scanners SET device_role='monitor' WHERE id=?", [s.id]),
         { idempotencyKey },
-        commitBatchSql,
+        RACE_GRANT_INSERT,
       );
       // The winning check-in stays; the refused heads-up leaves no gate change, event or claim.
       expect(response.status).toBe(409);
@@ -178,7 +178,7 @@ export function registerAuthorityIdentity() {
       codeOf(pass),
       (db) => run(db, 'UPDATE scanners SET revoked_at=? WHERE id=?', [kit.clock.now(), scanner.id]),
       { idempotencyKey },
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     // scanners.credential_epoch moved: re-pair, and nothing about the other-mode pass is revealed.
     await expectBlocked(response, pass.id, idempotencyKey, 'SCANNER_REPAIR');
@@ -200,7 +200,7 @@ export function registerAuthorityIdentity() {
       input,
       (db) => retireCredential(db, pass.id, otherModeCredentialRef),
       { idempotencyKey },
-      commitBatchSql,
+      RACE_GRANT_INSERT,
     );
     // The retired credential is not authority: the generic cross-mode reason is returned, with no pass detail.
     expect(await out(response)).toMatchObject({

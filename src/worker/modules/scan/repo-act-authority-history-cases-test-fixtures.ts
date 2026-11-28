@@ -3,7 +3,7 @@ import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { expectAdmitted, expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 export function registerAuthorityHistory() {
@@ -192,7 +192,7 @@ export function registerAuthorityHistory() {
         codeOf(pass),
         (db) => run(db, `UPDATE passes SET ${set} WHERE id=?`, [pass.id]),
         { idempotencyKey },
-        commitBatchSql,
+        RACE_GRANT_INSERT,
       );
       if (refused) await expectBlocked(response, pass.id, idempotencyKey, 'SCAN_PASS_CHANGED');
       else expect(response.status).toBe(200);

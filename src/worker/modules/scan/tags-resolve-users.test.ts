@@ -4,6 +4,7 @@ import { first, run } from '../../platform/db.ts';
 import { accessTemplate, makeDoor } from './access-test-fixtures.ts';
 import { act, CHECK_IN, HOUR, kit, setupActionFixture, tpl } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import {
   actTag,
   bindTag,
@@ -162,7 +163,7 @@ describe('a user-bound tag picks one pass', () => {
     const idempotencyKey = key();
     const { result: failed, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       async () => {
         throw new Error('transient D1 failure');
       },
@@ -196,7 +197,7 @@ describe('a user-bound tag picks one pass', () => {
     );
     const { result, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       (db) =>
         db.batch([
           db

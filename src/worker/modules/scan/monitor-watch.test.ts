@@ -12,6 +12,7 @@ import {
 } from './occupancy/whos-in-test-fixtures.ts';
 import { scanAt, trackedZone } from './occupancy-scan-test-fixtures.ts';
 import { overrideAs, signIn } from './overrides-test-fixtures.ts';
+import { RACE_SCAN_CLAIM } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(async () => {
@@ -370,7 +371,7 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
     const { result, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scans|UPDATE scan_gates|scan_presence/,
+      RACE_SCAN_CLAIM,
       async (db) => {
         await run(db, "UPDATE scanning_sessions SET status = 'paused' WHERE id = ?", [
           r.door.sessionId,

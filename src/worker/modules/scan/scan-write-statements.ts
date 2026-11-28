@@ -3,7 +3,7 @@ import { exists, type GrantCond, notExists } from '../../platform/authority-cond
 import { gte, lte, ne, orNull, type WhereValue } from '../../platform/authority-expr.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { AdmissionPlan } from './admission-types.ts';
-import { RACE_GATE_WRITE } from './race-tags.ts';
+import { RACE_GATE_WRITE, RACE_PRESENCE_WRITE } from './race-tags.ts';
 import type { GateRule } from './repo-gates.ts';
 import type { ScanGateSnapshot, ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { wonGate } from './scan-write-grant.ts';
@@ -233,9 +233,15 @@ export function writeAdmissionRecord(
     scanId,
   ];
   const when = [wonGate(gate, scanId)];
-  if (!before) return g.upsert('scan_presence', columns, values, { when, doNothing: true });
+  if (!before)
+    return g.upsert('scan_presence', columns, values, {
+      when,
+      doNothing: true,
+      tag: RACE_PRESENCE_WRITE,
+    });
   return g.upsert('scan_presence', columns, values, {
     when,
+    tag: RACE_PRESENCE_WRITE,
     copy: {
       prev_state: 'state',
       prev_tracking: 'tracking',

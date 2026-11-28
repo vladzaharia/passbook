@@ -11,6 +11,7 @@ import type { ScanActor } from '../actor.ts';
 import { localDay, planCounts } from '../counts.ts';
 import { policyActor } from '../dto.ts';
 import { blankOutcome, undoWindowMinutes } from '../outcome.ts';
+import { RACE_SCAN_UNDO } from '../race-tags.ts';
 import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import type { ScanRow } from '../repo-scans.ts';
 import { addOccupancyUndo, readOccupancyUndo } from '../repo-undo-occupancy.ts';
@@ -118,6 +119,7 @@ export async function undoDeskMarkOut(
   });
   addOccupancyUndo(g, c, occupancy);
   g.update('scans', {
+    tag: RACE_SCAN_UNDO,
     set: { undone_by: id, undone_at: now },
     where: {
       id: t.id,

@@ -14,6 +14,7 @@ import {
 } from './access-test-fixtures.ts';
 import { HOUR, kit, MINUTE, out, setupActionFixture } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_GATE_WRITE } from './race-tags.ts';
 import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
@@ -120,7 +121,7 @@ describe('access: the visit gate under concurrency', () => {
     const seen: { second?: ScanOutcome } = {};
     const { result: first, fired } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       async () => {
         seen.second = await grantOf(b.headers, pass);
       },
@@ -144,7 +145,7 @@ describe('access: the visit gate under concurrency', () => {
     const seen: { second?: ScanOutcome } = {};
     const { result: first } = await beforeBatch(
       kit.env,
-      /INSERT INTO scan_gates/,
+      RACE_GATE_WRITE,
       async () => {
         seen.second = await grantOf(b.headers, pass);
       },

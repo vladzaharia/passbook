@@ -4,6 +4,7 @@ import { stmt } from '../../platform/db.ts';
 import type { OccupancyRow } from './occupancy/repo.ts';
 import { groupRowsRead } from './occupancy/repo-reads.ts';
 import { addUndo } from './occupancy/service.ts';
+import { RACE_SCAN_UNDO } from './race-tags.ts';
 import { occZonesOf, orgZonesStmt } from './repo-access.ts';
 import { orgTimeZoneOf, orgTimeZoneStmt } from './repo-org-clock.ts';
 import type { OccupancyUndo, UndoCommit } from './repo-undo-types.ts';
@@ -51,6 +52,7 @@ export function addOccupancyUndo(g: Grant, c: UndoCommit, o: OccupancyUndo): voi
   for (const id of o.group)
     if (id !== c.target.id)
       g.update('scans', {
+        tag: RACE_SCAN_UNDO,
         set: { undone_by: c.id, undone_at: now },
         where: { id, pass_id: c.target.passId, undone_by: null, state: 'done', outcome: 'ok' },
         require: 'one',

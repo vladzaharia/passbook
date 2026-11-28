@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
+import { RACE_SCAN_UNDO } from './race-tags.ts';
 import { codeOf, key, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
@@ -172,7 +173,7 @@ describe('only a lost credential unpairs a scanner mid-request', () => {
     const undo = () => kit.post(s.headers, `/scans/${done.scanId}/undo`, { idempotencyKey: key() });
     const { result, fired } = await beforeBatch(
       kit.env,
-      /UPDATE scans SET undone_by/,
+      RACE_SCAN_UNDO,
       async (db) => void (await pairCode(s.id)(db)),
       undo,
     );

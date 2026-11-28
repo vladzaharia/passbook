@@ -2,7 +2,7 @@ import { expect } from 'vitest';
 import { first } from '../../platform/db.ts';
 import type { ActionRequest, Scenario } from './action-gate-stale-budget-core-test-fixtures.ts';
 import { effects } from './action-gate-stale-budget-core-test-fixtures.ts';
-import { commitBatchSql } from './repo-act-support-test-fixtures.ts';
+import { RACE_GRANT_INSERT } from './race-tags.ts';
 import { pinCounts, seedPinCounter } from './repo-action-gate-stale-budget-test-fixtures.ts';
 import { PIN_PERSON_WINDOW_MS, PIN_SCANNER_WINDOW_MS } from './staff-pin.ts';
 
@@ -47,7 +47,7 @@ export async function raceApproved(
       if (prop === 'prepare')
         return (sql: string) => {
           const prepared = target.prepare(sql);
-          if (!sql.includes(commitBatchSql)) return prepared;
+          if (!sql.includes(RACE_GRANT_INSERT)) return prepared;
           return new Proxy(prepared, {
             get(statement, member) {
               if (member === 'bind')
