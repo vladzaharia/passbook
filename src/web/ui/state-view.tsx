@@ -223,13 +223,22 @@ export function StateView({
           className={cn(
             titleClassName ??
               (size === 'stage' || size === 'hosted' || heading
-                ? 'text-2xl font-semibold tracking-[-0.015em] text-fg-strong'
-                : 'text-sm font-medium text-fg-strong'),
+                ? 'text-2xl font-semibold tracking-[-0.015em] text-(--pk-text-strong)'
+                : 'text-sm font-medium text-(--pk-text-strong)'),
           )}
         >
           {title}
         </Title>
-        {line ? <p className="max-w-[65ch] text-sm text-fg-muted">{line}</p> : null}
+        {line ? (
+          <p
+            className={cn(
+              'max-w-[65ch] text-sm',
+              tone === 'neutral' ? 'text-fg-muted' : 'text-(--pk-slate-fg)',
+            )}
+          >
+            {line}
+          </p>
+        ) : null}
       </div>
       {action || secondary ? (
         // Below sm every action is the row's width, so two states line up.

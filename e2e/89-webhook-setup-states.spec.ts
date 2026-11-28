@@ -26,6 +26,8 @@ async function check(page: Page, name: string) {
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
+      // A resize remounts the state and its entrance runs again; axe reads colours after it.
+      await page.waitForTimeout(1200);
       expect(await serious(page), `${name} ${width} ${scheme}`).toEqual([]);
     }
   }
