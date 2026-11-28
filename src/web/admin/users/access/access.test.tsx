@@ -2,7 +2,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, renderApp } from '@/web/lib/test-utils.tsx';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
+import { STEP_UP_COPY } from '@/shared/copy/step-up.ts';
+import { dismissStepUp } from '@/web/lib/step-up.ts';
+import { json, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
 
 const NOW = 1_700_000_000_000;
 const detail = {
@@ -221,24 +224,34 @@ describe('Offboard', () => {
 });
 
 describe('Groups and Claims', () => {
-  it('does not ask for claims on a break-glass or stale session', async () => {
-    const asked: string[] = [];
-    const claims = () => {
-      asked.push('claims');
-      return json({ claims: {}, otherKeys: 0 });
-    };
-    await renderApp('/admin/users/u2', {
-      session: 'admin',
-      amr: 'breakglass',
-      handlers: {
-        ...base,
-        '/api/v1/users/u2/access': () => json(access()),
-        '/api/v1/users/u2/claims': claims,
-      },
+  describe.each([
+    ['fresh', 'oidc', 0, 'Add claim'],
+    ['stale', 'oidc', 11 * 60_000, IDP_COPY.claimsStale],
+    ['break-glass', 'breakglass', 0, IDP_COPY.claimsBreakGlass],
+  ] as const)('claims on a %s session', (state, amr, age, expected) => {
+    it('asks only when the session qualifies', async () => {
+      const asked: string[] = [];
+      await renderApp('/admin/users/u2', {
+        session: 'admin',
+        handlers: {
+          ...base,
+          '/api/v1/session': () =>
+            json({ ...sessionFixture('admin', amr), authTime: Date.now() - age }),
+          '/api/v1/users/u2/access': () => json(access()),
+          '/api/v1/users/u2/claims': () => {
+            asked.push('claims');
+            return json({ claims: {}, otherKeys: 0 });
+          },
+        },
+      });
+      expect(await screen.findByText(expected)).toBeInTheDocument();
+      expect(asked).toEqual(state === 'fresh' ? ['claims'] : []);
+      if (state === 'stale') {
+        await userEvent.setup().click(screen.getByRole('button', { name: IDP_COPY.claimsSignIn }));
+        expect(await screen.findByText(STEP_UP_COPY.title)).toBeInTheDocument();
+        dismissStepUp();
+      }
     });
-    await screen.findByRole('heading', { name: 'Polaris ID access' });
-    expect(screen.queryByRole('heading', { name: 'Claims' })).toBeNull();
-    expect(asked).toEqual([]);
   });
 
   it('lists manual groups and claims, and adds a typed claim', async () => {

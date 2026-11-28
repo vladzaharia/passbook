@@ -2,7 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { IDP_COPY } from '@/shared/copy/idp.ts';
+import { json, problem, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
 
 const group = (over: Record<string, unknown>) => ({
   key: 'partners',
@@ -241,22 +242,31 @@ describe('Group detail', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('does not ask for claims on a break-glass session', async () => {
-    const asked: string[] = [];
-    await renderApp('/admin/platform/groups/partners', {
-      session: 'admin',
-      amr: 'breakglass',
-      handlers: {
-        ...detail(),
-        '/api/v1/platform/idp/groups/partners/claims': () => {
-          asked.push('claims');
-          return json({ claims: {}, otherKeys: 0 });
+  describe.each([
+    ['fresh', 'oidc', 0, 'passbook_plan'],
+    ['stale', 'oidc', 11 * 60_000, IDP_COPY.claimsStale],
+    ['break-glass', 'breakglass', 0, IDP_COPY.claimsBreakGlass],
+  ] as const)('claims on a %s session', (state, amr, age, expected) => {
+    it('asks only when the session qualifies', async () => {
+      const asked: string[] = [];
+      await renderApp('/admin/platform/groups/partners', {
+        session: 'admin',
+        handlers: {
+          ...detail(),
+          '/api/v1/session': () =>
+            json({ ...sessionFixture('admin', amr), authTime: Date.now() - age }),
+          '/api/v1/platform/idp/groups/partners/claims': () => {
+            asked.push('claims');
+            return json({
+              claims: { passbook_plan: { type: 'text', value: 'gold' } },
+              otherKeys: 0,
+            });
+          },
         },
-      },
+      });
+      expect(await screen.findByText(expected)).toBeInTheDocument();
+      expect(asked).toEqual(state === 'fresh' ? ['claims'] : []);
     });
-    expect(await screen.findByRole('heading', { name: 'Partner apps' })).toBeInTheDocument();
-    expect(screen.queryByText('Claims')).toBeNull();
-    expect(asked).toEqual([]);
   });
 
   it('sets a typed claim', async () => {
