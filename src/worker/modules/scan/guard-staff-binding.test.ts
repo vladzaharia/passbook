@@ -4,6 +4,7 @@ import { type makeEnv, makeScanner, makeScanStaff } from '../../../../test/helpe
 import type { AppBindings } from '../../platform/context.ts';
 import { all, run } from '../../platform/db.ts';
 import { code, createGuardHarness, get } from './guard-test-fixtures.ts';
+import { RACE_STAFF_UNBIND } from './race-tags.ts';
 
 const harness = createGuardHarness();
 let { f, clock, orgId } = harness;
@@ -148,7 +149,7 @@ describe('requireScanActor: staff binding', () => {
         if (prop === 'prepare')
           return (sql: string) => {
             const statement = target.prepare(sql);
-            if (/UPDATE\s+scanners\s+SET\s+staff_id\s*=\s*\?/i.test(sql)) marked.push(statement);
+            if (sql.includes(RACE_STAFF_UNBIND)) marked.push(statement);
             return statement;
           };
         const value = Reflect.get(target, prop, target);

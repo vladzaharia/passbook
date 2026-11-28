@@ -3,6 +3,7 @@ import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { stmt } from '../../platform/db.ts';
+import { RACE_STAFF_PIN_ROTATE } from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -189,6 +190,7 @@ export const addStaffPinRotate = (
   now: number,
 ): GrantedStatement =>
   g.update('scan_staff', {
+    tag: RACE_STAFF_PIN_ROTATE,
     set: {
       pin_hash: pinHash,
       pin_tag: pinTag,

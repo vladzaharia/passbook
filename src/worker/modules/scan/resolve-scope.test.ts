@@ -6,6 +6,7 @@ import { normalizeLookup } from '../../../shared/scan-lookup.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
+import { RACE_GATES_OF_PASS } from './race-tags.ts';
 import { issueUnderOlderAdapter } from './release-policy-test-fixtures.ts';
 import { installVersion } from './repo-resolve-test-fixtures.ts';
 import {
@@ -208,8 +209,7 @@ describe('resolve: projection revalidation', () => {
           if (prop === 'prepare')
             return (sql: string) => {
               const statement = target.prepare(sql);
-              if (!sql.includes('SELECT action_id, scope, state, last_at FROM scan_gates'))
-                return statement;
+              if (!sql.includes(RACE_GATES_OF_PASS)) return statement;
               return new Proxy(statement, {
                 get(inner, member) {
                   if (member === 'bind')

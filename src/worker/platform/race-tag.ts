@@ -4,6 +4,12 @@ export const RACE_GRANT_INSERT = '/* race:grant */';
 /** Inert SQL comment on the credential keyset initializer. */
 export const RACE_KEYSET_INSERT = '/* race:keyset-insert */';
 
+/** Inert SQL comment on the pass row insert. */
+export const RACE_PASS_INSERT = '/* race:pass-insert */';
+
+/** Inert SQL comment on the fixed-window counter increment (`bump`). */
+export const RACE_COUNTER_BUMP = '/* race:counter-bump */';
+
 const LEADING_TAG = /^\/\* race:[a-z0-9-]+ \*\/ ?/;
 
 /** Splits a leading inert race marker from SQL, so a lint that refuses comments can check the rest. */

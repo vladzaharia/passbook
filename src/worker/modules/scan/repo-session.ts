@@ -1,10 +1,11 @@
 import { containsMatch, stmt } from '../../platform/db.ts';
+import { RACE_ORG_NAME } from './race-tags.ts';
 import { type ScanReadAuthority, scanRead } from './repo-read-authority.ts';
 
 type Db = D1Database;
 
 export const orgNameStmt = (db: Db, orgId: string) =>
-  stmt(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
+  stmt(db, `${RACE_ORG_NAME} SELECT name FROM orgs WHERE id = ?`, [orgId]);
 
 export const orgBrandingStmt = (db: Db, orgId: string) =>
   stmt(db, 'SELECT branding FROM orgs WHERE id = ?', [orgId]);

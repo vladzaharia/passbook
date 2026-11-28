@@ -5,6 +5,7 @@ import { first } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { credentialKeyOf } from './key-credentials.ts';
+import { RACE_PAIR_CODE, RACE_PAIR_CREDENTIAL } from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -60,6 +61,7 @@ export const addPairCode = (
   restart: boolean,
 ): GrantedStatement =>
   g.update('scanners', {
+    tag: RACE_PAIR_CODE,
     set: {
       pair_code_hash: hash,
       pair_expires_at: expiresAt,
@@ -107,7 +109,12 @@ export const addAdminCredential = (
   kind: string,
   c: Credential,
 ): GrantedStatement =>
-  g.update('scanners', { set: installed(c), where: { id, kind }, require: 'one' });
+  g.update('scanners', {
+    tag: RACE_PAIR_CREDENTIAL,
+    set: installed(c),
+    where: { id, kind },
+    require: 'one',
+  });
 
 /** An issued code authorizes redemption without a session: only while the code is live. */
 export const addCodeCredential = (
@@ -117,6 +124,7 @@ export const addCodeCredential = (
   c: Credential,
 ): GrantedStatement =>
   g.update('scanners', {
+    tag: RACE_PAIR_CREDENTIAL,
     set: installed(c),
     where: {
       id,

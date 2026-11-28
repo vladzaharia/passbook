@@ -1,5 +1,6 @@
 import { deleteInBatches } from './batched.ts';
 import { first, run, type SqlValue, stmt } from './db.ts';
+import { RACE_COUNTER_BUMP } from './race-tag.ts';
 
 /** Fixed-window counters in D1 (the `counters` table). The only place that table is written. */
 
@@ -12,7 +13,7 @@ export async function bump(
 ): Promise<number> {
   const row = await first<{ count: number }>(
     db,
-    `INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)
+    `${RACE_COUNTER_BUMP} INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)
      ON CONFLICT (key, window_start) DO UPDATE SET count = count + excluded.count RETURNING count`,
     [key, windowStart, by],
   );

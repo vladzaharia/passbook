@@ -3,6 +3,7 @@ import type { ScannerFixture } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { RACE_EPOCH_SESSION, RACE_TAG_BIND } from './race-tags.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
@@ -134,7 +135,7 @@ describe('admission by session hours', () => {
     const { card } = await f.pass();
     const { result, fired } = await beforeBatch(
       f.kit.env,
-      /INSERT INTO tag_bindings|INSERT INTO nfc_tags/i,
+      RACE_TAG_BIND,
       (db) =>
         run(
           db,
@@ -310,7 +311,7 @@ describe('closed sessions, more doors', () => {
     f.kit.clock.set(at(3, 9));
     const { result, fired } = await beforeBatch(
       f.kit.env,
-      /FROM scanning_sessions\s+WHERE id=\? AND org_id=\? AND mode=\?/i,
+      RACE_EPOCH_SESSION,
       (db) =>
         run(db, 'UPDATE scanning_sessions SET hold = ?, updated_at = updated_at + 1 WHERE id = ?', [
           JSON.stringify({ state: 'closed', until: at(10, 8) }),

@@ -200,7 +200,8 @@ export class Grant {
       'inserting children',
       keyMayWrite(table.toLowerCase()),
       table,
-      (t, pin, keyed) => buildInsertJoined(this.id, this.scope, t, options, pin, keyed),
+      (t, pin, keyed) =>
+        tagged(buildInsertJoined(this.id, this.scope, t, options, pin, keyed), options.tag),
       'insert',
     );
   }

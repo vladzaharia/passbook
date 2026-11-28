@@ -2,13 +2,15 @@
 /** Runs `mutate` on the real database once, just before the first batch holding a statement that matches. */
 export async function beforeBatch<T>(
   env: { DB: D1Database },
-  match: RegExp,
+  match: RegExp | string,
   mutate: (db: D1Database) => Promise<unknown>,
   call: () => Promise<T>,
 ): Promise<{ result: T; fired: boolean }> {
   const original = env.DB;
   const sqlOf = new WeakMap<D1PreparedStatement, string>();
   let fired = false;
+  const matches = (sql: string) =>
+    typeof match === 'string' ? sql.includes(match) : match.test(sql);
   env.DB = new Proxy(original, {
     get(target, property) {
       if (property === 'prepare')
@@ -27,7 +29,7 @@ export async function beforeBatch<T>(
           });
       if (property === 'batch')
         return async (statements: D1PreparedStatement[]) => {
-          if (!fired && statements.some((st) => match.test(sqlOf.get(st) ?? ''))) {
+          if (!fired && statements.some((st) => matches(sqlOf.get(st) ?? ''))) {
             fired = true;
             await mutate(original);
           }

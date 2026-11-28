@@ -1,6 +1,11 @@
 import { expect } from 'vitest';
 import type { AppEnv } from '../../platform/env.ts';
-import { RACE_EVENT_ROWS } from './race-tags.ts';
+import {
+  RACE_EVENT_CACHE_FILL,
+  RACE_EVENT_ROWS,
+  RACE_EVENT_TARGET,
+  RACE_KEYSET_INSERT,
+} from './race-tags.ts';
 
 export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
   /** Intervene before bootstrap/commit, or after the committing transaction has completed. */
@@ -42,7 +47,7 @@ export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
               );
             });
             const bootstrap = statements.some((statement) =>
-              /\bINSERT\s+INTO\s+credential_ref_keyset\b/i.test(sqlOf.get(statement) ?? ''),
+              (sqlOf.get(statement) ?? '').includes(RACE_KEYSET_INSERT),
             );
             if (
               !hits &&
@@ -98,13 +103,9 @@ export function createEventTenantRaceInterceptors(getEnv: () => AppEnv) {
             prop === method &&
             sql.includes(RACE_EVENT_ROWS);
           const targetRead =
-            phase === 'target' &&
-            prop === 'first' &&
-            /\bSELECT\s+org_id\s+AS\s+orgId,\s*mode\s+FROM\s+scan_events\s+WHERE\s+id/i.test(sql);
+            phase === 'target' && prop === 'first' && sql.includes(RACE_EVENT_TARGET);
           const cacheWrite =
-            phase === 'cache' &&
-            prop === 'run' &&
-            /\bUPDATE\s+scan_events\b[\s\S]*\bSET\s+expected\s*=/i.test(sql);
+            phase === 'cache' && prop === 'run' && sql.includes(RACE_EVENT_CACHE_FILL);
           if (rowRead || targetRead || cacheWrite) {
             return async (...values: unknown[]) => {
               if ((cacheWrite || (rowRead && phase === 'before-row')) && !intercepted) {

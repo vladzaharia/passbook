@@ -1,6 +1,7 @@
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { tenantSql } from '../../platform/authority-cond.ts';
 import { first } from '../../platform/db.ts';
+import { RACE_PASS_INSERT } from '../../platform/race-tag.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
 const OWNER_SQL = `(SELECT CASE WHEN count(*) = 1 THEN min(u.id) END FROM users u
@@ -114,6 +115,7 @@ export function grantPassInsert(
         ...(join ? [] : [tenantSql(`${OWNER_SQL} IS ?`, [row.holderEmail, row.id, ownerUserId])]),
       ],
       returning: ['id', 'owner_user_id'],
+      tag: RACE_PASS_INSERT,
     },
   );
 }

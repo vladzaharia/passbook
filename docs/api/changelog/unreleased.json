@@ -2441,6 +2441,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-health operation removed",
+    "class": "breaking",
+    "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-health",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/orgs/memberships/me 200.items[].capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.getOrgsMembershipsMe",
@@ -3127,6 +3135,14 @@
     "op": "GET /api/v1/scans/{id}",
     "change": "200.passState: field added",
     "note": "Scans report passState (voided, expired or suspended) when a tap-out was recorded for a pass in that state."
+  },
+  {
+    "key": "GET /api/v1/session 200|0.authTime: field removed",
+    "class": "breaking",
+    "operationId": "session.getSession",
+    "op": "GET /api/v1/session",
+    "change": "200|0.authTime: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
@@ -6367,6 +6383,14 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck operation removed",
+    "class": "breaking",
+    "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.capabilities[]: enum value \"logs:read\" added",

@@ -6,6 +6,7 @@ import { all, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
+import { RACE_DEVICE_DAY_CLEAR } from './race-tags.ts';
 import { type ScannerRow, scannerEpochsOf } from './repo-device.ts';
 import { STAFF_CODES } from './staff-statements.ts';
 
@@ -157,7 +158,11 @@ export const clearNamedDayStatement = (db: Db, staffId: string) =>
  * grant's own batch: it commits with a successful pairing and never on a refused one.
  */
 export const clearDeviceDayPart = (scannerId: string): GrantPart =>
-  writePart('DELETE FROM counters WHERE key = ? AND {grant}', [deviceDayKey(scannerId)]);
+  writePart(
+    'DELETE FROM counters WHERE key = ? AND {grant}',
+    [deviceDayKey(scannerId)],
+    RACE_DEVICE_DAY_CLEAR,
+  );
 
 /** A day's events for the admin digest, newest last. */
 export const digestEvents = (db: Db, since: number, until: number) =>

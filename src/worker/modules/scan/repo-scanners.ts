@@ -5,6 +5,7 @@ import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, prefixMatch, stmt } from '../../platform/db.ts';
 import { withinLimit } from '../../platform/entitlements.ts';
 import { templateVisibleSql, visibleBinds } from '../templates/repo-visibility.ts';
+import { RACE_EVENT_BY_ID } from './race-tags.ts';
 
 type Db = D1Database;
 
@@ -306,7 +307,7 @@ export const addScannerRevoke = (g: Grant, id: string, now: number): GrantedStat
 export const eventModeOf = (db: Db, orgId: string, id: string) =>
   first<{ mode: Mode; archived_at: number | null }>(
     db,
-    'SELECT mode, archived_at FROM scan_events WHERE id = ? AND org_id = ?',
+    `${RACE_EVENT_BY_ID} SELECT mode, archived_at FROM scan_events WHERE id = ? AND org_id = ?`,
     [id, orgId],
   );
 

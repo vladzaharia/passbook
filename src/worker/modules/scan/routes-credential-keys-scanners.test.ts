@@ -5,6 +5,7 @@ import { tenantOrgAccessRevision } from '../passes/repo-authority.ts';
 import { credentialKeysFixture, FORMAT } from './credential-keys-test-fixtures.ts';
 import { createPairing } from './pairing.ts';
 import { replaceTerminalToken } from './pairing-token.ts';
+import { RACE_COUNTER_BUMP } from './race-tags.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 
 const t = credentialKeysFixture();
@@ -390,7 +391,7 @@ describe('review probes', () => {
         get(target, prop) {
           if (prop === 'prepare')
             return (sql: string) =>
-              /INSERT INTO counters/.test(sql) ? hook(target.prepare(sql)) : target.prepare(sql);
+              sql.includes(RACE_COUNTER_BUMP) ? hook(target.prepare(sql)) : target.prepare(sql);
           const v = Reflect.get(target, prop);
           return typeof v === 'function' ? v.bind(target) : v;
         },

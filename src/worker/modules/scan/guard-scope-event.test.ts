@@ -13,6 +13,7 @@ import { run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createGuardHarness, get, scannerCsrf } from './guard-test-fixtures.ts';
 import { pairedSession } from './pairing-session.ts';
+import { RACE_EVENT_BY_ID } from './race-tags.ts';
 import { readScannerScope, readValidEventScope } from './repo-scope.ts';
 
 const harness = createGuardHarness();
@@ -190,11 +191,7 @@ describe('requireScanActor: scope: pinned events', () => {
             get(target, prop) {
               if (prop === 'prepare')
                 return (sql: string) =>
-                  target.prepare(
-                    sql.includes('FROM scan_events WHERE id = ? AND org_id = ?')
-                      ? `${sql} AND 0`
-                      : sql,
-                  );
+                  target.prepare(sql.includes(RACE_EVENT_BY_ID) ? `${sql} AND 0` : sql);
               const value = Reflect.get(target, prop, target);
               return typeof value === 'function' ? value.bind(target) : value;
             },

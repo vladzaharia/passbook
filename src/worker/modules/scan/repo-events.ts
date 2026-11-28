@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first, prefixMatch, type SqlValue } from '../../platform/db.ts';
-import { RACE_EVENT_ROWS } from './race-tags.ts';
+import { RACE_EVENT_ROWS, RACE_EVENT_TARGET } from './race-tags.ts';
 import { eventExpectedCountSql } from './repo-counts.ts';
 import { eventArrivedCountSql } from './repo-event-attendance.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -126,7 +126,7 @@ const toRow = (r: Raw): ConsoleEventRow => ({
 export async function getConsoleEventTarget(db: Db, id: string) {
   return first<{ orgId: string; mode: Mode }>(
     db,
-    'SELECT org_id AS orgId, mode FROM scan_events WHERE id = ?',
+    `${RACE_EVENT_TARGET} SELECT org_id AS orgId, mode FROM scan_events WHERE id = ?`,
     [id],
   );
 }
