@@ -1,5 +1,5 @@
 {
-  "area-templates": "<path d=\"M11.5 16h15a2.5 2.5 0 0 1 2.5 2.5v11a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 9 29.5v-11A2.5 2.5 0 0 1 11.5 16zM19 19L20.41 22.46L24.14 22.73L21.28 25.14L22.17 28.77L19 26.8L15.83 28.77L16.72 25.14L13.86 22.73L17.59 22.46Z\" fill=\"#16132B\" fill-rule=\"evenodd\"/>",
+  "area-templates": "<rect x=\"10.2\" y=\"15.7\" width=\"17.6\" height=\"16.6\" rx=\"2.4\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.4\"/><path d=\"M10.2 18.1A2.4 2.4 0 0 1 12.6 15.7H25.4A2.4 2.4 0 0 1 27.8 18.1V20.8H10.2Z\" fill=\"#16132B\"/><rect x=\"13\" y=\"23.4\" width=\"4.6\" height=\"6.2\" rx=\"0.8\" fill=\"#16132B\"/><path d=\"M20.6 24.4H24.8M20.6 28.6H24.8\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
   "templates": "<path d=\"M11 21.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1H11a1.5 1.5 0 0 1-1.5-1V23A1.5 1.5 0 0 1 11 21.5z\" fill=\"#16132B\"/><path d=\"M13.5 18.4v-1a1.6 1.6 0 0 1 1.6-1.6h11.8a1.6 1.6 0 0 1 1.6 1.6v9.4a1.6 1.6 0 0 1-1.6 1.6\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
   "all-23-blueprints": "<path d=\"M11 15.5h7a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 9.5 22v-5A1.5 1.5 0 0 1 11 15.5zM21.4 15.5h7a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 19.9 22v-5A1.5 1.5 0 0 1 21.4 15.5zM11 24.9h7a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 9.5 31.4v-5A1.5 1.5 0 0 1 11 24.9zM21.4 24.9h7a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 19.9 31.4v-5A1.5 1.5 0 0 1 21.4 24.9z\" fill=\"#16132B\"/>",
   "visual-designer": "<path d=\"M25.2 15.2L29.6 20.2L17.4 30.2L10 32L12.5 25Z\" fill=\"#16132B\"/>",
@@ -24,119 +24,119 @@
   "bulk-changes-per-day": "<path d=\"M10 18.3l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 16.8h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 24.2l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 22.7h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/><path d=\"M10 30.1l1.5 1.5 2.7-3\" fill=\"none\" stroke=\"#16132B\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17.2 28.6h10.8a1.4 1.4 0 0 1 0 2.8H17.2a1.4 1.4 0 0 1 0-2.8z\" fill=\"#16132B\"/>",
   "$fit": {
     "area-templates": {
-      "s": 1.125,
-      "tx": -0.9,
-      "ty": -3
+      "s": 1.48,
+      "tx": -4.12,
+      "ty": -12.52
     },
     "templates": {
-      "s": 1.01,
-      "tx": 0.73,
-      "ty": 0.16
+      "s": 1.472,
+      "tx": -4.78,
+      "ty": -11.74
     },
     "all-23-blueprints": {
-      "s": 1.034,
-      "tx": 0.11,
-      "ty": -1.02
+      "s": 1.45,
+      "tx": -4.56,
+      "ty": -12.09
     },
     "visual-designer": {
-      "s": 1.071,
-      "tx": -0.73,
-      "ty": -1.28
+      "s": 1.51,
+      "tx": -5.9,
+      "ty": -12.64
     },
     "boarding-pass-and-transit-ticket-style": {
-      "s": 1.125,
-      "tx": -1.04,
-      "ty": -3
+      "s": 1.537,
+      "tx": -5.4,
+      "ty": -13.89
     },
     "upload-your-own-template-files": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.494,
+      "tx": -4.39,
+      "ty": -12.86
     },
     "stamps-balances-and-packs": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.48,
+      "tx": -4.12,
+      "ty": -12.52
     },
     "expiry-and-term-rules": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.644,
+      "tx": -7.24,
+      "ty": -16.46
     },
     "show-on-the-lock-screen-near-a-time": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.741,
+      "tx": -9.08,
+      "ty": -18.78
     },
     "show-on-the-lock-screen-near-a-place": {
-      "s": 1.046,
-      "tx": 0.6,
-      "ty": -1
+      "s": 1.744,
+      "tx": -9.14,
+      "ty": -18.68
     },
     "beacons": {
-      "s": 1.136,
-      "tx": -1.11,
-      "ty": -3.26
+      "s": 1.465,
+      "tx": -3.84,
+      "ty": -12.16
     },
     "several-events-or-dates-on-one-pass": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.48,
+      "tx": -4.12,
+      "ty": -12.52
     },
     "bundles-for-groups-and-families": {
-      "s": 0.975,
-      "tx": 1.95,
-      "ty": 0.82
+      "s": 1.626,
+      "tx": -6.89,
+      "ty": -15.66
     },
     "photo-on-the-pass": {
-      "s": 1.125,
-      "tx": -0.9,
-      "ty": -3
+      "s": 1.48,
+      "tx": -4.12,
+      "ty": -12.52
     },
     "move-a-pass-to-a-new-holder": {
-      "s": 1.084,
-      "tx": -0.12,
-      "ty": -2.02
+      "s": 1.541,
+      "tx": -5.28,
+      "ty": -13.98
     },
     "void-and-remove-from-the-phone": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.741,
+      "tx": -9.08,
+      "ty": -18.78
     },
     "area-sending": {
-      "s": 1.016,
-      "tx": 0.89,
-      "ty": -0.64
+      "s": 1.44,
+      "tx": -3.76,
+      "ty": -11.92
     },
     "push-updates-to-passes": {
-      "s": 1.084,
-      "tx": -0.12,
-      "ty": -2.02
+      "s": 1.8,
+      "tx": -10.2,
+      "ty": -20.2
     },
     "join-links-and-qr-sign-up-per-day": {
-      "s": 1.058,
-      "tx": 0.37,
-      "ty": -1.39
+      "s": 1.741,
+      "tx": -9.08,
+      "ty": -18.78
     },
     "broadcasts-per-day": {
-      "s": 1.046,
-      "tx": -0.42,
-      "ty": -1.1
+      "s": 1.412,
+      "tx": -4.2,
+      "ty": -10.89
     },
     "scheduled-broadcasts": {
-      "s": 1.097,
-      "tx": -0.37,
-      "ty": -2.77
+      "s": 1.761,
+      "tx": -9.46,
+      "ty": -19.97
     },
     "automatic-reminders-active-rules": {
-      "s": 1.016,
-      "tx": 1.17,
-      "ty": -0.74
+      "s": 1.694,
+      "tx": -8.19,
+      "ty": -18.25
     },
     "bulk-changes-per-day": {
-      "s": 1.058,
-      "tx": 0.21,
-      "ty": -1.6
+      "s": 1.443,
+      "tx": -3.63,
+      "ty": -11.92
     }
   }
 }
