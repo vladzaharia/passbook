@@ -203,6 +203,20 @@ __all__ = [
     "ConnectionsFilesUploadResponse1Skipped",
     "ConnectionsFilesUploadResponse2",
     "ConnectionsFilesUploadResult",
+    "ConnectionsLinksCreateBody",
+    "ConnectionsLinksCreateParams",
+    "ConnectionsLinksCreateResponse",
+    "ConnectionsLinksCreateResult",
+    "ConnectionsLinksDeleteResponse",
+    "ConnectionsLinksDeleteResult",
+    "ConnectionsLinksListItem",
+    "ConnectionsLinksListResponse",
+    "ConnectionsLinksListResponseItemsItem",
+    "ConnectionsLinksListResult",
+    "ConnectionsLinksSearchItem",
+    "ConnectionsLinksSearchResponse",
+    "ConnectionsLinksSearchResponseItemsItem",
+    "ConnectionsLinksSearchResult",
     "ConnectionsListItem",
     "ConnectionsListItemMappingValue",
     "ConnectionsListItemMappingValueTransform",
@@ -3484,6 +3498,77 @@ class ConnectionsFilesUploadResponse1Skipped(_Model):
 
 class ConnectionsFilesUploadResponse2(_Model):
     unchanged: _Literal[True]
+
+class ConnectionsLinksCreateParams(_Model):
+    objectType: str
+    externalId: str
+    localId: str
+
+class ConnectionsLinksCreateResponse(_Model):
+    id: str
+    connectionId: str
+    objectType: str
+    externalId: str
+    localId: str
+    role: _Literal["primary", "secondary"] | str
+    state: _Literal["active", "tombstoned"] | str
+    createdAt: int
+    updatedAt: int
+
+class ConnectionsLinksDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class ConnectionsLinksListItem(_Model):
+    id: str
+    connectionId: str
+    objectType: str
+    externalId: str
+    localId: str
+    role: _Literal["primary", "secondary"] | str
+    state: _Literal["active", "tombstoned"] | str
+    createdAt: int
+    updatedAt: int
+
+class ConnectionsLinksListResponse(_Model):
+    items: _List[ConnectionsLinksListResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsLinksListResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    objectType: str
+    externalId: str
+    localId: str
+    role: _Literal["primary", "secondary"] | str
+    state: _Literal["active", "tombstoned"] | str
+    createdAt: int
+    updatedAt: int
+
+class ConnectionsLinksSearchItem(_Model):
+    id: str
+    connectionId: str
+    objectType: str
+    externalId: str
+    localId: str
+    role: _Literal["primary", "secondary"] | str
+    state: _Literal["active", "tombstoned"] | str
+    createdAt: int
+    updatedAt: int
+
+class ConnectionsLinksSearchResponse(_Model):
+    items: _List[ConnectionsLinksSearchResponseItemsItem]
+    nextCursor: str | None
+
+class ConnectionsLinksSearchResponseItemsItem(_Model):
+    id: str
+    connectionId: str
+    objectType: str
+    externalId: str
+    localId: str
+    role: _Literal["primary", "secondary"] | str
+    state: _Literal["active", "tombstoned"] | str
+    createdAt: int
+    updatedAt: int
 
 class ConnectionsListItem(_Model):
     id: str
@@ -16729,6 +16814,16 @@ ConnectionsFilesUploadBody = ConnectionsFilesUploadParams
 ConnectionsFilesUploadResponse = ConnectionsFilesUploadResponse1 | ConnectionsFilesUploadResponse2
 
 ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
+
+ConnectionsLinksCreateBody = ConnectionsLinksCreateParams
+
+ConnectionsLinksCreateResult = ConnectionsLinksCreateResponse
+
+ConnectionsLinksDeleteResult = ConnectionsLinksDeleteResponse
+
+ConnectionsLinksListResult = ConnectionsLinksListResponse
+
+ConnectionsLinksSearchResult = ConnectionsLinksSearchResponse
 
 ConnectionsListResult = ConnectionsListResponse
 

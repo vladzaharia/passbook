@@ -1336,5 +1336,68 @@
         "hasSecret": true
       }
     }
+  },
+  "connections.getConnectionsByIdLinks": {
+    "description": "Lists the links of a connection: the upstream objects bound to its passes. The pass's own binding shows as role `primary` with objectType `record`. Filter with objectType and externalId. Needs connections:read.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-ea05e2fc1905",
+          "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+          "objectType": "invoice",
+          "externalId": "booking_8841",
+          "localId": "0193a1b2-7c00-7000-8000-abe60b6773f8",
+          "role": "primary",
+          "state": "active",
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "connections.postConnectionsByIdLinks": {
+    "description": "Links a pass of your organization to an upstream object. Each externalId and each pass is linked once per objectType; objectType `record` is reserved for the pass binding. Needs connections:write.",
+    "request": {
+      "objectType": "invoice",
+      "externalId": "booking_8841",
+      "localId": "0193a1b2-7c00-7000-8000-0059709b2a3c"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-35f6e3d530b3",
+      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+      "objectType": "invoice",
+      "externalId": "booking_8841",
+      "localId": "0193a1b2-7c00-7000-8000-0059709b2a3c",
+      "role": "primary",
+      "state": "active",
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000
+    }
+  },
+  "connections.deleteConnectionsByIdLinksByLinkId": {
+    "description": "Removes a secondary link. The primary link follows the pass binding; change that with PUT /api/v1/passes/{id}/connection. Needs connections:write.",
+    "response": {
+      "ok": true
+    }
+  },
+  "connections.getLinks": {
+    "description": "Finds links across your connections by connectionId, objectType and externalId. Needs connections:read.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-adddc4099600",
+          "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+          "objectType": "invoice",
+          "externalId": "booking_8841",
+          "localId": "0193a1b2-7c00-7000-8000-a6933b1b1110",
+          "role": "primary",
+          "state": "active",
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }

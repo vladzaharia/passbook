@@ -6,6 +6,7 @@ import { authRoutes, sessionRoutes } from './modules/auth/routes.ts';
 import { broadcastsRoutes } from './modules/broadcasts/routes.ts';
 import { bundlesRoutes } from './modules/bundles/routes.ts';
 import { connectionsRoutes, connectorsRoutes } from './modules/connections/routes.ts';
+import { linksRoutes } from './modules/connections/routes-links.ts';
 import { deliveryRoutes } from './modules/delivery/routes.ts';
 import { developerOrgRoutes } from './modules/dev-access/routes-org.ts';
 import { developerRoutes } from './modules/developer/routes.ts';
@@ -115,6 +116,7 @@ export const tenantMounts: readonly (readonly Mount[])[] = [
     ['/api/v1/offboard', offboardRoutes],
     ['/api/v1/delivery', deliveryRoutes],
     ['/api/v1/connections', connectionsRoutes],
+    ['/api/v1/links', linksRoutes],
     ['/api/v1/connectors', connectorsRoutes],
     ['/api/v1/webhook-endpoints', webhookEndpointsRoutes],
     ['/api/v1/events', eventFeedRoutes],

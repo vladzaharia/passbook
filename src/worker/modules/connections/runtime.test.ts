@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import demo from '../../connectors/demo/index.ts';
 import httpJson from '../../connectors/http-json/index.ts';
-import { connectors } from '../../connectors/registry.ts';
-import { type AnyConnector, ConnectorError } from '../../connectors/types.ts';
+import { connectors, defineRegistry } from '../../connectors/registry.ts';
+import { type AnyConnector, ConnectorError, declareCapabilities } from '../../connectors/types.ts';
 import { setDeps } from './deps.ts';
 import { getConnection } from './repo.ts';
 import { prepare } from './runtime.ts';
@@ -27,7 +27,15 @@ beforeEach(async () => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-const upload: AnyConnector = { ...demo, capabilities: { ...demo.capabilities, upload: true } };
+const upload: AnyConnector = defineRegistry([
+  {
+    ...demo,
+    capabilities: declareCapabilities({
+      read: { ...demo.capabilities.read, upload: true },
+      auth: 'none',
+    }),
+  },
+]).list()[0] as AnyConnector;
 
 async function rowOf(id: string) {
   const row = await getConnection(kit.env.DB, id);

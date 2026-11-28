@@ -1012,6 +1012,58 @@ export type ConnectionsFilesUploadResponse = {
   unchanged: true;
 };
 
+export type ConnectionsLinksCreateParams = {
+  objectType: string;
+  externalId: string;
+  localId: string;
+};
+
+export type ConnectionsLinksCreateResponse = {
+  id: string;
+  connectionId: string;
+  objectType: string;
+  externalId: string;
+  localId: string;
+  role: "primary" | "secondary";
+  state: "active" | "tombstoned";
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ConnectionsLinksDeleteResponse = {
+  ok: true;
+};
+
+export type ConnectionsLinksListResponse = {
+  items: Array<{
+    id: string;
+    connectionId: string;
+    objectType: string;
+    externalId: string;
+    localId: string;
+    role: "primary" | "secondary";
+    state: "active" | "tombstoned";
+    createdAt: number;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsLinksSearchResponse = {
+  items: Array<{
+    id: string;
+    connectionId: string;
+    objectType: string;
+    externalId: string;
+    localId: string;
+    role: "primary" | "secondary";
+    state: "active" | "tombstoned";
+    createdAt: number;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type ConnectionsListResponse = {
   items: Array<{
     id: string;

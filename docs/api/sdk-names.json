@@ -2910,5 +2910,21 @@
     "method": "revokeAll",
     "sdk": false,
     "reason": "Platform administration by a person; no key calls it."
+  },
+  "connections.getConnectionsByIdLinks": {
+    "resource": "connections.links",
+    "method": "list"
+  },
+  "connections.postConnectionsByIdLinks": {
+    "resource": "connections.links",
+    "method": "create"
+  },
+  "connections.deleteConnectionsByIdLinksByLinkId": {
+    "resource": "connections.links",
+    "method": "delete"
+  },
+  "connections.getLinks": {
+    "resource": "connections.links",
+    "method": "search"
   }
 }

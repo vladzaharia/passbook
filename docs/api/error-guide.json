@@ -4318,5 +4318,17 @@
     "when": "The device pass failed one of its own checks before signing, so nothing was made.",
     "fix": "Send the request again. If it keeps failing, report it with the request id.",
     "retryable": true
+  },
+  "LINK_EXISTS": {
+    "title": "Link exists",
+    "when": "The upstream object or the pass is already linked on this connection for that object type.",
+    "fix": "List the links, remove the old one with DELETE, or link a different object.",
+    "retryable": false
+  },
+  "LINK_PRIMARY": {
+    "title": "Primary link",
+    "when": "The link mirrors the pass binding and cannot be removed here.",
+    "fix": "Change or remove the binding with PUT /api/v1/passes/{id}/connection.",
+    "retryable": false
   }
 }

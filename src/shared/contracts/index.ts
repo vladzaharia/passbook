@@ -11,6 +11,7 @@ export * from './connection-preview.ts';
 export * from './connection-probe.ts';
 export * from './connection-setup.ts';
 export * from './connections.ts';
+export * from './connections-links.ts';
 export * from './developer.ts';
 export * from './developer-invitations.ts';
 export * from './device-passes.ts';

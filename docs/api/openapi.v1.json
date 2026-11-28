@@ -58819,6 +58819,180 @@
           "ok"
         ]
       },
+      "ConnectionsLinksListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "connectionId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "objectType": {
+                  "type": "string"
+                },
+                "externalId": {
+                  "type": "string"
+                },
+                "localId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "primary",
+                    "secondary"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "tombstoned"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "connectionId",
+                "objectType",
+                "externalId",
+                "localId",
+                "role",
+                "state",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "ConnectionsLinksCreateParams": {
+        "type": "object",
+        "properties": {
+          "objectType": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "localId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "objectType",
+          "externalId",
+          "localId"
+        ]
+      },
+      "ConnectionsLinksCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "objectType": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "localId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "secondary"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "tombstoned"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "connectionId",
+          "objectType",
+          "externalId",
+          "localId",
+          "role",
+          "state",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ConnectionsLinksDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
       "ConnectionsProbeConfigParams": {
         "type": "object",
         "properties": {
@@ -62308,6 +62482,83 @@
           "webhookUrl",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "ConnectionsLinksSearchResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "connectionId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "objectType": {
+                  "type": "string"
+                },
+                "externalId": {
+                  "type": "string"
+                },
+                "localId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "primary",
+                    "secondary"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "tombstoned"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "connectionId",
+                "objectType",
+                "externalId",
+                "localId",
+                "role",
+                "state",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "ConnectorsListResponse": {
@@ -139326,6 +139577,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -140889,6 +141141,348 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/links": {
+      "get": {
+        "summary": "List the links of a connection",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
+            },
+            "required": false,
+            "name": "objectType",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "externalId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsLinksListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-ea05e2fc1905",
+                      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                      "objectType": "invoice",
+                      "externalId": "booking_8841",
+                      "localId": "0193a1b2-7c00-7000-8000-abe60b6773f8",
+                      "role": "primary",
+                      "state": "active",
+                      "createdAt": 1794362400000,
+                      "updatedAt": 1795399200000
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getConnectionsByIdLinks",
+        "x-sdk": {
+          "resource": "connections.links",
+          "method": "list"
+        },
+        "description": "Lists the links of a connection: the upstream objects bound to its passes. The pass's own binding shows as role `primary` with objectType `record`. Filter with objectType and externalId. Needs connections:read.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      },
+      "post": {
+        "summary": "Link a pass to an upstream object",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionsLinksCreateParams"
+              },
+              "example": {
+                "objectType": "invoice",
+                "externalId": "booking_8841",
+                "localId": "0193a1b2-7c00-7000-8000-0059709b2a3c"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsLinksCreateResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-35f6e3d530b3",
+                  "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                  "objectType": "invoice",
+                  "externalId": "booking_8841",
+                  "localId": "0193a1b2-7c00-7000-8000-0059709b2a3c",
+                  "role": "primary",
+                  "state": "active",
+                  "createdAt": 1794362400000,
+                  "updatedAt": 1795399200000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsByIdLinks",
+        "x-sdk": {
+          "resource": "connections.links",
+          "method": "create"
+        },
+        "description": "Links a pass of your organization to an upstream object. Each externalId and each pass is linked once per objectType; objectType `record` is reserved for the pass binding. Needs connections:write.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "API_KEY_MISSING",
+          "AUTHORITY_DENIED",
+          "CONNECTION_CONFLICT",
+          "CONNECTION_NOT_FOUND",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "LINK_EXISTS",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "RETENTION_CHANGED",
+          "SANDBOX_TEST_ONLY",
+          "SCANNER_REPAIR",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "STALE",
+          "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/connections/{id}/links/{linkId}": {
+      "delete": {
+        "summary": "Remove a link",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "linkId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsLinksDeleteResponse"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.deleteConnectionsByIdLinksByLinkId",
+        "x-sdk": {
+          "resource": "connections.links",
+          "method": "delete"
+        },
+        "description": "Removes a secondary link. The primary link follows the pass binding; change that with PUT /api/v1/passes/{id}/connection. Needs connections:write.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "API_KEY_MISSING",
+          "AUTHORITY_DENIED",
+          "CONNECTION_NOT_FOUND",
+          "FEATURE_LIMIT_REACHED",
+          "FEATURE_NOT_INCLUDED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "LINEAGE_CHANGED",
+          "LINK_NOT_FOUND",
+          "LINK_PRIMARY",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_ACCESS_CHANGED",
@@ -142577,6 +143171,146 @@
           "SCAN_STAFF_CHANGED",
           "STALE",
           "TEMPLATE_RELEASE_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WORKBENCH_TEST_ONLY"
+        ]
+      }
+    },
+    "/api/v1/links": {
+      "get": {
+        "summary": "Find links by connection, object type or upstream id",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
+            },
+            "required": false,
+            "name": "objectType",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "externalId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "connectionId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsLinksSearchResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-adddc4099600",
+                      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+                      "objectType": "invoice",
+                      "externalId": "booking_8841",
+                      "localId": "0193a1b2-7c00-7000-8000-a6933b1b1110",
+                      "role": "primary",
+                      "state": "active",
+                      "createdAt": 1794362400000,
+                      "updatedAt": 1795399200000
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.getLinks",
+        "x-sdk": {
+          "resource": "connections.links",
+          "method": "search"
+        },
+        "description": "Finds links across your connections by connectionId, objectType and externalId. Needs connections:read.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "API_KEY_MISSING",
+          "CONNECTION_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_TEST_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION",
           "WORKBENCH_TEST_ONLY"

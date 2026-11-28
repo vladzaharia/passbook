@@ -1395,6 +1395,107 @@ type ConnectionsFilesUploadResponse2 struct {
 
 type ConnectionsFilesUploadResult = ConnectionsFilesUploadResponse
 
+type ConnectionsLinksCreateBody = ConnectionsLinksCreateParams
+
+type ConnectionsLinksCreateParams struct {
+	ObjectType string `json:"objectType"`
+	ExternalID string `json:"externalId"`
+	LocalID    string `json:"localId"`
+}
+
+type ConnectionsLinksCreateResponse struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connectionId"`
+	ObjectType   string `json:"objectType"`
+	ExternalID   string `json:"externalId"`
+	LocalID      string `json:"localId"`
+	Role         string `json:"role"`
+	State        string `json:"state"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+}
+
+type ConnectionsLinksCreateResult = ConnectionsLinksCreateResponse
+
+type ConnectionsLinksDeleteResponse struct {
+	Ok bool `json:"ok"`
+}
+
+type ConnectionsLinksDeleteResult = ConnectionsLinksDeleteResponse
+
+type ConnectionsLinksListItem struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connectionId"`
+	ObjectType   string `json:"objectType"`
+	ExternalID   string `json:"externalId"`
+	LocalID      string `json:"localId"`
+	Role         string `json:"role"`
+	State        string `json:"state"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+}
+
+type ConnectionsLinksListQuery struct {
+	Cursor     *string `json:"cursor,omitempty"`
+	Limit      *int64  `json:"limit,omitempty"`
+	ObjectType *string `json:"objectType,omitempty"`
+	ExternalID *string `json:"externalId,omitempty"`
+}
+
+type ConnectionsLinksListResponse struct {
+	Items      []ConnectionsLinksListResponseItemsItem `json:"items"`
+	NextCursor *string                                 `json:"nextCursor"`
+}
+
+type ConnectionsLinksListResponseItemsItem struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connectionId"`
+	ObjectType   string `json:"objectType"`
+	ExternalID   string `json:"externalId"`
+	LocalID      string `json:"localId"`
+	Role         string `json:"role"`
+	State        string `json:"state"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+}
+
+type ConnectionsLinksSearchItem struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connectionId"`
+	ObjectType   string `json:"objectType"`
+	ExternalID   string `json:"externalId"`
+	LocalID      string `json:"localId"`
+	Role         string `json:"role"`
+	State        string `json:"state"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+}
+
+type ConnectionsLinksSearchQuery struct {
+	Cursor       *string `json:"cursor,omitempty"`
+	Limit        *int64  `json:"limit,omitempty"`
+	ObjectType   *string `json:"objectType,omitempty"`
+	ExternalID   *string `json:"externalId,omitempty"`
+	ConnectionID *string `json:"connectionId,omitempty"`
+}
+
+type ConnectionsLinksSearchResponse struct {
+	Items      []ConnectionsLinksSearchResponseItemsItem `json:"items"`
+	NextCursor *string                                   `json:"nextCursor"`
+}
+
+type ConnectionsLinksSearchResponseItemsItem struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connectionId"`
+	ObjectType   string `json:"objectType"`
+	ExternalID   string `json:"externalId"`
+	LocalID      string `json:"localId"`
+	Role         string `json:"role"`
+	State        string `json:"state"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+}
+
 type ConnectionsListItem struct {
 	ID                     string                                     `json:"id"`
 	OrgID                  string                                     `json:"orgId"`

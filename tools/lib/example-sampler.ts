@@ -243,7 +243,7 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
                 : 'iPhone 15',
     ],
     [
-      /^(connectorType|type|plan|step|variant|slot|actorType|enum|preset|flags|value|values|key|ref|externalRef|runId|pointer|path|field|column|target|q|to|from|end|sendAt|date|eventRef|missing|promotable|assetGrant|waitingFor|identityHint|png|csv|meta|samples|refusedReason|alt)$/,
+      /^(connectorType|type|plan|step|variant|slot|actorType|enum|preset|flags|value|values|key|ref|externalRef|objectType|runId|pointer|path|field|column|target|q|to|from|end|sendAt|date|eventRef|missing|promotable|assetGrant|waitingFor|identityHint|png|csv|meta|samples|refusedReason|alt)$/,
       () => 'x',
     ],
   ];
@@ -285,6 +285,8 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'ref':
     case 'externalRef':
       return 'booking_8841';
+    case 'objectType':
+      return 'invoice';
     case 'runId':
       return 'bulk-0193a1b2-7c00-7000-8000-000000000023';
     case 'pointer':

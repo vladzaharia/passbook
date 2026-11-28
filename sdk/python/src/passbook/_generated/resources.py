@@ -1386,6 +1386,55 @@ class ConnectionsFilesResource:
         return self._core.request("POST", f"/api/v1/connections/{_p(id)}/files", body=body, query={"apply": apply}, result=m.ConnectionsFilesUploadResult, **opts)
 
 
+class ConnectionsLinksResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.ConnectionsLinksCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsLinksCreateResult:
+        """Link a pass to an upstream object `POST /api/v1/connections/{id}/links`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/links", body=body, result=m.ConnectionsLinksCreateResult, **opts)
+
+    def delete(
+        self,
+        id: str,
+        link_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsLinksDeleteResult:
+        """Remove a link `DELETE /api/v1/connections/{id}/links/{linkId}`"""
+        return self._core.request("DELETE", f"/api/v1/connections/{_p(id)}/links/{_p(link_id)}", result=m.ConnectionsLinksDeleteResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        object_type: str | None = None,
+        external_id: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsLinksListItem]:
+        """List the links of a connection `GET /api/v1/connections/{id}/links`"""
+        return self._core.paginate("GET", f"/api/v1/connections/{_p(id)}/links", query={"cursor": cursor, "limit": limit, "objectType": object_type, "externalId": external_id}, result=m.ConnectionsLinksListResult, cursor_param="cursor", **opts)
+
+    def search(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        object_type: str | None = None,
+        external_id: str | None = None,
+        connection_id: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ConnectionsLinksSearchItem]:
+        """Find links by connection, object type or upstream id `GET /api/v1/links`"""
+        return self._core.paginate("GET", "/api/v1/links", query={"cursor": cursor, "limit": limit, "objectType": object_type, "externalId": external_id, "connectionId": connection_id}, result=m.ConnectionsLinksSearchResult, cursor_param="cursor", **opts)
+
+
 class ConnectionsRunsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1470,6 +1519,7 @@ class ConnectionsResource:
         self._core = core
         self.uploads = ConnectionsUploadsResource(core)
         self.files = ConnectionsFilesResource(core)
+        self.links = ConnectionsLinksResource(core)
         self.runs = ConnectionsRunsResource(core)
         self.setup = ConnectionsSetupResource(core)
         self.webhook_arrivals = ConnectionsWebhookArrivalsResource(core)

@@ -1533,6 +1533,44 @@ func (r *ConnectionsFilesResource) Upload(ctx context.Context, id string, body *
 	return out, err
 }
 
+type ConnectionsLinksResource struct {
+	c *core
+}
+
+func newConnectionsLinksResource(c *core) *ConnectionsLinksResource {
+	return &ConnectionsLinksResource{
+		c: c,
+	}
+}
+
+// Create Link a pass to an upstream object `POST /api/v1/connections/{id}/links`
+func (r *ConnectionsLinksResource) Create(ctx context.Context, id string, body *ConnectionsLinksCreateBody, opts ...RequestOption) (*ConnectionsLinksCreateResult, error) {
+	var out ConnectionsLinksCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/links", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Delete Remove a link `DELETE /api/v1/connections/{id}/links/{linkId}`
+func (r *ConnectionsLinksResource) Delete(ctx context.Context, id string, linkId string, opts ...RequestOption) (*ConnectionsLinksDeleteResult, error) {
+	var out ConnectionsLinksDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/connections/" + pathEscape(id) + "/links/" + pathEscape(linkId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List the links of a connection `GET /api/v1/connections/{id}/links`
+func (r *ConnectionsLinksResource) List(ctx context.Context, id string, query *ConnectionsLinksListQuery, opts ...RequestOption) *Pager[ConnectionsLinksListItem] {
+	return newPager[ConnectionsLinksListItem](r.c, call{method: "GET", path: "/api/v1/connections/" + pathEscape(id) + "/links", query: queryValues(query)}, "cursor", opts)
+}
+
+// Search Find links by connection, object type or upstream id `GET /api/v1/links`
+func (r *ConnectionsLinksResource) Search(ctx context.Context, query *ConnectionsLinksSearchQuery, opts ...RequestOption) *Pager[ConnectionsLinksSearchItem] {
+	return newPager[ConnectionsLinksSearchItem](r.c, call{method: "GET", path: "/api/v1/links", query: queryValues(query)}, "cursor", opts)
+}
+
 type ConnectionsRunsResource struct {
 	c *core
 }
@@ -1619,6 +1657,7 @@ type ConnectionsResource struct {
 	c               *core
 	Uploads         *ConnectionsUploadsResource
 	Files           *ConnectionsFilesResource
+	Links           *ConnectionsLinksResource
 	Runs            *ConnectionsRunsResource
 	Setup           *ConnectionsSetupResource
 	WebhookArrivals *ConnectionsWebhookArrivalsResource
@@ -1630,6 +1669,7 @@ func newConnectionsResource(c *core) *ConnectionsResource {
 		c:               c,
 		Uploads:         newConnectionsUploadsResource(c),
 		Files:           newConnectionsFilesResource(c),
+		Links:           newConnectionsLinksResource(c),
 		Runs:            newConnectionsRunsResource(c),
 		Setup:           newConnectionsSetupResource(c),
 		WebhookArrivals: newConnectionsWebhookArrivalsResource(c),

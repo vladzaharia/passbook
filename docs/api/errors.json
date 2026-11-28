@@ -3485,6 +3485,15 @@
       ]
     },
     {
+      "code": "LINK_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
       "code": "LINK_INVALID",
       "statuses": [
         400
@@ -3500,7 +3509,17 @@
       ],
       "modules": [
         "bundles",
+        "connections",
         "public"
+      ]
+    },
+    {
+      "code": "LINK_PRIMARY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
       ]
     },
     {

@@ -43,6 +43,10 @@ function mismatches(d: ConnectorDefinition): string[] {
     writesSomething === (has('mapEvent') && has('write')) && has('mapEvent') === has('write'),
     'write.objects or outbound.events need mapEvent and write, and mapEvent and write need them',
   );
+  need(
+    writes.length === 0 || (caps.outbound?.events.length ?? 0) > 0,
+    'write.objects needs outbound.events',
+  );
   for (const [object, ops] of writes) {
     need(d.objects?.[object], `written object ${object} is not in the objects catalog`);
     need(

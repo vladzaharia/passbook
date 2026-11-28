@@ -35,6 +35,7 @@ import { registerConnectionListRoutes } from './list-routes.ts';
 import { previewUnsaved } from './preview.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import { registerConnectionProbeRoutes } from './probe-routes.ts';
+import { registerConnectionLinkRoutes } from './routes-links.ts';
 import * as service from './service.ts';
 import { registerConnectionSetupRoute } from './setup-routes.ts';
 import { testConfig } from './test-config.ts';
@@ -97,6 +98,7 @@ registerWebhookArrivalRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 registerConnectionSetupRoute(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
+registerConnectionLinkRoutes(connectionsRoutes);
 // A probe that brings its own config or secrets reads through the stored credential: it asks what PATCH asks.
 connectionsRoutes.post('/:id/probe', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerConnectionProbeRoutes(connectionsRoutes);

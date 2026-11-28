@@ -40,6 +40,14 @@
     "note": "Discard a pending revision and its stored file."
   },
   {
+    "key": "DELETE /api/v1/connections/{id}/links/{linkId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsByIdLinksByLinkId",
+    "op": "DELETE /api/v1/connections/{id}/links/{linkId}",
+    "change": "new operation",
+    "note": "Remove a secondary link."
+  },
+  {
     "key": "DELETE /api/v1/connections/{id}/webhook-secret/previous 200.firstVerifiedArrivalAt: field added",
     "class": "additive",
     "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
@@ -681,6 +689,14 @@
     "note": "Revisions of a connection file, newest first, with their diff and whether a sync applied them."
   },
   {
+    "key": "GET /api/v1/connections/{id}/links new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdLinks",
+    "op": "GET /api/v1/connections/{id}/links",
+    "change": "new operation",
+    "note": "List the upstream objects linked to a connection's passes."
+  },
+  {
     "key": "GET /api/v1/connections/{id}/runs 200.items[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsByIdRuns",
@@ -774,7 +790,7 @@
     "operationId": "connectors.getConnectors",
     "op": "GET /api/v1/connectors",
     "change": "200.items[].capabilities.read: field added",
-    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, import and upload derive from it; webhook derives from inbound.webhook."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
@@ -886,7 +902,7 @@
     "operationId": "connectors.getConnectorsByType",
     "op": "GET /api/v1/connectors/{type}",
     "change": "200.capabilities.read: field added",
-    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, webhook, import and upload derive from it."
+    "note": "Connectors report capabilities.read: fetch, list, delta, import and upload. poll, delta, import and upload derive from it; webhook derives from inbound.webhook."
   },
   {
     "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
@@ -2177,6 +2193,14 @@
     "note": "Reads one provisioning run and its steps."
   },
   {
+    "key": "GET /api/v1/links new operation",
+    "class": "additive",
+    "operationId": "connections.getLinks",
+    "op": "GET /api/v1/links",
+    "change": "new operation",
+    "note": "Find links across connections by connectionId, objectType and externalId."
+  },
+  {
     "key": "GET /api/v1/me/passes 200.items[].readOnly: field added",
     "class": "additive",
     "operationId": "me.getMePasses",
@@ -3095,6 +3119,14 @@
     "op": "GET /api/v1/scan/live",
     "change": "200.rows[].customer.screen: enum value \"review\" added",
     "note": "A customer body's screen can be review."
+  },
+  {
+    "key": "GET /api/v1/scan/live 200.rows[].reason: field removed",
+    "class": "breaking",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].reason: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scan/roster 200.entries[].g: field added",
@@ -5628,6 +5660,14 @@
     "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
     "change": "new operation",
     "note": "Apply a pending revision (it becomes current) and start a sync."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/links new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdLinks",
+    "op": "POST /api/v1/connections/{id}/links",
+    "change": "new operation",
+    "note": "Link a pass to an upstream object of a connection."
   },
   {
     "key": "POST /api/v1/connections/{id}/preview new operation",

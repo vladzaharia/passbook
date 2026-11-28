@@ -2122,6 +2122,103 @@
   }
  },
  {
+  "id": "connections.getConnectionsByIdLinks",
+  "call": "connections.links.list",
+  "published": true,
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/links",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "connectionId": "x",
+     "objectType": "x",
+     "externalId": "x",
+     "localId": "x",
+     "role": "primary",
+     "state": "active",
+     "createdAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdLinks",
+  "call": "connections.links.create",
+  "published": true,
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/links",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "objectType": "x",
+   "externalId": "x",
+   "localId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "connectionId": "x",
+   "objectType": "x",
+   "externalId": "x",
+   "localId": "x",
+   "role": "primary",
+   "state": "active",
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsByIdLinksByLinkId",
+  "call": "connections.links.delete",
+  "published": true,
+  "http": "DELETE",
+  "path": "/api/v1/connections/{id}/links/{linkId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "linkId",
+    "py": "link_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
   "id": "connections.postConnectionsByIdPreview",
   "call": "connections.preview",
   "published": true,
@@ -3519,6 +3616,35 @@
    "nfcEnabled": false,
    "isDefault": false,
    "createdAt": 0
+  }
+ },
+ {
+  "id": "connections.getLinks",
+  "call": "connections.links.search",
+  "published": true,
+  "http": "GET",
+  "path": "/api/v1/links",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "connectionId": "x",
+     "objectType": "x",
+     "externalId": "x",
+     "localId": "x",
+     "role": "primary",
+     "state": "active",
+     "createdAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
   }
  },
  {

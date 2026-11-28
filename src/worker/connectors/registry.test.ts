@@ -83,6 +83,7 @@ const writer: AnyConnector = {
   capabilities: declareCapabilities({
     read: { list: true },
     write: { objects: { member: ['update'] } },
+    outbound: { events: ['pass.scanned'] },
     auth: 'none',
   }),
   objects: {
@@ -189,20 +190,46 @@ describe('defineRegistry refuses a declaration that does not match the methods',
         capabilities: declareCapabilities({
           read: { list: true },
           write: { objects: { member: [] } },
+          outbound: { events: ['pass.scanned'] },
           auth: 'none',
         }),
       },
       /member/,
     ],
     [
+      'duplicate ops on a written object',
+      {
+        ...writer,
+        capabilities: declareCapabilities({
+          read: { list: true },
+          write: { objects: { member: ['update', 'update'] } },
+          outbound: { events: ['pass.scanned'] },
+          auth: 'none',
+        }),
+      },
+      /distinct ops/,
+    ],
+    [
+      'write.objects without outbound.events',
+      {
+        ...writer,
+        capabilities: declareCapabilities({
+          read: { list: true },
+          write: { objects: { member: ['update'] } },
+          auth: 'none',
+        }),
+      },
+      /write\.objects needs outbound\.events/,
+    ],
+    [
       'an outgoing field on an object that is not written',
       {
         ...listed,
         objects: {
-          guest: { label: 'Guest', fields: { tag: { type: 'string', direction: 'both' } } },
+          guest: { label: 'Guest', fields: { tag: { type: 'string', direction: 'out' } } },
         },
       },
-      /guest/,
+      /not written/,
     ],
     [
       'a two-way field with no master',

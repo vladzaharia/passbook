@@ -442,6 +442,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"connections.links.list", "GET", "/api/v1/connections/id1/links", false,
+		"", `{"items":[{"id":"x","connectionId":"x","objectType":"x","externalId":"x","localId":"x","role":"primary","state":"active","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Links.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"connections.links.create", "POST", "/api/v1/connections/id1/links", false,
+		`{"objectType":"x","externalId":"x","localId":"x"}`, `{"id":"x","connectionId":"x","objectType":"x","externalId":"x","localId":"x","role":"primary","state":"active","createdAt":0,"updatedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ConnectionsLinksCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Connections.Links.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"connections.links.delete", "DELETE", "/api/v1/connections/id1/links/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Links.Delete(ctx, "id1", "id2")
+		},
+	},
+	{
 		"connections.preview", "POST", "/api/v1/connections/id1/preview", false,
 		`{}`, `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -721,6 +746,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Identities.Rotate(ctx, "id1", &b)
+		},
+	},
+	{
+		"connections.links.search", "GET", "/api/v1/links", false,
+		"", `{"items":[{"id":"x","connectionId":"x","objectType":"x","externalId":"x","localId":"x","role":"primary","state":"active","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Connections.Links.Search(ctx, nil).All(ctx)
 		},
 	},
 	{
