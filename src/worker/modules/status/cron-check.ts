@@ -1,5 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Component } from './checks.ts';
+import { loadHooks, withHooks } from './checks-hooks.ts';
 import { lastCronRun } from './cron.ts';
 
 type Draft = Omit<Component, 'checkedAt'>;
@@ -22,8 +23,10 @@ export function isDeployed(env: { PUBLIC_BASE_URL?: string }): boolean {
 export async function checkCron(ctx: ServiceContext): Promise<Draft[]> {
   const now = ctx.clock.now();
   const deployed = isDeployed(ctx.env);
+  const hooks = await loadHooks(ctx);
   const one = async (name: 'minute' | 'daily', maxAge: number): Promise<Draft> => {
     const at = await lastCronRun(ctx, name);
+    const withHealth = (draft: Draft) => withHooks(draft, hooks, name);
     const base = {
       id: `cron:${name}`,
       kind: 'cron',
@@ -31,19 +34,19 @@ export async function checkCron(ctx: ServiceContext): Promise<Draft[]> {
     } as const;
     // Deployed, a cron with no run in a day is a problem; locally crons never fire.
     if (deployed && (at === null || now - at > DAY))
-      return {
+      return withHealth({
         ...base,
         state: 'degraded',
         detail: 'No recent run.',
         data: { lastRunAt: at, noRecentRun: true },
-      };
+      });
     const stale = at !== null && now - at > maxAge;
-    return {
+    return withHealth({
       ...base,
       state: at === null ? 'configured' : stale ? 'degraded' : 'verified',
       detail: at === null ? 'No run recorded.' : stale ? 'Last run is overdue.' : null,
       data: { lastRunAt: at },
-    };
+    });
   };
   return [await one('minute', 5 * MINUTE), await one('daily', 26 * HOUR)];
 }

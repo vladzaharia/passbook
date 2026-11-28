@@ -26,6 +26,29 @@ export const COPY = {
   empty: 'No organizations enrolled',
 } as const;
 
+export const HEALTH = {
+  title: 'Health',
+  tone: {
+    ok: 'Healthy',
+    attention: 'Needs attention',
+    failing: 'Credentials failing',
+    idle: 'No activity',
+  },
+  lastUpdate: 'Last update',
+  queued: 'Queued',
+  failed: 'Failed, 24 h',
+  report: 'Provider report',
+  none: 'None yet',
+  recheck: 'Check again',
+  rechecked: 'Checking again',
+  nothingDue: 'Nothing to check yet',
+  waiting: 'Settles by itself within 10 minutes.',
+  due: 'The provider may not have received them.',
+  unknown: (n: number) => `${n} ${n === 1 ? 'update has' : 'updates have'} an unknown outcome`,
+  failing: 'The provider rejected the credentials twice.',
+  loadError: 'Could not load health.',
+} as const;
+
 export const RELEASE = {
   notReleased: (name: string) => `${name} isn't released yet.`,
   testOnly: (name: string) => `${name} is released in Test only.`,

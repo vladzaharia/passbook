@@ -80,6 +80,13 @@ describe('the nav', () => {
     expect(navGroups(WB_TOOLS, true)[0]?.items.map((i) => i.tool)).toEqual(['home']);
   });
 
+  it('offers Console, not Activity, beside a refused Keys', () => {
+    const allowed: readonly (typeof WB_TOOLS)[number][] = ['design', 'console', 'logs', 'activity'];
+    expect(nearestTool('keys', allowed)).toBe('console');
+    expect(nearestTool('keys', ['logs', 'activity'])).toBe('activity');
+    expect(nearestTool('sandbox', ['console', 'keys'])).toBe('keys');
+  });
+
   it('shows attention, never totals, and names it', () => {
     expect(navAttention(summary(), 0)).toEqual({});
     const map = navAttention(
@@ -93,15 +100,18 @@ describe('the nav', () => {
       1,
     );
     expect(map.logs).toEqual({ kind: 'danger', value: 3, label: '3 new errors' });
-    expect(map.events).toEqual({ kind: 'live', label: 'Listening' });
+    // Listening alone is no news: the Events dot needs an unseen failure.
+    expect(map.events).toBeUndefined();
     expect(map.inbox?.label).toBe('2 new');
     expect(map.activity?.label).toBe('1 running');
     expect(map.keys?.kind).toBe('warn');
     expect(map.quickstart?.label).toBe('4 of 5 done');
-    // Failed deliveries outrank the live dot.
     expect(navAttention(summary({ failedDeliveries: 1, listening: true }), 0).events?.label).toBe(
       '1 failed delivery',
     );
+    expect(
+      navAttention(summary({ failedDeliveries: 0, listening: true }), 0).events,
+    ).toBeUndefined();
     expect(quickstartDone(summary({ quickstart: { done: 5, total: 5 } }))).toBe(true);
   });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, runOne } from '../../../../test/helpers/index.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import {
   ACTION,
   ACTIVITY_NAME,
@@ -207,9 +208,7 @@ async function beforeAuthorityRead(
       if (member === 'prepare')
         return (sql: string) => {
           const statement = target.prepare(sql);
-          return /session_row|actor_ok/.test(sql) && sql.trimEnd().endsWith('AS authorized')
-            ? hooked(statement)
-            : statement;
+          return sql.includes(RACE_AUTHORIZED) ? hooked(statement) : statement;
         };
       const value = Reflect.get(target, member, target);
       return typeof value === 'function' ? value.bind(target) : value;

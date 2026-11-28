@@ -259,9 +259,10 @@ export const APPEND_ONLY_TABLES = ['audit_log'] as const;
 /**
  * Unguarded tables whose triggers write a guarded table. An `include` part on one would reach the guarded
  * table through the trigger, so parts refuse them. `request_log`: its insert trigger stamps the guarded
- * `developer_sandboxes` progress columns (0176). A test derives the list from the migrated schema.
+ * `developer_sandboxes` progress columns (0176). `cli_sessions`: ending a CLI token revokes its `api_keys` row
+ * (0245). A test derives the list from the migrated schema.
  */
-export const TRIGGER_WRITES_GUARDED: readonly string[] = ['request_log'];
+export const TRIGGER_WRITES_GUARDED: readonly string[] = ['cli_sessions', 'request_log'];
 
 export {
   MODE_BEARING_TABLES,

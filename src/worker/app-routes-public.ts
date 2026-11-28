@@ -14,6 +14,7 @@ import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
+import { devicePassPublicRoutes } from './modules/workbench/routes-device-pass-public.ts';
 import type { AppBindings } from './platform/context.ts';
 
 type Mount = readonly [path: string, routes: Hono<AppBindings>];
@@ -29,6 +30,7 @@ export const publicMounts: readonly (readonly Mount[])[] = [
     ['/wallet/v1/samsung', samsungCallbackRoutes],
     ['/wallet/v1', appleRoutes],
     ['/scan', scanShellSwRoutes],
+    ['/d', devicePassPublicRoutes],
     ['/p', walletOfferRoutes],
     ['/w/i', walletImageRoutes],
     ['/brand', brandAssetRoutes],

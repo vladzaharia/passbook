@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { Plus, Send } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { wbEventsPath } from '@/shared/workbench.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
@@ -9,7 +9,6 @@ import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import { toast } from '../../ui/toaster.tsx';
 import { useBenchKeys } from '../bench/keys.ts';
 import { BenchSkeleton } from '../bench/skeleton.tsx';
-import { BenchSlot } from '../bench/slots.tsx';
 import { useToolHost } from '../host/tool-host.tsx';
 import { ToolPage } from '../shell/tool-page.tsx';
 import { ToolEmpty, ToolFailed } from '../states/states.tsx';
@@ -77,36 +76,42 @@ export function EventsTool({ className }: { className: string }) {
     }
   }
 
-  // ⌘↵ sends a test event, as the tool's one action (design §5.4).
+  // ⌘↵ sends a test event; while the empty state shows it holds both ways on, so the head keeps neither (design §5.4).
+  const [emptyNow, setEmptyNow] = useState(false);
   useBenchKeys({ primary: () => void sendTest() });
 
-  const empty = (
+  const empty = <ToolEmpty tool="events" />;
+  const emptyFeed = (
     <ToolEmpty
       tool="events"
       action={
-        <div className="flex flex-wrap justify-center gap-2">
+        <>
+          <Button onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
+            Send test event
+          </Button>
           <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
             <a href={addHref}>Add endpoint</a>
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => void sendTest()}
-            iconStart={<Send aria-hidden />}
-          >
-            Send a test event
-          </Button>
-        </div>
+        </>
       }
     />
+  );
+  const sendAction = (
+    <Button variant="outline" onClick={() => void sendTest()} iconStart={<Send aria-hidden />}>
+      Send test event
+    </Button>
   );
 
   return (
     <ToolPage
       tool="events"
+      markSeen={!emptyNow}
       primary={
-        <Button asChild iconStart={<Plus aria-hidden />}>
-          <a href={addHref}>Add endpoint</a>
-        </Button>
+        emptyNow && params.tab === 'events' ? undefined : (
+          <Button asChild iconStart={<Plus aria-hidden />}>
+            <a href={addHref}>Add endpoint</a>
+          </Button>
+        )
       }
     >
       <div className={`${className} flex flex-col gap-3`}>
@@ -131,24 +136,15 @@ export function EventsTool({ className }: { className: string }) {
             empty={empty}
           />
         ) : (
-          <>
-            <BenchSlot name="action">
-              <Button
-                variant="outline"
-                onClick={() => void sendTest()}
-                iconStart={<Send aria-hidden />}
-              >
-                Send test event
-              </Button>
-            </BenchSlot>
-            <EventsPanel
-              orgId={orgId}
-              params={params}
-              endpoints={list}
-              write={write}
-              empty={empty}
-            />
-          </>
+          <EventsPanel
+            orgId={orgId}
+            params={params}
+            endpoints={list}
+            write={write}
+            empty={emptyFeed}
+            sendAction={sendAction}
+            onEmpty={setEmptyNow}
+          />
         )}
       </div>
     </ToolPage>

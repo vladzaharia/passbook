@@ -123,7 +123,7 @@ describe('the toolbar', () => {
     render(<LogsToolbar />);
     expect(screen.queryByRole('combobox', { name: 'Status' })).toBeNull();
     const open = screen.getByRole('button', { name: 'Filters (1)' });
-    expect(open.hasAttribute('data-set')).toBe(true);
+    expect(open.className).toContain('border-accent');
     fireEvent.click(open);
     const sheet = screen.getByRole('dialog', { name: 'Filters' });
     expect(sheet.querySelectorAll('select')).toHaveLength(2);

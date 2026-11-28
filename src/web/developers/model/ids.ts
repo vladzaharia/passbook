@@ -28,6 +28,7 @@ export function pathValue(path: string, name: string, type: string): string {
   if (name === 'name') return 'icon.png';
   if (name === 'type') return 'event-ticket';
   if (name === 'recipe') return 'shopify-orders';
+  if (name === 'provider') return 'google';
   if (path.endsWith('/{id}/use')) return BLUEPRINT_ID;
   const before = path.split(`{${name}}`)[0]?.split('/').filter(Boolean).pop() ?? '';
   return EXAMPLE_IDS[BY_SEGMENT[before] ?? 'otherId'];

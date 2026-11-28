@@ -18,31 +18,18 @@ const pointer = z.string().max(200).refine(isPointer, 'Not a JSON pointer.');
 const config = z.object({
   recipe: RecipeIdSchema.default('custom').meta({
     'x-label': 'Sender',
-    'x-help': 'Fixed once the connection exists.',
   }),
   acceptTestEvents: z
     .boolean()
     .default(false)
     .meta({ 'x-label': 'Accept test-mode events', 'x-group': 'Advanced' }),
-  passPer: z
-    .enum(['order', 'line_item'])
-    .default('order')
-    .meta({ 'x-label': 'Pass per', 'x-help': 'One pass for each order or each line item.' }),
-  recordsPointer: pointer
-    .default('/records')
-    .meta({ 'x-label': 'Records', 'x-help': 'Where the list of records sits in the body.' }),
-  refPointer: pointer
-    .default('/ref')
-    .meta({ 'x-label': 'Record ID', 'x-help': 'Inside each item.' }),
-  recordPointer: pointer
-    .default('/record')
-    .meta({ 'x-label': 'Record', 'x-help': 'The record inside each item.' }),
-  deletedPointer: pointer
-    .default('/deleted')
-    .meta({ 'x-label': 'Deleted flag', 'x-help': 'True removes the record.' }),
+  passPer: z.enum(['order', 'line_item']).default('order').meta({ 'x-label': 'Pass per' }),
+  recordsPointer: pointer.default('/records').meta({ 'x-label': 'Records' }),
+  refPointer: pointer.default('/ref').meta({ 'x-label': 'Record ID' }),
+  recordPointer: pointer.default('/record').meta({ 'x-label': 'Record' }),
+  deletedPointer: pointer.default('/deleted').meta({ 'x-label': 'Deleted flag' }),
   eventIdPointer: pointer.default('/id').meta({
     'x-label': 'Event ID',
-    'x-help': 'Repeated events are ignored.',
     'x-group': 'Advanced',
   }),
   signatureHeader: z
@@ -54,7 +41,7 @@ const config = z.object({
     .string()
     .refine(isAllowedHeaderName)
     .default(TIMESTAMP_HEADER)
-    .meta({ 'x-label': 'Timestamp header', 'x-group': 'Advanced' }),
+    .meta({ 'x-label': 'Timestamp', 'x-group': 'Advanced' }),
 });
 
 /** Records arrive in the signed webhook body; nothing is fetched. */

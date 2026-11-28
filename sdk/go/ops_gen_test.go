@@ -295,6 +295,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"apiKeys.cliTokens.revoke", "DELETE", "/api/v1/cli/tokens/id1", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.APIKeys.CliTokens.Revoke(ctx, "id1")
+		},
+	},
+	{
 		"connections.list", "GET", "/api/v1/connections", false,
 		"", `{"items":[{"id":"x","orgId":"x","connectorType":"x","connectorVersion":0,"name":"x","config":{},"hasCredential":false,"hasWebhookSecret":false,"mapping":{},"defaultTemplateId":"x","holderEmailField":"x","autoCreate":false,"autoEmail":false,"onMissing":"keep","voidWhen":[{"from":"x","op":"in"}],"webhookPrevUntil":0,"mode":"poll","intervalSeconds":0,"maxConcurrency":0,"requestsPerMinute":0,"enabled":false,"health":"unknown","firstVerifiedArrivalAt":0,"warning":{"code":"stale_deliveries","text":"x"},"consecutiveFailures":0,"breakerOpenUntil":0,"nextRunAt":0,"lastRunAt":0,"lastSuccessAt":0,"lastErrorCode":"x","lastErrorAt":0,"webhookUrl":"x","createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1193,6 +1200,20 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Orgs.UpdatePassSetup(ctx, "id1", &b, nil)
+		},
+	},
+	{
+		"walletHealth.list", "GET", "/api/v1/orgs/id1/wallet-health", false,
+		"", `{"items":[{"provider":"google","mode":"live","tone":"ok","lastSuccessAt":0,"queued":0,"failed24h":0,"uncertain":0,"uncertainWaiting":0,"callbackAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WalletHealth.List(ctx, "id1")
+		},
+	},
+	{
+		"walletHealth.retry", "POST", "/api/v1/orgs/id1/wallet-health/id2/recheck", false,
+		"", `{"due":0,"waiting":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WalletHealth.Retry(ctx, "id1", "id2")
 		},
 	},
 	{

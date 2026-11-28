@@ -54,6 +54,8 @@ const Wallet = z.literal('apple');
 const RunId = Str.optional();
 const Opt = Str.nullable().optional();
 const Flag = z.boolean().optional();
+/** On an event about a developer's own device pass: a Test pass on their phone (Workbench), not a real holder. */
+const DevicePass = { devicePass: Flag, devicePassId: Str.optional() };
 
 /**
  * The `data` of each type is an allowlist: receivers must ignore unknown fields, and nothing about
@@ -76,6 +78,7 @@ export const WEBHOOK_DATA_SCHEMAS = {
     device: z.string().max(12).nullable(),
     deviceCount: Version,
     firstDevice: z.boolean(),
+    ...DevicePass,
   }),
   'pass.uninstalled': z.object({
     wallet: Wallet,
@@ -83,6 +86,7 @@ export const WEBHOOK_DATA_SCHEMAS = {
     deviceCount: Version,
     lastDevice: z.boolean(),
     cause: z.enum(['wallet', 'push_gone']),
+    ...DevicePass,
   }),
   'pass.scanned': z.object({
     scanId: Str.nullable().optional(),
@@ -129,6 +133,7 @@ export const WEBHOOK_DATA_SCHEMAS = {
     status: z.number().int().optional(),
     reason: Str.nullable().optional(),
     code: Str.nullable().optional(),
+    ...DevicePass,
   }),
   'email.failed': z.object({ code: Str.nullable().optional() }),
   'webhook.test': z.object({}),
@@ -154,6 +159,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     requestId: z.string().optional(),
     /** Only on a sample sent from "Send test": it describes no real pass. */
     sample: z.literal(true).optional(),
+    /** Present, true, only on an event the Workbench simulator sent. */
+    simulated: z.literal(true).optional(),
   });
 
 const P = WebhookPassRefSchema;

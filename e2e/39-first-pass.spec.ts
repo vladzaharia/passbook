@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
+import { useBlueprintWizard } from './helpers/blueprint-wizard.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 test.setTimeout(120_000);
@@ -19,9 +20,7 @@ test('a new org goes from the path card to a pass waiting on a phone', async ({ 
   await expect(path).toBeVisible();
   await path.getByRole('link', { name: 'Monthly pass' }).click();
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Make it yours' })).toBeVisible();
-  await page.getByRole('textbox', { name: /^Name/ }).fill('Gym membership');
-  await page.getByRole('button', { name: 'Create' }).click();
+  await useBlueprintWizard(page, 'Gym membership');
 
   await page.waitForURL(/\/templates\/[^/]+$/);
   await page.getByRole('button', { name: 'Try on my phone' }).first().click();

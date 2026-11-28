@@ -94,7 +94,7 @@
     var(--tw-ring-shadow), var(--tw-shadow);
 }
 .btn.outline {
-  border-style: var(--tw-border-style);
+  border-style: solid;
   border-width: 1px;
   border-color: var(--pk-border-strong);
   color: var(--pk-text-default);

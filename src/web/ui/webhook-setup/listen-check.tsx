@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatTime } from '../../lib/format.ts';
@@ -8,7 +8,7 @@ import { ErrorState } from '../error-state.tsx';
 import { type LocalStepDef, useLocalOperation } from '../operation/index.ts';
 import { stepItems } from '../operation/steps.ts';
 import { StepList, type StepListItem } from '../step-marker.tsx';
-import { judge, type Verdict } from './listen-state.ts';
+import { judge, LISTENING, type Verdict } from './listen-state.ts';
 import { LivePanel } from './live-panel.tsx';
 import { topicProgress } from './topic-checklist.tsx';
 import { type TroubleActions, Troubleshoot } from './troubleshoot.tsx';
@@ -31,13 +31,17 @@ export interface ListenProps {
   notIssued?: ReadonlySet<string>;
   /** The guide's `troubleshooting`. */
   recipeFix?: InboundContext['recipeFix'];
-  /** The guide's test line: where to press Send test. Shown while nothing has arrived. */
-  hint?: ReactNode;
   actions?: TroubleActions;
   zone?: string | undefined;
   marks?: Partial<FeedMarks>;
   /** The phase and the topics seen: the host ticks its checklist and enables Done from this. */
-  onChange?: (state: { phase: Verdict['phase']; seen: string[]; verified: Arrival | null }) => void;
+  onChange?: (state: {
+    phase: Verdict['phase'];
+    seen: string[];
+    verified: Arrival | null;
+    /** The panel's own heading: a strip elsewhere says the same state. */
+    head: string;
+  }) => void;
   /** An accepted delivery can show what it made. */
   onInspect?: (arrival: Arrival) => void;
   buddy?: boolean;
@@ -87,14 +91,6 @@ export function ListenCheck(props: ListenProps) {
     [provider],
   );
   const { operation: op, driver } = useLocalOperation(def, zone);
-
-  const { onChange } = props;
-  const changeKey = `${verdict.phase}|${verdict.verified?.id ?? ''}|${verdict.seen.join(',')}`;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the key stands for the verdict.
-  useEffect(
-    () => onChange?.({ phase: verdict.phase, seen: verdict.seen, verified: verdict.verified }),
-    [changeKey],
-  );
 
   const waiting = useRef(false);
   const finished = useRef(false);
@@ -164,7 +160,15 @@ export function ListenCheck(props: ListenProps) {
           ? (trouble?.title ?? 'Delivery refused')
           : showSlow
             ? 'Nothing arrived yet'
-            : 'Listening · nothing yet';
+            : LISTENING;
+  const { onChange } = props;
+  const changeKey = `${verdict.phase}|${verdict.verified?.id ?? ''}|${verdict.seen.join(',')}|${head}`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the key stands for the verdict and the heading.
+  useEffect(
+    () =>
+      onChange?.({ phase: verdict.phase, seen: verdict.seen, verified: verdict.verified, head }),
+    [changeKey],
+  );
   const say = feed.error
     ? "Couldn't check for deliveries."
     : paused
@@ -207,9 +211,6 @@ export function ListenCheck(props: ListenProps) {
         <>
           <div className="flex flex-col gap-1">
             <h4 className="text-base font-semibold text-fg-strong">{head}</h4>
-            {quiet && !paused && props.hint ? (
-              <p className="text-sm text-fg-muted">{props.hint}</p>
-            ) : null}
             {sample ? (
               <p className="text-sm text-fg-muted">
                 Samples prove the setup. Real {props.record ?? 'records'} issue passes.

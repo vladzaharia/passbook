@@ -13,6 +13,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { developerDevicePassRoutes } from '../workbench/routes-device-pass.ts';
 import { developerHome } from './home.ts';
 import { pendingInviteOrgs } from './repo-invites.ts';
 import { reopenOwnSandbox } from './reset.ts';
@@ -25,6 +26,7 @@ export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
 developerRoutes.route('/', developerLogRoutes);
 developerRoutes.route('/', developerSandboxRoutes);
+developerRoutes.route('/device-passes', developerDevicePassRoutes);
 
 register(
   developerRoutes,

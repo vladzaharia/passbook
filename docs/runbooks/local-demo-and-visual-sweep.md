@@ -16,10 +16,10 @@ Use to seed a local e2e server with demo orgs and passes, then screenshot every 
 
 ## Parameters
 
-`ROUTES` lists route files under `tools/dev/visual-routes/`. `ONLY` keeps routes whose name contains any comma-separated substring; empty means all. `OUT` must be inside `.wrangler/`.
+`E2E_PORT` and `SEED_BREAKGLASS_TOKEN` default to the frontmatter values and are exported for the seed and sweep. `ROUTES` lists route files under `tools/dev/visual-routes/`. `ONLY` keeps routes whose name contains any comma-separated substring; empty means all. `OUT` must be inside `.wrangler/`.
 
 ```sh name=set-params confirm=no
-export DEV_URL="${DEV_URL:-http://localhost:$E2E_PORT}" && export ROUTES="${ROUTES:-admin,portal,public,scanner,scanning}" && export ONLY="${ONLY:-}" && export OUT="${OUT:-.wrangler/visual-sweep/run}"
+export E2E_PORT="${E2E_PORT:-5473}" && export SEED_BREAKGLASS_TOKEN="${SEED_BREAKGLASS_TOKEN:-wbg_e2e-breakglass-token}" && export DEV_URL="${DEV_URL:-http://localhost:$E2E_PORT}" && export ROUTES="${ROUTES:-admin,portal,public,scanner,scanning}" && export ONLY="${ONLY:-}" && export OUT="${OUT:-.wrangler/visual-sweep/run}"
 ```
 
 ## 0. Start the e2e server

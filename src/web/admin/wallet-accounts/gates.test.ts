@@ -30,7 +30,7 @@ describe('enrolment gates', () => {
   });
 
   it('lists the round trip only in Live', () => {
-    expect(gatesOf(enrolment()).map((g) => g.label)).toEqual(['Account check']);
+    expect(gatesOf(enrolment()).map((g) => g.label)).toEqual(['Enrolment check']);
     expect(
       gatesOf(enrolment({ prerequisites: { check: true, roundTrip: false } })).map((g) => g.state),
     ).toEqual(['Passed', 'Needed']);

@@ -7,6 +7,7 @@ import {
   makeTemplate,
 } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
+import { RACE_AUTHORIZED } from './repo-read-authority.ts';
 import { recordSessionCountScan } from './repo-session-count-scope-test-fixtures.ts';
 import {
   atCountBatch,
@@ -17,9 +18,7 @@ import {
 const makeEnv = installKeysetTestEnv();
 
 function countResultIndexes(statements: readonly ({ sql: string } | undefined)[]) {
-  const authority = statements.findIndex((entry) =>
-    /session_row\s+AS\s+MATERIALIZED[\s\S]*AS\s+authorized\s*$/i.test(entry?.sql ?? ''),
-  );
+  const authority = statements.findIndex((entry) => (entry?.sql ?? '').includes(RACE_AUTHORIZED));
   const devices = statements.findIndex((entry) =>
     /SELECT\s+count\(\*\)\s+AS\s+devices\b/i.test(entry?.sql ?? ''),
   );

@@ -32,5 +32,6 @@ export const IDENTITY_RUN_ACTIONS = {
   'wallet.google_issuer_entered': a('Google issuer entered', key, 'success'),
   'wallet.google_issuer_created': a('Google issuer created', key, 'success'),
   'wallet.google_key_rotated': a('Google key rotated', key, 'success'),
+  'wallet.uncertain_recheck': a('Uncertain updates rechecked', rotate, 'info'),
   'wallet.key_unknown': a('Unknown Google key', key, 'danger'),
 };

@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { PUBLIC_AUDIT_SQL } from '../../platform/repo-audit-public.ts';
 
 export interface Scope {
   orgId?: string;
@@ -186,13 +187,20 @@ export interface RecentRow {
 }
 
 /** Audit rows carry no mode, so test mode shows none, like the sign-in series. */
-export async function recentAudit(db: D1Database, scope: Scope, limit: number, tenant: boolean) {
+export async function recentAudit(
+  db: D1Database,
+  scope: Scope,
+  limit: number,
+  tenant: boolean,
+  excludePersonal = false,
+) {
   // Audit entries have no reliable template dimension.
   if (scope.mode === 'test' || scope.templateId) return [];
   return all<RecentRow>(
     db,
     `SELECT at, action, org_id, ${tenant ? 'NULL AS target_id' : 'target_id'} FROM audit_log
-     ${scope.orgId ? 'WHERE org_id = ?' : ''} ORDER BY at DESC LIMIT ?`,
+     WHERE ${scope.orgId ? 'org_id = ?' : excludePersonal ? PUBLIC_AUDIT_SQL : '1'}
+     ORDER BY at DESC LIMIT ?`,
     [...(scope.orgId ? [scope.orgId] : []), limit],
   );
 }

@@ -119,13 +119,9 @@ describe('the widest resolve and lookup reads', () => {
     );
     const parts = [
       refsClear(REFS),
-      refsClear(REFS, { org: 'actor_ok.org_id', mode: "'test'" }),
+      refsClear(REFS, { org: 'ao.org_id', mode: "'test'" }),
       absent(
-        matchingPassSql(
-          match,
-          { org: 'actor_ok.org_id', mode: 'actor_ok.mode' },
-          acceptedFilter(actor, true),
-        ),
+        matchingPassSql(match, { org: 'ao.org_id', mode: 'ao.mode' }, acceptedFilter(actor, true)),
       ),
       ...lineage,
     ].map((part) => {

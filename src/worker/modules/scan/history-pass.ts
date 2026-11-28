@@ -131,7 +131,7 @@ export async function passHistory(
           limit: take,
         }),
         // The `+` keeps the planner on this pass's own index, not the org's.
-        tenant: auth.tenant('+s', 'scans'),
+        tenant: auth.tenantOnce('+s', 'scans'),
       },
       now,
     ),

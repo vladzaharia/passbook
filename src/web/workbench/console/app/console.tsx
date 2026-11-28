@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { BENCH_COPY } from '../../../../shared/copy/developers-bench.ts';
 import { CONSOLE_COPY } from '../../../../shared/copy/developers-bench-console.ts';
 import { copyWithFeedback } from '../../../developers/shell/copy.ts';
 import { Ticket } from '../../../developers/ui/ticket.tsx';
@@ -24,7 +25,7 @@ import { type Outcome, RunError, send } from '../send.ts';
 import { loadTemplateInput } from '../template-sample.ts';
 import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
-import { LazyState } from './lazy-state.tsx';
+import { LazyStage } from './lazy-state.tsx';
 import { RunBar } from './run-bar.tsx';
 
 /** Below the bench's 720 px the Run bar docks to the screen's bottom edge. */
@@ -251,7 +252,7 @@ export function OpConsole({
                 />
               </Suspense>
             ) : pending || error ? null : (
-              <LazyState scene="console-idle" heading="p" />
+              <LazyStage scene="nudge" mood="curious" title={BENCH_COPY.state.consoleIdle} />
             )}
           </div>
         }

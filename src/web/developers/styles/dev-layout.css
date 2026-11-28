@@ -29,6 +29,8 @@
   align-self: start;
   max-height: calc(100dvh - var(--dev-bar));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 48px;
 }
 .sidenav h4 {
   font-size: 11px;
@@ -121,6 +123,11 @@
 }
 [data-menubar] .min-h-8 {
   min-height: 32px;
+}
+@media (pointer: coarse) {
+  [data-menubar] .min-h-8 {
+    min-height: 44px;
+  }
 }
 [data-menubar] .size-5 {
   width: 20px;

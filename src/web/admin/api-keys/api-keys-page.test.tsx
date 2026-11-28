@@ -67,6 +67,14 @@ describe('api keys page', () => {
     expect(screen.getByText('Old')).toBeInTheDocument();
   });
 
+  it('badges a key issued by the CLI', async () => {
+    await renderApp('/admin/api-keys', {
+      session: 'admin',
+      handlers: { '/api/v1/api-keys': () => page([key({ origin: 'cli' })]) },
+    });
+    expect(await screen.findByText('CLI')).toBeInTheDocument();
+  });
+
   it('defaults to platform keys rather than a remembered tenant selection', async () => {
     vi.stubGlobal('localStorage', {
       getItem: (k: string) => (k === 'wallet-org-filter' ? 'o1' : null),

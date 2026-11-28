@@ -15,6 +15,7 @@ import { retentionPlatformRoutes } from './modules/retention/routes.ts';
 import { retentionPlatformReleaseRoutes } from './modules/retention/routes-platform-release.ts';
 import { platformSettingsRoutes } from './modules/settings/routes-platform.ts';
 import { walletPlatformRoutes } from './modules/wallet-providers/routes-platform-credentials.ts';
+import { devicePassPlatformRoutes } from './modules/workbench/routes-device-pass-platform.ts';
 import type { AppBindings } from './platform/context.ts';
 
 type Mount = readonly [path: string, routes: Hono<AppBindings>];
@@ -27,6 +28,7 @@ export const platformMounts: readonly (readonly Mount[])[] = [
   [
     // Platform routes that declare their own key access.
     ['/api/v1/platform', platformSettingsRoutes],
+    ['/api/v1/platform', devicePassPlatformRoutes],
     ['/api/v1/platform', retentionPlatformReleaseRoutes],
     // Polaris ID routes declare their own key access (`{ platform, key? }`); a person-only one refuses a key with PERSON_REQUIRED.
     ['/api/v1/platform', idpOperationRoutes],

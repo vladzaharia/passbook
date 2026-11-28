@@ -238,7 +238,7 @@ describe('Use blueprint', () => {
     phone();
     const user = userEvent.setup();
     const bodies: unknown[] = [];
-    const { dialog } = await open(user, {
+    await open(user, {
       [`/api/v1/templates/${ID}/use`]: (_u: URL, init?: RequestInit) => {
         bodies.push(JSON.parse(String(init?.body)));
         return json(made, 201);
@@ -246,7 +246,9 @@ describe('Use blueprint', () => {
       '/api/v1/templates/made1': () => json(made),
       '/api/v1/templates/made1/preview': preview,
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: ORG.id, name: 'Balance card' }]));
   });
 
@@ -257,7 +259,9 @@ describe('Use blueprint', () => {
       [`/api/v1/templates/${ID}/use`]: () =>
         problem(409, 'TEMPLATE_EXISTS', 'A template with this name exists. Pick another name.'),
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Create template' }));
     expect(await within(dialog).findByText(/A template with this name exists/)).toBeInTheDocument();
   });
 });

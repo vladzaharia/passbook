@@ -81,6 +81,8 @@ export const RATE_LIMITS = [
   'RL_SIMULATE',
   'RL_WEBHOOK_LEDGER',
   'RL_SANDBOX_DELIVERY',
+  'RL_CLI_START',
+  'RL_CLI_POLL',
 ] as const satisfies readonly RateLimitName[];
 
 /**

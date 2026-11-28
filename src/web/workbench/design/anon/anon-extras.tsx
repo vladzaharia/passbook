@@ -7,6 +7,7 @@ import { useBottomBar } from '../../../ui/bottom-bar.ts';
 import { Button } from '../../../ui/button.tsx';
 import { Select } from '../../../ui/select.tsx';
 import { Sheet, SheetContent, SheetTrigger } from '../../../ui/sheet.tsx';
+import { BenchSlot } from '../../bench/slots.tsx';
 import { CodeTab } from '../code-tab.tsx';
 import { WalletPeek } from '../peek.tsx';
 import { useAnon } from './anon-context.tsx';
@@ -27,23 +28,33 @@ export function AnonCode() {
 }
 
 /** The head: the blueprint picker where a template's name would be, then Share and Save. */
-function AnonHead({ actions }: { name: string; actions: ReactNode }) {
+function AnonHead({ actions, modes }: { name: string; actions: ReactNode; modes?: ReactNode }) {
   const { blueprint, options, pick } = useAnon();
   const phone = useMediaQuery(PHONE);
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className="mb-2 flex items-center gap-2 sm:mb-3 sm:flex-wrap">
+      {phone ? (
+        <BenchSlot name="action">
+          <ShareButton iconOnly />
+        </BenchSlot>
+      ) : null}
       <Select
-        className="w-64 max-w-full"
+        className="min-w-0 flex-1 sm:w-64 sm:flex-none"
         aria-label={WB_DESIGN.anon.pick}
         tall
         value={blueprint.preview.id}
         options={options}
         onValueChange={pick}
       />
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      {modes}
+      <div className="flex shrink-0 items-center gap-2 empty:hidden sm:ml-auto sm:flex-wrap">
         {actions}
-        <ShareButton />
-        {phone ? null : <SaveButton />}
+        {phone ? null : (
+          <>
+            <ShareButton />
+            <SaveButton />
+          </>
+        )}
       </div>
     </div>
   );

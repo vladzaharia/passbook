@@ -57,7 +57,9 @@ import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-a
 import { walletCredentialRoutes } from './modules/wallet-providers/routes-credentials.ts';
 import { walletEnrolmentRoutes } from './modules/wallet-providers/routes-enrolments.ts';
 import { walletReissueRoutes } from './modules/wallet-providers/routes-reissue.ts';
+import { walletHealthRoutes } from './modules/wallet-providers/routes-health.ts';
 import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-status.ts';
+import { cliPlatformRoutes, cliRoutes } from './modules/workbench/cli-routes.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
 import { workbenchRoutes } from './modules/workbench/routes.ts';
@@ -78,11 +80,14 @@ export const tenantMounts: readonly (readonly Mount[])[] = [
     ['/api/v1/me', meRoutes],
     ['/api/v1/developer', developerRoutes],
     ['/api/v1/workbench', workbenchRoutes],
+    ['/api/v1/cli', cliRoutes],
+    ['/api/v1/platform', cliPlatformRoutes],
     ['/api/v1', resolveRoutes],
     ['/api/v1/workbench', workbenchReadRoutes],
     ['/api/v1/request-logs', requestLogRoutes],
     // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
     ['/api/v1/orgs', orgEntitlementsRoutes],
+    ['/api/v1/orgs', walletHealthRoutes],
     ['/api/v1/orgs', developerOrgRoutes],
     ['/api/v1/invitations', invitationRoutes],
     ['/api/v1/orgs', passSetupRoutes],

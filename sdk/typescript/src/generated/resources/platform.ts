@@ -8,7 +8,7 @@ export class PlatformAuditEntriesResource {
     this.core = core;
   }
 
-  /** Export the platform audit log as CSV (10,000 entries at most; 6 an hour) `GET /api/v1/audit/platform/export` */
+  /** Export the platform audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/platform/export` */
   export(query?: PlatformAuditEntriesExportQuery, options?: RequestOptions): Promise<Response> {
     return this.core.request({ method: 'GET', path: '/api/v1/audit/platform/export', query, raw: true }, options);
   }

@@ -18,6 +18,7 @@ import { hostPolicy } from './platform/host-policy.ts';
 import { buildOpenApiDocument } from './platform/openapi-document.ts';
 import { keyCallableOnly } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
+import { assertScopedPatterns } from './platform/router-scope.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
 
@@ -30,7 +31,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|scim|assets|health|marketing|d)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -111,5 +112,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.get('/api/v1/openapi.json', document);
   app.get('/api/v1/docs', document);
 
+  assertScopedPatterns(app);
   return app;
 }

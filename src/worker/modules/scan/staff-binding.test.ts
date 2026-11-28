@@ -8,6 +8,7 @@ import {
   makeScanStaff,
   TEST_NOW,
 } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -65,7 +66,7 @@ describe('staff binding grants', () => {
       staffSince: clock.now(),
       staffSeenAt: clock.now(),
     });
-    expect(JSON.stringify(bound)).not.toContain(person.pin);
+    expectSecretAbsent(JSON.stringify(bound), person.pin);
   });
 
   it('cannot bind a person who was disabled, deleted, or had their PIN reset after verification', async () => {

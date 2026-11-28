@@ -1,3 +1,5 @@
+import { RACE_KEYSET } from './race-tags.ts';
+
 /**
  * Triggers `change` ahead of the statements that decide what an answer discloses: the output fence's
  * history bind (a packed authority term), the passless read (`SELECT 1 AS ok FROM actor_ok`, run on
@@ -36,7 +38,7 @@ export function outputRaceDatabase(real: D1Database, trigger: () => Promise<void
           const statement = target.prepare(sql);
           if (sql.includes('SELECT 1 AS ok FROM actor_ok')) return wrap(statement);
           if (
-            sql.endsWith(' AS keyset') ||
+            sql.includes(RACE_KEYSET) ||
             (sql.includes('ring AS MATERIALIZED') && sql.includes(' AS pass_ok'))
           )
             return new Proxy(statement, {

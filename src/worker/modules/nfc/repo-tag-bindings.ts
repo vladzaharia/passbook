@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
+import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { all, first } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -158,10 +159,8 @@ export async function passInTenantLimits(
   passId: string,
 ): Promise<boolean> {
   const p = authorityPredicate(principal, { scope: 'org_mode', now });
-  const row = await first<{ id: string }>(
-    db,
-    `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND p.id = ? AND ${tenantFilter('p', 'passes')}`,
-    [...p.params, passId],
-  );
+  const sql = `WITH ${p.ctes} SELECT p.id FROM ${p.rows}passes p WHERE ${p.ok} AND p.id = ? AND ${p.tenant('p', 'passes')}`;
+  assertActorOnce(sql);
+  const row = await first<{ id: string }>(db, sql, [...p.params, passId]);
   return row !== null;
 }

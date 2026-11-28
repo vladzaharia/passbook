@@ -152,12 +152,20 @@ test('a dead pass link explains itself and opens sign-in with the reason', async
   });
 });
 
-test('a failed browser check shows beside the reason line, not instead of it', async ({
+test('a failed browser check shows at submit beside the reason line, not instead of it', async ({
   playwright,
 }) => {
   await withAgent(playwright, 'android', async (page) => {
     await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
     await page.goto('/login?reason=link');
+    await expect(
+      page.getByText('That pass link does not work. Sign in to see your current passes.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Could not verify this browser. Reload and try again.'),
+    ).toHaveCount(0);
+    await page.getByLabel('Email').fill('sam@example.com');
+    await page.getByRole('button', { name: 'Email me a sign-in link' }).click();
     await expect(
       page.getByText('Could not verify this browser. Reload and try again.'),
     ).toBeVisible();

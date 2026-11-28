@@ -1,31 +1,5 @@
 /* The bench's states (bench/state.tsx, skeleton.tsx), its live mark (live.tsx) and the shortcuts sheet
-   (shortcuts.tsx). The card is ui/state-card.css's; the buddy sits on its top edge. */
-
-/* ---------- BenchState ---------- */
-.bench-state {
-  margin-top: 48px;
-}
-/* The buddy's prop stands past the card's end edge (the cable most): the card leaves it room, so it
-   never clips at the phone's gutter or scrolls the page sideways. */
-.bench-state[data-prop] {
-  margin-inline-end: 28px;
-}
-/* In the list's column the card is centred at a reading width, not pushed to the column's left edge. */
-.bench-main .bench-state,
-.logs-solo .bench-state {
-  max-width: min(44rem, calc(100% - 28px));
-  margin-inline: auto;
-}
-/* A card with a prop (the cable) keeps its room on both sides, so the prop never scrolls the page sideways. */
-.bench-main .bench-state[data-prop],
-.logs-solo .bench-state[data-prop] {
-  max-width: min(44rem, calc(100% - 56px));
-}
-/* Inside a pane or a list the card keeps less air above it. */
-.bench-insp .bench-state,
-.bench-main > .bench-state:first-child {
-  margin-top: 40px;
-}
+   (shortcuts.tsx). */
 
 /* ---------- BenchSkeleton ---------- */
 .bench-skel {
@@ -112,7 +86,8 @@
   border-radius: 50%;
   background: var(--pk-success);
 }
-.bench-live[data-state="paused"] .bench-live-d {
+.bench-live[data-state="paused"] .bench-live-d,
+.bench-live[data-state="limited"] .bench-live-d {
   background: var(--pk-text-subtle);
 }
 .bench-live[data-state="offline"] .bench-live-d {

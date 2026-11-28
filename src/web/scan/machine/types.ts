@@ -55,6 +55,8 @@ export type Loop =
       picker: Draft | null;
       held: ScanInput | null;
       locked: boolean;
+      /** The request that opened the card: a late band applies only under the same key. */
+      key?: string;
     }
   | { s: 'reviewing'; input: ScanInput; card: Card; draft: Draft; held: ScanInput | null }
   | {
@@ -82,6 +84,8 @@ export type Loop =
       /** From here a different code replaces the verdict (T0 + NEXT_SCAN_AFTER_VERDICT). */
       openFrom: number;
       next: ScanInput | null;
+      /** The request this verdict answers: a late answer replaces it only under the same key. */
+      key?: string;
       /** What was sent, so a Manager's PIN can re-send the same draft (`needs_approval`). */
       draft?: Draft;
       /** The last PIN was refused: the tries the lockout leaves, or locked. */

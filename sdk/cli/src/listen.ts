@@ -45,13 +45,7 @@ async function endpoint(o: ListenOptions): Promise<string> {
     id = made.endpoint.id;
     secret = made.secret;
   }
-  if (secret === null) {
-    try {
-      secret = (await o.api.webhookEndpoints.captures.revealSecret(id)).secret;
-    } catch (e) {
-      o.log(`Could not read the signing secret: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
+  if (secret === null) o.log('Read the signing secret in the Workbench.');
   if (secret !== null) o.log(`Signing secret: ${secret}`);
   return id;
 }
