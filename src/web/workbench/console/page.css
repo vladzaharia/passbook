@@ -49,7 +49,9 @@
   inline-size: 100%;
   min-height: 44px;
   block-size: auto;
+  min-width: 0;
   padding-block: 8px;
+  white-space: normal;
   justify-content: flex-start;
   font-weight: 500;
 }
@@ -61,6 +63,7 @@
   flex: 1;
   min-width: 0;
   text-align: start;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .console-trigger > svg {
