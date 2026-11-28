@@ -122,13 +122,15 @@ function GovernanceSummary({
     },
   ];
   return (
-    <section aria-label="Platform directories" className="grid gap-3 md:grid-cols-3">
+    <section aria-label="Platform directories" className="grid gap-2 md:grid-cols-3 md:gap-3">
       {cards.map((card) => (
         <Card key={card.to}>
-          <CardBody className="flex h-full flex-col items-start gap-2">
-            <h2 className="text-sm font-semibold text-fg-strong">{card.title}</h2>
+          <CardBody className="flex h-full items-center gap-3 md:flex-col md:items-start md:gap-2">
+            <h2 className="min-w-0 flex-1 text-sm font-semibold text-fg-strong md:flex-none">
+              {card.title}
+            </h2>
             <CountText count={card.count} loading={loading} />
-            <Button asChild variant="link" className="mt-auto">
+            <Button asChild variant="link" className="shrink-0 md:mt-auto">
               <Link to={card.to}>{card.link}</Link>
             </Button>
           </CardBody>

@@ -55,7 +55,7 @@ export function BlueprintTile({
       onClick={play}
       className={cn(
         GALLERY_CARD,
-        choices && 'max-sm:col-span-2',
+        '@container',
         'bp-tile wl-colors hover:border-border-strong has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus',
       )}
     >
@@ -64,7 +64,7 @@ export function BlueprintTile({
         <div
           inert
           aria-hidden
-          className="bp-pass pointer-events-none w-full max-w-44 max-h-48 max-sm:max-h-32 max-sm:max-w-32 overflow-hidden [mask-image:linear-gradient(to_bottom,black_70%,transparent)]"
+          className="bp-pass pointer-events-none w-full max-w-44 max-h-48 @max-[14rem]:max-h-32 @max-[14rem]:max-w-32 overflow-hidden [mask-image:linear-gradient(to_bottom,black_70%,transparent)]"
         >
           {preview.data ? (
             <PassPreview
@@ -78,15 +78,27 @@ export function BlueprintTile({
             <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
           )}
         </div>
+        {choices ? (
+          <div className="absolute inset-x-2 bottom-2 z-10 flex justify-center">
+            <SegmentedControl
+              block
+              className="[&_button]:min-w-0 [&_button]:flex-1 [&_button]:truncate [&_button]:px-2"
+              label={`${entry.variants[0]?.blueprint.name} for`}
+              value={String(pick)}
+              onValueChange={(v) => setPick(Number(v))}
+              options={entry.variants.map((v, i) => ({ value: String(i), label: v.label }))}
+            />
+          </div>
+        ) : null}
       </div>
       <div
         className={cn(
-          'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-4 py-3 max-sm:px-3',
+          'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-4 py-3 @max-[14rem]:px-3',
           rise && 'wl-rise [--wl-delay:calc(min(var(--i),6)*60ms+160ms)]',
         )}
       >
-        <BlueprintGlyph icon={blueprintGlyph(b)} className="max-sm:hidden" />
-        <div className="min-w-0 flex-1 max-sm:basis-full">
+        <BlueprintGlyph icon={blueprintGlyph(b)} className="@max-[14rem]:hidden" />
+        <div className="min-w-0 flex-1 @max-[14rem]:basis-full">
           <Link
             to="/admin/blueprints/$blueprintId"
             params={{ blueprintId: b.id }}
@@ -98,22 +110,12 @@ export function BlueprintTile({
         <Button
           size="sm"
           variant="outline"
-          className="relative z-10 max-sm:w-full"
+          className="relative z-10 @max-[14rem]:w-full"
           aria-label={`Use ${b.name}`}
           onClick={() => onUse(b)}
         >
           Use
         </Button>
-        {choices ? (
-          <div className="relative z-10 basis-full">
-            <SegmentedControl
-              label={`${entry.variants[0]?.blueprint.name} for`}
-              value={String(pick)}
-              onValueChange={(v) => setPick(Number(v))}
-              options={entry.variants.map((v, i) => ({ value: String(i), label: v.label }))}
-            />
-          </div>
-        ) : null}
       </div>
     </li>
   );

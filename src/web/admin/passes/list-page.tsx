@@ -117,8 +117,12 @@ export function PassesListPage({
   );
   const orgs = useMemo(() => new Map(readable.map((m) => [m.orgId, m])), [readable]);
   const templateIds = useMemo(() => [...new Set(rows.map((r) => r.templateId))].sort(), [rows]);
-  // Previews are per organization: the All list shows plain chips.
-  const swatches = useSwatches(all ? [] : templateIds, orgId);
+  // Previews are per organization: in the All scope each template loads from its own.
+  const orgByTemplate = useMemo(
+    () => (all ? new Map(rows.map((r) => [r.templateId, r.orgId] as const)) : undefined),
+    [all, rows],
+  );
+  const swatches = useSwatches(templateIds, orgId, orgByTemplate);
   const showSubtitles = useMemo(() => {
     const seen = new Set<string>();
     return rows.some((r) => {

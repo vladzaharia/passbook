@@ -12,7 +12,7 @@ import { BlueprintTile } from './blueprint-tile.tsx';
 import { entriesOf, groupEntries, matches } from './gallery-model.ts';
 import { UseBlueprintDialog } from './use-dialog.tsx';
 
-const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4';
+const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4';
 
 /**
  * Platform designs to start from, grouped by the job they do. Read only: Use makes a tracked
