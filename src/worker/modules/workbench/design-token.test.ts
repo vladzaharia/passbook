@@ -186,6 +186,11 @@ describe('Design on the member token: save, dry run and the designer reads', () 
     const other = await t.member();
     const foreign = await t.call('GET', `/templates?orgId=${other.orgId}`, t.asClient(token));
     expect([403, 404]).toContain(foreign.status);
+    // Same user, member of the second org too: only the token's org pin refuses it.
+    await t.join(m.user.id, other.orgId, ['org_admin']);
+    await templateIn(other.orgId, m.user.id);
+    const pinned = await t.call('GET', `/templates?orgId=${other.orgId}`, t.asClient(token));
+    expect(pinned.status).toBe(404);
   });
 
   it('keeps every template and blueprint write out of the allowlist', () => {
