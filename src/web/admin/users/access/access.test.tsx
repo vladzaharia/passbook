@@ -221,6 +221,26 @@ describe('Offboard', () => {
 });
 
 describe('Groups and Claims', () => {
+  it('does not ask for claims on a break-glass or stale session', async () => {
+    const asked: string[] = [];
+    const claims = () => {
+      asked.push('claims');
+      return json({ claims: {}, otherKeys: 0 });
+    };
+    await renderApp('/admin/users/u2', {
+      session: 'admin',
+      amr: 'breakglass',
+      handlers: {
+        ...base,
+        '/api/v1/users/u2/access': () => json(access()),
+        '/api/v1/users/u2/claims': claims,
+      },
+    });
+    await screen.findByRole('heading', { name: 'Polaris ID access' });
+    expect(screen.queryByRole('heading', { name: 'Claims' })).toBeNull();
+    expect(asked).toEqual([]);
+  });
+
   it('lists manual groups and claims, and adds a typed claim', async () => {
     const patches: unknown[] = [];
     await open({

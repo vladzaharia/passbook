@@ -1,6 +1,13 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { safeNextPath } from '../../shared/next.ts';
-import { canUseConsole, isStrongAmr, type SignInLevel } from '../../shared/sign-in.ts';
+import {
+  canUseConsole,
+  isStrongAmr,
+  STEP_UP_SECONDS,
+  type SignInLevel,
+} from '../../shared/sign-in.ts';
+
+export { STEP_UP_SECONDS };
 import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import type { SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
@@ -101,9 +108,6 @@ export function assertSignIn(
 /** `strict` for a handler or router that already holds the session. */
 export const assertStrictSignIn = (c: Context<AppBindings>, session: SessionAuth): void =>
   assertSignIn(c, session, 'strict');
-
-/** How recent a sign-in a sensitive action asks for. */
-export const STEP_UP_SECONDS = 600;
 
 /** The page the person is on (a same-origin Referer), else the surface the route belongs to. */
 function stepUpNext(c: Context<AppBindings>): string {

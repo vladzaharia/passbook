@@ -26,3 +26,6 @@ export function canUseConsole(
 ): boolean {
   return isStrongAmr(session.amr) || (session.consoleUntil != null && now < session.consoleUntil);
 }
+
+/** How recent a sign-in a sensitive action asks for. */
+export const STEP_UP_SECONDS = 600;

@@ -63,6 +63,7 @@ export function sessionFixture(kind: SessionKind, amr: SignInMethod = 'oidc'): S
         : ['user']) as AuthedRoles,
     csrfToken: 'csrf-test',
     amr,
+    authTime: amr === 'magic_link' ? null : Date.now(),
     expiresAt: 4_000_000_000_000,
   };
 }
