@@ -101,15 +101,15 @@ describe('endpoint repo', () => {
     expect((await getEndpoint(b.db, b.fence, 'epb'))?.url).toBe(NEW.url);
   });
 
-  it('the 11th endpoint aborts the batch', async () => {
+  it('the 101st endpoint aborts the batch', async () => {
     const t = await setup('wh-cap');
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 100; i++) {
       const g = t.g('endpoint.create');
       insertEndpoint(g, { ...NEW, id: `cap${i}` });
       await g.commit();
     }
     const g = t.g('endpoint.create');
-    insertEndpoint(g, { ...NEW, id: 'cap10' });
+    insertEndpoint(g, { ...NEW, id: 'cap100' });
     await expect(g.commit()).rejects.toThrow(/webhook endpoint limit/);
   });
 });

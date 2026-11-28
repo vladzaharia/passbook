@@ -769,7 +769,7 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 
 `eventTypes` is an explicit list of 1 to 32 types, with no wildcard. `templateIds` (up to 20 of the org's
 own templates) narrows it; `null` means all. The URL must be `https` on port 443 with a public host (no
-credentials, IP literal or platform host): `422 UNSAFE_URL`. It is re-checked on every attempt. The 11th
+credentials, IP literal or platform host): `422 UNSAFE_URL`. It is re-checked on every attempt. The 101st
 endpoint in a mode is `409 WEBHOOK_ENDPOINT_LIMIT`, and an org may create 20 endpoints an hour (`429`). Create, update, delete, rotate and replay are audited
 (`webhook.endpoint.*`, `webhook.secret.rotate`, `webhook.replay`) with the host only, never the path or a secret.
 

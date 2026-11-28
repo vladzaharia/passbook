@@ -17,6 +17,7 @@ import { type Net, stubNet } from './deliver-test-fixtures.ts';
 import { activeSecrets } from './repo-secrets.ts';
 import { clearResolverMemo } from './resolver-memo.ts';
 import { openSecret } from './secrets.ts';
+import { seedEndpoint } from './webhooks-test-fixtures.ts';
 
 let api: Api;
 let net: Net;
@@ -151,15 +152,14 @@ describe('create, read, update, delete', () => {
     expect((await create({ url: '' })).status).toBe(422);
   });
 
-  it('stops at ten endpoints per mode with a stable code', async () => {
-    for (let i = 0; i < 10; i++)
-      expect((await create({ url: `https://hooks.example.com/${i}` })).status).toBe(201);
+  it('stops at the platform ceiling of 100 endpoints per mode with a stable code', async () => {
+    for (let i = 0; i < 100; i++) await seedEndpoint(api.rig.db, { orgId });
     await expectProblem(
-      await create({ url: 'https://hooks.example.com/11' }),
+      await create({ url: 'https://hooks.example.com/101' }),
       409,
       'WEBHOOK_ENDPOINT_LIMIT',
     );
-    expect(await rowCount(api.rig.db, 'webhook_endpoints')).toBe(10);
+    expect(await rowCount(api.rig.db, 'webhook_endpoints')).toBe(100);
     const test = await api.member(['org_admin'], { mode: 'test' });
     expect((await api.call('POST', BASE, { orgId, ...GOOD }, test)).status).toBe(201);
   });

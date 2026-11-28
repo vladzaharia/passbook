@@ -17,6 +17,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
 import { byUserOfCaller } from '../idp/actor.ts';
+import { assertFooterAllowed } from './footer-rule.ts';
 import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   presetRows,
@@ -168,6 +169,7 @@ export async function setPreset(
   const meta = (await presetRows(db)).find((p) => p.preset === input.preset);
   if (!meta) throw new NotFoundError('Preset not found.', 'PRESET_NOT_FOUND');
   if (input.expectedRevision !== meta.revision) throw changed();
+  assertFooterAllowed(input.preset, input.values['brand.mark']);
   const current = (await loadPresetValues(ctx)).get(input.preset) ?? {};
   const edits = Object.entries(input.values).filter(
     ([key, value]) => !same(current[key as keyof EntitlementValues], value),

@@ -12,7 +12,9 @@ export const ENTITLEMENT_PRESETS = [
   'trial',
   'starter',
   'standard',
+  'business',
   'premium',
+  'enterprise',
   'legacy',
   'developer',
 ] as const;
@@ -44,12 +46,32 @@ export type EntitlementDef =
   | { kind: 'limit'; presets: Column<LimitValue> };
 
 /** Column order of every row below, and the order the picker lists plans. */
-type Row<V> = readonly [trial: V, starter: V, standard: V, premium: V, unlimited: V, developer: V];
-const col = <V>([trial, starter, standard, premium, legacy, developer]: Row<V>): Column<V> => ({
+type Row<V> = readonly [
+  trial: V,
+  starter: V,
+  standard: V,
+  business: V,
+  premium: V,
+  enterprise: V,
+  unlimited: V,
+  developer: V,
+];
+const col = <V>([
   trial,
   starter,
   standard,
+  business,
   premium,
+  enterprise,
+  legacy,
+  developer,
+]: Row<V>): Column<V> => ({
+  trial,
+  starter,
+  standard,
+  business,
+  premium,
+  enterprise,
   legacy,
   developer,
 });
@@ -71,47 +93,67 @@ const block = (r: Row<string[]>): EntitlementDef => ({
 });
 const limit = (r: Row<LimitValue>): EntitlementDef => ({ kind: 'limit', presets: col(r) });
 
-const BASIC_CONNECTORS: string[] = ['csv-url', 'webhook-push/*', 'file-upload', 'demo'];
+const STUB_CONNECTORS: string[] = ['csv-url', 'file-upload', 'demo'];
+const ADMIT_CONNECTORS: string[] = [
+  ...STUB_CONNECTORS,
+  'http-json',
+  'webhook-push/*',
+  'zapier',
+  'shopify/webhook',
+  'stripe/*',
+  'woocommerce/*',
+  'calcom/*',
+  'tickettailor/*',
+];
 const ALL: string[] = ['*'];
 const BOARDING: string[] = ['boardingPass'];
 const NONE: string[] = [];
 
 /**
- * Columns: trial, starter, standard, premium, unlimited (id `legacy`), developer. Unlimited is every flag
- * on and no limits, so nothing changes for an existing org. Each step up only adds (a test holds it).
+ * Columns: trial (Stub), starter (Admit One), standard (Season Pass), business (Backstage), premium (All Access),
+ * enterprise, unlimited (id `legacy`), developer. Unlimited is every flag on and no limits, so nothing changes
+ * for an existing org. Each step up only adds (a test holds it). Values: plan Appendix A (v5).
  */
 export const ENTITLEMENTS = {
-  api: level(['off', 'read', 'full'], ['full', 'full', 'full', 'full', 'full', 'full']),
+  api: level(
+    ['off', 'read', 'full'],
+    ['full', 'full', 'full', 'full', 'full', 'full', 'full', 'full'],
+  ),
   'api.rateTier': level(
     ['standard', 'high', 'bulk'],
-    ['standard', 'standard', 'high', 'bulk', 'bulk', 'standard'],
+    ['standard', 'standard', 'high', 'high', 'bulk', 'bulk', 'bulk', 'standard'],
   ),
-  'api.keys': limit([2, 3, 10, 50, null, 3]),
-  apps: flag([0, 0, 1, 1, 1, 0]),
-  webhooks: flag([0, 1, 1, 1, 1, 1]),
-  'webhooks.endpoints': limit([1, 2, 10, 50, null, 3]),
-  connections: limit([1, 2, 10, 50, null, 0]),
-  connectors: allow([BASIC_CONNECTORS, BASIC_CONNECTORS, ALL, ALL, ALL, NONE]),
-  'wallet.google': flag([0, 1, 1, 1, 1, 0]),
-  'wallet.samsung': flag([0, 0, 1, 1, 1, 0]),
-  print: flag([0, 1, 1, 1, 1, 0]),
-  nfc: level(['off', 'basic', 'secure'], ['off', 'off', 'basic', 'secure', 'secure', 'off']),
-  'scanning.devices': limit([2, 5, 20, 100, null, 0]),
-  'join.perDay': limit([100, 250, 1000, 10000, null, 0]),
-  'messages.perDay': limit([3, 5, 20, 100, null, 0]),
-  'passes.changesPerDay': limit([3, 5, 20, 100, null, 10]),
-  'passes.live': limit([100, 1000, 5000, 50000, null, 0]),
-  'passes.test': limit([50, 200, 500, 2000, null, 500]),
-  templates: limit([3, 5, 25, 100, null, 10]),
-  'templates.uploads': flag([0, 0, 1, 1, 1, 0]),
-  'templates.stylesBlocked': block([BOARDING, BOARDING, NONE, NONE, NONE, NONE]),
-  'email.perDay': limit([100, 250, 500, 5000, null, 100]),
-  members: limit([3, 5, 25, 100, null, 1]),
-  'members.developers': limit([1, 2, 5, 25, null, 0]),
-  'brand.mark': level(['none', 'quiet', 'full'], ['full', 'full', 'quiet', 'none', 'none', 'full']),
-  domains: limit([0, 0, 1, 5, null, 0]),
-  'identity.own': flag([0, 0, 1, 1, 1, 0]),
-  'identity.managed': flag([0, 0, 1, 1, 1, 0]),
+  'api.keys': limit([2, 2, 5, 12, 30, null, null, 3]),
+  webhooks: flag([1, 1, 1, 1, 1, 1, 1, 1]),
+  'webhooks.endpoints': limit([1, 2, 4, 15, 40, null, null, 3]),
+  connections: limit([1, 2, 3, 15, 40, null, null, 0]),
+  connectors: allow([STUB_CONNECTORS, ADMIT_CONNECTORS, ALL, ALL, ALL, ALL, ALL, NONE]),
+  'wallet.google': flag([1, 1, 1, 1, 1, 1, 1, 0]),
+  'wallet.samsung': flag([0, 0, 1, 1, 1, 1, 1, 0]),
+  print: flag([0, 1, 1, 1, 1, 1, 1, 0]),
+  nfc: level(
+    ['off', 'basic', 'secure'],
+    ['off', 'basic', 'basic', 'basic', 'secure', 'secure', 'secure', 'off'],
+  ),
+  'scanning.devices': limit([1, 5, 10, 50, 100, null, null, 0]),
+  'join.perDay': limit([10, 150, 1500, 3000, 7500, null, null, 0]),
+  'messages.perDay': limit([1, 5, 10, 25, 50, null, null, 0]),
+  'passes.changesPerDay': limit([1, 3, 8, 20, 50, null, null, 10]),
+  'passes.live': limit([50, null, null, null, null, null, null, 0]),
+  'passes.test': limit([50, 100, 250, 500, 1000, null, null, 500]),
+  templates: limit([2, 5, 10, 100, 500, null, null, 10]),
+  'templates.uploads': flag([0, 0, 1, 1, 1, 1, 1, 0]),
+  'templates.stylesBlocked': block([BOARDING, NONE, NONE, NONE, NONE, NONE, NONE, NONE]),
+  'email.perDay': limit([35, 1700, 5000, 10000, 50000, null, null, 100]),
+  members: limit([2, 5, 8, 40, 250, null, null, 1]),
+  'members.developers': limit([1, 2, 3, 8, 25, null, null, 0]),
+  'brand.mark': level(
+    ['none', 'quiet', 'full'],
+    ['full', 'quiet', 'quiet', 'none', 'none', 'none', 'none', 'full'],
+  ),
+  domains: limit([0, 0, 0, 1, 3, null, null, 0]),
+  'identity.own': flag([0, 0, 0, 1, 1, 1, 1, 0]),
+  'identity.managed': flag([0, 0, 1, 1, 1, 1, 1, 0]),
 } as const satisfies Record<string, EntitlementDef>;
 
 export type EntitlementKey = keyof typeof ENTITLEMENTS;

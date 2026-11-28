@@ -3529,7 +3529,7 @@
   },
   "WEBHOOK_ENDPOINT_LIMIT": {
     "title": "Webhook endpoint limit",
-    "when": "This mode already has 10 endpoints.",
+    "when": "This mode already has 100 endpoints.",
     "fix": "Delete one first.",
     "retryable": false
   },

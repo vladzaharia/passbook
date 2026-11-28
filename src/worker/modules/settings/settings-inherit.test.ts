@@ -224,7 +224,6 @@ describe('settings and the plan', () => {
     expect((await read(scope))('channels.blocked').planBlocked).toBeUndefined();
     await plan(scope, 'trial');
     expect((await read(scope))('channels.blocked').planBlocked).toEqual([
-      'google',
       'samsung',
       'paper',
       'nfc',
@@ -241,7 +240,7 @@ describe('settings and the plan', () => {
     expect(await res.json()).toMatchObject({ code: 'FEATURE_NOT_INCLUDED', feature: 'nfc' });
     expect((await read(scope))('nfc.tags')).toMatchObject({ source: 'default' });
     expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
-    expect((await put(scope, { 'email.orgCapPerDay': 100 })).status).toBe(200);
+    expect((await put(scope, { 'email.orgCapPerDay': 30 })).status).toBe(200);
   });
 
   it('refuses a reset of nfc.tags while the plan lacks nfc: the default is on (L1)', async () => {

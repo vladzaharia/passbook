@@ -88,7 +88,7 @@ describe('Edit presets', () => {
     await user.click(await screen.findByRole('button', { name: 'Edit presets' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit presets' });
     await user.click(await within(dialog).findByRole('combobox', { name: /Feature/ }));
-    await user.click(await screen.findByRole('option', { name: /Webhooks: Off/ }));
+    await user.click(await screen.findByRole('option', { name: /Print at home: Off/ }));
     await user.click(within(dialog).getByRole('radio', { name: 'On' }));
     await user.click(within(dialog).getByRole('button', { name: 'Continue' }));
     const confirm = await screen.findByRole('alertdialog');
@@ -98,7 +98,7 @@ describe('Edit presets', () => {
     expect(puts).toHaveLength(0);
     await user.click(within(confirm).getByRole('button', { name: 'Change' }));
     await waitFor(() => expect(puts).toHaveLength(1));
-    expect(puts[0]).toEqual({ preset: 'trial', expectedRevision: 4, values: { webhooks: 1 } });
+    expect(puts[0]).toEqual({ preset: 'trial', expectedRevision: 4, values: { print: 1 } });
   });
 
   it('offers to move the organizations an earlier change has not reached, with no values', async () => {

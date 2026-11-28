@@ -7,8 +7,8 @@ const kinds = (before: EntitlementValues, after: EntitlementValues) =>
 
 describe('entitlementImpact', () => {
   it('reads each kind of value from the org side', () => {
-    expect(kinds({ apps: 1 }, { apps: 0 })).toEqual({ apps: 'off' });
-    expect(kinds({ apps: 0 }, { apps: 1 })).toEqual({ apps: 'on' });
+    expect(kinds({ print: 1 }, { print: 0 })).toEqual({ print: 'off' });
+    expect(kinds({ print: 0 }, { print: 1 })).toEqual({ print: 'on' });
     expect(kinds({ api: 'full' }, { api: 'read' })).toEqual({ api: 'down' });
     expect(kinds({ api: 'read' }, { api: 'off' })).toEqual({ api: 'off' });
     expect(kinds({ nfc: 'off' }, { nfc: 'basic' })).toEqual({ nfc: 'on' });
@@ -61,7 +61,7 @@ describe('entitlementImpact', () => {
   });
 
   it('treats a missing value as off, since it denies', () => {
-    expect(kinds({ apps: 1 }, {})).toEqual({ apps: 'off' });
-    expect(kinds({}, { apps: 1 })).toEqual({ apps: 'on' });
+    expect(kinds({ print: 1 }, {})).toEqual({ print: 'off' });
+    expect(kinds({}, { print: 1 })).toEqual({ print: 'on' });
   });
 });

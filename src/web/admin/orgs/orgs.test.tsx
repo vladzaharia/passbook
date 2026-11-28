@@ -332,10 +332,10 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Name/)).not.toHaveAttribute('aria-invalid');
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
-    // Plans load as cards: Standard is the default, the developer sandbox is not offered.
-    expect(await within(dialog).findByRole('radio', { name: 'Standard' })).toBeChecked();
+    // Plans load as cards: Season Pass is the default, the developer sandbox is not offered.
+    expect(await within(dialog).findByRole('radio', { name: 'Season Pass' })).toBeChecked();
     expect(within(dialog).queryByRole('radio', { name: 'Developer sandbox' })).toBeNull();
-    await ui.click(within(dialog).getByRole('radio', { name: 'Premium' }));
+    await ui.click(within(dialog).getByRole('radio', { name: 'All Access' }));
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() =>
       expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym', addMe: true, preset: 'premium' }),

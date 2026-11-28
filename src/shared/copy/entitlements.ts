@@ -15,7 +15,6 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
   api: 'API access',
   'api.rateTier': 'API rate tier',
   'api.keys': 'API keys',
-  apps: 'Apps',
   webhooks: 'Webhooks',
   'webhooks.endpoints': 'Webhook endpoints',
   connections: 'Connections',
@@ -51,10 +50,12 @@ export const ENTITLEMENT_LEVEL_LABEL: Partial<Record<EntitlementKey, Record<stri
 };
 
 export const PRESET_LABEL: Record<EntitlementPreset, string> = {
-  trial: 'Trial',
-  starter: 'Starter',
-  standard: 'Standard',
-  premium: 'Premium',
+  trial: 'Stub',
+  starter: 'Admit One',
+  standard: 'Season Pass',
+  business: 'Backstage',
+  premium: 'All Access',
+  enterprise: 'Enterprise',
   legacy: 'Unlimited',
   developer: 'Developer sandbox',
 };

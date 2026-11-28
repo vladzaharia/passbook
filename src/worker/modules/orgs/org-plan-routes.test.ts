@@ -82,10 +82,10 @@ describe('GET /orgs/{id}/plan', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = (await res.json()) as OrgPlanDto;
-    expect(body).toMatchObject({ preset: 'trial', label: 'Trial', footer: 'full' });
+    expect(body).toMatchObject({ preset: 'trial', label: 'Stub', footer: 'full' });
     expect(body.limits.find((l) => l.key === 'passes.live')).toEqual({
       key: 'passes.live',
-      limit: 100,
+      limit: 50,
       used: 0,
     });
     // Trial has no custom domains (limit 0) and no per-day usage counters.
@@ -94,7 +94,7 @@ describe('GET /orgs/{id}/plan', () => {
     const keys = body.features.map((f) => f.key);
     expect(keys).toContain('apple');
     expect(keys).toContain('api');
-    expect(keys).not.toContain('wallet.google');
+    expect(keys).not.toContain('wallet.samsung');
     expect(keys).not.toContain('nfc');
   });
 
@@ -154,9 +154,9 @@ describe('what the platform lets through', () => {
       expect(limitOf(body, 'join.perDay')?.limit).toBe(40);
       await moveTo(p, 'trial');
       const trial = await plan(p);
-      // The plan's own cap stands where it is lower: trial sends 100 a day, joins 100.
-      expect(limitOf(trial, 'email.perDay')?.limit).toBe(100);
-      expect(limitOf(trial, 'join.perDay')?.limit).toBe(40);
+      // The plan's own cap stands where it is lower: trial sends 35 a day, joins 10.
+      expect(limitOf(trial, 'email.perDay')?.limit).toBe(35);
+      expect(limitOf(trial, 'join.perDay')?.limit).toBe(10);
       await platformSetting('join.enabled', false);
       expect(limitOf(await plan(p), 'join.perDay')).toBeUndefined();
     } finally {
@@ -175,12 +175,11 @@ describe('what the platform lets through', () => {
 
   it('leaves out a limit whose feature is off, and limits nothing enforces', async () => {
     const p = await setup();
-    await moveTo(p, 'trial');
+    await moveTo(p, 'trial', { webhooks: { value: 0 } });
     const trial = await plan(p);
     expect(limitOf(trial, 'webhooks.endpoints')).toBeUndefined();
     expect(limitOf(trial, 'api.keys')).toBeDefined();
     expect(trial.limits.map((l) => l.key)).not.toContain('domains');
-    expect(trial.features.map((f) => f.key)).not.toContain('apps');
     expect(trial.features.map((f) => f.key)).not.toContain('identity.own');
     await moveTo(p, 'standard');
     expect(limitOf(await plan(p), 'webhooks.endpoints')).toBeDefined();

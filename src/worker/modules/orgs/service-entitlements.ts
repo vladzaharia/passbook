@@ -18,6 +18,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
 import { byUserOfCaller } from '../idp/actor.ts';
+import { assertFooterAllowed } from './footer-rule.ts';
 import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   orgEntitlementsRow,
@@ -217,6 +218,7 @@ export async function setOrgEntitlements(
   const base = before.gap ? presetValues('legacy') : (before.lagging ?? before.presetValues);
   const was = resolve(base, overrideMaps(ctx, stored, now).all);
   const after = resolve(target.values, next);
+  assertFooterAllowed(input.preset, after['brand.mark']);
   const impact = entitlementImpact(was, after);
   const touched = new Set([...put.map(([k]) => k), ...remove, ...impact.changes.map((c) => c.key)]);
   const changes: Record<string, unknown> = {};

@@ -12,7 +12,9 @@ describe('the presets list', () => {
       'trial',
       'starter',
       'standard',
+      'business',
       'premium',
+      'enterprise',
       'legacy',
       'developer',
     ]);

@@ -22989,7 +22989,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "connections",
@@ -23100,7 +23099,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "connections",
@@ -24443,7 +24441,9 @@
               "trial",
               "starter",
               "standard",
+              "business",
               "premium",
+              "enterprise",
               "legacy"
             ]
           },
@@ -33441,7 +33441,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "connections",
@@ -33714,7 +33713,6 @@
                     "api",
                     "api.rateTier",
                     "api.keys",
-                    "apps",
                     "webhooks",
                     "webhooks.endpoints",
                     "connections",
@@ -111763,6 +111761,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
+          "FOOTER_REQUIRED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111933,6 +111932,7 @@
         "x-codes": [
           "API_KEY_MISSING",
           "ENTITLEMENTS_CHANGED",
+          "FOOTER_REQUIRED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",

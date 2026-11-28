@@ -1,11 +1,13 @@
 import {
   BadgeCheck,
+  Building2,
   Gem,
   Hourglass,
   Layers,
   type LucideIcon,
   Sprout,
   SquareTerminal,
+  Ticket,
   Infinity as Unlimited,
 } from 'lucide-react';
 
@@ -13,7 +15,9 @@ const PLAN_ICON: Record<string, LucideIcon> = {
   trial: Hourglass,
   starter: Sprout,
   standard: BadgeCheck,
+  business: Ticket,
   premium: Gem,
+  enterprise: Building2,
   legacy: Unlimited,
   developer: SquareTerminal,
 };
