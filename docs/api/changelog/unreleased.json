@@ -3041,6 +3041,14 @@
     "note": "A customer body's screen can be review."
   },
   {
+    "key": "GET /api/v1/scan/live 200.rows[].reason: field added",
+    "class": "additive",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].reason: field added",
+    "note": "Live rows carry the monitor reason for desk roles."
+  },
+  {
     "key": "GET /api/v1/scan/roster 200.entries[].g: field added",
     "class": "additive",
     "operationId": "scan.getScanRoster",
