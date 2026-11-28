@@ -19,7 +19,7 @@ import {
   scanApi,
 } from './lib/scan-api.ts';
 import { deskBridgeStates, doorBridgeStates, installFakeApp } from './lib/scan-bridge.ts';
-import { codes as passCodes, seedScans } from './lib/scan-seed.ts';
+import { seedScans } from './lib/scan-seed.ts';
 import { eventDeskStates, type Run, tabletStates } from './lib/scan-states.ts';
 import { touchOptions } from './lib/touch.ts';
 
@@ -105,8 +105,6 @@ async function pairedDevice(
   }
 }
 
-let bridgeRuns = 0;
-
 /** The native bridge (W82): settle, drop and a late band, with a fake app host. */
 async function bridge(
   c: Ctx,
@@ -115,12 +113,27 @@ async function bridge(
   viewport: ViewportName,
   theme: Theme,
 ) {
-  // The seed scanned the first passes of the door's template: take later ones, so the reads are check-ins.
+  // Take passes nothing has scanned yet (the seed and earlier runs did), so the reads are check-ins.
+  const scanned = new Set(
+    (
+      (await api.get(`/api/v1/scans?orgId=${fx.orgId}&limit=100`)).items as { passId: string }[]
+    ).map((s) => s.passId),
+  );
   const first = (await api.get(`/api/v1/passes?orgId=${fx.orgId}&limit=1&status=active`)).items[0];
-  const pool = await passCodes(api, fx.orgId, 50, first.templateId);
-  const end = pool.length - bridgeRuns * 2;
-  const codes = pool.slice(end - 2, end);
-  bridgeRuns += 1;
+  const fresh = (
+    (await api.get(`/api/v1/passes?orgId=${fx.orgId}&limit=50&status=active`)).items as {
+      id: string;
+      templateId: string;
+    }[]
+  )
+    .filter((p) => p.templateId === first.templateId && !scanned.has(p.id))
+    .slice(0, 2);
+  const codes: string[] = [];
+  for (const p of fresh) {
+    const message = (await api.get(`/api/v1/passes/${p.id}`)).passJson?.barcodes?.[0]?.message;
+    if (typeof message === 'string') codes.push(message);
+  }
+  if (codes.length < 2) throw new Error('No unscanned passes left for the bridge: reseed.');
   for (const role of ['door', 'desk'] as const) {
     const context = await newContext(c, viewport, theme);
     try {
@@ -263,7 +276,7 @@ async function main() {
     ['Gate A', fx.gate.id, fx.gate.orgId],
   ] as const)
     console.log(
-      `scans, ${name}: ${await seedScans(base, api, scanner, org, 6).catch((e) => `skipped, ${(e as Error).message}`)}`,
+      `scans, ${name}: ${await seedScans(base, api, scanner, org, 4).catch((e) => `skipped, ${(e as Error).message}`)}`,
     );
   const pins = new Map<string, string>();
   for (const s of fx.staff) pins.set(s.id, await resetPin(api, fx.orgId, s.id));
