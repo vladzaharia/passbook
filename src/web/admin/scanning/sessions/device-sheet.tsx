@@ -218,7 +218,11 @@ export function DeviceSheet({
                   />
                 )}
               </FormField>
-              <SurfacePicker value={surface} onChange={setSurface} />
+              <SurfacePicker
+                value={surface}
+                onChange={setSurface}
+                capabilities={device.capabilities}
+              />
               {layout !== 'customer' ? (
                 <section className="grid gap-4 border-t border-border pt-4">
                   <div className="flex items-center justify-between gap-2">
