@@ -185,7 +185,7 @@ describe('KioskViewSchema', () => {
       KioskViewSchema.safeParse({
         screen: 'welcome',
         greet: 'Dana',
-        card: { label: 'Checked in', band: 'in' },
+        card: { band: 'in' },
       }).success,
     ).toBe(true);
     for (const extra of [{ reason: 'expired' }, { passId: 'p' }, { count: 4 }, { staff: 'Sam' }]) {
@@ -225,7 +225,7 @@ describe('KioskViewSchema', () => {
     expect(KioskViewSchema.safeParse(good).success).toBe(true);
   });
   it('has no sub copy and the help lines follow K-D20', () => {
-    expect(JSON.stringify(KIOSK_COPY)).not.toContain('{when}');
+    expect(JSON.stringify(KIOSK_COPY)).not.toContain('Your plan opens');
     expect(KIOSK_COPY.help.coming).toBe("Someone's coming.");
     expect('call' in KIOSK_COPY.help).toBe(false);
   });
@@ -420,6 +420,7 @@ describe('KioskHeartbeatSchema', () => {
       model: 'acr1555u',
       transport: 'bluetooth',
       pinned: true,
+      pinnedBy: 'staffMenu',
       label: null,
       firmware: null,
       battery: { percent: 20, low: true, charging: false },
