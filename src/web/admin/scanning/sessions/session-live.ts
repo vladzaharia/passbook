@@ -79,7 +79,7 @@ export function liveDoorFacts(
     devices: s.devices.map((d) => ({
       ref: d.id,
       name: d.name,
-      role: d.effectiveSurface === 'customer' ? 'customer' : 'scan',
+      role: d.deviceRole === 'customer' ? 'customer' : 'scan',
       direction: direction(d.settings.direction),
       reader: d.settings.reader,
       revoked: d.revoked,

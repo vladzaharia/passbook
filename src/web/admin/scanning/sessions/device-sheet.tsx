@@ -1,7 +1,7 @@
 import { QrCode, RotateCcw } from 'lucide-react';
 import { useId, useState } from 'react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
-import { surfaceFor } from '@/shared/scan-surfaces.ts';
+import { type StoredSurface, surfaceFor, wireSurface } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import {
@@ -40,7 +40,9 @@ export function DeviceSheet({
   const formId = useId();
   const [discard, setDiscard] = useState(false);
   const [name, setName] = useState(device.name);
-  const [surface, setSurface] = useState(device.surface);
+  const stored: StoredSurface =
+    device.surface ?? (device.deviceRole === 'monitor' ? 'desk' : 'customer');
+  const [surface, setSurface] = useState(stored);
   const [overrides, setOverrides] = useState(device.overrides);
   const [revision, setRevision] = useState(device.configRevision);
   const [error, setError] = useState('');
@@ -48,10 +50,11 @@ export function DeviceSheet({
   const changed = device.configRevision !== revision;
   const dirty =
     name !== device.name ||
-    surface !== device.surface ||
+    surface !== stored ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
   // The surface the server will resolve for this choice and these capabilities.
-  const layout = surface === 'desk' ? 'customer' : surfaceFor(surface, device.capabilities);
+  const choice = wireSurface(surface);
+  const layout = choice ? surfaceFor(choice, device.capabilities) : 'customer';
   const check = useFormErrors({ name: name.trim() ? undefined : 'Enter a name.' });
   async function submit() {
     if (changed || device.revoked || !dirty) return undefined;
@@ -61,7 +64,7 @@ export function DeviceSheet({
       const { follows: _follows, ...scanOverrides } = overrides;
       await save.mutateAsync({
         name: name.trim(),
-        surface,
+        ...(choice ? { surface: choice } : {}),
         overrides: layout === 'customer' ? overrides : scanOverrides,
         revision,
       });
@@ -196,7 +199,7 @@ export function DeviceSheet({
                   variant="link"
                   onClick={() => {
                     setName(device.name);
-                    setSurface(device.surface);
+                    setSurface(stored);
                     setOverrides(device.overrides);
                     setRevision(device.configRevision);
                     setError('');
@@ -240,13 +243,11 @@ export function DeviceSheet({
                   <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
                 </section>
               ) : (
-                <>
-                  <DeviceFollows
-                    value={overrides}
-                    onChange={setOverrides}
-                    scanners={followable(session.devices)}
-                  />
-                </>
+                <DeviceFollows
+                  value={overrides}
+                  onChange={setOverrides}
+                  scanners={followable(session.devices)}
+                />
               )}
             </fieldset>
           </Form>

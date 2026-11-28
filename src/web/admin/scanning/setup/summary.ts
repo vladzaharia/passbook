@@ -141,7 +141,7 @@ export function settingsLine(
     mode ? `Check-in: ${CHECK_IN[mode]}` : null,
     s.hardLimit ? 'Hard limit' : null,
     s.offline && s.whenOffline === 'list' ? 'Offline list' : null,
-    session.devices.some((d) => d.surface === 'customer') ? 'Customer screen' : null,
+    session.devices.some((d) => d.role === 'customer') ? 'Customer screen' : null,
   ].filter((p): p is string => p !== null);
   return parts.length > 0 ? parts.join(' · ') : null;
 }

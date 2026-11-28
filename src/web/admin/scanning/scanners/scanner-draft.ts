@@ -85,7 +85,8 @@ export function draftOf(s: ScannerDto & Partial<ScannerSetup>): ScannerDraft {
     orgId: s.orgId,
     accepts: accepts && 'eventId' in accepts ? 'event' : accepts ? 'templates' : 'all',
     kind: s.kind,
-    deviceRole: s.deviceRole,
+    // Kiosks are created by K0's flow, never this draft.
+    deviceRole: s.deviceRole === 'kiosk' ? 'scan' : s.deviceRole,
     watch: s.watch ?? { scannerIds: [], allOrg: false },
     adminUserId: s.adminUser?.id ?? '',
     eventId: accepts && 'eventId' in accepts ? accepts.eventId : '',

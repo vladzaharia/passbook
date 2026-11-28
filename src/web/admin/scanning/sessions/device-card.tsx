@@ -1,6 +1,6 @@
 import { Settings2, SlidersHorizontal } from 'lucide-react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
-import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
+import { DEVICE_KIND_LABELS, SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
 import { Badge, Button, Card, CardBody, StatusPill } from '@/web/ui/index.ts';
 import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { SURFACE_ICON } from './surface-picker.tsx';
@@ -19,7 +19,9 @@ export function DeviceCard({
 }) {
   const Icon =
     SURFACE_ICON[
-      device.surface === 'auto' && !device.capabilities ? 'auto' : device.effectiveSurface
+      device.surface === 'auto' && !device.capabilities
+        ? 'auto'
+        : (device.effectiveSurface ?? (device.deviceRole === 'monitor' ? 'desk' : 'customer'))
     ];
   const now = useNow();
   const overrides = Object.keys(device.overrides).length;
@@ -38,9 +40,11 @@ export function DeviceCard({
             <p className="text-xs text-fg-muted">
               {device.surface === 'auto'
                 ? device.capabilities
-                  ? `Automatic · ${SCAN_SURFACE_LABELS[device.effectiveSurface]}`
+                  ? `Automatic · ${SCAN_SURFACE_LABELS[device.effectiveSurface ?? 'phone']}`
                   : 'Automatic'
-                : SCAN_SURFACE_LABELS[device.effectiveSurface]}
+                : device.effectiveSurface
+                  ? SCAN_SURFACE_LABELS[device.effectiveSurface]
+                  : DEVICE_KIND_LABELS[device.deviceRole]}
             </p>
           </div>
         </div>

@@ -7,11 +7,8 @@ import {
   Sparkles,
   UserRound,
 } from 'lucide-react';
-import type {
-  ScanDeviceCapabilities,
-  ScanningDevice,
-} from '@/shared/contracts/scanning-sessions.ts';
-import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
+import type { ScanDeviceCapabilities } from '@/shared/contracts/scanning-sessions.ts';
+import { SCAN_SURFACE_LABELS, type StoredSurface } from '@/shared/scan-surfaces.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { FormField, Select } from '@/web/ui/index.ts';
 
@@ -22,7 +19,8 @@ export const SURFACE_ICON = {
   desk: Monitor,
   customer: UserRound,
 };
-type SurfaceChoice = Exclude<ScanningDevice['surface'], 'desk'>;
+type SurfaceChoice = Exclude<StoredSurface, 'desk'>;
+const LABELS = { ...SCAN_SURFACE_LABELS, customer: 'Customer screen' };
 
 function SurfacePreview({ surface }: { surface: SurfaceChoice }) {
   const Icon = SURFACE_ICON[surface];
@@ -67,8 +65,8 @@ export function SurfacePicker({
   onChange,
   capabilities,
 }: {
-  value: ScanningDevice['surface'];
-  onChange: (v: ScanningDevice['surface']) => void;
+  value: StoredSurface;
+  onChange: (v: StoredSurface) => void;
   capabilities?: ScanDeviceCapabilities | null;
 }) {
   const choice = (key: SurfaceChoice) => {
@@ -90,7 +88,7 @@ export function SurfacePicker({
       >
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-sm font-semibold text-fg-strong">
-            {SCAN_SURFACE_LABELS[key]}
+            {LABELS[key]}
             {selected ? <Check className="size-4 shrink-0 text-accent-fg" aria-hidden /> : null}
           </span>
         </span>

@@ -10,8 +10,7 @@ describe('device sheet follows', () => {
     const device = session.devices[0];
     if (!device?.capabilities) throw new Error('Missing fixture device.');
     device.overrides = { follows: ['door-1'] };
-    device.capabilities.preferred = 'customer';
-    device.capabilities.surfaces = ['phone', 'customer'];
+    device.capabilities.surfaces = ['phone'];
     let saved: { overrides?: { follows?: string[] } } | undefined;
     await renderApp('/admin/scanning/sessions/session-1?deviceId=device-1', {
       session: 'admin',
