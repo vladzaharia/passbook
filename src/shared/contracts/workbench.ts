@@ -103,11 +103,12 @@ export const WORKBENCH_ROUTES: readonly string[] = [
   'GET /api/v1/workbench/contexts',
   // Release a template version to Test only (`modes: ['test']`).
   'POST /api/v1/templates/:id/release',
-  // Design: read a template, its versions, files and the wallets' reports; save a version and run its dry
+  // Design: list the org's templates and the blueprints, read a template, its versions, files and the wallets' reports; save a version and run its dry
   // run (template authoring is Test work: a save is a draft only a release moves); build a preview; read
   // the releases, the stamps impact and the channels' policy. The designer's small reads: the org's
   // website and time zone settings and its brand (`pass-setup`), both filtered for a token. Channel writes,
   // review, promotion, rollback and the template's lifecycle stay out (`WORKBENCH_NEVER`).
+  'GET /api/v1/templates',
   'GET /api/v1/templates/:id',
   'GET /api/v1/templates/:id/input-schema',
   'GET /api/v1/templates/:id/versions/:version',

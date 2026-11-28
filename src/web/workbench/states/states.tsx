@@ -182,6 +182,7 @@ export function ToolEmpty({ tool, action }: { tool: WbTool; action?: ReactNode }
 export function failedLine(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 0) return WB_STATES.failed.network;
+    if (error.code === 'WORKBENCH_TEST_ONLY') return WB_STATES.failed.tokenOnly;
     if (error.status === 401 || error.status === 403) return WB_STATES.failed.access;
     if (error.status === 429)
       return error.retryAfter && error.retryAfter > 0
@@ -191,7 +192,11 @@ export function failedLine(error: unknown): string {
   return WB_STATES.failed.server;
 }
 
-/** A failed load: one line saying what failed (or the cause's own `reason`), and Retry. */
+/** A refusal (403) no retry can change. */
+export const isRefused = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 403;
+
+/** A failed load: one line saying what failed (or the cause's own `reason`), and Retry unless it was refused. */
 export function ToolFailed({
   error,
   reason,
@@ -207,7 +212,7 @@ export function ToolFailed({
       title={reason ?? failedLine(error)}
       titleClassName={STATE_TITLE}
       surface="stage"
-      onRetry={onRetry}
+      onRetry={isRefused(error) ? undefined : onRetry}
     />
   );
 }

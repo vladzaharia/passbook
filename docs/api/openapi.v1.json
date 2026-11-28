@@ -115358,6 +115358,7 @@
           }
         },
         "operationId": "templates.getTemplates",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "list"
