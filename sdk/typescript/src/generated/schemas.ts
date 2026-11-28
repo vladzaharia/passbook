@@ -4128,6 +4128,7 @@ export type NfcReaderStatus = {
   model: "acr1555u" | "acr1552u" | "ccid" | null;
   transport: "usb" | "bluetooth" | "web-bluetooth" | "keyboard" | null;
   pinned: boolean;
+  pinnedBy: "device" | "staffMenu";
   label: string | null;
   firmware: string | null;
   battery: {
@@ -10826,6 +10827,7 @@ export type ScanDeviceCapabilities = {
     model: "acr1555u" | "acr1552u" | "ccid" | null;
     transport: "usb" | "bluetooth" | "web-bluetooth" | "keyboard" | null;
     pinned: boolean;
+    pinnedBy: "device" | "staffMenu";
     label: string | null;
     firmware: string | null;
     battery: {

@@ -13951,19 +13951,28 @@
               "pinned": {
                 "type": "boolean"
               },
+              "pinnedBy": {
+                "type": "string",
+                "enum": [
+                  "device",
+                  "staffMenu"
+                ]
+              },
               "label": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "maxLength": 40
+                "maxLength": 40,
+                "pattern": "^[\\x20-\\x7E]*$"
               },
               "firmware": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "maxLength": 32
+                "maxLength": 32,
+                "pattern": "^[\\x20-\\x7E]*$"
               },
               "battery": {
                 "type": [
@@ -14023,6 +14032,7 @@
               "model",
               "transport",
               "pinned",
+              "pinnedBy",
               "label",
               "firmware",
               "battery",
@@ -14144,19 +14154,28 @@
           "pinned": {
             "type": "boolean"
           },
+          "pinnedBy": {
+            "type": "string",
+            "enum": [
+              "device",
+              "staffMenu"
+            ]
+          },
           "label": {
             "type": [
               "string",
               "null"
             ],
-            "maxLength": 40
+            "maxLength": 40,
+            "pattern": "^[\\x20-\\x7E]*$"
           },
           "firmware": {
             "type": [
               "string",
               "null"
             ],
-            "maxLength": 32
+            "maxLength": 32,
+            "pattern": "^[\\x20-\\x7E]*$"
           },
           "battery": {
             "type": [
@@ -14220,6 +14239,7 @@
           "model",
           "transport",
           "pinned",
+          "pinnedBy",
           "label",
           "firmware",
           "battery",
@@ -155344,6 +155364,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -155784,6 +155819,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -156308,6 +156358,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -156685,6 +156750,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -157074,6 +157154,21 @@
                               "state": "active"
                             }
                           ],
+                          "nfcReader": {
+                            "state": "ready",
+                            "model": "acr1555u",
+                            "transport": "usb",
+                            "pinned": false,
+                            "pinnedBy": "device",
+                            "label": "Front desk",
+                            "firmware": "1.3.1",
+                            "battery": {
+                              "percent": 4,
+                              "low": false,
+                              "charging": false
+                            },
+                            "code": "READER_NOT_FOUND"
+                          },
                           "draftFailures": 1,
                           "surfaces": [
                             "phone"
@@ -160499,6 +160594,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -164486,19 +164596,28 @@
                           "pinned": {
                             "type": "boolean"
                           },
+                          "pinnedBy": {
+                            "type": "string",
+                            "enum": [
+                              "device",
+                              "staffMenu"
+                            ]
+                          },
                           "label": {
                             "type": [
                               "string",
                               "null"
                             ],
-                            "maxLength": 40
+                            "maxLength": 40,
+                            "pattern": "^[\\x20-\\x7E]*$"
                           },
                           "firmware": {
                             "type": [
                               "string",
                               "null"
                             ],
-                            "maxLength": 32
+                            "maxLength": 32,
+                            "pattern": "^[\\x20-\\x7E]*$"
                           },
                           "battery": {
                             "type": [
@@ -164558,6 +164677,7 @@
                           "model",
                           "transport",
                           "pinned",
+                          "pinnedBy",
                           "label",
                           "firmware",
                           "battery",
@@ -164885,6 +165005,21 @@
                           "state": "active"
                         }
                       ],
+                      "nfcReader": {
+                        "state": "ready",
+                        "model": "acr1555u",
+                        "transport": "usb",
+                        "pinned": false,
+                        "pinnedBy": "device",
+                        "label": "Front desk",
+                        "firmware": "1.3.1",
+                        "battery": {
+                          "percent": 4,
+                          "low": false,
+                          "charging": false
+                        },
+                        "code": "READER_NOT_FOUND"
+                      },
                       "draftFailures": 1,
                       "surfaces": [
                         "phone"
@@ -169619,6 +169754,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -169901,6 +170051,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -170171,6 +170336,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -170467,6 +170647,21 @@
                             "state": "active"
                           }
                         ],
+                        "nfcReader": {
+                          "state": "ready",
+                          "model": "acr1555u",
+                          "transport": "usb",
+                          "pinned": false,
+                          "pinnedBy": "device",
+                          "label": "Front desk",
+                          "firmware": "1.3.1",
+                          "battery": {
+                            "percent": 4,
+                            "low": false,
+                            "charging": false
+                          },
+                          "code": "READER_NOT_FOUND"
+                        },
                         "draftFailures": 1,
                         "surfaces": [
                           "phone"
@@ -170693,6 +170888,21 @@
                         "state": "active"
                       }
                     ],
+                    "nfcReader": {
+                      "state": "ready",
+                      "model": "acr1555u",
+                      "transport": "usb",
+                      "pinned": false,
+                      "pinnedBy": "device",
+                      "label": "Front desk",
+                      "firmware": "1.3.1",
+                      "battery": {
+                        "percent": 4,
+                        "low": false,
+                        "charging": false
+                      },
+                      "code": "READER_NOT_FOUND"
+                    },
                     "draftFailures": 1,
                     "surfaces": [
                       "phone"
@@ -170914,6 +171124,21 @@
                         "state": "active"
                       }
                     ],
+                    "nfcReader": {
+                      "state": "ready",
+                      "model": "acr1555u",
+                      "transport": "usb",
+                      "pinned": false,
+                      "pinnedBy": "device",
+                      "label": "Front desk",
+                      "firmware": "1.3.1",
+                      "battery": {
+                        "percent": 4,
+                        "low": false,
+                        "charging": false
+                      },
+                      "code": "READER_NOT_FOUND"
+                    },
                     "draftFailures": 1,
                     "surfaces": [
                       "phone"

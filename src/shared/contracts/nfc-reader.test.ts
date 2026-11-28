@@ -13,6 +13,7 @@ const status = {
   model: 'acr1555u',
   transport: 'bluetooth',
   pinned: true,
+  pinnedBy: 'staffMenu',
   label: 'ACR1555U 4F21',
   firmware: '1.3.1',
   battery: { percent: 80, low: false, charging: null },
@@ -141,5 +142,19 @@ describe('reader defaults and the read rule', () => {
   it('bounds status text to printable ASCII', () => {
     const bad = NfcReaderStatusSchema.safeParse({ ...status, label: 'x\u202Ey' });
     expect(bad.success).toBe(false);
+  });
+});
+
+describe('readerMayRead on a reported status', () => {
+  it('lets a kiosk read only from a staff-menu pin', () => {
+    const settings = { use: true };
+    const kiosk = (pinnedBy: 'device' | 'staffMenu') =>
+      readerMayRead({
+        role: 'kiosk',
+        settings,
+        reader: NfcReaderStatusSchema.parse({ ...status, pinnedBy }),
+      });
+    expect(kiosk('device')).toBe(false);
+    expect(kiosk('staffMenu')).toBe(true);
   });
 });
