@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, TimestampSchema } from '../../../shared/contracts/common.ts';
+import { ScanningSessionStatusSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import {
-  ScanningSessionStatusSchema,
-  ScanSurfaceChoiceSchema,
-  ScanSurfaceSchema,
-} from '../../../shared/contracts/scanning-sessions.ts';
+  StoredEffectiveSurfaceSchema,
+  StoredSurfaceSchema,
+} from '../../../shared/scan-surfaces.ts';
 import type { ScanActor } from './actor.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
@@ -113,8 +113,8 @@ const observedSessionSchema = z.object({
     mode: ModeSchema,
     name: z.string(),
     kind: z.enum(['device', 'terminal', 'display']),
-    surface: ScanSurfaceChoiceSchema,
-    effective_surface: ScanSurfaceSchema,
+    surface: StoredSurfaceSchema,
+    effective_surface: StoredEffectiveSurfaceSchema,
     overrides: z.string(),
     capabilities: z.string().nullable(),
     reported_at: TimestampSchema.nullable(),

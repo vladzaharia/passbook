@@ -120,7 +120,7 @@ describe('planned sessions of the new presets', () => {
   });
   it('counter: operator and customer screen, staff sign in', () => {
     const [s] = planned({ preset: 'counter', doors: [door] }).sessions;
-    expect(s?.devices.map((d) => d.surface)).toEqual(['operator', 'customer']);
+    expect(s?.devices.map((d) => d.surface ?? d.role)).toEqual(['operator', 'customer']);
     expect(s?.settings).toMatchObject({ staffSignIn: true, flow: 'choose' });
   });
   const place = { ref: 'galleries', name: 'Galleries', count: true };

@@ -1,9 +1,10 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import type { DeviceRoleSchema } from './contracts/scanners.ts';
 import {
   type ScanDeviceCapabilities,
   type ScanSurface,
   type ScanSurfaceChoice,
+  ScanSurfaceChoiceSchema,
   ScanSurfaceSchema,
 } from './contracts/scanning-sessions.ts';
 
@@ -33,8 +34,14 @@ export function surfaceFor(
  * What `scanning_devices.surface` stores until SD12's migration: the old screen layouts
  * (`customer`, `desk`) mark a Customer screen and a Monitor. Storage only, never the wire.
  */
-export type StoredSurface = ScanSurfaceChoice | 'desk' | 'customer';
-export type StoredEffectiveSurface = ScanSurface | 'desk' | 'customer';
+export const StoredSurfaceSchema = z.enum([...ScanSurfaceChoiceSchema.options, 'desk', 'customer']);
+export const StoredEffectiveSurfaceSchema = z.enum([
+  ...ScanSurfaceSchema.options,
+  'desk',
+  'customer',
+]);
+export type StoredSurface = z.infer<typeof StoredSurfaceSchema>;
+export type StoredEffectiveSurface = z.infer<typeof StoredEffectiveSurfaceSchema>;
 
 export function storedSurfaceFor(
   stored: string,
