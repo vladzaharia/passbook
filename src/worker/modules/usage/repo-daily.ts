@@ -51,14 +51,6 @@ export const latestPeriod = (db: D1Database, orgId: string): Promise<PeriodRow |
     [orgId],
   );
 
-/** The period holding the instant, if one was created. */
-export const periodRowAt = (db: D1Database, orgId: string, ms: number): Promise<PeriodRow | null> =>
-  first<PeriodRow>(
-    db,
-    `SELECT ${COLS} FROM usage_periods WHERE org_id = ? AND start_ms <= ? AND end_ms > ?`,
-    [orgId, ms, ms],
-  );
-
 /** Periods that end after `from` and start before `to`. */
 export const periodRowsBetween = (
   db: D1Database,
