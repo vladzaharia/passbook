@@ -62,7 +62,10 @@ test('event setup, session assignment and scan history undo', async ({ page }) =
     await page.getByRole('checkbox', { name: sessionName, exact: true }).check();
     await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByRole('link', { name: sessionName, exact: true })).toBeVisible();
-    await page.screenshot({ path: 'test-results/scanner-event-admin.png', fullPage: true });
+    await page.screenshot({
+      path: test.info().outputPath('scanner-event-admin.png'),
+      fullPage: true,
+    });
     const outcome = await api.send('POST', '/api/v1/scan/actions', {
       scope: { orgId, timeZone: 'UTC' },
       input: { passId: pass.id, method: 'manual' },
