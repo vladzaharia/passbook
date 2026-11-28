@@ -134,6 +134,7 @@ export function NotFoundPage() {
       heading
       art="wallet"
       artState="lost"
+      surface="card"
       title={STATE_COPY.pageNotFound}
       action={
         inAdmin ? (

@@ -15,6 +15,7 @@ import {
 } from './art/index.ts';
 import { ACTED_STATES, type ActedState } from './art/state-acts.ts';
 import { Button } from './button.tsx';
+import { Wordmark } from './layout/wordmark.tsx';
 
 export interface EmptyStateProps {
   /** Every empty state names its art; there is no generic picture. */
@@ -36,8 +37,12 @@ export interface EmptyStateProps {
   inline?: boolean;
   /** Not-found and forbidden pages: the title is the page h1. */
   heading?: boolean;
-  /** `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). */
-  surface?: 'stage';
+  /**
+   * `stage`: the Workbench's dot-grid canvas in place of the dashed box (design D3). `card`: the
+   * hosted pages' card (worker/ssr/hosted.ts): wordmark band, the buddy seated on the card's top
+   * edge, the title and action on a solid card. Not found uses it, as the SSR error pages do.
+   */
+  surface?: 'stage' | 'card';
   className?: string;
 }
 
@@ -102,6 +107,48 @@ export function EmptyState({
       ) : null}
     </>
   );
+  if (surface === 'card' && !inline) {
+    return (
+      <div
+        className={cn('mx-auto flex w-full max-w-sm flex-col pt-8 pb-10 sm:pt-14', className)}
+      >
+        <div className="flex items-end justify-between gap-4 ps-[calc(1px+1.25rem)] pe-[calc(1.25rem-17px)] sm:ps-[calc(1px+1.5rem)] sm:pe-[calc(1.5rem-19px)]">
+          <div className="flex h-[63px] items-center sm:h-[72px]">
+            <Wordmark hello={false} size="lg" />
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none relative z-20 h-[84px] w-28 flex-none sm:h-24 sm:w-32 [&>.wl-buddy]:top-full! [&>.wl-buddy]:right-0! [&>.wl-buddy]:left-auto! [&>.wl-buddy]:translate-x-0! [&>.wl-buddy]:-translate-y-full!"
+          >
+            <Buddy
+              mood="sad"
+              size="xl"
+              still={still}
+              scene={scene}
+              {...(art === 'wallet'
+                ? { state: artState ?? 'empty' }
+                : { prop: <span className="relative block">{picture}</span> })}
+            />
+          </div>
+        </div>
+        <section
+          data-art-host=""
+          className="wl-foil-edge relative z-10 flex flex-col gap-6 overflow-hidden rounded-xl border border-border bg-surface-raised p-5 shadow-elevation-1 sm:p-6"
+        >
+          <div>
+            <Title
+              tabIndex={heading ? -1 : undefined}
+              className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong"
+            >
+              {title}
+            </Title>
+            {description ? <p className="mt-1 text-sm text-fg-muted">{description}</p> : null}
+          </div>
+          {action ? <div className="max-sm:[&>*]:w-full">{action}</div> : null}
+        </section>
+      </div>
+    );
+  }
   return (
     <div
       data-art-host=""
