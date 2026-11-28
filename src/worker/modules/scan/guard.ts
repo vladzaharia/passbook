@@ -283,7 +283,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         const boundBefore = scanner.staffId;
         const previousWorkspace = captureObservedScanningSession(actor);
         if (!actor.terminal) withRole(actor, await boundStaff(ctx, scanner, pendingStaff));
-        if (!actor.settings.staffSignIn && scanner.staffId) await unbindStaff(ctx.env.DB, scanner);
+        if (!actor.settings.staffSignIn && scanner.staffId) await unbindStaff(ctx, scanner);
         if (scanner.staffId !== boundBefore) {
           actor.staff = null;
           // Clearing a binding is a volatile write: it moves no epoch, so the workspace stays
