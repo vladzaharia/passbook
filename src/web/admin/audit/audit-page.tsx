@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { Badge, Card, CardBody, PageHeader } from '@/web/ui/index.ts';
 import { useOrgPages } from '../orgs/org-pages.ts';
 import { useOrgList } from '../orgs/queries.ts';
@@ -52,7 +51,6 @@ export function AuditPage({
     <>
       <PageHeader
         title="Audit log"
-        description={RETENTION_COPY.auditNote(365)}
         actions={
           <ExportButton
             path="/api/v1/audit/platform/export"

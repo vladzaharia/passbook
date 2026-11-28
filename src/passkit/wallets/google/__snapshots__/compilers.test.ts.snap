@@ -9305,11 +9305,6 @@ exports[`Google compilers over every starter and baked template > starter-visito
         "uri": "https://img.example/w/i/wallets-google-logo-png",
       },
     },
-    "notifications": {
-      "upcomingNotification": {
-        "enableNotification": true,
-      },
-    },
     "state": "ACTIVE",
     "subheader": {
       "defaultValue": {
@@ -9347,9 +9342,6 @@ exports[`Google compilers over every starter and baked template > starter-visito
     "validTimeInterval": {
       "end": {
         "date": "2030-11-19T01:00:00Z",
-      },
-      "start": {
-        "date": "2030-11-18T16:30:00Z",
       },
     },
   },
@@ -9463,11 +9455,6 @@ exports[`Google compilers over every starter and baked template > starter-visito
       },
     },
     "hexBackgroundColor": "#facc15",
-    "notifications": {
-      "upcomingNotification": {
-        "enableNotification": true,
-      },
-    },
     "state": "ACTIVE",
     "subheader": {
       "defaultValue": {
@@ -9505,9 +9492,6 @@ exports[`Google compilers over every starter and baked template > starter-visito
     "validTimeInterval": {
       "end": {
         "date": "2030-11-19T01:00:00Z",
-      },
-      "start": {
-        "date": "2030-11-18T16:30:00Z",
       },
     },
   },

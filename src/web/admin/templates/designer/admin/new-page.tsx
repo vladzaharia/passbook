@@ -117,6 +117,7 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
         {header}
         <Callout
           tone="info"
+          title="Use a larger screen"
           actions={
             <Button
               size="sm"
@@ -126,9 +127,7 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
               Create template
             </Button>
           }
-        >
-          The designer needs a tablet or desktop screen.
-        </Callout>
+        />
       </>
     );
   }

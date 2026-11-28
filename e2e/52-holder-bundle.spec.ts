@@ -51,7 +51,7 @@ test('Android Chrome: no Apple badge, every live member shows at the door, peeks
   const b = await bundleOf();
   await withAgent(playwright, 'android', async (page) => {
     await page.goto(b.path);
-    await expect(page.getByText('3 passes · 1 voided')).toBeVisible();
+    await expect(page.getByText('1 voided', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: /^All passes/ })).toHaveCount(0);
     await expect(page.getByText('For Apple Wallet, open this page on an iPhone.')).toBeVisible();
     // Every live member shows at the door from its own row; the voided one has none.

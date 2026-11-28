@@ -23,7 +23,7 @@ export function orgFence(principal: Principal, checks: Check[], now: number): Fe
     ctes: p.ctes,
     from: `${p.rows}operations o`,
     ctesParams: p.params,
-    where: `o.audience = 'org' AND ${p.ok}
+    where: `${p.ok} AND o.audience = 'org'
       AND o.org_id = ao.org_id AND o.mode = ao.mode
       AND ao.limit_key IS NULL`,
     whereParams: [],
@@ -40,7 +40,7 @@ export function platformFence(
     ctes: p.ctes,
     from: `${p.rows}operations o`,
     ctesParams: p.params,
-    where: `o.audience = 'platform' AND ${p.ok}`,
+    where: `${p.ok} AND o.audience = 'platform'`,
     whereParams: [],
   };
 }
@@ -55,8 +55,8 @@ export function platformKeyFence(
     ctes: p.ctes,
     from: `${p.rows}operations o`,
     ctesParams: p.params,
-    where: `o.audience IN ('platform', 'starter') AND o.org_id IS NULL AND o.actor_type = 'api_key'
-      AND o.actor_id = ? AND ${p.ok}`,
+    where: `${p.ok} AND o.audience IN ('platform', 'starter') AND o.org_id IS NULL AND o.actor_type = 'api_key'
+      AND o.actor_id = ?`,
     whereParams: [principal.keyId],
   };
 }

@@ -31,7 +31,7 @@ export const PRESENTATION_HEADERS = {
 const CSS = `${RIBBON_CSS}
 html,body{background:#fff;color:#0b1220}
 body{margin:0;min-height:100dvh}
-.door{display:flex;flex-direction:column;align-items:center;gap:1.5rem;min-height:100dvh;box-sizing:border-box;width:100%;max-width:30rem;margin:0 auto;padding:max(1.5rem,env(safe-area-inset-top)) .5rem max(1.5rem,env(safe-area-inset-bottom))}
+.door{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;min-height:100dvh;box-sizing:border-box;width:100%;max-width:30rem;margin:0 auto;padding:max(1.5rem,env(safe-area-inset-top)) .5rem max(1.5rem,env(safe-area-inset-bottom))}
 .door-head{display:flex;flex-direction:column;align-items:center;gap:.25rem;text-align:center}
 .door-head h1{margin:0;font-size:1.25rem;line-height:1.75rem;font-weight:600;overflow-wrap:anywhere;color:#0b1220}
 .door-head p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
@@ -43,7 +43,7 @@ body{margin:0;min-height:100dvh}
 .presentation-code[data-square=true]{width:min(100%,24rem)}
 .presentation-code svg{display:block;width:100%;height:auto}
 .presentation-unavailable p{margin:0}
-.door-foot{display:flex;flex-direction:column;align-items:center;gap:.75rem;margin-top:auto}
+.door-foot{display:flex;flex-direction:column;align-items:center;gap:.75rem}
 .door-foot p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
 .door-foot [hidden]{display:none}
 `;

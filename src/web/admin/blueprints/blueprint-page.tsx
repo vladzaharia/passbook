@@ -137,7 +137,6 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
       <PageHeader
         title={b.name}
         breadcrumbs={crumbs(b.name)}
-        description={b.description ?? undefined}
         avatar={<BlueprintAvatar icon={b.icon} passJson={passJson} />}
         meta={
           <>

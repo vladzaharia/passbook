@@ -96,9 +96,6 @@ body {
 .jn-field .jn-help {
   margin-top: -0.25rem;
 }
-.jn-keeps {
-  text-align: center;
-}
 .jn-ts:empty {
   display: none;
 }

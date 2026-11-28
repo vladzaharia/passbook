@@ -191,7 +191,6 @@ describe('check', () => {
     });
     const sw = await screen.findByRole('switch', { name: 'Email new holders' });
     expect(sw).toHaveProperty('disabled', true);
-    expect(screen.getByText('No new holder has an email.')).toBeTruthy();
   });
 
   it('offers a re-check when the template moved, and blocks commit meanwhile', async () => {

@@ -21,7 +21,6 @@ export const IMPORT_COPY = {
   pasteLabel: 'Rows',
   pastePlaceholder: 'Name,Email,Id\nMaya,maya@example.com,A1',
   linkLabel: 'Link',
-  linkHelp: 'In Google Sheets: File › Share › Publish to web › CSV.',
   xlsx: 'Save the sheet as CSV first.',
   notUtf8: 'The file is not UTF-8. Save it as CSV UTF-8.',
   savedColumns: 'A saved column is not in this file. Choose it again.',
@@ -106,13 +105,9 @@ export const IMPORT_COPY = {
   source: {
     way: 'Source',
     file: 'Spreadsheet',
-    fileHint: 'CSV, paste or a sheet link',
     connection: 'Connection',
-    connectionHint: 'Shopify, Stripe, WooCommerce and more',
-    connectionBody: 'A connection keeps passes in step with another system.',
     connectionGo: 'Set up a connection',
     api: 'API',
-    apiHint: 'POST /pass-imports',
     apiGo: 'Developer docs',
     remove: 'Remove file',
     shape: (rows: number, columns: number) =>
@@ -155,7 +150,6 @@ export const IMPORT_COPY = {
   sheet: {
     title: 'Import',
     email: 'Email new holders',
-    noEmail: 'No new holder has an email.',
   },
   run: {
     leave: 'You can leave this page.',

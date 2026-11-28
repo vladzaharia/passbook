@@ -54,7 +54,7 @@ export async function readStaffActivity(
   const ofPerson = (expr: string) => `CASE WHEN st.id IS NULL THEN NULL ELSE ${expr} END`;
   const zoneStarts = JSON.stringify(zones.map((zone) => ({ zone, since: dayStartMs(zone, now) })));
   const ctes = `starts AS (SELECT ? AS zones), page AS MATERIALIZED (
-      SELECT CASE WHEN ${auth.present} THEN 1 ELSE 0 END AS auth_ok, ${snapshotOk} AS snapshot_ok,
+      SELECT ${auth.authorized('auth_ok')}, ${snapshotOk} AS snapshot_ok,
         st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
         st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
         ${ofPerson(`EXISTS (

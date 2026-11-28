@@ -4,10 +4,7 @@ import { resolveRoles } from '../wallets/roles.ts';
 import type { buildFields, styleOf } from '../wallets/view-fields.ts';
 import type { relevanceOf } from '../wallets/view-parts.ts';
 
-/**
- * The pass's roles for paper. The lock-screen relevance date sits early on purpose, so the event's
- * start and end and the validity start come from a resolution without it.
- */
+/** The pass's roles for paper. */
 export function paperRoles(
   input: {
     style: ReturnType<typeof styleOf>;
@@ -19,30 +16,18 @@ export function paperRoles(
   overrides: Parameters<typeof resolveRoles>[1],
   evalExpr: Parameters<typeof resolveRoles>[2],
 ) {
-  const roleInput = {
-    style: input.style,
-    org: input.org,
-    fields: input.fields,
-    ...(input.passJson.semantics ? { semantics: input.passJson.semantics } : {}),
-    barcodes: [],
-    locations: input.relevance.locations,
-  };
-  const { roles: resolved } = resolveRoles(
-    { ...roleInput, dates: input.relevance.dates },
+  return resolveRoles(
+    {
+      style: input.style,
+      org: input.org,
+      fields: input.fields,
+      ...(input.passJson.semantics ? { semantics: input.passJson.semantics } : {}),
+      barcodes: [],
+      locations: input.relevance.locations,
+    },
     overrides,
     evalExpr,
-  );
-  const { roles: exact } = resolveRoles({ ...roleInput, dates: [] }, overrides, evalExpr);
-  const roles = {
-    ...resolved,
-    eventStart: exact.eventStart,
-    eventEnd: exact.eventEnd,
-    validFrom: exact.validFrom,
-  };
-  if (!roles.eventStart) delete roles.eventStart;
-  if (!roles.eventEnd) delete roles.eventEnd;
-  if (!roles.validFrom) delete roles.validFrom;
-  return roles;
+  ).roles;
 }
 
 /** An address that starts with the venue name drops the repeat; one that equals it vanishes. */

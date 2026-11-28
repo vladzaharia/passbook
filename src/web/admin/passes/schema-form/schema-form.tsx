@@ -211,8 +211,7 @@ export function SchemaForm({
                           Use the connection's value
                         </Button>
                       ) : (
-                        (field.help ??
-                        (field.widget === 'textarea' ? 'Shown on the back.' : undefined))
+                        field.help
                       )
                     }
                     error={error}

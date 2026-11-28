@@ -1,3 +1,4 @@
+import { PRESENT } from '../../platform/authority-read.ts';
 import type { SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
@@ -257,4 +258,9 @@ export const ownedReceiptStmt = (
 
 /** One row while the actor's authority holds and the pass answer's fence does. */
 export const projectionStmt = (db: D1Database, auth: ScanReadAuthority, inner: Fence) =>
-  scanRead(db, auth, `SELECT 1 AS authorized FROM actor_ok ao WHERE ${inner.sql}`, inner.params);
+  scanRead(
+    db,
+    auth,
+    `SELECT 1 AS authorized FROM actor_ok ao WHERE ${PRESENT} = 1 AND ${inner.sql}`,
+    inner.params,
+  );

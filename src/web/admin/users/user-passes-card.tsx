@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { UserPassSchema } from '@/shared/contracts/users.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
+import { formatDayIn } from '@/web/lib/format.ts';
 import { canAccessAdminPath } from '@/web/lib/guards.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { orgPath } from '@/web/lib/scope.ts';
@@ -19,7 +20,6 @@ import {
   SkeletonRows,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { formatDayIn } from '../../../shared/format-date.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useUserPasses } from './queries.ts';
 
@@ -62,7 +62,6 @@ export function UserPassesCard({ userId }: { userId: string }) {
                 `Issued ${day(p.issuedAt)}`,
                 `Updated ${day(p.updatedAt)}`,
                 ...(p.holding === 'waiting' ? ['Waiting for sign-in'] : []),
-                ...(open ? [] : ['Open the org to see details']),
               ].join(' · ');
               const org = p.orgStatus === 'suspended' ? `${p.orgName} (suspended)` : p.orgName;
               return (

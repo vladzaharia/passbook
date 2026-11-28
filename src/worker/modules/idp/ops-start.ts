@@ -4,7 +4,12 @@ import type { OperationDto } from '../../../shared/contracts/operations.ts';
 import { type Actor, platformActorOf } from '../../platform/actor.ts';
 import type { PlatformScope } from '../../platform/api-scopes.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ConflictError, UnauthenticatedError, UnavailableError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  UnauthenticatedError,
+  UnavailableError,
+} from '../../platform/errors.ts';
 import { principalOf } from '../../platform/idempotency.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -76,7 +81,7 @@ async function replayOf(
     op.kind !== kind ||
     (target && (op.target?.type !== target.type || op.target.id !== target.id))
   )
-    throw new ConflictError('This key was used for a different request.', 'IDEMPOTENCY_KEY_REUSED');
+    throw new AppError('IDEMPOTENCY_KEY_REUSED', 422, 'This key was used for a different request.');
   return op;
 }
 

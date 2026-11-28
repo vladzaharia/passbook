@@ -1,6 +1,6 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
-import { authorityPredicate } from '../../platform/authority-read.ts';
+import { authorityPredicate, PRESENT } from '../../platform/authority-read.ts';
 import { assertActorOnce } from '../../platform/authority-read-once.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
@@ -21,10 +21,14 @@ export interface ScanReadAuthority {
   params: SqlValue[];
   /** First FROM term of a row read (`actor_ok ao CROSS JOIN `): no actor, no rows. Once per statement. */
   rows: string;
-  /** Outermost FROM of a read that must answer when the actor fails: `ao` columns are then NULL. */
+  /** Outermost FROM of a read that must answer when the actor fails: `ao` then holds a sentinel no stored value equals. */
   anchor: string;
-  /** The actor's checks all hold (`ao.present = 1`, with any session row); NULL, not 0, with `anchor`. */
+  /** The actor's checks all hold: `<P> = 1` and every gate. Write it as `WHERE ...` or `ON ...`, first. */
   present: string;
+  /** Extra conjuncts after `<P> = 1` (a session row). `present` and `authorized` are both built from them. */
+  readonly gates: readonly string[];
+  /** `CASE WHEN present [AND (cond)] THEN 1 ELSE 0 END AS alias`: the output form. Top-level select list only. */
+  authorized: (alias: string, cond?: string) => string;
   /** A platform key's tenant: present and org-less. */
   platform: string;
   /** `tenant`, written against the one `ao` row. */
@@ -32,13 +36,30 @@ export interface ScanReadAuthority {
 }
 
 /** The join-once fields of an `authorityPredicate`, for the org-and-mode fences. */
-const once = (p: ReturnType<typeof authorityPredicate>) => ({
-  rows: p.rows,
-  anchor: p.anchor,
-  present: p.ok,
-  platform: p.platform,
-  tenantOnce: (alias: string, table: string) => p.tenant(alias, table, 'org_mode'),
-});
+const once = (p: ReturnType<typeof authorityPredicate>) =>
+  seal({
+    rows: p.rows,
+    anchor: p.anchor,
+    platform: p.platform,
+    tenantOnce: (alias: string, table: string) => p.tenant(alias, table, 'org_mode'),
+  });
+
+type Unsealed = Omit<ScanReadAuthority, 'present' | 'gates' | 'authorized' | 'ctes' | 'params'>;
+
+/** `present` and `authorized` come from one gate list, so no caller can set one without the other. */
+export function seal<A extends Unsealed>(
+  base: A,
+  gates: readonly string[] = [],
+): A & Pick<ScanReadAuthority, 'present' | 'gates' | 'authorized'> {
+  const present = [`${PRESENT} = 1`, ...gates].join(' AND ');
+  return {
+    ...base,
+    gates,
+    present,
+    authorized: (alias, cond) =>
+      `CASE WHEN ${present}${cond ? ` AND (${cond})` : ''} THEN 1 ELSE 0 END AS ${alias}`,
+  };
+}
 
 /** A fence that asked for read relaxations: usable by reads only, never as a write guard. */
 export interface RelaxedReadAuthority extends ScanReadAuthority {
@@ -132,7 +153,7 @@ export const scanAuthorizedStmt = (db: D1Database, auth: ScanReadAuthority) =>
   scanRead(
     db,
     auth,
-    `${RACE_AUTHORIZED} SELECT COALESCE(${auth.present}, 0) AS authorized FROM ${auth.anchor}`,
+    `${RACE_AUTHORIZED} SELECT ${auth.authorized('authorized')} FROM ${auth.anchor}`,
   );
 
 /** The fence as one scalar `EXISTS`, for a statement that cannot take a `WITH` (an `UPDATE`'s guard). */
@@ -176,15 +197,16 @@ export function apiKeyReadAuthority(
   return {
     ctes: named ? `${ctes},\n    named AS MATERIALIZED (SELECT ? AS org_id)` : ctes,
     params: named ? [...params, namedOrgId] : params,
-    // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
-    rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
-    anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
-    present: predicate.ok,
-    platform: predicate.platform,
-    tenantOnce: (alias, table) =>
-      bound
-        ? predicate.tenant(alias, table, 'org_mode')
-        : `${predicate.platform} AND ${named ? `${alias}.org_id = nm.org_id AND ` : ''}${alias}.mode = ao.mode`,
+    ...seal({
+      // `named` is one row, joined beside `ao`: a CTE reference late in a large statement fails on workerd.
+      rows: named ? `${predicate.rows}named nm CROSS JOIN ` : predicate.rows,
+      anchor: named ? `${predicate.anchor} CROSS JOIN named nm` : predicate.anchor,
+      platform: predicate.platform,
+      tenantOnce: (alias: string, table: string) =>
+        bound
+          ? predicate.tenant(alias, table, 'org_mode')
+          : `${predicate.platform} AND ${named ? `${alias}.org_id = nm.org_id AND ` : ''}${alias}.mode = ao.mode`,
+    }),
     relaxed: true,
   };
 }
@@ -198,14 +220,14 @@ export function withSessionRow<A extends ScanReadAuthority>(
   auth: A,
   row: { id: string; org_id: string; mode: string; config_epoch: number },
 ): A {
+  const { present: _p, authorized: _a, gates, ...rest } = auth;
   return {
-    ...auth,
+    ...seal(rest, [...gates, 'EXISTS (SELECT 1 FROM session_row)']),
     ctes: `${auth.ctes},
     session_row AS MATERIALIZED (SELECT 1 AS ok FROM scanning_sessions
       WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
-    present: `(${auth.present} AND EXISTS (SELECT 1 FROM session_row))`,
-  };
+  } as A;
 }
 
 export interface KeyReadAuthority extends ScanReadAuthority {

@@ -65,7 +65,6 @@ export function AccountTiles({ orgId, canManage }: { orgId: string; canManage: b
           name={`google-account-${orgId}`}
           value="managed"
           label={COPY.managed}
-          description={COPY.managedHint}
           icon={Cloud}
           checked={choice === 'managed'}
           onSelect={() => setChoice('managed')}
@@ -75,7 +74,6 @@ export function AccountTiles({ orgId, canManage }: { orgId: string; canManage: b
           name={`google-account-${orgId}`}
           value="shared"
           label={COPY.shared}
-          description={COPY.sharedHint}
           icon={Share2}
           checked={choice === 'shared'}
           onSelect={() => setChoice('shared')}

@@ -157,14 +157,14 @@ describe('start', () => {
     expect((await start(SETUP, 'POST', a.headers, { dryRun: false, extra: 1 })).status).toBe(422);
   });
 
-  it('answers a repeated Idempotency-Key with the first operation, and a changed body with 409', async () => {
+  it('answers a repeated Idempotency-Key with the first operation, and a changed body with 422', async () => {
     const a = await admin();
     const headers = { ...a.headers, 'idempotency-key': 'setup-1' };
     const first = await opOf(await start(SETUP, 'POST', headers, { dryRun: false }));
     expect((await opOf(await start(SETUP, 'POST', headers, { dryRun: false }))).id).toBe(first.id);
     await expectProblem(
       await start(SETUP, 'POST', headers, { dryRun: true }),
-      409,
+      422,
       'IDEMPOTENCY_KEY_REUSED',
     );
   });
