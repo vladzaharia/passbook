@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import { SESSION_DEVICE_CAP } from '../../../shared/contracts/scan-access.ts';
 import type { CreateScanningDeviceSchema } from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { storedSurfaceFor, storedSurfaceOf } from '../../../shared/scan-surfaces.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveFollows } from './device-follows.ts';
@@ -71,13 +71,14 @@ export async function planScanningDevice(
       [],
       'SCANNING_FOLLOWS_INVALID',
     );
-  const overrides = resolveFollows(input.overrides, surfaceFor(input.surface, null), stored);
+  const role = input.deviceRole;
+  const surface = storedSurfaceOf(role, input.surface);
+  const overrides = resolveFollows(input.overrides, storedSurfaceFor(surface, null), stored);
   const settings = ScannerSettingsSchema.parse({
     ...parentSettings,
     ...overrides,
     ...(scope.restricted ? { acceptAllTemplates: false } : {}),
   });
-  const role = roleForSurface(input.surface);
   const name =
     input.name ??
     numberedName(parent.name, 40, await takenScannerNames(ctx.env.DB, parent.org_id, parent.mode));
@@ -97,7 +98,7 @@ export async function planScanningDevice(
     capture,
     {
       sessionId: parent.id,
-      surface: input.surface,
+      surface,
       overrides,
       deviceKey: admin?.deviceKey,
     },

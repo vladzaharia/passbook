@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { ScanApprovalSchema } from '../../../shared/contracts/scan.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
 import { namedDayCountsStatement } from './repo-pin-tag.ts';
@@ -13,6 +14,21 @@ import {
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
 import { assertNamedDayRows, countNamedMiss, dayWindowOf } from './staff-pin-day.ts';
+
+/** Until help requests land (SD2, SD14), only the PIN form of an approval is accepted. */
+export function pinApprovalOnly<A extends object>(
+  approval: A | undefined,
+): Extract<A, { pin: string }> | undefined {
+  if (!approval) return undefined;
+  if ('pin' in approval) return approval as Extract<A, { pin: string }>;
+  if ('requestId' in approval)
+    throw new AppError(
+      'APPROVAL_GRANT_INVALID',
+      409,
+      'This approval expired. Ask again or enter a PIN.',
+    );
+  throw new AppError('APPROVE_AS_NOT_ALLOWED', 403, 'Approve as is off here. Enter a PIN.');
+}
 
 /**
  * A Manager's PIN for one action (SA 2.7). Verified here and stored nowhere: the scan row keeps

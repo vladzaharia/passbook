@@ -24,6 +24,7 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { pinApprovalOnly } from './approval.ts';
 import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
 import { scanActorOf } from './guard.ts';
@@ -201,7 +202,8 @@ register(
     // The request and the actor are frozen once, here: nothing below changes either.
     const ctx = capturingContext(serviceContext(c)),
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c))),
-      req = deepFreeze(c.req.valid('json'));
+      body = c.req.valid('json'),
+      req = deepFreeze({ ...body, approval: pinApprovalOnly(body.approval) });
     const input = req.input;
     const evaluation =
       'tag' in input
@@ -301,7 +303,7 @@ register(
       ctx,
       actor,
       c.req.valid('param').scanId,
-      c.req.valid('json'),
+      { ...c.req.valid('json'), approval: pinApprovalOnly(c.req.valid('json').approval) },
     );
     if (!outcome.replay)
       publishScan(ctx, actor, outcome, evaluatedSnapshot, credentialContext, 'manual', true);

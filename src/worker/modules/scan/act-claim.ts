@@ -13,8 +13,11 @@ import { failPendingActionClaimStmt } from './repo-act-claim.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { type Claim, pristineClaimFence } from './repo-scans.ts';
 
-export type ActRequest = Omit<z.infer<typeof ScanActRequestSchema>, 'input'> & {
+type ActBody = z.infer<typeof ScanActRequestSchema>;
+/** The PIN form only: `pinApprovalOnly` turns the other forms away until SD2. */
+export type ActRequest = Omit<ActBody, 'input' | 'approval'> & {
   input: ScanCodeInput;
+  approval?: Extract<NonNullable<ActBody['approval']>, { pin: string }> | undefined;
 };
 /** As sent: a tag read becomes an `ActRequest` once it has chosen its pass. */
 export type ActRequestInput = Omit<ActRequest, 'input'> & { input: ScanInput | ScanCodeInput };

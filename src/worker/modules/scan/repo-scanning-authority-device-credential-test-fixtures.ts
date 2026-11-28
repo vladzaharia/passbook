@@ -53,7 +53,7 @@ export function registerScanningAuthorityDeviceCredential() {
       camera: 'available',
       keyboard: true,
       nativeBarcode: false,
-      surfaces: ['phone', 'operator', 'customer'],
+      surfaces: ['phone', 'operator'],
       preferred: 'phone',
     };
     for (const state of Object.keys(REFUSED) as (keyof typeof REFUSED)[]) {

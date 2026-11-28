@@ -12,6 +12,7 @@ import {
   ScanningSessionSchema,
   SessionCustomerSettingsSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import { roleOfStoredSurface, wireSurface } from '../../../shared/scan-surfaces.ts';
 import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -223,8 +224,9 @@ export const deviceDto = (row: ScanningDeviceRow, now: number, settings?: Scanne
     id: row.scanner_id,
     sessionId: row.session_id,
     name: row.name,
-    surface: row.surface,
-    effectiveSurface: row.effective_surface,
+    deviceRole: roleOfStoredSurface(row.surface),
+    surface: wireSurface(row.surface),
+    effectiveSurface: wireSurface(row.effective_surface),
     overrides: JSON.parse(row.overrides),
     settings: settings ?? parseSettings(row.settings),
     capabilities: readStoredCapabilities(row.capabilities),

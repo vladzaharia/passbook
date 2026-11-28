@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type { ScanningDevice, ScanSurface } from '../../../shared/contracts/scanning-sessions.ts';
+import type { StoredEffectiveSurface, StoredSurface } from '../../../shared/scan-surfaces.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
@@ -11,8 +11,8 @@ export interface ScanningDeviceRow {
   mode: 'live' | 'test';
   name: string;
   kind: 'device' | 'terminal' | 'display';
-  surface: ScanningDevice['surface'];
-  effective_surface: ScanSurface;
+  surface: StoredSurface;
+  effective_surface: StoredEffectiveSurface;
   overrides: string;
   capabilities: string | null;
   reported_at: number | null;

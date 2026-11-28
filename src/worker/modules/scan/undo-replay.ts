@@ -9,7 +9,11 @@ import { candidateById } from './repo-lookup.ts';
 import type { ScanRow } from './repo-scans.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
-export type UndoRequest = z.infer<typeof ScanUndoRequestSchema>;
+type UndoBody = z.infer<typeof ScanUndoRequestSchema>;
+/** The PIN form only: `pinApprovalOnly` turns the other forms away until SD2. */
+export type UndoRequest = Omit<UndoBody, 'approval'> & {
+  approval?: Extract<NonNullable<UndoBody['approval']>, { pin: string }> | undefined;
+};
 
 /** The outcome of an undo that committed earlier: current counts and the pass the live view re-renders. */
 async function answer(

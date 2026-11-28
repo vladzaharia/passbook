@@ -1,8 +1,5 @@
-import type {
-  ScanDeviceOverrides,
-  ScanSurface,
-} from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface } from '../../../shared/scan-surfaces.ts';
+import type { ScanDeviceOverrides } from '../../../shared/contracts/scanning-sessions.ts';
+import { roleOfStoredSurface, type StoredEffectiveSurface } from '../../../shared/scan-surfaces.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 
@@ -14,18 +11,18 @@ import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
  */
 export function resolveFollows(
   overrides: ScanDeviceOverrides,
-  effectiveSurface: ScanSurface,
+  effectiveSurface: StoredEffectiveSurface,
   siblings: readonly ScanningDeviceRow[],
   stored: readonly string[] = [],
 ): ScanDeviceOverrides {
   const { follows, ...rest } = overrides;
   if (!follows)
-    return roleForSurface(effectiveSurface) === 'scan' && stored.length
+    return roleOfStoredSurface(effectiveSurface) === 'scan' && stored.length
       ? { ...rest, follows: [...stored] }
       : rest;
   const live = new Set(
     siblings
-      .filter((d) => d.revoked_at === null && roleForSurface(d.effective_surface) === 'scan')
+      .filter((d) => d.revoked_at === null && roleOfStoredSurface(d.effective_surface) === 'scan')
       .map((d) => d.scanner_id),
   );
   if (!follows.every((id) => stored.includes(id) || live.has(id)))

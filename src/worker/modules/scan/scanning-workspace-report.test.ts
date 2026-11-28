@@ -9,7 +9,7 @@ const report: ScanDeviceCapabilities = {
   camera: 'available',
   keyboard: true,
   nativeBarcode: false,
-  surfaces: ['phone', 'operator', 'customer'],
+  surfaces: ['phone', 'operator'],
   preferred: 'phone',
   hardware: [{ kind: 'camera', count: 1, builtIn: true, connected: true, state: 'ready' }],
 };

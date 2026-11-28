@@ -7,7 +7,7 @@ import {
   ScanDeviceOverridesSchema,
   type UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { roleOfStoredSurface, storedSurfaceFor } from '../../../shared/scan-surfaces.ts';
 import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -138,11 +138,11 @@ export async function updateScanningDevice(
         )
       : null;
   const effective =
-    input.surface === undefined ? device.effective_surface : surfaceFor(surface, caps);
+    input.surface === undefined ? device.effective_surface : storedSurfaceFor(surface, caps);
   if (
     input.surface !== undefined &&
     device.kind === 'terminal' &&
-    roleForSurface(effective) !== 'scan'
+    roleOfStoredSurface(effective) !== 'scan'
   )
     throw new ValidationError(
       'A terminal cannot be used as a display.',
@@ -207,7 +207,7 @@ export async function updateScanningDevice(
     now,
   );
   if (input.surface !== undefined)
-    addLinkedDeviceRole(g, id, scanner.kind, roleForSurface(effective), now);
+    addLinkedDeviceRole(g, id, scanner.kind, roleOfStoredSurface(effective), now);
   g.add(
     audited(g, ctx, {
       orgId: parent.org_id,
@@ -275,6 +275,7 @@ export async function joinAdminScanningSession(
         parent.id,
         {
           name: `${(user?.name ?? 'Administrator').slice(0, 31)} · ${suffix}`,
+          deviceRole: 'scan',
           surface: 'auto',
           overrides: {},
         },

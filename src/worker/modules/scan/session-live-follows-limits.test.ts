@@ -134,7 +134,12 @@ describe('customer screen follows: limits and edits', () => {
       'admin-1',
       'live',
       session.id,
-      { name: 'Scanner with follows', surface: 'phone', overrides: { follows: [door.id] } },
+      {
+        name: 'Scanner with follows',
+        deviceRole: 'scan',
+        surface: 'phone',
+        overrides: { follows: [door.id] },
+      },
       'https://wallet.test',
       authority,
     );

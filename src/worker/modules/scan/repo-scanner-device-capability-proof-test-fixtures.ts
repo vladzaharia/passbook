@@ -36,7 +36,7 @@ export const capabilities = (width: number): ScanDeviceCapabilities => ({
   camera: 'available',
   keyboard: true,
   nativeBarcode: false,
-  surfaces: ['phone', 'operator', 'customer'],
+  surfaces: ['phone', 'operator'],
   preferred: 'phone',
 });
 

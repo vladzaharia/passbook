@@ -91,7 +91,7 @@ describe('legacy device layout compatibility', () => {
         'admin-1',
         terminal.id,
         terminal.id,
-        { surface: 'customer' },
+        { surface: 'customer' as never },
         authority,
       ),
     ).rejects.toMatchObject({ code: 'SCAN_SURFACE_UNSUPPORTED' });
