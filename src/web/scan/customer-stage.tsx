@@ -3,6 +3,7 @@ import { CustomerBuddy, type CustomerBuddyStatus } from './live/customer-buddy.t
 import { figureSlots } from './live/customer-draft.ts';
 import { ScanOrgLogo } from './platform/scan-branding.tsx';
 import './customer-display.css';
+import './customer-display-portrait.css';
 
 const BUDDY: Record<StageTone, CustomerBuddyStatus> = {
   ready: 'ready',

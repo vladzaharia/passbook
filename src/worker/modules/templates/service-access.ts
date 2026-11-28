@@ -131,8 +131,9 @@ export async function loadTemplate(
   else if (auth.kind === 'session' && !auth.roles.includes('admin')) {
     // Without an org the caller cannot hold a release: a staged upload is as unknown as a missing id.
     if (row.origin === 'uploaded' && !row.shared) throw notFound();
-    throw new ForbiddenError(
+    throw new ValidationError(
       'An organization is required to access this template.',
+      [],
       'ORG_REQUIRED',
     );
   }

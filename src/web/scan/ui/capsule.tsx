@@ -2,13 +2,14 @@ import { Ellipsis } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
 import { ScanOrgLogo } from '../platform/scan-branding.tsx';
 
-export type CapsuleState = 'scanning' | 'checking' | 'offline' | 'paused';
+export type CapsuleState = 'scanning' | 'checking' | 'offline' | 'paused' | 'ready';
 
 const STATE_TEXT: Record<CapsuleState, string> = {
   scanning: 'Scanning',
   checking: 'Checking…',
   offline: 'Offline',
   paused: 'Paused',
+  ready: 'Ready',
 };
 
 /**

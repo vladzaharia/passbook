@@ -52,7 +52,6 @@ describe('where the hardware pill shows', () => {
         leave={vi.fn()}
         operator={false}
         duoLayout={false}
-        handheld
         readerUsable={false}
         cameraChoice="back"
         setCameraChoice={vi.fn()}

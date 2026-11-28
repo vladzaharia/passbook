@@ -46,6 +46,7 @@ function monitorExtras(row: ScanLiveRow, role: ScanRole | null): Partial<ScanLiv
             : { ...row.occupancy, via: null, stayMs: null, since: null },
         }
       : {}),
+    ...(row.reason && desk ? { reason: row.reason } : {}),
     ...(row.resolvedBy && desk ? { resolvedBy: row.resolvedBy } : {}),
   };
 }

@@ -42,7 +42,7 @@ test('a customer screen follows only the door it is bound to', async ({ browser 
     const checkedIn = (page: Page) =>
       page.getByRole('heading', { name: 'Checked in', exact: true });
     const enter = async (door: Page, memberId: string) => {
-      await door.getByRole('button', { name: 'Enter code', exact: true }).click();
+      await door.getByRole('button', { name: 'Look up', exact: true }).click();
       const field = door.getByRole('textbox', { name: 'Name, email or code', exact: true });
       await field.fill(memberId);
       await field.press('Enter');

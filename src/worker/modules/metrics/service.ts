@@ -4,7 +4,7 @@ import type {
   MetricsQuery,
   SeriesKey,
 } from '../../../shared/contracts/metrics.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { analyticsSql, type EventRow, queryEvents } from './analytics-sql.ts';
@@ -171,11 +171,7 @@ export async function getOverview(
   keyRead = false,
 ): Promise<MetricsOverview> {
   if (query.orgId && !(await orgIsReadable(ctx.env.DB, query.orgId)))
-    throw new ValidationError(
-      'Unknown organization.',
-      [{ path: 'orgId', message: 'Not found.' }],
-      'ORG_NOT_FOUND',
-    );
+    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 
   const now = ctx.clock.now();
   const key = JSON.stringify([audience, query.orgId, query.templateId, query.range, mode, keyRead]);

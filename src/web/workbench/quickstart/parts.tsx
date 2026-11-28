@@ -112,8 +112,8 @@ export function GhostCard() {
   );
 }
 
-/** The right column before there is a pass: a title, the ghost card and one sentence. */
-export function EmptyStage({ line }: { line: string }) {
+/** The right column before there is a pass: a title, a waiting pill and the ghost card. */
+export function EmptyStage() {
   return (
     <>
       <header className="qs-stage-h">
@@ -123,7 +123,6 @@ export function EmptyStage({ line }: { line: string }) {
       <div className="qs-stage-card stage">
         <GhostCard />
       </div>
-      <p className="muted sm qs-empty">{line}</p>
     </>
   );
 }

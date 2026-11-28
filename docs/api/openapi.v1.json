@@ -115608,6 +115608,7 @@
           }
         },
         "operationId": "templates.getTemplates",
+        "x-workbench": "test",
         "x-sdk": {
           "resource": "templates",
           "method": "list"
@@ -149038,6 +149039,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
@@ -150766,6 +150768,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
@@ -151311,6 +151314,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_CHANGED",
           "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "API_KEY_RETIRE_SET",
@@ -161041,6 +161045,7 @@
           "SCAN_PASS_CHANGED",
           "SCAN_STAFF_CHANGED",
           "TAG_ASSIGN_FORBIDDEN",
+          "TAG_HOLDER_CHANGED",
           "TAG_NOT_FOUND",
           "TAG_SCANNER_ONLY",
           "TAG_TYPE_NOT_FOUND",
@@ -170293,6 +170298,53 @@
                           "label": {
                             "type": "string"
                           },
+                          "reason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "not_found",
+                              "code_replaced",
+                              "ambiguous",
+                              "test_pass",
+                              "live_pass",
+                              "not_accepted",
+                              "wrong_event",
+                              "removed",
+                              "voided",
+                              "expired",
+                              "no_balance",
+                              "card_full",
+                              "managed_elsewhere",
+                              "limit_reached",
+                              "zone_not_included",
+                              "outside_hours",
+                              "guest_expired",
+                              "guest_visits_used",
+                              "suspended",
+                              "tag_lost",
+                              "tag_not_allowed",
+                              "tag_invalid",
+                              "tag_expired",
+                              "channel_off",
+                              "print_replaced",
+                              "print_voided",
+                              "already_done",
+                              "cooldown",
+                              "not_yet_valid",
+                              "ended",
+                              "capacity_full",
+                              "check_required",
+                              "needs_approval",
+                              "stale",
+                              "in_progress",
+                              "still_inside",
+                              "not_inside",
+                              "choose",
+                              null
+                            ]
+                          },
                           "presented": {
                             "type": "boolean"
                           },
@@ -171800,6 +171852,7 @@
                       "kind": "ok",
                       "direction": "in",
                       "label": "Ada Example",
+                      "reason": null,
                       "presented": false,
                       "occupancy": {
                         "place": {

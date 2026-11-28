@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import * as actions from './actions.ts';
 import { setDeps } from './deps.ts';
 import { getConnection } from './repo.ts';
@@ -162,11 +162,15 @@ describe('create', () => {
       ['bad mapping', { mapping: { a: { from: '/x~2' } } }],
       ['bad holder pointer', { holderEmailField: '/a~9' }],
       ['auto-create without template', { autoCreate: true }],
-      ['unknown template', { defaultTemplateId: 'nope' }],
-      ['unknown org', { orgId: 'no-such-org' }],
     ];
     for (const [name, over] of bad) {
       await expect(createDemo(kit, over), name).rejects.toBeInstanceOf(ValidationError);
+    }
+    for (const [name, over] of [
+      ['unknown template', { defaultTemplateId: 'nope' }],
+      ['unknown org', { orgId: 'no-such-org' }],
+    ] as const) {
+      await expect(createDemo(kit, over), name).rejects.toBeInstanceOf(NotFoundError);
     }
     const count = await first<{ n: number }>(
       kit.env.DB,
@@ -179,9 +183,9 @@ describe('create', () => {
   it('refuses a deleted or suspended org with ORG_NOT_FOUND', async () => {
     for (const status of ['deleted', 'suspended']) {
       await run(kit.env.DB, 'UPDATE orgs SET status = ? WHERE id = ?', [status, kit.org.id]);
-      const err = await createDemo(kit).catch((e: ValidationError) => e);
-      expect(err, status).toBeInstanceOf(ValidationError);
-      expect((err as ValidationError).code).toBe('ORG_NOT_FOUND');
+      const err = await createDemo(kit).catch((e: NotFoundError) => e);
+      expect(err, status).toBeInstanceOf(NotFoundError);
+      expect((err as NotFoundError).code).toBe('ORG_NOT_FOUND');
     }
   });
 
