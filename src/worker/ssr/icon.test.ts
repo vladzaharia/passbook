@@ -24,17 +24,46 @@ describe('plan and row icon markup', () => {
     expect(rowIconHtml({ icon: 'live-passes' })).toMatchSnapshot();
   });
 
+  it('renders the same markup as the SPA component for every plan and row icon', () => {
+    for (const id of Object.keys(PLAN_ICONS))
+      for (const mono of [false, true]) {
+        const props = { id, mono };
+        expect(unsized(planIconHtml(props))).toBe(
+          renderToStaticMarkup(createElement(PlanIcon, props)),
+        );
+      }
+    for (const icon of Object.keys(ROW_ICONS))
+      for (const mono of [false, true]) {
+        const props = { icon, mono };
+        expect(unsized(rowIconHtml(props))).toBe(
+          renderToStaticMarkup(createElement(RowIcon, props)),
+        );
+      }
+  });
+
   it('renders every generated svg back to its source, with no innerHTML', () => {
+    const plain = (html: string) => selfClosed(unsized(html)).replace(/~\w+/g, '');
     for (const [id, icon] of Object.entries(PLAN_ICONS))
       for (const mono of [false, true])
-        expect(selfClosed(unsized(planIconHtml({ id, mono })))).toContain(
-          tight(mono ? icon.mono : icon.svg),
-        );
+        expect(plain(planIconHtml({ id, mono }))).toContain(tight(mono ? icon.mono : icon.svg));
     for (const [icon, row] of Object.entries(ROW_ICONS))
       for (const mono of [false, true])
-        expect(selfClosed(unsized(rowIconHtml({ icon, mono })))).toContain(
-          tight(mono ? row.mono : row.svg),
-        );
+        expect(plain(rowIconHtml({ icon, mono }))).toContain(tight(mono ? row.mono : row.svg));
+  });
+
+  it('gives two copies of a masked icon on one page different mask ids', () => {
+    const page = renderToStaticMarkup(
+      createElement(
+        'div',
+        null,
+        createElement(PlanIcon, { id: 'trial', mono: true }),
+        createElement(PlanIcon, { id: 'trial', mono: true }),
+      ),
+    );
+    const ids = [...page.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids.length).toBeGreaterThan(1);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(page).toContain(`url(#${id})`);
   });
 
   it('is decorative unless labelled', () => {
