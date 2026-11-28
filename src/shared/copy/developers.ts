@@ -52,19 +52,16 @@ export const DEV_COPY = {
       {
         key: 'quickstart',
         title: 'Quickstart',
-        line: 'Sandbox, first request, your pass live.',
         foot: '5 min',
       },
       {
         key: 'playground',
         title: 'Playground',
-        line: 'Edit fields, watch every wallet change.',
         foot: '',
       },
       {
         key: 'reference',
         title: 'API reference',
-        line: 'Every operation, runnable in place.',
         foot: '',
       },
     ],

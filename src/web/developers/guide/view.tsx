@@ -190,7 +190,7 @@ export function GuidesIndex({ guides }: { guides: Guide[] }) {
   const s = DEV_COPY.slots.guides;
   return (
     <>
-      <Head title={s.title} line={s.line} />
+      <Head title={s.title} />
       {groupByStep(guides, (g) => g.meta.id).map(({ step, items }) => (
         <section key={step.id} className="gsec" aria-labelledby={`step-${step.id}`}>
           <h2 id={`step-${step.id}`} className="h3 gsec-h">
@@ -205,8 +205,6 @@ export function GuidesIndex({ guides }: { guides: Guide[] }) {
                   {STATUS[g.meta.status] ? (
                     <span className="pill neutral gpill">{STATUS[g.meta.status]}</span>
                   ) : null}
-                  <br />
-                  <span className="xs muted">{g.meta.line}</span>
                 </span>
               </a>
             ))}

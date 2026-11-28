@@ -52,9 +52,9 @@ const pass = await pb.passes.create({
 const HERO_CODE = SDK_STATUS.typescript ? HERO_SDK : HERO_FETCH;
 
 const SANDBOX_ROWS = [
-  ['Secret key', 'A pbp_test_ key, shown once. Copy it as .env.'],
-  ['Limits', '500 test passes, 10 templates, 3 webhook endpoints'],
-  ['Webhooks', 'A capture endpoint. Deliveries are stored, never sent.'],
+  ['Secret key', 'pbp_test_, shown once'],
+  ['Limits', '500 passes, 10 templates, 3 webhooks'],
+  ['Webhooks', 'Capture only'],
 ] as const;
 
 function Hero() {
@@ -134,7 +134,6 @@ function Tiles() {
               </span>
               <span className="tile-text">
                 <span className="h3">{t.title}</span>
-                <span className="sm muted">{t.line}</span>
               </span>
               {t.foot ? <span className="pill neutral mono tile-time">{t.foot}</span> : null}
               <ArrowRight aria-hidden="true" className="tile-go" />
