@@ -41,6 +41,8 @@ async function settled(page: Page, tool: WbTool, org: string) {
   // Sandbox's danger zone is a lazy chunk with no fallback: its buttons are the signal it has loaded.
   if (tool === 'sandbox')
     await expect(main.getByRole('button', { name: 'Delete sandbox' })).toBeVisible();
+  // A failed read settles too (ToolFailed): audit only a tool that loaded.
+  await expect(main.getByRole('button', { name: 'Retry' })).toHaveCount(0);
 }
 
 test.beforeEach(async ({ page }) => {
