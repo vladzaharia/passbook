@@ -133,8 +133,13 @@ export function keepTool(target: WbContext, tool: WbTool): WbTool {
   return target.tools.includes(tool) ? tool : 'home';
 }
 
+/** Areas whose nearest neighbour by nav order is the wrong offer: Keys sits beside Activity, but belongs with Console. */
+const KIN: Partial<Record<WbTool, WbTool>> = { keys: 'console' };
+
 /** The allowed area closest to a refused one in nav order, Home when none is nearer. */
 export function nearestTool(tool: WbTool, allowed: readonly WbTool[]): WbTool {
+  const kin = KIN[tool];
+  if (kin && allowed.includes(kin)) return kin;
   const at = WB_TOOLS.indexOf(tool);
   let best: WbTool = 'home';
   let distance = Number.POSITIVE_INFINITY;

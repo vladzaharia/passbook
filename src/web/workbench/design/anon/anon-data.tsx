@@ -80,11 +80,16 @@ export function AnonData(): ReactNode {
   );
 }
 
-export function ShareButton() {
+export function ShareButton({ iconOnly = false }: { iconOnly?: boolean }) {
   const { share } = useAnon();
   return (
-    <Button variant="outline" iconStart={<Share2 aria-hidden />} onClick={share}>
-      {WB_DESIGN.anon.share}
+    <Button
+      variant="outline"
+      aria-label={iconOnly ? WB_DESIGN.anon.share : undefined}
+      iconStart={<Share2 aria-hidden />}
+      onClick={share}
+    >
+      {iconOnly ? null : WB_DESIGN.anon.share}
     </Button>
   );
 }

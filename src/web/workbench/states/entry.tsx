@@ -1,5 +1,6 @@
 import { useRouter, useRouterState } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { WB_STATES } from '@/shared/copy/workbench-states.ts';
 import { hasDeveloperAccess } from '@/shared/spaces.ts';
 import { type WbTool, wbPath, wbToolOf } from '@/shared/workbench.ts';
@@ -9,6 +10,9 @@ import { CARD_SURFACE } from '../../ui/card-base.tsx';
 import { keepTool, useWorkbenchContexts, type WbContext } from '../host/contexts.ts';
 import { Monogram, TestLine } from '../shell/switcher-face.tsx';
 import { NoSandboxState, NoWorkbenchAccess } from './states.tsx';
+
+// Its own chunk: only a developer with no sandbox reads the Console beside the state.
+const ReadOnlyConsole = lazy(() => import('../home/readonly-console-gate.tsx'));
 
 /** Several contexts and none remembered: pick one. The sandbox, if any, is first. */
 function ContextChooser({
@@ -79,5 +83,14 @@ export function WorkbenchEntry() {
   const tool = wbToolOf(location.pathname) ?? 'home';
   const tail = `${location.searchStr}${location.hash ? `#${location.hash}` : ''}`;
   if (list.length > 0) return <ContextChooser contexts={list} tool={tool} tail={tail} />;
-  return authed && hasDeveloperAccess(authed.roles) ? <NoSandboxState /> : <NoWorkbenchAccess />;
+  if (!(authed && hasDeveloperAccess(authed.roles))) return <NoWorkbenchAccess />;
+  // The Console only reads here: the operation index and each operation's reference, beside Create sandbox.
+  return (
+    <div className="flex flex-col gap-4">
+      <NoSandboxState />
+      <Suspense fallback={null}>
+        <ReadOnlyConsole />
+      </Suspense>
+    </div>
+  );
 }

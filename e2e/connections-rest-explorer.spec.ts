@@ -1,19 +1,13 @@
 import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
-import { saveState, startOidcAs } from './helpers/auth.ts';
+import { stepUpAdmin } from './helpers/auth.ts';
 import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
 // The probe calls a live host, so the specs answer it with a recorded page; the UI is what is under test.
-/** Creating a connection needs a recent sign-in, and the stored session ages during a long shard. */
-async function stepUp(page: Page) {
-  await startOidcAs(page, 'admin', '/admin', 'prompt=login&max_age=0&');
-  await page.waitForURL(/\/admin/);
-  await saveState(page, 'admin');
-}
-
+// Creating a connection needs a recent sign-in, and the stored session ages during a long shard.
 const row = (n: number) => ({
   id: `m_${n}`,
   email: `member${n}@example.test`,
@@ -85,7 +79,7 @@ async function answerProbe(page: Page, pattern: string, posts: Record<string, un
 
 test('connection page: fetch a sample, click through it, prove page 2, save', async ({ page }) => {
   const seed = readSeed();
-  await stepUp(page);
+  await stepUpAdmin(page);
   const api = await apiAs('admin');
   const created = await api.send('POST', '/api/v1/connections', {
     orgId: seed.org.id,
@@ -139,7 +133,7 @@ test('connection page: fetch a sample, click through it, prove page 2, save', as
 
 test('connection page: the platform refusing an address is one line', async ({ page }) => {
   const seed = readSeed();
-  await stepUp(page);
+  await stepUpAdmin(page);
   const api = await apiAs('admin');
   const created = await api.send('POST', '/api/v1/connections', {
     orgId: seed.org.id,
@@ -200,7 +194,7 @@ test('connection page: no list is a curious question, and a missing holder email
   page,
 }) => {
   const seed = readSeed();
-  await stepUp(page);
+  await stepUpAdmin(page);
   const api = await apiAs('admin');
   const created = await api.send('POST', '/api/v1/connections', {
     orgId: seed.org.id,

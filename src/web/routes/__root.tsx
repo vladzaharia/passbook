@@ -49,7 +49,11 @@ function RootComponent() {
         <Outlet />
       ) : (
         <ChunkBoundary fallback={<RootPending />}>
-          {isPublicPath(pathname) ? <BareLayout /> : <PortalLayout />}
+          {isPublicPath(pathname) || !isKnownPortalPath(pathname) ? (
+            <BareLayout />
+          ) : (
+            <PortalLayout />
+          )}
         </ChunkBoundary>
       )}
     </PrincipalBoundary>

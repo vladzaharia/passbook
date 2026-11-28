@@ -280,6 +280,18 @@ describe('orgs list', () => {
     expect(router.state.location.search).toMatchObject({ q: 'acme' });
   });
 
+  it('asks before discarding a changed Add me switch', async () => {
+    await renderApp('/admin/orgs?new=1', {
+      session: 'admin',
+      handlers: { '/api/v1/orgs': () => json({ items: [summary()], nextCursor: null }) },
+    });
+    const ui = userEvent.setup();
+    const dialog = await screen.findByRole('dialog', { name: 'New organization' });
+    await ui.click(within(dialog).getByRole('switch', { name: 'Add me as admin' }));
+    await ui.keyboard('{Escape}');
+    expect(await screen.findByText('Discard unsaved changes?')).toBeVisible();
+  });
+
   it('creates an org in the wizard (Basics, Plan, Review), clears fixed errors and opens the new org', async () => {
     let body: unknown;
     let created = false;
@@ -1082,7 +1094,7 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    expect(await screen.findByRole('link', { name: 'Manage identities' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Signing identities' })).toHaveAttribute(
       'href',
       '/admin/identities',
     );

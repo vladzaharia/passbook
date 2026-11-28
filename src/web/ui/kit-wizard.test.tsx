@@ -6,6 +6,7 @@ import '../lib/test-utils.tsx';
 import { Celebrate } from './celebrate.tsx';
 import { Checklist } from './checklist.tsx';
 import { OptionTile } from './option-tile.tsx';
+import { toast } from './toaster.tsx';
 import { TwoPane } from './two-pane.tsx';
 import { Wizard } from './wizard.tsx';
 
@@ -139,6 +140,104 @@ describe('Wizard and OptionTile', () => {
     expect(onNext).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Pick a source.'));
     expect(screen.getByText('Step 1 of 2')).toBeInTheDocument();
+  });
+
+  it('says why a blocked Next is blocked on a phone, where the bar hides the hint', async () => {
+    const user = userEvent.setup();
+    const info = vi.spyOn(toast, 'info').mockImplementation(() => '');
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width: 639'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    render(
+      <Wizard
+        steps={[{ id: 'a', title: 'Source' }]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        onNext={() => {}}
+        nextDisabled
+        nextHint="Send a test first."
+      >
+        <p>Step</p>
+      </Wizard>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(info).toHaveBeenCalledWith('Send a test first.');
+    info.mockRestore();
+  });
+
+  it('toasts the hint once when onNext refuses on a phone, and never on a wide screen', async () => {
+    const user = userEvent.setup();
+    const info = vi.spyOn(toast, 'info').mockImplementation(() => '');
+    const media = (phone: boolean) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: phone && query.includes('max-width: 639'),
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }));
+    const view = (
+      <Wizard
+        steps={[{ id: 'a', title: 'Source' }]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        onNext={() => false}
+        nextHint="Fix the address."
+      >
+        <p>Step</p>
+      </Wizard>
+    );
+    media(true);
+    const phone = render(view);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info).toHaveBeenCalledWith('Fix the address.');
+    phone.unmount();
+    info.mockClear();
+    media(false);
+    render(view);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Fix the address.'));
+    expect(info).not.toHaveBeenCalled();
+    info.mockRestore();
+  });
+
+  it('toasts a hint-only block from an external onBlocked, but not when a field is invalid', async () => {
+    const user = userEvent.setup();
+    const info = vi.spyOn(toast, 'info').mockImplementation(() => '');
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width: 639'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const view = (invalid: boolean) => (
+      <Wizard
+        steps={[{ id: 'a', title: 'Source' }]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        onBlocked={() => {}}
+        nextDisabled
+        nextHint="Pick a source."
+      >
+        <input aria-label="Name" aria-invalid={invalid || undefined} />
+      </Wizard>
+    );
+    const first = render(view(true));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(screen.getByLabelText('Name')).toHaveFocus());
+    expect(info).not.toHaveBeenCalled();
+    first.unmount();
+    render(view(false));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info).toHaveBeenCalledWith('Pick a source.');
+    info.mockRestore();
   });
 
   it('submits the form a formId names, and a blocked press does not', async () => {

@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useId, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
+import { KeepProvider } from '../keep.tsx';
 
 const WIDE = '(min-width: 1024px)';
 // Under the top bar with room to spare (the two-pane pages use the same 5rem), and no taller than what is left.
@@ -43,9 +44,18 @@ const Surface = ({ children }: { children: ReactNode }) => (
 /**
  * Both sides of the setup at once. At 1024 and up the guide has the column and the PassBook panel
  * sticks beside it (22rem). From 640 to 1023 the panel folds into a sticky strip that opens as a
- * disclosure. Under 640 they stack. The panel stays mounted in every shape: listening goes on.
+ * disclosure. Under 640 they stack. The live check keeps its state and clock across the shapes.
  */
-export function TwoSided({
+export function TwoSided(props: TwoSidedProps) {
+  // The shapes are different trees: what the live check keeps (use-arrival-feed.ts) lives out here.
+  return (
+    <KeepProvider>
+      <Shapes {...props} />
+    </KeepProvider>
+  );
+}
+
+function Shapes({
   guide,
   guideLabel,
   panel,

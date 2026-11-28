@@ -28,6 +28,17 @@ describe('the console start', () => {
     expect(safeStart(index)?.id).toBe('list');
   });
 
+  it('skips a read this context may not run', () => {
+    const index: RunIndex = {
+      codes: [],
+      groups: [
+        { label: 'x', items: [{ ...item('locked', 'get'), wb: false }, item('open', 'get')] },
+      ],
+    };
+    expect(safeStart(index)?.id).toBe('locked');
+    expect(safeStart(index, (op) => op.wb)?.id).toBe('open');
+  });
+
   it('opens nothing when no read exists', () => {
     expect(
       safeStart({ codes: [], groups: [{ label: 'x', items: [item('a', 'delete')] }] }),

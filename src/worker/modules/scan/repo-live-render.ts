@@ -1,3 +1,4 @@
+import { PRESENT } from '../../platform/authority-read.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import { effectiveReleaseIdSql } from './effective-release.ts';
@@ -101,7 +102,8 @@ export function liveRowsStmt(
       CASE WHEN ring.staff_id IS NULL THEN 1 ELSE EXISTS (SELECT 1 FROM scan_staff st
         WHERE st.id = ring.staff_id AND st.org_id = ao.org_id
           AND st.auth_epoch = ring.staff_epoch AND st.disabled_at IS NULL) END AS staff_ok
-    FROM ${auth.rows}ring ${passJoin}`,
+    FROM ${auth.rows}ring ${passJoin}
+    WHERE ${PRESENT} = 1`,
     params,
     {
       ctes: `ring AS MATERIALIZED (SELECT json_extract(value,'$[0]') AS i,

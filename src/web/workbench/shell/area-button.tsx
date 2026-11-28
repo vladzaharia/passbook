@@ -21,14 +21,13 @@ export function GlyphTile({ tool, size = 'md' }: { tool: WbTool; size?: 'sm' | '
   );
 }
 
-/** The Test tag after the area name below 1024: info in a sandbox, warning in an org. */
+/** The Test tag after the area name below 1024: info in a sandbox (and with no context yet), warning in an org. */
 export function TestTag({ context }: { context: WbContext | null }) {
-  if (!context) return null;
   return (
     <span
       className={cn(
         'inline-flex h-5 shrink-0 items-center rounded-full border px-1.5 text-[0.6875rem] font-medium',
-        context.kind === 'sandbox'
+        !context || context.kind === 'sandbox'
           ? 'border-info-border/50 bg-info-subtle text-info'
           : 'border-warning-border/50 bg-warning-subtle text-warning',
       )}

@@ -42,7 +42,6 @@ function TileGrid({
               name="connector"
               value={t.key}
               label={t.label}
-              description={t.line}
               className="h-full items-center"
               checked={picked}
               onSelect={() => onPick(t)}

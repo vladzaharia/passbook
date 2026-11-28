@@ -51,8 +51,9 @@ public class ReaderInstrumentedTest {
     }
 
     @Test public void readyAndCapabilitiesAdvertiseScanAckOutsideTheSnapshot() throws Exception {
-        assertEquals(1, MainActivity.features().length());
+        assertEquals(2, MainActivity.features().length());
         assertEquals("scanAck", MainActivity.features().getString(0));
+        assertEquals("scanSettle", MainActivity.features().getString(1));
         assertFalse(MainActivity.capabilitySnapshot("1.2.3", true, "granted", true, true, true).has("features"));
     }
 

@@ -3,7 +3,8 @@ import type { PublicStatus } from '../../../shared/contracts/status.ts';
 import { STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { FaceArt } from '../../ui/art/face-art.tsx';
 import '../../ui/art/scenes/face.css';
-import { shortDate } from '../model/dates.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
+import { formatDateTimeIn, formatShortDateIn, formatZoneAbbr } from '../../lib/format.ts';
 
 /** Placeholder in the prerendered page: the Worker swaps it for the live body (modules/status/public-page.tsx). */
 export const STATUS_SLOT = '<div data-status-slot="1"></div>';
@@ -19,7 +20,9 @@ const PILL = {
 /** The page header's face: smiling when all is well, flat when degraded, sad when down. */
 const FACE = { operational: 'happy', degraded: 'flat', outage: 'sad', off: 'flat' } as const;
 
-const clock = (ms: number) => new Date(ms).toISOString().replace('T', ' ').slice(0, 16);
+/** The page is public, so there is no org: the platform's default zone, named. */
+const clock = (ms: number) =>
+  `${formatDateTimeIn(ms, DEFAULT_TIME_ZONE)} ${formatZoneAbbr(ms, DEFAULT_TIME_ZONE)}`;
 
 /** The status page body. Same markup at build (no data) and at request time (live), so no script is needed. */
 export function StatusBody({ status }: { status: PublicStatus | null }) {
@@ -36,7 +39,7 @@ export function StatusBody({ status }: { status: PublicStatus | null }) {
         />
         <strong>{STATUS_COPY.overall[status.overall]}</strong>
         <time className="push xs" dateTime={new Date(status.checkedAt).toISOString()}>
-          {STATUS_COPY.checked} {clock(status.checkedAt)} UTC
+          {STATUS_COPY.checked} {clock(status.checkedAt)}
         </time>
       </div>
       <ul className="list card mt6 status-list">
@@ -71,7 +74,7 @@ export function StatusBody({ status }: { status: PublicStatus | null }) {
                   className="push xs muted nowrap"
                   dateTime={new Date(i.startedAt).toISOString()}
                 >
-                  {shortDate(new Date(i.startedAt).toISOString().slice(0, 10))}
+                  {formatShortDateIn(i.startedAt)}
                 </time>
               </span>
               <span className="sm muted">{i.note}</span>

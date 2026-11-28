@@ -7,7 +7,7 @@ struct BridgeHandshake: Equatable {
     enum Outgoing: Equatable { case ready, capabilities }
 
     /// Sent as a top-level `features` field of `ready` and `capabilities`, outside the snapshot object.
-    static let advertisedFeatures = ["scanAck"]
+    static let advertisedFeatures = ["scanAck", "scanSettle"]
 
     private(set) var ready = false
     private(set) var wireVersion = 1

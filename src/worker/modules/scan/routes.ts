@@ -22,6 +22,7 @@ import {
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
@@ -66,7 +67,7 @@ limitScanBodies(scanRoutes);
 const DayStart = z.object({ dayStart: z.coerce.number().int().nonnegative().optional() });
 
 mountScanGuards(scanRoutes);
-scanRoutes.use('*', async (c, next) => {
+ownUse(scanRoutes, async (c, next) => {
   await next();
   if (!c.res.headers.has('cache-control')) c.header('cache-control', 'no-store');
 });

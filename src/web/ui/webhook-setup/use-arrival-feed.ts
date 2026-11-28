@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useKept } from '../keep.tsx';
 import type { Arrival } from './types.ts';
 
 /** The ledger read: rows after `since`, or null when nothing changed since `etag` (a 304). */
@@ -34,26 +35,41 @@ export function useArrivalFeed(load: ArrivalLoader, since: number, marks: Partia
   const m = { ...MARKS, ...marks };
   const loadRef = useRef(load);
   loadRef.current = load;
-  const [rows, setRows] = useState<Arrival[]>([]);
-  const [error, setError] = useState<unknown>(null);
-  const [slow, setSlow] = useState(false);
-  const [paused, setPaused] = useState(false);
+  // The panel may be remounted by a layout change (two-sided.tsx): what it knew and when its clock
+  // started are kept, so a resize neither empties it nor restarts the 3 and 15 minutes.
+  const key = `feed:${since}`;
+  const [rows, setRows] = useKept<Arrival[]>(`${key}:rows`, []);
+  const [error, setError] = useKept<unknown>(`${key}:error`, null);
+  const [slow, setSlow] = useKept(`${key}:slow`, false);
+  const [paused, setPaused] = useKept(`${key}:paused`, false);
   // A run is one stretch of polling: Resume and Retry start a new one, with its own clock.
-  const [run, setRun] = useState(0);
+  const [clock, setClock] = useKept(`${key}:clock`, { run: 0, startedAt: 0 });
+  const { run } = clock;
+  const clockRef = useRef(clock);
+  clockRef.current = clock;
+  const stoppedAlready = useRef({ error, paused });
+  stoppedAlready.current = { error, paused };
   const { visibleMs, hiddenMs, slowMs, pauseMs } = m;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `run` restarts the loop and its clock.
   useEffect(() => {
+    // A remount after the loop stopped (an error, the pause) shows that state, and does not poll.
+    if (stoppedAlready.current.error !== null || stoppedAlready.current.paused) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let etag: string | undefined;
-    const startedAt = Date.now();
-    const slowTimer = setTimeout(() => setSlow(true), slowMs);
-    const pauseTimer = setTimeout(() => {
-      stopped = true;
-      clearTimeout(timer);
-      setPaused(true);
-    }, pauseMs);
+    const startedAt = clockRef.current.startedAt || Date.now();
+    if (clockRef.current.startedAt === 0) setClock({ run: clockRef.current.run, startedAt });
+    const spent = Date.now() - startedAt;
+    const slowTimer = setTimeout(() => setSlow(true), Math.max(0, slowMs - spent));
+    const pauseTimer = setTimeout(
+      () => {
+        stopped = true;
+        clearTimeout(timer);
+        setPaused(true);
+      },
+      Math.max(0, pauseMs - spent),
+    );
 
     async function tick() {
       clearTimeout(timer);
@@ -90,14 +106,26 @@ export function useArrivalFeed(load: ArrivalLoader, since: number, marks: Partia
       clearTimeout(pauseTimer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [since, run, visibleMs, hiddenMs, slowMs, pauseMs]);
+  }, [
+    since,
+    run,
+    visibleMs,
+    hiddenMs,
+    slowMs,
+    pauseMs,
+    setClock,
+    setError,
+    setPaused,
+    setRows,
+    setSlow,
+  ]);
 
   const restart = useCallback(() => {
     setPaused(false);
     setError(null);
     setSlow(false);
-    setRun((n) => n + 1);
-  }, []);
+    setClock((c) => ({ run: c.run + 1, startedAt: 0 }));
+  }, [setSlow, setPaused, setError, setClock]);
 
   return { rows, error, slow, paused, resume: restart, retry: restart };
 }

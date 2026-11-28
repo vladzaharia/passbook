@@ -118,13 +118,27 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     {
       accessorKey: 'scannerName',
       header: 'Where',
-      cell: ({ row }) => whereText(row.original),
+      cell: ({ row }) => {
+        // On a phone the Who line is folded in here, so a scan nobody staffed has no empty line.
+        const who = whoText(row.original);
+        return (
+          <>
+            {whereText(row.original)}
+            {who === '—' ? null : <span className="md:hidden">{` · ${who}`}</span>}
+          </>
+        );
+      },
     },
-    { accessorKey: 'staffName', header: 'Who', cell: ({ row }) => whoText(row.original) },
+    {
+      accessorKey: 'staffName',
+      header: 'Who',
+      meta: { stackHidden: true },
+      cell: ({ row }) => whoText(row.original),
+    },
     {
       accessorKey: 'method',
       header: 'Method',
-      meta: { hideBelow: 'lg' },
+      meta: { hideBelow: 'xl', stackHidden: true },
       cell: ({ row }) => methodLabel(row.original.method),
     },
   ];

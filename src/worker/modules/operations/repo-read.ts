@@ -18,10 +18,10 @@ function fencedSql(fence: Fence, where: string, tail = ''): string {
 
 /** One row the fence lets the caller read; null for unknown and unreadable alike. */
 export function getFenced(db: D1Database, fence: Fence, id: string): Promise<OperationRow | null> {
-  return first<OperationRow>(db, fencedSql(fence, `o.id = ? AND ${fence.where}`), [
+  return first<OperationRow>(db, fencedSql(fence, `${fence.where} AND o.id = ?`), [
     ...fence.ctesParams,
-    id,
     ...fence.whereParams,
+    id,
   ]);
 }
 

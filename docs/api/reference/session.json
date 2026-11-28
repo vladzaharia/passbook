@@ -11,6 +11,7 @@
       "csrfToken": "csrf_demo_northwind",
       "amr": "oidc",
       "consoleUntil": 1798790399999,
+      "authTime": 5,
       "consoleGroupRequired": false,
       "expiresAt": 1798790399999
     }

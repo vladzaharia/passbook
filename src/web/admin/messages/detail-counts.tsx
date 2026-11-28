@@ -102,9 +102,7 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
           </>
         ) : (
           <p className="text-sm text-fg-muted">
-            {b.state === 'cancelled'
-              ? 'Cancelled before it started.'
-              : 'Counts appear once it starts.'}
+            {b.state === 'cancelled' ? 'Cancelled before it started.' : 'No counts yet'}
           </p>
         )}
       </CardBody>

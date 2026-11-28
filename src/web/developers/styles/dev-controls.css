@@ -96,7 +96,7 @@
   border: 1px solid var(--pk-border-subtle);
 }
 .chip.mono {
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .method {
   display: inline-flex;
@@ -106,7 +106,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 4px;
-  font: 600 10.5px / 1 var(--pk-font-mono);
+  font: 600 12px / 1 var(--pk-font-mono);
   letter-spacing: 0.04em;
   flex: none;
 }
@@ -237,5 +237,20 @@ a.lrow:hover {
   .recipes a {
     min-height: 44px;
     margin-block: -7px;
+  }
+  /* Small links in tables and meta lines: a 44 px box, the margin gives the height back. */
+  .meta-links a,
+  .errs td.mono a,
+  a.changed-in,
+  a.push.sm {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -14px;
+  }
+  .main details > summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
   }
 }

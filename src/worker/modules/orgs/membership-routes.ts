@@ -27,6 +27,7 @@ import { AppError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
+import { ownRoutesOnly } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
@@ -52,7 +53,7 @@ const session = (c: Context<AppBindings>): SessionAuth => {
   return auth;
 };
 
-export const membershipRoutes = createRouter({ bodyLimit: false });
+export const membershipRoutes = createRouter();
 
 // The old landing address, still in mailed links: it opens the invitation page, carrying the fragment on.
 // The accepting POST is always strong-session (no email-link grace) and CSRF protected.
@@ -63,16 +64,23 @@ membershipRoutes.use('/invitations/accept', (c, next) =>
 membershipRoutes.use('/memberships/me', requireHolderSession);
 
 // A key reaching for an administering role is an escalation attempt: audited as the key, in its org's log.
-membershipRoutes.use('/:id/*', async (c, next) => {
-  await next();
-  const auth = c.var.auth;
-  if (
-    auth?.kind === 'api_key' &&
-    c.error instanceof AppError &&
-    c.error.code === 'KEY_CANNOT_ADMINISTER'
-  )
-    reportDenied(c, 'KEY_CANNOT_ADMINISTER', auth);
-});
+membershipRoutes.use(
+  '/:id/*',
+  ownRoutesOnly(
+    membershipRoutes,
+    async (c, next) => {
+      await next();
+      const auth = c.var.auth;
+      if (
+        auth?.kind === 'api_key' &&
+        c.error instanceof AppError &&
+        c.error.code === 'KEY_CANNOT_ADMINISTER'
+      )
+        reportDenied(c, 'KEY_CANNOT_ADMINISTER', auth);
+    },
+    '/:id/*',
+  ),
+);
 
 const TAG = 'organization memberships';
 /** An administering role hands over the org's credentials: a session steps up, a key is refused in the service. */

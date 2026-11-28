@@ -73,7 +73,7 @@ export const BENCH_COPY = {
   state: {
     noSandbox: 'No sandbox yet',
     closed: 'Sandbox closed',
-    consoleIdle: 'Run the request.',
+    consoleIdle: 'Run the request',
     webhooksIdle: 'Listening for events',
     logsIdle: 'Waiting for your first call',
     keysNone: 'No keys',

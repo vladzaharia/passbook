@@ -54,8 +54,9 @@ describe('/b with a voided pass', () => {
   const html = render([item('a', 'active', 'Tier: Plus'), item('b', 'voided', 'Tier: Pro')]);
 
   it('counts what is voided and what is removed', () => {
-    expect(BUNDLE_COPY.summary(3, 1, 1)).toBe('3 passes · 1 voided · 1 removed');
-    expect(text(html)).toContain('2 passes · 1 voided');
+    expect(BUNDLE_COPY.extras(1, 1)).toBe('1 voided · 1 removed');
+    expect(text(html)).toContain('1 voided');
+    expect(text(html)).not.toContain('2 passes');
   });
 
   it('keeps the voided pass as a dim peek named Voided, counted under the title', () => {

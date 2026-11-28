@@ -158,7 +158,7 @@ export function ListInput({
 
   const listError = serverErrors?.[field.key] ?? (showAllErrors ? errors[field.key] : undefined);
   const required = field.required;
-  const note = listError ?? field.help;
+  const note = listError;
   return (
     <fieldset className="min-w-0 border-0 p-0" aria-describedby={note ? helpId : undefined}>
       <legend id={titleId} className="mb-2 text-sm font-medium text-fg-strong">
@@ -252,12 +252,7 @@ export function ListInput({
                         : undefined);
                     return (
                       <FormSpan key={sub.key} full={WIDE_WIDGETS.has(sub.widget)}>
-                        <FormField
-                          label={sub.label}
-                          help={sub.help}
-                          error={error}
-                          required={sub.required}
-                        >
+                        <FormField label={sub.label} error={error} required={sub.required}>
                           {(control) => (
                             <Control
                               field={sub}

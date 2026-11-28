@@ -38,6 +38,19 @@ describe('the hand-off from the signed-out page', () => {
     expect(handoffState(target.slice(target.indexOf('#'))).edits).toEqual(edits);
   });
 
+  it('lends the kept edits only to the tab’s own hand-off, not to a shared or foreign link', () => {
+    const edits = { holder: 'x'.repeat(900) };
+    const target = handoffTarget(state(edits));
+    const hash = target.slice(target.indexOf('#'));
+    const params = new URLSearchParams(hash.slice(1));
+    params.set('s', '1');
+    const foreign = `#${params}`;
+    expect(handoffState(foreign).edits).toEqual({});
+    expect(handoffState(`#t=${encodeURIComponent(STORE)}`).edits).toEqual({});
+    spendHandoff();
+    expect(handoffState(hash).edits).toEqual({});
+  });
+
   it('does not lend another blueprint’s edits to a link', () => {
     handoffTarget(state({ holder: 'Ada' }));
     expect(handoffState(`#t=${encodeURIComponent('baked:other')}&s=1`).edits).toEqual({});
@@ -55,7 +68,9 @@ describe('the hand-off from the signed-out page', () => {
     const target = handoffTarget(state({}));
     const hash = target.slice(target.indexOf('#'));
     expect(ownsHandoff(hash)).toBe(true);
-    expect(ownsHandoff(`${hash.replace(/s=[^&]+/, 's=1')}`)).toBe(false);
+    const params = new URLSearchParams(hash.slice(1));
+    params.set('s', '1');
+    expect(ownsHandoff(`#${params}`)).toBe(false);
     expect(ownsHandoff('#t=x')).toBe(false);
     spendHandoff();
     expect(ownsHandoff(hash)).toBe(false);

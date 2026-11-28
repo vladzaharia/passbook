@@ -94,47 +94,74 @@ export function begin(s: MachineState, input: ScanInput, env: Env): Out {
   };
 }
 
+/** What a read does, from the state before it: `begin` it, `park` it behind the open one, drop it as a `duplicate`, or `assign` consumes it. */
+export type ReadFate = 'begin' | 'park' | 'duplicate' | 'assign';
+
+/** The classifier `read` and the reducer share. A blocked scanner ignores the read (`duplicate`). */
+export function readFate(s: MachineState, input: ScanInput, now: number): ReadFate {
+  if (s.block) return 'duplicate';
+  if (s.assign) return 'assign';
+  const l = s.loop;
+  const hit = findIgnore(s.ignore, input.sig, now);
+  const isSame = inputOf(l)?.sig === input.sig;
+  switch (l.s) {
+    case 'ready':
+    case 'paused':
+      return hit ? 'duplicate' : 'begin';
+    case 'checking':
+    case 'applying':
+      return isSame || hit ? 'duplicate' : 'park';
+    case 'member':
+    case 'reviewing':
+      if (isSame || hit) return 'duplicate';
+      return l.s === 'reviewing' || l.picker !== null ? 'park' : 'begin';
+    case 'verdict':
+      if (isSame) return l.outcome.kind === 'system' ? 'begin' : 'duplicate';
+      if (hit) return 'duplicate';
+      return now < l.openFrom ? 'park' : 'begin';
+  }
+}
+
 /** A read from any source, in every loop state. */
 export function read(s: MachineState, input: ScanInput, env: Env): Out {
   if (s.block) return same(s);
   const { now } = env;
   const l = s.loop;
+  const fate = readFate(s, input, now);
   const hit = findIgnore(s.ignore, input.sig, now);
   const chip = (c: Cmd = chipFor(hit)): Out => ({ state: { ...s, lastActivity: now }, cmds: [c] });
-  const current = inputOf(l);
-  const isSame = current?.sig === input.sig;
-
-  switch (l.s) {
-    case 'ready':
-    case 'paused':
-      return hit ? chip() : begin(s, input, env);
-    case 'checking':
-    case 'applying':
-      if (isSame || hit) return same(s);
-      return { state: { ...s, loop: { ...l, next: input } }, cmds: [] };
-    case 'member':
-    case 'reviewing': {
-      if (isSame) return chip({ c: 'chip', chip: 'already_open' });
-      if (hit) return chip();
-      const drafting = l.s === 'reviewing' || l.picker !== null;
-      if (!drafting) return begin(s, input, env);
+  const isSame = inputOf(l)?.sig === input.sig;
+  if (fate === 'begin') {
+    const b = begin(s, input, env);
+    return l.s === 'verdict' && !isSame
+      ? { state: b.state, cmds: [{ c: 'beat', beat: 'cut' }, ...b.cmds] }
+      : b;
+  }
+  if (fate === 'park') {
+    if (l.s === 'member' || l.s === 'reviewing')
       return {
         state: { ...s, loop: { ...l, held: input } },
         cmds: [{ c: 'sound', tone: 'heads_up' }],
       };
-    }
-    case 'verdict': {
+    if (l.s === 'checking' || l.s === 'applying' || l.s === 'verdict')
+      return { state: { ...s, loop: { ...l, next: input } }, cmds: [] };
+    return same(s);
+  }
+  switch (l.s) {
+    case 'checking':
+    case 'applying':
+      return same(s);
+    case 'member':
+    case 'reviewing':
+      return isSame ? chip({ c: 'chip', chip: 'already_open' }) : chip();
+    case 'verdict':
       if (isSame && (l.outcome.kind === 'heads_up' || l.outcome.kind === 'refused'))
         return chip({
           c: 'chip',
           chip: { same: verdictLine(l.outcome, now)?.headline ?? headlineOf(l.outcome.reason) },
         });
-      if (isSame && l.outcome.kind !== 'system') return chip({ c: 'chip', chip: 'just_now' });
-      if (isSame) return begin(s, input, env);
-      if (hit) return chip();
-      if (now < l.openFrom) return { state: { ...s, loop: { ...l, next: input } }, cmds: [] };
-      const b = begin(s, input, env);
-      return { state: b.state, cmds: [{ c: 'beat', beat: 'cut' }, ...b.cmds] };
-    }
+      return isSame ? chip({ c: 'chip', chip: 'just_now' }) : chip();
+    default:
+      return chip();
   }
 }

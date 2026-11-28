@@ -35,6 +35,7 @@ export async function getSession(c: Context<AppBindings>): Promise<SessionRespon
       csrfToken: auth.csrfSecret,
       amr: auth.amr,
       consoleUntil: auth.consoleUntil ?? null,
+      authTime: auth.authTime ?? null,
       consoleGroupRequired: c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true',
       expiresAt,
     };

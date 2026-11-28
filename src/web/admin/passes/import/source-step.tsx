@@ -155,17 +155,16 @@ export function SourceStep({ orgId, children }: { orgId: string; children?: Reac
       >
         {(
           [
-            ['file', FileText, C.source.file, C.source.fileHint],
-            ['connection', Plug, C.source.connection, C.source.connectionHint],
-            ['api', Code2, C.source.api, C.source.apiHint],
+            ['file', FileText, C.source.file],
+            ['connection', Plug, C.source.connection],
+            ['api', Code2, C.source.api],
           ] as const
-        ).map(([value, icon, label, description]) => (
+        ).map(([value, icon, label]) => (
           <OptionTile
             key={value}
             name="source-way"
             value={value}
             label={label}
-            description={description}
             icon={icon}
             checked={way === value}
             onSelect={(v) => setWay(v as Way)}
@@ -174,7 +173,6 @@ export function SourceStep({ orgId, children }: { orgId: string; children?: Reac
       </div>
       {way === 'connection' ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised p-4">
-          <p className="text-sm text-fg-muted">{C.source.connectionBody}</p>
           <Button asChild variant="outline">
             <Link to={orgPath(orgId, '/connections/new')}>{C.source.connectionGo}</Link>
           </Button>
@@ -238,7 +236,7 @@ export function SourceStep({ orgId, children }: { orgId: string; children?: Reac
               )}
             </FormField>
           ) : (
-            <FormField label={C.linkLabel} help={C.linkHelp}>
+            <FormField label={C.linkLabel}>
               {(c) => (
                 <Input
                   {...c}

@@ -10,7 +10,12 @@ const WIDTHS = [62, 48, 71, 55, 40, 66, 52, 44];
  */
 export function BenchSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="bench-skel" role="status" aria-label={BENCH_COPY.loading}>
+    <div
+      className="bench-skel"
+      data-loading="content"
+      role="status"
+      aria-label={BENCH_COPY.loading}
+    >
       {Array.from({ length: rows }, (_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: placeholder rows never reorder
         <div key={i} className="bench-skel-r" aria-hidden="true">

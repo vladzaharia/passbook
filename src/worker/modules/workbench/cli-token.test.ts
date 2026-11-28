@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/fake-auth.ts';
 import { makePass, makeSession, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
+import { expectSecretAbsent } from '../../../../test/helpers/secret-absent.ts';
 import { CLI_LOGOUT_ROUTE, CLI_ROUTES } from '../../../shared/contracts/cli.ts';
 import { WORKBENCH_ROUTES } from '../../../shared/contracts/workbench.ts';
 import { createApp } from '../../app.ts';
@@ -358,14 +359,8 @@ describe('L27: redaction', () => {
       await all(t.db, 'SELECT * FROM audit_log'),
       await all(t.db, 'SELECT * FROM request_log'),
     ]);
-    for (const secret of [
-      issued.token,
-      issued.token.split('_').at(-1),
-      s.deviceCode,
-      s.userCode,
-      s.userCode.replace('-', ''),
-    ])
-      expect(text, String(secret)).not.toContain(String(secret));
+    for (const secret of [issued.token, s.deviceCode, s.userCode, s.userCode.replace('-', '')])
+      expectSecretAbsent(text, secret);
     expect(text).not.toContain('pbcli_test_');
   });
 });

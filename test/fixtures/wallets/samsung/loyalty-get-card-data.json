@@ -1,0 +1,38 @@
+{
+  "provenance": "doc-shape",
+  "note": "Doc-shape, not recorded from Samsung: built from the documented response shapes in docs/design/wallet-providers/samsung-wallet.md (S-card attribute tables, S-api Get Card Data, Update Notification and Send Card State). Real recordings are owner-held (journey 20) and replace this file by name. Source: S-api Get Card Data, 200 with {card:{...}}; S-card loyalty/others.",
+  "name": "loyalty-get-card-data",
+  "request": {
+    "method": "GET",
+    "path": "/cards/<card-id>/<ref-1>"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "card": {
+        "type": "loyalty",
+        "subType": "others",
+        "data": [
+          {
+            "refId": "<ref-1>",
+            "state": "ACTIVE",
+            "createdAt": 1794873600000,
+            "updatedAt": 1794873600000,
+            "language": "en",
+            "attributes": {
+              "title": "Example Org",
+              "providerName": "Example Org",
+              "amount": "12 pts",
+              "appLinkLogo": "https://img.example/org-logo.png",
+              "appLinkName": "Example Org",
+              "appLinkData": "https://org.example"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

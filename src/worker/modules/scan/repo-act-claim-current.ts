@@ -39,10 +39,13 @@ export const collidingClaimStmt = (
   scanRead(
     db,
     auth,
-    `SELECT CASE WHEN ${auth.present} AND EXISTS (SELECT 1 FROM scans existing
+    `SELECT ${auth.authorized(
+      'authorized',
+      `EXISTS (SELECT 1 FROM scans existing
         WHERE existing.id = ? AND existing.at = ? AND existing.state = ? AND existing.reason IS ?
           AND existing.actor_key = ? AND existing.idempotency_key = ? AND existing.request_hash = ?
-          AND ${auth.tenantOnce('existing', 'scans')}) THEN 1 ELSE 0 END AS authorized
+          AND ${auth.tenantOnce('existing', 'scans')})`,
+    )}
      FROM ${auth.anchor}`,
     [row.id, row.at, row.state, row.reason, actorKey, idempotencyKey, row.requestHash],
   );

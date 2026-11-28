@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { optionalBindPredicate, replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
+import {
+  optionalBindPredicate,
+  presenceStamp,
+  replaceOnIdentities,
+  sqlOutsideRepo,
+} from './check-sql-owner.ts';
 
 describe('check-sql-owner', () => {
   it('flags SQL in a service and allows it in repo files', () => {
@@ -7,6 +12,27 @@ describe('check-sql-owner', () => {
     expect(sqlOutsideRepo('src/worker/modules/a/service.ts', text)).toMatch(/outside a repo/);
     expect(sqlOutsideRepo('src/worker/modules/a/repo-sync.ts', text)).toBeNull();
     expect(sqlOutsideRepo('src/worker/platform/workflow-runs.ts', text)).toBeNull();
+  });
+
+  it('refuses the presence stamp outside the anchor builder, its guard and their tests', () => {
+    const text = 'WHERE ao.authority_present_k7 = 1';
+    expect(presenceStamp('src/worker/modules/scan/repo-feed.ts', text)).toMatch(/presence stamp/);
+    expect(presenceStamp('src/worker/modules/scan/read-corpus.test.ts', text)).toMatch(
+      /presence stamp/,
+    );
+    expect(presenceStamp('src/worker/platform/authority-restrict.ts', text)).toMatch(
+      /presence stamp/,
+    );
+    for (const ok of [
+      'authority-read.ts',
+      'authority-read-once.ts',
+      'authority-read-shape.ts',
+      'authority-read-join-guard.test.ts',
+    ])
+      expect(presenceStamp(`src/worker/platform/${ok}`, text)).toBeNull();
+    expect(
+      presenceStamp('src/worker/modules/scan/repo-feed.ts', 'WHERE ao.present = 1'),
+    ).toBeNull();
   });
 
   it('ignores prose', () => {

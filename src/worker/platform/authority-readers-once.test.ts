@@ -1,5 +1,5 @@
-// Differential: the readers moved onto the join-once form (operations fences, org members and invitations for a
-// key, the NFC pass-in-limits read) return exactly what their scalar-form statements returned, for every actor.
+// The readers on the join-once form (operations fences, org members and invitations for a key, the NFC
+// pass-in-limits read) return what a plain statement bound to the actor's own org and mode returns, for every actor.
 import { describe, expect, it } from 'vitest';
 import { passInTenantLimits } from '../modules/nfc/repo-tag-bindings.ts';
 import {
@@ -12,7 +12,7 @@ import { getFenced, listFenced } from '../modules/operations/repo-read.ts';
 import { keyOrgInvitations, keyOrgMembers } from '../modules/orgs/repo-members.ts';
 import { passRow } from './authority-checks.ts';
 import { db } from './authority-ext-fixtures.ts';
-import { authorityPredicate, tenantFilter } from './authority-read.ts';
+import { authorityPredicate } from './authority-read.ts';
 import { type Actor, actors, seed } from './authority-read-join-fixtures.ts';
 import { assertActorOnce } from './authority-read-once.ts';
 import { all, first, run } from './db.ts';
@@ -63,8 +63,23 @@ async function world() {
 
 const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
 
+interface ActorRow {
+  org_id: string | null;
+  mode: string | null;
+  limit_key: string | null;
+}
+
+/** The actor row the predicate resolves (none when the actor fails its checks). */
+async function actorRow(p: ReturnType<typeof authorityPredicate>): Promise<ActorRow | null> {
+  return first<ActorRow>(
+    db,
+    `WITH ${p.ctes} SELECT org_id, mode, limit_key FROM actor_ok`,
+    p.params,
+  );
+}
+
 describe('operations fences', () => {
-  it('read the rows the scalar fences read', async () => {
+  it('read the rows a plain statement bound to the actor reads', async () => {
     const { now, list, checksOf } = await world();
     const filter = {
       active: false,
@@ -77,29 +92,39 @@ describe('operations fences', () => {
     };
     let nonEmpty = 0;
     for (const a of list) {
-      const cases: {
-        name: string;
-        fence: ReturnType<typeof orgFence>;
-        old: string;
-        oldParams: unknown[];
-      }[] = [];
+      const cases: { name: string; fence: ReturnType<typeof orgFence>; was: string[] }[] = [];
+      const order = 'ORDER BY created_at DESC, id DESC';
       const p = authorityPredicate(a.principal, { scope: 'org_mode', now, checks: checksOf(a) });
+      const r = await actorRow(p);
       if (a.scope === 'org_mode')
         cases.push({
           name: 'org',
           fence: orgFence(a.principal, checksOf(a), now),
-          old: `WITH ${p.ctes} SELECT o.id FROM operations o WHERE o.audience = 'org' AND EXISTS (SELECT 1 FROM actor_ok)
-      AND o.org_id = (SELECT org_id FROM actor_ok) AND o.mode = (SELECT mode FROM actor_ok)
-      AND (SELECT limit_key FROM actor_ok) IS NULL ORDER BY o.created_at DESC, o.id DESC`,
-          oldParams: p.params,
+          was:
+            r && r.limit_key === null
+              ? ids(
+                  await all<{ id: string }>(
+                    db,
+                    `SELECT id FROM operations WHERE audience = 'org' AND org_id = ? AND mode = ? ${order}`,
+                    [r.org_id, r.mode],
+                  ),
+                )
+              : [],
         });
       if (a.principal.kind === 'platform') {
         const q = authorityPredicate(a.principal, { scope: 'platform', now });
         cases.push({
           name: 'platform',
           fence: platformFence(a.principal, now),
-          old: `WITH ${q.ctes} SELECT o.id FROM operations o WHERE o.audience = 'platform' AND EXISTS (SELECT 1 FROM actor_ok) ORDER BY o.created_at DESC, o.id DESC`,
-          oldParams: q.params,
+          was: (await actorRow(q))
+            ? ids(
+                await all<{ id: string }>(
+                  db,
+                  `SELECT id FROM operations WHERE audience = 'platform' ${order}`,
+                  [],
+                ),
+              )
+            : [],
         });
       }
       if (a.principal.kind === 'api_key') {
@@ -107,13 +132,19 @@ describe('operations fences', () => {
         cases.push({
           name: 'platform key',
           fence: platformKeyFence(a.principal, now),
-          old: `WITH ${q.ctes} SELECT o.id FROM operations o WHERE o.audience IN ('platform', 'starter') AND o.org_id IS NULL AND o.actor_type = 'api_key'
-      AND o.actor_id = ? AND EXISTS (SELECT 1 FROM actor_ok) ORDER BY o.created_at DESC, o.id DESC`,
-          oldParams: [...q.params, a.principal.keyId],
+          was: (await actorRow(q))
+            ? ids(
+                await all<{ id: string }>(
+                  db,
+                  `SELECT id FROM operations WHERE audience IN ('platform', 'starter') AND org_id IS NULL AND actor_type = 'api_key' AND actor_id = ? ${order}`,
+                  [a.principal.keyId],
+                ),
+              )
+            : [],
         });
       }
       for (const c of cases) {
-        const was = ids(await all<{ id: string }>(db, c.old, c.oldParams as never));
+        const { was } = c;
         const sql = `WITH ${c.fence.ctes} SELECT o.id FROM ${c.fence.from} WHERE ${c.fence.where} ORDER BY o.created_at DESC, o.id DESC`;
         assertActorOnce(sql);
         const params = [...c.fence.ctesParams, ...c.fence.whereParams];
@@ -153,31 +184,37 @@ describe('starter fence', () => {
 });
 
 describe('org members and invitations for a key', () => {
-  it('return the rows the scalar guard returned', async () => {
+  it('return the rows of the own org of the actor', async () => {
     const { s, now, list, checksOf } = await world();
     let nonEmpty = 0;
     for (const a of list) {
       const checks = checksOf(a);
       const p = authorityPredicate(a.principal, { scope: 'org', now, checks });
+      const r = await actorRow(p);
       for (const orgId of [s.a.id, s.b.id]) {
-        const members = await all(
-          db,
-          `WITH ${p.ctes} SELECT ${SELECT_MEMBERS}
+        const mine = r !== null && r.limit_key === null && r.org_id === orgId;
+        const members = mine
+          ? await all(
+              db,
+              `SELECT ${SELECT_MEMBERS}
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
-     WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) AND (SELECT limit_key FROM actor_ok) IS NULL AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
+     WHERE m.org_id = ? AND m.revoked_at IS NULL AND o.status = 'active' AND u.status = 'active'
      ORDER BY m.created_at, m.id`,
-          [...p.params, orgId],
-        );
+              [orgId],
+            )
+          : [];
         expect(
           await keyOrgMembers(db, orgId, a.principal, checks, now),
           `${a.name}: members`,
         ).toEqual(members);
-        const invitations = await all(
-          db,
-          `WITH ${p.ctes} SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
-     FROM org_invitations m WHERE m.org_id = ? AND m.org_id = (SELECT org_id FROM actor_ok) AND (SELECT limit_key FROM actor_ok) IS NULL ORDER BY m.created_at, m.id`,
-          [...p.params, orgId],
-        );
+        const invitations = mine
+          ? await all(
+              db,
+              `SELECT m.id, m.org_id, m.email, m.roles, m.created_at, m.expires_at, m.revoked_at, m.accepted_at
+     FROM org_invitations m WHERE m.org_id = ? ORDER BY m.created_at, m.id`,
+              [orgId],
+            )
+          : [];
         expect(
           await keyOrgInvitations(db, orgId, a.principal, checks, now),
           `${a.name}: invitations`,
@@ -190,7 +227,7 @@ describe('org members and invitations for a key', () => {
 });
 
 describe('pass in tenant limits', () => {
-  it('answers as the scalar read did', async () => {
+  it('answers for the own org and mode', async () => {
     const { s, now, list } = await world();
     const passes = [
       s.w.a.pass,
@@ -202,13 +239,17 @@ describe('pass in tenant limits', () => {
     let yes = 0;
     for (const a of list) {
       if (a.scope !== 'org_mode') continue;
-      const p = authorityPredicate(a.principal, { scope: 'org_mode', now });
+      const r = await actorRow(authorityPredicate(a.principal, { scope: 'org_mode', now }));
+      // A key limited to templates is covered by authority-restrict.test.ts.
+      if (r?.limit_key) continue;
       for (const passId of passes) {
-        const was = await first(
-          db,
-          `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND p.id = ? AND ${tenantFilter('p', 'passes')}`,
-          [...p.params, passId],
-        );
+        const was = r
+          ? await first(db, 'SELECT id FROM passes WHERE id = ? AND org_id = ? AND mode = ?', [
+              passId,
+              r.org_id,
+              r.mode,
+            ])
+          : null;
         const got = await passInTenantLimits(db, a.principal, now, passId);
         expect(got, `${a.name}: ${passId}`).toBe(was !== null);
         if (got) yes++;

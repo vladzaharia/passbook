@@ -115,7 +115,7 @@ describe('act fences at their widest shape', () => {
       const projection = scanRead(
         kit.env.DB,
         auth,
-        `SELECT 1 AS authorized FROM actor_ok ao WHERE ${plain.sql}`,
+        `SELECT 1 AS authorized FROM actor_ok ao WHERE ${auth.present} AND ${plain.sql}`,
         plain.params,
       );
       expect((await projection.all()).results.length).toBeLessThanOrEqual(1);

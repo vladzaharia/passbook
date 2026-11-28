@@ -126,13 +126,10 @@ export function PhotosPage() {
                 accept="image/*"
                 maxBytes={10_000_000}
                 art="badge"
-                label="Drop photos or choose"
+                label="Drop photos named by external ID or serial"
                 disabled={busy}
                 onFiles={(files) => void choose(files)}
               />
-              <p className="text-sm text-fg-muted">
-                Images up to 10 MB, named by External ID or serial.
-              </p>
               <CheckboxField
                 label="Include photos in the Wallet pass"
                 checked={include}

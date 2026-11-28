@@ -15,12 +15,14 @@ Target UX: `docs/audits/2026-11-07/mockups/` (customer-portal, other-surfaces, a
 | --- | --- |
 | Accounts | Per org, per mode, per provider (`wallet_provider_accounts`, `0037`). Encrypted credentials; configure/revoke API; admin UI: Platform and Organization Wallet accounts (`src/web/admin/wallet-accounts/`). Readiness is `absent/configured/revoked`; `externalApprovalVerified` is hard `false`. |
 | Projection | `projection-contract.ts`: Google generic (text, QR, reviewed artwork); Samsung `loyalty/others` (text, QR, artwork, app link). Title + up to 9 fields. Bound into releases (`0038`). |
-| Issuance | **Denied for both.** `instance-policy.ts` `walletIssuancePermitted` returns false. The release panel says "Native wallet offers remain unavailable until provider requirements are verified." |
+| Issuance | **Dark.** Gated per provider and mode by the `RELEASE` cell (`wallet-providers/release.ts`: `dark`, `draining`, `released`; `0229`). Flips are owner actions. |
+| Authoring | Designer Wallets tab (roles, type, art, required, omit), import fidelity report, per-item omission review in the release, system candidate backfill for Google and Samsung. |
+| Fixtures | Doc-shape fixtures and contract tests for Google and Samsung. Recorded fixtures and real-device runs are owner-held. |
 | Offers | `GET /p/{token}/wallet/{provider}`, Samsung click-time offer, offers in portal (`holder-pass-view.tsx`) and pass email. Excluded on transfer-pending, removed, quarantined and stale keyset. |
 | Lifecycle | Sync queue, callbacks, tombstones, retirement and generation fences. `onWalletPassUpdated` runs on refresh, reissue, void and unvoid; `onWalletPassRetired` runs before deletion. |
 | Admin pass | `wallet-provider-status.tsx` shows each provider's instance lifecycle and desired operation. |
 | Device | `src/shared/device.ts` knows `iphone | mac | other` only. No Android or Galaxy class. |
-| Not wired | Bundles, broadcasts/messages, scan, status page, audit categories, test inbox. `platform-architecture.md` still lists "Google Wallet" as out of scope. |
+| Wired | Bundles (one link per member pass; Google single save JWT), messages, scan parity, status, audit, test inbox. |
 
 "Bake in" means: lift the issuance gate under defined proofs, finish the surfaces in the "Not wired" row, and make every journey below pass its acceptance test.
 

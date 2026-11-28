@@ -55,7 +55,7 @@ export type RouteAuth =
       tillKey?: true;
       /**
        * The handler enforces a key's template and style limits: through grants (the builder adds them) and reads
-       * (`authorityPredicate` with `tenantFilter`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
+       * (`authorityPredicate` with `tenant`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
        * Set it per route, never on a router guard, and only where every read and write goes through those two.
        */
       templateScoped?: true;

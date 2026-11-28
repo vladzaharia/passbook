@@ -40,9 +40,6 @@ export function PassHold({ passId, orgId }: { passId: string; orgId: string }) {
           )}
         </span>
         {own?.reason ? <span className="text-xs text-fg-muted">{own.reason}</span> : null}
-        {!own && wide ? (
-          <span className="text-xs text-fg-muted">{RETENTION_COPY.holdNote}</span>
-        ) : null}
       </div>
       {canManage && own?.canRelease ? (
         <Button variant="outline" size="sm" onClick={() => setReleasing(own.id)}>

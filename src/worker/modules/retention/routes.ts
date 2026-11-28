@@ -17,6 +17,7 @@ import {
   UnauthenticatedError,
 } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { byUserOfCaller } from '../idp/actor.ts';
 import { personalOwnerOf } from '../orgs/repo-personal.ts';
@@ -66,7 +67,7 @@ const download = (c: C, name: string) =>
  */
 export const retentionRoutes = createRouter();
 guard(retentionRoutes, requireTenantSession);
-retentionRoutes.use('*', async (c, next) => {
+ownUse(retentionRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });
@@ -171,7 +172,7 @@ register(
 
 /** Mount at /api/v1/platform: a platform administrator places holds an org cannot release. */
 export const retentionPlatformRoutes = createRouter();
-retentionPlatformRoutes.use('*', async (c, next) => {
+ownUse(retentionPlatformRoutes, async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });

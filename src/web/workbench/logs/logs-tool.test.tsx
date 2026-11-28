@@ -61,13 +61,13 @@ describe('Logs before the token host is ready', () => {
 });
 
 describe('Logs on the Workbench token', () => {
-  it('lists the org requests in one listbox, with the count and the retention note', async () => {
+  it('lists the org requests in one listbox, with the count once', async () => {
     stubApi({ lists: [page([entry(1), entry(2, { status: 404, code: 'NOT_FOUND' })])] });
     open();
     await waitFor(() => expect(rows()).toHaveLength(2));
-    expect(screen.getAllByText('2 requests')).toHaveLength(2);
+    expect(screen.getAllByText('2 requests')).toHaveLength(1);
     expect(within(rows()[1] as HTMLElement).getByText('NOT_FOUND')).toBeInTheDocument();
-    expect(screen.getAllByText(/Kept 7 days/)).toHaveLength(2);
+    expect(screen.queryByText(/Kept 7 days/)).toBeNull();
     // Time is the org's zone (Pacific by default), not UTC: 22:15:52 UTC is 14:15:52 PST.
     expect(within(rows()[0] as HTMLElement).getByText(/14:15/)).toBeInTheDocument();
   });
@@ -442,13 +442,12 @@ describe('Logs on the Workbench token', () => {
     expect(logCalls(calls).some((c) => c.includes('cursor=c2'))).toBe(true);
   });
 
-  it('shows the first call, how long calls stay, and Run in Console when nothing is logged', async () => {
+  it('shows the first call and Run in Console when nothing is logged', async () => {
     stubApi({ lists: [page([])] });
     open();
     expect(await screen.findByText('Waiting for your first call')).toBeInTheDocument();
     expect(document.querySelector('.wl-buddy')?.getAttribute('data-scene')).toBe('listen');
     expect(screen.getByText(/PASSBOOK_KEY/)).toBeInTheDocument();
-    expect(screen.getByText('Calls are kept 7 days')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Run in Console' }).getAttribute('href')).toBe(
       '/workbench/o/nw/console',
     );

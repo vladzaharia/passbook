@@ -89,6 +89,7 @@ export function ProviderWizard({
   const [leaving, setLeaving] = useState(false);
   const [finished, setFinished] = useState(false);
   const [seen, setSeen] = useState<string[]>([]);
+  const [head, setHead] = useState<string | undefined>(undefined);
   const [verified, setVerified] = useState(connection.firstVerifiedArrivalAt !== null);
   const id = order[at] ?? 'test';
   const hasSecret = setup.values.hasSecret;
@@ -163,19 +164,19 @@ export function ProviderWizard({
       />
     );
 
-  const live = (withHint: boolean) => (
+  const live = () => (
     <ProviderLive
       setup={setup}
       connection={connection}
       load={load}
       zone={zone}
       notIssued={notIssued}
-      withHint={withHint}
       onState={(s) => {
         setSeen((prev) =>
           s.seen.every((t) => prev.includes(t)) ? prev : [...new Set([...prev, ...s.seen])],
         );
         if (s.verified) setVerified(true);
+        setHead(s.head);
       }}
       actions={{
         replaceSecret: goSecret,
@@ -252,7 +253,7 @@ export function ProviderWizard({
   // The test leads with its result: at every width it is on the page, not behind a disclosure.
   const testGuide = (
     <div className="flex max-w-xl min-w-0 flex-col gap-4">
-      {live(true)}
+      {live()}
       {setup.test.command ? (
         <CodeBlock code={setup.test.command} label="Test command" maxHeight="max-h-24" wrap />
       ) : null}
@@ -290,22 +291,21 @@ export function ProviderWizard({
         onNext={next}
         nextLabel={label}
         nextDisabled={(holding && !saved) || (id === 'test' && !verified)}
-        nextHint={holding ? 'Copy the secret.' : 'Waiting for a delivery.'}
+        nextHint={holding ? 'Copy the secret.' : undefined}
         barMenu={barMenu}
         busy={actions.update.isPending}
       >
         <TwoSided
           guideLabel={providerGroup(provider)}
           guide={id === 'connect' ? connectGuide : id === 'secret' ? secretGuide : testGuide}
-          panel={
-            <ProviderPanel setup={setup} seen={seen} live={id === 'test' ? null : live(false)} />
-          }
+          panel={<ProviderPanel setup={setup} seen={seen} live={id === 'test' ? null : live()} />}
           strip={
             <ProviderStrip
               url={url}
               topics={setup.subscriptions.topics}
               seen={seen}
               verified={verified}
+              head={head}
             />
           }
         />

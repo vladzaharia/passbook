@@ -2441,6 +2441,14 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-health new operation",
+    "class": "additive",
+    "operationId": "wallet-health.getOrgsByOrgIdWalletHealth",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-health",
+    "change": "new operation",
+    "note": "wallet:read: each open wallet with last update, queued, failed in 24 h and unknown outcomes. Unreleased or unenrolled wallets are left out."
+  },
+  {
     "key": "GET /api/v1/orgs/memberships/me 200.items[].capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.getOrgsMembershipsMe",
@@ -3127,6 +3135,14 @@
     "op": "GET /api/v1/scans/{id}",
     "change": "200.passState: field added",
     "note": "Scans report passState (voided, expired or suspended) when a tap-out was recorded for a pass in that state."
+  },
+  {
+    "key": "GET /api/v1/session 200|0.authTime: field added",
+    "class": "additive",
+    "operationId": "session.getSession",
+    "op": "GET /api/v1/session",
+    "change": "200|0.authTime: field added",
+    "note": "The session reports authTime, when the sign-in happened in ms, or null for an email link or when Polaris ID sent none."
   },
   {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
@@ -6369,6 +6385,14 @@
     "note": "Wallet credentials report provenance."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck new operation",
+    "class": "additive",
+    "operationId": "wallet-health.postOrgsByOrgIdWalletHealthByProviderRecheck",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-health/{provider}/recheck",
+    "change": "new operation",
+    "note": "passes:write: sends uncertain updates past the 10 minute window to settle; answers due and waiting."
+  },
+  {
     "key": "POST /api/v1/orgs/invitations/accept 200.capabilities[]: enum value \"logs:read\" added",
     "class": "notable",
     "operationId": "organization-memberships.postOrgsInvitationsAccept",
@@ -6783,6 +6807,14 @@
     "op": "POST /api/v1/platform/apple/identities/{id}/default",
     "change": "new operation",
     "note": "Makes a ready platform identity the default. Session only, with a recent sign-in, CSRF and an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/platform/apple/identity-moves 422.IDEMPOTENCY_KEY_REUSED",
+    "class": "notable",
+    "operationId": "wallet-identities.postPlatformAppleIdentityMoves",
+    "op": "POST /api/v1/platform/apple/identity-moves",
+    "change": "IDEMPOTENCY_KEY_REUSED on operation starts: now 422",
+    "note": "An operation start or IdP role change with a reused Idempotency-Key and another request is now 422 IDEMPOTENCY_KEY_REUSED, not 409."
   },
   {
     "key": "POST /api/v1/platform/apple/identity-moves new operation",

@@ -74,7 +74,7 @@ test('all eight camera barcode formats check in continuously across phone, table
       body: JSON.stringify(measures, null, 2),
       contentType: 'application/json',
     });
-    await page.screenshot({ path: `test-results/${testInfo.project.name}-camera.png` });
+    await page.screenshot({ path: test.info().outputPath(`${testInfo.project.name}-camera.png`) });
   } finally {
     await api.dispose();
   }

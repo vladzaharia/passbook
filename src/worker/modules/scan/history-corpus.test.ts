@@ -120,7 +120,8 @@ describe('history reads at their widest shape', () => {
   });
   it('a read may be 64 KiB of UTF-8, counted in bytes, and no more', async () => {
     const { kit, auth } = await console();
-    const padded = (comment: string) => `SELECT 1 AS ok FROM ${auth.anchor} /*${comment}*/`;
+    const padded = (comment: string) =>
+      `SELECT 1 AS ok FROM ${auth.anchor} WHERE ${auth.present} /*${comment}*/`;
     // Over the 32 KiB a grant write may be, under the read budget.
     expect(
       (await scanRead(kit.env.DB, auth, padded('x'.repeat(40_000))).all()).results,

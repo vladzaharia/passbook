@@ -4,13 +4,14 @@ import { MemberPhotoSchema, PutMemberPhotoSchema } from '../../../shared/contrac
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
+import { ownUse } from '../../platform/router-scope.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { scanActorOf } from './guard.ts';
 import { captureDeskPhoto } from './photo-capture.ts';
 
 /** Before the guards, which read the body: the default cap, and the photo route's own. */
 export function limitScanBodies(router: OpenAPIHono<AppBindings>): void {
-  router.use('*', defaultBodyLimit(/\/passes\/[^/]+\/photo$/));
+  ownUse(router, defaultBodyLimit(/\/passes\/[^/]+\/photo$/));
   router.use('/passes/:passId/photo', limitBody(1_410_000));
 }
 

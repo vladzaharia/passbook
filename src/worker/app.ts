@@ -91,6 +91,7 @@ import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbac
 import { walletCredentialRoutes } from './modules/wallet-providers/routes-credentials.ts';
 import { walletEnrolmentRoutes } from './modules/wallet-providers/routes-enrolments.ts';
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
+import { walletHealthRoutes } from './modules/wallet-providers/routes-health.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletPlatformRoutes } from './modules/wallet-providers/routes-platform-credentials.ts';
 import { walletReissueRoutes } from './modules/wallet-providers/routes-reissue.ts';
@@ -114,6 +115,7 @@ import { hostPolicy } from './platform/host-policy.ts';
 import { buildOpenApiDocument } from './platform/openapi-document.ts';
 import { keyCallableOnly } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
+import { assertScopedPatterns } from './platform/router-scope.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
 
@@ -199,6 +201,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/request-logs', requestLogRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
+  app.route('/api/v1/orgs', walletHealthRoutes);
   app.route('/api/v1/orgs', developerOrgRoutes);
   app.route('/api/v1/invitations', invitationRoutes);
   app.route('/api/v1/orgs', passSetupRoutes);
@@ -312,5 +315,6 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.get('/api/v1/openapi.json', document);
   app.get('/api/v1/docs', document);
 
+  assertScopedPatterns(app);
   return app;
 }

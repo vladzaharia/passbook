@@ -100,7 +100,7 @@ describe('templates list', () => {
     expect(screen.queryByText('Baked')).toBeNull();
     expect(seen[0]?.searchParams.get('origin')).toBe('baked');
     expect(seen[0]?.searchParams.get('orgId')).toBe(ORG.id);
-    expect(screen.getByText('2 templates')).toBeInTheDocument();
+    expect(screen.queryByText('2 templates')).toBeNull();
   });
 
   it('pages by cursor, 50 at a time, with Load more', async () => {
@@ -125,7 +125,7 @@ describe('templates list', () => {
     await user.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByRole('link', { name: 'Second' })).toBeInTheDocument();
     expect(seen.at(-1)?.searchParams.get('cursor')).toBe('next');
-    expect(screen.getByText('2 templates')).toBeInTheDocument();
+    expect(screen.queryByText('2 templates')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
   });
 

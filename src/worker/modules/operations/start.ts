@@ -64,7 +64,7 @@ const sameRequest = (row: OperationRow, input: StartInput) =>
   row.actor_id === input.actor.id;
 
 const reused = () =>
-  new AppError('IDEMPOTENCY_KEY_REUSED', 409, 'This key was used for a different request.');
+  new AppError('IDEMPOTENCY_KEY_REUSED', 422, 'This key was used for a different request.');
 
 /** The INSERT as a statement, to batch with the domain row it describes. */
 export function startOperationStmt(ctx: ServiceContext, input: StartInput) {

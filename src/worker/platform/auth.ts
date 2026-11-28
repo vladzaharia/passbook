@@ -35,6 +35,7 @@ import {
   sessionKindOf,
   signInOf,
 } from './route-auth-spec.ts';
+import { innerOf } from './router-scope.ts';
 import { serviceContext } from './service-context.ts';
 import {
   assertConsoleGroup,
@@ -55,12 +56,11 @@ export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
-export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
+export const isKnownGuard = (handler: object): boolean => knownGuards.has(innerOf(handler));
 /** `requireCaller` guards that take a bearer (a `scope` route): the Workbench route tests read them. */
 const bearerGuards = new WeakSet<object>();
-export const takesBearer = (handler: object): boolean => bearerGuards.has(handler);
+export const takesBearer = (handler: object): boolean => bearerGuards.has(innerOf(handler));
 export const API_SCOPES = ApiScopeSchema.options;
-
 export const SESSION_COOKIE = '__Host-wallet_sid';
 
 export type { KeyCaller } from './browser-signals.ts';
