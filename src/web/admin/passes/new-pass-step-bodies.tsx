@@ -80,7 +80,12 @@ export function TemplateBody({
       (!eligible.isFetching || eligible.isFetchingNextPage) &&
       !(scope.isLoading && usable.length === 0) ? (
         <div className="wl-rise [--wl-delay:240ms]">
-          <LoadMore query={eligible} shown={eligible.hasNextPage ? usable.length : undefined} noun={TEMPLATE_NOUN} scoped />
+          <LoadMore
+            query={eligible}
+            shown={eligible.hasNextPage ? usable.length : undefined}
+            noun={TEMPLATE_NOUN}
+            scoped
+          />
         </div>
       ) : null}
       {templateId &&
