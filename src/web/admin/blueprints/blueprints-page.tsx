@@ -12,25 +12,23 @@ import { BlueprintTile } from './blueprint-tile.tsx';
 import { entriesOf, groupEntries, matches } from './gallery-model.ts';
 import { UseBlueprintDialog } from './use-dialog.tsx';
 
-const GRID =
-  'grid grid-cols-2 gap-3 sm:gap-4 max-sm:[&>:last-child:nth-child(odd)]:col-span-2';
+const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 max-sm:[&>:last-child:nth-child(odd)]:col-span-2';
 
-const COLS = {
-  md: ['', '', 'md:grid-cols-2', 'md:grid-cols-3', 'md:grid-cols-4'],
-  lg: ['', '', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-cols-4'],
-  xl: ['', '', 'xl:grid-cols-2', 'xl:grid-cols-3', 'xl:grid-cols-4'],
-} as const;
+const MD = ['', '', 'md:grid-cols-2', 'md:grid-cols-3'] as const;
+const XL = ['', '', 'xl:grid-cols-2', 'xl:grid-cols-3', 'xl:grid-cols-4'] as const;
 
-/** Columns that fill every row: all tiles in one row when few, else the count with the least empty cells. */
-function fit(count: number, max: number): number {
+/** Columns for a row count: all tiles in one row when they fit, else the fewest empty cells, wider on ties. */
+function columnsFor(count: number, max: number): number {
   if (count <= max) return Math.max(count, 2);
   let best = max;
-  for (let c = max - 1; c >= 3; c--) if (count % c < count % best) best = c;
+  for (let c = max - 1; c >= 2; c--)
+    if ((c - (count % c)) % c < (best - (count % best)) % best) best = c;
   return best;
 }
 
+/** md and lg share a width class (lg has the sidebar), so columns never shrink as the screen grows. */
 export function gridFor(count: number): string {
-  return `${GRID} ${COLS.md[fit(count, 4)]} ${COLS.lg[fit(count, 3)]} ${COLS.xl[fit(count, 4)]}`;
+  return `${GRID} ${MD[columnsFor(count, 3)]} ${XL[columnsFor(count, 4)]}`;
 }
 
 /**
