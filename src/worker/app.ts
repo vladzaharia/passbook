@@ -93,11 +93,25 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.get('/health', (c) => c.json({ ok: true }));
 
   // The order is the one the routes were mounted in: it sets the order of the OpenAPI components.
-  const [tenantA, tenantB, tenantC] = tenantMounts;
-  const [platformA, platformB] = platformMounts;
-  const [publicA, publicB] = publicMounts;
-  const order = [tenantA, platformA, tenantB, platformB, tenantC, publicA, ...hooksMounts, publicB];
-  for (const mounts of order) for (const [path, routes] of mounts ?? []) app.route(path, routes);
+  const groupAt = <T>(list: readonly T[], i: number): T => {
+    const group = list[i];
+    if (!group) throw new Error(`route group ${i} is missing from its list in app-routes-*.ts`);
+    return group;
+  };
+  const order = [
+    groupAt(tenantMounts, 0),
+    groupAt(platformMounts, 0),
+    groupAt(tenantMounts, 1),
+    groupAt(platformMounts, 1),
+    groupAt(tenantMounts, 2),
+    groupAt(publicMounts, 0),
+    ...hooksMounts,
+    groupAt(publicMounts, 1),
+  ];
+  // A group added to a list but not placed above would never be mounted.
+  for (const group of [...tenantMounts, ...platformMounts, ...publicMounts, ...hooksMounts])
+    if (!order.includes(group)) throw new Error('a route group in app-routes-*.ts is not mounted');
+  for (const mounts of order) for (const [path, routes] of mounts) app.route(path, routes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.

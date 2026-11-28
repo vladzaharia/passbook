@@ -10,13 +10,16 @@ import { planIconHtml, rowIconHtml } from './icon.ts';
 const selfClosed = (html: string) =>
   html.replace(/<(\w+)([^>]*)><\/\1>/g, '<$1$2/>').replace(/ \/>/g, '/>');
 const tight = (svg: string) => svg.replace(/ \/>/g, '/>');
+const unsized = (html: string) => html.replace('<svg width="20" height="20" ', '<svg ');
 
 describe('plan and row icon markup', () => {
-  it('renders the same markup in the SPA and in SSR', () => {
+  it('renders the SPA markup, with an explicit size because SSR pages have no Tailwind', () => {
     const plan = { id: 'business', label: 'Backstage', className: 'size-8' };
-    expect(planIconHtml(plan)).toBe(renderToStaticMarkup(createElement(PlanIcon, plan)));
+    expect(unsized(planIconHtml(plan))).toBe(renderToStaticMarkup(createElement(PlanIcon, plan)));
     const row = { icon: 'live-passes', mono: true };
-    expect(rowIconHtml(row)).toBe(renderToStaticMarkup(createElement(RowIcon, row)));
+    expect(unsized(rowIconHtml(row))).toBe(renderToStaticMarkup(createElement(RowIcon, row)));
+    expect(planIconHtml(plan)).toContain('<svg width="20" height="20" ');
+    expect(rowIconHtml(row)).toContain('<svg width="20" height="20" ');
     expect(planIconHtml({ id: 'trial' })).toMatchSnapshot();
     expect(rowIconHtml({ icon: 'live-passes' })).toMatchSnapshot();
   });
@@ -24,12 +27,14 @@ describe('plan and row icon markup', () => {
   it('renders every generated svg back to its source, with no innerHTML', () => {
     for (const [id, icon] of Object.entries(PLAN_ICONS))
       for (const mono of [false, true])
-        expect(selfClosed(planIconHtml({ id, mono }))).toContain(
+        expect(selfClosed(unsized(planIconHtml({ id, mono })))).toContain(
           tight(mono ? icon.mono : icon.svg),
         );
     for (const [icon, row] of Object.entries(ROW_ICONS))
       for (const mono of [false, true])
-        expect(selfClosed(rowIconHtml({ icon, mono }))).toContain(tight(mono ? row.mono : row.svg));
+        expect(selfClosed(unsized(rowIconHtml({ icon, mono })))).toContain(
+          tight(mono ? row.mono : row.svg),
+        );
   });
 
   it('is decorative unless labelled', () => {
