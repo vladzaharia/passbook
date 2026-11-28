@@ -14,6 +14,8 @@ export type Route = {
   viewports?: ViewportName[];
   /** Placeholder that holds the org the console filters to for this route, instead of `{orgId}`. */
   filterOrg?: string;
+  /** API calls answered by the sweep instead of the server: `path` is a request path prefix (`/api/v1/passes`); the first match wins. For empty and failed states. */
+  mock?: { path: string; status?: number; body?: unknown; headers?: Record<string, string> }[];
   /** `touch`: a phone or tablet user agent with touch, sized by the viewport. */
   device?: 'touch';
 };
@@ -70,6 +72,16 @@ export function parseRoutes(json: string, source = 'route list'): Route[] {
         `${source}[${i}] (${r.path}): click must be a non-empty string or list of them.`,
       );
     }
+    const badMock = (Array.isArray(r.mock) ? r.mock : []).find(
+      (m) => typeof m?.path !== 'string' || !m.path.startsWith('/'),
+    );
+    if (
+      r.mock !== undefined &&
+      (!Array.isArray(r.mock) || badMock !== undefined || r.mock.length === 0)
+    )
+      throw new Error(
+        `${source}[${i}] (${r.path}): mock needs a list of { path, status?, body? }.`,
+      );
     const bad = r.viewports?.find((v) => !ALL_VIEWPORTS.includes(v));
     if (bad) throw new Error(`${source}[${i}]: unknown viewport "${bad}".`);
     return r as Route;
@@ -116,9 +128,13 @@ export function shotName(name: string, viewport: string, theme: string): string 
   return `${safe}-${viewport}-${theme}.png`;
 }
 
-/** `--only` keeps routes whose name contains any comma-separated substring. */
+/** `--only` keeps routes whose name contains any comma-separated substring; `=name` matches a whole name. */
 export function filterRoutes(routes: Route[], only?: string): Route[] {
   if (!only) return routes;
   const parts = only.split(',').map((s) => s.trim().toLowerCase());
-  return routes.filter((r) => parts.some((p) => r.name.toLowerCase().includes(p)));
+  return routes.filter((r) =>
+    parts.some((p) =>
+      p.startsWith('=') ? r.name.toLowerCase() === p.slice(1) : r.name.toLowerCase().includes(p),
+    ),
+  );
 }

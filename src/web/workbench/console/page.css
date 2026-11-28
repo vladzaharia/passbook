@@ -15,9 +15,7 @@
 .console-op-t {
   margin: 0;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .console-path {
   display: inline-flex;
@@ -50,6 +48,8 @@
   gap: 10px;
   inline-size: 100%;
   min-height: 44px;
+  block-size: auto;
+  padding-block: 8px;
   justify-content: flex-start;
   font-weight: 500;
 }
@@ -60,10 +60,8 @@
 .console-trigger-t {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   text-align: start;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .console-trigger > svg {
   flex: none;

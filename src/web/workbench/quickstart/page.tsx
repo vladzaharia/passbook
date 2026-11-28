@@ -15,33 +15,27 @@ export function QuickstartView() {
         steps={
           <>
             <Step n={1} state="current" title={C.signIn.title}>
-              <p className="sm muted">{C.signIn.line}</p>
               <p>
                 <a className="btn" href={POLARIS_HERE}>
                   {C.signIn.cta}
                 </a>
               </p>
             </Step>
-            <Step n={2} state="todo" title={C.sandbox.title} tag={<Tag>{C.sandbox.tag}</Tag>}>
-              <p className="sm muted">{C.sandbox.line}</p>
-            </Step>
+            <Step n={2} state="todo" title={C.sandbox.title} tag={<Tag>{C.sandbox.tag}</Tag>} />
             <Step n={3} state="todo" title={C.run.title}>
               <p className="sm muted">
-                {C.run.line} <code className="inline-code">Quickstart ticket</code>. {C.run.line2}
+                <code className="inline-code">POST /api/v1/passes</code>
               </p>
             </Step>
             <Step n={4} state="todo" title={C.change.title}>
               <p className="sm muted">
-                {C.change.line} <code className="inline-code">PATCH /api/v1/passes/{'{id}'}</code>{' '}
-                {C.change.line2}
+                <code className="inline-code">PATCH /api/v1/passes/{'{id}'}</code>
               </p>
             </Step>
-            <Step n={5} state="todo" title={QS_COPY.hear.title}>
-              <p className="sm muted">{QS_COPY.hear.line}</p>
-            </Step>
+            <Step n={5} state="todo" title={QS_COPY.hear.title} />
           </>
         }
-        stage={<EmptyStage line={QS_COPY.signedOutStage} />}
+        stage={<EmptyStage />}
       />
     </div>
   );

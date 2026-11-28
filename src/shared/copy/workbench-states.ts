@@ -34,7 +34,13 @@ export const WB_STATES = {
   failed: {
     network: 'Could not reach PassBook. Check your connection.',
     access: 'You do not have access to this.',
+    tokenOnly: 'Not available with a Workbench token.',
     server: 'PassBook could not answer. Try again.',
+    rateLimited: 'Too many requests. Try again in a minute.',
+    rateLimitedIn: (seconds: number) =>
+      seconds < 60
+        ? `Too many requests. Try again in ${seconds} s.`
+        : `Too many requests. Try again in ${Math.ceil(seconds / 60)} min.`,
     noContext: 'Choose a sandbox or organization first.',
     stale: 'Could not refresh your contexts.',
   },

@@ -146,11 +146,11 @@ export function Quickstart({
         }
         stage={
           signed ? (
-            <Suspense fallback={<EmptyStage line={QS_COPY.signedOutStage} />}>
+            <Suspense fallback={<EmptyStage />}>
               <Stage q={q} fix={fix} />
             </Suspense>
           ) : (
-            <EmptyStage line={QS_COPY.signedOutStage} />
+            <EmptyStage />
           )
         }
       />

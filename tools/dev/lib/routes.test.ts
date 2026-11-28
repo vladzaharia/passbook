@@ -6,6 +6,7 @@ import {
   filterRoutes,
   parseRoutes,
   placeholdersOf,
+  type Route,
   shotName,
   withCompanions,
 } from './routes.ts';
@@ -80,5 +81,18 @@ describe('visual-sweep routes', () => {
     expect(one(['x', 'y'])).toHaveLength(1);
     expect(one('x')).toHaveLength(1);
     for (const bad of [5, [1, {}], '', []]) expect(() => one(bad)).toThrow(/\/a.*click/);
+  });
+
+  it('validates mock and matches a whole name with =', () => {
+    const one = (mock: unknown) =>
+      parseRoutes(JSON.stringify([{ role: 'org', path: '/a', name: 'n', mock }]));
+    expect(
+      one([{ path: '/api/v1/passes', status: 429, headers: { 'retry-after': '5' } }]),
+    ).toHaveLength(1);
+    for (const bad of ['x', [], [{ path: 'api' }], [{}]])
+      expect(() => one(bad)).toThrow(/\/a.*mock/);
+    const rs = [{ name: 'a' }, { name: 'a-empty' }] as Route[];
+    expect(filterRoutes(rs, '=a')).toHaveLength(1);
+    expect(filterRoutes(rs, 'a')).toHaveLength(2);
   });
 });
