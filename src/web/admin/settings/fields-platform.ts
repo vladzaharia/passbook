@@ -32,7 +32,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     group: 'Identity trust',
     label: 'Trust Polaris ID emails',
     kind: 'boolean',
-    help: 'Off requires extra email proof on a matching sign-in.',
+    help: 'Off requires additional email proof on a matching sign-in.',
     schema: P['oidc.trustEmail'],
   },
   {
